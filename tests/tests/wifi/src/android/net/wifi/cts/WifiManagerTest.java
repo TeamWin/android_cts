@@ -99,6 +99,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -1989,31 +1990,26 @@ public class WifiManagerTest extends AndroidTestCase {
         assertTrue(mWifiManager.isWifiEnabled());
     }
 
+    /**
+     * state is a bitset, where bit 0 indicates whether there was data in, and bit 1 indicates
+     * whether there was data out. Only count down on the latch once there was both data in and out.
+     */
     private static class TestTrafficStateCallback implements WifiManager.TrafficStateCallback {
-        private final Object mLock;
-        private final int mWaitForState;
-        public boolean onStateChangedCalled = false;
-        public int state = -1;
-
-        TestTrafficStateCallback(Object lock, int waitForState) {
-            mLock = lock;
-            mWaitForState = waitForState;
-        }
+        public final CountDownLatch latch = new CountDownLatch(1);
+        private int mAccumulator = 0;
 
         @Override
         public void onStateChanged(int state) {
-            synchronized (mLock) {
-                onStateChangedCalled = true;
-                this.state = state;
-                if (mWaitForState == state) { // only notify if we got the expected state.
-                    mLock.notify();
-                }
+            mAccumulator |= state;
+            if (mAccumulator == DATA_ACTIVITY_INOUT) {
+                latch.countDown();
             }
         }
     }
 
     private void sendTraffic() {
-        for (int i = 0; i < 10; i ++) {
+        boolean didAnyConnectionSucceed = false;
+        for (int i = 0; i < 10; i++) {
             // Do some network operations
             HttpURLConnection connection = null;
             try {
@@ -2023,13 +2019,19 @@ public class WifiManagerTest extends AndroidTestCase {
                 connection.setConnectTimeout(TIMEOUT_MSEC);
                 connection.setReadTimeout(TIMEOUT_MSEC);
                 connection.setUseCaches(false);
-                connection.getInputStream();
+                InputStream stream = connection.getInputStream();
+                byte[] bytes = new byte[100];
+                int receivedBytes = stream.read(bytes);
+                if (receivedBytes > 0) {
+                    didAnyConnectionSucceed = true;
+                }
             } catch (Exception e) {
                 // ignore
             } finally {
                 if (connection != null) connection.disconnect();
             }
         }
+        assertTrue("All connections failed!", didAnyConnectionSucceed);
     }
 
     /**
@@ -2041,8 +2043,7 @@ public class WifiManagerTest extends AndroidTestCase {
             // skip the test if WiFi is not supported
             return;
         }
-        TestTrafficStateCallback trafficStateCallback =
-                new TestTrafficStateCallback(mLock, DATA_ACTIVITY_INOUT);
+        TestTrafficStateCallback callback = new TestTrafficStateCallback();
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
@@ -2052,23 +2053,17 @@ public class WifiManagerTest extends AndroidTestCase {
 
             // Turn screen on for wifi traffic polling.
             turnScreenOn();
-            synchronized (mLock) {
-                try {
-                    mWifiManager.registerTrafficStateCallback(
-                            Executors.newSingleThreadExecutor(), trafficStateCallback);
-                    // Send some traffic to trigger the traffic state change callbacks.
-                    sendTraffic();
-                    // now wait for callback
-                    mLock.wait(TEST_WAIT_DURATION_MS);
-                } catch (InterruptedException e) {
-                }
-            }
-            // check if we got the state changed callback
-            assertTrue(trafficStateCallback.onStateChangedCalled);
-            assertEquals(DATA_ACTIVITY_INOUT, trafficStateCallback.state);
+            mWifiManager.registerTrafficStateCallback(
+                    Executors.newSingleThreadExecutor(), callback);
+            // Send some traffic to trigger the traffic state change callbacks.
+            sendTraffic();
+            // now wait for callback
+            boolean success = callback.latch.await(TEST_WAIT_DURATION_MS, TimeUnit.MILLISECONDS);
+            // check if we got the state changed callback with both data in and out
+            assertTrue(success);
         } finally {
             turnScreenOff();
-            mWifiManager.unregisterTrafficStateCallback(trafficStateCallback);
+            mWifiManager.unregisterTrafficStateCallback(callback);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
