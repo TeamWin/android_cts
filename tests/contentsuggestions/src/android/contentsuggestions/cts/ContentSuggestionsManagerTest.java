@@ -45,7 +45,7 @@ import com.google.common.collect.Lists;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,8 +65,8 @@ public class ContentSuggestionsManagerTest {
     private static final long VERIFY_TIMEOUT_MS = 5_000;
     private static final long SERVICE_LIFECYCLE_TIMEOUT_MS = 30_000;
 
-    @ClassRule
-    public static final RequiredServiceRule mRequiredServiceRule =
+    @Rule
+    public final RequiredServiceRule mRequiredServiceRule =
             new RequiredServiceRule(Context.CONTENT_SUGGESTIONS_SERVICE);
 
     private ContentSuggestionsManager mManager;
