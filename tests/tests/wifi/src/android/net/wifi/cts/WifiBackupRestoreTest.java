@@ -16,6 +16,7 @@
 
 package android.net.wifi.cts;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.net.wifi.WifiConfiguration.METERED_OVERRIDE_METERED;
 import static android.net.wifi.WifiConfiguration.METERED_OVERRIDE_NONE;
 import static android.net.wifi.WifiConfiguration.METERED_OVERRIDE_NOT_METERED;
@@ -37,6 +38,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
+import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -71,6 +73,7 @@ import java.util.stream.Collectors;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class WifiBackupRestoreTest {
+    private static final String TAG = "WifiBackupRestoreTest";
     private static final String LEGACY_SUPP_CONF_FILE =
             "assets/BackupLegacyFormatSupplicantConf.txt";
     private static final String LEGACY_IP_CONF_FILE =
@@ -165,6 +168,10 @@ public class WifiBackupRestoreTest {
     /**
      * Tests for {@link WifiManager#retrieveBackupData()} &
      * {@link WifiManager#restoreBackupData(byte[])}
+     * Note: If the network was not created by an app with OVERRIDE_WIFI_CONFIG permission (held
+     * by AOSP settings app for example), then the backup data will not contain that network. If
+     * the device does not contain any such pre-existing saved network, then this test will be
+     * a no-op, will only ensure that the device does not crash when invoking the API's.
      */
     @Test
     public void testCanRestoreBackupData() {
@@ -174,32 +181,47 @@ public class WifiBackupRestoreTest {
             uiAutomation.adoptShellPermissionIdentity();
 
             // Pick any saved network to modify;
-            origNetwork = mWifiManager.getConfiguredNetworks().get(0);
+            origNetwork = mWifiManager.getConfiguredNetworks().stream()
+                    .filter(n -> mContext.checkPermission(
+                            android.Manifest.permission.OVERRIDE_WIFI_CONFIG, -1, n.creatorUid)
+                            == PERMISSION_GRANTED)
+                    .findAny()
+                    .orElse(null);
+            if (origNetwork == null) {
+                Log.e(TAG, "Need a network created by an app holding OVERRIDE_WIFI_CONFIG "
+                        + "permission to fully evaluate the functionality");
+            }
 
             // Retrieve backup data.
             byte[] backupData = mWifiManager.retrieveBackupData();
 
-            // Modify the metered bit.
-            final String origNetworkSsid = origNetwork.SSID;
-            WifiConfiguration modNetwork = new WifiConfiguration(origNetwork);
-            flipMeteredOverride(modNetwork);
-            int networkId = mWifiManager.updateNetwork(modNetwork);
-            assertThat(networkId).isEqualTo(origNetwork.networkId);
-            assertThat(mWifiManager.getConfiguredNetworks()
-                    .stream()
-                    .filter(n -> n.SSID.equals(origNetworkSsid))
-                    .findAny()
-                    .get().meteredOverride)
-                    .isNotEqualTo(origNetwork.meteredOverride);
+            if (origNetwork != null) {
+                // Modify the metered bit.
+                final String origNetworkSsid = origNetwork.SSID;
+                WifiConfiguration modNetwork = new WifiConfiguration(origNetwork);
+                flipMeteredOverride(modNetwork);
+                int networkId = mWifiManager.updateNetwork(modNetwork);
+                assertThat(networkId).isEqualTo(origNetwork.networkId);
+                assertThat(mWifiManager.getConfiguredNetworks()
+                        .stream()
+                        .filter(n -> n.SSID.equals(origNetworkSsid))
+                        .findAny()
+                        .get().meteredOverride)
+                        .isNotEqualTo(origNetwork.meteredOverride);
+            }
 
             // Restore the original backup data & ensure that the metered bit is back to orig.
             mWifiManager.restoreBackupData(backupData);
-            assertThat(mWifiManager.getConfiguredNetworks()
-                    .stream()
-                    .filter(n -> n.SSID.equals(origNetworkSsid))
-                    .findAny()
-                    .get().meteredOverride)
-                    .isEqualTo(origNetwork.meteredOverride);
+
+            if (origNetwork != null) {
+                final String origNetworkSsid = origNetwork.SSID;
+                assertThat(mWifiManager.getConfiguredNetworks()
+                        .stream()
+                        .filter(n -> n.SSID.equals(origNetworkSsid))
+                        .findAny()
+                        .get().meteredOverride)
+                        .isEqualTo(origNetwork.meteredOverride);
+            }
         } finally {
             // Restore the orig network
             if (origNetwork != null) {
@@ -441,7 +463,7 @@ public class WifiBackupRestoreTest {
     }
 
     /**
-     * Verify that 3 network configuration is serialized & deserialized correctly from
+     * Verify that 3 network configuration is deserialized correctly from AOSP
      * legacy supplicant/ipconf backup data format.
      */
     @Test
@@ -471,7 +493,7 @@ public class WifiBackupRestoreTest {
     }
 
     /**
-     * Verify that 3 network configuration is serialized & deserialized correctly from 1.0 format.
+     * Verify that 3 network configuration is deserialized correctly from AOSP 1.0 format.
      */
     @Test
     public void testRestoreFromV1_0BackupFormat() throws Exception {
@@ -500,7 +522,7 @@ public class WifiBackupRestoreTest {
     }
 
     /**
-     * Verify that 3 network configuration is serialized & deserialized correctly from 1.1 format.
+     * Verify that 3 network configuration is deserialized correctly from AOSP 1.1 format.
      */
     @Test
     public void testRestoreFromV1_1BackupFormat() throws Exception {
@@ -532,7 +554,7 @@ public class WifiBackupRestoreTest {
     }
 
     /**
-     * Verify that 3 network configuration is serialized & deserialized correctly from 1.2 format.
+     * Verify that 3 network configuration is deserialized correctly from AOSP 1.2 format.
      */
     @Test
     public void testRestoreFromV1_2BackupFormat() throws Exception {
