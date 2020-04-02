@@ -24,12 +24,13 @@ import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Parcel;
 import android.util.Size;
-import android.widget.inline.InlinePresentationSpec;
 import android.view.inputmethod.InlineSuggestionsRequest;
+import android.widget.inline.InlinePresentationSpec;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -89,8 +90,8 @@ public class InlineSuggestionsRequestTest {
         assertThat(request.getMaxSuggestionCount()).isEqualTo(suggestionCount);
         assertThat(request.getInlinePresentationSpecs()).isNotNull();
         assertThat(request.getInlinePresentationSpecs().size()).isEqualTo(1);
-        assertThat(request.getInlinePresentationSpecs().get(0).getStyle()).isNull();
-        assertThat(request.getExtras()).isNull();
+        assertThat(request.getInlinePresentationSpecs().get(0).getStyle()).isEqualTo(Bundle.EMPTY);
+        assertThat(request.getExtras()).isEqualTo(Bundle.EMPTY);
         assertThat(request.getSupportedLocales()).isEqualTo(LocaleList.getDefault());
     }
 
@@ -120,6 +121,7 @@ public class InlineSuggestionsRequestTest {
         assertThat(request.getSupportedLocales()).isEqualTo(localeList);
     }
 
+    @Ignore("b/152811052")
     @Test
     public void testInlineSuggestionsRequestParcelizeDeparcelize() {
         ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();

@@ -44,11 +44,11 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
-import org.junit.ClassRule;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -68,8 +68,8 @@ public class AppPredictionServiceTest {
     private static final String TEST_LAUNCH_LOCATION = "testCollapsedLocation";
     private static final int TEST_ACTION = 2;
 
-    @ClassRule
-    public static final RequiredServiceRule mRequiredServiceRule =
+    @Rule
+    public final RequiredServiceRule mRequiredServiceRule =
             new RequiredServiceRule(APP_PREDICTION_SERVICE);
 
     private ServiceReporter mReporter;

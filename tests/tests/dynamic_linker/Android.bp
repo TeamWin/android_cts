@@ -54,7 +54,6 @@ android_test {
     sdk_version: "current",
     test_suites: [
         "cts",
-        "vts",
         "vts10",
     ],
     use_embedded_native_libs: true,
