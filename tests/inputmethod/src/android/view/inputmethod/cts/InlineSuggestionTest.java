@@ -34,7 +34,6 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -62,7 +61,6 @@ public class InlineSuggestionTest {
         assertThat(suggestion.getInfo()).isNotNull();
     }
 
-    @Ignore("b/152811052")
     @Test
     public void testInlineSuggestionParcelizeDeparcelize() {
         InlineSuggestion suggestion = createInlineSuggestion();
