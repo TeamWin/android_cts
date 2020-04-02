@@ -27,10 +27,12 @@ import android.app.UiAutomation;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiUsabilityStatsEntry;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 
+import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -42,6 +44,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Tests for wifi connected network scorer interface and usability stats.
+ */
+@AppModeFull(reason = "Cannot get WifiManager in instant app mode")
+@SmallTest
 public class ConnectedNetworkScorerTest extends AndroidTestCase {
     private WifiManager mWifiManager;
     private UiDevice mUiDevice;
