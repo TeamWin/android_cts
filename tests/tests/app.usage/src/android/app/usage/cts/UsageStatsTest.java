@@ -33,14 +33,18 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.usage.cts.ITestReceiver;
 import android.app.usage.EventStats;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.IBinder;
 import android.os.Parcel;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -53,7 +57,6 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseLongArray;
-import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -75,6 +78,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
@@ -113,6 +118,8 @@ public class UsageStatsTest {
     private static final String TEST_APP_CLASS = "android.app.usage.cts.test1.SomeActivity";
     private static final String TEST_APP_CLASS_LOCUS
             = "android.app.usage.cts.test1.SomeActivityWithLocus";
+    private static final String TEST_APP_CLASS_SERVICE
+            = "android.app.usage.cts.test1.TestService";
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
@@ -123,8 +130,11 @@ public class UsageStatsTest {
     private static final long TIME_DIFF_THRESHOLD = 200;
     private static final String CHANNEL_ID = "my_channel";
 
+    private static final long TIMEOUT_BINDER_SERVICE_SEC = 2;
+
     private Context mContext;
     private UiDevice mUiDevice;
+    private ActivityManager mAm;
     private UsageStatsManager mUsageStatsManager;
     private KeyguardManager mKeyguardManager;
     private String mTargetPackage;
@@ -134,6 +144,7 @@ public class UsageStatsTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mAm = mContext.getSystemService(ActivityManager.class);
         mUsageStatsManager = (UsageStatsManager) mContext.getSystemService(
                 Context.USAGE_STATS_SERVICE);
         mKeyguardManager = mContext.getSystemService(KeyguardManager.class);
@@ -184,6 +195,14 @@ public class UsageStatsTest {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
         mUiDevice.wait(Until.hasObject(By.clazz(clazz)), TIMEOUT);
+    }
+
+    private void launchTestActivity(String pkgName, String className) {
+        Intent intent = new Intent();
+        intent.setClassName(pkgName, className);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        mUiDevice.wait(Until.hasObject(By.clazz(pkgName, className)), TIMEOUT);
     }
 
     private void launchSubActivities(Class<? extends Activity>[] activityClasses) {
@@ -685,6 +704,48 @@ public class UsageStatsTest {
         assertEquals("Activity launch didn't bring RESTRICTED app into ACTIVE bucket",
                 UsageStatsManager.STANDBY_BUCKET_ACTIVE,
                 mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+    }
+
+    @Test
+    public void testIsAppInactive() throws Exception {
+        setStandByBucket(mTargetPackage, "rare");
+        setStandByBucket(TEST_APP_PKG, "rare");
+
+        try {
+            BatteryUtils.runDumpsysBatteryUnplug();
+
+            waitUntil(() -> mUsageStatsManager.isAppInactive(mTargetPackage), true);
+            assertFalse(
+                    "App without PACKAGE_USAGE_STATS permission should always receive false for "
+                            + "isAppInactive",
+                    isAppInactiveAsPermissionlessApp(mTargetPackage));
+
+            launchSubActivity(Activities.ActivityOne.class);
+
+            waitUntil(() -> mUsageStatsManager.isAppInactive(mTargetPackage), false);
+            assertFalse(
+                    "App without PACKAGE_USAGE_STATS permission should always receive false for "
+                            + "isAppInactive",
+                    isAppInactiveAsPermissionlessApp(mTargetPackage));
+
+            // Querying for self does not require the PACKAGE_USAGE_STATS
+            waitUntil(() -> mUsageStatsManager.isAppInactive(TEST_APP_PKG), true);
+            assertTrue(
+                    "App without PACKAGE_USAGE_STATS permission should be able to call "
+                            + "isAppInactive for itself",
+                    isAppInactiveAsPermissionlessApp(TEST_APP_PKG));
+
+            launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS);
+
+            waitUntil(() -> mUsageStatsManager.isAppInactive(TEST_APP_PKG), false);
+            assertFalse(
+                    "App without PACKAGE_USAGE_STATS permission should be able to call "
+                            + "isAppInactive for itself",
+                    isAppInactiveAsPermissionlessApp(TEST_APP_PKG));
+
+        } finally {
+            BatteryUtils.runDumpsysBatteryReset();
+        }
     }
 
     @Test
@@ -1236,7 +1297,6 @@ public class UsageStatsTest {
         mUiDevice.pressHome();
 
         final long startTime = System.currentTimeMillis();
-        final ActivityManager mAm = mContext.getSystemService(ActivityManager.class);
 
         Intent intent = new Intent();
         intent.setClassName(TEST_APP_PKG, TEST_APP_CLASS);
@@ -1293,8 +1353,6 @@ public class UsageStatsTest {
     }
 
     private void startAndDestroyActivityWithLocus() {
-        final ActivityManager mAm = mContext.getSystemService(ActivityManager.class);
-
         Intent intent = new Intent();
         intent.setClassName(TEST_APP_PKG, TEST_APP_CLASS_LOCUS);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1373,5 +1431,35 @@ public class UsageStatsTest {
     private UsageEvents queryEventsAsShell(long start, long end) {
         return SystemUtil.runWithShellPermissionIdentity(() ->
                 mUsageStatsManager.queryEvents(start, end));
+    }
+
+    private ITestReceiver bindToTestService() throws Exception {
+        final TestServiceConnection connection = new TestServiceConnection();
+        final Intent intent = new Intent().setComponent(
+                new ComponentName(TEST_APP_PKG, TEST_APP_CLASS_SERVICE));
+        mContext.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        return ITestReceiver.Stub.asInterface(connection.getService());
+    }
+
+    private class TestServiceConnection implements ServiceConnection {
+        private BlockingQueue<IBinder> mBlockingQueue = new LinkedBlockingQueue<>();
+
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBlockingQueue.offer(service);
+        }
+
+        public void onServiceDisconnected(ComponentName componentName) {
+        }
+
+        public IBinder getService() throws Exception {
+            final IBinder service = mBlockingQueue.poll(TIMEOUT_BINDER_SERVICE_SEC,
+                    TimeUnit.SECONDS);
+            return service;
+        }
+    }
+
+    private boolean isAppInactiveAsPermissionlessApp(String pkg) throws Exception {
+        final ITestReceiver testService = bindToTestService();
+        return testService.isAppInactive(pkg);
     }
 }
