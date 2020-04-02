@@ -30,7 +30,6 @@ import android.widget.inline.InlinePresentationSpec;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -93,6 +92,17 @@ public class InlineSuggestionsRequestTest {
         assertThat(request.getInlinePresentationSpecs().get(0).getStyle()).isEqualTo(Bundle.EMPTY);
         assertThat(request.getExtras()).isEqualTo(Bundle.EMPTY);
         assertThat(request.getSupportedLocales()).isEqualTo(LocaleList.getDefault());
+
+        // Tests the parceling/deparceling
+        Parcel p = Parcel.obtain();
+        request.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        InlineSuggestionsRequest targetRequest =
+                InlineSuggestionsRequest.CREATOR.createFromParcel(p);
+        p.recycle();
+
+        assertThat(targetRequest).isEqualTo(request);
     }
 
     @Test
@@ -119,16 +129,8 @@ public class InlineSuggestionsRequestTest {
         assertThat(request.getInlinePresentationSpecs().get(0).getStyle()).isEqualTo(style);
         assertThat(request.getExtras()).isEqualTo(extra);
         assertThat(request.getSupportedLocales()).isEqualTo(localeList);
-    }
 
-    @Ignore("b/152811052")
-    @Test
-    public void testInlineSuggestionsRequestParcelizeDeparcelize() {
-        ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
-        presentationSpecs.add(
-                new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 400)).build());
-        InlineSuggestionsRequest request =
-                new InlineSuggestionsRequest.Builder(presentationSpecs).build();
+        // Tests the parceling/deparceling
         Parcel p = Parcel.obtain();
         request.writeToParcel(p, 0);
         p.setDataPosition(0);
