@@ -85,6 +85,12 @@ public class SmsCbMessageTest {
     }
 
     @Test
+    public void testSubId() {
+        assertEquals(TEST_SUB_ID, mSmsCbMessage.getSubscriptionId());
+    }
+
+
+    @Test
     public void testGeographicalScope() {
         assertEquals(TEST_GEO_SCOPE, mSmsCbMessage.getGeographicalScope());
     }
