@@ -1,10 +1,12 @@
 package com.android.cts.intent.sender;
 
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -28,6 +30,7 @@ public class SuspendPackageTest extends InstrumentationTestCase {
     private IntentSenderActivity mActivity;
     private Context mContext;
     private PackageManager mPackageManager;
+    private UiAutomation mUiAutomation;
 
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String TARGET_ACTIVITY_NAME
@@ -39,6 +42,7 @@ public class SuspendPackageTest extends InstrumentationTestCase {
         mContext = getInstrumentation().getTargetContext();
         mActivity = launchActivity(mContext.getPackageName(), IntentSenderActivity.class, null);
         mPackageManager = mContext.getPackageManager();
+        mUiAutomation = getInstrumentation().getUiAutomation();
     }
 
     @Override
@@ -117,10 +121,16 @@ public class SuspendPackageTest extends InstrumentationTestCase {
 
     private String getSettingsPackageName() {
         String settingsPackageName = "com.android.settings";
-        ResolveInfo resolveInfo = mPackageManager.resolveActivity(
-                new Intent(Settings.ACTION_SETTINGS), PackageManager.MATCH_SYSTEM_ONLY);
-        if (resolveInfo != null && resolveInfo.activityInfo != null) {
-            settingsPackageName = resolveInfo.activityInfo.packageName;
+        try {
+            mUiAutomation.adoptShellPermissionIdentity("android.permission.INTERACT_ACROSS_USERS");
+            ResolveInfo resolveInfo = mPackageManager.resolveActivityAsUser(
+                    new Intent(Settings.ACTION_SETTINGS), PackageManager.MATCH_SYSTEM_ONLY,
+                    UserHandle.USER_SYSTEM);
+            if (resolveInfo != null && resolveInfo.activityInfo != null) {
+                settingsPackageName = resolveInfo.activityInfo.packageName;
+            }
+        } finally {
+            mUiAutomation.dropShellPermissionIdentity();
         }
         return settingsPackageName;
     }
