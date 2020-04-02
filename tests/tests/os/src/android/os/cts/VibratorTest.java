@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 
 import android.app.UiAutomation;
 import android.media.AudioAttributes;
+import android.os.cts.SimpleTestActivity;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -32,9 +33,11 @@ import android.os.Vibrator.OnVibratorStateChangedListener;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -43,6 +46,10 @@ import org.mockito.MockitoAnnotations;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class VibratorTest {
+    @Rule
+    public ActivityTestRule<SimpleTestActivity> mActivityRule = new ActivityTestRule<>(
+            SimpleTestActivity.class);
+
     private static final AudioAttributes AUDIO_ATTRIBUTES =
             new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
