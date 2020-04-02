@@ -201,15 +201,20 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
         assumeTrue("Userspace reboot not supported on the device",
                 getDevice().getBooleanProperty(USERSPACE_REBOOT_SUPPORTED_PROP, false));
         assumeTrue("This test requires root", getDevice().enableAdbRoot());
-        final String defaultValue = getProperty("init.userspace_reboot.sigkill.timeoutmillis", "");
+        final String sigkillTimeout =
+                getProperty("init.userspace_reboot.sigkill.timeoutmillis", "");
+        final String sigtermTimeout =
+                getProperty("init.userspace_reboot.sigterm.timeoutmillis", "");
         try {
             // Explicitly set a very low value to make sure that safety mechanism kicks in.
             getDevice().setProperty("init.userspace_reboot.sigkill.timeoutmillis", "500");
+            getDevice().setProperty("init.userspace_reboot.sigterm.timeoutmillis", "500");
             rebootUserspaceAndWaitForBootComplete();
             assertUserspaceRebootFailed();
             assertLastBootReasonIs("userspace_failed,shutdown_aborted");
         } finally {
-            getDevice().setProperty("init.userspace_reboot.sigkill.timeoutmillis", defaultValue);
+            getDevice().setProperty("init.userspace_reboot.sigkill.timeoutmillis", sigkillTimeout);
+            getDevice().setProperty("init.userspace_reboot.sigterm.timeoutmillis", sigtermTimeout);
         }
     }
 
