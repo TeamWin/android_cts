@@ -64,9 +64,9 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
     private static final long LAST_BUFFER_TIMESTAMP_US = 166666;
 
-    // The test should fail if the decoder never produces output frames for the truncated input.
-    // Time out decoding, as we have no way to query whether the decoder will produce output.
-    private static final int DECODING_TIMEOUT_MS = 2000;
+    // The test should fail if the codec never produces output frames for the truncated input.
+    // Time out processing, as we have no way to query whether the decoder will produce output.
+    private static final int TIMEOUT_MS = 2000;
 
     /**
      * Tests whether decoding a short group-of-pictures succeeds. The test queues a few video frames
@@ -108,21 +108,21 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
 
     private void runThread(BooleanSupplier supplier) throws InterruptedException {
         final AtomicBoolean completed = new AtomicBoolean(false);
-        Thread videoDecodingThread = new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             public void run() {
                 completed.set(supplier.getAsBoolean());
             }
         });
         final AtomicReference<Throwable> throwable = new AtomicReference<>();
-        videoDecodingThread.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
+        thread.setUncaughtExceptionHandler((Thread t, Throwable e) -> {
             throwable.set(e);
         });
-        videoDecodingThread.start();
-        videoDecodingThread.join(DECODING_TIMEOUT_MS);
+        thread.start();
+        thread.join(TIMEOUT_MS);
         Throwable t = throwable.get();
         if (t != null) {
-            Log.i(TAG, "Video decoding thread has thrown", t);
-            fail("Video decoding thread has thrown, please check log");
+            Log.e(TAG, "There was an error while running the thread:", t);
+            fail("There was an error while running the thread; please check log");
         }
         assertTrue("timed out decoding to end-of-stream", completed.get());
     }
@@ -141,10 +141,12 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         public ExtractorInputSlotListener(
                 MediaExtractor extractor,
                 long lastBufferTimestampUs,
-                boolean obtainBlockForEachBuffer) {
+                boolean obtainBlockForEachBuffer,
+                LinkedBlockingQueue<Long> timestampQueue) {
             mExtractor = extractor;
             mLastBufferTimestampUs = lastBufferTimestampUs;
             mObtainBlockForEachBuffer = obtainBlockForEachBuffer;
+            mTimestampQueue = timestampQueue;
         }
 
         @Override
@@ -196,11 +198,15 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                             mSignaledEos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0)
                     .queue();
             input.offset += written;
+            if (mTimestampQueue != null) {
+                mTimestampQueue.offer(timestampUs);
+            }
         }
 
         private final MediaExtractor mExtractor;
         private final long mLastBufferTimestampUs;
         private final boolean mObtainBlockForEachBuffer;
+        private final LinkedBlockingQueue<Long> mTimestampQueue;
         private boolean mSignaledEos = false;
     }
 
@@ -210,8 +216,9 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     }
 
     private static class DummyOutputSlotListener implements OutputSlotListener {
-        public DummyOutputSlotListener(boolean graphic) {
+        public DummyOutputSlotListener(boolean graphic, LinkedBlockingQueue<Long> timestampQueue) {
             mGraphic = graphic;
+            mTimestampQueue = timestampQueue;
         }
 
         @Override
@@ -225,17 +232,26 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             if (!mGraphic && frame.getLinearBlock() != null) {
                 frame.getLinearBlock().recycle();
             }
+
+            Long ts = mTimestampQueue.peek();
+            if (ts != null && ts == frame.getPresentationTimeUs()) {
+                mTimestampQueue.poll();
+            }
+
             codec.releaseOutputBuffer(index, false);
 
             return eos;
         }
 
         private final boolean mGraphic;
+        private final LinkedBlockingQueue<Long> mTimestampQueue;
     }
 
     private static class SurfaceOutputSlotListener implements OutputSlotListener {
-        public SurfaceOutputSlotListener(OutputSurface surface) {
+        public SurfaceOutputSlotListener(
+                OutputSurface surface, LinkedBlockingQueue<Long> timestampQueue) {
             mOutputSurface = surface;
+            mTimestampQueue = timestampQueue;
         }
 
         @Override
@@ -248,6 +264,12 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 frame.getHardwareBuffer().close();
                 render = true;
             }
+
+            Long ts = mTimestampQueue.peek();
+            if (ts != null && ts == frame.getPresentationTimeUs()) {
+                mTimestampQueue.poll();
+            }
+
             codec.releaseOutputBuffer(index, render);
             if (render) {
                 mOutputSurface.awaitNewImage();
@@ -257,6 +279,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
 
         private final OutputSurface mOutputSurface;
+        private final LinkedBlockingQueue<Long> mTimestampQueue;
     }
 
     private static class SlotEvent {
@@ -288,14 +311,23 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
-            return runComponentWithLinearInput(
+            LinkedBlockingQueue<Long> timestampQueue = new LinkedBlockingQueue<>();
+            boolean result = runComponentWithLinearInput(
                     mediaCodec,
                     mediaFormat,
                     outputSurface.getSurface(),
                     false,  // encoder
                     new ExtractorInputSlotListener(
-                            mediaExtractor, lastBufferTimestampUs, obtainBlockForEachBuffer),
-                    new SurfaceOutputSlotListener(outputSurface));
+                            mediaExtractor,
+                            lastBufferTimestampUs,
+                            obtainBlockForEachBuffer,
+                            timestampQueue),
+                    new SurfaceOutputSlotListener(outputSurface, timestampQueue));
+            if (result) {
+                assertTrue("Timestamp should match between input / output",
+                        timestampQueue.isEmpty());
+            }
+            return result;
         } catch (IOException e) {
             throw new RuntimeException("error reading input resource", e);
         } catch (Exception e) {
@@ -332,14 +364,23 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
-            return runComponentWithLinearInput(
+            LinkedBlockingQueue<Long> timestampQueue = new LinkedBlockingQueue<>();
+            boolean result = runComponentWithLinearInput(
                     mediaCodec,
                     mediaFormat,
                     null,  // surface
                     false,  // encoder
                     new ExtractorInputSlotListener(
-                            mediaExtractor, lastBufferTimestampUs, obtainBlockForEachBuffer),
-                    new DummyOutputSlotListener(false /* graphic */));
+                            mediaExtractor,
+                            lastBufferTimestampUs,
+                            obtainBlockForEachBuffer,
+                            timestampQueue),
+                    new DummyOutputSlotListener(false /* graphic */, timestampQueue));
+            if (result) {
+                assertTrue("Timestamp should match between input / output",
+                        timestampQueue.isEmpty());
+            }
+            return result;
         } catch (IOException e) {
             throw new RuntimeException("error reading input resource", e);
         } catch (Exception e) {
@@ -373,14 +414,23 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
-            return runComponentWithLinearInput(
+            LinkedBlockingQueue<Long> timestampQueue = new LinkedBlockingQueue<>();
+            boolean result = runComponentWithLinearInput(
                     mediaCodec,
                     mediaFormat,
                     null,  // surface
                     true,  // encoder
                     new ExtractorInputSlotListener(
-                            mediaExtractor, LAST_BUFFER_TIMESTAMP_US, false),
-                    new DummyOutputSlotListener(false /* graphic */));
+                            mediaExtractor,
+                            LAST_BUFFER_TIMESTAMP_US,
+                            false,
+                            timestampQueue),
+                    new DummyOutputSlotListener(false /* graphic */, timestampQueue));
+            if (result) {
+                assertTrue("Timestamp should match between input / output",
+                        timestampQueue.isEmpty());
+            }
+            return result;
         } catch (IOException e) {
             throw new RuntimeException("error reading input resource", e);
         } catch (Exception e) {
