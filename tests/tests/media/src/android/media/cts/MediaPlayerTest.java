@@ -670,8 +670,8 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                         return;
                     }
                     long now = SystemClock.elapsedRealtime();
-                    if ((now - startTime) > 25000) {
-                        // We've been running for 25 seconds and still aren't done, so we're stuck
+                    if ((now - startTime) > 45000) {
+                        // We've been running for 45 seconds and still aren't done, so we're stuck
                         // somewhere. Signal ourselves to dump the thread stacks.
                         android.os.Process.sendSignal(android.os.Process.myPid(), 3);
                         SystemClock.sleep(2000);
