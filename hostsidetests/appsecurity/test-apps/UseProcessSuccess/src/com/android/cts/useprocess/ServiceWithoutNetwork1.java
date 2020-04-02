@@ -18,6 +18,6 @@ package com.android.cts.useprocess;
 
 public class ServiceWithoutNetwork1 extends BaseNetworkService {
     public ServiceWithoutNetwork1() {
-        super(false);
+        super(false, "com.android.cts.useprocess:withoutnet1");
     }
 }
