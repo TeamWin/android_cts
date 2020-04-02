@@ -532,11 +532,14 @@ public class UsageStatsTest {
         final long startTime = System.currentTimeMillis();
         Context context = InstrumentationRegistry.getContext();
 
-        // Skip the test for wearable devices and televisions; neither has a notification shade.
+        // Skip the test for wearable devices, televisions and automotives; neither has
+        // a notification shade, as notifications are shown via a different path than phones
         assumeFalse("Test cannot run on a watch- notification shade is not shown",
                 context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
         assumeFalse("Test cannot run on a television- notifications are not shown",
                 context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY));
+        assumeFalse("Test cannot run on an automotive - notification shade is not shown",
+                context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
 
         NotificationManager mNotificationManager =
             (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
