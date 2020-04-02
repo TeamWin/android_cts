@@ -25,9 +25,14 @@ import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
+import android.platform.test.annotations.AppModeFull;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 
+import androidx.test.filters.SmallTest;
+
+@AppModeFull(reason = "Cannot get WifiManager in instant app mode")
+@SmallTest
 public class WifiNetworkSuggestionTest extends AndroidTestCase {
     private static final String TEST_SSID = "testSsid";
     private static final String TEST_BSSID = "00:df:aa:bc:12:23";
