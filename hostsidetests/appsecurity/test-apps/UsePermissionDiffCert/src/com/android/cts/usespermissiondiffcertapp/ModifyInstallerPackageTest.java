@@ -20,9 +20,12 @@ import static com.android.cts.permissiondeclareapp.UtilsProvider.ACTION_SET_INST
 import static com.android.cts.permissiondeclareapp.UtilsProvider.EXTRA_INSTALLER_PACKAGE_NAME;
 import static com.android.cts.permissiondeclareapp.UtilsProvider.EXTRA_PACKAGE_NAME;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.Intent;
 import android.content.pm.InstallSourceInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.SigningInfo;
 import android.os.Bundle;
 import android.test.AndroidTestCase;
 
@@ -146,6 +149,17 @@ public class ModifyInstallerPackageTest extends AndroidTestCase {
         final InstallSourceInfo installSourceInfo = mPM.getInstallSourceInfo(packageName);
         assertEquals(expectedInstaller, installSourceInfo.getInstallingPackageName());
         assertEquals(expectedInitiator, installSourceInfo.getInitiatingPackageName());
+
+        // We should get the initiator's signature iff we have an initiator.
+        if (expectedInitiator == null) {
+            assertNull(installSourceInfo.getInitiatingPackageSigningInfo());
+        } else {
+            final SigningInfo expectedSigning = mPM.getPackageInfo(expectedInitiator,
+                    PackageManager.GET_SIGNING_CERTIFICATES).signingInfo;
+            final SigningInfo actualSigning = installSourceInfo.getInitiatingPackageSigningInfo();
+            assertThat(actualSigning.getApkContentsSigners()).asList()
+                    .containsExactlyElementsIn(expectedSigning.getApkContentsSigners());
+        }
     }
 
     private void call(Intent intent) {
