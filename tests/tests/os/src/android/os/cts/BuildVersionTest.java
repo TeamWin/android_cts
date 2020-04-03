@@ -38,7 +38,7 @@ public class BuildVersionTest extends TestCase {
     private static final int EXPECTED_SDK = 29;
     private static final String EXPECTED_BUILD_VARIANT = "user";
     private static final String EXPECTED_TAG = "release-keys";
-    private static final String PLATFORM_VERSIONS_FILE = "platform_versions.txt";
+    private static final String PLATFORM_RELEASES_FILE = "platform_releases.txt";
 
     @SuppressWarnings("deprecation")
     @RestrictedBuildTest
@@ -137,12 +137,12 @@ public class BuildVersionTest extends TestCase {
                 InstrumentationRegistry.getInstrumentation().getTargetContext().getAssets();
         String line;
         try (BufferedReader br =
-                new BufferedReader(new InputStreamReader(assets.open(PLATFORM_VERSIONS_FILE)))) {
+                new BufferedReader(new InputStreamReader(assets.open(PLATFORM_RELEASES_FILE)))) {
             while ((line = br.readLine()) != null) {
                 expectedReleases.add(line);
             }
         } catch (IOException e) {
-            fail("Could not open file " + PLATFORM_VERSIONS_FILE + " to run test");
+            fail("Could not open file " + PLATFORM_RELEASES_FILE + " to run test");
         }
         return expectedReleases;
     }
