@@ -19,11 +19,14 @@ package android.server.wm;
 import static android.server.wm.app.Components.ClickableToastActivity.ACTION_TOAST_DISPLAYED;
 import static android.server.wm.app.Components.ClickableToastActivity.ACTION_TOAST_TAP_DETECTED;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -35,6 +38,9 @@ import android.provider.Settings;
 import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.app.Components;
 import android.view.WindowManager.LayoutParams;
+import android.widget.Toast;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -48,12 +54,14 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 @Presubmit
-public class ToastTest extends ActivityManagerTestBase {
+public class ToastWindowTest extends ActivityManagerTestBase {
+    private static final String TOAST_WINDOW_TITLE = "Toast";
     private static final String SETTING_HIDDEN_API_POLICY = "hidden_api_policy";
     private static final long TOAST_DISPLAY_TIMEOUT_MS = 8000;
     private static final long TOAST_TAP_TIMEOUT_MS = 3500;
     private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
 
+    private Instrumentation mInstrumentation;
     @Nullable
     private String mPreviousHiddenApiPolicy;
     private Map<String, ConditionVariable> mBroadcastsReceived;
@@ -68,6 +76,8 @@ public class ToastTest extends ActivityManagerTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+
         SystemUtil.runWithShellPermissionIdentity(() -> {
             ContentResolver resolver = mContext.getContentResolver();
             mPreviousHiddenApiPolicy = Settings.Global.getString(resolver,
@@ -95,7 +105,22 @@ public class ToastTest extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testToastIsNotClickable() {
+    public void testToastWindowTokenIsRemovedAfterToastIsHidden() {
+        mInstrumentation.runOnMainSync(() -> {
+            Toast.makeText(mContext, "Toast token test", Toast.LENGTH_SHORT).show();
+        });
+
+        WindowManagerStateHelper wmState = getWmState();
+        wmState.waitFor(
+                state -> state.findFirstWindowWithType(LayoutParams.TYPE_TOAST) == null,
+                "Toast wasn't hidden on time");
+        wmState.waitFor(
+                state -> state.getMatchingVisibleWindowState(TOAST_WINDOW_TITLE).isEmpty(),
+                "Toast token wasn't removed on time");
+    }
+
+    @Test
+    public void testToastWindowIsNotClickable() {
         Intent intent = new Intent();
         intent.setComponent(Components.CLICKABLE_TOAST_ACTIVITY);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

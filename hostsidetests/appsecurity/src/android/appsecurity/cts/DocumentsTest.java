@@ -100,7 +100,10 @@ public class DocumentsTest extends DocumentsTestCase {
     }
 
     public void testOpenDocumentTreeWithScopedStorage() throws Exception {
-        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenDocumentTreeWithScopedStorage");
+        if (isAtLeastR()) {
+            runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",
+                "testOpenDocumentTreeWithScopedStorage");
+        }
     }
 
     public void testOpenRootWithoutRootIdAtInitialLocation() throws Exception {
@@ -121,16 +124,33 @@ public class DocumentsTest extends DocumentsTestCase {
     }
 
     public void testRestrictStorageAccessFrameworkEnabled_blockFromTree() throws Exception {
-        runDeviceCompatTest(CLIENT_PKG, ".DocumentsClientTest",
+        if (isAtLeastR()) {
+            runDeviceCompatTest(CLIENT_PKG, ".DocumentsClientTest",
                 "testRestrictStorageAccessFrameworkEnabled_blockFromTree",
                 /* enabledChanges */ ImmutableSet.of(RESTRICT_STORAGE_ACCESS_FRAMEWORK),
                 /* disabledChanges */ ImmutableSet.of());
+        }
     }
 
     public void testRestrictStorageAccessFrameworkDisabled_notBlockFromTree() throws Exception {
-        runDeviceCompatTest(CLIENT_PKG, ".DocumentsClientTest",
+        if (isAtLeastR()) {
+            runDeviceCompatTest(CLIENT_PKG, ".DocumentsClientTest",
                 "testRestrictStorageAccessFrameworkDisabled_notBlockFromTree",
                 /* enabledChanges */ ImmutableSet.of(),
                 /* disabledChanges */ ImmutableSet.of(RESTRICT_STORAGE_ACCESS_FRAMEWORK));
+        }
+    }
+
+    private boolean isAtLeastR() {
+        try {
+            String apiString = getDevice().getProperty("ro.build.version.sdk");
+            if (apiString == null) {
+                return false;
+            }
+            int apiLevel = Integer.parseInt(apiString);
+            return apiLevel > 29;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
