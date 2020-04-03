@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.os.Build;
 import com.android.compatibility.common.util.DeviceInfoStore;
+import com.android.compatibility.common.util.PackageUtil;
 
 import java.io.IOException;
 import java.util.*;
@@ -51,6 +52,8 @@ public class PackageDeviceInfo extends DeviceInfo {
 
     private static final String SHARES_INSTALL_PERMISSION = "shares_install_packages_permission";
     private static final String INSTALL_PACKAGES_PERMISSION = "android.permission.INSTALL_PACKAGES";
+
+    private static final String SHA256_CERT = "sha256_cert";
 
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
@@ -96,6 +99,8 @@ public class PackageDeviceInfo extends DeviceInfo {
                 final boolean canInstall = sharesUidWithInstallerPackage(pm, appInfo.uid);
                 store.addResult(SHARES_INSTALL_PERMISSION, canInstall);
             }
+            String sha256_cert = PackageUtil.computePackageSignatureDigest(pkg.packageName);
+            store.addResult(SHA256_CERT, sha256_cert);
 
             store.endGroup();
         }
