@@ -968,6 +968,14 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     public void testStartLocalOnlyHotspotWithConfig() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // check that softap mode is supported by the device
+        if (!mWifiManager.isPortableHotspotSupported()) {
+            return;
+        }
         SoftApConfiguration customConfig = new SoftApConfiguration.Builder()
                 .setBssid(TEST_MAC)
                 .setSsid(TEST_SSID_UNQUOTED)
@@ -1025,6 +1033,10 @@ public class WifiManagerTest extends AndroidTestCase {
      * Verify that changing the mac randomization setting of a Passpoint configuration.
      */
     public void testMacRandomizationSettingPasspoint() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
         String configStr = loadResourceFile(PASSPOINT_INSTALLATION_FILE_WITH_CA_CERT);
         PasspointConfiguration config =
                 ConfigParser.parsePasspointConfig(TYPE_WIFI_CONFIG, configStr.getBytes());
@@ -1056,6 +1068,10 @@ public class WifiManagerTest extends AndroidTestCase {
      * apps extremely broad access to connectivity functionality.
      */
     public void testNetworkStackPermission() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
         final PackageManager pm = getContext().getPackageManager();
 
         final List<PackageInfo> holding = pm.getPackagesHoldingPermissions(new String[] {
@@ -1077,6 +1093,10 @@ public class WifiManagerTest extends AndroidTestCase {
      * access and no others.
      */
     public void testNetworkSettingsPermission() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
         final PackageManager pm = getContext().getPackageManager();
 
         final ArraySet<String> allowedPackages = new ArraySet();
@@ -1141,6 +1161,10 @@ public class WifiManagerTest extends AndroidTestCase {
      * functionality.  The permission is intended to be granted to only the device setup wizard.
      */
     public void testNetworkSetupWizardPermission() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
         final ArraySet<String> allowedPackages = new ArraySet();
 
         final PackageManager pm = getContext().getPackageManager();
@@ -1197,6 +1221,10 @@ public class WifiManagerTest extends AndroidTestCase {
      * provisioning.
      */
     public void testNetworkManagedProvisioningPermission() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
         final PackageManager pm = getContext().getPackageManager();
 
         // TODO(b/115980767): Using hardcoded package name. Need a better mechanism to find the
@@ -1227,6 +1255,10 @@ public class WifiManagerTest extends AndroidTestCase {
      * is held by at most one application.
      */
     public void testWifiSetDeviceMobilityStatePermission() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
         final PackageManager pm = getContext().getPackageManager();
 
         final List<PackageInfo> holding = pm.getPackagesHoldingPermissions(new String[] {
@@ -1251,6 +1283,10 @@ public class WifiManagerTest extends AndroidTestCase {
      * is held by at most one application.
      */
     public void testNetworkCarrierProvisioningPermission() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
         final PackageManager pm = getContext().getPackageManager();
 
         final List<PackageInfo> holding = pm.getPackagesHoldingPermissions(new String[] {
@@ -1275,6 +1311,10 @@ public class WifiManagerTest extends AndroidTestCase {
      * permission is held by at most one application.
      */
     public void testUpdateWifiUsabilityStatsScorePermission() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
         final PackageManager pm = getContext().getPackageManager();
 
         final List<PackageInfo> holding = pm.getPackagesHoldingPermissions(new String[] {
@@ -1480,6 +1520,14 @@ public class WifiManagerTest extends AndroidTestCase {
      * @throws Exception
      */
     public void testSetGetSoftApConfigurationAndSoftApCapabilityCallback() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // check that softap mode is supported by the device
+        if (!mWifiManager.isPortableHotspotSupported()) {
+            return;
+        }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         TestExecutor executor = new TestExecutor();
         TestSoftApCallback callback = new TestSoftApCallback(mLock);
@@ -1535,6 +1583,14 @@ public class WifiManagerTest extends AndroidTestCase {
      */
     public void testStartTetheredHotspotWithChannelConfigAndSoftApStateAndInfoCallback()
             throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // check that softap mode is supported by the device
+        if (!mWifiManager.isPortableHotspotSupported()) {
+            return;
+        }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         TestExecutor executor = new TestExecutor();
         TestSoftApCallback callback = new TestSoftApCallback(mLock);
@@ -2218,6 +2274,10 @@ public class WifiManagerTest extends AndroidTestCase {
      * TODO(b/150891569): deprecate it in Android S, this API is not used anywhere.
      */
     public void testWifiNetworkConnectionStatistics() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
         new WifiNetworkConnectionStatistics();
         WifiNetworkConnectionStatistics stats = new WifiNetworkConnectionStatistics(0, 0);
         new WifiNetworkConnectionStatistics(stats);
@@ -2625,11 +2685,11 @@ public class WifiManagerTest extends AndroidTestCase {
      * Tests {@link WifiManager#getWifiConfigForMatchedNetworkSuggestionsSharedWithUser(List)}
      */
     public void testGetAllWifiConfigForMatchedNetworkSuggestion() {
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
         }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         ScanResult scanResult = new ScanResult();
         scanResult.SSID = TEST_SSID;
         scanResult.capabilities = TEST_PSK_CAP;
