@@ -179,6 +179,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     @Test
     @FlakyTest(bugId = 110276714)
     public void testTurnScreenOnActivity() throws Exception {
+        assumeTrue(supportsLockScreen());
+
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             launchActivity(TURN_SCREEN_ON_ACTIVITY);
@@ -387,6 +389,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Test
     public void testTurnScreenOnAttrNoLockScreen() throws Exception {
+        assumeTrue(supportsLockScreen());
+
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.disableLockScreen()
                     .sleepDevice();
@@ -416,6 +420,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Test
     public void testTurnScreenOnShowOnLockAttr() throws Exception {
+        assumeTrue(supportsLockScreen());
+
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
@@ -430,6 +436,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     @Test
     @FlakyTest
     public void testTurnScreenOnAttrRemove() throws Exception {
+        assumeTrue(supportsLockScreen());
+
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
@@ -453,6 +461,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Test
     public void testTurnScreenOnSingleTask() throws Exception {
+        assumeTrue(supportsLockScreen());
+
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             separateTestJournal();
@@ -479,6 +489,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Test
     public void testTurnScreenOnActivity_withRelayout() throws Exception {
+        assumeTrue(supportsLockScreen());
+
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             launchActivity(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
