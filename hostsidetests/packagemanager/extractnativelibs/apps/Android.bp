@@ -32,7 +32,6 @@ android_test_helper_app {
     manifest: "app_no_extract/AndroidManifest.xml",
     test_suites: [
         "cts",
-        "vts",
         "vts10",
         "general-tests",
     ],
@@ -52,7 +51,6 @@ android_test_helper_app {
     manifest: "app_extract/AndroidManifest.xml",
     test_suites: [
         "cts",
-        "vts",
         "vts10",
         "general-tests",
     ],

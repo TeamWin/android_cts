@@ -91,6 +91,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private Uri mAudioUri;
     private Uri mVideoUri;
     private Resources mResources;
+    private Error mErrorFromThread;
 
     private static final byte[] PSSH = hexStringToByteArray(
             // BMFF box header (4 bytes size + 'pssh')
@@ -603,6 +604,9 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     }
 
     public boolean isEnded() {
+        if (mErrorFromThread != null) {
+            throw mErrorFromThread;
+        }
         for (CodecState state : mVideoCodecStates.values()) {
           if (!state.isEnded()) {
             return false;
@@ -624,10 +628,13 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                 state.doSomeWork();
             }
         } catch (MediaCodec.CryptoException e) {
-            throw new Error("Video CryptoException w/ errorCode "
+            mErrorFromThread = new Error("Video CryptoException w/ errorCode "
                     + e.getErrorCode() + ", '" + e.getMessage() + "'");
+            return;
         } catch (IllegalStateException e) {
-            throw new Error("Video CodecState.feedInputBuffer IllegalStateException " + e);
+            mErrorFromThread =
+                new Error("Video CodecState.feedInputBuffer IllegalStateException " + e);
+            return;
         }
 
         try {
@@ -635,10 +642,13 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                 state.doSomeWork();
             }
         } catch (MediaCodec.CryptoException e) {
-            throw new Error("Audio CryptoException w/ errorCode "
+            mErrorFromThread = new Error("Audio CryptoException w/ errorCode "
                     + e.getErrorCode() + ", '" + e.getMessage() + "'");
+            return;
         } catch (IllegalStateException e) {
-            throw new Error("Aduio CodecState.feedInputBuffer IllegalStateException " + e);
+            mErrorFromThread =
+                new Error("Audio CodecState.feedInputBuffer IllegalStateException " + e);
+            return;
         }
     }
 

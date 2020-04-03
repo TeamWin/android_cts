@@ -22,7 +22,6 @@ java_test_host {
         "cts",
         "general-tests",
         "mts",
-        "vts",
         "vts10",
     ],
 
@@ -32,7 +31,10 @@ java_test_host {
         "host-libprotobuf-java-full",
         "platformprotos",
         "tradefed",
-	"truth-prebuilt",
+        "truth-prebuilt"
+    ],
+    static_libs: [
+        "core_cts_test_resources"
     ],
     data: [
         "**/*.pbtxt",

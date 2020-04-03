@@ -28,12 +28,16 @@ import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.SparseArray;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.concurrent.Executor;
 
+@AppModeFull(reason = "Cannot get WifiManager in instant app mode")
+@SmallTest
 public class EasyConnectStatusCallbackTest extends AndroidTestCase {
     private static final String TEST_SSID = "\"testSsid\"";
     private static final String TEST_PASSPHRASE = "\"testPassword\"";

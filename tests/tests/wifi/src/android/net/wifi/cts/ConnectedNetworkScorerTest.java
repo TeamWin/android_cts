@@ -22,27 +22,45 @@ import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_SUCCESS;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_UNKNOWN;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
+import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiUsabilityStatsEntry;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
-import android.test.AndroidTestCase;
 
+import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class ConnectedNetworkScorerTest extends AndroidTestCase {
+/**
+ * Tests for wifi connected network scorer interface and usability stats.
+ */
+@AppModeFull(reason = "Cannot get WifiManager in instant app mode")
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class ConnectedNetworkScorerTest {
+    private Context mContext;
     private WifiManager mWifiManager;
     private UiDevice mUiDevice;
     private boolean mWasVerboseLoggingEnabled;
@@ -50,14 +68,14 @@ public class ConnectedNetworkScorerTest extends AndroidTestCase {
     private static final int DURATION = 10_000;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-        mWifiManager = getContext().getSystemService(WifiManager.class);
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+
+        // skip the test if WiFi is not supported
+        assumeTrue(WifiFeature.isWifiSupported(mContext));
+
+        mWifiManager = mContext.getSystemService(WifiManager.class);
         assertThat(mWifiManager).isNotNull();
 
         // turn on verbose logging for tests
@@ -72,7 +90,7 @@ public class ConnectedNetworkScorerTest extends AndroidTestCase {
         PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getConfiguredNetworks());
-        assertFalse("Need at least one saved network", savedNetworks.isEmpty());
+        assertWithMessage("Need at least one saved network").that(savedNetworks).isNotEmpty();
         // Wait for wifi is to be connected
         PollingCheck.check(
                 "Wifi not connected",
@@ -81,18 +99,13 @@ public class ConnectedNetworkScorerTest extends AndroidTestCase {
         assertThat(mWifiManager.getConnectionInfo().getNetworkId()).isNotEqualTo(-1);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            super.tearDown();
-            return;
-        }
+    @After
+    public void tearDown() throws Exception {
+        if (!WifiFeature.isWifiSupported(mContext)) return;
         if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
         turnScreenOff();
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
-        super.tearDown();
     }
 
     private void setWifiEnabled(boolean enable) throws Exception {
@@ -136,11 +149,8 @@ public class ConnectedNetworkScorerTest extends AndroidTestCase {
      * Tests the {@link android.net.wifi.WifiUsabilityStatsEntry} retrieved from
      * {@link WifiManager.OnWifiUsabilityStatsListener}.
      */
+    @Test
     public void testWifiUsabilityStatsEntry() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         CountDownLatch countDownLatch = new CountDownLatch(1);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         TestUsabilityStatsListener usabilityStatsListener =
@@ -163,53 +173,55 @@ public class ConnectedNetworkScorerTest extends AndroidTestCase {
             assertThat(statsEntry.getTotalTxRetries()).isAtLeast(0L);
             assertThat(statsEntry.getTotalTxBad()).isAtLeast(0L);
             assertThat(statsEntry.getTotalRxSuccess()).isAtLeast(0L);
-            assertThat(statsEntry.getTotalRadioOnTimeMillis()).isGreaterThan(0L);
-            assertThat(statsEntry.getTotalRadioTxTimeMillis()).isGreaterThan(0L);
-            assertThat(statsEntry.getTotalRadioRxTimeMillis()).isGreaterThan(0L);
-            assertThat(statsEntry.getTotalScanTimeMillis()).isGreaterThan(0L);
-            assertThat(statsEntry.getTotalNanScanTimeMillis()).isAtLeast(0L);
-            assertThat(statsEntry.getTotalBackgroundScanTimeMillis()).isAtLeast(0L);
-            assertThat(statsEntry.getTotalRoamScanTimeMillis()).isAtLeast(0L);
-            assertThat(statsEntry.getTotalPnoScanTimeMillis()).isAtLeast(0L);
-            assertThat(statsEntry.getTotalHotspot2ScanTimeMillis()).isAtLeast(0L);
-            assertThat(statsEntry.getTotalCcaBusyFreqTimeMillis()).isAtLeast(0L);
-            assertThat(statsEntry.getTotalRadioOnTimeMillis()).isGreaterThan(0L);
-            assertThat(statsEntry.getTotalRadioOnFreqTimeMillis()).isGreaterThan(0L);
-            assertThat(statsEntry.getTotalBeaconRx()).isGreaterThan(0L);
-            assertThat(statsEntry.getProbeStatusSinceLastUpdate())
-                    .isAnyOf(PROBE_STATUS_SUCCESS,
-                            PROBE_STATUS_FAILURE,
-                            PROBE_STATUS_NO_PROBE,
-                            PROBE_STATUS_UNKNOWN);
-            // -1 is default value for some of these fields if they're not available.
-            assertThat(statsEntry.getProbeElapsedTimeSinceLastUpdateMillis()).isAtLeast(-1);
-            assertThat(statsEntry.getProbeMcsRateSinceLastUpdate()).isAtLeast(-1);
-            assertThat(statsEntry.getRxLinkSpeedMbps()).isAtLeast(-1);
-            // no longer populated, return default value.
-            assertThat(statsEntry.getCellularDataNetworkType())
-                    .isAnyOf(TelephonyManager.NETWORK_TYPE_UNKNOWN,
-                            TelephonyManager.NETWORK_TYPE_GPRS,
-                            TelephonyManager.NETWORK_TYPE_EDGE,
-                            TelephonyManager.NETWORK_TYPE_UMTS,
-                            TelephonyManager.NETWORK_TYPE_CDMA,
-                            TelephonyManager.NETWORK_TYPE_EVDO_0,
-                            TelephonyManager.NETWORK_TYPE_EVDO_A,
-                            TelephonyManager.NETWORK_TYPE_1xRTT,
-                            TelephonyManager.NETWORK_TYPE_HSDPA,
-                            TelephonyManager.NETWORK_TYPE_HSUPA,
-                            TelephonyManager.NETWORK_TYPE_HSPA,
-                            TelephonyManager.NETWORK_TYPE_IDEN,
-                            TelephonyManager.NETWORK_TYPE_EVDO_B,
-                            TelephonyManager.NETWORK_TYPE_LTE,
-                            TelephonyManager.NETWORK_TYPE_EHRPD,
-                            TelephonyManager.NETWORK_TYPE_HSPAP,
-                            TelephonyManager.NETWORK_TYPE_GSM,
-                            TelephonyManager.NETWORK_TYPE_TD_SCDMA,
-                            TelephonyManager.NETWORK_TYPE_IWLAN,
-                            TelephonyManager.NETWORK_TYPE_NR);
-            assertThat(statsEntry.getCellularSignalStrengthDbm()).isAtMost(0);
-            assertThat(statsEntry.getCellularSignalStrengthDb()).isAtMost(0);
-            assertThat(statsEntry.isSameRegisteredCell()).isFalse();
+            if (mWifiManager.isEnhancedPowerReportingSupported()) {
+                assertThat(statsEntry.getTotalRadioOnTimeMillis()).isGreaterThan(0L);
+                assertThat(statsEntry.getTotalRadioTxTimeMillis()).isGreaterThan(0L);
+                assertThat(statsEntry.getTotalRadioRxTimeMillis()).isGreaterThan(0L);
+                assertThat(statsEntry.getTotalScanTimeMillis()).isGreaterThan(0L);
+                assertThat(statsEntry.getTotalNanScanTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalBackgroundScanTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalRoamScanTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalPnoScanTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalHotspot2ScanTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalCcaBusyFreqTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalRadioOnTimeMillis()).isGreaterThan(0L);
+                assertThat(statsEntry.getTotalRadioOnFreqTimeMillis()).isGreaterThan(0L);
+                assertThat(statsEntry.getTotalBeaconRx()).isGreaterThan(0L);
+                assertThat(statsEntry.getProbeStatusSinceLastUpdate())
+                        .isAnyOf(PROBE_STATUS_SUCCESS,
+                                PROBE_STATUS_FAILURE,
+                                PROBE_STATUS_NO_PROBE,
+                                PROBE_STATUS_UNKNOWN);
+                // -1 is default value for some of these fields if they're not available.
+                assertThat(statsEntry.getProbeElapsedTimeSinceLastUpdateMillis()).isAtLeast(-1);
+                assertThat(statsEntry.getProbeMcsRateSinceLastUpdate()).isAtLeast(-1);
+                assertThat(statsEntry.getRxLinkSpeedMbps()).isAtLeast(-1);
+                // no longer populated, return default value.
+                assertThat(statsEntry.getCellularDataNetworkType())
+                        .isAnyOf(TelephonyManager.NETWORK_TYPE_UNKNOWN,
+                                TelephonyManager.NETWORK_TYPE_GPRS,
+                                TelephonyManager.NETWORK_TYPE_EDGE,
+                                TelephonyManager.NETWORK_TYPE_UMTS,
+                                TelephonyManager.NETWORK_TYPE_CDMA,
+                                TelephonyManager.NETWORK_TYPE_EVDO_0,
+                                TelephonyManager.NETWORK_TYPE_EVDO_A,
+                                TelephonyManager.NETWORK_TYPE_1xRTT,
+                                TelephonyManager.NETWORK_TYPE_HSDPA,
+                                TelephonyManager.NETWORK_TYPE_HSUPA,
+                                TelephonyManager.NETWORK_TYPE_HSPA,
+                                TelephonyManager.NETWORK_TYPE_IDEN,
+                                TelephonyManager.NETWORK_TYPE_EVDO_B,
+                                TelephonyManager.NETWORK_TYPE_LTE,
+                                TelephonyManager.NETWORK_TYPE_EHRPD,
+                                TelephonyManager.NETWORK_TYPE_HSPAP,
+                                TelephonyManager.NETWORK_TYPE_GSM,
+                                TelephonyManager.NETWORK_TYPE_TD_SCDMA,
+                                TelephonyManager.NETWORK_TYPE_IWLAN,
+                                TelephonyManager.NETWORK_TYPE_NR);
+                assertThat(statsEntry.getCellularSignalStrengthDbm()).isAtMost(0);
+                assertThat(statsEntry.getCellularSignalStrengthDb()).isAtMost(0);
+                assertThat(statsEntry.isSameRegisteredCell()).isFalse();
+            }
         } finally {
             mWifiManager.removeOnWifiUsabilityStatsListener(usabilityStatsListener);
             uiAutomation.dropShellPermissionIdentity();
@@ -219,11 +231,8 @@ public class ConnectedNetworkScorerTest extends AndroidTestCase {
     /**
      * Tests the {@link android.net.wifi.WifiManager#updateWifiUsabilityScore(int, int, int)}
      */
+    @Test
     public void testUpdateWifiUsabilityScore() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
@@ -282,11 +291,8 @@ public class ConnectedNetworkScorerTest extends AndroidTestCase {
      * other parts of the platform (likely in connectivity service) and hence will behave
      * differently on OEM devices.
      */
+    @Test
     public void testSetWifiConnectedNetworkScorer() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         CountDownLatch countDownLatchScorer = new CountDownLatch(1);
         CountDownLatch countDownLatchUsabilityStats = new CountDownLatch(1);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();

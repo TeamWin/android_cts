@@ -27,6 +27,9 @@ import org.junit.runners.model.Statement;
 
 /**
  * Custom JUnit4 rule that does not run a test case if the device does not have a given service.
+ *
+ * <p><b>NOTE:</b> it must be used as {@code Rule}, not {@code ClassRule}.
+ *
  */
 public class RequiredServiceRule implements TestRule {
     private static final String TAG = "RequiredServiceRule";

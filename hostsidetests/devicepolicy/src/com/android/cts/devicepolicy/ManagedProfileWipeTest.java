@@ -25,10 +25,32 @@ import android.platform.test.annotations.FlakyTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
+import com.android.tradefed.device.DeviceNotAvailableException;
 
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ManagedProfileWipeTest extends BaseManagedProfileTest {
+
+    private static final String KEY_PROFILE_ID = "profileId";
+    private final Map<String, String> mTestArgs = new HashMap<>();
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+
+        mTestArgs.put(KEY_PROFILE_ID, Integer.toString(mProfileUserId));
+        configureNotificationListener();
+    }
+
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+        mTestArgs.clear();
+    }
+
     @FlakyTest
     @Test
     public void testWipeDataWithReason() throws Exception {
@@ -36,19 +58,22 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
             return;
         }
         assertTrue(listUsers().contains(mProfileUserId));
-        sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA_WITH_REASON");
-        // Note: the managed profile is removed by this test, which will make removeUserCommand in
-        // tearDown() to complain, but that should be OK since its result is not asserted.
-        waitUntilUserRemoved(mProfileUserId);
+
         // testWipeDataWithReason() removes the managed profile,
         // so it needs to separated from other tests.
         // Check and clear the notification is presented after work profile got removed, so profile
         // user no longer exists, verification should be run in primary user.
+        // Both the profile wipe and notification verification are done on the device side test
+        // because notifications are checked using a NotificationListenerService
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG,
                 ".WipeDataNotificationTest",
                 "testWipeDataWithReasonVerification",
-                mParentUserId);
+                mParentUserId,
+                mTestArgs);
+        // Note: the managed profile is removed by this test, which will make removeUserCommand in
+        // tearDown() to complain, but that should be OK since its result is not asserted.
+        waitUntilUserRemoved(mProfileUserId);
     }
 
     @FlakyTest
@@ -58,20 +83,22 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
             return;
         }
         assertTrue(listUsers().contains(mProfileUserId));
+
+        // Both the profile wipe and notification verification are done on the device side test
+        // because notifications are checked using a NotificationListenerService
         assertMetricsLogged(getDevice(), () -> {
-            sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA_WITH_REASON");
+            runDeviceTestsAsUser(
+                    MANAGED_PROFILE_PKG,
+                    ".WipeDataNotificationTest",
+                    "testWipeDataWithReasonVerification",
+                    mParentUserId,
+                    mTestArgs);
         }, new DevicePolicyEventWrapper.Builder(EventId.WIPE_DATA_WITH_REASON_VALUE)
                 .setAdminPackageName(MANAGED_PROFILE_PKG)
                 .setInt(0)
                 .setStrings("notCalledFromParent")
                 .build());
-        // Check and clear the notification is presented after work profile got removed, so profile
-        // user no longer exists, verification should be run in primary user.
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG,
-                ".WipeDataNotificationTest",
-                "testWipeDataWithReasonVerification",
-                mParentUserId);
+        waitUntilUserRemoved(mProfileUserId);
     }
 
     @FlakyTest
@@ -81,19 +108,23 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
             return;
         }
         assertTrue(listUsers().contains(mProfileUserId));
-        sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA_WITHOUT_REASON");
-        // Note: the managed profile is removed by this test, which will make removeUserCommand in
-        // tearDown() to complain, but that should be OK since its result is not asserted.
-        waitUntilUserRemoved(mProfileUserId);
+
         // testWipeDataWithoutReason() removes the managed profile,
         // so it needs to separated from other tests.
         // Check the notification is not presented after work profile got removed, so profile user
         // no longer exists, verification should be run in primary user.
+        // Both the profile wipe and notification verification are done on the device side test
+        // because notifications are checked using a NotificationListenerService
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG,
                 ".WipeDataNotificationTest",
                 "testWipeDataWithoutReasonVerification",
-                mParentUserId);
+                mParentUserId,
+                mTestArgs);
+
+        // Note: the managed profile is removed by this test, which will make removeUserCommand in
+        // tearDown() to complain, but that should be OK since its result is not asserted.
+        waitUntilUserRemoved(mProfileUserId);
     }
 
     /**
@@ -105,16 +136,21 @@ public class ManagedProfileWipeTest extends BaseManagedProfileTest {
             return;
         }
         assertTrue(listUsers().contains(mProfileUserId));
-        sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA");
+
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".WipeDataNotificationTest",
+                "testWipeDataWithEmptyReasonVerification",
+                mParentUserId,
+                mTestArgs);
+
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
         waitUntilUserRemoved(mProfileUserId);
     }
 
-    private void sendWipeProfileBroadcast(String action) throws Exception {
-        final String cmd = "am broadcast --receiver-foreground --user " + mProfileUserId
-                + " -a " + action
-                + " com.android.cts.managedprofile/.WipeDataReceiver";
-        getDevice().executeShellCommand(cmd);
+    private void configureNotificationListener() throws DeviceNotAvailableException {
+        getDevice().executeShellCommand("cmd notification allow_listener "
+                + "com.android.cts.managedprofile/.NotificationListener");
     }
 }
