@@ -18,6 +18,7 @@ package android.view.inputmethod.cts;
 
 import static android.view.View.SCREEN_STATE_OFF;
 import static android.view.View.SCREEN_STATE_ON;
+import static android.view.View.VISIBLE;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
@@ -112,8 +113,8 @@ public class InputMethodStartInputLifecycleTest {
 
             // Expected text commit will not work when turnScreenOff.
             TestUtils.turnScreenOff();
-            TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_OFF,
-                    TIMEOUT);
+            TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_OFF
+                            && editText.getWindowVisibility() != VISIBLE, TIMEOUT);
             assertTrue(TestUtils.getOnMainSync(
                     () -> !imManager.isActive(editText) && !imManager.isAcceptingText()));
             final ImeCommand commit = imeSession.callCommitText("Hi!", 1);
@@ -124,8 +125,8 @@ public class InputMethodStartInputLifecycleTest {
             // Expected text commit will work when turnScreenOn.
             TestUtils.turnScreenOn();
             TestUtils.unlockScreen();
-            TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_ON,
-                    TIMEOUT);
+            TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_ON
+                            && editText.getWindowVisibility() == VISIBLE, TIMEOUT);
             CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             assertTrue(TestUtils.getOnMainSync(
