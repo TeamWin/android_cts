@@ -64,22 +64,21 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import androidx.annotation.AnyThread;
-import androidx.annotation.CallSuper;
-import androidx.annotation.GuardedBy;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import androidx.annotation.AnyThread;
+import androidx.annotation.CallSuper;
+import androidx.annotation.GuardedBy;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 /**
  * Mock IME for end-to-end tests.
@@ -288,6 +287,10 @@ public final class MockIme extends InputMethodService {
                                 .getDefaultDisplay().getDisplayId();
                     case "verifyLayoutInflaterContext":
                         return getLayoutInflater().getContext() == this;
+                    case "setHeight":
+                        final int height = command.getExtras().getInt("height");
+                        mView.setHeight(height);
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                 }
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;
@@ -416,6 +419,8 @@ public final class MockIme extends InputMethodService {
         @NonNull
         private final View.OnLayoutChangeListener mLayoutListener;
 
+        private final LinearLayout mLayout;
+
         KeyboardLayoutView(MockIme mockIme, @NonNull ImeSettings imeSettings,
                 @Nullable Consumer<ImeLayoutInfo> onInputViewLayoutChangedCallback) {
             super(mockIme);
@@ -431,8 +436,8 @@ public final class MockIme extends InputMethodService {
             final int mainSpacerHeight = mSettings.getInputViewHeightWithoutSystemWindowInset(
                     LayoutParams.WRAP_CONTENT);
             {
-                final LinearLayout layout = new LinearLayout(getContext());
-                layout.setOrientation(LinearLayout.VERTICAL);
+                mLayout = new LinearLayout(getContext());
+                mLayout.setOrientation(LinearLayout.VERTICAL);
 
                 if (mSettings.getInlineSuggestionsEnabled()) {
                     final ScrollView scrollView = new ScrollView(getContext());
@@ -446,7 +451,7 @@ public final class MockIme extends InputMethodService {
                     scrollView.addView(sSuggestionView,
                             new LayoutParams(MATCH_PARENT, MATCH_PARENT));
 
-                    layout.addView(scrollView);
+                    mLayout.addView(scrollView);
                 }
 
                 final TextView textView = new TextView(getContext());
@@ -456,9 +461,9 @@ public final class MockIme extends InputMethodService {
                 textView.setGravity(Gravity.CENTER);
                 textView.setText(getImeId());
                 textView.setBackgroundColor(mSettings.getBackgroundColor(defaultBackgroundColor));
-                layout.addView(textView);
+                mLayout.addView(textView);
 
-                addView(layout, MATCH_PARENT, mainSpacerHeight);
+                addView(mLayout, MATCH_PARENT, mainSpacerHeight);
             }
 
             final int systemUiVisibility = mSettings.getInputViewSystemUiVisibility(0);
@@ -473,6 +478,11 @@ public final class MockIme extends InputMethodService {
                                     v, left, top, right, bottom, oldLeft, oldTop, oldRight,
                                     oldBottom));
             this.addOnLayoutChangeListener(mLayoutListener);
+        }
+
+        private void setHeight(int height) {
+            mLayout.getLayoutParams().height = height;
+            mLayout.requestLayout();
         }
 
         private void updateBottomPaddingIfNecessary(int newPaddingBottom) {
@@ -527,14 +537,18 @@ public final class MockIme extends InputMethodService {
         }
     }
 
+    KeyboardLayoutView mView;
+
     private void onInputViewLayoutChanged(@NonNull ImeLayoutInfo layoutInfo) {
         getTracer().onInputViewLayoutChanged(layoutInfo, () -> { });
     }
 
     @Override
     public View onCreateInputView() {
-        return getTracer().onCreateInputView(() ->
-                new KeyboardLayoutView(this, mSettings, this::onInputViewLayoutChanged));
+        return getTracer().onCreateInputView(() -> {
+            mView = new KeyboardLayoutView(this, mSettings, this::onInputViewLayoutChanged);
+            return mView;
+        });
     }
 
     @Override

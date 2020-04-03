@@ -278,7 +278,6 @@ public class WindowInsetsTest {
                 .setDisplayCutout(CUTOUT).build();
 
         assertNotEquals(insets, insets.consumeSystemWindowInsets());
-        assertNotEquals(insets, insets.consumeStableInsets());
         assertNotEquals(insets, insets.consumeDisplayCutout());
     }
 
@@ -326,14 +325,7 @@ public class WindowInsetsTest {
                 .setDisplayCutout(CUTOUT).build();
 
         final WindowInsets consumed = insets.consumeStableInsets();
-
-        assertEquals(Insets.NONE, consumed.getSystemWindowInsets());
-        assertEquals(Insets.NONE, consumed.getStableInsets());
-        assertEquals(insets.getDisplayCutout(), consumed.getDisplayCutout());
-        assertEquals(Insets.NONE, consumed.getSystemGestureInsets());
-        assertEquals(Insets.NONE, consumed.getMandatorySystemGestureInsets());
-        assertEquals(Insets.NONE, consumed.getTappableElementInsets());
-        assertEquals(Insets.NONE, consumed.getInsets(Type.displayCutout()));
+        assertSame(insets, consumed);
     }
 
     @Test
