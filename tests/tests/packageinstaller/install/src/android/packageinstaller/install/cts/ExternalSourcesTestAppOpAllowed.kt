@@ -40,7 +40,7 @@ private const val ALERT_DIALOG_TITLE_ID = "android:id/alertTitle"
 @RunWith(AndroidJUnit4::class)
 @MediumTest
 @AppModeFull
-class ExternalSourcesTest : PackageInstallerTestBase() {
+class ExternalSourcesTestAppOpAllowed : PackageInstallerTestBase() {
     private val context = InstrumentationRegistry.getTargetContext()
     private val pm = context.packageManager
     private val packageName = context.packageName

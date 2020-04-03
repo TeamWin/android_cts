@@ -20,7 +20,10 @@ import android.net.wifi.hotspot2.ConfigParser;
 import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
+
+import androidx.test.filters.SmallTest;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -31,6 +34,8 @@ import java.util.Arrays;
 /**
  * CTS tests for Hotspot 2.0 Release 1 installation file parsing API.
  */
+@AppModeFull(reason = "Cannot get WifiManager in instant app mode")
+@SmallTest
 public class ConfigParserTest extends AndroidTestCase {
     /**
      * Hotspot 2.0 Release 1 installation file that contains a Passpoint profile and a
