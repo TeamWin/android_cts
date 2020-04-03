@@ -93,17 +93,22 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
             return;
         }
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testRemoveWifiNetworkIfExists", mParentUserId);
 
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mProfileUserId);
+        try (LocationModeSetter locationModeSetter = new LocationModeSetter(getDevice())) {
+            locationModeSetter.setLocationEnabled(true);
+            runDeviceTestsAsUser(
+                    MANAGED_PROFILE_PKG, ".WifiTest", "testRemoveWifiNetworkIfExists",
+                    mParentUserId);
 
-        // Now delete the user - should undo the effect of testAddWifiNetwork.
-        removeUser(mProfileUserId);
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WifiTest", "testWifiNetworkDoesNotExist",
-                mParentUserId);
+            runDeviceTestsAsUser(
+                    MANAGED_PROFILE_PKG, ".WifiTest", "testAddWifiNetwork", mProfileUserId);
+
+            // Now delete the user - should undo the effect of testAddWifiNetwork.
+            removeUser(mProfileUserId);
+            runDeviceTestsAsUser(
+                    MANAGED_PROFILE_PKG, ".WifiTest", "testWifiNetworkDoesNotExist",
+                    mParentUserId);
+        }
     }
 
     @LargeTest
