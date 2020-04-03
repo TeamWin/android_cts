@@ -261,6 +261,14 @@ public class EphemeralTest extends BaseAppSecurityTest {
         Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
                 "testStartExposed10");
     }
+    @Test
+    public void testEphemeralStartExposed11() throws Exception {
+        if (mIsUnsupportedDevice) {
+            return;
+        }
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testStartExposed11");
+    }
 
     @Test
     public void testEphemeralStartEphemeral() throws Exception {
