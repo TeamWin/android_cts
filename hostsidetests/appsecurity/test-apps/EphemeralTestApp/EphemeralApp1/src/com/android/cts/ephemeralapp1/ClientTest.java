@@ -76,7 +76,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.testng.Assert;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -513,9 +512,9 @@ public class ClientTest {
         assertThat(testResult.getStatus(),
                 is("PASS"));
         assertThat(testResult.getEphemeralPackageInfoExposed(),
-                is(true));
+                is(false));
         assertThat(testResult.getException(),
-                is(nullValue()));
+                is(PackageManager.NameNotFoundException.class.getName()));
     }
 
     @Test
@@ -534,9 +533,9 @@ public class ClientTest {
         assertThat(testResult.getStatus(),
                 is("PASS"));
         assertThat(testResult.getEphemeralPackageInfoExposed(),
-                is(true));
+                is(false));
         assertThat(testResult.getException(),
-                is(nullValue()));
+                is(PackageManager.NameNotFoundException.class.getName()));
     }
 
     @Test
@@ -556,9 +555,9 @@ public class ClientTest {
         assertThat(testResult.getStatus(),
                 is("PASS"));
         assertThat(testResult.getEphemeralPackageInfoExposed(),
-                is(true));
+                is(false));
         assertThat(testResult.getException(),
-                is(nullValue()));
+                is(PackageManager.NameNotFoundException.class.getName()));
     }
 
     @Test
@@ -714,6 +713,29 @@ public class ClientTest {
                 is("com.android.cts.normalapp"));
         assertThat(testResult.getComponentName(),
                 is("ExposedProvider"));
+        assertThat(testResult.getStatus(),
+                is("PASS"));
+        assertThat(testResult.getEphemeralPackageInfoExposed(),
+                is(true));
+        assertThat(testResult.getException(),
+                is(nullValue()));
+    }
+
+    @Test
+    public void testStartExposed11() throws Exception {
+        // start the explicitly exposed activity
+        final Intent startExposedIntent = new Intent(ACTION_START_EXPOSED)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        final Context context = InstrumentationRegistry.getContext();
+        context.startActivity(startExposedIntent.setComponent(
+                new ComponentName(context, StartForResultActivity.class)));
+
+        final TestResult testResult = getResult();
+        assertThat(testResult.getPackageName(),
+                is("com.android.cts.normalapp"));
+        assertThat(testResult.getComponentName(),
+                is("ExposedActivity"));
         assertThat(testResult.getStatus(),
                 is("PASS"));
         assertThat(testResult.getEphemeralPackageInfoExposed(),
