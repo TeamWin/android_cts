@@ -118,6 +118,10 @@ public class EasyConnectStatusCallbackTest extends AndroidTestCase {
             // skip the test if WiFi is not supported
             return;
         }
+        if (!mWifiManager.isEasyConnectSupported()) {
+            // skip the test if Easy Connect is not supported
+            return;
+        }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
@@ -152,6 +156,10 @@ public class EasyConnectStatusCallbackTest extends AndroidTestCase {
     public void testEnrolleeInitiatorOnFailure() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
+            return;
+        }
+        if (!mWifiManager.isEasyConnectSupported()) {
+            // skip the test if Easy Connect is not supported
             return;
         }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
