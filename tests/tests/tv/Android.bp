@@ -28,6 +28,7 @@ android_test {
     ],
     static_libs: [
         "androidx.test.core",
+        "androidx.test.ext.truth",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "testng",
