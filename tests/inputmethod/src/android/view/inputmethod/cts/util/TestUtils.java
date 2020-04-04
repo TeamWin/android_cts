@@ -149,10 +149,6 @@ public final class TestUtils {
      * unlocking insecure keyguard for test automation.
      */
     public static void unlockScreen() throws Exception {
-        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final KeyguardManager km = context.getSystemService(KeyguardManager.class);
         runShellCommand("input keyevent KEYCODE_MENU");
-        CommonTestUtils.waitUntil("Device does not unlock after 5 seconds", 5,
-                () -> km != null && !km.isKeyguardLocked());
     }
 }
