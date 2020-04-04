@@ -174,6 +174,13 @@ class CodecAsyncHandler extends MediaCodec.Callback {
         return element;
     }
 
+    boolean isInputQueueEmpty() {
+        mLock.lock();
+        boolean isEmpty = mCbInputQueue.isEmpty();
+        mLock.unlock();
+        return isEmpty;
+    }
+
     boolean hasSeenError() {
         return mSignalledError;
     }
