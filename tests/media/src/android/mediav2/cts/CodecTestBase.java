@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.PersistableBundle;
 import android.util.Log;
 import android.util.Pair;
+import android.view.Surface;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -39,6 +40,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -46,6 +48,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.CRC32;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 class CodecAsyncHandler extends MediaCodec.Callback {
     private static final String LOG_TAG = CodecAsyncHandler.class.getSimpleName();
@@ -170,6 +173,13 @@ class CodecAsyncHandler extends MediaCodec.Callback {
         }
         mLock.unlock();
         return element;
+    }
+
+    boolean isInputQueueEmpty() {
+        mLock.lock();
+        boolean isEmpty = mCbInputQueue.isEmpty();
+        mLock.unlock();
+        return isEmpty;
     }
 
     boolean hasSeenError() {
@@ -419,7 +429,7 @@ class OutputManager {
 
 abstract class CodecTestBase {
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
-    private static final String CODEC_SEL_KEY = "codec-sel";
+    static final String CODEC_SEL_KEY = "codec-sel";
     static final String CODEC_SEL_VALUE = "default";
     static final Map<String, String> codecSelKeyMimeMap = new HashMap<>();
     static final boolean ENABLE_LOGS = false;
@@ -445,6 +455,7 @@ abstract class CodecTestBase {
     OutputManager mOutputBuff;
 
     MediaCodec mCodec;
+    Surface mSurface;
 
     static {
         codecSelKeyMimeMap.put("vp8", MediaFormat.MIMETYPE_VIDEO_VP8);
@@ -478,6 +489,53 @@ abstract class CodecTestBase {
                 .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
+    static List<Object[]> prepareParamList(ArrayList<String> cddRequiredMimeList,
+            List<Object[]> exhaustiveArgsList, boolean isEncoder) {
+        ArrayList<String> mimes = new ArrayList<>();
+        if (codecSelKeys.contains(CODEC_SEL_VALUE)) {
+            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+            MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
+            for (MediaCodecInfo codecInfo : codecInfos) {
+                if (codecInfo.isEncoder() != isEncoder) continue;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
+                String[] types = codecInfo.getSupportedTypes();
+                for (String type : types) {
+                    if (!mimes.contains(type)) {
+                        mimes.add(type);
+                    }
+                }
+            }
+            for (String mime : cddRequiredMimeList) {
+                if (!mimes.contains(mime)) {
+                    fail("no codec found for mime " + mime + " as required by cdd");
+                }
+            }
+        } else {
+            for (Map.Entry<String, String> entry : codecSelKeyMimeMap.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (codecSelKeys.contains(key) && !mimes.contains(value)) mimes.add(value);
+            }
+        }
+        final List<Object[]> argsList = new ArrayList<>();
+        for (String mime : mimes) {
+            boolean miss = true;
+            for (Object[] arg : exhaustiveArgsList) {
+                if (mime.equals(arg[0])) {
+                    argsList.add(arg);
+                    miss = false;
+                }
+            }
+            if (miss) {
+                if (cddRequiredMimeList.contains(mime)) {
+                    fail("no test vectors for required mimetype " + mime);
+                }
+                Log.w(LOG_TAG, "no test vectors available for optional mime type " + mime);
+            }
+        }
+        return argsList;
+    }
+
     abstract void enqueueInput(int bufferIndex) throws IOException;
 
     abstract void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info);
@@ -489,9 +547,11 @@ abstract class CodecTestBase {
         // signalEOS flag has nothing to do with configure. We are using this flag to try all
         // available configure apis
         if (signalEOSWithLastFrame) {
-            mCodec.configure(format, null, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+            mCodec.configure(format, mSurface, null,
+                    isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
         } else {
-            mCodec.configure(format, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0, null);
+            mCodec.configure(format, mSurface, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0,
+                    null);
         }
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");

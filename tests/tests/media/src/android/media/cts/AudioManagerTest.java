@@ -62,6 +62,7 @@ import android.view.SoundEffectConstants;
 import com.android.compatibility.common.util.CddTest;
 import com.android.internal.annotations.GuardedBy;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1611,4 +1612,45 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertEquals("Allowed capture policy doesn't match", setPolicy, getPolicy);
         }
     }
+
+    public void testIsHdmiSystemAudidoSupported() {
+        // just make sure the call works
+        boolean isSupported = mAudioManager.isHdmiSystemAudioSupported();
+        Log.d(TAG, "isHdmiSystemAudioSupported() = " + isSupported);
+    }
+
+    public void testIsBluetoothScoAvailableOffCall() {
+        // just make sure the call works
+        boolean isSupported = mAudioManager.isBluetoothScoAvailableOffCall();
+        Log.d(TAG, "isBluetoothScoAvailableOffCall() = " + isSupported);
+    }
+
+    public void testStartStopBluetoothSco() {
+        mAudioManager.startBluetoothSco();
+        mAudioManager.stopBluetoothSco();
+    }
+
+    public void testStartStopBluetoothScoVirtualCall() {
+        mAudioManager.startBluetoothScoVirtualCall();
+        mAudioManager.stopBluetoothSco();
+    }
+
+    public void testGetAdditionalOutputDeviceDelay() {
+        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL);
+        for (AudioDeviceInfo device : devices) {
+            long delay = mAudioManager.getAdditionalOutputDeviceDelay(device);
+            assertTrue("getAdditionalOutputDeviceDelay() = " + delay +" (should be >= 0)",
+                    delay >= 0);
+            delay = mAudioManager.getMaxAdditionalOutputDeviceDelay(device);
+            assertTrue("getMaxAdditionalOutputDeviceDelay() = " + delay +" (should be >= 0)",
+                    delay >= 0);
+        }
+    }
+
+    // getParameters() & setParameters() are deprecated, so don't test
+
+    // setAdditionalOutputDeviceDelay(), getAudioVolumeGroups(), getVolumeIndexForAttributes()
+    // getMinVolumeIndexForAttributes(), getMaxVolumeIndexForAttributes() &
+    // setVolumeIndexForAttributes() require privledged permission MODIFY_AUDIO_ROUTING
+    // and thus cannot be tested here.
 }
