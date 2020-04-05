@@ -1064,7 +1064,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
         installAppAsUser(METERED_DATA_APP_APK, mUserId);
 
-        executeDeviceTestClass(".MeteredDataRestrictionTest");
+        try (LocationModeSetter locationModeSetter = new LocationModeSetter(getDevice())) {
+            locationModeSetter.setLocationEnabled(true);
+            executeDeviceTestClass(".MeteredDataRestrictionTest");
+        }
     }
 
     @Test
@@ -2039,7 +2042,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
             return;
         }
-        executeDeviceTestClass(".RandomizedWifiMacAddressTest");
+        try (LocationModeSetter locationModeSetter = new LocationModeSetter(getDevice())) {
+            locationModeSetter.setLocationEnabled(true);
+            executeDeviceTestClass(".RandomizedWifiMacAddressTest");
+        }
     }
 
     @Test

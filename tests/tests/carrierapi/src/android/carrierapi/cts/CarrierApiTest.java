@@ -52,6 +52,8 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.Suppress;
+import android.util.Base64;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -132,6 +134,28 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String NUMBER_A = "1234567890";
     private static final String NUMBER_B = "0987654321";
     private static final String TESTING_PLMN = "12345";
+
+    private static final String EAP_SIM_AKA_RAND = "11111111111111111111111111111111";
+
+    // Derived from TS 134 108#8.1.2. Based on EAP_SIM_AKA_RAND and assumed K value of
+    // 000102030405060708090A0B0C0D0E0F, per TS 134 108#8.2
+    private static final String EAP_AKA_AUTN = "12351417161900001130131215141716";
+
+    // EAP-AKA Response Format: [DB][Length][RES][Length][CK][Length][IK]
+    private static final int EAP_AKA_RESPONSE_LENGTH = 1 + 1 + 16 + 1 + 16 + 1 + 16;
+
+    // Derived from TS 134 108#8.1.2. Based on EAP_SIM_AKA_RAND and assumed K value of
+    // 000102030405060708090A0B0C0D0E0F, per TS 134 108#8.2.
+    // Format: [DB][Length][RES][Length][CK][Length][IK]
+    private static final String EXPECTED_EAP_AKA_RESULT =
+            "DB10111013121514171619181B1A1D1C1F1E"
+                    + "101013121514171619181B1A1D1C1F1E11"
+                    + "1013121514171619181B1A1D1C1F1E1110";
+
+    // Derived from TS 134 108#8.1.2 and TS 133 102#6.8.1.2. Based on EAP_SIM_AKA_RAND and assumed K
+    // value of 000102030405060708090A0B0C0D0E0F, per TS 134 108#8.2.
+    // Format: [Length][SRES][Length][Kc]
+    private static final String EXPECTED_EAP_SIM_RESULT = "0400000000080000000000000000";
 
     private static final int DSDS_PHONE_COUNT = 2;
 
@@ -1208,5 +1232,48 @@ public class CarrierApiTest extends AndroidTestCase {
         public boolean waitForReceive() throws InterruptedException {
             return mReceiveLatch.await(30, TimeUnit.SECONDS);
         }
+    }
+
+    @Suppress
+    public void testEapSimAuthentication() {
+        // K: '000102030405060708090A0B0C0D0E0F', defined by TS 134 108#8.2
+        // n: 128 (Bits to use for RES value)
+        // Format: [Length][RAND]
+        String challenge = "10" + EAP_SIM_AKA_RAND;
+        String base64Challenge = Base64.encodeToString(hexStringToBytes(challenge), Base64.NO_WRAP);
+        String base64Response =
+                mTelephonyManager.getIccAuthentication(
+                        TelephonyManager.APPTYPE_USIM,
+                        TelephonyManager.AUTHTYPE_EAP_SIM,
+                        base64Challenge);
+        byte[] response = Base64.decode(base64Response, Base64.DEFAULT);
+        assertArrayEquals(
+                "Results for AUTHTYPE_EAP_SIM failed",
+                hexStringToBytes(EXPECTED_EAP_SIM_RESULT),
+                response);
+    }
+
+    @Suppress
+    public void testEapAkaAuthentication() {
+        // K: '000102030405060708090A0B0C0D0E0F', defined by TS 134 108#8.2
+        // n: 128 (Bits to use for RES value)
+        // Format: [Length][Rand][Length][Autn]
+        String challenge = "10" + EAP_SIM_AKA_RAND + "10" + EAP_AKA_AUTN;
+        String base64Challenge = Base64.encodeToString(hexStringToBytes(challenge), Base64.NO_WRAP);
+        String base64Response =
+                mTelephonyManager.getIccAuthentication(
+                        TelephonyManager.APPTYPE_USIM,
+                        TelephonyManager.AUTHTYPE_EAP_AKA,
+                        base64Challenge);
+
+        assertNotNull("UICC returned null for EAP-AKA auth", base64Response);
+        byte[] response = Base64.decode(base64Response, Base64.NO_WRAP);
+
+        // response may be formatted as: [DB][Length][RES][Length][CK][Length][IK][Length][Kc]
+        byte[] akaResponse = Arrays.copyOfRange(response, 0, EAP_AKA_RESPONSE_LENGTH);
+        assertArrayEquals(
+                "Results for AUTHTYPE_EAP_AKA failed",
+                hexStringToBytes(EXPECTED_EAP_AKA_RESULT),
+                akaResponse);
     }
 }
