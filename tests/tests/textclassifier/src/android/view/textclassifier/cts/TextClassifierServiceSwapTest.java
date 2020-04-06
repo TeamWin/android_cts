@@ -24,6 +24,7 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Icon;
 import android.os.SystemClock;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassificationContext;
@@ -111,6 +112,20 @@ public class TextClassifierServiceSwapTest {
                 service.getRequestSessions().get("onClassifyText");
         assertThat(sessionIds).hasSize(2);
         assertThat(sessionIds.get(0).getValue()).isNotEqualTo(sessionIds.get(1).getValue());
+    }
+
+    @Test
+    public void testResourceIconsRewrittenToContentUriIcons() throws Exception {
+        final TextClassifier tc = ApplicationProvider.getApplicationContext()
+                .getSystemService(TextClassificationManager.class)
+                .getTextClassifier();
+        final TextClassification.Request request =
+                new TextClassification.Request.Builder("0800 123 4567", 0, 12).build();
+
+        final TextClassification classification = tc.classifyText(request);
+        final Icon icon = classification.getActions().get(0).getIcon();
+        assertThat(icon.getType()).isEqualTo(Icon.TYPE_URI);
+        assertThat(icon.getUri()).isEqualTo(CtsTextClassifierService.ICON_URI.getUri());
     }
 
     /**
