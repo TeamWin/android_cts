@@ -264,7 +264,6 @@ public class TelephonyManagerTest {
                 assertTrue("Phone count should be > 0", phoneCount > 0);
                 break;
             case TelephonyManager.PHONE_TYPE_NONE:
-                assertTrue("Phone count should be 0", phoneCount == 0 || phoneCount == 1);
                 break;
             default:
                 throw new IllegalArgumentException("Did you add a new phone type? " + phoneType);
