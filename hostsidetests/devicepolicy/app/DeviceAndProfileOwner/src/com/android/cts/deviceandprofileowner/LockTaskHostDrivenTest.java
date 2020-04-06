@@ -26,6 +26,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
@@ -48,6 +49,7 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
 
     private static final String TAG = LockTaskHostDrivenTest.class.getName();
     private static final int ACTIVITY_RESUMED_TIMEOUT_MILLIS = 20000;  // 20 seconds
+    private static final int LOCK_TASK_STATE_CHANGE_TIMEOUT_MILLIS = 10000;  // 10 seconds
     private static final String ACTION_EMERGENCY_DIAL = "com.android.phone.EmergencyDialer.DIAL";
     private static final String LOCK_TASK_ACTIVITY
             = LockTaskUtilityActivityIfWhitelisted.class.getName();
@@ -111,6 +113,25 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mUiDevice.waitForIdle();
     }
 
+    /**
+      * Poll for {@link ActivityManager#getLockTaskModeState()} to equal
+      * {@link ActivityManager#LOCK_TASK_MODE_NONE}
+      *
+      * <p>This will check every 500 milliseconds for a maximum of
+     * {@link #LOCK_TASK_STATE_CHANGE_TIMEOUT_MILLIS} milliseconds.
+      */
+    private void waitForLockTaskModeStateNone() {
+        long delayed = 0;
+        long delay = 500;
+        while (delayed <= LOCK_TASK_STATE_CHANGE_TIMEOUT_MILLIS) {
+            if (mActivityManager.getLockTaskModeState() == ActivityManager.LOCK_TASK_MODE_NONE) {
+                break;
+            }
+            SystemClock.sleep(delay);
+            delayed += delay;
+        }
+    }
+
     public void testLockTaskIsExitedIfNotWhitelisted() throws Exception {
         Log.d(TAG, "testLockTaskIsExitedIfNotWhitelisted on host-driven test");
 
@@ -126,6 +147,7 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
 
         // Remove it from whitelist
         setLockTaskPackages();
+        waitForLockTaskModeStateNone();
         mUiDevice.waitForIdle();
 
         // The activity should be finished and exit lock task mode
