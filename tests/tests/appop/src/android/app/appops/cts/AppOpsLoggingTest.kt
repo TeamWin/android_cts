@@ -17,7 +17,6 @@
 package android.app.appops.cts
 
 import android.app.AppOpsManager
-import android.app.AppOpsManager.OnOpNotedCallback
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
 import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
@@ -26,6 +25,7 @@ import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
 import android.app.AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE
 import android.app.AppOpsManager.OPSTR_WRITE_CONTACTS
+import android.app.AppOpsManager.OnOpNotedCallback
 import android.app.AppOpsManager.strOpToOp
 import android.app.AsyncNotedAppOp
 import android.app.PendingIntent
@@ -33,6 +33,7 @@ import android.app.SyncNotedAppOp
 import android.app.WallpaperManager
 import android.app.WallpaperManager.FLAG_SYSTEM
 import android.bluetooth.BluetoothManager
+import android.bluetooth.le.ScanCallback
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.ContentValues
@@ -43,6 +44,7 @@ import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH
+import android.content.pm.PackageManager.FEATURE_BLUETOOTH_LE
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
@@ -392,7 +394,7 @@ class AppOpsLoggingTest {
     }
 
     /**
-     * Realistic end-to-end test for scanning bluetooth
+     * Realistic end-to-end test for getting bluetooth scan results
      */
     @Test
     fun getBTScanResults() {
@@ -409,6 +411,33 @@ class AppOpsLoggingTest {
             assertThat(noted[0].second.map { it.methodName }).contains("getBTScanResults")
         } finally {
             btManager.adapter.cancelDiscovery()
+        }
+    }
+
+    /**
+     * Realistic end-to-end test for scanning LE bluetooth
+     */
+    @Test
+    fun scanLEBluetooth() {
+        assumeTrue("Device does not support LE bluetooth",
+                context.packageManager.hasSystemFeature(FEATURE_BLUETOOTH_LE))
+
+        val btScanner = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
+                .getSystemService(BluetoothManager::class.java).adapter.bluetoothLeScanner
+
+        val scanCallback = object : ScanCallback() {}
+
+        btScanner.startScan(scanCallback)
+        try {
+            eventually {
+                assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
+                assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+                // startScan calls into the system server which then calls back into the app to
+                // start the scan. I.e. the backtrace points back to a callback from the system
+                // server
+            }
+        } finally {
+            btScanner.stopScan(scanCallback)
         }
     }
 
