@@ -107,6 +107,11 @@ public final class TvTrackInfoSubject extends Subject<TvTrackInfoSubject, TvTrac
         check("isAudioDescription()").that(actual.isAudioDescription()).isEqualTo(enabled);
     }
 
+    @RequiresApi(Build.VERSION_CODES.R)
+    public void isHardOfHearing(boolean enabled) {
+        check("isHardOfHearing()").that(actual.isHardOfHearing()).isEqualTo(enabled);
+    }
+
     public BundleSubject extra() {
         SimpleSubjectBuilder<? extends BundleSubject, Bundle> bundleSubjectBuilder = check(
                 "getExtra()").about(BundleSubject.bundles());
