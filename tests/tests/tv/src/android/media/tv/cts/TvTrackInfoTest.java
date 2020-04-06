@@ -84,7 +84,30 @@ public class TvTrackInfoTest {
     }
 
     @Test
-    public void testVideoTrackInfoOp() {
+    public void newVideoTrack_default() {
+        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
+            return;
+        }
+        final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "default")
+                .build();
+        assertThat(info).hasType(TvTrackInfo.TYPE_VIDEO);
+        assertThat(info).hasId("default");
+        assertThat(info).hasEncoding(null);
+        assertThat(info).hasVideoWidth(0);
+        assertThat(info).hasVideoHeight(0);
+        assertThat(info).hasVideoFrameRate(0f);
+        assertThat(info).hasVideoPixelAspectRatio(1.0f);
+        assertThat(info).hasVideoActiveFormatDescription((byte)0);
+        assertThat(info).hasLanguage(null);
+        assertThat(info).extra().isNull();
+        assertThat(info).hasContentDescription(0);
+        assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
+        TvTrackInfo copy = Parcelables.forceParcel(info, TvTrackInfo.CREATOR);
+        assertThat(copy).extra().isNull();
+    }
+
+    @Test
+    public void newVideoTrack_everything() {
         if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
             return;
         }
