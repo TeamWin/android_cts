@@ -61,6 +61,16 @@ public interface ICtsPrintHelper extends ICtsDeviceInteractionHelper {
     void selectPrinter(String printerName, long timeout);
 
     /**
+     * Wait for a printer to appear in the list of printers, then select it.
+     *
+     * <p>This is similar to {@link #selectPrinter(String, long)}, except it retries until the
+     * printer exists.  Can be used if a printer has just been added and might not yet be available.
+     *
+     * @param printerName name of the printer
+     */
+    void selectPrinterWhenAvailable(String printerName);
+
+    /**
      * Set the page orientation to portrait or landscape.
      *
      * @param orientation "Portrait" or "Landscape"
@@ -159,4 +169,18 @@ public interface ICtsPrintHelper extends ICtsDeviceInteractionHelper {
      * print options.
      */
     void openCustomPrintOptions();
+
+    /**
+     * Display the full list of printers.
+     *
+     * <p>This is not intended for selecting a printer; use {@link #selectPrinter(String, long)} for
+     * that.  The purpose of displaying the whole list is to ensure that all printers can be
+     * successfully enumerated and have their properties retrieved.
+     */
+    void displayPrinterList();
+
+    /**
+     * Display the "more info" activity for the currently selected printer.
+     */
+    void displayMoreInfo();
 }
