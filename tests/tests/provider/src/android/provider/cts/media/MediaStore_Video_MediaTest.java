@@ -399,6 +399,7 @@ public class MediaStore_Video_MediaTest {
             assertEquals(9296, c.getLong(c.getColumnIndex(VideoColumns.DURATION)));
             assertEquals(1920, c.getLong(c.getColumnIndex(VideoColumns.WIDTH)));
             assertEquals(1080, c.getLong(c.getColumnIndex(VideoColumns.HEIGHT)));
+            assertEquals(90, c.getInt(c.getColumnIndex(VideoColumns.ORIENTATION)));
 
             // Confirm that we parsed XMP metadata
             assertEquals("xmp.did:051dfd42-0b46-4302-918a-836fba5016ed",
