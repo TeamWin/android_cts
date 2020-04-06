@@ -69,7 +69,7 @@ public class KeyGenParameterSpecTest extends TestCase {
         assertTrue(spec.isRandomizedEncryptionRequired());
         MoreAsserts.assertEmpty(Arrays.asList(spec.getSignaturePaddings()));
         assertFalse(spec.isUserAuthenticationRequired());
-        assertEquals(-1, spec.getUserAuthenticationValidityDurationSeconds());
+        assertEquals(0, spec.getUserAuthenticationValidityDurationSeconds());
         assertFalse(spec.isUnlockedDeviceRequired());
     }
 
