@@ -17,13 +17,14 @@
 package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithAction;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangTypesAndWindowId;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
-import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
+import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
@@ -32,6 +33,7 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICK
 import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOWS_CHANGED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_SELECTION;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK;
@@ -61,9 +63,7 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.app.UiAutomation.AccessibilityEventFilter;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Rect;
-import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.SparseArray;
@@ -211,9 +211,11 @@ public class AccessibilityWindowQueryTest {
                         "android.accessibilityservice.cts:id/button1").get(0);
 
         // Click the button to generate an event
-        AccessibilityEvent event = sUiAutomation.executeAndWaitForEvent(
-                () -> button1.performAction(ACTION_CLICK),
-                filterForEventType(TYPE_VIEW_CLICKED), DEFAULT_TIMEOUT_MS);
+        AccessibilityEvent event =
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> button1.performAction(ACTION_CLICK),
+                        filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
+                        DEFAULT_TIMEOUT_MS);
 
         // Make sure the source window cannot be accessed.
         assertNull(event.getSource().getWindow());
@@ -263,9 +265,11 @@ public class AccessibilityWindowQueryTest {
                             "android.accessibilityservice.cts:id/button1").get(0);
 
             // Click the button.
-            AccessibilityEvent event = sUiAutomation.executeAndWaitForEvent(
-                    () -> button1.performAction(ACTION_CLICK),
-                    filterForEventType(TYPE_VIEW_CLICKED), DEFAULT_TIMEOUT_MS);
+            AccessibilityEvent event =
+                    sUiAutomation.executeAndWaitForEvent(
+                            () -> button1.performAction(ACTION_CLICK),
+                            filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
+                            DEFAULT_TIMEOUT_MS);
 
             // Get the source window.
             AccessibilityWindowInfo window = event.getSource().getWindow();
@@ -299,9 +303,11 @@ public class AccessibilityWindowQueryTest {
                             "android.accessibilityservice.cts:id/button1").get(0);
 
             // Click the button.
-            AccessibilityEvent event = sUiAutomation.executeAndWaitForEvent(
-                    () -> button1.performAction(ACTION_CLICK),
-                    filterForEventType(TYPE_VIEW_CLICKED), DEFAULT_TIMEOUT_MS);
+            AccessibilityEvent event =
+                    sUiAutomation.executeAndWaitForEvent(
+                            () -> button1.performAction(ACTION_CLICK),
+                            filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
+                            DEFAULT_TIMEOUT_MS);
 
             // Get the source window.
             AccessibilityWindowInfo window = event.getSource().getWindow();
@@ -312,8 +318,10 @@ public class AccessibilityWindowQueryTest {
                             "android.accessibilityservice.cts:id/button2").get(0);
 
             // Click the second button.
-            sUiAutomation.executeAndWaitForEvent(() -> button2.performAction(ACTION_CLICK),
-                    filterForEventType(TYPE_VIEW_CLICKED), DEFAULT_TIMEOUT_MS);
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> button2.performAction(ACTION_CLICK),
+                    filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
+                    DEFAULT_TIMEOUT_MS);
         } finally {
             clearAccessInteractiveWindowsFlag();
         }
@@ -439,9 +447,11 @@ public class AccessibilityWindowQueryTest {
         assertFalse(button.isSelected());
 
         // Perform an action and wait for an event
-        AccessibilityEvent expected = sUiAutomation.executeAndWaitForEvent(
-                () -> button.performAction(ACTION_CLICK),
-                filterForEventType(TYPE_VIEW_CLICKED), DEFAULT_TIMEOUT_MS);
+        AccessibilityEvent expected =
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> button.performAction(ACTION_CLICK),
+                        filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
+                        DEFAULT_TIMEOUT_MS);
 
         // Make sure the expected event was received.
         assertNotNull(expected);
@@ -457,9 +467,11 @@ public class AccessibilityWindowQueryTest {
         assertFalse(button.isSelected());
 
         // Perform an action and wait for an event.
-        AccessibilityEvent expected = sUiAutomation.executeAndWaitForEvent(
-                () -> button.performAction(ACTION_LONG_CLICK),
-                filterForEventType(TYPE_VIEW_LONG_CLICKED), DEFAULT_TIMEOUT_MS);
+        AccessibilityEvent expected =
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> button.performAction(ACTION_LONG_CLICK),
+                        filterForEventTypeWithAction(TYPE_VIEW_LONG_CLICKED, ACTION_LONG_CLICK),
+                        DEFAULT_TIMEOUT_MS);
 
         // Make sure the expected event was received.
         assertNotNull(expected);
@@ -498,9 +510,11 @@ public class AccessibilityWindowQueryTest {
         assertFalse(button.isSelected());
 
         // focus and wait for the event
-        AccessibilityEvent awaitedEvent = sUiAutomation
-                .executeAndWaitForEvent(() -> button.performAction(ACTION_FOCUS),
-                        filterForEventType(TYPE_VIEW_FOCUSED), DEFAULT_TIMEOUT_MS);
+        AccessibilityEvent awaitedEvent =
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> button.performAction(ACTION_FOCUS),
+                        filterForEventTypeWithAction(TYPE_VIEW_FOCUSED, ACTION_FOCUS),
+                        DEFAULT_TIMEOUT_MS);
 
         assertNotNull(awaitedEvent);
 
@@ -838,20 +852,25 @@ public class AccessibilityWindowQueryTest {
 
     private void ensureAccessibilityFocusCleared() {
         try {
-            sUiAutomation.executeAndWaitForEvent(() -> {
-                List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
-                final int windowCount = windows.size();
-                for (int i = 0; i < windowCount; i++) {
-                    AccessibilityWindowInfo window = windows.get(i);
-                    if (window.isAccessibilityFocused()) {
-                        AccessibilityNodeInfo root = window.getRoot();
-                        if (root != null) {
-                            root.performAction(
-                                    AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS);
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> {
+                        List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
+                        final int windowCount = windows.size();
+                        for (int i = 0; i < windowCount; i++) {
+                            AccessibilityWindowInfo window = windows.get(i);
+                            if (window.isAccessibilityFocused()) {
+                                AccessibilityNodeInfo root = window.getRoot();
+                                if (root != null) {
+                                    root.performAction(
+                                            AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS);
+                                }
+                            }
                         }
-                    }
-                }
-            }, filterForEventType(TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED), DEFAULT_TIMEOUT_MS);
+                    },
+                    filterForEventTypeWithAction(
+                            TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED,
+                            ACTION_CLEAR_ACCESSIBILITY_FOCUS),
+                    DEFAULT_TIMEOUT_MS);
         } catch (TimeoutException te) {
             /* ignore */
         }
