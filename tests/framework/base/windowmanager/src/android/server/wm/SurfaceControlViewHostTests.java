@@ -21,8 +21,9 @@ import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -117,6 +118,7 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         mEmbeddedLayoutParams = new WindowManager.LayoutParams(width, height,
                 WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
         mVr.setView(v, mEmbeddedLayoutParams);
+        assertEquals(v, mVr.getView());
     }
 
     @Override
