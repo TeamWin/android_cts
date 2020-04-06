@@ -40,6 +40,7 @@ public class TvTrackInfoTest {
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "id_audio")
                 .setAudioChannelCount(2)
                 .setAudioSampleRate(48000)
+                .setEncoding("test_encoding")
                 .setLanguage("eng")
                 .setExtra(bundle)
                 .build();
@@ -47,6 +48,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasId("id_audio");
         assertThat(info).hasAudioChannelCount(2);
         assertThat(info).hasAudioSampleRate(48000);
+        assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasLanguage("eng");
         assertThat(info).extra().isEmpty();
         assertThat(info).hasContentDescription(0);
@@ -63,6 +65,7 @@ public class TvTrackInfoTest {
         final Bundle bundle = new Bundle();
         bundle.putBoolean("testTrue", true);
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "id_video")
+                .setEncoding("test_encoding")
                 .setVideoWidth(1920)
                 .setVideoHeight(1080)
                 .setVideoFrameRate(29.97f)
@@ -73,6 +76,7 @@ public class TvTrackInfoTest {
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_VIDEO);
         assertThat(info).hasId("id_video");
+        assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasVideoWidth(1920);
         assertThat(info).hasVideoHeight(1080);
         assertThat(info).hasVideoFrameRate(29.97f);
@@ -95,10 +99,12 @@ public class TvTrackInfoTest {
         bundle.putBoolean("testTrue", true);
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "id_subtitle")
                 .setLanguage("eng")
+                .setEncoding("test_encoding")
                 .setExtra(bundle)
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_SUBTITLE);
         assertThat(info).hasId("id_subtitle");
+        assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasLanguage("eng");
         assertThat(info).extra().bool("testTrue").isTrue();
         assertThat(info).hasContentDescription(0);
