@@ -28,8 +28,6 @@ COLOR_CHECKER = {'BLACK': [0, 0, 0], 'RED': [1, 0, 0], 'GREEN': [0, 1, 0],
                  'BLUE': [0, 0, 1], 'MAGENTA': [1, 0, 1], 'CYAN': [0, 1, 1],
                  'YELLOW': [1, 1, 0], 'WHITE': [1, 1, 1]}
 CH_TOL = 2E-3  # 1/2 DN in [0:1]
-LSFR_COEFFS = 0b100010000  # PN9
-REQUIRED_PATTERNS = [2]  # [COLOR_BARS]
 
 
 def check_solid_color(cap, props):
@@ -146,9 +144,6 @@ def test_test_patterns(cam, props, af_fd):
         else:
             print '%d not in android.sensor.availableTestPatternModes.' % (
                     pattern)
-    msg = 'avail_patterns: %s, REQUIRED_PATTERNS: %s' % (
-            str(avail_patterns), str(REQUIRED_PATTERNS))
-    assert set(REQUIRED_PATTERNS).issubset(avail_patterns), msg
 
 
 def main():
