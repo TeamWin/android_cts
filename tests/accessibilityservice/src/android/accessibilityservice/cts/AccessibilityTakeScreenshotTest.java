@@ -16,10 +16,12 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -28,6 +30,10 @@ import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityService.ScreenshotResult;
 import android.accessibilityservice.AccessibilityService.TakeScreenshotCallback;
+import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.ColorSpace;
@@ -37,9 +43,12 @@ import android.os.SystemClock;
 import android.view.Display;
 import android.view.WindowManager;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -58,6 +67,9 @@ public class AccessibilityTakeScreenshotTest {
      * The timeout for waiting screenshot had been taken done.
      */
     private static final long TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS = 1000;
+
+    private static Instrumentation sInstrumentation;
+    private static UiAutomation sUiAutomation;
 
     private InstrumentedAccessibilityServiceTestRule<StubTakeScreenshotService> mServiceRule =
             new InstrumentedAccessibilityServiceTestRule<>(StubTakeScreenshotService.class);
@@ -79,6 +91,17 @@ public class AccessibilityTakeScreenshotTest {
     @Captor
     private ArgumentCaptor<ScreenshotResult> mSuccessResultArgumentCaptor;
 
+    @BeforeClass
+    public static void oneTimeSetup() {
+        sInstrumentation = InstrumentationRegistry.getInstrumentation();
+        sUiAutomation = sInstrumentation.getUiAutomation();
+    }
+
+    @AfterClass
+    public static void finalTearDown() {
+        sUiAutomation.destroy();
+    }
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -95,7 +118,7 @@ public class AccessibilityTakeScreenshotTest {
 
     @Test
     public void testTakeScreenshot_GetScreenshotResult() {
-        takeScreenshot();
+        takeScreenshot(Display.DEFAULT_DISPLAY);
         verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onSuccess(
                 mSuccessResultArgumentCaptor.capture());
 
@@ -104,14 +127,14 @@ public class AccessibilityTakeScreenshotTest {
 
     @Test
     public void testTakeScreenshot_RequestIntervalTime() throws Exception {
-        takeScreenshot();
+        takeScreenshot(Display.DEFAULT_DISPLAY);
         verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onSuccess(
                 mSuccessResultArgumentCaptor.capture());
 
         Thread.sleep(
                 AccessibilityService.ACCESSIBILITY_TAKE_SCREENSHOT_REQUEST_INTERVAL_TIMES_MS / 2);
         // Requests the API again during interval time from calling the first time.
-        takeScreenshot();
+        takeScreenshot(Display.DEFAULT_DISPLAY);
         verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onFailure(
                 AccessibilityService.ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT);
 
@@ -119,21 +142,50 @@ public class AccessibilityTakeScreenshotTest {
                 AccessibilityService.ACCESSIBILITY_TAKE_SCREENSHOT_REQUEST_INTERVAL_TIMES_MS / 2 +
                         1);
         // Requests the API again after interval time from calling the first time.
-        takeScreenshot();
+        takeScreenshot(Display.DEFAULT_DISPLAY);
         verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onSuccess(
                 mSuccessResultArgumentCaptor.capture());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testTakeScreenshotWithNonDefaultDisplay_GetIllegalArgumentException() {
-        // DisplayId isn't the default display, should throw illegalArgument exception.
-        mService.takeScreenshot(Display.DEFAULT_DISPLAY + 1,
-                mContext.getMainExecutor(), mCallback);
+    @Test
+    public void testTakeScreenshotOnVirtualDisplay_GetScreenshotResult() throws Exception {
+        try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
+            final int virtualDisplayId =
+                    displaySession.createDisplayWithDefaultDisplayMetricsAndWait(mContext,
+                            false).getDisplayId();
+            // Launches an activity on virtual display.
+            final Activity activity = launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
+                    sInstrumentation, sUiAutomation, AccessibilityWindowQueryActivity.class,
+                    virtualDisplayId);
+            try {
+                takeScreenshot(virtualDisplayId);
+                verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onSuccess(
+                        mSuccessResultArgumentCaptor.capture());
+
+                verifyScreenshotResult(mSuccessResultArgumentCaptor.getValue());
+            } finally {
+                sInstrumentation.runOnMainSync(() -> {
+                    activity.finish();
+                });
+            }
+        }
     }
 
-    private void takeScreenshot() {
+    @Test
+    public void testTakeScreenshotOnPrivateDisplay_GetErrorCode() {
+        try (VirtualDisplaySession displaySession = new VirtualDisplaySession()) {
+            final int virtualDisplayId =
+                    displaySession.createDisplayWithDefaultDisplayMetricsAndWait(mContext,
+                            true).getDisplayId();
+            takeScreenshot(virtualDisplayId);
+            verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onFailure(
+                    AccessibilityService.ERROR_TAKE_SCREENSHOT_INVALID_DISPLAY);
+        }
+    }
+
+    private void takeScreenshot(int displayId) {
         mStartTestingTime = SystemClock.uptimeMillis();
-        mService.takeScreenshot(Display.DEFAULT_DISPLAY, mContext.getMainExecutor(),
+        mService.takeScreenshot(displayId, mContext.getMainExecutor(),
                 mCallback);
     }
 
