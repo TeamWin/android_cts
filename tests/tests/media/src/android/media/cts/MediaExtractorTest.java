@@ -924,4 +924,20 @@ public class MediaExtractorTest extends AndroidTestCase {
         doTestAdvance(R.raw.video_480x360_mp4_h264_500kbps_30fps_aac_stereo_128kbps_44100hz);
         doTestAdvance(R.raw.video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz);
     }
+
+    public void testAC3inMP4() throws Exception {
+        setDataSource(R.raw.testac3mp4);
+    }
+
+    public void testEAC3inMP4() throws Exception {
+        setDataSource(R.raw.testeac3mp4);
+    }
+
+    public void testAC3inTS() throws Exception {
+        setDataSource(R.raw.testac3ts);
+    }
+
+    public void testEAC3inTS() throws Exception {
+        setDataSource(R.raw.testeac3ts);
+    }
 }
