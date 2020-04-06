@@ -20,9 +20,11 @@ import static com.google.common.truth.Truth.assertAbout;
 
 import android.annotation.Nullable;
 import android.media.tv.TvTrackInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 
+import androidx.annotation.RequiresApi;
 import androidx.test.ext.truth.os.BundleSubject;
 import androidx.test.ext.truth.os.ParcelableSubject;
 
@@ -60,6 +62,11 @@ public final class TvTrackInfoSubject extends Subject<TvTrackInfoSubject, TvTrac
 
     public void hasContentDescription(int content) {
         check("describeContents()").that(actual.describeContents()).isEqualTo(content);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    public void hasEncoding(String encoding) {
+        check("getEncoding()").that(actual.getEncoding()).isEqualTo(encoding);
     }
 
     public void hasId(String id) {
