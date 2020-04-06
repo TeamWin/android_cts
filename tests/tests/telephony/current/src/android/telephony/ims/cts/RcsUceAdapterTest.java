@@ -19,14 +19,10 @@ package android.telephony.ims.cts;
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Handler;
@@ -37,7 +33,6 @@ import android.telecom.PhoneAccount;
 import android.telephony.SubscriptionManager;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
-import android.telephony.ims.ImsRcsManager;
 import android.telephony.ims.RcsUceAdapter;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -103,22 +98,6 @@ public class RcsUceAdapterTest {
         if (!SubscriptionManager.isValidSubscriptionId(sTestSub)) {
             fail("This test requires that there is a SIM in the device!");
         }
-    }
-
-    @Test
-    public void testCapabilityDiscoveryIntentReceiverExists() {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
-
-        PackageManager packageManager = getContext().getPackageManager();
-        ResolveInfo info = packageManager.resolveActivity(
-                new Intent(ImsRcsManager.ACTION_SHOW_CAPABILITY_DISCOVERY_OPT_IN),
-                PackageManager.MATCH_DEFAULT_ONLY);
-        assertNotNull(ImsRcsManager.ACTION_SHOW_CAPABILITY_DISCOVERY_OPT_IN
-                + " Intent action must be handled by an appropriate settings application.", info);
-        assertNotEquals(ImsRcsManager.ACTION_SHOW_CAPABILITY_DISCOVERY_OPT_IN
-                + " activity intent filter must have a > 0 priority.", 0, info.priority);
     }
 
     @Test
