@@ -140,7 +140,28 @@ public class TvTrackInfoTest {
     }
 
     @Test
-    public void testSubtitleTrackInfoOp() {
+    public void newSubtitleTrack_default() {
+        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
+            return;
+        }
+        final Bundle bundle = new Bundle();
+        bundle.putBoolean("testTrue", true);
+        final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "default")
+                .build();
+        assertThat(info).hasType(TvTrackInfo.TYPE_SUBTITLE);
+        assertThat(info).hasId("default");
+        assertThat(info).hasEncoding(null);
+        assertThat(info).hasLanguage(null);
+        assertThat(info).isHardOfHearing(false);
+        assertThat(info).extra().isNull();
+        assertThat(info).hasContentDescription(0);
+        assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
+        TvTrackInfo copy = Parcelables.forceParcel(info, TvTrackInfo.CREATOR);
+        assertThat(copy).extra().isNull();
+    }
+
+    @Test
+    public void newSubtitleTrack_everything() {
         if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
             return;
         }
