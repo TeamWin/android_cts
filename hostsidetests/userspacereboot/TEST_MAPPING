@@ -1,7 +1,8 @@
 {
-  "presubmit" : [
+  "postsubmit" : [
     {
-      "name": "CtsUserspaceRebootHostSideTestCases"
+      "name": "CtsUserspaceRebootHostSideTestCases",
+      "keywords": ["primary-device"]
     }
   ]
 }
