@@ -19,12 +19,12 @@ import its.image
 import its.objects
 
 CONTINUOUS_PICTURE_MODE = 4
-CONVERGED_3A = [[2, 2, 2], [2, 5, 2], [2, 6, 2]]  # [AE, AF, AWB]
+CONVERGED_3A = [2, 2, 2]  # [AE, AF, AWB]
 # AE_STATES: {0: INACTIVE, 1: SEARCHING, 2: CONVERGED, 3: LOCKED,
 #             4: FLASH_REQ, 5: PRECAPTURE}
 # AF_STATES: {0: INACTIVE, 1: PASSIVE_SCAN, 2: PASSIVE_FOCUSED,
-#             3: PASSIVE_UNFOCUSED, 4: ACTIVE_SCAN, 5: FOCUS_LOCKED,
-#             6: NOT_FOCUSED_LOCKED}
+#             3: ACTIVE_SCAN, 4: FOCUS_LOCKED, 5: NOT_FOCUSED_LOCKED,
+#             6: PASSIVE_UNFOCUSED}
 # AWB_STATES: {0: INACTIVE, 1: SEARCHING, 2: CONVERGED, 3: LOCKED}
 NAME = os.path.basename(__file__).split('.')[0]
 NUM_FRAMES = 50
@@ -91,7 +91,7 @@ def main():
         msg = '\n Last frame [ae, af, awb] state: [%d, %d, %d]' % (
                 final_3a[0], final_3a[1], final_3a[2])
         msg += '\n Converged states:' + str(CONVERGED_3A)
-        assert final_3a in CONVERGED_3A, msg
+        assert final_3a == CONVERGED_3A, msg
 
 
 if __name__ == '__main__':
