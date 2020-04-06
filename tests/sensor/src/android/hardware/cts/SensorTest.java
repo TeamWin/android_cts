@@ -40,19 +40,13 @@ import android.hardware.cts.helpers.sensorverification.EventTimestampSynchroniza
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PowerManager;
-import android.os.Process;
 import android.os.SystemClock;
-import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.util.Log;
-
-import androidx.test.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.SystemUtil;
 
 import junit.framework.Assert;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -370,7 +364,8 @@ public class SensorTest extends SensorTestCase {
                     false /* sanitized */, errorsFound);
 
             // If the UID is idle sanitization should be performed
-            makeMyPackageIdle();
+
+            SensorCtsHelper.makeMyPackageIdle();
             try {
                 verifyLongActivation(sensor, 0 /* maxReportLatencyUs */,
                         5 /* duration */, TimeUnit.SECONDS, "continuous event",
@@ -379,7 +374,7 @@ public class SensorTest extends SensorTestCase {
                         5 /* duration */, TimeUnit.SECONDS, "continuous event",
                         true /* sanitized */, errorsFound);
             } finally {
-                makeMyPackageActive();
+                SensorCtsHelper.makeMyPackageActive();
             }
 
             // If the UID is active no sanitization should be performed
@@ -687,20 +682,6 @@ public class SensorTest extends SensorTestCase {
         }
     }
 
-    private static void makeMyPackageActive() throws IOException {
-        final String command = "cmd sensorservice reset-uid-state "
-                +  InstrumentationRegistry.getTargetContext().getPackageName()
-                + " --user " + Process.myUserHandle().getIdentifier();
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
-    }
-
-    private void makeMyPackageIdle() throws IOException {
-        final String command = "cmd sensorservice set-uid-state "
-                + InstrumentationRegistry.getTargetContext().getPackageName() + " idle"
-                + " --user " + Process.myUserHandle().getIdentifier();
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
-    }
-
     /**
      * A delegate that drives the execution of Batch/Flush tests.
      * It performs several operations in order:
@@ -741,7 +722,7 @@ public class SensorTest extends SensorTestCase {
                     listener.waitForEvents(eventLatch, mEventCount, true);
                 }
                 if (mFlushWhileIdle) {
-                    makeMyPackageIdle();
+                    SensorCtsHelper.makeMyPackageIdle();
                     sensorManager.assertFlushFail();
                 } else {
                     CountDownLatch flushLatch = sensorManager.requestFlush();
@@ -750,7 +731,7 @@ public class SensorTest extends SensorTestCase {
             } finally {
                 sensorManager.unregisterListener();
                 if (mFlushWhileIdle) {
-                    makeMyPackageActive();
+                    SensorCtsHelper.makeMyPackageActive();
                 }
             }
         }
