@@ -7,6 +7,7 @@ import android.location.cts.common.TestUtils;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -46,6 +47,7 @@ public class GnssTtffTests extends GnssTestCase {
    * @throws Exception
    */
   @CddTest(requirement="7.3.3")
+  @AppModeFull(reason = "permission ACCESS_LOCATION_EXTRA_COMMANDS not available to instant apps")
   public void testTtffWithNetwork() throws Exception {
     if (!TestUtils.deviceHasGpsFeature(getContext())) {
       return;
