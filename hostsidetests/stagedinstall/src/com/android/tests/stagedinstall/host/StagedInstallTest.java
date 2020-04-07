@@ -122,6 +122,15 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testGetActiveStagedSessions");
     }
 
+    /**
+     * Verifies that active staged session fulfils conditions stated at
+     * {@link PackageInstaller.SessionInfo#isStagedSessionActive}
+     */
+    @Test
+    public void testIsStagedSessionActive() throws Exception {
+        runPhase("testIsStagedSessionActive");
+    }
+
     @Test
     public void testGetActiveStagedSessionsNoSessionActive() throws Exception {
         runPhase("testGetActiveStagedSessionsNoSessionActive");
