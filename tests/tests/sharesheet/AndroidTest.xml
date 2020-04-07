@@ -33,7 +33,7 @@
     
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.sharesheet.cts" />
-        <!-- Update hint with appx run time later <option name="runtime-hint" value="7m30s" />-->
+        <option name="runtime-hint" value="7s" />-->
     </test>
 
     <!-- Collect the files generated on error -->
