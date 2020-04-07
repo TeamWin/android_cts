@@ -695,7 +695,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private void wipePrimaryExternalStorage() throws DeviceNotAvailableException {
         // Can't delete everything under /sdcard as that's going to remove the mounts.
         getDevice().executeShellCommand("find /sdcard -type f -delete");
-        getDevice().executeShellCommand("rm -rf /sdcard/DCIM");
+        getDevice().executeShellCommand("rm -rf /sdcard/DCIM/*");
         getDevice().executeShellCommand("rm -rf /sdcard/MUST_*");
     }
 
