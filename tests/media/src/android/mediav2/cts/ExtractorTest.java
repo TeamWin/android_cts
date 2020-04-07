@@ -584,7 +584,7 @@ public class ExtractorTest {
         @Rule
         public TestName testName = new TestName();
 
-        @Parameterized.Parameters
+        @Parameterized.Parameters(name = "{index}({0})")
         public static Collection<Object[]> input() {
             /* TODO: add ts files for MPEG2, AVC and AAC. These parameters are used by seek tests
                  as well. Would it make sense to add ts files to this list */
