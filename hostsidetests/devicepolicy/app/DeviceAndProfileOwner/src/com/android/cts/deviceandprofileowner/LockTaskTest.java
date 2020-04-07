@@ -45,6 +45,7 @@ import android.view.KeyEvent;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 public class LockTaskTest extends BaseDeviceAdminTest {
@@ -306,6 +307,10 @@ public class LockTaskTest extends BaseDeviceAdminTest {
             mReceiverActivityRunningLock.wait(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
             assertTrue(mIsReceiverActivityRunning);
         }
+        synchronized (mReceiverActivityRunningLock) {
+            mReceiverActivityRunningLock.wait(ACTIVITY_DESTROYED_TIMEOUT_MILLIS);
+            assertFalse(mIsReceiverActivityRunning);
+        }
         stopAndFinish(UTILITY_ACTIVITY);
     }
 
@@ -504,7 +509,11 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     /**
      * Checks that lock task mode is active and fails the test if it isn't.
      */
-    private void assertLockTaskModeActive() {
+    private void assertLockTaskModeActive() throws Exception {
+        Utils.tryWaitForSuccess(() -> ActivityManager.LOCK_TASK_MODE_LOCKED
+                        == mActivityManager.getLockTaskModeState(),
+                Duration.ofSeconds(2).toMillis()
+        );
         assertTrue(mActivityManager.isInLockTaskMode());
         assertEquals(ActivityManager.LOCK_TASK_MODE_LOCKED,
                 mActivityManager.getLockTaskModeState());
@@ -513,11 +522,11 @@ public class LockTaskTest extends BaseDeviceAdminTest {
     /**
      * Checks that lock task mode is not active and fails the test if it is.
      */
-    private void assertLockTaskModeInactive() throws InterruptedException {
-        // Retry 10 times with 200 ms interval.
-        for (int i = 0; i < 10 && mActivityManager.isInLockTaskMode(); i++) {
-            Thread.sleep(200);
-        }
+    private void assertLockTaskModeInactive() throws Exception {
+        Utils.tryWaitForSuccess(() -> ActivityManager.LOCK_TASK_MODE_NONE
+                        == mActivityManager.getLockTaskModeState(),
+                Duration.ofSeconds(2).toMillis()
+        );
         assertFalse(mActivityManager.isInLockTaskMode());
         assertEquals(ActivityManager.LOCK_TASK_MODE_NONE, mActivityManager.getLockTaskModeState());
     }
@@ -530,7 +539,7 @@ public class LockTaskTest extends BaseDeviceAdminTest {
      * If activityManager is not null then verify that the ActivityManager
      * is no longer in lock task mode.
      */
-    private void stopAndFinish(String className) throws InterruptedException {
+    private void stopAndFinish(String className) throws Exception {
         stopLockTask(className);
         finishAndWait(className);
         assertLockTaskModeInactive();
