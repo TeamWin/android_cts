@@ -96,6 +96,7 @@ public final class CarUserManagerTest extends CarApiTestBase {
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        mPackageManager = sContext.getPackageManager();
 
         // TODO: ideally it should be created on @BeforeClass, but it relies on getCar()
         if (sNewUserId != UserHandle.USER_NULL) {
@@ -107,8 +108,6 @@ public final class CarUserManagerTest extends CarApiTestBase {
         sNewUserId = createNewUser("CarUserManagerTest", /* isGuestUser= */ false);
         Log.i(TAG, "setUp(): myUid=" + myUid() + ", currentUser=" + sInitialUserId
                 + ", newUser=" + sNewUserId);
-
-        mPackageManager = sContext.getPackageManager();
     }
 
     @AfterClass
