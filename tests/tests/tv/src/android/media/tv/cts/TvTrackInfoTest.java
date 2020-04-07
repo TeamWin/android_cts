@@ -16,13 +16,15 @@
 
 package android.media.tv.cts;
 
+import static android.media.tv.cts.TvTrackInfoSubject.assertThat;
+
+import static org.testng.Assert.assertThrows;
+
 import android.media.tv.TvTrackInfo;
 import android.os.Bundle;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.core.os.Parcelables;
-
-import static android.media.tv.cts.TvTrackInfoSubject.assertThat;
 
 import org.junit.Test;
 
@@ -30,6 +32,18 @@ import org.junit.Test;
  * Test {@link android.media.tv.TvTrackInfo}.
  */
 public class TvTrackInfoTest {
+
+    @Test
+    public void setHardOfHearing_invalid() {
+        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
+            return;
+        }
+        assertThrows(
+                IllegalStateException.class,
+                () -> new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "invalid")
+                        .setHardOfHearing(true)
+        );
+    }
 
     @Test
     public void newAudioTrack_default() {
@@ -100,7 +114,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasVideoHeight(0);
         assertThat(info).hasVideoFrameRate(0f);
         assertThat(info).hasVideoPixelAspectRatio(1.0f);
-        assertThat(info).hasVideoActiveFormatDescription((byte)0);
+        assertThat(info).hasVideoActiveFormatDescription((byte) 0);
         assertThat(info).hasLanguage(null);
         assertThat(info).isEncrypted(false);
         assertThat(info).extra().isNull();
