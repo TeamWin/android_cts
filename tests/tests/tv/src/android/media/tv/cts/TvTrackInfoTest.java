@@ -32,7 +32,29 @@ import org.junit.Test;
 public class TvTrackInfoTest {
 
     @Test
-    public void testAudioTrackInfoOp() {
+    public void newAudioTrack_default() {
+        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
+            return;
+        }
+        final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "default")
+                .build();
+        assertThat(info).hasType(TvTrackInfo.TYPE_AUDIO);
+        assertThat(info).hasId("default");
+        assertThat(info).hasAudioChannelCount(0);
+        assertThat(info).hasAudioSampleRate(0);
+        assertThat(info).hasEncoding(null);
+        assertThat(info).hasLanguage(null);
+        assertThat(info).isAudioDescription(false);
+        assertThat(info).isHardOfHearing(false);
+        assertThat(info).extra().isNull();
+        assertThat(info).hasContentDescription(0);
+        assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
+        TvTrackInfo copy = Parcelables.forceParcel(info, TvTrackInfo.CREATOR);
+        assertThat(copy).extra().isNull();
+    }
+
+    @Test
+    public void newAudioTrack_everything() {
         if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
             return;
         }
@@ -62,7 +84,30 @@ public class TvTrackInfoTest {
     }
 
     @Test
-    public void testVideoTrackInfoOp() {
+    public void newVideoTrack_default() {
+        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
+            return;
+        }
+        final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "default")
+                .build();
+        assertThat(info).hasType(TvTrackInfo.TYPE_VIDEO);
+        assertThat(info).hasId("default");
+        assertThat(info).hasEncoding(null);
+        assertThat(info).hasVideoWidth(0);
+        assertThat(info).hasVideoHeight(0);
+        assertThat(info).hasVideoFrameRate(0f);
+        assertThat(info).hasVideoPixelAspectRatio(1.0f);
+        assertThat(info).hasVideoActiveFormatDescription((byte)0);
+        assertThat(info).hasLanguage(null);
+        assertThat(info).extra().isNull();
+        assertThat(info).hasContentDescription(0);
+        assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
+        TvTrackInfo copy = Parcelables.forceParcel(info, TvTrackInfo.CREATOR);
+        assertThat(copy).extra().isNull();
+    }
+
+    @Test
+    public void newVideoTrack_everything() {
         if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
             return;
         }
@@ -95,7 +140,28 @@ public class TvTrackInfoTest {
     }
 
     @Test
-    public void testSubtitleTrackInfoOp() {
+    public void newSubtitleTrack_default() {
+        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
+            return;
+        }
+        final Bundle bundle = new Bundle();
+        bundle.putBoolean("testTrue", true);
+        final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "default")
+                .build();
+        assertThat(info).hasType(TvTrackInfo.TYPE_SUBTITLE);
+        assertThat(info).hasId("default");
+        assertThat(info).hasEncoding(null);
+        assertThat(info).hasLanguage(null);
+        assertThat(info).isHardOfHearing(false);
+        assertThat(info).extra().isNull();
+        assertThat(info).hasContentDescription(0);
+        assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
+        TvTrackInfo copy = Parcelables.forceParcel(info, TvTrackInfo.CREATOR);
+        assertThat(copy).extra().isNull();
+    }
+
+    @Test
+    public void newSubtitleTrack_everything() {
         if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
             return;
         }
