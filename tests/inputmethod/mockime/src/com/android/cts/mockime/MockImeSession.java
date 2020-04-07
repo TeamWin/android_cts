@@ -996,4 +996,11 @@ public class MockImeSession implements AutoCloseable {
         final Bundle params = new Bundle();
         return callCommandInternal("verifyLayoutInflaterContext", params);
     }
+
+    @NonNull
+    public ImeCommand callSetHeight(int height) {
+        final Bundle params = new Bundle();
+        params.putInt("height", height);
+        return callCommandInternal("setHeight", params);
+    }
 }
