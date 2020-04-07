@@ -91,7 +91,7 @@ public class OnScreenPositionTest extends EndToEndImeTestBase {
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder()
-                        .setInputViewHeightWithoutSystemWindowInset(EXPECTED_KEYBOARD_HEIGHT))) {
+                        .setInputViewHeight(EXPECTED_KEYBOARD_HEIGHT))) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final EditText editText = launchTestActivity();
