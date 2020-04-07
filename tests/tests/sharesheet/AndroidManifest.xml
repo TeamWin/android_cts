@@ -20,6 +20,9 @@
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
+    <!-- Allows test to query for all installed apps, needed to test excluding components -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+
     <!-- Needed permission and android:requestLegacyExternalStorage to dump screenshots in case of
          failure -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
