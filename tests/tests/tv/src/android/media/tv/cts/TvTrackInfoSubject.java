@@ -20,9 +20,11 @@ import static com.google.common.truth.Truth.assertAbout;
 
 import android.annotation.Nullable;
 import android.media.tv.TvTrackInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 
+import androidx.annotation.RequiresApi;
 import androidx.test.ext.truth.os.BundleSubject;
 import androidx.test.ext.truth.os.ParcelableSubject;
 
@@ -62,6 +64,11 @@ public final class TvTrackInfoSubject extends Subject<TvTrackInfoSubject, TvTrac
         check("describeContents()").that(actual.describeContents()).isEqualTo(content);
     }
 
+    @RequiresApi(Build.VERSION_CODES.R)
+    public void hasEncoding(String encoding) {
+        check("getEncoding()").that(actual.getEncoding()).isEqualTo(encoding);
+    }
+
     public void hasId(String id) {
         check("getId()").that(actual.getId()).isEqualTo(id);
     }
@@ -93,6 +100,16 @@ public final class TvTrackInfoSubject extends Subject<TvTrackInfoSubject, TvTrac
 
     public void hasVideoWidth(int width) {
         check("getVideoWidth()").that(actual.getVideoWidth()).isEqualTo(width);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    public void isAudioDescription(boolean enabled) {
+        check("isAudioDescription()").that(actual.isAudioDescription()).isEqualTo(enabled);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    public void isHardOfHearing(boolean enabled) {
+        check("isHardOfHearing()").that(actual.isHardOfHearing()).isEqualTo(enabled);
     }
 
     public BundleSubject extra() {

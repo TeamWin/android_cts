@@ -500,6 +500,10 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
             assertNull(install(STATIC_LIB_CONSUMER1_APK));
             // Install the second client
             assertNull(install(STATIC_LIB_CONSUMER2_APK));
+            // Ensure the first library has the REQUEST_INSTALL_PACKAGES app op
+            getDevice().executeShellV2Command("appops set "
+                    + STATIC_LIB_CONSUMER1_PKG
+                    + " REQUEST_INSTALL_PACKAGES allow");
             // Ensure libraries are properly reported
             runDeviceTests(STATIC_LIB_CONSUMER1_PKG,
                     "android.os.lib.consumer1.UseSharedLibraryTest",

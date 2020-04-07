@@ -32,7 +32,29 @@ import org.junit.Test;
 public class TvTrackInfoTest {
 
     @Test
-    public void testAudioTrackInfoOp() {
+    public void newAudioTrack_default() {
+        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
+            return;
+        }
+        final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "default")
+                .build();
+        assertThat(info).hasType(TvTrackInfo.TYPE_AUDIO);
+        assertThat(info).hasId("default");
+        assertThat(info).hasAudioChannelCount(0);
+        assertThat(info).hasAudioSampleRate(0);
+        assertThat(info).hasEncoding(null);
+        assertThat(info).hasLanguage(null);
+        assertThat(info).isAudioDescription(false);
+        assertThat(info).isHardOfHearing(false);
+        assertThat(info).extra().isNull();
+        assertThat(info).hasContentDescription(0);
+        assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
+        TvTrackInfo copy = Parcelables.forceParcel(info, TvTrackInfo.CREATOR);
+        assertThat(copy).extra().isNull();
+    }
+
+    @Test
+    public void newAudioTrack_everything() {
         if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
             return;
         }
@@ -40,14 +62,20 @@ public class TvTrackInfoTest {
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "id_audio")
                 .setAudioChannelCount(2)
                 .setAudioSampleRate(48000)
+                .setAudioDescription(true)
+                .setEncoding("test_encoding")
                 .setLanguage("eng")
+                .setHardOfHearing(true)
                 .setExtra(bundle)
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_AUDIO);
         assertThat(info).hasId("id_audio");
         assertThat(info).hasAudioChannelCount(2);
         assertThat(info).hasAudioSampleRate(48000);
+        assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasLanguage("eng");
+        assertThat(info).isAudioDescription(true);
+        assertThat(info).isHardOfHearing(true);
         assertThat(info).extra().isEmpty();
         assertThat(info).hasContentDescription(0);
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
@@ -56,13 +84,37 @@ public class TvTrackInfoTest {
     }
 
     @Test
-    public void testVideoTrackInfoOp() {
+    public void newVideoTrack_default() {
+        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
+            return;
+        }
+        final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "default")
+                .build();
+        assertThat(info).hasType(TvTrackInfo.TYPE_VIDEO);
+        assertThat(info).hasId("default");
+        assertThat(info).hasEncoding(null);
+        assertThat(info).hasVideoWidth(0);
+        assertThat(info).hasVideoHeight(0);
+        assertThat(info).hasVideoFrameRate(0f);
+        assertThat(info).hasVideoPixelAspectRatio(1.0f);
+        assertThat(info).hasVideoActiveFormatDescription((byte)0);
+        assertThat(info).hasLanguage(null);
+        assertThat(info).extra().isNull();
+        assertThat(info).hasContentDescription(0);
+        assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
+        TvTrackInfo copy = Parcelables.forceParcel(info, TvTrackInfo.CREATOR);
+        assertThat(copy).extra().isNull();
+    }
+
+    @Test
+    public void newVideoTrack_everything() {
         if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
             return;
         }
         final Bundle bundle = new Bundle();
         bundle.putBoolean("testTrue", true);
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "id_video")
+                .setEncoding("test_encoding")
                 .setVideoWidth(1920)
                 .setVideoHeight(1080)
                 .setVideoFrameRate(29.97f)
@@ -73,6 +125,7 @@ public class TvTrackInfoTest {
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_VIDEO);
         assertThat(info).hasId("id_video");
+        assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasVideoWidth(1920);
         assertThat(info).hasVideoHeight(1080);
         assertThat(info).hasVideoFrameRate(29.97f);
@@ -87,7 +140,28 @@ public class TvTrackInfoTest {
     }
 
     @Test
-    public void testSubtitleTrackInfoOp() {
+    public void newSubtitleTrack_default() {
+        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
+            return;
+        }
+        final Bundle bundle = new Bundle();
+        bundle.putBoolean("testTrue", true);
+        final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "default")
+                .build();
+        assertThat(info).hasType(TvTrackInfo.TYPE_SUBTITLE);
+        assertThat(info).hasId("default");
+        assertThat(info).hasEncoding(null);
+        assertThat(info).hasLanguage(null);
+        assertThat(info).isHardOfHearing(false);
+        assertThat(info).extra().isNull();
+        assertThat(info).hasContentDescription(0);
+        assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
+        TvTrackInfo copy = Parcelables.forceParcel(info, TvTrackInfo.CREATOR);
+        assertThat(copy).extra().isNull();
+    }
+
+    @Test
+    public void newSubtitleTrack_everything() {
         if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
             return;
         }
@@ -95,11 +169,15 @@ public class TvTrackInfoTest {
         bundle.putBoolean("testTrue", true);
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "id_subtitle")
                 .setLanguage("eng")
+                .setEncoding("test_encoding")
+                .setHardOfHearing(true)
                 .setExtra(bundle)
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_SUBTITLE);
         assertThat(info).hasId("id_subtitle");
+        assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasLanguage("eng");
+        assertThat(info).isHardOfHearing(true);
         assertThat(info).extra().bool("testTrue").isTrue();
         assertThat(info).hasContentDescription(0);
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
