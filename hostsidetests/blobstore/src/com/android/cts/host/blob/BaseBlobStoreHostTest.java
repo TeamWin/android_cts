@@ -31,6 +31,7 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
     protected static final String TARGET_PKG = "com.android.cts.device.blob";
 
     private static final long TIMEOUT_BOOT_COMPLETE_MS = 120_000;
+    private static final long DEFAULT_INSTRUMENTATION_TIMEOUT_MS = 900_000; // 15min
 
     protected static final String KEY_SESSION_ID = "session";
 
@@ -60,7 +61,8 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
             Map<String, String> instrumentationArgs, int userId) throws Exception {
         final DeviceTestRunOptions deviceTestRunOptions = new DeviceTestRunOptions(testPkg)
                 .setTestClassName(testClass)
-                .setTestMethodName(testMethod);
+                .setTestMethodName(testMethod)
+                .setMaxInstrumentationTimeoutMs(DEFAULT_INSTRUMENTATION_TIMEOUT_MS);
         if (userId != -1) {
             deviceTestRunOptions.setUserId(userId);
         }
@@ -75,9 +77,7 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
 
     protected void rebootAndWaitUntilReady() throws Exception {
         // TODO: use rebootUserspace()
-        getDevice().rebootUntilOnline();
-        assertWithMessage("Timed out waiting for device to boot").that(
-                getDevice().waitForBootComplete(TIMEOUT_BOOT_COMPLETE_MS)).isTrue();
+        getDevice().reboot(); // reboot() waits for device available
     }
 
     protected boolean isMultiUserSupported() throws Exception {
