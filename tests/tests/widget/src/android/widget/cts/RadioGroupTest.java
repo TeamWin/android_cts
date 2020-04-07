@@ -438,6 +438,20 @@ public class RadioGroupTest {
         assertEquals(colItemInfo.isSelected(), true);
     }
 
+    @UiThreadTest
+    @Test
+    public void testOnInitializeAccessibilityNodeInfo_populatesColInfoWithInvalidCount() {
+        for (int i = 0; i < mRadioGroup.getChildCount(); i++) {
+            ((RadioButton) mRadioGroup.getChildAt(i)).setText("");
+        }
+        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+        mRadioGroup.onInitializeAccessibilityNodeInfo(info);
+
+        AccessibilityNodeInfo.CollectionInfo colInfo = info.getCollectionInfo();
+        assertNotNull(colInfo);
+        assertEquals(colInfo.getRowCount(), 0);
+    }
+
     private AttributeSet getAttributeSet(int resId) {
         XmlPullParser parser = mActivity.getResources().getLayout(resId);
         assertNotNull(parser);
