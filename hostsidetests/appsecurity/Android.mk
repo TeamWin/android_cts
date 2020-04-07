@@ -28,7 +28,7 @@ LOCAL_JAVA_RESOURCE_DIRS := res
 LOCAL_CTS_TEST_PACKAGE := android.appsecurity
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts vts10 general-tests mts sts
+LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests mts sts
 
 LOCAL_REQUIRED_MODULES := \
 	CtsCorruptApkTests_b71360999 \
