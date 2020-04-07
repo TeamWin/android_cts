@@ -227,7 +227,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
         } catch (e: RuntimeException) {
             val ui = instrumentation.uiAutomation.rootInActiveWindow
 
-            val title = ui.depthFirstSearch { "alertTitle" in viewIdResourceName }
+            val title = ui.depthFirstSearch { viewIdResourceName?.contains("alertTitle") == true  }
             val okButton = ui.depthFirstSearch {
                 (text as CharSequence?)?.toString()?.equals("OK", ignoreCase = true) ?: false
             }
