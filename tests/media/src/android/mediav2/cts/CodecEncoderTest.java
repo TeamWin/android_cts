@@ -20,7 +20,9 @@ import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.test.filters.LargeTest;
@@ -39,13 +41,21 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Validate encode functionality of available encoder components
+ * Validate encode functionality of listed encoder components
+ *
+ * The test aims to test all encoders advertised in MediaCodecList. Hence we are not using
+ * MediaCodecList#findEncoderForFormat to create codec. Further, it can so happen that the
+ * test clip chosen is not supported by component (codecCapabilities.isFormatSupported()
+ * fails), then it is better to remove the format but not skip testing the component. The idea
+ * of these tests are not to cover CDD requirements but to test components and their plugins
  */
 @RunWith(Parameterized.class)
 public class CodecEncoderTest extends CodecTestBase {
@@ -68,10 +78,14 @@ public class CodecEncoderTest extends CodecTestBase {
 
     private int mWidth, mHeight;
     private int mChannels;
-    private int mRate;
+    private int mSampleRate;
+    private int mFrameRate;
 
     public CodecEncoderTest(String mime, int[] bitrates, int[] encoderInfo1, int[] encoderInfo2) {
         mMime = mime;
+        mFrameRate = 30;
+        if (mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) mFrameRate = 12;
+        else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_H263)) mFrameRate = 12;
         mBitrates = bitrates;
         mEncParamList1 = encoderInfo1;
         mEncParamList2 = encoderInfo2;
@@ -92,9 +106,10 @@ public class CodecEncoderTest extends CodecTestBase {
     void flushCodec() {
         super.flushCodec();
         if (mIsAudio) {
-            mInputOffsetPts = (mNumBytesSubmitted + 1024) * 1000000L / (2 * mChannels * mRate);
+            mInputOffsetPts =
+                    (mNumBytesSubmitted + 1024) * 1000000L / (2 * mChannels * mSampleRate);
         } else {
-            mInputOffsetPts = (mInputCount + 5) * 1000000L / mRate;
+            mInputOffsetPts = (mInputCount + 5) * 1000000L / mFrameRate;
         }
         mPrevOutputPts = mInputOffsetPts - 1;
         mNumBytesSubmitted = 0;
@@ -201,7 +216,7 @@ public class CodecEncoderTest extends CodecTestBase {
             int flags = 0;
             long pts = mInputOffsetPts;
             if (mIsAudio) {
-                pts += mNumBytesSubmitted * 1000000L / (2 * mChannels * mRate);
+                pts += mNumBytesSubmitted * 1000000L / (2 * mChannels * mSampleRate);
                 size = Math.min(inputBuffer.capacity(), mInputData.length - mNumBytesSubmitted);
                 inputBuffer.put(mInputData, mNumBytesSubmitted, size);
                 if (mNumBytesSubmitted + size >= mInputData.length && mSignalEOSWithLastFrame) {
@@ -210,7 +225,7 @@ public class CodecEncoderTest extends CodecTestBase {
                 }
                 mNumBytesSubmitted += size;
             } else {
-                pts += mInputCount * 1000000L / mRate;
+                pts += mInputCount * 1000000L / mFrameRate;
                 size = mWidth * mHeight * 3 / 2;
                 int frmSize = INP_FRM_WIDTH * INP_FRM_HEIGHT * 3 / 2;
                 if (mNumBytesSubmitted + frmSize > mInputData.length) {
@@ -277,12 +292,11 @@ public class CodecEncoderTest extends CodecTestBase {
         setUpSource(file);
         configureCodec(format, false, true, true);
         if (mIsAudio) {
-            mRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
+            mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
             mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
         } else {
             mWidth = format.getInteger(MediaFormat.KEY_WIDTH, 352);
             mHeight = format.getInteger(MediaFormat.KEY_HEIGHT, 288);
-            mRate = format.getInteger(MediaFormat.KEY_FRAME_RATE, 30);
         }
         mCodec.start();
         doWork(frameLimit);
@@ -293,9 +307,21 @@ public class CodecEncoderTest extends CodecTestBase {
         mSaveToMem = false;
     }
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        return Arrays.asList(new Object[][]{
+        final List<String> cddRequiredMimeList =
+                Arrays.asList(MediaFormat.MIMETYPE_AUDIO_FLAC,
+                        MediaFormat.MIMETYPE_AUDIO_OPUS,
+                        MediaFormat.MIMETYPE_AUDIO_AAC,
+                        MediaFormat.MIMETYPE_AUDIO_AMR_NB,
+                        MediaFormat.MIMETYPE_AUDIO_AMR_WB,
+                        MediaFormat.MIMETYPE_VIDEO_MPEG4,
+                        MediaFormat.MIMETYPE_VIDEO_H263,
+                        MediaFormat.MIMETYPE_VIDEO_AVC,
+                        MediaFormat.MIMETYPE_VIDEO_HEVC,
+                        MediaFormat.MIMETYPE_VIDEO_VP8,
+                        MediaFormat.MIMETYPE_VIDEO_VP9);
+        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, arrays of bit-rates, sample rates, channel counts
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{64000, 128000}, new int[]{8000, 11025,
                         22050, 44100, 48000}, new int[]{1, 2}},
@@ -309,6 +335,9 @@ public class CodecEncoderTest extends CodecTestBase {
                         , 96000, 192000}, new int[]{1, 2}},
 
                 // Video - CodecMime, arrays of bit-rates, height, width
+                {MediaFormat.MIMETYPE_VIDEO_H263, new int[]{64000}, new int[]{176}, new int[]{144}},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, new int[]{64000}, new int[]{176},
+                        new int[]{144}},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{512000}, new int[]{176, 352, 352, 480}
                         , new int[]{144, 240, 288, 360}},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{512000}, new int[]{176, 352, 352,
@@ -317,10 +346,57 @@ public class CodecEncoderTest extends CodecTestBase {
                         , new int[]{144, 240, 288, 360}},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{512000}, new int[]{176, 352, 352, 480}
                         , new int[]{144, 240, 288, 360}},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{512000}, new int[]{176, 352, 352, 480}
+                        , new int[]{144, 240, 288, 360}},
         });
+
+        ArrayList<String> mimes = new ArrayList<>();
+        if (codecSelKeys.contains(CODEC_SEL_VALUE)) {
+            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+            MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
+            for (MediaCodecInfo codecInfo : codecInfos) {
+                if (!codecInfo.isEncoder()) continue;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
+                String[] types = codecInfo.getSupportedTypes();
+                for (String type : types) {
+                    if (!mimes.contains(type)) {
+                        mimes.add(type);
+                    }
+                }
+            }
+            for (String mime : cddRequiredMimeList) {
+                if (!mimes.contains(mime)) {
+                    fail("no codec found to encoder mime " + mime + " as required by cdd");
+                }
+            }
+        } else {
+            for (Map.Entry<String, String> entry : codecSelKeyMimeMap.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (codecSelKeys.contains(key) && !mimes.contains(value)) mimes.add(value);
+            }
+        }
+        final List<Object[]> argsList = new ArrayList<>();
+        for (String mime : mimes) {
+            boolean miss = true;
+            for (int i = 0; i < exhaustiveArgsList.size(); i++) {
+                if (mime.equals(exhaustiveArgsList.get(i)[0])) {
+                    argsList.add(exhaustiveArgsList.get(i));
+                    miss = false;
+                }
+            }
+            if (miss) {
+                if (cddRequiredMimeList.contains(mime)) {
+                    fail("no testvectors for required mimetype " + mime);
+                }
+                Log.w(LOG_TAG, "no test vectors available for optional mime type " + mime);
+            }
+        }
+        return argsList;
     }
 
-    public void setUpParams() {
+    private void setUpParams(int limit) {
+        int count = 0;
         for (int bitrate : mBitrates) {
             if (mIsAudio) {
                 for (int rate : mEncParamList1) {
@@ -331,6 +407,8 @@ public class CodecEncoderTest extends CodecTestBase {
                         format.setInteger(MediaFormat.KEY_SAMPLE_RATE, rate);
                         format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
                         mFormats.add(format);
+                        count++;
+                        if (count >= limit) return;
                     }
                 }
             } else {
@@ -342,11 +420,13 @@ public class CodecEncoderTest extends CodecTestBase {
                     format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
                     format.setInteger(MediaFormat.KEY_WIDTH, mEncParamList1[i]);
                     format.setInteger(MediaFormat.KEY_HEIGHT, mEncParamList2[i]);
-                    format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+                    format.setInteger(MediaFormat.KEY_FRAME_RATE, mFrameRate);
                     format.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 1.0f);
                     format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                             MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
                     mFormats.add(format);
+                    count++;
+                    if (count >= limit) return;
                 }
             }
         }
@@ -364,8 +444,8 @@ public class CodecEncoderTest extends CodecTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncode() throws IOException, InterruptedException {
-        setUpParams();
-        ArrayList<String> listOfEncoders = selectCodecs(mMime, mFormats, null, true);
+        setUpParams(Integer.MAX_VALUE);
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
         assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         boolean[] boolStates = {true, false};
         setUpSource(mInputFile);
@@ -379,12 +459,11 @@ public class CodecEncoderTest extends CodecTestBase {
                 OutputManager test = mSaveToMem ? new OutputManager() : null;
                 int loopCounter = 0;
                 if (mIsAudio) {
-                    mRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
+                    mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
                     mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
                 } else {
                     mWidth = format.getInteger(MediaFormat.KEY_WIDTH, 352);
                     mHeight = format.getInteger(MediaFormat.KEY_HEIGHT, 288);
-                    mRate = format.getInteger(MediaFormat.KEY_FRAME_RATE, 30);
                 }
                 for (boolean eosType : boolStates) {
                     for (boolean isAsync : boolStates) {
@@ -431,20 +510,19 @@ public class CodecEncoderTest extends CodecTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testFlush() throws IOException, InterruptedException {
+        setUpParams(1);
         ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
         assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         setUpSource(mInputFile);
-        setUpParams();
         boolean[] boolStates = {true, false};
         for (String encoder : listOfEncoders) {
             MediaFormat inpFormat = mFormats.get(0);
             if (mIsAudio) {
-                mRate = inpFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+                mSampleRate = inpFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
                 mChannels = inpFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
             } else {
                 mWidth = inpFormat.getInteger(MediaFormat.KEY_WIDTH);
                 mHeight = inpFormat.getInteger(MediaFormat.KEY_HEIGHT);
-                mRate = inpFormat.getInteger(MediaFormat.KEY_FRAME_RATE);
             }
             mCodec = MediaCodec.createByCodecName(encoder);
             for (boolean isAsync : boolStates) {
@@ -502,10 +580,10 @@ public class CodecEncoderTest extends CodecTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
+        setUpParams(1);
         ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
         assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         setUpSource(mInputFile);
-        setUpParams();
         boolean[] boolStates = {true, false};
         for (String encoder : listOfEncoders) {
             MediaFormat format = mFormats.get(0);
@@ -578,9 +656,9 @@ public class CodecEncoderTest extends CodecTestBase {
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testOnlyEos() throws IOException, InterruptedException {
+        setUpParams(1);
         ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
         assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
-        setUpParams();
         boolean[] boolStates = {true, false};
         for (String encoder : listOfEncoders) {
             mCodec = MediaCodec.createByCodecName(encoder);
