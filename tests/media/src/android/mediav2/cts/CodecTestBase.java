@@ -24,6 +24,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.os.PersistableBundle;
 import android.util.Log;
 import android.util.Pair;
 
@@ -685,5 +686,29 @@ abstract class CodecTestBase {
                     getHeight(inpFormat) == getHeight(outFormat) && inpMime.startsWith("video/");
         }
         return true;
+    }
+
+    PersistableBundle validateMetrics(String codec) {
+        PersistableBundle metrics = mCodec.getMetrics();
+        assertTrue("metrics is null", metrics != null);
+        assertTrue(metrics.getString(MediaCodec.MetricsConstants.CODEC).equals(codec));
+        if (mIsAudio) {
+            assertTrue(metrics.getString(MediaCodec.MetricsConstants.MODE)
+                    .equals(MediaCodec.MetricsConstants.MODE_AUDIO));
+        } else {
+            assertTrue(metrics.getString(MediaCodec.MetricsConstants.MODE)
+                    .equals(MediaCodec.MetricsConstants.MODE_VIDEO));
+        }
+        return metrics;
+    }
+
+    PersistableBundle validateMetrics(String codec, MediaFormat format) {
+        PersistableBundle metrics = validateMetrics(codec);
+        if (!mIsAudio) {
+            assertTrue(metrics.getInt(MediaCodec.MetricsConstants.WIDTH) == getWidth(format));
+            assertTrue(metrics.getInt(MediaCodec.MetricsConstants.HEIGHT) == getHeight(format));
+        }
+        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.SECURE) == 0);
+        return metrics;
     }
 }
