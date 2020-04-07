@@ -23,6 +23,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.os.PersistableBundle;
 import android.util.Log;
 
 import androidx.test.filters.LargeTest;
@@ -304,6 +305,14 @@ public class CodecEncoderTest extends CodecTestBase {
         mSaveToMem = false;
     }
 
+    @Override
+    PersistableBundle validateMetrics(String codec, MediaFormat format) {
+        PersistableBundle metrics = super.validateMetrics(codec, format);
+        assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
+        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 1);
+        return metrics;
+    }
+
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
         final List<String> cddRequiredMimeList =
@@ -475,11 +484,13 @@ public class CodecEncoderTest extends CodecTestBase {
                                 (eosType ? "eos with last frame" : "eos separate"));
                         mOutputBuff = loopCounter == 0 ? ref : test;
                         mOutputBuff.reset();
+                        validateMetrics(encoder);
                         configureCodec(format, isAsync, eosType, true);
                         mCodec.start();
                         doWork(Integer.MAX_VALUE);
                         queueEOS();
                         waitForAllOutputs();
+                        validateMetrics(encoder, format);
                         /* TODO(b/147348711) */
                         if (false) mCodec.stop();
                         else mCodec.reset();
@@ -549,10 +560,13 @@ public class CodecEncoderTest extends CodecTestBase {
                 assertTrue(log + " pts is not strictly increasing",
                         mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts));
 
+                boolean checkMetrics = (mOutputCount != 0);
+
                 /* test flush in running state */
                 flushCodec();
                 mOutputBuff.reset();
                 if (mIsCodecInAsyncMode) mCodec.start();
+                if (checkMetrics) validateMetrics(encoder, inpFormat);
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
@@ -645,6 +659,8 @@ public class CodecEncoderTest extends CodecTestBase {
                 reConfigureCodec(format, !isAsync, false, true);
                 mCodec.start();
                 doWork(23);
+
+                if (mOutputCount != 0) validateMetrics(encoder, format);
 
                 /* test reconfigure codec in running state */
                 reConfigureCodec(format, isAsync, true, true);

@@ -23,6 +23,7 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.os.PersistableBundle;
 import android.util.Log;
 import android.util.Pair;
 
@@ -323,6 +324,14 @@ public class CodecDecoderTest extends CodecTestBase {
         mSaveToMem = false;
     }
 
+    @Override
+    PersistableBundle validateMetrics(String decoder, MediaFormat format) {
+        PersistableBundle metrics = super.validateMetrics(decoder, format);
+        assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
+        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 0);
+        return metrics;
+    }
+
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
         final List<String> cddRequiredMimeList =
@@ -469,6 +478,7 @@ public class CodecDecoderTest extends CodecTestBase {
                     mCodec.getName().equals(decoder));
             assertTrue("error! codec canonical name is null",
                     mCodec.getCanonicalName() != null && !mCodec.getCanonicalName().isEmpty());
+            validateMetrics(decoder);
             int loopCounter = 0;
             for (boolean eosType : boolStates) {
                 for (boolean isAsync : boolStates) {
@@ -491,6 +501,7 @@ public class CodecDecoderTest extends CodecTestBase {
                     doWork(Integer.MAX_VALUE);
                     queueEOS();
                     waitForAllOutputs();
+                    validateMetrics(decoder, format);
                     /* TODO(b/147348711) */
                     if (false) mCodec.stop();
                     else mCodec.reset();
@@ -604,8 +615,11 @@ public class CodecDecoderTest extends CodecTestBase {
                 assertTrue(log + " pts is not strictly increasing",
                         test.isPtsStrictlyIncreasing(mPrevOutputPts));
 
+                boolean checkMetrics = (mOutputCount != 0);
+
                 /* test flush in running state */
                 flushCodec();
+                if (checkMetrics) validateMetrics(decoder, format);
                 if (mIsCodecInAsyncMode) mCodec.start();
                 mSaveToMem = true;
                 test.reset();
@@ -719,14 +733,17 @@ public class CodecDecoderTest extends CodecTestBase {
                 mCodec.start();
                 doWork(23);
 
-                if (validateFormat) {
-                    assertTrue(log + "not received format change",
-                            mIsCodecInAsyncMode ? mAsyncHandle.hasOutputFormatChanged() :
-                                    mSignalledOutFormatChanged);
-                    assertTrue(log + "configured format and output format are not similar",
-                            isFormatSimilar(format,
-                                    mIsCodecInAsyncMode ? mAsyncHandle.getOutputFormat() :
-                                            mOutFormat));
+                if (mOutputCount != 0) {
+                    if (validateFormat) {
+                        assertTrue(log + "not received format change",
+                                mIsCodecInAsyncMode ? mAsyncHandle.hasOutputFormatChanged() :
+                                        mSignalledOutFormatChanged);
+                        assertTrue(log + "configured format and output format are not similar",
+                                isFormatSimilar(format,
+                                        mIsCodecInAsyncMode ? mAsyncHandle.getOutputFormat() :
+                                                mOutFormat));
+                    }
+                    validateMetrics(decoder, format);
                 }
 
                 /* test reconfigure codec in running state */
@@ -806,6 +823,7 @@ public class CodecDecoderTest extends CodecTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
+                validateMetrics(decoder, newFormat);
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
@@ -935,6 +953,7 @@ public class CodecDecoderTest extends CodecTestBase {
                         doWork(Integer.MAX_VALUE);
                         queueEOS();
                         waitForAllOutputs();
+                        validateMetrics(decoder);
                         /* TODO(b/147348711) */
                         if (false) mCodec.stop();
                         else mCodec.reset();
