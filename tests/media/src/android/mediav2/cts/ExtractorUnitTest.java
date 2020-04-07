@@ -790,4 +790,190 @@ public class ExtractorUnitTest {
             }
         }
     }
+
+    @SmallTest
+    public static class TestApiNative {
+        @Rule
+        public TestName testName = new TestName();
+
+        static {
+            System.loadLibrary("ctsmediav2extractor_jni");
+        }
+
+        @Test
+        public void testGetTrackCountBeforeSetDataSource() {
+            assertTrue(nativeTestGetTrackCountBeforeSetDataSource());
+        }
+        private native boolean nativeTestGetTrackCountBeforeSetDataSource();
+
+        @Test
+        public void testSelectTrackBeforeSetDataSource() {
+            assertTrue(nativeTestSelectTrackBeforeSetDataSource());
+        }
+        private native boolean nativeTestSelectTrackBeforeSetDataSource();
+
+        @Test
+        public void testSelectTrackForInvalidIndex() {
+            assertTrue(nativeTestSelectTrackForInvalidIndex(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestSelectTrackForInvalidIndex(String srcPath);
+
+        @Test
+        public void testIdempotentSelectTrack() {
+            assertTrue(nativeTestIdempotentSelectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestIdempotentSelectTrack(String srcPath);
+
+        @Test
+        public void testUnselectTrackBeforeSetDataSource() {
+            assertTrue(nativeTestUnselectTrackBeforeSetDataSource());
+        }
+        private native boolean nativeTestUnselectTrackBeforeSetDataSource();
+
+        @Test
+        public void testUnselectTrackForInvalidIndex() {
+            assertTrue(nativeTestUnselectTrackForInvalidIndex(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestUnselectTrackForInvalidIndex(String srcPath);
+
+        @Test
+        public void testUnselectTrackForUnSelectedTrackIndex() {
+            assertTrue(nativeTestUnselectTrackForUnSelectedTrackIndex(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestUnselectTrackForUnSelectedTrackIndex(String srcPath);
+
+        @Test
+        public void testIdempotentUnselectTrack() {
+            assertTrue(nativeTestIdempotentUnselectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestIdempotentUnselectTrack(String srcPath);
+
+        @Test
+        public void testSeekToBeforeSetDataSource() {
+            assertTrue(nativeTestSeekToBeforeSetDataSource());
+        }
+        private native boolean nativeTestSeekToBeforeSetDataSource();
+
+        @Test
+        public void testSeekToBeforeSelectTrack() {
+            assertTrue(nativeTestSeekToBeforeSelectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestSeekToBeforeSelectTrack(String srcPath);
+
+        @Test
+        @Ignore("TODO(b/148205432)")
+        public void testGetCachedDurationBeforeSetDataSource() {
+            assertTrue(nativeTestGetCachedDurationBeforeSetDataSource());
+        }
+        private native boolean nativeTestGetCachedDurationBeforeSetDataSource();
+
+        @Test
+        public void testIfGetFileFormatSucceedsBeforeSetDataSource() {
+            assertTrue(nativeTestIfGetFileFormatSucceedsBeforeSetDataSource());
+        }
+        private native boolean nativeTestIfGetFileFormatSucceedsBeforeSetDataSource();
+
+        @Test
+        public void testAdvanceBeforeSetDataSource() {
+            assertTrue(nativeTestAdvanceBeforeSetDataSource());
+        }
+        private native boolean nativeTestAdvanceBeforeSetDataSource();
+
+        @Test
+        public void testAdvanceBeforeSelectTrack() {
+            assertTrue(nativeTestAdvanceBeforeSelectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestAdvanceBeforeSelectTrack(String srcPath);
+
+        @Test
+        public void testGetSampleFlagsBeforeSetDataSource() {
+            assertTrue(nativeTestGetSampleFlagsBeforeSetDataSource());
+        }
+        private native boolean nativeTestGetSampleFlagsBeforeSetDataSource();
+
+        @Test
+        public void testGetSampleFlagsBeforeSelectTrack() {
+            assertTrue(nativeTestGetSampleFlagsBeforeSelectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestGetSampleFlagsBeforeSelectTrack(String srcPath);
+
+        @Test
+        public void testGetSampleTimeBeforeSetDataSource() {
+            assertTrue(nativeTestGetSampleTimeBeforeSetDataSource());
+        }
+        private native boolean nativeTestGetSampleTimeBeforeSetDataSource();
+
+        @Test
+        public void testGetSampleTimeBeforeSelectTrack() {
+            assertTrue(nativeTestGetSampleTimeBeforeSelectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestGetSampleTimeBeforeSelectTrack(String srcPath);
+
+        @Test
+        public void testGetSampleSizeBeforeSetDataSource() {
+            assertTrue(nativeTestGetSampleSizeBeforeSetDataSource());
+        }
+        private native boolean nativeTestGetSampleSizeBeforeSetDataSource();
+
+        @Test
+        public void testGetSampleSizeBeforeSelectTrack() {
+            assertTrue(nativeTestGetSampleSizeBeforeSelectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestGetSampleSizeBeforeSelectTrack(String srcPath);
+
+        @Test
+        public void testIfGetSampleFormatBeforeSetDataSource() {
+            assertTrue(nativeTestIfGetSampleFormatBeforeSetDataSource());
+        }
+        private native boolean nativeTestIfGetSampleFormatBeforeSetDataSource();
+
+        @Test
+        public void testIfGetSampleFormatBeforeSelectTrack() {
+            assertTrue(nativeTestIfGetSampleFormatBeforeSelectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestIfGetSampleFormatBeforeSelectTrack(String srcPath);
+
+        @Test
+        public void testGetSampleTrackIndexBeforeSetDataSource() {
+            assertTrue(nativeTestGetSampleTrackIndexBeforeSetDataSource());
+        }
+        private native boolean nativeTestGetSampleTrackIndexBeforeSetDataSource();
+
+        @Test
+        public void testGetSampleTrackIndexBeforeSelectTrack() {
+            assertTrue(
+                    nativeTestGetSampleTrackIndexBeforeSelectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestGetSampleTrackIndexBeforeSelectTrack(String srcPath);
+
+        @Test
+        public void testGetTrackFormatBeforeSetDataSource() {
+            assertTrue(nativeTestGetTrackFormatBeforeSetDataSource());
+        }
+        private native boolean nativeTestGetTrackFormatBeforeSetDataSource();
+
+        @Test
+        public void testGetTrackFormatForInvalidIndex() {
+            assertTrue(nativeTestGetTrackFormatForInvalidIndex(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestGetTrackFormatForInvalidIndex(String srcPath);
+
+        @Test
+        public void testReadSampleDataBeforeSetDataSource() {
+            assertTrue(nativeTestReadSampleDataBeforeSetDataSource());
+        }
+        private native boolean nativeTestReadSampleDataBeforeSetDataSource();
+
+        @Test
+        public void testReadSampleDataBeforeSelectTrack() {
+            assertTrue(nativeTestReadSampleDataBeforeSelectTrack(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestReadSampleDataBeforeSelectTrack(String srcPath);
+
+        @Test
+        public void testIfNullLocationIsRejectedBySetDataSource() {
+            assertTrue(nativeTestIfNullLocationIsRejectedBySetDataSource());
+        }
+        private native boolean nativeTestIfNullLocationIsRejectedBySetDataSource();
+    }
 }
