@@ -108,6 +108,11 @@ public final class TvTrackInfoSubject extends Subject<TvTrackInfoSubject, TvTrac
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
+    public void isEncrypted(boolean enabled) {
+        check("isEncrypted()").that(actual.isEncrypted()).isEqualTo(enabled);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
     public void isHardOfHearing(boolean enabled) {
         check("isHardOfHearing()").that(actual.isHardOfHearing()).isEqualTo(enabled);
     }
