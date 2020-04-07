@@ -1128,15 +1128,6 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             return true;
         }
 
-        // Most types of devices need to support this.
-        int mode = mContext.getResources().getConfiguration().uiMode
-                & Configuration.UI_MODE_TYPE_MASK;
-        if (mode != Configuration.UI_MODE_TYPE_WATCH
-                && mode != Configuration.UI_MODE_TYPE_APPLIANCE) {
-            // Most devices must support the can't save state feature.
-            throw new IllegalStateException("Devices that are not watches or appliances must "
-                    + "support FEATURE_CANT_SAVE_STATE");
-        }
         return false;
     }
 
