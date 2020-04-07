@@ -214,7 +214,7 @@ public class MediaStorePlacementTest {
                 "Android", "media", "android.provider.cts", System.nanoTime() + ".jpg"));
         final Uri uri = ProviderTestUtils.scanFile(file);
 
-        assertFalse(updatePlacement(uri,
+        assertTrue(updatePlacement(uri,
                 Optional.of("Android/media/android.provider.cts/foo"), null));
         assertFalse(updatePlacement(uri,
                 Optional.of("Android/media/com.example/foo"), null));
