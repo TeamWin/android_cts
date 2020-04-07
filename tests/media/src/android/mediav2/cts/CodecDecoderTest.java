@@ -114,7 +114,12 @@ public class CodecDecoderTest extends CodecTestBase {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
             if (mMime.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
                 mExtractor.selectTrack(trackID);
-                return mExtractor.getTrackFormat(trackID);
+                if (!mIsAudio) {
+                    // COLOR_FormatYUV420Flexible by default should be supported by all components
+                    // This call shouldn't effect configure() call for any codec
+                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
+                }
+                return format;
             }
         }
         fail("No track with mime: " + mMime + " found in file: " + srcFile);
@@ -387,9 +392,6 @@ public class CodecDecoderTest extends CodecTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecode() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
@@ -473,9 +475,6 @@ public class CodecDecoderTest extends CodecTestBase {
     public void testFlush() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
@@ -593,10 +592,6 @@ public class CodecDecoderTest extends CodecTestBase {
         mExtractor.release();
         MediaFormat newFormat = setUpSource(mReconfigFile);
         mExtractor.release();
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-            newFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         formats.add(newFormat);
@@ -761,9 +756,6 @@ public class CodecDecoderTest extends CodecTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testOnlyEos() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
@@ -797,9 +789,6 @@ public class CodecDecoderTest extends CodecTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeQueueCSD() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
         Assume.assumeTrue("Format has no CSD, ignoring test for mime:" + mMime, hasCSD(format));
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
@@ -888,9 +877,6 @@ public class CodecDecoderTest extends CodecTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodePartialFrame() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         ArrayList<String> listOfDecoders = selectCodecs(mMime, formats,
