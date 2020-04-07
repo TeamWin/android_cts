@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -188,11 +189,70 @@ class OutputManager {
     private byte[] memory;
     private int memIndex;
     private ArrayList<Long> crc32List;
+    private ArrayList<Long> inpPtsList;
+    private ArrayList<Long> outPtsList;
 
     OutputManager() {
         memory = new byte[1024];
         memIndex = 0;
         crc32List = new ArrayList<>();
+        inpPtsList = new ArrayList<>();
+        outPtsList = new ArrayList<>();
+    }
+
+    void saveInPTS(long pts) {
+        inpPtsList.add(pts);
+    }
+
+    void saveOutPTS(long pts) {
+        outPtsList.add(pts);
+    }
+
+    boolean isPtsStrictlyIncreasing(long lastPts) {
+        boolean res = true;
+        for (int i = 0; i < outPtsList.size(); i++) {
+            if (lastPts < outPtsList.get(i)) {
+                lastPts = outPtsList.get(i);
+            } else {
+                Log.e(LOG_TAG, "Timestamp ordering check failed: last timestamp: " + lastPts +
+                        " current timestamp:" + outPtsList.get(i));
+                res = false;
+                break;
+            }
+        }
+        return res;
+    }
+
+    boolean isOutPtsListIdenticalToInpPtsList(boolean requireSorting) {
+        boolean res;
+        Collections.sort(inpPtsList);
+        if (requireSorting) {
+            Collections.sort(outPtsList);
+        }
+        if (outPtsList.size() != inpPtsList.size()) {
+            Log.e(LOG_TAG, "input and output presentation timestamp list sizes are not identical" +
+                    "exp/rec" + inpPtsList.size() + '/' + outPtsList.size());
+            return false;
+        } else {
+            int count = 0;
+            for (int i = 0; i < outPtsList.size(); i++) {
+                if (!outPtsList.get(i).equals(inpPtsList.get(i))) {
+                    count ++;
+                    Log.e(LOG_TAG, "input output pts mismatch, exp/rec " + outPtsList.get(i) + '/' +
+                            inpPtsList.get(i));
+                    if (count == 20) {
+                        Log.e(LOG_TAG, "stopping after 20 mismatches, ...");
+                        break;
+                    }
+                }
+            }
+            res = (count == 0);
+        }
+        return res;
+    }
+
+    int getOutStreamSize() {
+        return memIndex;
     }
 
     void checksum(ByteBuffer buf, int size) {
@@ -301,6 +361,8 @@ class OutputManager {
     void reset() {
         position(0);
         crc32List.clear();
+        inpPtsList.clear();
+        outPtsList.clear();
     }
 
     float getRmsError(short[] refData) {
@@ -326,6 +388,10 @@ class OutputManager {
         if (!crc32List.equals(that.crc32List)) {
             isEqual = false;
             Log.e(LOG_TAG, "ref and test crc32 checksums mismatch");
+        }
+        if (!outPtsList.equals(that.outPtsList)) {
+            isEqual = false;
+            Log.e(LOG_TAG, "ref and test presentation timestamp mismatch");
         }
         if (memIndex == that.memIndex) {
             int count = 0;
