@@ -16,23 +16,24 @@
 
 package android.server.wm;
 
-import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
-import static android.view.WindowInsets.Type.systemBars;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Type;
 import android.view.WindowInsetsAnimation;
@@ -45,6 +46,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -173,6 +175,38 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT,
                 () -> !rootView.getRootWindowInsets().isVisible(statusBars())
                         && !rootView.getRootWindowInsets().isVisible(navigationBars()));
+    }
+
+    @Test
+    public void testInsetsDispatch() throws Exception {
+        // Start an activity which hides system bars.
+        final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+        PollingCheck.waitFor(TIMEOUT,
+                () -> !rootView.getRootWindowInsets().isVisible(statusBars())
+                        && !rootView.getRootWindowInsets().isVisible(navigationBars()));
+
+        // Add a dialog which hides system bars before the dialog is added to the system while the
+        // system bar was hidden previously, and collect the window insets that the dialog receives.
+        final ArrayList<WindowInsets> windowInsetsList = new ArrayList<>();
+        getInstrumentation().runOnMainSync(() -> {
+            final AlertDialog dialog = new AlertDialog.Builder(activity).create();
+            final Window dialogWindow = dialog.getWindow();
+            dialogWindow.getDecorView().setOnApplyWindowInsetsListener((view, insets) -> {
+                windowInsetsList.add(insets);
+                return view.onApplyWindowInsets(insets);
+            });
+            dialogWindow.getInsetsController().hide(statusBars() | navigationBars());
+            dialog.show();
+        });
+        getInstrumentation().waitForIdleSync();
+
+        // The dialog must never receive any of visible insets of system bars.
+        for (WindowInsets windowInsets : windowInsetsList) {
+            assertFalse(windowInsets.isVisible(statusBars()));
+            assertFalse(windowInsets.isVisible(navigationBars()));
+        }
     }
 
     private static void hideInsets(View view, int types) throws InterruptedException {
