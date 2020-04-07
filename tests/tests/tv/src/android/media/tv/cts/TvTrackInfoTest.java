@@ -45,6 +45,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasEncoding(null);
         assertThat(info).hasLanguage(null);
         assertThat(info).isAudioDescription(false);
+        assertThat(info).isEncrypted(false);
         assertThat(info).isHardOfHearing(false);
         assertThat(info).extra().isNull();
         assertThat(info).hasContentDescription(0);
@@ -64,6 +65,7 @@ public class TvTrackInfoTest {
                 .setAudioSampleRate(48000)
                 .setAudioDescription(true)
                 .setEncoding("test_encoding")
+                .setEncrypted(true)
                 .setLanguage("eng")
                 .setHardOfHearing(true)
                 .setExtra(bundle)
@@ -75,6 +77,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasLanguage("eng");
         assertThat(info).isAudioDescription(true);
+        assertThat(info).isEncrypted(true);
         assertThat(info).isHardOfHearing(true);
         assertThat(info).extra().isEmpty();
         assertThat(info).hasContentDescription(0);
@@ -99,6 +102,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasVideoPixelAspectRatio(1.0f);
         assertThat(info).hasVideoActiveFormatDescription((byte)0);
         assertThat(info).hasLanguage(null);
+        assertThat(info).isEncrypted(false);
         assertThat(info).extra().isNull();
         assertThat(info).hasContentDescription(0);
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
@@ -115,6 +119,7 @@ public class TvTrackInfoTest {
         bundle.putBoolean("testTrue", true);
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "id_video")
                 .setEncoding("test_encoding")
+                .setEncrypted(true)
                 .setVideoWidth(1920)
                 .setVideoHeight(1080)
                 .setVideoFrameRate(29.97f)
@@ -132,6 +137,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasVideoPixelAspectRatio(1.0f);
         assertThat(info).hasVideoActiveFormatDescription((byte) 8);
         assertThat(info).hasLanguage("eng");
+        assertThat(info).isEncrypted(true);
         assertThat(info).extra().bool("testTrue").isTrue();
         assertThat(info).hasContentDescription(0);
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
@@ -152,6 +158,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasId("default");
         assertThat(info).hasEncoding(null);
         assertThat(info).hasLanguage(null);
+        assertThat(info).isEncrypted(false);
         assertThat(info).isHardOfHearing(false);
         assertThat(info).extra().isNull();
         assertThat(info).hasContentDescription(0);
@@ -170,6 +177,7 @@ public class TvTrackInfoTest {
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "id_subtitle")
                 .setLanguage("eng")
                 .setEncoding("test_encoding")
+                .setEncrypted(true)
                 .setHardOfHearing(true)
                 .setExtra(bundle)
                 .build();
@@ -177,6 +185,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasId("id_subtitle");
         assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasLanguage("eng");
+        assertThat(info).isEncrypted(true);
         assertThat(info).isHardOfHearing(true);
         assertThat(info).extra().bool("testTrue").isTrue();
         assertThat(info).hasContentDescription(0);
