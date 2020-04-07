@@ -23,6 +23,9 @@ cc_test_library {
         "libmediandk",
         "liblog",
     ],
+    include_dirs: [
+        "frameworks/av/media/ndk/include/media",
+    ],
     stl: "libc++_static",
     cflags: [
         "-Werror",
@@ -36,10 +39,14 @@ cc_test_library {
     srcs: [
         "NativeMediaConstants.cpp",
         "NativeExtractorTest.cpp",
+        "NativeExtractorUnitTest.cpp",
     ],
     shared_libs: [
         "libmediandk",
         "liblog",
+    ],
+    include_dirs: [
+        "frameworks/av/media/ndk/include/media",
     ],
     stl: "libc++_static",
     cflags: [

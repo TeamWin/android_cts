@@ -16,18 +16,19 @@
 
 package android.mediav2.cts;
 
-import android.content.pm.PackageManager;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.os.Build;
+import android.os.PersistableBundle;
 import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assume;
 import org.junit.Ignore;
@@ -44,6 +45,8 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static org.junit.Assert.assertTrue;
@@ -51,6 +54,12 @@ import static org.junit.Assert.fail;
 
 /**
  * Validate decode functionality of listed decoder components
+ *
+ * The test aims to test all decoders advertised in MediaCodecList. Hence we are not using
+ * MediaCodecList#findDecoderForFormat to create codec. Further, it can so happen that the
+ * test clip chosen is not supported by component (codecCapabilities.isFormatSupported()
+ * fails), then it is better to replace the clip but not skip testing the component. The idea
+ * of these tests are not to cover CDD requirements but to test components and their plugins
  */
 @RunWith(Parameterized.class)
 public class CodecDecoderTest extends CodecTestBase {
@@ -79,17 +88,7 @@ public class CodecDecoderTest extends CodecTestBase {
         mIsAudio = mMime.startsWith("audio/");
     }
 
-    private static boolean isTv() {
-        return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
-    }
-
-    private static boolean shouldRunTest(String mime) {
-        return !mime.equals(MediaFormat.MIMETYPE_VIDEO_AV1) &&
-                (!mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG2) || isTv());
-    }
-
-    private short[] setUpReference() throws IOException {
+    private short[] setUpAudioReference() throws IOException {
         File refFile = new File(mInpPrefix + mRefFile);
         short[] refData;
         try (FileInputStream refStream = new FileInputStream(refFile)) {
@@ -114,7 +113,12 @@ public class CodecDecoderTest extends CodecTestBase {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
             if (mMime.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
                 mExtractor.selectTrack(trackID);
-                return mExtractor.getTrackFormat(trackID);
+                if (!mIsAudio) {
+                    // COLOR_FormatYUV420Flexible by default should be supported by all components
+                    // This call shouldn't effect configure() call for any codec
+                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
+                }
+                return format;
             }
         }
         fail("No track with mime: " + mMime + " found in file: " + srcFile);
@@ -163,6 +167,7 @@ public class CodecDecoderTest extends CodecTestBase {
             mCodec.queueInputBuffer(bufferIndex, 0, size, pts, codecFlags);
             if (size > 0 && (codecFlags & (MediaCodec.BUFFER_FLAG_CODEC_CONFIG |
                     MediaCodec.BUFFER_FLAG_PARTIAL_FRAME)) == 0) {
+                mOutputBuff.saveInPTS(pts);
                 mInputCount++;
             }
         }
@@ -186,6 +191,7 @@ public class CodecDecoderTest extends CodecTestBase {
                 flags);
         if (info.size > 0 && ((flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) &&
                 ((flags & MediaCodec.BUFFER_FLAG_PARTIAL_FRAME) == 0)) {
+            mOutputBuff.saveInPTS(info.presentationTimeUs);
             mInputCount++;
         }
     }
@@ -196,13 +202,14 @@ public class CodecDecoderTest extends CodecTestBase {
                 ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
                 mOutputBuff.saveToMemory(buf, info);
             } else {
+                // tests both getOutputImage and getOutputBuffer. Can do time division
+                // multiplexing but lets allow it for now
                 Image img = mCodec.getOutputImage(bufferIndex);
-                if (img != null) {
-                    mOutputBuff.checksum(img);
-                } else {
-                    ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-                    mOutputBuff.checksum(buf, info.size);
-                }
+                assertTrue(img != null);
+                mOutputBuff.checksum(img);
+
+                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
+                mOutputBuff.checksum(buf, info.size);
             }
         }
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
@@ -213,11 +220,7 @@ public class CodecDecoderTest extends CodecTestBase {
                     info.size + " timestamp: " + info.presentationTimeUs);
         }
         if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
-            if (info.presentationTimeUs <= mPrevOutputPts) {
-                fail("Timestamp ordering check failed: last timestamp: " + mPrevOutputPts +
-                        " current timestamp:" + info.presentationTimeUs);
-            }
-            mPrevOutputPts = info.presentationTimeUs;
+            mOutputBuff.saveOutPTS(info.presentationTimeUs);
             mOutputCount++;
         }
         mCodec.releaseOutputBuffer(bufferIndex, false);
@@ -227,7 +230,7 @@ public class CodecDecoderTest extends CodecTestBase {
             throws InterruptedException {
         int frameCount = 0;
         if (mIsCodecInAsyncMode) {
-            // dequeue output after inputEOS is expected to be done in waitForAllOutputs()
+            // output processing after queuing EOS is done in waitForAllOutputs()
             while (!mAsyncHandle.hasSeenError() && !mSawInputEOS && frameCount < list.size()) {
                 Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getWork();
                 if (element != null) {
@@ -243,7 +246,7 @@ public class CodecDecoderTest extends CodecTestBase {
             }
         } else {
             MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
-            // dequeue output after inputEOS is expected to be done in waitForAllOutputs()
+            // output processing after queuing EOS is done in waitForAllOutputs()
             while (!mSawInputEOS && frameCount < list.size()) {
                 int outputBufferId = mCodec.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
                 if (outputBufferId >= 0) {
@@ -321,9 +324,33 @@ public class CodecDecoderTest extends CodecTestBase {
         mSaveToMem = false;
     }
 
-    @Parameterized.Parameters
+    @Override
+    PersistableBundle validateMetrics(String decoder, MediaFormat format) {
+        PersistableBundle metrics = super.validateMetrics(decoder, format);
+        assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
+        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 0);
+        return metrics;
+    }
+
+    @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        return Arrays.asList(new Object[][]{
+        final List<String> cddRequiredMimeList =
+                Arrays.asList(MediaFormat.MIMETYPE_AUDIO_MPEG,
+                        MediaFormat.MIMETYPE_AUDIO_AAC,
+                        MediaFormat.MIMETYPE_AUDIO_FLAC,
+                        MediaFormat.MIMETYPE_AUDIO_VORBIS,
+                        MediaFormat.MIMETYPE_AUDIO_OPUS,
+                        MediaFormat.MIMETYPE_AUDIO_RAW,
+                        MediaFormat.MIMETYPE_AUDIO_AMR_NB,
+                        MediaFormat.MIMETYPE_AUDIO_AMR_WB,
+                        MediaFormat.MIMETYPE_VIDEO_MPEG4,
+                        MediaFormat.MIMETYPE_VIDEO_H263,
+                        MediaFormat.MIMETYPE_VIDEO_AVC,
+                        MediaFormat.MIMETYPE_VIDEO_HEVC,
+                        MediaFormat.MIMETYPE_VIDEO_VP8,
+                        MediaFormat.MIMETYPE_VIDEO_VP9);
+        if (isTv()) cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
+        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_1ch_8kHz_lame_cbr.mp3",
                         "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3",
                         91.022f * 1.05f},
@@ -349,6 +376,12 @@ public class CodecDecoderTest extends CodecTestBase {
                         "bbb_2ch_44kHz.wav", 0.0f},
                 {MediaFormat.MIMETYPE_AUDIO_RAW, "bbb_2ch_44kHz.wav", "bbb_2ch_44kHz_s16le.raw",
                         "bbb_1ch_16kHz.wav", 0.0f},
+                {MediaFormat.MIMETYPE_AUDIO_G711_ALAW, "bbb_1ch_8kHz_alaw.wav",
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_alaw.wav", 23.08678f * 1.05f},
+                {MediaFormat.MIMETYPE_AUDIO_G711_MLAW, "bbb_1ch_8kHz_mulaw.wav",
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_mulaw.wav", 24.4131f * 1.05f},
+                {MediaFormat.MIMETYPE_AUDIO_MSGSM, "bbb_1ch_8kHz_gsm.wav",
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_gsm.wav", 946.02698f * 1.05f},
                 {MediaFormat.MIMETYPE_AUDIO_VORBIS, "bbb_1ch_16kHz_vorbis.mka",
                         "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_vorbis.mka", -1.0f},
                 {MediaFormat.MIMETYPE_AUDIO_OPUS, "bbb_2ch_48kHz_opus.mka",
@@ -372,6 +405,49 @@ public class CodecDecoderTest extends CodecTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_340x280_768kbps_30fps_av1.mp4", null,
                         "bbb_520x390_1mbps_30fps_av1.mp4", -1.0f},
         });
+        ArrayList<String> mimes = new ArrayList<>();
+        if (codecSelKeys.contains(CODEC_SEL_VALUE)) {
+            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+            MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
+            for (MediaCodecInfo codecInfo : codecInfos) {
+                if (codecInfo.isEncoder()) continue;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
+                String[] types = codecInfo.getSupportedTypes();
+                for (String type : types) {
+                    if (!mimes.contains(type)) {
+                        mimes.add(type);
+                    }
+                }
+            }
+            for (String mime : cddRequiredMimeList) {
+                if (!mimes.contains(mime)) {
+                    fail("no codec found to decode mime " + mime + " as required by cdd");
+                }
+            }
+        } else {
+            for (Map.Entry<String, String> entry : codecSelKeyMimeMap.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                if (codecSelKeys.contains(key) && !mimes.contains(value)) mimes.add(value);
+            }
+        }
+        final List<Object[]> argsList = new ArrayList<>();
+        for (String mime : mimes) {
+            boolean miss = true;
+            for (int i = 0; i < exhaustiveArgsList.size(); i++) {
+                if (mime.equals(exhaustiveArgsList.get(i)[0])) {
+                    argsList.add(exhaustiveArgsList.get(i));
+                    miss = false;
+                }
+            }
+            if (miss) {
+                if (cddRequiredMimeList.contains(mime)) {
+                    fail("no testvectors for required mimetype " + mime);
+                }
+                Log.w(LOG_TAG, "no test vectors available for optional mime type " + mime);
+            }
+        }
+        return argsList;
     }
 
     /**
@@ -387,23 +463,22 @@ public class CodecDecoderTest extends CodecTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecode() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
-        ArrayList<MediaFormat> formats = new ArrayList<>();
-        formats.add(format);
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
         if (listOfDecoders.isEmpty()) {
             mExtractor.release();
-            if (shouldRunTest(mMime)) fail("no suitable codecs found for mime: " + mMime);
-            else Assume.assumeTrue("no suitable codecs found for mime: " + mMime, false);
+            fail("no suitable codecs found for mime: " + mMime);
         }
         boolean[] boolStates = {true, false};
         mSaveToMem = true;
+        OutputManager ref = new OutputManager();
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             mCodec = MediaCodec.createByCodecName(decoder);
-            OutputManager ref = mSaveToMem ? new OutputManager() : null;
-            OutputManager test = mSaveToMem ? new OutputManager() : null;
+            assertTrue("codec name act/got: " + mCodec.getName() + '/' + decoder,
+                    mCodec.getName().equals(decoder));
+            assertTrue("error! codec canonical name is null",
+                    mCodec.getCanonicalName() != null && !mCodec.getCanonicalName().isEmpty());
+            validateMetrics(decoder);
             int loopCounter = 0;
             for (boolean eosType : boolStates) {
                 for (boolean isAsync : boolStates) {
@@ -411,10 +486,8 @@ public class CodecDecoderTest extends CodecTestBase {
                     String log = String.format("codec: %s, file: %s, mode: %s, eos type: %s:: ",
                             decoder, mTestFile, (isAsync ? "async" : "sync"),
                             (eosType ? "eos with last frame" : "eos separate"));
-                    if (mSaveToMem) {
-                        mOutputBuff = loopCounter == 0 ? ref : test;
-                        mOutputBuff.reset();
-                    }
+                    mOutputBuff = loopCounter == 0 ? ref : test;
+                    mOutputBuff.reset();
                     mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                     configureCodec(format, isAsync, eosType, false);
                     MediaFormat defFormat = mCodec.getOutputFormat();
@@ -428,6 +501,7 @@ public class CodecDecoderTest extends CodecTestBase {
                     doWork(Integer.MAX_VALUE);
                     queueEOS();
                     waitForAllOutputs();
+                    validateMetrics(decoder, format);
                     /* TODO(b/147348711) */
                     if (false) mCodec.stop();
                     else mCodec.reset();
@@ -438,8 +512,17 @@ public class CodecDecoderTest extends CodecTestBase {
                         assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
                                 " / " + mInputCount, mInputCount == mOutputCount);
                     }
-                    if (mSaveToMem && loopCounter != 0) {
+                    if (loopCounter != 0) {
                         assertTrue(log + "decoder output is flaky", ref.equals(test));
+                    } else {
+                        if (mIsAudio) {
+                            assertTrue(log + " pts is not strictly increasing",
+                                    ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+                        } else {
+                            assertTrue(
+                                    log + " input pts list and output pts list are not identical",
+                                    ref.isOutPtsListIdenticalToInpPtsList(false));
+                        }
                     }
                     if (validateFormat) {
                         assertTrue(log + "not received format change",
@@ -455,7 +538,7 @@ public class CodecDecoderTest extends CodecTestBase {
             }
             mCodec.release();
             if (mSaveToMem && mRefFile != null && mRmsError >= 0) {
-                short[] refData = setUpReference();
+                short[] refData = setUpAudioReference();
                 assertTrue(String.format("%s rms error too high", mTestFile),
                         ref.getRmsError(refData) <= mRmsError);
             }
@@ -473,15 +556,9 @@ public class CodecDecoderTest extends CodecTestBase {
     public void testFlush() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
-        ArrayList<MediaFormat> formats = new ArrayList<>();
-        formats.add(format);
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
         if (listOfDecoders.isEmpty()) {
-            if (shouldRunTest(mMime)) fail("no suitable codecs found for mime: " + mMime);
-            else Assume.assumeTrue("no suitable codecs found for mime: " + mMime, false);
+            fail("no suitable codecs found for mime: " + mMime);
         }
         mCsdBuffers.clear();
         for (int i = 0; ; i++) {
@@ -493,10 +570,17 @@ public class CodecDecoderTest extends CodecTestBase {
         final long pts = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             decodeToMemory(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
-            OutputManager test = new OutputManager();
+            if (mIsAudio) {
+                assertTrue("reference output pts is not strictly increasing",
+                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+            } else {
+                assertTrue("input pts list and output pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
             mOutputBuff = test;
             setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(decoder);
@@ -526,10 +610,16 @@ public class CodecDecoderTest extends CodecTestBase {
                 queueCodecConfig(); /* flushed codec too soon after start, resubmit csd */
 
                 mExtractor.seekTo(0, mode);
+                test.reset();
                 doWork(23);
+                assertTrue(log + " pts is not strictly increasing",
+                        test.isPtsStrictlyIncreasing(mPrevOutputPts));
+
+                boolean checkMetrics = (mOutputCount != 0);
 
                 /* test flush in running state */
                 flushCodec();
+                if (checkMetrics) validateMetrics(decoder, format);
                 if (mIsCodecInAsyncMode) mCodec.start();
                 mSaveToMem = true;
                 test.reset();
@@ -593,27 +683,30 @@ public class CodecDecoderTest extends CodecTestBase {
         mExtractor.release();
         MediaFormat newFormat = setUpSource(mReconfigFile);
         mExtractor.release();
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-            newFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
-        ArrayList<MediaFormat> formats = new ArrayList<>();
-        formats.add(format);
-        formats.add(newFormat);
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
         if (listOfDecoders.isEmpty()) {
-            if (shouldRunTest(mMime)) fail("no suitable codecs found for mime: " + mMime);
-            else Assume.assumeTrue("no suitable codecs found for mime: " + mMime, false);
+            fail("no suitable codecs found for mime: " + mMime);
         }
         final long pts = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             decodeToMemory(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
             decodeToMemory(mReconfigFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager configRef = mOutputBuff;
-            OutputManager test = new OutputManager();
+            if (mIsAudio) {
+                assertTrue("reference output pts is not strictly increasing",
+                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+                assertTrue("config reference output pts is not strictly increasing",
+                        configRef.isPtsStrictlyIncreasing(mPrevOutputPts));
+            } else {
+                assertTrue("input pts list and reference pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                assertTrue("input pts list and reconfig ref output pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
             mOutputBuff = test;
             mCodec = MediaCodec.createByCodecName(decoder);
             for (boolean isAsync : boolStates) {
@@ -640,14 +733,17 @@ public class CodecDecoderTest extends CodecTestBase {
                 mCodec.start();
                 doWork(23);
 
-                if (validateFormat) {
-                    assertTrue(log + "not received format change",
-                            mIsCodecInAsyncMode ? mAsyncHandle.hasOutputFormatChanged() :
-                                    mSignalledOutFormatChanged);
-                    assertTrue(log + "configured format and output format are not similar",
-                            isFormatSimilar(format,
-                                    mIsCodecInAsyncMode ? mAsyncHandle.getOutputFormat() :
-                                            mOutFormat));
+                if (mOutputCount != 0) {
+                    if (validateFormat) {
+                        assertTrue(log + "not received format change",
+                                mIsCodecInAsyncMode ? mAsyncHandle.hasOutputFormatChanged() :
+                                        mSignalledOutFormatChanged);
+                        assertTrue(log + "configured format and output format are not similar",
+                                isFormatSimilar(format,
+                                        mIsCodecInAsyncMode ? mAsyncHandle.getOutputFormat() :
+                                                mOutFormat));
+                    }
+                    validateMetrics(decoder, format);
                 }
 
                 /* test reconfigure codec in running state */
@@ -727,6 +823,7 @@ public class CodecDecoderTest extends CodecTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
+                validateMetrics(decoder, newFormat);
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
@@ -761,29 +858,42 @@ public class CodecDecoderTest extends CodecTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
     public void testOnlyEos() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
-        ArrayList<MediaFormat> formats = new ArrayList<>();
-        formats.add(format);
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
         if (listOfDecoders.isEmpty()) {
             mExtractor.release();
-            if (shouldRunTest(mMime)) fail("no suitable codecs found for mime: " + mMime);
-            else Assume.assumeTrue("no suitable codecs found for mime: " + mMime, false);
+            fail("no suitable codecs found for mime: " + mMime);
         }
         boolean[] boolStates = {true, false};
+        OutputManager ref = new OutputManager();
+        OutputManager test = new OutputManager();
+        mSaveToMem = true;
         for (String decoder : listOfDecoders) {
             mCodec = MediaCodec.createByCodecName(decoder);
+            int loopCounter = 0;
             for (boolean isAsync : boolStates) {
                 String log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
                         mTestFile, (isAsync ? "async" : "sync"));
                 configureCodec(format, isAsync, false, false);
+                mOutputBuff = loopCounter == 0 ? ref : test;
+                mOutputBuff.reset();
                 mCodec.start();
                 queueEOS();
                 waitForAllOutputs();
                 mCodec.stop();
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
+                if (loopCounter != 0) {
+                    assertTrue(log + "decoder output is flaky", ref.equals(test));
+                } else {
+                    if (mIsAudio) {
+                        assertTrue(log + " pts is not strictly increasing",
+                                ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+                    } else {
+                        assertTrue(
+                                log + " input pts list and output pts list are not identical",
+                                ref.isOutPtsListIdenticalToInpPtsList(false));
+                    }
+                }
+                loopCounter++;
             }
             mCodec.release();
         }
@@ -797,9 +907,6 @@ public class CodecDecoderTest extends CodecTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeQueueCSD() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
         Assume.assumeTrue("Format has no CSD, ignoring test for mime:" + mMime, hasCSD(format));
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
@@ -811,18 +918,17 @@ public class CodecDecoderTest extends CodecTestBase {
                 format.removeKey(csdKey);
             } else break;
         }
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats, null, false);
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
         if (listOfDecoders.isEmpty()) {
             mExtractor.release();
-            if (shouldRunTest(mMime)) fail("no suitable codecs found for mime: " + mMime);
-            else Assume.assumeTrue("no suitable codecs found for mime: " + mMime, false);
+            fail("no suitable codecs found for mime: " + mMime);
         }
         boolean[] boolStates = {true, false};
         mSaveToMem = true;
+        OutputManager ref = new OutputManager();
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             mCodec = MediaCodec.createByCodecName(decoder);
-            OutputManager ref = mSaveToMem ? new OutputManager() : null;
-            OutputManager test = mSaveToMem ? new OutputManager() : null;
             int loopCounter = 0;
             for (MediaFormat fmt : formats) {
                 for (boolean eosMode : boolStates) {
@@ -831,10 +937,8 @@ public class CodecDecoderTest extends CodecTestBase {
                         String log = String.format("codec: %s, file: %s, mode: %s, eos type: %s:: ",
                                 decoder, mTestFile, (isAsync ? "async" : "sync"),
                                 (eosMode ? "eos with last frame" : "eos separate"));
-                        if (mSaveToMem) {
-                            mOutputBuff = loopCounter == 0 ? ref : test;
-                            mOutputBuff.reset();
-                        }
+                        mOutputBuff = loopCounter == 0 ? ref : test;
+                        mOutputBuff.reset();
                         mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                         configureCodec(fmt, isAsync, eosMode, false);
                         MediaFormat defFormat = mCodec.getOutputFormat();
@@ -849,6 +953,7 @@ public class CodecDecoderTest extends CodecTestBase {
                         doWork(Integer.MAX_VALUE);
                         queueEOS();
                         waitForAllOutputs();
+                        validateMetrics(decoder);
                         /* TODO(b/147348711) */
                         if (false) mCodec.stop();
                         else mCodec.reset();
@@ -860,8 +965,17 @@ public class CodecDecoderTest extends CodecTestBase {
                                     log + "input count != output count, act/exp: " + mOutputCount +
                                             " / " + mInputCount, mInputCount == mOutputCount);
                         }
-                        if (mSaveToMem && loopCounter != 0) {
+                        if (loopCounter != 0) {
                             assertTrue(log + "decoder output is flaky", ref.equals(test));
+                        } else {
+                            if (mIsAudio) {
+                                assertTrue(log + " pts is not strictly increasing",
+                                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+                            } else {
+                                assertTrue(
+                                        log + " input pts list and output pts list are not identical",
+                                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                            }
                         }
                         if (validateFormat) {
                             assertTrue(log + "not received format change",
@@ -888,21 +1002,23 @@ public class CodecDecoderTest extends CodecTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testDecodePartialFrame() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
-        if (!mIsAudio) {
-            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-        }
-        ArrayList<MediaFormat> formats = new ArrayList<>();
-        formats.add(format);
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, formats,
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null,
                 new String[]{MediaCodecInfo.CodecCapabilities.FEATURE_PartialFrame}, false);
         boolean[] boolStates = {true, false};
         int frameLimit = 10;
         ByteBuffer buffer = ByteBuffer.allocate(4 * 1024 * 1024);
+        OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
             decodeToMemory(mTestFile, decoder, 0, MediaExtractor.SEEK_TO_CLOSEST_SYNC, frameLimit);
             mCodec = MediaCodec.createByCodecName(decoder);
             OutputManager ref = mOutputBuff;
-            OutputManager test = new OutputManager();
+            if (mIsAudio) {
+                assertTrue("reference output pts is not strictly increasing",
+                        ref.isPtsStrictlyIncreasing(mPrevOutputPts));
+            } else {
+                assertTrue("input pts list and output pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
             mSaveToMem = true;
             mOutputBuff = test;
             for (boolean isAsync : boolStates) {
