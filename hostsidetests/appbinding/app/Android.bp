@@ -32,6 +32,8 @@ java_defaults {
     static_libs: [
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "androidx.legacy_legacy-support-v4",
+        "androidx.test.rules",
     ],
 }
 
