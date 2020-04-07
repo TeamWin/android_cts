@@ -306,9 +306,48 @@ public class StagedInstallTest {
         waitForIsReadyBroadcast(secondSessionId);
         List<Integer> stagedSessionIds = packageInstaller.getActiveStagedSessions()
                 .stream().map(s -> s.getSessionId()).collect(Collectors.toList());
-        assertThat(stagedSessionIds).hasSize(2);
-        assertThat(stagedSessionIds).contains(firstSessionId);
-        assertThat(stagedSessionIds).contains(secondSessionId);
+        assertThat(stagedSessionIds).containsExactly(firstSessionId, secondSessionId);
+
+        // Verify no other session is considered as active staged session
+        List<PackageInstaller.SessionInfo> allSessions = packageInstaller.getAllSessions();
+        for (PackageInstaller.SessionInfo session : allSessions) {
+            if (session.isStagedSessionActive()) {
+                assertThat(stagedSessionIds).contains(session.getSessionId());
+            }
+        }
+    }
+
+    /**
+     * Verifies that active staged session fulfils conditions stated at
+     * {@link PackageInstaller.SessionInfo#isStagedSessionActive}
+     */
+    @Test
+    public void testIsStagedSessionActive() throws Exception {
+        PackageInstaller packageInstaller = getPackageInstaller();
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        // Currently abandoning a session before pre-reboot verification finishes might result in
+        // a system_server crash. Before that issue is resolved we need to manually wait for
+        // pre-reboot verification to finish before abandoning sessions.
+        // TODO(b/145925842): remove following two lines after fixing the bug.
+        waitForIsReadyBroadcast(sessionId);
+
+        List<PackageInstaller.SessionInfo> allSessions = packageInstaller.getAllSessions();
+        boolean activeStagedSessionFound = false;
+        for (PackageInstaller.SessionInfo session : allSessions) {
+            // If it fulfils conditions, then it should be an active staged session
+            if (session.isStaged() && session.isCommitted() && !session.isStagedSessionApplied()
+                    && !session.isStagedSessionFailed()) {
+                activeStagedSessionFound = true;
+                assertThat(session.getSessionId()).isEqualTo(sessionId);
+                assertThat(session.isStagedSessionActive()).isTrue();
+            } else {
+                // Otherwise, it should not be marked as active staged session
+                assertThat(session.getSessionId()).isNotEqualTo(sessionId);
+                assertThat(session.isStagedSessionActive()).isFalse();
+            }
+        }
+        assertWithMessage("Did not find any active staged session")
+                .that(activeStagedSessionFound).isTrue();
     }
 
     @Test
@@ -335,9 +374,7 @@ public class StagedInstallTest {
         waitForIsReadyBroadcast(secondSessionId);
         List<Integer> stagedSessionIds = getPackageInstaller().getActiveStagedSessions()
                 .stream().map(s -> s.getSessionId()).collect(Collectors.toList());
-        assertThat(stagedSessionIds).hasSize(2);
-        assertThat(stagedSessionIds).contains(firstSessionId);
-        assertThat(stagedSessionIds).contains(secondSessionId);
+        assertThat(stagedSessionIds).containsExactly(firstSessionId, secondSessionId);
     }
 
     @Test
