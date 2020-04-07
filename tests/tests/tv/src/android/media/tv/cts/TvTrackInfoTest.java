@@ -43,6 +43,7 @@ public class TvTrackInfoTest {
                 .setAudioDescription(true)
                 .setEncoding("test_encoding")
                 .setLanguage("eng")
+                .setHardOfHearing(true)
                 .setExtra(bundle)
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_AUDIO);
@@ -52,6 +53,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasLanguage("eng");
         assertThat(info).isAudioDescription(true);
+        assertThat(info).isHardOfHearing(true);
         assertThat(info).extra().isEmpty();
         assertThat(info).hasContentDescription(0);
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
@@ -102,12 +104,14 @@ public class TvTrackInfoTest {
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "id_subtitle")
                 .setLanguage("eng")
                 .setEncoding("test_encoding")
+                .setHardOfHearing(true)
                 .setExtra(bundle)
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_SUBTITLE);
         assertThat(info).hasId("id_subtitle");
         assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasLanguage("eng");
+        assertThat(info).isHardOfHearing(true);
         assertThat(info).extra().bool("testTrue").isTrue();
         assertThat(info).hasContentDescription(0);
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
