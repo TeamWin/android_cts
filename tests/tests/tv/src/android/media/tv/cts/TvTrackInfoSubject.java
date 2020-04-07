@@ -102,6 +102,11 @@ public final class TvTrackInfoSubject extends Subject<TvTrackInfoSubject, TvTrac
         check("getVideoWidth()").that(actual.getVideoWidth()).isEqualTo(width);
     }
 
+    @RequiresApi(Build.VERSION_CODES.R)
+    public void isAudioDescription(boolean enabled) {
+        check("isAudioDescription()").that(actual.isAudioDescription()).isEqualTo(enabled);
+    }
+
     public BundleSubject extra() {
         SimpleSubjectBuilder<? extends BundleSubject, Bundle> bundleSubjectBuilder = check(
                 "getExtra()").about(BundleSubject.bundles());

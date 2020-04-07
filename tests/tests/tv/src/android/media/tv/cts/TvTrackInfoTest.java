@@ -40,6 +40,7 @@ public class TvTrackInfoTest {
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "id_audio")
                 .setAudioChannelCount(2)
                 .setAudioSampleRate(48000)
+                .setAudioDescription(true)
                 .setEncoding("test_encoding")
                 .setLanguage("eng")
                 .setExtra(bundle)
@@ -50,6 +51,7 @@ public class TvTrackInfoTest {
         assertThat(info).hasAudioSampleRate(48000);
         assertThat(info).hasEncoding("test_encoding");
         assertThat(info).hasLanguage("eng");
+        assertThat(info).isAudioDescription(true);
         assertThat(info).extra().isEmpty();
         assertThat(info).hasContentDescription(0);
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
