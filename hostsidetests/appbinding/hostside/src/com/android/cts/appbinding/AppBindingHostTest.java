@@ -15,16 +15,29 @@
  */
 package com.android.cts.appbinding;
 
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class AppBindingHostTest extends BaseHostJUnit4Test implements IBuildReceiver {
 
     private static final boolean SKIP_UNINSTALL = false;
 
@@ -166,8 +179,8 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
         runCommand("cmd role add-role-holder --user " + userId + " android.app.role.SMS " + pkg);
     }
 
-    private void uninstallTestApps() throws Exception {
-        if (SKIP_UNINSTALL) {
+    private void uninstallTestApps(boolean always) throws Exception {
+        if (SKIP_UNINSTALL && !always) {
             return;
         }
         getDevice().uninstallPackage(PACKAGE_A);
@@ -194,24 +207,20 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
         throw lastThrowable;
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUp() throws Exception {
         // Reset to the default setting.
         updateConstants(",");
 
-        uninstallTestApps();
+        uninstallTestApps(true);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        uninstallTestApps();
+    @After
+    public void tearDown() throws Exception {
+        uninstallTestApps(false);
 
         // Reset to the default setting.
         updateConstants(",");
-
-        super.tearDown();
     }
 
     private void installAndCheckBound(String apk, String packageName,
@@ -329,6 +338,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * Install APK 1 and make it the default SMS app and make sure the service gets bound.
      */
+    @Test
     public void testSimpleBind1() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -341,6 +351,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * Install APK 2 and make it the default SMS app and make sure the service gets bound.
      */
+    @Test
     public void testSimpleBind2() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -353,6 +364,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * Install APK B and make it the default SMS app and make sure the service gets bound.
      */
+    @Test
     public void testSimpleBindB() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -365,6 +377,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * APK 3 doesn't have a valid service to be bound.
      */
+    @Test
     public void testSimpleNotBound3() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -378,6 +391,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * APK 4 doesn't have a valid service to be bound.
      */
+    @Test
     public void testSimpleNotBound4() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -390,6 +404,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * APK 5 doesn't have a valid service to be bound.
      */
+    @Test
     public void testSimpleNotBound5() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -403,6 +418,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * APK 6's service doesn't have android:process.
      */
+    @Test
     public void testSimpleNotBound6() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -416,6 +432,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * Make sure when the SMS app gets updated, the service still gets bound correctly.
      */
+    @Test
     public void testUpgrade() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -431,9 +448,15 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
         installAndCheckNotBound(APK_4, PACKAGE_A, USER_SYSTEM, "More than one");
     }
 
+    private void enableTargetService(boolean enable) throws DeviceNotAvailableException {
+        runDeviceTests(PACKAGE_A, "com.android.cts.appbinding.app.MyEnabler",
+                enable ? "enableService" : "disableService");
+    }
+
     /**
      * Make sure the service responds to setComponentEnabled.
      */
+    @Test
     public void testServiceEnabledByDefault() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -444,7 +467,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
 
         // Disable the component and now it should be unbound.
 
-        runCommand(String.format("pm disable %s/%s", PACKAGE_A, SERVICE_1));
+        enableTargetService(false);
 
         Thread.sleep(2); // Technically not needed, but allow the system to handle the broadcast.
 
@@ -452,7 +475,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
                 "Service with android.telephony.action.CARRIER_MESSAGING_CLIENT_SERVICE not found");
 
         // Enable the component and now it should be bound.
-        runCommand(String.format("pm enable %s/%s", PACKAGE_A, SERVICE_1));
+        enableTargetService(true);
 
         Thread.sleep(2); // Technically not needed, but allow the system to handle the broadcast.
 
@@ -462,6 +485,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * Make sure the service responds to setComponentEnabled.
      */
+    @Test
     public void testServiceDisabledByDefault() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -473,7 +497,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
                 "Service with android.telephony.action.CARRIER_MESSAGING_CLIENT_SERVICE not found");
 
         // Enable the component and now it should be bound.
-        runCommand(String.format("pm enable %s/%s", PACKAGE_A, SERVICE_1));
+        enableTargetService(true);
 
         Thread.sleep(2); // Technically not needed, but allow the system to handle the broadcast.
 
@@ -481,7 +505,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
 
         // Disable the component and now it should be unbound.
 
-        runCommand(String.format("pm disable %s/%s", PACKAGE_A, SERVICE_1));
+        enableTargetService(false);
 
         Thread.sleep(2); // Technically not needed, but allow the system to handle the broadcast.
 
@@ -492,6 +516,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * Make sure when the SMS app is uninstalled, the binding will be gone.
      */
+    @Test
     public void testUninstall() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -516,6 +541,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * Make sure when the SMS app changes, the service still gets bound correctly.
      */
+    @Test
     public void testSwitchDefaultApp() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -541,6 +567,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
         });
     }
 
+    @Test
     public void testSecondaryUser() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -596,6 +623,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
         assertUserHasNoFinder(userId);
     }
 
+    @Test
     public void testCrashAndAutoRebind() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -678,6 +706,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
     /**
      * Test the feature flag.
      */
+    @Test
     public void testFeatureDisabled() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
@@ -699,6 +728,7 @@ ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
         });
     }
 
+    @Test
     public void testOomAdjustment() throws Throwable {
         if (!isSmsCapable()) {
             // device not supporting sms. cannot run the test.
