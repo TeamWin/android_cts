@@ -17,6 +17,11 @@
 package android.server.wm;
 
 import static android.server.wm.app.Components.TEST_DREAM_SERVICE;
+import static android.server.wm.app.Components.TEST_STUBBORN_DREAM_SERVICE;
+import static android.server.wm.ComponentNameUtils.getWindowName;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.app.DreamManager;
 import android.content.ComponentName;
@@ -32,9 +37,18 @@ import org.junit.Test;
 @FlakyTest(detail = "Promote once confirmed non-flaky")
 public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
-    private static final ComponentName DREAM_ACTIVITY_COMPONENT_NAME =
-            new ComponentName(TEST_DREAM_SERVICE.getPackageName(),
-                              "android.service.dreams.DreamActivity");
+    // Timeout after which the dream should have finished willingly
+    private static final long ACTIVITY_STOP_TIMEOUT = 3000;
+
+    // Timeout after which the dream should have been forcefully stopped
+    private static final long ACTIVITY_FORCE_STOP_TIMEOUT = 5500;
+
+    private ComponentName mDreamActivityName;
+
+    private static final ComponentName getDreamActivityName(ComponentName dream) {
+        return new ComponentName(dream.getPackageName(),
+                                 "android.service.dreams.DreamActivity");
+    }
 
     private void startDream(ComponentName name) {
         DreamManager dreamer = mContext.getSystemService(DreamManager.class);
@@ -55,6 +69,20 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             dreamer.setActiveDream(dream);
         });
+        mDreamActivityName = getDreamActivityName(dream);
+    }
+
+    private boolean getIsDreaming() {
+        DreamManager dreamer = mContext.getSystemService(DreamManager.class);
+        return SystemUtil.runWithShellPermissionIdentity(() -> {
+            return dreamer.isDreaming();
+        });
+    }
+
+    private void assertDreamActivityIsGone() {
+        mWmState.computeState();
+        assertTrue(!mWmState.containsWindow(getWindowName(mDreamActivityName))
+                   && !mWmState.containsActivity(mDreamActivityName));
     }
 
     @Test
@@ -62,13 +90,48 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         setActiveDream(TEST_DREAM_SERVICE);
 
         startDream(TEST_DREAM_SERVICE);
-        mWmState.waitForValidState(DREAM_ACTIVITY_COMPONENT_NAME);
-        mWmState.assertVisibility(DREAM_ACTIVITY_COMPONENT_NAME, true);
+        mWmState.waitForValidState(mDreamActivityName);
+        mWmState.assertVisibility(mDreamActivityName, true);
+        mWmState.assertHomeActivityVisible(false);
+
+        assertTrue(getIsDreaming());
+
+        stopDream();
+        mWmState.waitAndAssertActivityRemoved(mDreamActivityName);
+
+        mWmState.assertHomeActivityVisible(true);
+    }
+
+    @Test
+    public void testDreamServiceStopsTimely() throws Exception {
+        setActiveDream(TEST_DREAM_SERVICE);
+
+        startDream(TEST_DREAM_SERVICE);
+        mWmState.waitForValidState(mDreamActivityName);
+        assertTrue(getIsDreaming());
+
+        stopDream();
+
+        Thread.sleep(ACTIVITY_STOP_TIMEOUT);
+
+        assertDreamActivityIsGone();
+        assertFalse(getIsDreaming());
+    }
+
+    @Test
+    public void testForceStopStubbornDream() throws Exception {
+        setActiveDream(TEST_STUBBORN_DREAM_SERVICE);
+
+        startDream(TEST_STUBBORN_DREAM_SERVICE);
+        mWmState.waitForValidState(mDreamActivityName);
+        mWmState.assertVisibility(mDreamActivityName, true);
         mWmState.assertHomeActivityVisible(false);
 
         stopDream();
-        mWmState.waitAndAssertActivityRemoved(DREAM_ACTIVITY_COMPONENT_NAME);
 
-        mWmState.assertHomeActivityVisible(true);
+        Thread.sleep(ACTIVITY_FORCE_STOP_TIMEOUT);
+
+        assertDreamActivityIsGone();
+        assertFalse(getIsDreaming());
     }
 }

@@ -210,6 +210,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName TEST_DREAM_SERVICE =
             component("TestDream");
 
+    public static final ComponentName TEST_STUBBORN_DREAM_SERVICE =
+            component("TestStubbornDream");
+
     /**
      * Action and extra key constants for {@link #INPUT_METHOD_TEST_ACTIVITY}.
      */
