@@ -47,7 +47,7 @@ public class KeyProtectionTest extends TestCase {
         assertTrue(spec.isRandomizedEncryptionRequired());
         MoreAsserts.assertEmpty(Arrays.asList(spec.getSignaturePaddings()));
         assertFalse(spec.isUserAuthenticationRequired());
-        assertEquals(-1, spec.getUserAuthenticationValidityDurationSeconds());
+        assertEquals(0, spec.getUserAuthenticationValidityDurationSeconds());
         assertEquals(GateKeeper.INVALID_SECURE_USER_ID, spec.getBoundToSpecificSecureUserId());
         assertFalse(spec.isUnlockedDeviceRequired());
     }
