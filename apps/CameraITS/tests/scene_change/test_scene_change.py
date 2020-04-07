@@ -24,12 +24,12 @@ import its.objects
 
 BRIGHT_CHANGE_TOL = 0.2
 CONTINUOUS_PICTURE_MODE = 4
-CONVERGED_3A = [[2, 2, 2], [2, 5, 2], [2, 6, 2]]  # [AE, AF, AWB]
+CONVERGED_3A = [2, 2, 2]  # [AE, AF, AWB]
 # AE_STATES: {0: INACTIVE, 1: SEARCHING, 2: CONVERGED, 3: LOCKED,
 #             4: FLASH_REQ, 5: PRECAPTURE}
 # AF_STATES: {0: INACTIVE, 1: PASSIVE_SCAN, 2: PASSIVE_FOCUSED,
-#             3: PASSIVE_UNFOCUSED, 4: ACTIVE_SCAN, 5: FOCUS_LOCKED,
-#             6: NOT_FOCUSED_LOCKED}
+#             3: ACTIVE_SCAN, 4: FOCUS_LOCKED, 5: NOT_FOCUSED_LOCKED,
+#             6: PASSIVE_UNFOCUSED}
 # AWB_STATES: {0: INACTIVE, 1: SEARCHING, 2: CONVERGED, 3: LOCKED}
 DELAY_CAPTURE = 1.5  # delay in first capture to sync events (sec)
 DELAY_DISPLAY = 3.0  # time when display turns OFF (sec)
@@ -52,7 +52,7 @@ def get_cmd_line_args():
 def mask_3a_settling_frames(cap_data):
     converged_frame = -1
     for i, cap in enumerate(cap_data):
-        if cap['3a_state'] in CONVERGED_3A:
+        if cap['3a_state'] == CONVERGED_3A:
             converged_frame = i
             break
     print 'Frames index where 3A converges: %d' % converged_frame
