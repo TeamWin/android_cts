@@ -57,6 +57,15 @@ public class PersonalAppsSuspensionTest {
     }
 
     @Test
+    public void testSetManagedProfileMaximumTimeOff() {
+        final long timeout = 123456789;
+        mDpm.setManagedProfileMaximumTimeOff(ADMIN, timeout);
+        assertThat(mDpm.getManagedProfileMaximumTimeOff(ADMIN)).isEqualTo(timeout);
+        mDpm.setManagedProfileMaximumTimeOff(ADMIN, 0);
+        assertThat(mDpm.getManagedProfileMaximumTimeOff(ADMIN)).isEqualTo(0);
+    }
+
+    @Test
     public void testPersonalAppsSuspendedByTimeout() {
         assertThat(mDpm.getPersonalAppsSuspendedReasons(ADMIN))
                 .isEqualTo(DevicePolicyManager.PERSONAL_APPS_SUSPENDED_PROFILE_TIMEOUT);
