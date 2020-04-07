@@ -155,7 +155,8 @@ public class CtsSharesheetDeviceTest {
 
         // We want to only show targets in the sheet put forth by the CTS test. In order to do that
         // a special type is used but this doesn't prevent apps registered against */* from showing.
-        // To hide */* targets, search for all matching targets and exclude them.
+        // To hide */* targets, search for all matching targets and exclude them. Requires
+        // permission android.permission.QUERY_ALL_PACKAGES.
         List<ResolveInfo> matchingTargets = mContext.getPackageManager().queryIntentActivities(
                 createMatchingIntent(),
                 PackageManager.MATCH_DEFAULT_ONLY | PackageManager.GET_META_DATA
@@ -199,7 +200,7 @@ public class CtsSharesheetDeviceTest {
     @Test
     public void bulkTest1() {
         try {
-            launchSharesheet(createShareIntent(true /* test content preview */,
+            launchSharesheet(createShareIntent(false /* do not test preview */,
                     0 /* do not test EIIs */,
                     0 /* do not test ECTs */));
 
@@ -207,8 +208,6 @@ public class CtsSharesheetDeviceTest {
             showsApplicationLabel();
             showsAppAndActivityLabel();
             showsAppAndIntentFilterLabel();
-            showsContentPreviewTitle();
-            showsContentPreviewText();
             isChooserTargetServiceDirectShareEnabled();
 
             // Must be run last, partial completion closes the Sharesheet
@@ -243,6 +242,25 @@ public class CtsSharesheetDeviceTest {
         }
     }
 
+    /**
+     * Testing content preview must be isolated into its own test because in AOSP on small devices
+     * the preview can push app and direct share content offscreen because of its height.
+     */
+    @Test
+    public void contentPreviewTest() {
+        try {
+            launchSharesheet(createShareIntent(true /* test content preview */,
+                    0 /* do not test EIIs */,
+                    0 /* do not test ECTs */));
+            showsContentPreviewTitle();
+            showsContentPreviewText();
+        } catch (Exception e) {
+            // No-op
+        } finally {
+            closeSharesheet();
+        }
+    }
+
     /*
     Test methods
      */
@@ -250,6 +268,8 @@ public class CtsSharesheetDeviceTest {
     /**
      * Tests API compliance for Intent.EXTRA_EXCLUDE_COMPONENTS. This test is necessary for other
      * tests to run as expected.
+     *
+     * Requires content loaded with permission: android.permission.QUERY_ALL_PACKAGES
      */
     public void doesExcludeComponents() {
         // The excluded component should not be found on screen
