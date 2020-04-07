@@ -485,7 +485,13 @@ abstract class CodecTestBase {
             boolean isEncoder) {
         resetContext(isAsync, signalEOSWithLastFrame);
         mAsyncHandle.setCallBack(mCodec, isAsync);
-        mCodec.configure(format, null, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+        // signalEOS flag has nothing to do with configure. We are using this flag to try all
+        // available configure apis
+        if (signalEOSWithLastFrame) {
+            mCodec.configure(format, null, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+        } else {
+            mCodec.configure(format, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0, null);
+        }
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
         }
@@ -493,6 +499,7 @@ abstract class CodecTestBase {
 
     void flushCodec() {
         mCodec.flush();
+        // TODO(b/147576107): is it ok to clearQueues right away or wait for some signal
         mAsyncHandle.clearQueues();
         mSawInputEOS = false;
         mSawOutputEOS = false;
@@ -612,7 +619,7 @@ abstract class CodecTestBase {
             String[] features, boolean isEncoder) {
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
-        ArrayList<String> listOfDecoders = new ArrayList<>();
+        ArrayList<String> listOfCodecs = new ArrayList<>();
         for (MediaCodecInfo codecInfo : codecInfos) {
             if (codecInfo.isEncoder() != isEncoder) continue;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
@@ -638,11 +645,11 @@ abstract class CodecTestBase {
                             }
                         }
                     }
-                    if (isOk) listOfDecoders.add(codecInfo.getName());
+                    if (isOk) listOfCodecs.add(codecInfo.getName());
                 }
             }
         }
-        return listOfDecoders;
+        return listOfCodecs;
     }
 
     static int getWidth(MediaFormat format) {

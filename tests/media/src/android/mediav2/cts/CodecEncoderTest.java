@@ -289,11 +289,11 @@ public class CodecEncoderTest extends CodecTestBase {
         setUpSource(file);
         configureCodec(format, false, true, true);
         if (mIsAudio) {
-            mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
-            mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
+            mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
         } else {
-            mWidth = format.getInteger(MediaFormat.KEY_WIDTH, 352);
-            mHeight = format.getInteger(MediaFormat.KEY_HEIGHT, 288);
+            mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
+            mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
         }
         mCodec.start();
         doWork(frameLimit);
@@ -451,17 +451,21 @@ public class CodecEncoderTest extends CodecTestBase {
         OutputManager test = new OutputManager();
         for (String encoder : listOfEncoders) {
             mCodec = MediaCodec.createByCodecName(encoder);
+            assertTrue("codec name act/got: " + mCodec.getName() + '/' + encoder,
+                    mCodec.getName().equals(encoder));
+            assertTrue("error! codec canonical name is null",
+                    mCodec.getCanonicalName() != null && !mCodec.getCanonicalName().isEmpty());
             /* TODO(b/149027258) */
             if (true) mSaveToMem = false;
             else mSaveToMem = true;
             for (MediaFormat format : mFormats) {
                 int loopCounter = 0;
                 if (mIsAudio) {
-                    mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
-                    mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
+                    mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+                    mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
                 } else {
-                    mWidth = format.getInteger(MediaFormat.KEY_WIDTH, 352);
-                    mHeight = format.getInteger(MediaFormat.KEY_HEIGHT, 288);
+                    mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
+                    mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
                 }
                 for (boolean eosType : boolStates) {
                     for (boolean isAsync : boolStates) {
@@ -603,13 +607,19 @@ public class CodecEncoderTest extends CodecTestBase {
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
-        setUpParams(1);
+        setUpParams(2);
         ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
         assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         setUpSource(mInputFile);
         boolean[] boolStates = {true, false};
         OutputManager test = new OutputManager();
         for (String encoder : listOfEncoders) {
+            OutputManager configRef = null;
+            if (mFormats.size() > 1) {
+                MediaFormat format = mFormats.get(1);
+                encodeToMemory(mInputFile, encoder, Integer.MAX_VALUE, format);
+                configRef = mOutputBuff;
+            }
             MediaFormat format = mFormats.get(0);
             encodeToMemory(mInputFile, encoder, Integer.MAX_VALUE, format);
             OutputManager ref = mOutputBuff;
@@ -665,7 +675,9 @@ public class CodecEncoderTest extends CodecTestBase {
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
-                mCodec.stop();
+                /* TODO(b/147348711) */
+                if (false) mCodec.stop();
+                else mCodec.reset();
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
@@ -674,6 +686,27 @@ public class CodecEncoderTest extends CodecTestBase {
                             " / " + mInputCount, mInputCount == mOutputCount);
                 }
                 assertTrue(log + "encoder output is flaky", ref.equals(test));
+
+                /* test reconfigure codec for new format */
+                if (mFormats.size() > 1) {
+                    reConfigureCodec(mFormats.get(1), isAsync, false, true);
+                    mCodec.start();
+                    test.reset();
+                    doWork(Integer.MAX_VALUE);
+                    queueEOS();
+                    waitForAllOutputs();
+                    /* TODO(b/147348711) */
+                    if (false) mCodec.stop();
+                    else mCodec.reset();
+                    assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
+                    assertTrue(log + "no input sent", 0 != mInputCount);
+                    assertTrue(log + "output received", 0 != mOutputCount);
+                    if (!mIsAudio) {
+                        assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
+                                " / " + mInputCount, mInputCount == mOutputCount);
+                    }
+                    assertTrue(log + "encoder output is flaky", configRef.equals(test));
+                }
                 mSaveToMem = false;
             }
             mCodec.release();
