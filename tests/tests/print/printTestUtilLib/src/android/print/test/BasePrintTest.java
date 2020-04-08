@@ -62,7 +62,6 @@ import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
 import android.provider.Settings;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -133,15 +132,6 @@ public abstract class BasePrintTest {
             new DeviceInteractionHelperRule(ICtsPrintHelper.class);
 
     protected ICtsPrintHelper mPrintHelper;
-
-    /**
-     * Return the UI device
-     *
-     * @return the UI device
-     */
-    public static UiDevice getUiDevice() {
-        return UiDevice.getInstance(getInstrumentation());
-    }
 
     private CallCounter mCancelOperationCounter;
     private CallCounter mLayoutCallCounter;

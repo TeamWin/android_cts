@@ -414,8 +414,8 @@ public class PrintServicesTest extends BasePrintTest {
 
         assertThatIconIs(renderDrawable(mIcon.loadDrawable(getActivity())));
 
-        getUiDevice().pressBack();
-        getUiDevice().pressBack();
+        mPrintHelper.closePrinterList();
+        mPrintHelper.cancelPrinting();
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
@@ -453,8 +453,7 @@ public class PrintServicesTest extends BasePrintTest {
         assertException(() -> serviceCallbacks.getService().callAttachBaseContext(getActivity()),
                 IllegalStateException.class);
 
-        getUiDevice().pressBack();
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
@@ -685,10 +684,10 @@ public class PrintServicesTest extends BasePrintTest {
                 InfoActivity.clearObservers();
             }
         } finally {
-            getUiDevice().pressBack();
+            mPrintHelper.closePrinterList();
         }
 
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 }
