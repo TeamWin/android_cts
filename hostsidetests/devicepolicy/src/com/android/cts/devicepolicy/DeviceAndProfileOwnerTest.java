@@ -1800,6 +1800,21 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testSetKeyguardDisabledSecureCameraLogged() throws Exception {
+        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(
+                    ".DevicePolicyLoggingTest", "testSetKeyguardDisabledSecureCameraLogged");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setInt(KEYGUARD_DISABLE_SECURE_CAMERA)
+                .setStrings(NOT_CALLED_FROM_PARENT)
+                .build());
+    }
+
+    @Test
     public void testSetKeyguardDisabledFeatures() throws Exception {
         if (!mHasFeature) {
             return;
