@@ -14,12 +14,8 @@
 
 java_library {
     name: "CtsJvmtiDeviceRunTestAppBase",
-
-    // We explicitly enumerate, as we have a definition of art.Main to simplify development
-    // in an IDE (but want the implementation of said class to come from the ART run-tests).
     srcs: [
         "src/android/jvmti/cts/JvmtiRunTestBasedTest.java",
-        ":art_cts_jvmti_test_library",
     ],
     // Allow sun.misc.Unsafe.
     target: {
@@ -36,6 +32,7 @@ java_library {
         "junit",
     ],
     static_libs: [
+        "art_cts_jvmti_test_library",
         "CtsJvmtiDeviceAppBase",
         "expected_cts_outputs",
     ],
