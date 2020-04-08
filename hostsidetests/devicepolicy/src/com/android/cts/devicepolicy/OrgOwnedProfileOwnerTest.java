@@ -437,6 +437,10 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPersonalAppsSuspensionInstalledApp() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
         setPersonalAppsSuspended(true);
 
         installAppAsUser(DUMMY_IME_APK, mPrimaryUserId);
