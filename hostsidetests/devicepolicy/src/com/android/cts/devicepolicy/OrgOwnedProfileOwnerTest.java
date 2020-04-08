@@ -552,12 +552,12 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
-                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingTest",
-                            "testSetManagedProfileMaximumTimeOffLogged", mUserId);
+                    runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                            "testSetManagedProfileMaximumTimeOff", mUserId);
                 }, new DevicePolicyEventWrapper.Builder(
                         EventId.SET_MANAGED_PROFILE_MAXIMUM_TIME_OFF_VALUE)
                         .setAdminPackageName(DEVICE_ADMIN_PKG)
-                        .setTimePeriod(1234567)
+                        .setTimePeriod(123456789)
                         .build(),
                 new DevicePolicyEventWrapper.Builder(
                         EventId.SET_MANAGED_PROFILE_MAXIMUM_TIME_OFF_VALUE)

@@ -16,6 +16,7 @@
 
 package android.mediav2.cts;
 
+import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.MediaCodec;
@@ -23,17 +24,22 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.os.PersistableBundle;
 import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -184,11 +190,70 @@ class OutputManager {
     private byte[] memory;
     private int memIndex;
     private ArrayList<Long> crc32List;
+    private ArrayList<Long> inpPtsList;
+    private ArrayList<Long> outPtsList;
 
     OutputManager() {
         memory = new byte[1024];
         memIndex = 0;
         crc32List = new ArrayList<>();
+        inpPtsList = new ArrayList<>();
+        outPtsList = new ArrayList<>();
+    }
+
+    void saveInPTS(long pts) {
+        inpPtsList.add(pts);
+    }
+
+    void saveOutPTS(long pts) {
+        outPtsList.add(pts);
+    }
+
+    boolean isPtsStrictlyIncreasing(long lastPts) {
+        boolean res = true;
+        for (int i = 0; i < outPtsList.size(); i++) {
+            if (lastPts < outPtsList.get(i)) {
+                lastPts = outPtsList.get(i);
+            } else {
+                Log.e(LOG_TAG, "Timestamp ordering check failed: last timestamp: " + lastPts +
+                        " current timestamp:" + outPtsList.get(i));
+                res = false;
+                break;
+            }
+        }
+        return res;
+    }
+
+    boolean isOutPtsListIdenticalToInpPtsList(boolean requireSorting) {
+        boolean res;
+        Collections.sort(inpPtsList);
+        if (requireSorting) {
+            Collections.sort(outPtsList);
+        }
+        if (outPtsList.size() != inpPtsList.size()) {
+            Log.e(LOG_TAG, "input and output presentation timestamp list sizes are not identical" +
+                    "exp/rec" + inpPtsList.size() + '/' + outPtsList.size());
+            return false;
+        } else {
+            int count = 0;
+            for (int i = 0; i < outPtsList.size(); i++) {
+                if (!outPtsList.get(i).equals(inpPtsList.get(i))) {
+                    count ++;
+                    Log.e(LOG_TAG, "input output pts mismatch, exp/rec " + outPtsList.get(i) + '/' +
+                            inpPtsList.get(i));
+                    if (count == 20) {
+                        Log.e(LOG_TAG, "stopping after 20 mismatches, ...");
+                        break;
+                    }
+                }
+            }
+            res = (count == 0);
+        }
+        return res;
+    }
+
+    int getOutStreamSize() {
+        return memIndex;
     }
 
     void checksum(ByteBuffer buf, int size) {
@@ -297,6 +362,8 @@ class OutputManager {
     void reset() {
         position(0);
         crc32List.clear();
+        inpPtsList.clear();
+        outPtsList.clear();
     }
 
     float getRmsError(short[] refData) {
@@ -323,6 +390,10 @@ class OutputManager {
             isEqual = false;
             Log.e(LOG_TAG, "ref and test crc32 checksums mismatch");
         }
+        if (!outPtsList.equals(that.outPtsList)) {
+            isEqual = false;
+            Log.e(LOG_TAG, "ref and test presentation timestamp mismatch");
+        }
         if (memIndex == that.memIndex) {
             int count = 0;
             for (int i = 0; i < memIndex; i++) {
@@ -348,11 +419,15 @@ class OutputManager {
 
 abstract class CodecTestBase {
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
+    private static final String CODEC_SEL_KEY = "codec-sel";
+    static final String CODEC_SEL_VALUE = "default";
+    static final Map<String, String> codecSelKeyMimeMap = new HashMap<>();
     static final boolean ENABLE_LOGS = false;
     static final int PER_TEST_TIMEOUT_LARGE_TEST_MS = 300000;
     static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
     static final long Q_DEQ_TIMEOUT_US = 500;
     static final String mInpPrefix = WorkDir.getMediaDirString();
+    static String codecSelKeys;
 
     CodecAsyncHandler mAsyncHandle;
     boolean mIsCodecInAsyncMode;
@@ -371,6 +446,38 @@ abstract class CodecTestBase {
 
     MediaCodec mCodec;
 
+    static {
+        codecSelKeyMimeMap.put("vp8", MediaFormat.MIMETYPE_VIDEO_VP8);
+        codecSelKeyMimeMap.put("vp9", MediaFormat.MIMETYPE_VIDEO_VP9);
+        codecSelKeyMimeMap.put("av1", MediaFormat.MIMETYPE_VIDEO_AV1);
+        codecSelKeyMimeMap.put("avc", MediaFormat.MIMETYPE_VIDEO_AVC);
+        codecSelKeyMimeMap.put("hevc", MediaFormat.MIMETYPE_VIDEO_HEVC);
+        codecSelKeyMimeMap.put("mpeg4", MediaFormat.MIMETYPE_VIDEO_MPEG4);
+        codecSelKeyMimeMap.put("h263", MediaFormat.MIMETYPE_VIDEO_H263);
+        codecSelKeyMimeMap.put("mpeg2", MediaFormat.MIMETYPE_VIDEO_MPEG2);
+        codecSelKeyMimeMap.put("vraw", MediaFormat.MIMETYPE_VIDEO_RAW);
+        codecSelKeyMimeMap.put("amrnb", MediaFormat.MIMETYPE_AUDIO_AMR_NB);
+        codecSelKeyMimeMap.put("amrwb", MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+        codecSelKeyMimeMap.put("mp3", MediaFormat.MIMETYPE_AUDIO_MPEG);
+        codecSelKeyMimeMap.put("aac", MediaFormat.MIMETYPE_AUDIO_AAC);
+        codecSelKeyMimeMap.put("vorbis", MediaFormat.MIMETYPE_AUDIO_VORBIS);
+        codecSelKeyMimeMap.put("opus", MediaFormat.MIMETYPE_AUDIO_OPUS);
+        codecSelKeyMimeMap.put("g711alaw", MediaFormat.MIMETYPE_AUDIO_G711_ALAW);
+        codecSelKeyMimeMap.put("g711mlaw", MediaFormat.MIMETYPE_AUDIO_G711_MLAW);
+        codecSelKeyMimeMap.put("araw", MediaFormat.MIMETYPE_AUDIO_RAW);
+        codecSelKeyMimeMap.put("flac", MediaFormat.MIMETYPE_AUDIO_FLAC);
+        codecSelKeyMimeMap.put("gsm", MediaFormat.MIMETYPE_AUDIO_MSGSM);
+
+        android.os.Bundle args = InstrumentationRegistry.getArguments();
+        codecSelKeys = args.getString(CODEC_SEL_KEY);
+        if (codecSelKeys == null) codecSelKeys = CODEC_SEL_VALUE;
+    }
+
+    static boolean isTv() {
+        return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
     abstract void enqueueInput(int bufferIndex) throws IOException;
 
     abstract void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info);
@@ -379,7 +486,13 @@ abstract class CodecTestBase {
             boolean isEncoder) {
         resetContext(isAsync, signalEOSWithLastFrame);
         mAsyncHandle.setCallBack(mCodec, isAsync);
-        mCodec.configure(format, null, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+        // signalEOS flag has nothing to do with configure. We are using this flag to try all
+        // available configure apis
+        if (signalEOSWithLastFrame) {
+            mCodec.configure(format, null, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+        } else {
+            mCodec.configure(format, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0, null);
+        }
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
         }
@@ -387,6 +500,7 @@ abstract class CodecTestBase {
 
     void flushCodec() {
         mCodec.flush();
+        // TODO(b/147576107): is it ok to clearQueues right away or wait for some signal
         mAsyncHandle.clearQueues();
         mSawInputEOS = false;
         mSawOutputEOS = false;
@@ -506,7 +620,7 @@ abstract class CodecTestBase {
             String[] features, boolean isEncoder) {
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
-        ArrayList<String> listOfDecoders = new ArrayList<>();
+        ArrayList<String> listOfCodecs = new ArrayList<>();
         for (MediaCodecInfo codecInfo : codecInfos) {
             if (codecInfo.isEncoder() != isEncoder) continue;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
@@ -532,15 +646,15 @@ abstract class CodecTestBase {
                             }
                         }
                     }
-                    if (isOk) listOfDecoders.add(codecInfo.getName());
+                    if (isOk) listOfCodecs.add(codecInfo.getName());
                 }
             }
         }
-        return listOfDecoders;
+        return listOfCodecs;
     }
 
     static int getWidth(MediaFormat format) {
-        int width = format.getInteger(MediaFormat.KEY_WIDTH);
+        int width = format.getInteger(MediaFormat.KEY_WIDTH, -1);
         if (format.containsKey("crop-left") && format.containsKey("crop-right")) {
             width = format.getInteger("crop-right") + 1 - format.getInteger("crop-left");
         }
@@ -548,27 +662,53 @@ abstract class CodecTestBase {
     }
 
     static int getHeight(MediaFormat format) {
-        int height = format.getInteger(MediaFormat.KEY_HEIGHT);
+        int height = format.getInteger(MediaFormat.KEY_HEIGHT, -1);
         if (format.containsKey("crop-top") && format.containsKey("crop-bottom")) {
             height = format.getInteger("crop-bottom") + 1 - format.getInteger("crop-top");
         }
         return height;
     }
 
-    static boolean isFormatSimilar(MediaFormat inpFormat, MediaFormat outFormat) {
+    boolean isFormatSimilar(MediaFormat inpFormat, MediaFormat outFormat) {
         if (inpFormat == null || outFormat == null) return false;
         String inpMime = inpFormat.getString(MediaFormat.KEY_MIME);
-        String outMime = inpFormat.getString(MediaFormat.KEY_MIME);
+        String outMime = outFormat.getString(MediaFormat.KEY_MIME);
+        // not comparing input and output mimes because for a codec, mime is raw on one side and
+        // encoded type on the other
         if (outMime.startsWith("audio/")) {
-            return inpFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) ==
-                    outFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) &&
-                    inpFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) ==
-                            outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) &&
+            return inpFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT, -1) ==
+                    outFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT, -2) &&
+                    inpFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE, -1) ==
+                            outFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE, -2) &&
                     inpMime.startsWith("audio/");
         } else if (outMime.startsWith("video/")) {
             return getWidth(inpFormat) == getWidth(outFormat) &&
                     getHeight(inpFormat) == getHeight(outFormat) && inpMime.startsWith("video/");
         }
         return true;
+    }
+
+    PersistableBundle validateMetrics(String codec) {
+        PersistableBundle metrics = mCodec.getMetrics();
+        assertTrue("metrics is null", metrics != null);
+        assertTrue(metrics.getString(MediaCodec.MetricsConstants.CODEC).equals(codec));
+        if (mIsAudio) {
+            assertTrue(metrics.getString(MediaCodec.MetricsConstants.MODE)
+                    .equals(MediaCodec.MetricsConstants.MODE_AUDIO));
+        } else {
+            assertTrue(metrics.getString(MediaCodec.MetricsConstants.MODE)
+                    .equals(MediaCodec.MetricsConstants.MODE_VIDEO));
+        }
+        return metrics;
+    }
+
+    PersistableBundle validateMetrics(String codec, MediaFormat format) {
+        PersistableBundle metrics = validateMetrics(codec);
+        if (!mIsAudio) {
+            assertTrue(metrics.getInt(MediaCodec.MetricsConstants.WIDTH) == getWidth(format));
+            assertTrue(metrics.getInt(MediaCodec.MetricsConstants.HEIGHT) == getHeight(format));
+        }
+        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.SECURE) == 0);
+        return metrics;
     }
 }

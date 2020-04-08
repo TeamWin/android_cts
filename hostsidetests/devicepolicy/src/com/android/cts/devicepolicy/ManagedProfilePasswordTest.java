@@ -49,7 +49,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
 
     @Test
     public void testPasswordMinimumRestrictions() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PasswordMinimumRestrictionsTest",

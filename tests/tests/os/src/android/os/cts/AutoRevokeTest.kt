@@ -34,6 +34,7 @@ import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.UiDumpUtils
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.Assert.assertThat
+import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
 private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
@@ -83,8 +84,8 @@ class AutoRevokeTest : InstrumentationTestCase() {
             assertWhitelistState(false)
 
             // Verify
-            waitFindObject(By.text("Request whitelist")).click()
-            waitFindObject(By.text("Permissions")).click()
+            waitFindObject(byTextIgnoreCase("Request whitelist")).click()
+            waitFindObject(byTextIgnoreCase("Permissions")).click()
             val autoRevokeEnabledToggle = getWhitelistToggle()
             assertTrue(autoRevokeEnabledToggle.isChecked)
 
@@ -227,7 +228,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
         } catch (e: RuntimeException) {
             val ui = instrumentation.uiAutomation.rootInActiveWindow
 
-            val title = ui.depthFirstSearch { "alertTitle" in viewIdResourceName }
+            val title = ui.depthFirstSearch { viewIdResourceName?.contains("alertTitle") == true  }
             val okButton = ui.depthFirstSearch {
                 (text as CharSequence?)?.toString()?.equals("OK", ignoreCase = true) ?: false
             }
@@ -241,6 +242,10 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 throw e
             }
         }
+    }
+
+    private fun byTextIgnoreCase(txt: String): BySelector {
+        return By.text(Pattern.compile(txt, Pattern.CASE_INSENSITIVE))
     }
 }
 

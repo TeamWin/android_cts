@@ -43,13 +43,11 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
 
     private boolean mRemoveOwnerInTearDown;
     private int mDeviceOwnerUserId;
-    private boolean mHasManagedUserFeature;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        mHasManagedUserFeature = hasDeviceFeature("android.software.managed_users");
         mRemoveOwnerInTearDown = false;
         mDeviceOwnerUserId = mPrimaryUserId;
     }
