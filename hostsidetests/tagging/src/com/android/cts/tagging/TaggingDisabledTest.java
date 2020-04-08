@@ -16,23 +16,24 @@
 
 package com.android.cts.tagging;
 
-import android.compat.cts.CompatChangeGatingTestCase;
+import com.android.cts.tagging.TaggingBaseTest;
 
 import com.google.common.collect.ImmutableSet;
 
-public class TaggingDisabledTest extends CompatChangeGatingTestCase {
+public class TaggingDisabledTest extends TaggingBaseTest {
 
     protected static final String TEST_APK = "CtsHostsideTaggingDisabledApp.apk";
     protected static final String TEST_PKG = "android.cts.tagging.disabled";
 
-    private static final long NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID = 135754954;
-
     @Override
     protected void setUp() throws Exception {
+        super.setUp();
         installPackage(TEST_APK, true);
     }
 
     public void testCompatFeatureEnabled() throws Exception {
+        // Checking for supportsTaggedPointers is unnecessary here, as we don't
+        // validate against reportDisabledChanges.
         runDeviceCompatTestReported(TEST_PKG, ".TaggingTest", "testHeapTaggingDisabled",
                 /*enabledChanges*/ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of(),
@@ -41,6 +42,8 @@ public class TaggingDisabledTest extends CompatChangeGatingTestCase {
     }
 
     public void testCompatFeatureDisabled() throws Exception {
+        // Checking for supportsTaggedPointers is unnecessary here, as we don't
+        // validate against reportDisabledChanges.
         runDeviceCompatTestReported(TEST_PKG, ".TaggingTest", "testHeapTaggingDisabled",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
