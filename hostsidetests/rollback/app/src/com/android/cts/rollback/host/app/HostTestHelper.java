@@ -21,9 +21,13 @@ import static com.android.cts.rollback.lib.RollbackInfoSubject.assertThat;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageInstaller;
 import android.content.rollback.RollbackInfo;
+import android.os.storage.StorageManager;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
@@ -584,5 +588,12 @@ public class HostTestHelper {
     @Test
     public void testApexKeyRotation_CofirmRollback() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+    }
+
+    @Test
+    public void isCheckpointSupported() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+        assertThat(sm.isCheckpointSupported()).isTrue();
     }
 }
