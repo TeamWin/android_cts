@@ -18,7 +18,6 @@ android_test_helper_app {
     compile_multilib: "both",
     test_suites: [
         "cts",
-        "vts",
         "general-tests",
     ],
     static_libs: [
