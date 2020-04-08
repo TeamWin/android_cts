@@ -173,7 +173,6 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
             Thread.sleep(500);
             assertWithMessage("Failed to start checkpoint : %s", result.getStderr()).that(
                     result.getStatus()).isEqualTo(CommandStatus.SUCCESS);
-            rebootUserspaceAndWaitForBootComplete();
             getDevice().executeShellV2Command("cmd lock_settings set-pin 1543");
             installApk(BOOT_COMPLETED_TEST_APP_APK);
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
@@ -207,8 +206,8 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
                 getProperty("init.userspace_reboot.sigterm.timeoutmillis", "");
         try {
             // Explicitly set a very low value to make sure that safety mechanism kicks in.
-            getDevice().setProperty("init.userspace_reboot.sigkill.timeoutmillis", "500");
-            getDevice().setProperty("init.userspace_reboot.sigterm.timeoutmillis", "500");
+            getDevice().setProperty("init.userspace_reboot.sigkill.timeoutmillis", "10");
+            getDevice().setProperty("init.userspace_reboot.sigterm.timeoutmillis", "10");
             rebootUserspaceAndWaitForBootComplete();
             assertUserspaceRebootFailed();
             assertLastBootReasonIs("userspace_failed,shutdown_aborted");
@@ -259,10 +258,12 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
      * userspace reboot succeeded.
      */
     private void rebootUserspaceAndWaitForBootComplete() throws Exception {
+        Duration timeout = Duration.ofMillis(getDevice().getIntProperty(
+                "init.userspace_reboot.watchdog.timeoutmillis", 0)).plusMinutes(2);
         setProperty("test.userspace_reboot.requested", "1");
         getDevice().rebootUserspaceUntilOnline();
-        assertWithMessage("Device did not boot withing 2 minutes").that(
-                getDevice().waitForBootComplete(Duration.ofMinutes(2).toMillis())).isTrue();
+        assertWithMessage("Device did not boot within %s", timeout).that(
+                getDevice().waitForBootComplete(timeout.toMillis())).isTrue();
     }
 
     /**
