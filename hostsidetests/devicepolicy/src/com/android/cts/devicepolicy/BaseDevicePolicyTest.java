@@ -156,6 +156,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
 
+    /** Whether managed profiles are supported. */
+    protected boolean mHasManagedUserFeature;
+
     /** Whether file-based encryption (FBE) is supported. */
     protected boolean mSupportsFbe;
 
@@ -179,6 +182,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             mHasFeature = mHasFeature && hasDeviceFeature("android.software.device_admin");
         }
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
+        mHasManagedUserFeature = hasDeviceFeature("android.software.managed_users");
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mHasTelephony = hasDeviceFeature("android.hardware.telephony");
         mFixedPackages = getDevice().getInstalledPackageNames();

@@ -553,7 +553,17 @@ public abstract class ActivityManagerTestBase {
      * @param displayId the display ID to gain focused by inject swipe action
      */
     protected void touchAndCancelOnDisplayCenterSync(int displayId) {
-        final Rect bounds = mWmState.getDisplay(displayId).getDisplayRect();
+        WindowManagerState.DisplayContent dc = mWmState.getDisplay(displayId);
+        if (dc == null) {
+            // never get wm state before?
+            mWmState.computeState();
+            dc = mWmState.getDisplay(displayId);
+        }
+        if (dc == null) {
+            log("Cannot tap on display: " + displayId);
+            return;
+        }
+        final Rect bounds = dc.getDisplayRect();
         final int x = bounds.left + bounds.width() / 2;
         final int y = bounds.top + bounds.height() / 2;
         final long downTime = SystemClock.uptimeMillis();

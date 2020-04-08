@@ -19,7 +19,6 @@ package com.android.cts.deviceandprofileowner;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FINGERPRINT;
-import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_SECURE_CAMERA;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_TRUST_AGENTS;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED;
 import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT;
@@ -74,8 +73,6 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
                 ADMIN_RECEIVER_COMPONENT, KEYGUARD_DISABLE_FINGERPRINT);
         mDevicePolicyManager.setKeyguardDisabledFeatures(
                 ADMIN_RECEIVER_COMPONENT, KEYGUARD_DISABLE_TRUST_AGENTS);
-        mDevicePolicyManager.setKeyguardDisabledFeatures(ADMIN_RECEIVER_COMPONENT,
-                KEYGUARD_DISABLE_SECURE_CAMERA);
         mDevicePolicyManager.setKeyguardDisabledFeatures(ADMIN_RECEIVER_COMPONENT,
                 KEYGUARD_DISABLE_FEATURES_NONE);
     }
@@ -192,10 +189,5 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
     public void testSetPersonalAppsSuspendedLogged() {
         mDevicePolicyManager.setPersonalAppsSuspended(ADMIN_RECEIVER_COMPONENT, true);
         mDevicePolicyManager.setPersonalAppsSuspended(ADMIN_RECEIVER_COMPONENT, false);
-    }
-
-    public void testSetManagedProfileMaximumTimeOffLogged() {
-        mDevicePolicyManager.setManagedProfileMaximumTimeOff(ADMIN_RECEIVER_COMPONENT, 1234567);
-        mDevicePolicyManager.setManagedProfileMaximumTimeOff(ADMIN_RECEIVER_COMPONENT, 0);
     }
 }

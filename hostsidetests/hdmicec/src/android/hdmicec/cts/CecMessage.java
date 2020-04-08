@@ -40,6 +40,7 @@ public enum CecMessage {
     REQUEST_ACTIVE_SOURCE(0x85),
     SET_STREAM_PATH(0x86),
     DEVICE_VENDOR_ID(0x87),
+    VENDOR_COMMAND(0x89),
     GIVE_DEVICE_VENDOR_ID(0x8c),
     GIVE_POWER_STATUS(0x8f),
     REPORT_POWER_STATUS(0x90),
@@ -49,6 +50,8 @@ public enum CecMessage {
     GET_CEC_VERSION(0x9f),
     INITIATE_ARC(0xc0),
     REQUEST_ARC_INITIATION(0xc3),
+    REQUEST_ARC_TERMINATION(0xc4),
+    TERMINATE_ARC(0xc5),
     ABORT(0xff);
 
     private final int messageId;

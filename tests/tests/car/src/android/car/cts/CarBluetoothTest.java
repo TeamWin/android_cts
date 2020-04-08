@@ -47,10 +47,9 @@ import org.junit.runner.RunWith;
 /**
  * Contains the tests to prove compliance with android automotive specific bluetooth requirements.
  */
-// TODO(b/146663105): Fix hidden API
-//@SmallTest
-//@RequiresDevice
-//@RunWith(AndroidJUnit4.class)
+@SmallTest
+@RequiresDevice
+@RunWith(AndroidJUnit4.class)
 public class CarBluetoothTest {
     private static final String TAG = "CarBluetoothTest";
     private static final boolean DBG = false;
@@ -159,20 +158,19 @@ public class CarBluetoothTest {
             mConnected = false;
         }
     }
-// TODO(b/146663105): Fix hidden API
-/*
+
     // Automotive required profiles and meta data. Profile defaults to 'not connected' and name
     // is used in debug and error messages
     private static SparseArray<ProfileInfo> sRequiredBluetoothProfiles = new SparseArray();
     static {
-        sRequiredBluetoothProfiles.put(BluetoothProfile.A2DP_SINK,
-                new ProfileInfo("A2DP Sink")); // 11
-        sRequiredBluetoothProfiles.put(BluetoothProfile.AVRCP_CONTROLLER,
-                new ProfileInfo("AVRCP Controller")); // 12
-        sRequiredBluetoothProfiles.put(BluetoothProfile.HEADSET_CLIENT,
-                new ProfileInfo("HSP Client")); // 16
-        sRequiredBluetoothProfiles.put(BluetoothProfile.PBAP_CLIENT,
-                new ProfileInfo("PBAP Client")); // 17
+        sRequiredBluetoothProfiles.put(11,
+                new ProfileInfo("A2DP Sink")); // BluetoothProfile.A2DP_SINK
+        sRequiredBluetoothProfiles.put(12,
+                new ProfileInfo("AVRCP Controller")); // BluetoothProfile.AVRCP_CONTROLLER
+        sRequiredBluetoothProfiles.put(16,
+                new ProfileInfo("HSP Client")); // BluetoothProfile.HEADSET_CLIENT
+        sRequiredBluetoothProfiles.put(17,
+                new ProfileInfo("PBAP Client")); // BluetoothProfile.PBAP_CLIENT
     }
     private static final int MAX_PROFILES_SUPPORTED = sRequiredBluetoothProfiles.size();
 
@@ -360,5 +358,4 @@ public class CarBluetoothTest {
         waitForProfileConnections();
         checkProfileConnections();
     }
-*/
 }

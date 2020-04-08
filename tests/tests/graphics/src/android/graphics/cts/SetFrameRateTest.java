@@ -16,10 +16,20 @@
 
 package android.graphics.cts;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import android.app.UiAutomation;
+import android.support.test.uiautomator.UiDevice;
+import android.util.Log;
+import android.view.SurfaceControl;
+
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,9 +37,57 @@ import org.junit.runner.RunWith;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class SetFrameRateTest {
+    private static String TAG = "SetFrameRateTest";
+
     @Rule
     public ActivityTestRule<FrameRateCtsActivity> mActivityRule =
             new ActivityTestRule<>(FrameRateCtsActivity.class);
+    private long mFrameRateFlexibilityToken;
+
+    @Before
+    public void setUp() throws Exception {
+        long frameRateFlexibilityToken = 0;
+        final UiDevice uiDevice =
+                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        try {
+            uiDevice.wakeUp();
+            uiDevice.executeShellCommand("wm dismiss-keyguard");
+            // Surface flinger requires the ACCESS_SURFACE_FLINGER permission to acquire a frame
+            // rate flexibility token. Switch to shell permission identity so we'll have the
+            // necessary permission when surface flinger checks.
+            UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+            uiAutomation.adoptShellPermissionIdentity();
+            try {
+                frameRateFlexibilityToken = SurfaceControl.acquireFrameRateFlexibilityToken();
+            } finally {
+                uiAutomation.dropShellPermissionIdentity();
+            }
+
+            // Setup succeeded. Take ownership of the frame rate flexibility token, if we were able
+            // to get one - we'll release it in tearDown().
+            mFrameRateFlexibilityToken = frameRateFlexibilityToken;
+            frameRateFlexibilityToken = 0;
+            if (mFrameRateFlexibilityToken == 0) {
+                Log.e(TAG,
+                        "Failed to acquire frame rate flexibility token."
+                                + " Frame rate tests may fail.");
+            }
+        } finally {
+            if (frameRateFlexibilityToken != 0) {
+                SurfaceControl.releaseFrameRateFlexibilityToken(frameRateFlexibilityToken);
+                frameRateFlexibilityToken = 0;
+            }
+        }
+    }
+
+    @After
+    public void tearDown() {
+        final UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        if (mFrameRateFlexibilityToken != 0) {
+            SurfaceControl.releaseFrameRateFlexibilityToken(mFrameRateFlexibilityToken);
+            mFrameRateFlexibilityToken = 0;
+        }
+    }
 
     @Test
     public void testExactFrameRateMatch() throws InterruptedException {
