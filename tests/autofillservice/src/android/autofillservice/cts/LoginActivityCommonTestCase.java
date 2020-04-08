@@ -148,6 +148,11 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
         final FillContext fillContext = request.contexts.get(request.contexts.size() - 1);
         assertThat(fillContext.getFocusedId())
                 .isEqualTo(findAutofillIdByResourceId(fillContext, ID_USERNAME));
+        if (isInlineMode()) {
+            assertThat(request.inlineRequest).isNotNull();
+        } else {
+            assertThat(request.inlineRequest).isNull();
+        }
 
         // Make sure initial focus was properly set.
         assertWithMessage("Username node is not focused").that(
