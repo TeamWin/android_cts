@@ -321,7 +321,13 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
                 .collect(Collectors.toMap(
                         atom -> atom.getChangeId(), // Key
                         atom -> atom.getState() ==  // Value
-                                AtomsProto.AppCompatibilityChangeReported.State.ENABLED));
+                                AtomsProto.AppCompatibilityChangeReported.State.ENABLED,
+                                (a, b) -> {
+                                  if (a != b) {
+                                    throw new IllegalStateException("inconsistent compatibility states");
+                                  }
+                                  return a;
+                                }));
     }
 
     /**
