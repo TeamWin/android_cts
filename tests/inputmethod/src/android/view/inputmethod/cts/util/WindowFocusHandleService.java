@@ -23,8 +23,6 @@ import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
 import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -96,7 +94,7 @@ public class WindowFocusHandleService extends Service {
             @Override
             public void onWindowFocusChanged(boolean hasWindowFocus) {
                 if (Log.isLoggable(TAG, Log.VERBOSE)) {
-                    Log.v(TAG,"onWindowFocusChanged for view=" + this
+                    Log.v(TAG, "onWindowFocusChanged for view=" + this
                             + ", hasWindowfocus: " + hasWindowFocus);
                 }
             }

@@ -23,8 +23,8 @@ import static org.testng.Assert.assertTrue;
 
 import android.os.Parcel;
 import android.util.Size;
-import android.widget.inline.InlinePresentationSpec;
 import android.view.inputmethod.InlineSuggestionInfo;
+import android.widget.inline.InlinePresentationSpec;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
