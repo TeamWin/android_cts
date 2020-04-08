@@ -449,6 +449,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testMultipleStagedInstall_ApkOnly() throws Exception {
+        assumeTrue(isCheckpointSupported());
         runPhase("testMultipleStagedInstall_ApkOnly_Commit");
         getDevice().reboot();
         runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
@@ -458,8 +459,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testInstallMultipleStagedSession_PartialFail_ApkOnly() throws Exception {
-        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
-
+        assumeTrue(isCheckpointSupported());
         runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_Commit");
         getDevice().reboot();
         runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_VerifyPostReboot");
