@@ -1794,11 +1794,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                     .build(),
             new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setInt(KEYGUARD_DISABLE_SECURE_CAMERA)
-                    .setStrings(NOT_CALLED_FROM_PARENT)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_FEATURES_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(KEYGUARD_DISABLE_FEATURES_NONE)
                     .setStrings(NOT_CALLED_FROM_PARENT)
                     .build());

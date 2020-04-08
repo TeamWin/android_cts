@@ -60,7 +60,7 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        assumeTrue(mSupportsMultiUser);
+        assumeTrue(mSupportsMultiUser && mHasManagedUserFeature);
     }
 
     @Test

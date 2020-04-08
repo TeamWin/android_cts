@@ -81,7 +81,6 @@ public class DisplayTest {
             (float)(SECONDARY_DISPLAY_DPI + 1) / DisplayMetrics.DENSITY_DEFAULT;
     // Matches com.android.internal.R.string.display_manager_overlay_display_name.
     private static final String OVERLAY_DISPLAY_NAME_PREFIX = "Overlay #";
-    private static final String OVERLAY_DISPLAY_TYPE = "type OVERLAY";
 
     private static final int BRIGHTNESS_MAX = 255;
 
@@ -151,7 +150,7 @@ public class DisplayTest {
 
     /** Check if the display is an overlay display, created by this test. */
     private boolean isSecondaryDisplay(Display display) {
-        return display.toString().contains(OVERLAY_DISPLAY_TYPE);
+        return display.getType() == Display.TYPE_OVERLAY;
     }
 
     /** Get the overlay display, created by this test. */

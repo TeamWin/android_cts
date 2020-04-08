@@ -23,15 +23,18 @@ import android.graphics.Rect
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
+import android.support.test.uiautomator.BySelector
+import android.support.test.uiautomator.UiObject2
 import android.test.InstrumentationTestCase
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
 import com.android.compatibility.common.util.SystemUtil.*
 import com.android.compatibility.common.util.ThrowingSupplier
-import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
+import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.UiDumpUtils
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.Assert.assertThat
+import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
 private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
@@ -42,6 +45,10 @@ private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
 // TODO test pregrants exempt
 // TODO test manifest whitelist
 class AutoRevokeTest : InstrumentationTestCase() {
+
+    companion object {
+        const val LOG_TAG = "AutoRevokeTest"
+    }
 
     @AppModeFull(reason = "Uses separate apps for testing")
     fun testUnusedApp_getsPermissionRevoked() {
@@ -77,8 +84,8 @@ class AutoRevokeTest : InstrumentationTestCase() {
             assertWhitelistState(false)
 
             // Verify
-            waitFindObject(By.text("Request whitelist")).click()
-            waitFindObject(By.text("Permissions")).click()
+            waitFindObject(byTextIgnoreCase("Request whitelist")).click()
+            waitFindObject(byTextIgnoreCase("Permissions")).click()
             val autoRevokeEnabledToggle = getWhitelistToggle()
             assertTrue(autoRevokeEnabledToggle.isChecked)
 
@@ -213,6 +220,32 @@ class AutoRevokeTest : InstrumentationTestCase() {
 
     private fun <T> T?.assertNotNull(errorMsg: () -> String): T {
         return if (this == null) throw AssertionError(errorMsg()) else this
+    }
+
+    private fun waitFindObject(selector: BySelector): UiObject2 {
+        try {
+            return UiAutomatorUtils.waitFindObject(selector)
+        } catch (e: RuntimeException) {
+            val ui = instrumentation.uiAutomation.rootInActiveWindow
+
+            val title = ui.depthFirstSearch { viewIdResourceName?.contains("alertTitle") == true  }
+            val okButton = ui.depthFirstSearch {
+                (text as CharSequence?)?.toString()?.equals("OK", ignoreCase = true) ?: false
+            }
+
+            if (title?.text?.toString() == "Android System" && okButton != null) {
+                // Auto dismiss occasional system dialogs to prevent interfering with the test
+                android.util.Log.w(LOG_TAG, "Ignoring exception", e)
+                okButton.click()
+                return UiAutomatorUtils.waitFindObject(selector)
+            } else {
+                throw e
+            }
+        }
+    }
+
+    private fun byTextIgnoreCase(txt: String): BySelector {
+        return By.text(Pattern.compile(txt, Pattern.CASE_INSENSITIVE))
     }
 }
 
