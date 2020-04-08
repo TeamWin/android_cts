@@ -109,8 +109,15 @@ public class WindowMetricsTests extends WindowManagerTestBase {
                 windowInsets.getInsetsIgnoringVisibility(navigationBars() | displayCutout());
 
         final Rect bounds = windowMetrics.getBounds();
-        final Insets result = Insets.subtract(Insets.of(bounds), insetsWithCutout);
-        return new Rect(result.left, result.top, result.right, result.bottom);
+        return inset(bounds, insetsWithCutout);
+    }
+
+    private static Rect inset(Rect original, Insets insets) {
+        final int left = original.left + insets.left;
+        final int top = original.top + insets.top;
+        final int right = original.right - insets.right;
+        final int bottom = original.bottom - insets.bottom;
+        return new Rect(left, top, right, bottom);
     }
 
     public static class MetricsActivity extends Activity implements View.OnLayoutChangeListener {
