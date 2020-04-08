@@ -34,8 +34,8 @@ import java.util.Scanner;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecDeviceTypeTest extends BaseHostJUnit4Test {
 
-    private static List<String> validTypes = new ArrayList<>(Arrays.asList("", "0", "4", "4,5"));
-
+    private static List<String> validTypes = new ArrayList<>(
+        Arrays.asList("", "0", "4", "4,5", "5,4"));
     /**
      * Tests that the device declares a valid HDMI CEC device type.
      */
