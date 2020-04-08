@@ -42,6 +42,7 @@ public class BaseNetworkService extends Service {
     public static final int TRANSACT_TEST = IBinder.FIRST_CALL_TRANSACTION;
 
     final boolean mNetworkAllowed;
+    final String mExpectedProcessName;
 
     public static final String readResult(Parcel in) {
         if (in.readInt() != 0) {
@@ -92,6 +93,13 @@ public class BaseNetworkService extends Service {
         }
 
         private void doTest(Parcel reply) {
+            if (!mExpectedProcessName.equals(getApplication().getProcessName())) {
+                writeResult(reply,
+                        "Not running in correct process, expected " + mExpectedProcessName
+                        + " but got " + getApplication().getProcessName(),null);
+                return;
+            }
+
             try {
                 Socket socket = new Socket("example.com", 80);
                 socket.close();
@@ -208,8 +216,9 @@ public class BaseNetworkService extends Service {
         }
     };
 
-    public BaseNetworkService(boolean networkAllowed) {
+    public BaseNetworkService(boolean networkAllowed, String expectedProcessName) {
         mNetworkAllowed = networkAllowed;
+        mExpectedProcessName = expectedProcessName;
     }
 
     @Override
