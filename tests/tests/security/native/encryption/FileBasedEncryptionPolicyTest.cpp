@@ -201,7 +201,11 @@ TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
         res = ioctl(fd, FS_IOC_GET_ENCRYPTION_POLICY, &arg.policy.v1);
     }
     if (res != 0) {
-        if (errno == ENODATA || errno == ENOENT) {  // Directory is unencrypted
+        if (errno == ENODATA ||     // Directory is unencrypted
+            errno == ENOENT ||      // Directory is unencrypted (on older kernels)
+            errno == EOPNOTSUPP ||  // Filesystem encryption feature not enabled
+            errno == ENOTTY) {      // Very old kernel, doesn't know about encryption at all
+
             // Starting with Android 10, file-based encryption is required on
             // new devices [CDD 9.9.2/C-0-3].
             if (first_api_level < Q_API_LEVEL) {
