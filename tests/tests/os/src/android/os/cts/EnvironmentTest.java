@@ -15,10 +15,16 @@
  */
 package android.os.cts;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
+import android.app.AppOpsManager;
 import android.os.Environment;
+import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.system.Os;
 import android.system.StructStatVfs;
+
+import androidx.test.InstrumentationRegistry;
 
 import junit.framework.TestCase;
 
@@ -125,6 +131,52 @@ public class EnvironmentTest extends TestCase {
             fail("Number of inodes " + stat.f_ffree + "/" + stat.f_favail
               + " not within sane range for partition of " + maxsize + " bytes; expected ["
               + minInodes + "," + maxInodes + "]");
+        }
+    }
+
+    public void testIsExternalStorageManager() throws Exception {
+        final int initialMode = getContext().getSystemService(AppOpsManager.class)
+                .unsafeCheckOpNoThrow(AppOpsManager.OPSTR_MANAGE_EXTERNAL_STORAGE, Process.myUid(),
+                        getContext().getPackageName());
+
+        try {
+            setAppOpsModeForUid(Process.myUid(), AppOpsManager.MODE_DEFAULT,
+                    AppOpsManager.OPSTR_MANAGE_EXTERNAL_STORAGE);
+            // By default, this test app is not an external storage manager
+            assertFalse(Environment.isExternalStorageManager());
+            // Allow the external storage manager app-op to the test app. This mirrors what happens
+            // when the user grants this special app access to an app.
+            setAppOpsModeForUid(Process.myUid(), AppOpsManager.MODE_ALLOWED,
+                    AppOpsManager.OPSTR_MANAGE_EXTERNAL_STORAGE);
+            // Once we allow the right app-op for the test, it becomes an external storage manager
+            assertTrue(Environment.isExternalStorageManager());
+        } finally {
+            setAppOpsModeForUid(Process.myUid(), initialMode,
+                    AppOpsManager.OPSTR_MANAGE_EXTERNAL_STORAGE);
+        }
+    }
+
+    /**
+     * Sets {@code mode} for the given {@code ops} and the given {@code uid}.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    private static void setAppOpsModeForUid(int uid, int mode, String... ops) {
+        if (ops == null) {
+            return;
+        }
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity();
+        try {
+            for (String op : ops) {
+                InstrumentationRegistry.getContext().getSystemService(AppOpsManager.class)
+                        .setUidMode(op, uid, mode);
+            }
+        } finally {
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
     }
 }
