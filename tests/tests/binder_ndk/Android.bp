@@ -18,7 +18,6 @@ android_test {
     compile_multilib: "both",
     test_suites: [
         "cts",
-        "vts",
         "vts10",
         "general-tests",
     ],

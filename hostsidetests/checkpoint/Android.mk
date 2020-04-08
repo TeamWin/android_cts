@@ -25,7 +25,7 @@ LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 LOCAL_CTS_TEST_PACKAGE := android.checkpoint
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts vts10 general-tests gts
+LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests gts
 
 LOCAL_MIN_SDK_VERSION := 4
 
