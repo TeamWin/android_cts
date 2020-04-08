@@ -18,6 +18,6 @@ package com.android.cts.useprocess;
 
 public class ServiceWithNetwork1 extends BaseNetworkService {
     public ServiceWithNetwork1() {
-        super(true);
+        super(true, "com.android.cts.useprocess");
     }
 }
