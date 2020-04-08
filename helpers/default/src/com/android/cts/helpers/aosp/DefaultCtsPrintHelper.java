@@ -169,6 +169,27 @@ public class DefaultCtsPrintHelper implements ICtsPrintHelper {
     }
 
     @Override
+    public void selectPrinterWhenAvailable(String printerName) throws TestHelperException {
+        try {
+            while (true) {
+                UiObject printerItem = mDevice.findObject(
+                        new UiSelector().text(printerName));
+
+                if (printerItem.isEnabled()) {
+                    printerItem.click();
+                    break;
+                } else {
+                    Thread.sleep(100);
+                }
+            }
+        } catch (UiObjectNotFoundException e) {
+            throw new TestHelperException("Failed to find printer label", e);
+        } catch (InterruptedException e) {
+            throw new TestHelperException("Interruped while waiting for printer", e);
+        }
+    }
+
+    @Override
     public void setPageOrientation(String orientation) throws TestHelperException {
         try {
             UiObject orientationSpinner = mDevice.findObject(new UiSelector().resourceId(
@@ -353,5 +374,28 @@ public class DefaultCtsPrintHelper implements ICtsPrintHelper {
             dumpWindowHierarchy();
             throw new TestHelperException("Unable to find print options handle", e);
         }
+    }
+
+    @Override
+    public void displayPrinterList() throws TestHelperException {
+        try {
+            // Open destination spinner
+            UiObject destinationSpinner = mDevice.findObject(new UiSelector().resourceId(
+                    "com.android.printspooler:id/destination_spinner"));
+            destinationSpinner.click();
+
+            // Wait until spinner is opened
+            mDevice.waitForIdle();
+        } catch (UiObjectNotFoundException e) {
+            throw new TestHelperException("Unable to find destination spinner", e);
+        }
+    }
+
+    @Override
+    public void displayMoreInfo() throws TestHelperException {
+        mDevice.waitForIdle();
+        mDevice.wait(
+                Until.findObject(By.res("com.android.printspooler:id/more_info")),
+                OPERATION_TIMEOUT_MILLIS).click();
     }
 }
