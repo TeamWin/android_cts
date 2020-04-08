@@ -31,7 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-wm-app-base \
     cts-core-test-runner-axt
 
-LOCAL_COMPATIBILITY_SUITE := cts vts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
 
 include $(BUILD_CTS_PACKAGE)
 
