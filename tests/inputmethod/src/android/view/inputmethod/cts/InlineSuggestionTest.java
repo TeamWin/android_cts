@@ -25,10 +25,10 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Parcel;
 import android.util.Size;
-import android.widget.inline.InlineContentView;
-import android.widget.inline.InlinePresentationSpec;
 import android.view.inputmethod.InlineSuggestion;
 import android.view.inputmethod.InlineSuggestionInfo;
+import android.widget.inline.InlineContentView;
+import android.widget.inline.InlinePresentationSpec;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
