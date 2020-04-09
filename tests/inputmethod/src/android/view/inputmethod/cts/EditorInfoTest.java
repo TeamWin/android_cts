@@ -324,7 +324,6 @@ public class EditorInfoTest {
     }
 
     private static CharSequence nullToEmpty(CharSequence source) {
-        return (source == null) ?
-                new SpannableStringBuilder("") : source;
+        return (source == null) ? new SpannableStringBuilder("") : source;
     }
 }
