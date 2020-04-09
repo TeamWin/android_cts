@@ -62,7 +62,7 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 LOCAL_WHOLE_STATIC_LIBRARIES := CtsTfliteNnapiDelegateTests_static
 
 LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
-LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libtflite_static
+LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libgmock_ndk libtflite_static
 LOCAL_CTS_TEST_PACKAGE := android.neuralnetworks
 
 # Tag this module as a cts test artifact
