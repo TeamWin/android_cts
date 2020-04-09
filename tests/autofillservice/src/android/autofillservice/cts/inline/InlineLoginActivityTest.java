@@ -115,4 +115,45 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         assertWithMessage("Password node is focused").that(
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
     }
+
+    @Test
+    public void testAutofill_selectDatasetThenHideInlineSuggestion() throws Exception {
+        // Set service.
+        enableService();
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation(createPresentation("The Username"))
+                        .setInlinePresentation(createInlinePresentation("The Username"))
+                        .build());
+
+        sReplier.addResponse(builder.build());
+        mActivity.expectAutoFill("dude");
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertDatasets("The Username");
+
+        mUiBot.selectDataset("The Username");
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertNoDatasets();
+
+        // Make sure input was sanitized.
+        final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
+        assertWithMessage("CancelationSignal is null").that(request.cancellationSignal).isNotNull();
+        assertTextIsSanitized(request.structure, ID_PASSWORD);
+        final FillContext fillContext = request.contexts.get(request.contexts.size() - 1);
+        assertThat(fillContext.getFocusedId())
+                .isEqualTo(findAutofillIdByResourceId(fillContext, ID_USERNAME));
+
+        // Make sure initial focus was properly set.
+        assertWithMessage("Username node is not focused").that(
+                findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
+        assertWithMessage("Password node is focused").that(
+                findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+    }
 }
