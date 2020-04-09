@@ -48,6 +48,7 @@ import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
 import android.util.Log;
+import android.view.inputmethod.InlineSuggestionsRequest;
 
 import androidx.annotation.Nullable;
 
@@ -234,7 +235,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         }
         mHandler.post(
                 () -> sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
-                        cancellationSignal, callback, request.getFlags()));
+                        cancellationSignal, callback, request.getFlags(),
+                        request.getInlineSuggestionsRequest()));
     }
 
     @Override
@@ -362,15 +364,18 @@ public class InstrumentedAutoFillService extends AutofillService {
         public final CancellationSignal cancellationSignal;
         public final FillCallback callback;
         public final int flags;
+        public final InlineSuggestionsRequest inlineRequest;
 
         private FillRequest(List<FillContext> contexts, Bundle data,
-                CancellationSignal cancellationSignal, FillCallback callback, int flags) {
+                CancellationSignal cancellationSignal, FillCallback callback, int flags,
+                InlineSuggestionsRequest inlineRequest) {
             this.contexts = contexts;
             this.data = data;
             this.cancellationSignal = cancellationSignal;
             this.callback = callback;
             this.flags = flags;
             this.structure = contexts.get(contexts.size() - 1).getStructure();
+            this.inlineRequest = inlineRequest;
         }
 
         @Override
@@ -602,7 +607,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         }
 
         private void onFillRequest(List<FillContext> contexts, Bundle data,
-                CancellationSignal cancellationSignal, FillCallback callback, int flags) {
+                CancellationSignal cancellationSignal, FillCallback callback, int flags,
+                InlineSuggestionsRequest inlineRequest) {
             try {
                 CannedFillResponse response = null;
                 try {
@@ -676,7 +682,7 @@ public class InstrumentedAutoFillService extends AutofillService {
                 addException(t);
             } finally {
                 Helper.offer(mFillRequests, new FillRequest(contexts, data, cancellationSignal,
-                        callback, flags), CONNECTION_TIMEOUT.ms());
+                        callback, flags, inlineRequest), CONNECTION_TIMEOUT.ms());
             }
         }
 
