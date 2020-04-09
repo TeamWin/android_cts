@@ -30,6 +30,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -652,7 +653,8 @@ public class CommandReceiverActivity extends Activity {
     }
 
     private boolean isSystemInputMethodInfo(InputMethodInfo inputMethodInfo) {
-        return inputMethodInfo.getServiceInfo().applicationInfo.isSystemApp();
+        final ApplicationInfo applicationInfo = inputMethodInfo.getServiceInfo().applicationInfo;
+        return (applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
     }
 
     private void createAndSwitchUserWithMessage(String startUserSessionMessage,
