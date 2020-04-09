@@ -19,7 +19,6 @@ package android.view.inputmethod.cts.util;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import android.app.Instrumentation;
-import android.app.KeyguardManager;
 import android.content.Context;
 import android.os.PowerManager;
 
@@ -121,7 +120,7 @@ public final class TestUtils {
         final PowerManager pm = context.getSystemService(PowerManager.class);
         runShellCommand("input keyevent KEYCODE_WAKEUP");
         CommonTestUtils.waitUntil("Device does not wake up after 5 seconds", 5,
-                () -> pm!= null && pm.isInteractive());
+                () -> pm != null && pm.isInteractive());
     }
 
     /**
