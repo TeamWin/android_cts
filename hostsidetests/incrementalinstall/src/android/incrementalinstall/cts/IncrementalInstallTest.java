@@ -20,6 +20,7 @@ import static android.incrementalinstall.common.Consts.SupportedComponents.COMPR
 import static android.incrementalinstall.common.Consts.SupportedComponents.DYNAMIC_ASSET_COMPONENT;
 import static android.incrementalinstall.common.Consts.SupportedComponents.DYNAMIC_CODE_COMPONENT;
 import static android.incrementalinstall.common.Consts.SupportedComponents.ON_CREATE_COMPONENT;
+import static android.incrementalinstall.common.Consts.SupportedComponents.ON_CREATE_COMPONENT_2;
 import static android.incrementalinstall.common.Consts.SupportedComponents.UNCOMPRESSED_NATIVE_COMPONENT;
 
 import static org.junit.Assert.assertFalse;
@@ -70,11 +71,15 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     private static final String VALIDATION_HELPER_CLASS =
             VALIDATION_HELPER_PKG + ".AppValidationTest";
     private static final String VALIDATION_HELPER_METHOD = "testAppComponentsInvoked";
-    private static final String INSTALLATION_TYPE_HELPER_METHOD = "testInstallationType";
+    private static final String INSTALLATION_TYPE_HELPER_METHOD = "testInstallationTypeAndVersion";
 
     private static final String TEST_APP_PACKAGE_NAME =
             "android.incrementalinstall.incrementaltestapp";
     private static final String TEST_APP_BASE_APK_NAME = "IncrementalTestApp.apk";
+    // apk for zero version update test (has version 1).
+    private static final String TEST_APP_BASE_APK_2_V1_NAME = "IncrementalTestApp2_v1.apk";
+    // apk for version update test (has version 2).
+    private static final String TEST_APP_BASE_APK_2_V2_NAME = "IncrementalTestApp2_v2.apk";
     private static final String TEST_APP_DYNAMIC_ASSET_NAME = "IncrementalTestAppDynamicAsset.apk";
     private static final String TEST_APP_DYNAMIC_CODE_NAME = "IncrementalTestAppDynamicCode.apk";
     private static final String TEST_APP_COMPRESSED_NATIVE_NAME =
@@ -84,10 +89,10 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
 
     private static final String SIG_SUFFIX = ".idsig";
     private static final String INSTALL_SUCCESS_OUTPUT = "Success";
-
     private static final long DEFAULT_TEST_TIMEOUT_MS = 60 * 1000L;
     private static final long DEFAULT_MAX_TIMEOUT_TO_OUTPUT_MS = 60 * 1000L; // 1min
-
+    private final int TEST_APP_V1_VERSION = 1;
+    private final int TEST_APP_V2_VERSION = 2;
     private CompatibilityBuildHelper mBuildHelper;
 
     @Before
@@ -109,7 +114,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         assertTrue(
                 installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
-        verifyInstallationType(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
     }
 
@@ -118,7 +124,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         assertTrue(
                 installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
-        verifyInstallationType(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
         uninstallApp(TEST_APP_PACKAGE_NAME);
         verifyPackageNotInstalled(TEST_APP_PACKAGE_NAME);
@@ -162,7 +169,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         assertTrue(installWithAdbInstaller(TEST_APP_BASE_APK_NAME,
                 TEST_APP_DYNAMIC_ASSET_NAME).contains(INSTALL_SUCCESS_OUTPUT));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
-        verifyInstallationType(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT, DYNAMIC_ASSET_COMPONENT);
     }
 
@@ -171,7 +179,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         assertTrue(installWithAdbInstaller(TEST_APP_BASE_APK_NAME,
                 TEST_APP_DYNAMIC_CODE_NAME).contains(INSTALL_SUCCESS_OUTPUT));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
-        verifyInstallationType(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT, DYNAMIC_CODE_COMPONENT);
     }
 
@@ -182,7 +191,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         assertTrue(installWithAdbInstaller(TEST_APP_BASE_APK_NAME,
                 TEST_APP_COMPRESSED_NATIVE_NAME).contains(INSTALL_SUCCESS_OUTPUT));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
-        verifyInstallationType(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT, COMPRESSED_NATIVE_COMPONENT);
     }
 
@@ -193,7 +203,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         assertTrue(installWithAdbInstaller(TEST_APP_BASE_APK_NAME,
                 TEST_APP_UNCOMPRESSED_NATIVE_NAME).contains(INSTALL_SUCCESS_OUTPUT));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
-        verifyInstallationType(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT,
                 UNCOMPRESSED_NATIVE_COMPONENT);
     }
@@ -203,7 +214,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         assertTrue(
                 installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
-        verifyInstallationType(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
         // Adb cannot add a split to an existing install, so we'll use pm to install just the
         // dynamic code
@@ -214,14 +226,53 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand(String.format("pm install -p %s %s", TEST_APP_PACKAGE_NAME,
                 deviceLocalPath + TEST_APP_DYNAMIC_CODE_NAME));
         // Verify IFS->NonIFS migration.
-        verifyInstallationType(TEST_APP_PACKAGE_NAME, /* isIncfs= */ false);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ false,
+                TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT, DYNAMIC_CODE_COMPONENT);
     }
 
-    private void verifyInstallationType(String packageName, boolean isIncfs) throws Exception {
+    @Test
+    public void testZeroVersionUpdateAdbInstall() throws Exception {
+        assertTrue(
+                installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
+        validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
+        // Install second implementation of app with the same version code.
+        assertTrue(
+                installWithAdbInstaller(/* shouldUpdate= */ true,
+                        TEST_APP_BASE_APK_2_V1_NAME).contains(
+                        INSTALL_SUCCESS_OUTPUT));
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
+        validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT_2);
+    }
+
+    @Test
+    public void testVersionUpdateAdbInstall() throws Exception {
+        assertTrue(
+                installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
+        validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
+        // Install second implementation of app with the same version code.
+        assertTrue(
+                installWithAdbInstaller(/* shouldUpdate= */ true,
+                        TEST_APP_BASE_APK_2_V2_NAME).contains(
+                        INSTALL_SUCCESS_OUTPUT));
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V2_VERSION);
+        validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT_2);
+    }
+
+    private void verifyInstallationTypeAndVersion(String packageName, boolean isIncfs,
+            int versionCode) throws Exception {
         Map<String, String> args = new HashMap<>();
         args.put(Consts.PACKAGE_TO_LAUNCH_TAG, packageName);
         args.put(Consts.IS_INCFS_INSTALLATION_TAG, Boolean.toString(isIncfs));
+        args.put(Consts.INSTALLED_VERSION_CODE_TAG, Integer.toString(versionCode));
         boolean result = runDeviceTests(
                 getDevice(), TEST_RUNNER, VALIDATION_HELPER_PKG, VALIDATION_HELPER_CLASS,
                 INSTALLATION_TYPE_HELPER_METHOD,
