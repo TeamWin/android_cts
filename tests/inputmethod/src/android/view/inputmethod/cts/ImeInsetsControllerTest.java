@@ -18,8 +18,10 @@ package android.view.inputmethod.cts;
 
 import static android.view.WindowInsets.CONSUMED;
 import static android.view.WindowInsets.Type.ime;
+
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -38,6 +40,11 @@ import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -48,11 +55,6 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.test.filters.MediumTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 @MediumTest
 public class ImeInsetsControllerTest extends EndToEndImeTestBase {
@@ -121,13 +123,13 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
                 editText.getWindowInsetsController().addOnControllableInsetsChangedListener(
                         new OnControllableInsetsChangedListener() {
 
-                            boolean controlling = false;
+                            boolean mControlling = false;
 
                             @Override
                             public void onControllableInsetsChanged(
                                     @NonNull WindowInsetsController controller, int typeMask) {
-                                if ((typeMask & ime()) != 0 && !controlling) {
-                                    controlling = true;
+                                if ((typeMask & ime()) != 0 && !mControlling) {
+                                    mControlling = true;
                                     controller.controlWindowInsetsAnimation(ime(), -1, null, null,
                                             createControlListener(animController, controlLatch));
                                 }
