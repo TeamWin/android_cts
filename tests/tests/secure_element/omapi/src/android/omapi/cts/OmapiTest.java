@@ -265,6 +265,17 @@ public class OmapiTest {
 
             if (supportUICCReaders()) {
                 assertGreaterOrEqual(uiccReaders.size(), 1);
+                // Test API getUiccReader(int slotNumber)
+                // The result should be the same as getReaders() with UICC reader prefix
+                for (int i = 1; i <= uiccReaders.size(); i++) {
+                    try {
+                        Reader uiccReader = seService.getUiccReader(i);
+                        if (!uiccReaders.contains(uiccReader))
+                            fail("Incorrect reader object - getUiccReader(" + i + ")");
+                    } catch (IllegalArgumentException e) {
+                        fail("Fail to get Reader object by calling getUiccReader(" + i + ")");
+                    }
+                }
             } else {
                 assertTrue(uiccReaders.size() == 0);
             }
