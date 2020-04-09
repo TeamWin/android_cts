@@ -104,6 +104,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @Before
     public void onBefore() throws Exception {
+        checkIncrementalDeliveryFeature();
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
@@ -115,8 +116,7 @@ public class PackageManagerShellCommandIncrementalTest {
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
     }
 
-    @Test
-    public void testIncrementalDelivery() throws Exception {
+    private void checkIncrementalDeliveryFeature() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         Assume.assumeTrue(context.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INCREMENTAL_DELIVERY));
