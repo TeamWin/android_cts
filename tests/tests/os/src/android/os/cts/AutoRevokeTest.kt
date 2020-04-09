@@ -51,7 +51,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
-    fun testUnusedApp_getsPermissionRevoked() {
+    fun _testUnusedApp_getsPermissionRevoked() {
         wakeUpScreen()
         withDeviceConfig("auto_revoke_unused_threshold_millis", "1") {
             withDummyApp {
@@ -75,7 +75,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
     // TODO once implemented, use:
     // Intent(Intent.ACTION_AUTO_REVOKE_PERMISSIONS).putExtra(Intent.EXTRA_PACKAGE_NAME, packageName)
     @AppModeFull(reason = "Uses separate apps for testing")
-    fun testAutoRevoke_userWhitelisting() {
+    fun _testAutoRevoke_userWhitelisting() {
         wakeUpScreen()
         withDummyApp {
             // Setup
