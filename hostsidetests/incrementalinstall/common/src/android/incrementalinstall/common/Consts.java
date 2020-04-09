@@ -27,8 +27,11 @@ public class Consts {
     // Tag for the components that should not be loaded, sent from Host to app validator.
     public static final String NOT_LOADED_COMPONENTS_TAG = "NOT_LOADED_COMPONENTS";
 
-    // Tag for the components that should not be loaded, sent from Host to app validator.
+    // Tag for installation type (incremental or not), sent from Host to app validator.
     public static final String IS_INCFS_INSTALLATION_TAG = "IS_INCFS";
+
+    // Tag for the version of the installed app, sent from Host to app validator.
+    public static final String INSTALLED_VERSION_CODE_TAG = "VERSION_CODE";
 
     // Action broadcast from test app after attempting to load a component.
     public static final String INCREMENTAL_TEST_APP_STATUS_RECEIVER_ACTION =
@@ -43,13 +46,14 @@ public class Consts {
     public static class SupportedComponents {
 
         public static final String ON_CREATE_COMPONENT = "onCreate";
+        public static final String ON_CREATE_COMPONENT_2 = "onCreate2";
         public static final String DYNAMIC_ASSET_COMPONENT = "dynamicAsset";
         public static final String DYNAMIC_CODE_COMPONENT = "dynamicCode";
         public static final String COMPRESSED_NATIVE_COMPONENT = "compressedNative";
         public static final String UNCOMPRESSED_NATIVE_COMPONENT = "unCompressedNative";
 
         public static String[] getAllComponents() {
-            return new String[]{ON_CREATE_COMPONENT, DYNAMIC_ASSET_COMPONENT,
+            return new String[]{ON_CREATE_COMPONENT, ON_CREATE_COMPONENT_2, DYNAMIC_ASSET_COMPONENT,
                     DYNAMIC_CODE_COMPONENT, COMPRESSED_NATIVE_COMPONENT,
                     UNCOMPRESSED_NATIVE_COMPONENT};
         }
