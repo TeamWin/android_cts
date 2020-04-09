@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// v1 implementation of test app built with v1 manifest.
 android_test_helper_app {
     name: "IncrementalTestApp",
-    srcs: ["src/**/*.java"],
+    srcs: ["v1/src/**/*.java"],
     dex_preopt: {
         enabled: false,
     },
@@ -31,4 +32,51 @@ android_test_helper_app {
     sdk_version: "test_current",
     export_package_resources: true,
     aapt_include_all_resources: true,
+    manifest: "AndroidManifestV1.xml",
+}
+
+// v2 implementation of test app built with v1 manifest for zero version update test.
+android_test_helper_app {
+    name: "IncrementalTestApp2_v1",
+    srcs: ["v2/src/**/*.java"],
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
+    test_suites: [
+        "cts",
+    ],
+    v4_signature: true,
+    static_libs: [
+        "incremental-install-common-lib",
+    ],
+    sdk_version: "test_current",
+    export_package_resources: true,
+    aapt_include_all_resources: true,
+    manifest: "AndroidManifestV1.xml",
+}
+
+// v2 implementation of test app built with v2 manifest for version update test.
+android_test_helper_app {
+    name: "IncrementalTestApp2_v2",
+    srcs: ["v2/src/**/*.java"],
+    dex_preopt: {
+        enabled: false,
+    },
+    optimize: {
+        enabled: false,
+    },
+    test_suites: [
+        "cts",
+    ],
+    v4_signature: true,
+    static_libs: [
+        "incremental-install-common-lib",
+    ],
+    sdk_version: "test_current",
+    export_package_resources: true,
+    aapt_include_all_resources: true,
+    manifest: "AndroidManifestV2.xml",
 }
