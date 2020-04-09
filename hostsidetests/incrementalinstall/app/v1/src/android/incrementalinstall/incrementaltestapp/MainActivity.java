@@ -43,6 +43,7 @@ public class MainActivity extends Activity {
         PACKAGE_NAME = getApplicationContext().getPackageName();
 
         broadcastStatus(Consts.SupportedComponents.ON_CREATE_COMPONENT, true);
+        broadcastStatus(Consts.SupportedComponents.ON_CREATE_COMPONENT_2, false);
         loadDynamicAsset();
         loadDynamicCode();
         loadCompressedNativeLib();
