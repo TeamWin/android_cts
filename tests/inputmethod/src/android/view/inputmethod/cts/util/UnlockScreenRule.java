@@ -40,7 +40,7 @@ public class UnlockScreenRule implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                if (pm!= null && !pm.isInteractive()) {
+                if (pm != null && !pm.isInteractive()) {
                     TestUtils.turnScreenOn();
                 }
                 if (km != null && km.isKeyguardLocked()) {
