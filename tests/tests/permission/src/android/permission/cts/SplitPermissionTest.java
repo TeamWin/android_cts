@@ -42,6 +42,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.app.UiAutomation;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
@@ -284,6 +285,7 @@ public class SplitPermissionTest {
      *
      * <p>App using a shared uid
      */
+    @FlakyTest(bugId = 129764636)
     @Test
     public void inheritGrantedPermissionStateSharedUidApp() throws Exception {
         install(APK_SHARED_UID_LOCATION_29);
@@ -300,6 +302,7 @@ public class SplitPermissionTest {
      *
      * <p>(Pre-M version of test)
      */
+    @FlakyTest(bugId = 129764636)
     @Test
     public void inheritFlagsPreM() {
         install(APK_CONTACTS_16);
@@ -316,6 +319,7 @@ public class SplitPermissionTest {
      * If a permission has flags before the split happens, the new permission should inherit the
      * flags.
      */
+    @FlakyTest(bugId = 129764636)
     @Test
     public void inheritFlags() {
         install(APK_LOCATION_29);
