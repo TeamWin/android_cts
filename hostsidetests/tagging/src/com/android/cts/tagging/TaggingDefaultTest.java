@@ -16,29 +16,43 @@
 
 package com.android.cts.tagging;
 
-import android.compat.cts.CompatChangeGatingTestCase;
+import com.android.cts.tagging.TaggingBaseTest;
 
 import com.google.common.collect.ImmutableSet;
 
-public class TaggingDefaultTest extends CompatChangeGatingTestCase {
+public class TaggingDefaultTest extends TaggingBaseTest {
 
     protected static final String TEST_APK = "CtsHostsideTaggingNoneApp.apk";
     protected static final String TEST_PKG = "android.cts.tagging.none";
 
-    private static final long NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID = 135754954;
-
     @Override
     protected void setUp() throws Exception {
+        super.setUp();
         installPackage(TEST_APK, true);
     }
 
     public void testCompatFeatureEnabled() throws Exception {
-        runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapTaggingEnabled",
+        if (supportsTaggedPointers) {
+            runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapTaggingEnabled",
                 /*enabledChanges*/ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of());
+        } else {
+            // Ensure that even if the compat flag is set to true, tagged pointers don't
+            // get enabled on incompatible devices. Ensure that we don't check the statsd
+            // report of the feature status, as it won't be present on kernel-unsupported
+            // devices.
+            runDeviceCompatTestReported(TEST_PKG, ".TaggingTest", "testHeapTaggingDisabled",
+                /*enabledChanges*/ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
+                /*disabledChanges*/ ImmutableSet.of(),
+                /*reportedEnabledChanges*/ ImmutableSet.of(),
+                /*reportedDisabledChanges*/ ImmutableSet.of());
+        }
     }
 
     public void testCompatFeatureDisabled() throws Exception {
+        if (!supportsTaggedPointers) {
+            return;
+        }
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapTaggingDisabled",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID));
