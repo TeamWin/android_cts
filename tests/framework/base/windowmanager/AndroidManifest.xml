@@ -338,6 +338,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name="android.server.wm.DecorInsetTestsBase$TestActivity"
+            android:label="DecorInsetTestsBase.TestActivity"
+            android:exported="true" />
+
         <activity android:name="android.server.wm.WindowCtsActivity"
                   android:theme="@android:style/Theme.Material.NoActionBar"
                   android:screenOrientation="locked"
