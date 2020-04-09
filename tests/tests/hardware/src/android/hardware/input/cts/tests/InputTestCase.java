@@ -108,8 +108,7 @@ public abstract class InputTestCase {
         }
         assertEquals(mCurrentTestCase + " (action)",
                 expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
-        assertEquals(mCurrentTestCase + " (source)",
-                expectedKeyEvent.getSource(), receivedKeyEvent.getSource());
+        assertSource(mCurrentTestCase, expectedKeyEvent.getSource(), receivedKeyEvent.getSource());
         assertEquals(mCurrentTestCase + " (keycode)",
                 expectedKeyEvent.getKeyCode(), receivedKeyEvent.getKeyCode());
         assertEquals(mCurrentTestCase + " (meta state)",
@@ -135,8 +134,7 @@ public abstract class InputTestCase {
         }
         assertEquals(mCurrentTestCase + " (action)",
                 expectedEvent.getAction(), event.getAction());
-        assertEquals(mCurrentTestCase + " (source)",
-                expectedEvent.getSource(), event.getSource());
+        assertSource(mCurrentTestCase, expectedEvent.getSource(), event.getSource());
         assertEquals(mCurrentTestCase + " (button state)",
                 expectedEvent.getButtonState(), event.getButtonState());
         if (event.getActionMasked() == MotionEvent.ACTION_BUTTON_PRESS
@@ -152,6 +150,17 @@ public abstract class InputTestCase {
             assertEquals(mCurrentTestCase + " (" + MotionEvent.axisToString(axis) + ")",
                     expectedEvent.getAxisValue(axis), event.getAxisValue(axis), TOLERANCE);
         }
+    }
+
+    /**
+     * Asserts source flags. Separate this into a different method to allow individual test case to
+     * specify it.
+     *
+     * @param expectedSource expected source flag specified in JSON files.
+     * @param actualSource actual source flag received in the test app.
+     */
+    void assertSource(String testCase, int expectedSource, int actualSource) {
+        assertEquals(testCase + " (source)", expectedSource, actualSource);
     }
 
     /**
