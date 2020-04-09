@@ -136,4 +136,42 @@ public class InlineAugmentedLoginActivityTest
 
         mActivity.assertAutoFilled();
     }
+
+    @Test
+    public void testAugmentedAutoFill_selectDatasetThenHideInlineSuggestion() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final EditText password = mActivity.getPassword();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillId passwordId = password.getAutofillId();
+        final AutofillValue usernameValue = username.getAutofillValue();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude", createInlinePresentation("dude"))
+                        .setField(passwordId, "sweet", createInlinePresentation("sweet"))
+                        .build())
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req1")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
+
+        mUiBot.assertSuggestionStrip(1);
+
+        mActivity.expectAutoFill("dude", "sweet");
+
+        mUiBot.selectSuggestion(0);
+        mUiBot.waitForIdle();
+
+        mUiBot.assertNoSuggestionStripEver();
+    }
 }
