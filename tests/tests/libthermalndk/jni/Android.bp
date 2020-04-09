@@ -17,6 +17,7 @@ cc_test_library {
     srcs: [
         "NativeThermalTest.cpp",
     ],
+    header_libs: ["jni_headers"],
     shared_libs: [
         "libandroid",
         "liblog",
