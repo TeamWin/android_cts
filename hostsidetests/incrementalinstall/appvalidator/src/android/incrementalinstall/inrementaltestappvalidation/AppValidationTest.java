@@ -17,6 +17,7 @@
 package android.incrementalinstall.inrementaltestappvalidation;
 
 import static android.incrementalinstall.common.Consts.INCREMENTAL_TEST_APP_STATUS_RECEIVER_ACTION;
+import static android.incrementalinstall.common.Consts.INSTALLED_VERSION_CODE_TAG;
 import static android.incrementalinstall.common.Consts.IS_INCFS_INSTALLATION_TAG;
 import static android.incrementalinstall.common.Consts.LOADED_COMPONENTS_TAG;
 import static android.incrementalinstall.common.Consts.NOT_LOADED_COMPONENTS_TAG;
@@ -77,19 +78,44 @@ public class AppValidationTest {
     }
 
     @Test
-    public void testInstallationType() throws Exception{
+    public void testInstallationTypeAndVersion() throws Exception {
         boolean isIncfsInstallation = Boolean.parseBoolean(InstrumentationRegistry.getArguments()
                 .getString(IS_INCFS_INSTALLATION_TAG));
-        assertEquals(isIncfsInstallation, new PathChecker().isIncFsPath(getAppSourceDir()));
+        int versionCode = Integer.parseInt(InstrumentationRegistry.getArguments()
+                .getString(INSTALLED_VERSION_CODE_TAG));
+        InstalledAppInfo installedAppInfo = getInstalledAppInfo();
+        assertEquals(isIncfsInstallation,
+                new PathChecker().isIncFsPath(installedAppInfo.installationPath));
+        assertEquals(versionCode, installedAppInfo.versionCode);
     }
 
-    private void launchTestApp() throws Exception{
+    private void launchTestApp() throws Exception {
         mDevice.executeShellCommand(String.format("am start %s/.MainActivity", mPackageToLaunch));
     }
 
-    private String getAppSourceDir() throws Exception{
-        String output = mDevice.executeShellCommand("pm list packages -f " + mPackageToLaunch);
-        // Output of the command is package:<path>/apk=<package_name>, we just need the <path>.
-        return output.substring("package:".length(), output.lastIndexOf("/"));
+    private InstalledAppInfo getInstalledAppInfo() throws Exception {
+        // Output of the command is package:<path>/apk=<package_name> versionCode:<version>, we
+        // just need the <path> and <version>.
+        String output = mDevice.executeShellCommand(
+                "pm list packages -f --show-versioncode " + mPackageToLaunch);
+        // outputSplits[0] will contain path information and outputSplits[1] will contain
+        // versionCode.
+        String[] outputSplits = output.split(" ");
+        String installationPath = outputSplits[0].trim().substring("package:".length(),
+                output.lastIndexOf("/"));
+        int versionCode = Integer.parseInt(
+                outputSplits[1].trim().substring("versionCode:".length()));
+        return new InstalledAppInfo(installationPath, versionCode);
+    }
+
+    private class InstalledAppInfo {
+
+        private final String installationPath;
+        private final int versionCode;
+
+        InstalledAppInfo(String installedPath, int versionCode) {
+            this.installationPath = installedPath;
+            this.versionCode = versionCode;
+        }
     }
 }
