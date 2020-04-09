@@ -263,6 +263,12 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
                 mUserId);
     }
 
+    @Test
+    @Override
+    public void testSetKeyguardDisabledSecureCameraLogged() {
+        // Managed profiles are not allowed to set keyguard disabled secure camera
+    }
+
     @FlakyTest
     @Override
     @Test
