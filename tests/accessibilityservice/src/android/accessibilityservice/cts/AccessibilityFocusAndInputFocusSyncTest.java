@@ -14,8 +14,11 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithAction;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
+import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
+import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS;
 
@@ -34,7 +37,6 @@ import android.app.UiAutomation;
 import android.platform.test.annotations.Presubmit;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.View;
-import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.test.InstrumentationRegistry;
@@ -115,8 +117,8 @@ public class AccessibilityFocusAndInputFocusSyncTest {
 
         sUiAutomation.executeAndWaitForEvent(
                 () -> assertTrue(expected.performAction(ACTION_ACCESSIBILITY_FOCUS)),
-                (event) ->
-                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                filterForEventTypeWithAction(
+                        TYPE_VIEW_ACCESSIBILITY_FOCUSED, ACTION_ACCESSIBILITY_FOCUS),
                 DEFAULT_TIMEOUT_MS);
 
         // Get the second expected node info.
@@ -151,8 +153,8 @@ public class AccessibilityFocusAndInputFocusSyncTest {
 
         sUiAutomation.executeAndWaitForEvent(
                 () -> assertTrue(rootLinearLayout.performAction(ACTION_ACCESSIBILITY_FOCUS)),
-                (event) ->
-                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                filterForEventTypeWithAction(
+                        TYPE_VIEW_ACCESSIBILITY_FOCUSED, ACTION_ACCESSIBILITY_FOCUS),
                 DEFAULT_TIMEOUT_MS);
 
         // Get the node info again.
@@ -174,8 +176,8 @@ public class AccessibilityFocusAndInputFocusSyncTest {
 
         sUiAutomation.executeAndWaitForEvent(
                 () -> assertTrue(rootLinearLayout.performAction(ACTION_ACCESSIBILITY_FOCUS)),
-                (event) ->
-                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                filterForEventTypeWithAction(
+                        TYPE_VIEW_ACCESSIBILITY_FOCUSED, ACTION_ACCESSIBILITY_FOCUS),
                 DEFAULT_TIMEOUT_MS);
 
         // Refresh the node info.
@@ -186,8 +188,8 @@ public class AccessibilityFocusAndInputFocusSyncTest {
 
         sUiAutomation.executeAndWaitForEvent(
                 () -> assertTrue(rootLinearLayout.performAction(ACTION_CLEAR_ACCESSIBILITY_FOCUS)),
-                (event) -> event.getEventType()
-                        == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED,
+                filterForEventTypeWithAction(
+                        TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED, ACTION_CLEAR_ACCESSIBILITY_FOCUS),
                 DEFAULT_TIMEOUT_MS);
 
         // Refresh the node info.
@@ -211,8 +213,8 @@ public class AccessibilityFocusAndInputFocusSyncTest {
 
         sUiAutomation.executeAndWaitForEvent(
                 () -> assertTrue(firstEditText.performAction(ACTION_ACCESSIBILITY_FOCUS)),
-                (event) ->
-                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                filterForEventTypeWithAction(
+                        TYPE_VIEW_ACCESSIBILITY_FOCUSED, ACTION_ACCESSIBILITY_FOCUS),
                 DEFAULT_TIMEOUT_MS);
 
         // Get the second not focused edit text.
@@ -226,8 +228,8 @@ public class AccessibilityFocusAndInputFocusSyncTest {
 
         sUiAutomation.executeAndWaitForEvent(
                 () -> assertTrue(secondEditText.performAction(ACTION_ACCESSIBILITY_FOCUS)),
-                (event) ->
-                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                filterForEventTypeWithAction(
+                        TYPE_VIEW_ACCESSIBILITY_FOCUSED, ACTION_ACCESSIBILITY_FOCUS),
                 DEFAULT_TIMEOUT_MS);
 
         // Get the node info again.
