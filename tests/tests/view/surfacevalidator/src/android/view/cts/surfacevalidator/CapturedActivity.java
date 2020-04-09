@@ -130,12 +130,6 @@ public class CapturedActivity extends Activity {
         bindMediaProjectionService();
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        mSettingsSession.close();
-    }
-
     public void dismissPermissionDialog() {
         // The permission dialog will be auto-opened by the activity - find it and accept
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
@@ -180,6 +174,7 @@ public class CapturedActivity extends Activity {
             unbindService(mConnection);
             mProjectionServiceBound = false;
         }
+        mSettingsSession.close();
     }
 
     @Override
