@@ -150,9 +150,9 @@ public class ConversationActionsTest {
                 new ConversationActions.Message.Builder(PERSON)
                         .setText(TEXT)
                         .build();
-
         ConversationActions.Request request =
                 new ConversationActions.Request.Builder(Collections.singletonList(message))
+                        .setMaxSuggestions(-1) // The default value.
                         .build();
 
         ConversationActions.Request recovered =
