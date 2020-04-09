@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.graphics.Insets.NONE;
+import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsets.Type.systemBars;
@@ -50,6 +51,7 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
 import android.view.WindowInsetsAnimation.Bounds;
 import android.view.WindowInsetsAnimation.Callback;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -94,7 +96,7 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
 
         waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
 
-        commonAnimationAssertions(mActivity, before, false /* show */);
+        commonAnimationAssertions(mActivity, before, false /* show */, systemBars());
     }
 
     @Test
@@ -112,7 +114,27 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
 
         waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
 
-        commonAnimationAssertions(mActivity, before, true /* show */);
+        commonAnimationAssertions(mActivity, before, true /* show */, systemBars());
+    }
+
+    @Test
+    public void testImeAnimationCallbacksShowAndHide() {
+        WindowInsets before = mActivity.mLastWindowInsets;
+        getInstrumentation().runOnMainSync(
+                () -> mRootView.getWindowInsetsController().show(ime()));
+
+        waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
+        commonAnimationAssertions(mActivity, before, true /* show */, ime());
+        mActivity.mCallback.animationDone = false;
+
+        before = mActivity.mLastWindowInsets;
+
+        getInstrumentation().runOnMainSync(
+                () -> mRootView.getWindowInsetsController().hide(ime()));
+
+        waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
+
+        commonAnimationAssertions(mActivity, before, false /* show */, ime());
     }
 
     @Test
@@ -174,6 +196,67 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
         assertEquals(after.getInsets(statusBars()),
                 callback.statusAnimSteps.get(callback.statusAnimSteps.size() - 1).insets
                         .getInsets(statusBars()));
+    }
+
+    @Test
+    @FlakyTest(detail = "Promote once confirmed non-flaky")
+    public void testAnimationCallbacks_overlapping_opposite() {
+        WindowInsets before = mActivity.mLastWindowInsets;
+
+        MultiAnimCallback callbackInner = new MultiAnimCallback();
+        MultiAnimCallback callback = mock(MultiAnimCallback.class,
+                withSettings()
+                        .spiedInstance(callbackInner)
+                        .defaultAnswer(CALLS_REAL_METHODS)
+                        .verboseLogging());
+        mActivity.mView.setWindowInsetsAnimationCallback(callback);
+
+        getInstrumentation().runOnMainSync(
+                () -> mRootView.getWindowInsetsController().hide(navigationBars()));
+        getInstrumentation().runOnMainSync(
+                () -> mRootView.getWindowInsetsController().show(ime()));
+
+        waitForOrFail("Waiting until animation done", () -> callback.animationDone);
+
+        WindowInsets after = mActivity.mLastWindowInsets;
+
+        InOrder inOrder = inOrder(callback, mActivity.mListener);
+
+        inOrder.verify(callback).onPrepare(eq(callback.navBarAnim));
+
+        inOrder.verify(mActivity.mListener).onApplyWindowInsets(any(), argThat(
+                argument -> NONE.equals(argument.getInsets(navigationBars()))
+                        && NONE.equals(argument.getInsets(ime()))));
+
+        inOrder.verify(callback).onStart(eq(callback.navBarAnim), argThat(
+                argument -> argument.getLowerBound().equals(NONE)
+                        && argument.getUpperBound().equals(before.getInsets(navigationBars()))));
+
+        inOrder.verify(callback).onPrepare(eq(callback.imeAnim));
+        inOrder.verify(mActivity.mListener).onApplyWindowInsets(
+                any(), eq(mActivity.mLastWindowInsets));
+
+        inOrder.verify(callback).onStart(eq(callback.imeAnim), argThat(
+                argument -> argument.getLowerBound().equals(NONE)
+                        && !argument.getUpperBound().equals(NONE)));
+
+        inOrder.verify(callback).onEnd(eq(callback.navBarAnim));
+        inOrder.verify(callback).onEnd(eq(callback.imeAnim));
+
+        assertAnimationSteps(callback.navAnimSteps, false /* showAnimation */);
+        assertAnimationSteps(callback.imeAnimSteps, false /* showAnimation */);
+
+        assertEquals(before.getInsets(navigationBars()),
+                callback.navAnimSteps.get(0).insets.getInsets(navigationBars()));
+        assertEquals(after.getInsets(navigationBars()),
+                callback.navAnimSteps.get(callback.navAnimSteps.size() - 1).insets
+                        .getInsets(navigationBars()));
+
+        assertEquals(before.getInsets(ime()),
+                callback.imeAnimSteps.get(0).insets.getInsets(ime()));
+        assertEquals(after.getInsets(ime()),
+                callback.imeAnimSteps.get(callback.imeAnimSteps.size() - 1).insets
+                        .getInsets(ime()));
     }
 
     @Test
@@ -244,7 +327,7 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
     }
 
     private void commonAnimationAssertions(TestActivity activity, WindowInsets before,
-            boolean show) {
+            boolean show, int types) {
 
         AnimCallback callback = activity.mCallback;
 
@@ -257,14 +340,19 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
         inOrder.verify(callback).onStart(eq(callback.lastAnimation), argThat(
                 argument -> argument.getLowerBound().equals(NONE)
                         && argument.getUpperBound().equals(show
-                                ? after.getInsets(systemBars())
-                                : before.getInsets(systemBars()))));
+                                ? after.getInsets(types)
+                                : before.getInsets(types))));
 
         inOrder.verify(callback, atLeast(2)).onProgress(any(), argThat(
                 argument -> argument.size() == 1 && argument.get(0) == callback.lastAnimation));
         inOrder.verify(callback).onEnd(eq(callback.lastAnimation));
 
-        assertTrue((callback.lastAnimation.getTypeMask() & systemBars()) != 0);
+        if ((types & systemBars()) != 0) {
+            assertTrue((callback.lastAnimation.getTypeMask() & systemBars()) != 0);
+        }
+        if ((types & ime()) != 0) {
+            assertTrue((callback.lastAnimation.getTypeMask() & ime()) != 0);
+        }
         assertTrue(callback.lastAnimation.getDurationMillis() > 0);
         assertNotNull(callback.lastAnimation.getInterpolator());
         assertBeforeAfterState(callback.animationSteps, before, after);
@@ -386,9 +474,11 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
 
         WindowInsetsAnimation statusBarAnim;
         WindowInsetsAnimation navBarAnim;
+        WindowInsetsAnimation imeAnim;
         volatile boolean animationDone;
         final ArrayList<AnimationStep> statusAnimSteps = new ArrayList<>();
         final ArrayList<AnimationStep> navAnimSteps = new ArrayList<>();
+        final ArrayList<AnimationStep> imeAnimSteps = new ArrayList<>();
         Runnable startRunnable;
         final ArraySet<WindowInsetsAnimation> runningAnims = new ArraySet<>();
 
@@ -403,6 +493,9 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
             }
             if ((animation.getTypeMask() & navigationBars()) != 0) {
                 navBarAnim = animation;
+            }
+            if ((animation.getTypeMask() & ime()) != 0) {
+                imeAnim = animation;
             }
         }
 
@@ -425,6 +518,10 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
             if (navBarAnim != null) {
                 navAnimSteps.add(new AnimationStep(insets, navBarAnim.getFraction(),
                         navBarAnim.getInterpolatedFraction(), navBarAnim.getAlpha()));
+            }
+            if (imeAnim != null) {
+                imeAnimSteps.add(new AnimationStep(insets, imeAnim.getFraction(),
+                        imeAnim.getInterpolatedFraction(), imeAnim.getAlpha()));
             }
 
             assertEquals(runningAnims.size(), runningAnimations.size());
@@ -452,6 +549,7 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
         OnApplyWindowInsetsListener mListener;
         LinearLayout mView;
         View mChild;
+        EditText mEditor;
 
         public class InsetsListener implements OnApplyWindowInsetsListener {
 
@@ -470,12 +568,14 @@ public class WindowInsetsAnimationTests extends WindowManagerTestBase {
             mView.setWindowInsetsAnimationCallback(mCallback);
             mView.setOnApplyWindowInsetsListener(mListener);
             mChild = new TextView(this);
+            mEditor = new EditText(this);
             mView.addView(mChild);
 
             getWindow().setDecorFitsSystemWindows(false);
             getWindow().getAttributes().layoutInDisplayCutoutMode =
                     LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
             setContentView(mView);
+            mEditor.requestFocus();
         }
     }
 }
