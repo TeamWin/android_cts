@@ -16,29 +16,34 @@
 
 package com.android.cts.tagging;
 
-import android.compat.cts.CompatChangeGatingTestCase;
+import com.android.cts.tagging.TaggingBaseTest;
 
 import com.google.common.collect.ImmutableSet;
 
-public class TaggingEnabledTest extends CompatChangeGatingTestCase {
+public class TaggingEnabledTest extends TaggingBaseTest {
 
     protected static final String TEST_APK = "CtsHostsideTaggingEnabledApp.apk";
     protected static final String TEST_PKG = "android.cts.tagging.enabled";
 
-    private static final long NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID = 135754954;
-
     @Override
     protected void setUp() throws Exception {
+        super.setUp();
         installPackage(TEST_APK, true);
     }
 
     public void testCompatFeatureEnabled() throws Exception {
+        if (!supportsTaggedPointers) {
+            return;
+        }
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapTaggingEnabled",
                 /*enabledChanges*/ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of());
     }
 
     public void testCompatFeatureDisabled() throws Exception {
+        if (!supportsTaggedPointers) {
+            return;
+        }
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapTaggingDisabled",
                 /*enabledChanges*/ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID));
