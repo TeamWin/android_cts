@@ -41,4 +41,18 @@ typedef enum {
     OUTPUT_FORMAT_LIST_END = OUTPUT_FORMAT_START + 4,
 } MuxerFormat;
 
+// Color formats supported by encoder - should mirror supportedColorList
+// from MediaCodecConstants.h (are these going to be deprecated)
+constexpr int COLOR_FormatYUV420SemiPlanar = 21;
+constexpr int COLOR_FormatYUV420Flexible = 0x7F420888;
+
+// constants not defined in NDK
+extern const char* TBD_AMEDIACODEC_PARAMETER_KEY_REQUEST_SYNC_FRAME;
+extern const char* TBD_AMEDIACODEC_PARAMETER_KEY_VIDEO_BITRATE;
+extern const char* TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES;
+extern const char* TBD_AMEDIAFORMAT_KEY_BIT_RATE_MODE;
+static const int TBD_AMEDIACODEC_BUFFER_FLAG_KEY_FRAME = 0x1;
+
+static const int kBitrateModeConstant = 2;
+
 #endif  // MEDIACTSNATIVE_NATIVE_MEDIA_CONSTANTS_H
