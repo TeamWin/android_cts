@@ -19,6 +19,7 @@ import static android.autofillservice.cts.augmented.AugmentedHelper.getContentDe
 
 import android.autofillservice.cts.R;
 import android.content.Context;
+import android.os.Bundle;
 import android.service.autofill.InlinePresentation;
 import android.service.autofill.augmented.FillCallback;
 import android.service.autofill.augmented.FillController;
@@ -50,6 +51,9 @@ import java.util.stream.Collectors;
 public final class CannedAugmentedFillResponse {
 
     private static final String TAG = CannedAugmentedFillResponse.class.getSimpleName();
+
+    public static final String CLIENT_STATE_KEY = "clientStateKey";
+    public static final String CLIENT_STATE_VALUE = "clientStateValue";
 
     private final AugmentedResponseType mResponseType;
     private final Map<AutofillId, Dataset> mDatasets;
@@ -169,6 +173,12 @@ public final class CannedAugmentedFillResponse {
         TIMEOUT,
     }
 
+    private Bundle newClientState() {
+        Bundle b = new Bundle();
+        b.putString(CLIENT_STATE_KEY, CLIENT_STATE_VALUE);
+        return b;
+    }
+
     private FillResponse createResponseWithInlineSuggestion() {
         List<android.service.autofill.Dataset> list = new ArrayList<>();
         for (Dataset dataset : mInlineSuggestions) {
@@ -183,7 +193,8 @@ public final class CannedAugmentedFillResponse {
                 list.add(datasetBuilder.build());
             }
         }
-        return new FillResponse.Builder().setInlineSuggestions(list).build();
+        return new FillResponse.Builder().setInlineSuggestions(list).setClientState(
+                newClientState()).build();
     }
 
     public static final class Builder {
