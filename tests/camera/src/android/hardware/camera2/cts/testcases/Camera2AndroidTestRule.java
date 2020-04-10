@@ -189,7 +189,7 @@ public class Camera2AndroidTestRule extends ExternalResource {
     }
 
     private String[] deriveCameraIdsUnderTest() throws Exception {
-        String[] idsUnderTest = mCameraManager.getCameraIdListNoLazy();
+        String[] idsUnderTest = mCameraManager.getCameraIdList();
         assertNotNull("Camera ids shouldn't be null", idsUnderTest);
         if (mOverrideCameraId != null) {
             if (Arrays.asList(idsUnderTest).contains(mOverrideCameraId)) {
