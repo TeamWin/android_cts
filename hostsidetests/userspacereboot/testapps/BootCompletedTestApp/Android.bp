@@ -19,6 +19,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.runner",
         "androidx.test.core",
+        "compatibility-device-util-axt",
         "testng",
         "truth-prebuilt",
     ],
