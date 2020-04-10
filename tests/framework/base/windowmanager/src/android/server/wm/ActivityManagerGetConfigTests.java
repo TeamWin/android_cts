@@ -43,8 +43,6 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Display;
 
-import com.android.compatibility.common.util.CtsDownstreamingTest;
-
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
 
 import org.junit.Before;
@@ -356,7 +354,6 @@ public class ActivityManagerGetConfigTests {
                 featureNames, deviceConfig.features);
     }
 
-    @CtsDownstreamingTest
     @Test
     public void testDeviceConfig() {
         byte[] dump = executeShellCommand("cmd activity get-config --proto --device");
@@ -378,7 +375,6 @@ public class ActivityManagerGetConfigTests {
         checkDeviceConfig(metrics, globalConfig.device);
     }
 
-    @CtsDownstreamingTest
     @Test
     public void testDeviceConfigWithSecondaryDisplay() throws Exception {
         VirtualDisplayHelper vd = new VirtualDisplayHelper();

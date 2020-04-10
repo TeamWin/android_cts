@@ -27,16 +27,6 @@ import static org.junit.Assert.*;
 public class Poc18_11 extends SecurityTestCase {
 
     /**
-     *  b/111330641
-     */
-    @Test
-    @SecurityTest(minPatchLevel = "2018-11")
-    public void testPocCVE_2018_9525() throws Exception {
-        assertTrue(AdbUtils.runCommandGetExitCode(
-                "pm dump com.android.settings | grep SliceBroadcastReceiver", getDevice()) != 0);
-    }
-
-    /**
      *  b/113027383
      */
     @Test
