@@ -677,6 +677,22 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testGetActiveDataSubscriptionId() {
+        if (!isSupported()) return;
+
+        int activeDataSubIdCurrent = executeWithShellPermissionAndDefault(
+                SubscriptionManager.INVALID_SUBSCRIPTION_ID, mSm,
+                (sm) -> sm.getActiveDataSubscriptionId());
+
+        if (activeDataSubIdCurrent != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            List<SubscriptionInfo> subscriptionInfos = mSm.getCompleteActiveSubscriptionInfoList();
+            boolean foundSub = subscriptionInfos.stream()
+                    .anyMatch(x -> x.getSubscriptionId() == activeDataSubIdCurrent);
+            assertTrue(foundSub);
+        }
+    }
+
+    @Test
     public void testSetPreferredDataSubscriptionId() {
         if (!isSupported()) return;
         int preferredSubId = executeWithShellPermissionAndDefault(-1, mSm,
