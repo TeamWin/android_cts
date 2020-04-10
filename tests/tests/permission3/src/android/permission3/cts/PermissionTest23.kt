@@ -241,7 +241,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
             android.Manifest.permission.RECORD_AUDIO,
             android.Manifest.permission.BODY_SENSORS,
             android.Manifest.permission.CAMERA,
-            android.Manifest.permission.READ_EXTERNAL_STORAGE
+            android.Manifest.permission.READ_EXTERNAL_STORAGE, targetSdk = 23
         )
         // Don't use UI for granting location permission as this shows another dialog
         uiAutomation.grantRuntimePermission(
