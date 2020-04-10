@@ -87,6 +87,6 @@ public class InstallBehavior extends BasePrintTest {
         selectPrinter("ExternalServicePrinter", OPERATION_TIMEOUT_MILLIS);
 
         // Exit print preview and thereby end printing
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
     }
 }
