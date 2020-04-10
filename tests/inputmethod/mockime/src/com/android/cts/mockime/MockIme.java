@@ -64,6 +64,13 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.inline.InlinePresentationSpec;
 
+import androidx.annotation.AnyThread;
+import androidx.annotation.CallSuper;
+import androidx.annotation.GuardedBy;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,13 +79,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import androidx.annotation.AnyThread;
-import androidx.annotation.CallSuper;
-import androidx.annotation.GuardedBy;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
 
 /**
  * Mock IME for end-to-end tests.
@@ -703,7 +703,7 @@ public final class MockIme extends InputMethodService {
                 sSuggestionView.removeAllViews();
                 final int size = mSuggestionViews.size();
                 for (int i = 0; i < size; i++) {
-                    if(mSuggestionViews.get(i) == null) {
+                    if (mSuggestionViews.get(i) == null) {
                         continue;
                     }
                     ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
@@ -759,7 +759,7 @@ public final class MockIme extends InputMethodService {
                     AsyncTask.THREAD_POOL_EXECUTOR,
                     suggestionView -> {
                         Log.d(TAG, "new inline suggestion view ready");
-                        if(suggestionView != null) {
+                        if (suggestionView != null) {
                             suggestionViews[index] = suggestionView;
                             sizes[index] = size;
                         }
@@ -1002,7 +1002,7 @@ public final class MockIme extends InputMethodService {
         }
 
         public void onSuggestionViewUpdated() {
-            recordEventInternal("onSuggestionViewUpdated", () -> {}, new Bundle());
+            recordEventInternal("onSuggestionViewUpdated", () -> { }, new Bundle());
         }
     }
 }

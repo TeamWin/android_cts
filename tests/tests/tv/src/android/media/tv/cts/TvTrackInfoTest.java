@@ -16,6 +16,7 @@
 
 package android.media.tv.cts;
 
+import static android.content.pm.PackageManager.FEATURE_LIVE_TV;
 import static android.media.tv.cts.TvTrackInfoSubject.assertThat;
 
 import static org.testng.Assert.assertThrows;
@@ -23,21 +24,22 @@ import static org.testng.Assert.assertThrows;
 import android.media.tv.TvTrackInfo;
 import android.os.Bundle;
 
-import androidx.test.core.app.ApplicationProvider;
 import androidx.test.core.os.Parcelables;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 /**
  * Test {@link android.media.tv.TvTrackInfo}.
  */
 public class TvTrackInfoTest {
 
+    @Rule
+    public final TestRule mRequiresLiveTvFeature = Utils.assumeFeatureRule(FEATURE_LIVE_TV);
+
     @Test
     public void setHardOfHearing_invalid() {
-        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
-            return;
-        }
         assertThrows(
                 IllegalStateException.class,
                 () -> new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "invalid")
@@ -47,9 +49,6 @@ public class TvTrackInfoTest {
 
     @Test
     public void newAudioTrack_default() {
-        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
-            return;
-        }
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "default")
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_AUDIO);
@@ -70,9 +69,6 @@ public class TvTrackInfoTest {
 
     @Test
     public void newAudioTrack_everything() {
-        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
-            return;
-        }
         final Bundle bundle = new Bundle();
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_AUDIO, "id_audio")
                 .setAudioChannelCount(2)
@@ -102,9 +98,6 @@ public class TvTrackInfoTest {
 
     @Test
     public void newVideoTrack_default() {
-        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
-            return;
-        }
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "default")
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_VIDEO);
@@ -126,9 +119,6 @@ public class TvTrackInfoTest {
 
     @Test
     public void newVideoTrack_everything() {
-        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
-            return;
-        }
         final Bundle bundle = new Bundle();
         bundle.putBoolean("testTrue", true);
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "id_video")
@@ -161,9 +151,6 @@ public class TvTrackInfoTest {
 
     @Test
     public void newSubtitleTrack_default() {
-        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
-            return;
-        }
         final Bundle bundle = new Bundle();
         bundle.putBoolean("testTrue", true);
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "default")
@@ -183,9 +170,6 @@ public class TvTrackInfoTest {
 
     @Test
     public void newSubtitleTrack_everything() {
-        if (!Utils.hasTvInputFramework(ApplicationProvider.getApplicationContext())) {
-            return;
-        }
         final Bundle bundle = new Bundle();
         bundle.putBoolean("testTrue", true);
         final TvTrackInfo info = new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "id_subtitle")
