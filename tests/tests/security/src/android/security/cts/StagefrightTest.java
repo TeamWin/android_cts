@@ -306,6 +306,7 @@ public class StagefrightTest {
         doStagefrightTest(R.raw.cve_2016_6766);
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "2017-02")
     public void testStagefright_cve_2016_2429_b_27211885() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2429_b_27211885,
@@ -1111,6 +1112,7 @@ public class StagefrightTest {
     doStagefrightTest(R.raw.bug_37430213);
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "2017-03")
     public void testStagefright_cve_2017_0474() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0474, 120000);
@@ -2170,31 +2172,37 @@ public class StagefrightTest {
                 new CrashUtils.Config().checkMinAddress(false));
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "Unknown")
     public void testBug_123700383() throws Exception {
         assertExtractorDoesNotHang(R.raw.bug_123700383);
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "Unknown")
     public void testBug_127310810() throws Exception {
         assertExtractorDoesNotHang(R.raw.bug_127310810);
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "Unknown")
     public void testBug_127312550() throws Exception {
         assertExtractorDoesNotHang(R.raw.bug_127312550);
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "Unknown")
     public void testBug_127313223() throws Exception {
         assertExtractorDoesNotHang(R.raw.bug_127313223);
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "Unknown")
     public void testBug_127313537() throws Exception {
         assertExtractorDoesNotHang(R.raw.bug_127313537);
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "Unknown")
     public void testBug_127313764() throws Exception {
         assertExtractorDoesNotHang(R.raw.bug_127313764);
