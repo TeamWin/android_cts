@@ -46,6 +46,15 @@ public class TestMedia extends SecurityTestCase {
      * existing test methods
      ******************************************************************************/
 
+    /**
+     * b/112662184
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     **/
+    @SecurityTest(minPatchLevel = "2018-11")
+    @Test
+    public void testPocCVE_2018_9536() throws Exception {
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2018-9536", getDevice(), 60);
+    }
 
     /******************************************************************************
      * To prevent merge conflicts, add tests for Q below this comment, before any
