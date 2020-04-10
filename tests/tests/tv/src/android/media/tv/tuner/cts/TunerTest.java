@@ -32,6 +32,8 @@ import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.TimeFilter;
+import android.media.tv.tuner.frontend.AtscFrontendSettings;
+import android.media.tv.tuner.frontend.FrontendSettings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -67,6 +69,16 @@ public class TunerTest {
         if (!hasTuner()) return;
         Tuner tuner = new Tuner(mContext, null, 100);
         assertNotNull(tuner);
+    }
+
+    @Test
+    public void testTuning() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        int res = tuner.tune(getFrontendSettings());
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        res = tuner.cancelTuning();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
     }
 
     @Test
@@ -176,10 +188,19 @@ public class TunerTest {
             public void onRecordStatusChanged(int status) {}
         };
     }
+
     private OnPlaybackStatusChangedListener getPlaybackListener() {
         return new OnPlaybackStatusChangedListener() {
             @Override
             public void onPlaybackStatusChanged(int status) {}
         };
+    }
+
+    private FrontendSettings getFrontendSettings() {
+        return AtscFrontendSettings
+                .builder()
+                .setFrequency(2000)
+                .setModulation(AtscFrontendSettings.MODULATION_AUTO)
+                .build();
     }
 }
