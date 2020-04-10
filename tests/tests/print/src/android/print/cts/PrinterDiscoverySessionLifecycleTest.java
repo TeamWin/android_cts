@@ -512,8 +512,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(4);
 
         // Cancel the printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for all print jobs to be handled after which the is session destroyed.
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
@@ -634,7 +633,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         runOnMainThread(() -> session[0].removePrinters(printerIdsToRemove));
         eventually(() -> runOnMainThread(() -> assertEquals(0, session[0].getPrinters().size())));
 
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
