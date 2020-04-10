@@ -343,8 +343,7 @@ public class PrinterInfoTest extends BasePrintTest {
         mPrintHelper.displayPrinterList();
 
         // Exit print spooler
-        getUiDevice().pressBack();
-        getUiDevice().pressBack();
-        getUiDevice().pressBack();
+        mPrintHelper.closePrinterList();
+        mPrintHelper.cancelPrinting();
     }
 }

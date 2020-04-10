@@ -203,8 +203,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForWriteAdapterCallback(1);
 
         // Cancel the printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for finish.
         waitForAdapterFinishCallbackCalled();
@@ -307,8 +306,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         assertNoPrintButton();
 
-        getUiDevice().pressBack();
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
@@ -1176,8 +1174,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for the cancellation request.
         waitForCancelOperationCallbackCalled();
@@ -1253,8 +1250,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForWriteAdapterCallback(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for the cancellation request.
         waitForCancelOperationCallbackCalled();
@@ -1317,8 +1313,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
@@ -1385,8 +1380,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForWriteAdapterCallback(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
@@ -1598,8 +1592,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForWriteAdapterCallback(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
@@ -1658,8 +1651,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
@@ -1723,8 +1715,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForWriteAdapterCallback(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
@@ -1800,8 +1791,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForWriteAdapterCallback(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
@@ -1888,8 +1878,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         waitForWriteAdapterCallback(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for a finish.
         waitForAdapterFinishCallbackCalled();
