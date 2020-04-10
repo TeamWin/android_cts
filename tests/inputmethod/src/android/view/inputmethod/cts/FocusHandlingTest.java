@@ -116,7 +116,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         editText.post(() -> {
             final ViewTreeObserver observerForEditText = editText.getViewTreeObserver();
             observerForEditText.addOnWindowFocusChangeListener((hasFocus) ->
-                outEditHasWindowFocusRef.set(editText.hasWindowFocus()));
+                    outEditHasWindowFocusRef.set(editText.hasWindowFocus()));
             outEditHasWindowFocusRef.set(editText.hasWindowFocus());
         });
         return editText;

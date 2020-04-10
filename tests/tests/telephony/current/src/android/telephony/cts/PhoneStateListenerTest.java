@@ -43,6 +43,7 @@ import android.telephony.PreciseDataConnectionState;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyDisplayInfo;
 import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsReasonInfo;
@@ -89,6 +90,7 @@ public class PhoneStateListenerTest {
     private boolean mOnBarringInfoChangedCalled;
     private boolean mSecurityExceptionThrown;
     private boolean mOnRegistrationFailedCalled;
+    private boolean mOnTelephonyDisplayInfoChanged;
     @RadioPowerState private int mRadioPowerState;
     @SimActivationState private int mVoiceActivationState;
     private BarringInfo mBarringInfo;
@@ -690,6 +692,37 @@ public class PhoneStateListenerTest {
         // Superseded in R by getApnSetting()
         mPreciseDataConnectionState.getDataConnectionApnTypeBitMask();
         mPreciseDataConnectionState.getDataConnectionApn();
+    }
+
+    @Test
+    public void testOnDisplayInfoChanged() throws Exception {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+        assertThat(mOnTelephonyDisplayInfoChanged).isFalse();
+
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onDisplayInfoChanged(TelephonyDisplayInfo displayInfo) {
+                    synchronized (mLock) {
+                        mOnTelephonyDisplayInfoChanged = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(mListener,
+                            PhoneStateListener.LISTEN_DISPLAY_INFO_CHANGED));
+        });
+
+        synchronized (mLock) {
+            if (!mOnTelephonyDisplayInfoChanged) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        assertTrue(mOnTelephonyDisplayInfoChanged);
     }
 
     @Test
