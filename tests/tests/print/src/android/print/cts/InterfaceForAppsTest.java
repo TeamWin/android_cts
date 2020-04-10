@@ -259,7 +259,7 @@ public class InterfaceForAppsTest extends BasePrintTest {
         eventually(() -> assertEquals(PrintJobInfo.STATE_CREATED, job.getInfo().getState()));
 
         // Cancel printing by exiting print activity
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
         eventually(() -> assertTrue(job.isCancelled()));
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
