@@ -111,6 +111,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -217,6 +218,7 @@ public abstract class ActivityManagerTestBase {
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
+    protected final Instrumentation mInstrumentation = getInstrumentation();
     protected final Context mContext = getInstrumentation().getContext();
     protected final ActivityManager mAm = mContext.getSystemService(ActivityManager.class);
     protected final ActivityTaskManager mAtm = mContext.getSystemService(ActivityTaskManager.class);
@@ -408,11 +410,10 @@ public abstract class ActivityManagerTestBase {
         private T launchActivityOnDisplay(Intent intent, int displayId) {
             final Bundle bundle = ActivityOptions.makeBasic()
                     .setLaunchDisplayId(displayId).toBundle();
-            final ActivityMonitor monitor = getInstrumentation()
-                    .addMonitor((String) null, null, false);
+            final ActivityMonitor monitor = mInstrumentation.addMonitor((String) null, null, false);
             mContext.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
             // Wait for activity launch with timeout.
-            mTestActivity = (T) getInstrumentation().waitForMonitorWithTimeout(monitor,
+            mTestActivity = (T) mInstrumentation.waitForMonitorWithTimeout(monitor,
                     ACTIVITY_LAUNCH_TIMEOUT);
             assertNotNull(mTestActivity);
             return mTestActivity;
@@ -426,8 +427,8 @@ public abstract class ActivityManagerTestBase {
         }
 
         void runOnMainSyncAndWait(Runnable runnable) {
-            getInstrumentation().runOnMainSync(runnable);
-            getInstrumentation().waitForIdleSync();
+            mInstrumentation.runOnMainSync(runnable);
+            mInstrumentation.waitForIdleSync();
         }
 
         void runOnMainAndAssertWithTimeout(@NonNull BooleanSupplier condition, long timeoutMs,
@@ -593,7 +594,7 @@ public abstract class ActivityManagerTestBase {
         // This is needed after a tap in multi-display to ensure that the display focus has really
         // changed, if needed. The call to syncInputTransaction will wait until focus change has
         // propagated from WMS to native input before returning.
-        getInstrumentation().getUiAutomation().syncInputTransactions();
+        mInstrumentation.getUiAutomation().syncInputTransactions();
     }
 
     protected void tapOnCenter(Rect bounds, int displayId) {
@@ -667,7 +668,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected Bitmap takeScreenshot() {
-        return getInstrumentation().getUiAutomation().takeScreenshot();
+        return mInstrumentation.getUiAutomation().takeScreenshot();
     }
 
     protected void launchActivity(final ComponentName activityName, final String... keyValuePairs) {
@@ -1251,7 +1252,7 @@ public abstract class ActivityManagerTestBase {
 
             waitForDeviceIdle(3000);
             SystemUtil.runWithShellPermissionIdentity(() ->
-                    getInstrumentation().sendStringSync(LOCK_CREDENTIAL));
+                    mInstrumentation.sendStringSync(LOCK_CREDENTIAL));
             pressEnterButton();
             return this;
         }
@@ -1271,7 +1272,7 @@ public abstract class ActivityManagerTestBase {
             // Not all device variants lock when we go to sleep, so we need to explicitly lock the
             // device. Note that pressSleepButton() above is redundant because the action also
             // puts the device to sleep, but kept around for clarity.
-            getInstrumentation().getUiAutomation().performGlobalAction(
+            mInstrumentation.getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
             if (mAmbientDisplayConfiguration.alwaysOnEnabled(
                     android.os.Process.myUserHandle().getIdentifier())) {
