@@ -21,3 +21,8 @@ filegroup {
     name: "cts-wm-aspect-ratio-test-base",
     srcs: ["src/android/server/wm/AspectRatioTestsBase.java"],
 }
+
+filegroup {
+    name: "cts-wm-decor-inset-test-base",
+    srcs: ["src/android/server/wm/DecorInsetTestsBase.java"],
+}

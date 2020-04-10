@@ -58,12 +58,14 @@ public class DisableScreenDozeRule implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 final Map<String, String> initialValues = new HashMap<>();
-                Arrays.stream(DOZE_SETTINGS).forEach(k -> initialValues.put(k, getSecureSetting(k)));
+                Arrays.stream(DOZE_SETTINGS).forEach(
+                        k -> initialValues.put(k, getSecureSetting(k)));
                 try {
                     Arrays.stream(DOZE_SETTINGS).forEach(k -> putSecureSetting(k, "0"));
                     base.evaluate();
                 } finally {
-                    Arrays.stream(DOZE_SETTINGS).forEach(k -> putSecureSetting(k, initialValues.get(k)));
+                    Arrays.stream(DOZE_SETTINGS).forEach(
+                            k -> putSecureSetting(k, initialValues.get(k)));
                 }
             }
         };

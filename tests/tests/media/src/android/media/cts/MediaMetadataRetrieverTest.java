@@ -375,6 +375,11 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         assertNotNull("couldn't retrieve album art", mRetriever.getEmbeddedPicture());
     }
 
+    public void testAlbumArtInOgg() throws Exception {
+        setDataSourceFd(R.raw.sinesweepoggalbumart);
+        assertNotNull("couldn't retrieve album art from ogg", mRetriever.getEmbeddedPicture());
+    }
+
     public void testSetDataSourcePath() {
         copyMeidaFile();
         File file = new File(Environment.getExternalStorageDirectory(), TEST_MEDIA_FILE);

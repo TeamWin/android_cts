@@ -215,6 +215,10 @@ public class NotificationManagerTest extends AndroidTestCase {
             mNotificationManager.deleteNotificationChannel(nc.getId());
         }
 
+        // Unsuspend package if it was suspended in the test
+        suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
+                false);
+
         toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), false);
         toggleNotificationPolicyAccess(mContext.getPackageName(),
