@@ -133,6 +133,36 @@ public class SplitScreenTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testNonResizeableWhenAlreadyInSplitScreenPrimary() throws Exception {
+        launchActivityInSplitScreenWithRecents(SDK_27_LAUNCHING_ACTIVITY);
+        launchActivity(NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_UNDEFINED);
+
+        mWmState.assertDoesNotContainStack("Must not contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        mWmState.assertFrontStack("Fullscreen stack must be front stack.",
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+
+        waitAndAssertTopResumedActivity(NON_RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,
+                "NON_RESIZEABLE_ACTIVITY launched on default display must be focused");
+    }
+
+    @Test
+    public void testNonResizeableWhenAlreadyInSplitScreenSecondary() throws Exception {
+        launchActivityInSplitScreenWithRecents(SDK_27_LAUNCHING_ACTIVITY);
+        // Launch home so secondary side as focus.
+        launchHomeActivity();
+        launchActivity(NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_UNDEFINED);
+
+        mWmState.assertDoesNotContainStack("Must not contain docked stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        mWmState.assertFrontStack("Fullscreen stack must be front stack.",
+                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+
+        waitAndAssertTopResumedActivity(NON_RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,
+                "NON_RESIZEABLE_ACTIVITY launched on default display must be focused");
+    }
+
+    @Test
     public void testLaunchToSide() throws Exception {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
