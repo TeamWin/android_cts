@@ -32,13 +32,17 @@ import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.TimeFilter;
+import android.media.tv.tuner.frontend.Atsc3PlpInfo;
 import android.media.tv.tuner.frontend.AtscFrontendSettings;
+import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
+import android.media.tv.tuner.frontend.ScanCallback;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 import org.junit.After;
@@ -79,6 +83,28 @@ public class TunerTest {
         assertEquals(Tuner.RESULT_SUCCESS, res);
         res = tuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
+        tuner.close();
+    }
+
+    @Test
+    public void testScanning() throws Exception {
+        if (!hasTuner()) return;
+        Tuner tuner = new Tuner(mContext, null, 100);
+        List<Integer> ids = tuner.getFrontendIds();
+        for (int id : ids) {
+            FrontendInfo info = tuner.getFrontendInfoById(id);
+            if (info != null && info.getType() == FrontendSettings.TYPE_ATSC) {
+                int res = tuner.scan(
+                        getFrontendSettings(),
+                        Tuner.SCAN_TYPE_AUTO,
+                        getExecutor(),
+                        getScanCallback());
+               assertEquals(Tuner.RESULT_SUCCESS, res);
+               res = tuner.cancelScanning();
+               assertEquals(Tuner.RESULT_SUCCESS, res);
+            }
+        }
+        tuner.close();
     }
 
     @Test
@@ -202,5 +228,51 @@ public class TunerTest {
                 .setFrequency(2000)
                 .setModulation(AtscFrontendSettings.MODULATION_AUTO)
                 .build();
+    }
+
+    private ScanCallback getScanCallback() {
+        return new ScanCallback() {
+            @Override
+            public void onLocked() {}
+
+            @Override
+            public void onScanStopped() {}
+
+            @Override
+            public void onProgress(int percent) {}
+
+            @Override
+            public void onFrequenciesReported(int[] frequency) {}
+
+            @Override
+            public void onSymbolRatesReported(int[] rate) {}
+
+            @Override
+            public void onPlpIdsReported(int[] plpIds) {}
+
+            @Override
+            public void onGroupIdsReported(int[] groupIds) {}
+
+            @Override
+            public void onInputStreamIdsReported(int[] inputStreamIds) {}
+
+            @Override
+            public void onDvbsStandardReported(int dvbsStandard) {}
+
+            @Override
+            public void onDvbtStandardReported(int dvbtStandard) {}
+
+            @Override
+            public void onAnalogSifStandardReported(int sif) {}
+
+            @Override
+            public void onAtsc3PlpInfosReported(Atsc3PlpInfo[] atsc3PlpInfos) {}
+
+            @Override
+            public void onHierarchyReported(int hierarchy) {}
+
+            @Override
+            public void onSignalTypeReported(int signalType) {}
+        };
     }
 }
