@@ -52,11 +52,17 @@ public class RemovePermissionTest {
             APP_PKG_NAME_BASE + ".runtimepermissionuserapp";
     private static final String RUNTIME_PERMISSION_DEFINER_PKG_NAME =
             APP_PKG_NAME_BASE + ".runtimepermissiondefinerapp";
+    private static final String INSTALLTIME_PERMISSION_USER_PKG_NAME =
+            APP_PKG_NAME_BASE + ".installtimepermissionuserapp";
+    private static final String INSTALLTIME_PERMISSION_DEFINER_PKG_NAME =
+            APP_PKG_NAME_BASE + ".installtimepermissiondefinerapp";
 
     private static final String TEST_PERMISSION =
             "android.permission.cts.revokepermissionwhenremoved.TestPermission";
     private static final String TEST_RUNTIME_PERMISSION =
             APP_PKG_NAME_BASE + ".TestRuntimePermission";
+    private static final String TEST_INSTALLTIME_PERMISSION =
+            APP_PKG_NAME_BASE + ".TestInstalltimePermission";
 
     private static final String ADVERSARIAL_PERMISSION_DEFINER_APK_NAME =
             "CtsAdversarialPermissionDefinerApp";
@@ -68,6 +74,10 @@ public class RemovePermissionTest {
             "CtsRuntimePermissionDefinerApp";
     private static final String RUNTIME_PERMISSION_USER_APK_NAME =
             "CtsRuntimePermissionUserApp";
+    private static final String INSTALLTIME_PERMISSION_DEFINER_APK_NAME =
+            "CtsInstalltimePermissionDefinerApp";
+    private static final String INSTALLTIME_PERMISSION_USER_APK_NAME =
+            "CtsInstalltimePermissionUserApp";
 
     private Context mContext;
     private Instrumentation mInstrumentation;
@@ -157,7 +167,7 @@ public class RemovePermissionTest {
     }
 
     @Test
-    public void permissionDependencyTest() throws Throwable {
+    public void runtimePermissionDependencyTest() throws Throwable {
         installApp(ADVERSARIAL_PERMISSION_USER_APK_NAME);
         // Should fail to grant permission because its definer is not installed yet
         try {
@@ -175,5 +185,24 @@ public class RemovePermissionTest {
         assertFalse(permissionGranted(ADVERSARIAL_PERMISSION_USER_PKG_NAME, TEST_PERMISSION));
 
         uninstallApp(ADVERSARIAL_PERMISSION_USER_PKG_NAME);
+    }
+
+    @Test
+    public void installtimePermissionDependencyTest() throws Throwable {
+        installApp(INSTALLTIME_PERMISSION_USER_APK_NAME);
+        // Should not have the permission auto-granted
+        assertFalse(permissionGranted(
+                INSTALLTIME_PERMISSION_USER_PKG_NAME, TEST_INSTALLTIME_PERMISSION));
+        // Now install the permission definer; user package should have the permission auto granted
+        installApp(INSTALLTIME_PERMISSION_DEFINER_APK_NAME);
+        installApp(INSTALLTIME_PERMISSION_USER_APK_NAME);
+        assertTrue(permissionGranted(
+                INSTALLTIME_PERMISSION_USER_PKG_NAME, TEST_INSTALLTIME_PERMISSION));
+        // Now uninstall the permission definer; the user packages' permission will not be revoked
+        uninstallApp(INSTALLTIME_PERMISSION_DEFINER_PKG_NAME);
+        assertTrue(permissionGranted(
+                INSTALLTIME_PERMISSION_USER_PKG_NAME, TEST_INSTALLTIME_PERMISSION));
+
+        uninstallApp(INSTALLTIME_PERMISSION_USER_PKG_NAME);
     }
 }

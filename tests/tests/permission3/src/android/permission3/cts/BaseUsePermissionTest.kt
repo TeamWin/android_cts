@@ -22,6 +22,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
@@ -312,20 +313,25 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         )
     )
 
-    protected fun grantAppPermissions(vararg permissions: String) {
-        setAppPermissionState(*permissions, state = PermissionState.ALLOWED, isLegacyApp = false)
+    protected fun grantAppPermissions(vararg permissions: String, targetSdk: Int = 30) {
+        setAppPermissionState(*permissions, state = PermissionState.ALLOWED, isLegacyApp = false,
+                targetSdk = targetSdk)
     }
 
-    protected fun revokeAppPermissions(vararg permissions: String, isLegacyApp: Boolean = false) {
-        setAppPermissionState(
-            *permissions, state = PermissionState.DENIED, isLegacyApp = isLegacyApp
-        )
+    protected fun revokeAppPermissions(
+        vararg permissions: String,
+        isLegacyApp: Boolean = false,
+        targetSdk: Int = 30
+    ) {
+        setAppPermissionState(*permissions, state = PermissionState.DENIED,
+                isLegacyApp = isLegacyApp, targetSdk = targetSdk)
     }
 
     private fun setAppPermissionState(
         vararg permissions: String,
         state: PermissionState,
-        isLegacyApp: Boolean
+        isLegacyApp: Boolean,
+        targetSdk: Int
     ) {
         pressBack()
         pressBack()
@@ -366,6 +372,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                             PermissionState.ALLOWED ->
                                 if (showsForegroundOnlyButton(permission)) {
                                     R.string.allow_foreground
+                                } else if (isMediaStorageButton(permission, targetSdk)) {
+                                    R.string.allow_media_storage
+                                } else if (isAllStorageButton(permission, targetSdk)) {
+                                    R.string.allow_external_storage
                                 } else {
                                     R.string.allow
                                 }
@@ -427,6 +437,27 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             android.Manifest.permission.RECORD_AUDIO -> true
             else -> false
         }
+
+    private fun isMediaStorageButton(permission: String, targetSdk: Int): Boolean =
+            when (permission) {
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                android.Manifest.permission.ACCESS_MEDIA_LOCATION ->
+                    // Default behavior, can cause issues if OPSTR_LEGACY_STORAGE is set
+                    targetSdk >= Build.VERSION_CODES.P
+                else -> false
+            }
+
+    private fun isAllStorageButton(permission: String, targetSdk: Int): Boolean =
+            when (permission) {
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                android.Manifest.permission.ACCESS_MEDIA_LOCATION ->
+                    // Default behavior, can cause issues if OPSTR_LEGACY_STORAGE is set
+                    targetSdk < Build.VERSION_CODES.P
+                android.Manifest.permission.MANAGE_EXTERNAL_STORAGE -> true
+                else -> false
+            }
 
     private fun scrollToBottom() {
         val scrollable = UiScrollable(UiSelector().scrollable(true)).apply {

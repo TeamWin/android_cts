@@ -58,6 +58,8 @@
         <option name="push" value="CtsVictimPermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsVictimPermissionDefinerApp.apk" />
         <option name="push" value="CtsRuntimePermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsRuntimePermissionDefinerApp.apk" />
         <option name="push" value="CtsRuntimePermissionUserApp.apk->/data/local/tmp/cts/permissions/CtsRuntimePermissionUserApp.apk" />
+        <option name="push" value="CtsInstalltimePermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsInstalltimePermissionDefinerApp.apk" />
+        <option name="push" value="CtsInstalltimePermissionUserApp.apk->/data/local/tmp/cts/permissions/CtsInstalltimePermissionUserApp.apk" />
         <option name="push" value="CtsAppThatRequestsOneTimePermission.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsOneTimePermission.apk" />
     </target_preparer>
 
