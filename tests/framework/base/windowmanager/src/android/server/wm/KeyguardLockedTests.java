@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
@@ -34,14 +35,14 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
@@ -55,7 +56,6 @@ import android.widget.LinearLayout;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
-
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
@@ -235,7 +235,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         lockScreenSession.setLockCredential();
 
         // Show the PiP activity in fullscreen.
-        launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_SHOW_OVER_KEYGUARD, "true"));
 
         // Lock the screen and ensure that the PiP activity showing over the LockScreen.
         lockScreenSession.gotoKeyguard(PIP_ACTIVITY);
@@ -264,7 +264,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         lockScreenSession.setLockCredential();
 
         // Show an activity in PIP.
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true"));
         waitForEnterPip(PIP_ACTIVITY);
         mWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                 ACTIVITY_TYPE_STANDARD);
@@ -292,7 +292,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         lockScreenSession.setLockCredential();
 
         // Show an activity in PIP.
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true", EXTRA_SHOW_OVER_KEYGUARD, "true");
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_SHOW_OVER_KEYGUARD, "true"));
         waitForEnterPip(PIP_ACTIVITY);
         mWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                 ACTIVITY_TYPE_STANDARD);
@@ -311,7 +312,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         // Show an activity in PIP.
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true", EXTRA_DISMISS_KEYGUARD, "true");
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true"),
+                extraString(EXTRA_DISMISS_KEYGUARD, "true"));
         waitForEnterPip(PIP_ACTIVITY);
         mWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                 ACTIVITY_TYPE_STANDARD);
