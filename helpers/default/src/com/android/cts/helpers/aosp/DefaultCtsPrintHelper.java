@@ -398,4 +398,30 @@ public class DefaultCtsPrintHelper implements ICtsPrintHelper {
                 Until.findObject(By.res("com.android.printspooler:id/more_info")),
                 OPERATION_TIMEOUT_MILLIS).click();
     }
+
+    @Override
+    public void closePrinterList() {
+        mDevice.pressBack();
+    }
+
+    @Override
+    public void closeCustomPrintOptions() {
+        mDevice.pressBack();
+    }
+
+    @Override
+    public void closePrintOptions() {
+        mDevice.pressBack();
+    }
+
+    @Override
+    public void cancelPrinting() throws TestHelperException {
+        try {
+            mDevice.wakeUp();
+            mDevice.pressBack();
+            mDevice.waitForIdle();
+        } catch (RemoteException e) {
+            throw new TestHelperException("Failed to cancel printing", e);
+        }
+    }
 }
