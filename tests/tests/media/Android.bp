@@ -37,6 +37,7 @@ android_test {
         "hamcrest-library",
         "ctstestserver",
         "junit",
+        "junit-params",
         "ndkaudio",
         "testng",
         "truth-prebuilt",

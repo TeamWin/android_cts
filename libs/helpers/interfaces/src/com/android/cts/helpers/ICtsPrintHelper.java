@@ -183,4 +183,34 @@ public interface ICtsPrintHelper extends ICtsDeviceInteractionHelper {
      * Display the "more info" activity for the currently selected printer.
      */
     void displayMoreInfo();
+
+    /**
+     * Close the printer list that was previously opened with {@link #displayPrinterList()}.
+     */
+    void closePrinterList();
+
+    /**
+     * Close the custom print options that were previously opened with
+     * {@link #openCustomPrintOptions()}.
+     *
+     * This call must be properly nested with other calls to openPrintOptions/closePrintOptions and
+     * print/cancelPrinting.
+     */
+    void closeCustomPrintOptions();
+
+    /**
+     * Close the basic print options that were previously opened with {@link #openPrintOptions()}.
+     *
+     * This call must be properly nested with other calls to
+     * openCustomPrintOptions/closeCustomPrintOptions and print/cancelPrinting.
+     */
+    void closePrintOptions();
+
+    /**
+     * Close the main print UI that as previously opened with {@link PrintManager.print()}.
+     *
+     * This call must be properly nested with other calls to
+     * openCustomPrintOptions/closeCustomPrintOptions and openPrintOptions/closePrintOptions.
+     */
+    void cancelPrinting();
 }
