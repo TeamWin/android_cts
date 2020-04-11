@@ -317,6 +317,27 @@ public class CodecEncoderTest extends CodecTestBase {
         mSaveToMem = false;
     }
 
+    /**
+     * Selects encoder input color format in byte buffer mode. As of now ndk tests support only
+     * 420p, 420sp. COLOR_FormatYUV420Flexible although can represent any form of yuv, it doesn't
+     * work in ndk due to lack of AMediaCodec_GetInputImage()
+     */
+    private static int findByteBufferColorFormat(String encoder, String mime) throws IOException {
+        MediaCodec codec = MediaCodec.createByCodecName(encoder);
+        MediaCodecInfo.CodecCapabilities cap = codec.getCodecInfo().getCapabilitiesForType(mime);
+        int colorFormat = -1;
+        for (int c : cap.colorFormats) {
+            if (c == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar ||
+                    c == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+                Log.v(LOG_TAG, "selecting color format: " + c);
+                colorFormat = c;
+                break;
+            }
+        }
+        codec.release();
+        return colorFormat;
+    }
+
     @Override
     PersistableBundle validateMetrics(String codec, MediaFormat format) {
         PersistableBundle metrics = super.validateMetrics(codec, format);
@@ -511,6 +532,25 @@ public class CodecEncoderTest extends CodecTestBase {
         }
     }
 
+    private native boolean nativeTestSimpleEncode(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSimpleEncodeNative() throws IOException {
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestSimpleEncode(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+                    mEncParamList1, mEncParamList2, colorFormat));
+        }
+    }
+
     /**
      * Tests flush when codec is in sync and async mode. In these scenarios, Timestamp
      * ordering is verified. The output has to be consistent (not flaky) in all runs
@@ -597,6 +637,26 @@ public class CodecEncoderTest extends CodecTestBase {
                 }
             }
             mCodec.release();
+        }
+    }
+
+    private native boolean nativeTestFlush(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @Ignore("TODO(b/147576107, b/148652492, b/148651699)")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testFlushNative() throws IOException {
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestFlush(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+                    mEncParamList1, mEncParamList2, colorFormat));
         }
     }
 
@@ -724,6 +784,26 @@ public class CodecEncoderTest extends CodecTestBase {
         }
     }
 
+    private native boolean nativeTestReconfigure(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @Ignore("TODO(b/147348711, b/149981033)")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testReconfigureNative() throws IOException {
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestReconfigure(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+                    mEncParamList1, mEncParamList2, colorFormat));
+        }
+    }
+
     /**
      * Tests encoder for only EOS frame
      */
@@ -770,6 +850,25 @@ public class CodecEncoderTest extends CodecTestBase {
                 loopCounter++;
             }
             mCodec.release();
+        }
+    }
+
+    private native boolean nativeTestOnlyEos(String encoder, String mime, int[] list0, int[] list1,
+            int[] list2, int colorFormat);
+
+    @SmallTest
+    @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
+    public void testOnlyEosNative() throws IOException {
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestOnlyEos(encoder, mMime, mBitrates, mEncParamList1, mEncParamList2,
+                    colorFormat));
         }
     }
 
@@ -849,6 +948,27 @@ public class CodecEncoderTest extends CodecTestBase {
         }
     }
 
+    private native boolean nativeTestSetForceSyncFrame(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @Ignore("TODO(b/) = test sometimes timesout")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSetForceSyncFrameNative() throws IOException {
+        Assume.assumeTrue(!mIsAudio);
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestSetForceSyncFrame(encoder, mInpPrefix + mInputFile, mMime,
+                    mBitrates, mEncParamList1, mEncParamList2, colorFormat));
+        }
+    }
+
     /**
      * Test set parameters : change bitrate dynamically
      */
@@ -925,6 +1045,29 @@ public class CodecEncoderTest extends CodecTestBase {
                 }
             }
             mCodec.release();
+        }
+    }
+
+    private native boolean nativeTestAdaptiveBitRate(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @Ignore("TODO(b/) = test sometimes timesout")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testAdaptiveBitRateNative() throws IOException {
+        Assume.assumeTrue(!mIsAudio);
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            /* TODO(b/147574800) */
+            if (encoder.equals("c2.android.hevc.encoder")) continue;
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestAdaptiveBitRate(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+                    mEncParamList1, mEncParamList2, colorFormat));
         }
     }
 }
