@@ -56,7 +56,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public final class CarUserManagerTest extends CarApiTestBase {
 
@@ -76,6 +78,12 @@ public final class CarUserManagerTest extends CarApiTestBase {
      * Constant used to wait blindly, when there is no condition that can be checked.
      */
     private static final int SUSPEND_TIMEOUT_MS = 5_000;
+
+    private static final List<Integer> EXPECTED_SWITCH_USER_EVENTS = Arrays.asList(
+            CarUserManager.USER_LIFECYCLE_EVENT_TYPE_STARTING,
+            CarUserManager.USER_LIFECYCLE_EVENT_TYPE_SWITCHING,
+            CarUserManager.USER_LIFECYCLE_EVENT_TYPE_UNLOCKING,
+            CarUserManager.USER_LIFECYCLE_EVENT_TYPE_UNLOCKED);
 
     /**
      * How long to sleep (multiple times) while waiting for a condition.
@@ -153,6 +161,9 @@ public final class CarUserManagerTest extends CarApiTestBase {
         AtomicReference<Exception> bgExceptionRef = new AtomicReference<>();
         AtomicBoolean expectingEventRef = new AtomicBoolean(true);
 
+        // Track events, STARTING, SWITCHING, UNLOCKING, UNLOCKED
+        List<Integer> receivedEventsType = new ArrayList<>();
+
         UserLifecycleListener listener = (event) -> {
             boolean expectingEvent = expectingEventRef.get();
             Log.d(TAG, "received event (expecting=" + expectingEvent + "): "  + event);
@@ -165,10 +176,7 @@ public final class CarUserManagerTest extends CarApiTestBase {
             // Verify event
             List<String> errors = new ArrayList<>();
             int actualType = event.getEventType();
-            if (actualType != CarUserManager.USER_LIFECYCLE_EVENT_TYPE_SWITCHING) {
-                errors.add("wrong event; expected SWITCHING, got "
-                        + CarUserManager.lifecycleEventTypeToString(actualType));
-            }
+
             UserHandle actualUserHandle = event.getUserHandle();
             if (actualUserHandle == null) {
                 errors.add("no user handle");
@@ -191,10 +199,11 @@ public final class CarUserManagerTest extends CarApiTestBase {
                 bgExceptionRef.set(new IllegalArgumentException(
                         "Received wrong event (" + event + "): " + errors));
             }
+            receivedEventsType.add(actualType);
         };
         Log.d(TAG, "registering listener: " + listener);
-
         AtomicBoolean executedRef = new AtomicBoolean();
+
         sCarUserManager.addListener((r) -> {
             executedRef.set(true);
             r.run();
@@ -209,12 +218,16 @@ public final class CarUserManagerTest extends CarApiTestBase {
         // Make sure it was executed in the proper threaqd
         assertWithMessage("not executed on executor").that(executedRef.get()).isTrue();
 
-         // Then switch back when it isn't
-        // TODO(b/144120654): the current mechanism is not thread safe because if an event is
-        // received before this line, it wouldn't be detected. But that's fine for now, as this test
-        // will be refactored once it's expecting more events (like STARTING before SWITCHING)
-        expectingEventRef.set(false);
+        // Then switch back when it isn't
+        waitUntil("Timeout: receive list of events for switch user: " + newUserId, 
+                SWITCH_TIMEOUT_USING_CHECK_MS,
+                () -> (receivedEventsType.size() == EXPECTED_SWITCH_USER_EVENTS.size()));
+        assertWithMessage("wrong events, expecting STARTING, SWITCHING, UNLOCKING, UNLOCKED; got"
+                + lifecycleEventsTypeToString(receivedEventsType))
+                .that(receivedEventsType).containsExactlyElementsIn(EXPECTED_SWITCH_USER_EVENTS)
+                .inOrder();
 
+        expectingEventRef.set(false);
         Log.d(TAG, "unregistering listener: " + listener);
         sCarUserManager.removeListener(listener);
         switchUser(oldUserId);
@@ -411,5 +424,11 @@ public final class CarUserManagerTest extends CarApiTestBase {
 
         fail(msg + " after: " + timeoutMs + "ms");
         return false;
+    }
+
+    private List<String> lifecycleEventsTypeToString(List<Integer> events) {
+        return events.stream()
+                .map(event -> CarUserManager.lifecycleEventTypeToString(event))
+                .collect(Collectors.toList());
     }
 }

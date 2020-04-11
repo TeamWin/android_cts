@@ -44,7 +44,6 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
@@ -66,14 +65,13 @@ import android.widget.inline.InlinePresentationSpec;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.CallSuper;
-import androidx.annotation.GuardedBy;
+import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -663,13 +661,27 @@ public final class MockIme extends InputMethodService {
     }
 
     private static LinearLayout sSuggestionView;
-    @GuardedBy("this")
-    private List<View> mSuggestionViews = new ArrayList<>();
-    @GuardedBy("this")
-    private List<Size> mSuggestionViewSizes = new ArrayList<>();
-    @GuardedBy("this")
-    private boolean mSuggestionViewVisible = false;
+    private PendingInlineSuggestions mPendingInlineSuggestions;
 
+    private static final class PendingInlineSuggestions {
+        final InlineSuggestionsResponse mResponse;
+        final int mTotalCount;
+        final View[] mViews;
+        final Size[] mViewSizes;
+        final AtomicInteger mInflatedViewCount;
+        final AtomicBoolean mValid = new AtomicBoolean(true);
+
+        PendingInlineSuggestions(InlineSuggestionsResponse response) {
+            mResponse = response;
+            mTotalCount = response.getInlineSuggestions().size();
+            mViews = new View[mTotalCount];
+            mViewSizes = new Size[mTotalCount];
+            mInflatedViewCount = new AtomicInteger(0);
+        }
+    }
+
+    @MainThread
+    @Override
     public InlineSuggestionsRequest onCreateInlineSuggestionsRequest(Bundle uiExtras) {
         Log.d(TAG, "onCreateInlineSuggestionsRequest() called");
         final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
@@ -683,90 +695,64 @@ public final class MockIme extends InputMethodService {
                 .build();
     }
 
+
+    @MainThread
     @Override
     public boolean onInlineSuggestionsResponse(InlineSuggestionsResponse response) {
-        Log.d(TAG, "onInlineSuggestionsResponse() called");
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(() -> {
-            onInlineSuggestionsResponseInternal(response);
-        });
-        return true;
-    }
-
-    private synchronized void updateInlineSuggestionVisibility(boolean visible, boolean force) {
-        Log.d(TAG, "updateInlineSuggestionVisibility() called, visible=" + visible + ", force="
-                + force);
-        mMainHandler.post(() -> {
-            Log.d(TAG, "updateInlineSuggestionVisibility() running");
-            if (visible == mSuggestionViewVisible && !force) {
-                return;
-            } else if (visible) {
-                sSuggestionView.removeAllViews();
-                final int size = mSuggestionViews.size();
-                for (int i = 0; i < size; i++) {
-                    if (mSuggestionViews.get(i) == null) {
-                        continue;
-                    }
-                    ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
-                            mSuggestionViewSizes.get(i).getWidth(),
-                            mSuggestionViewSizes.get(i).getHeight());
-                    sSuggestionView.addView(mSuggestionViews.get(i), layoutParams);
-                }
-                mSuggestionViewVisible = true;
-            } else {
-                sSuggestionView.removeAllViews();
-                mSuggestionViewVisible = false;
-            }
-        });
-    }
-
-    private void onSuggestionViewUpdated() {
-        getTracer().onSuggestionViewUpdated();
-    }
-
-    private synchronized void updateSuggestionViews(View[] suggestionViews, Size[] sizes) {
-        Log.d(TAG, "updateSuggestionViews() called on " + suggestionViews.length + " views");
-        mSuggestionViews = Arrays.asList(suggestionViews);
-        mSuggestionViewSizes = Arrays.asList(sizes);
-        final boolean visible = !mSuggestionViews.isEmpty();
-        updateInlineSuggestionVisibility(visible, true);
-        onSuggestionViewUpdated();
-    }
-
-    private void onInlineSuggestionsResponseInternal(InlineSuggestionsResponse response) {
-        if (response == null || response.getInlineSuggestions() == null) {
-            Log.w(TAG, "onInlineSuggestionsResponseInternal() null response/suggestions");
-            return;
+        Log.d(TAG,
+                "onInlineSuggestionsResponse() called: " + response.getInlineSuggestions().size());
+        final PendingInlineSuggestions pendingInlineSuggestions =
+                new PendingInlineSuggestions(response);
+        if (mPendingInlineSuggestions != null) {
+            mPendingInlineSuggestions.mValid.set(false);
         }
-        final List<InlineSuggestion> inlineSuggestions = response.getInlineSuggestions();
-        final int totalSuggestionsCount = inlineSuggestions.size();
-        Log.d(TAG, "onInlineSuggestionsResponseInternal() called. Suggestion="
-                + totalSuggestionsCount);
-
-        if (totalSuggestionsCount == 0) {
-            updateSuggestionViews(new View[]{} , new Size[]{});
+        mPendingInlineSuggestions = pendingInlineSuggestions;
+        if (pendingInlineSuggestions.mTotalCount == 0) {
+            updateInlineSuggestions(pendingInlineSuggestions);
+            return true;
         }
 
-        final AtomicInteger suggestionsCount = new AtomicInteger(totalSuggestionsCount);
-        final View[] suggestionViews = new View[totalSuggestionsCount];
-        final Size[] sizes = new Size[totalSuggestionsCount];
-
-        for (int i = 0; i < totalSuggestionsCount; i++) {
+        for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
             final int index = i;
-            InlineSuggestion inlineSuggestion = inlineSuggestions.get(index);
+            InlineSuggestion inlineSuggestion =
+                    pendingInlineSuggestions.mResponse.getInlineSuggestions().get(index);
             Size size = inlineSuggestion.getInfo().getInlinePresentationSpec().getMaxSize();
-            Log.d(TAG, "Calling inflate on suggestion " + i);
-            inlineSuggestion.inflate(this, size,
+            inlineSuggestion.inflate(
+                    this,
+                    size,
                     AsyncTask.THREAD_POOL_EXECUTOR,
                     suggestionView -> {
                         Log.d(TAG, "new inline suggestion view ready");
                         if (suggestionView != null) {
-                            suggestionViews[index] = suggestionView;
-                            sizes[index] = size;
+                            pendingInlineSuggestions.mViews[index] = suggestionView;
+                            pendingInlineSuggestions.mViewSizes[index] = size;
                         }
-                        if (suggestionsCount.decrementAndGet() == 0) {
-                            updateSuggestionViews(suggestionViews, sizes);
+                        if (pendingInlineSuggestions.mInflatedViewCount.incrementAndGet()
+                                == pendingInlineSuggestions.mTotalCount
+                                && pendingInlineSuggestions.mValid.get()) {
+                            Log.d(TAG, "ready to display all suggestions");
+                            getMainExecutor().execute(
+                                    () -> updateInlineSuggestions(pendingInlineSuggestions));
                         }
                     });
+        }
+        return true;
+    }
+
+    @MainThread
+    private void updateInlineSuggestions(PendingInlineSuggestions pendingInlineSuggestions) {
+        Log.d(TAG, "updateInlineSuggestions() called: " + pendingInlineSuggestions.mTotalCount);
+        if (sSuggestionView == null || !pendingInlineSuggestions.mValid.get()) {
+            return;
+        }
+        sSuggestionView.removeAllViews();
+        for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
+            View view = pendingInlineSuggestions.mViews[i];
+            Size size = pendingInlineSuggestions.mViewSizes[i];
+            if (view == null || size == null) {
+                continue;
+            }
+            sSuggestionView.addView(view, size.getWidth(), size.getHeight());
         }
     }
 
@@ -999,10 +985,6 @@ public final class MockIme extends InputMethodService {
             final Bundle arguments = new Bundle();
             imeLayoutInfo.writeToBundle(arguments);
             recordEventInternal("onInputViewLayoutChanged", runnable, arguments);
-        }
-
-        public void onSuggestionViewUpdated() {
-            recordEventInternal("onSuggestionViewUpdated", () -> { }, new Bundle());
         }
     }
 }
