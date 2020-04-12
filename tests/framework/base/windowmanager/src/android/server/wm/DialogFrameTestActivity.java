@@ -192,8 +192,8 @@ public class DialogFrameTestActivity extends Activity {
     private void testWithMargins() {
         doLayoutParamTest(params -> {
             params.gravity = Gravity.LEFT | Gravity.TOP;
-            params.horizontalMargin = .25f;
-            params.verticalMargin = .35f;
+            params.horizontalMargin = .10f;
+            params.verticalMargin = .15f;
             params.width = 200;
             params.height = 200;
             params.x = 0;

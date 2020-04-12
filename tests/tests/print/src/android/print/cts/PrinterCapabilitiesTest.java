@@ -305,7 +305,7 @@ public class PrinterCapabilitiesTest extends BasePrintTest {
 
         waitForPrinterDiscoverySessionCreateCallbackCalled();
 
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }

@@ -22,4 +22,6 @@
     <string name="ask">Ask every time</string>
     <string name="allow">Allow</string>
     <string name="allow_foreground">Allow only while using the app</string>
+    <string name="allow_media_storage">Allow access to media only</string>
+    <string name="allow_external_storage">Allow management of all files</string>
 </resources>
