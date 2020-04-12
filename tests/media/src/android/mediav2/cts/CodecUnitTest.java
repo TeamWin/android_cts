@@ -1962,4 +1962,456 @@ public class CodecUnitTest {
             mCodec.release();
         }
     }
+
+    @SmallTest
+    public static class TestApiNative {
+        @Rule
+        public Timeout timeout = new Timeout(PER_TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        static {
+            System.loadLibrary("ctsmediav2codec_jni");
+        }
+
+        @Test
+        public void testCreateByCodecNameForNull() {
+            assertTrue(nativeTestCreateByCodecNameForNull());
+        }
+
+        private native boolean nativeTestCreateByCodecNameForNull();
+
+        @Test
+        public void testCreateByCodecNameForInvalidName() {
+            assertTrue(nativeTestCreateByCodecNameForInvalidName());
+        }
+
+        private native boolean nativeTestCreateByCodecNameForInvalidName();
+
+        @Test
+        public void testCreateDecoderByTypeForNull() {
+            assertTrue(nativeTestCreateDecoderByTypeForNull());
+        }
+
+        private native boolean nativeTestCreateDecoderByTypeForNull();
+
+        @Test
+        public void testCreateDecoderByTypeForInvalidMime() {
+            assertTrue(nativeTestCreateDecoderByTypeForInvalidMime());
+        }
+
+        private native boolean nativeTestCreateDecoderByTypeForInvalidMime();
+
+        @Test
+        public void testCreateEncoderByTypeForNull() {
+            assertTrue(nativeTestCreateEncoderByTypeForNull());
+        }
+
+        private native boolean nativeTestCreateEncoderByTypeForNull();
+
+        @Test
+        public void testCreateEncoderByTypeForInvalidMime() {
+            assertTrue(nativeTestCreateEncoderByTypeForInvalidMime());
+        }
+
+        private native boolean nativeTestCreateEncoderByTypeForInvalidMime();
+
+        @Test
+        @Ignore("TODO(b/151302868)")
+        public void testConfigureForNullFormat() {
+            assertTrue(nativeTestConfigureForNullFormat());
+        }
+
+        private native boolean nativeTestConfigureForNullFormat();
+
+        @Test
+        public void testConfigureForEmptyFormat() {
+            assertTrue(nativeTestConfigureForEmptyFormat());
+        }
+
+        private native boolean nativeTestConfigureForEmptyFormat();
+
+        @Test
+        @Ignore("TODO(b/151303041)")
+        public void testConfigureCodecForIncompleteFormat() {
+            boolean[] boolStates = {false, true};
+            for (boolean isEncoder : boolStates) {
+                for (boolean isAudio : boolStates) {
+                    assertTrue(
+                            "testConfigureCodecForIncompleteFormat failed for isAudio " + isAudio +
+                                    ", isEncoder " + isEncoder,
+                            nativeTestConfigureCodecForIncompleteFormat(isAudio, isEncoder));
+                }
+            }
+        }
+
+        private native boolean nativeTestConfigureCodecForIncompleteFormat(boolean isAudio,
+                boolean isEncoder);
+
+        @Test
+        public void testConfigureEncoderForBadFlags() {
+            assertTrue(nativeTestConfigureEncoderForBadFlags());
+        }
+
+        private native boolean nativeTestConfigureEncoderForBadFlags();
+
+        @Test
+        public void testConfigureDecoderForBadFlags() {
+            assertTrue(nativeTestConfigureDecoderForBadFlags());
+        }
+
+        private native boolean nativeTestConfigureDecoderForBadFlags();
+
+        @Test
+        public void testConfigureInInitState() {
+            assertTrue(nativeTestConfigureInInitState());
+        }
+
+        private native boolean nativeTestConfigureInInitState();
+
+        @Test
+        public void testConfigureInRunningState() {
+            assertTrue(nativeTestConfigureInRunningState());
+        }
+
+        private native boolean nativeTestConfigureInRunningState();
+
+        @Test
+        public void testConfigureInUnInitState() {
+            assertTrue(nativeTestConfigureInUnInitState());
+        }
+
+        private native boolean nativeTestConfigureInUnInitState();
+
+        @Test
+        public void testDequeueInputBufferInInitState() {
+            assertTrue(nativeTestDequeueInputBufferInInitState());
+        }
+
+        private native boolean nativeTestDequeueInputBufferInInitState();
+
+        @Test
+        public void testDequeueInputBufferInRunningState() {
+            assertTrue(nativeTestDequeueInputBufferInRunningState());
+        }
+
+        private native boolean nativeTestDequeueInputBufferInRunningState();
+
+        @Test
+        public void testDequeueInputBufferInUnInitState() {
+            assertTrue(nativeTestDequeueInputBufferInUnInitState());
+        }
+
+        private native boolean nativeTestDequeueInputBufferInUnInitState();
+
+        @Test
+        public void testDequeueOutputBufferInInitState() {
+            assertTrue(nativeTestDequeueOutputBufferInInitState());
+        }
+
+        private native boolean nativeTestDequeueOutputBufferInInitState();
+
+        @Test
+        public void testDequeueOutputBufferInRunningState() {
+            assertTrue(nativeTestDequeueOutputBufferInRunningState());
+        }
+
+        private native boolean nativeTestDequeueOutputBufferInRunningState();
+
+        @Test
+        public void testDequeueOutputBufferInUnInitState() {
+            assertTrue(nativeTestDequeueOutputBufferInUnInitState());
+        }
+
+        private native boolean nativeTestDequeueOutputBufferInUnInitState();
+
+        @Test
+        public void testFlushInInitState() {
+            assertTrue(nativeTestFlushInInitState());
+        }
+
+        private native boolean nativeTestFlushInInitState();
+
+        @Test
+        public void testFlushInRunningState() {
+            assertTrue(nativeTestFlushInRunningState());
+        }
+
+        private native boolean nativeTestFlushInRunningState();
+
+        @Test
+        public void testFlushInUnInitState() {
+            assertTrue(nativeTestFlushInUnInitState());
+        }
+
+        private native boolean nativeTestFlushInUnInitState();
+
+        @Test
+        public void testGetNameInInitState() {
+            assertTrue(nativeTestGetNameInInitState());
+        }
+
+        private native boolean nativeTestGetNameInInitState();
+
+        @Test
+        public void testGetNameInRunningState() {
+            assertTrue(nativeTestGetNameInRunningState());
+        }
+
+        private native boolean nativeTestGetNameInRunningState();
+
+        @Test
+        public void testGetNameInUnInitState() {
+            assertTrue(nativeTestGetNameInUnInitState());
+        }
+
+        private native boolean nativeTestGetNameInUnInitState();
+
+        @Test
+        @Ignore("TODO(b/148523403)")
+        public void testSetAsyncNotifyCallbackInInitState() {
+            assertTrue(nativeTestSetAsyncNotifyCallbackInInitState());
+        }
+
+        private native boolean nativeTestSetAsyncNotifyCallbackInInitState();
+
+        @Test
+        @Ignore("TODO(b/152553625)")
+        public void testSetAsyncNotifyCallbackInRunningState() {
+            assertTrue(nativeTestSetAsyncNotifyCallbackInRunningState());
+        }
+
+        private native boolean nativeTestSetAsyncNotifyCallbackInRunningState();
+
+        @Test
+        public void testSetAsyncNotifyCallbackInUnInitState() {
+            assertTrue(nativeTestSetAsyncNotifyCallbackInUnInitState());
+        }
+
+        private native boolean nativeTestSetAsyncNotifyCallbackInUnInitState();
+
+        @Test
+        public void tesGetInputBufferInInitState() {
+            assertTrue(nativeTestGetInputBufferInInitState());
+        }
+
+        private native boolean nativeTestGetInputBufferInInitState();
+
+        @Test
+        public void testGetInputBufferInRunningState() {
+            assertTrue(nativeTestGetInputBufferInRunningState());
+        }
+
+        private native boolean nativeTestGetInputBufferInRunningState();
+
+        @Test
+        public void testGetInputBufferInUnInitState() {
+            assertTrue(nativeTestGetInputBufferInUnInitState());
+        }
+
+        private native boolean nativeTestGetInputBufferInUnInitState();
+
+        @Test
+        public void testGetInputFormatInInitState() {
+            assertTrue(nativeTestGetInputFormatInInitState());
+        }
+
+        private native boolean nativeTestGetInputFormatInInitState();
+
+        @Test
+        public void testGetInputFormatInRunningState() {
+            assertTrue(nativeTestGetInputFormatInRunningState());
+        }
+
+        private native boolean nativeTestGetInputFormatInRunningState();
+
+        @Test
+        public void testGetInputFormatInUnInitState() {
+            assertTrue(nativeTestGetInputFormatInUnInitState());
+        }
+
+        private native boolean nativeTestGetInputFormatInUnInitState();
+
+        @Test
+        public void testGetOutputBufferInInitState() {
+            assertTrue(nativeTestGetOutputBufferInInitState());
+        }
+
+        private native boolean nativeTestGetOutputBufferInInitState();
+
+        @Test
+        public void testGetOutputBufferInRunningState() {
+            assertTrue(nativeTestGetOutputBufferInRunningState());
+        }
+
+        private native boolean nativeTestGetOutputBufferInRunningState();
+
+        @Test
+        public void testGetOutputBufferInUnInitState() {
+            assertTrue(nativeTestGetOutputBufferInUnInitState());
+        }
+
+        private native boolean nativeTestGetOutputBufferInUnInitState();
+
+        @Test
+        public void testGetOutputFormatInInitState() {
+            assertTrue(nativeTestGetOutputFormatInInitState());
+        }
+
+        private native boolean nativeTestGetOutputFormatInInitState();
+
+        @Test
+        public void testGetOutputFormatInRunningState() {
+            assertTrue(nativeTestGetOutputFormatInRunningState());
+        }
+
+        private native boolean nativeTestGetOutputFormatInRunningState();
+
+        @Test
+        public void testGetOutputFormatInUnInitState() {
+            assertTrue(nativeTestGetOutputFormatInUnInitState());
+        }
+
+        private native boolean nativeTestGetOutputFormatInUnInitState();
+
+        @Test
+        @Ignore("TODO(b/)")
+        public void testSetParametersInInitState() {
+            assertTrue(nativeTestSetParametersInInitState());
+        }
+
+        private native boolean nativeTestSetParametersInInitState();
+
+        @Test
+        public void testSetParametersInRunningState() {
+            assertTrue(nativeTestSetParametersInRunningState());
+        }
+
+        private native boolean nativeTestSetParametersInRunningState();
+
+        @Test
+        @Ignore("TODO(b/)")
+        public void testSetParametersInUnInitState() {
+            assertTrue(nativeTestSetParametersInUnInitState());
+        }
+
+        private native boolean nativeTestSetParametersInUnInitState();
+
+        @Test
+        public void testStartInRunningState() {
+            assertTrue(nativeTestStartInRunningState());
+        }
+
+        private native boolean nativeTestStartInRunningState();
+
+        @Test
+        public void testStartInUnInitState() {
+            assertTrue(nativeTestStartInUnInitState());
+        }
+
+        private native boolean nativeTestStartInUnInitState();
+
+        @Test
+        public void testStopInInitState() {
+            assertTrue(nativeTestStopInInitState());
+        }
+
+        private native boolean nativeTestStopInInitState();
+
+        @Test
+        public void testStopInRunningState() {
+            assertTrue(nativeTestStopInRunningState());
+        }
+
+        private native boolean nativeTestStopInRunningState();
+
+        @Test
+        public void testStopInUnInitState() {
+            assertTrue(nativeTestStopInUnInitState());
+        }
+
+        private native boolean nativeTestStopInUnInitState();
+
+        @Test
+        public void testQueueInputBufferInInitState() {
+            assertTrue(nativeTestQueueInputBufferInInitState());
+        }
+
+        private native boolean nativeTestQueueInputBufferInInitState();
+
+        @Test
+        public void testQueueInputBufferWithBadIndex() {
+            assertTrue(nativeTestQueueInputBufferWithBadIndex());
+        }
+
+        private native boolean nativeTestQueueInputBufferWithBadIndex();
+
+        @Test
+        public void testQueueInputBufferWithBadSize() {
+            assertTrue(nativeTestQueueInputBufferWithBadSize());
+        }
+
+        private native boolean nativeTestQueueInputBufferWithBadSize();
+
+        @Test
+        public void testQueueInputBufferWithBadBuffInfo() {
+            assertTrue(nativeTestQueueInputBufferWithBadBuffInfo());
+        }
+
+        private native boolean nativeTestQueueInputBufferWithBadBuffInfo();
+
+        @Test
+        public void testQueueInputBufferWithBadOffset() {
+            assertTrue(nativeTestQueueInputBufferWithBadOffset());
+        }
+
+        private native boolean nativeTestQueueInputBufferWithBadOffset();
+
+        @Test
+        public void testQueueInputBufferInUnInitState() {
+            assertTrue(nativeTestQueueInputBufferInUnInitState());
+        }
+
+        private native boolean nativeTestQueueInputBufferInUnInitState();
+
+        @Test
+        public void testReleaseOutputBufferInInitState() {
+            assertTrue(nativeTestReleaseOutputBufferInInitState());
+        }
+
+        private native boolean nativeTestReleaseOutputBufferInInitState();
+
+        @Test
+        public void testReleaseOutputBufferInRunningState() {
+            assertTrue(nativeTestReleaseOutputBufferInRunningState());
+        }
+
+        private native boolean nativeTestReleaseOutputBufferInRunningState();
+
+        @Test
+        public void testReleaseOutputBufferInUnInitState() {
+            assertTrue(nativeTestReleaseOutputBufferInUnInitState());
+        }
+
+        private native boolean nativeTestReleaseOutputBufferInUnInitState();
+
+        @Test
+        public void testGetBufferFormatInInitState() {
+            assertTrue(nativeTestGetBufferFormatInInitState());
+        }
+
+        private native boolean nativeTestGetBufferFormatInInitState();
+
+        @Test
+        public void testGetBufferFormatInRunningState() {
+            assertTrue(nativeTestGetBufferFormatInRunningState());
+        }
+
+        private native boolean nativeTestGetBufferFormatInRunningState();
+
+        @Test
+        public void testGetBufferFormatInUnInitState() {
+            assertTrue(nativeTestGetBufferFormatInUnInitState());
+        }
+
+        private native boolean nativeTestGetBufferFormatInUnInitState();
+    }
 }
