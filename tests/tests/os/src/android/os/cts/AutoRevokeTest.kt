@@ -34,6 +34,7 @@ import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.UiDumpUtils
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.Assert.assertThat
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
@@ -51,9 +52,9 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
-    fun _testUnusedApp_getsPermissionRevoked() {
+    fun testUnusedApp_getsPermissionRevoked() {
         wakeUpScreen()
-        withDeviceConfig("auto_revoke_unused_threshold_millis", "1") {
+        withUnusedThresholdMs(1L) {
             withDummyApp {
                 // Setup
                 startApp()
@@ -75,32 +76,34 @@ class AutoRevokeTest : InstrumentationTestCase() {
     // TODO once implemented, use:
     // Intent(Intent.ACTION_AUTO_REVOKE_PERMISSIONS).putExtra(Intent.EXTRA_PACKAGE_NAME, packageName)
     @AppModeFull(reason = "Uses separate apps for testing")
-    fun _testAutoRevoke_userWhitelisting() {
+    fun testAutoRevoke_userWhitelisting() {
         wakeUpScreen()
-        withDummyApp {
-            // Setup
-            startApp()
-            clickPermissionAllow()
-            assertWhitelistState(false)
+        withUnusedThresholdMs(TimeUnit.DAYS.toMillis(30)) {
+            withDummyApp {
+                // Setup
+                startApp()
+                clickPermissionAllow()
+                assertWhitelistState(false)
 
-            // Verify
-            waitFindObject(byTextIgnoreCase("Request whitelist")).click()
-            waitFindObject(byTextIgnoreCase("Permissions")).click()
-            val autoRevokeEnabledToggle = getWhitelistToggle()
-            assertTrue(autoRevokeEnabledToggle.isChecked)
+                // Verify
+                waitFindObject(byTextIgnoreCase("Request whitelist")).click()
+                waitFindObject(byTextIgnoreCase("Permissions")).click()
+                val autoRevokeEnabledToggle = getWhitelistToggle()
+                assertTrue(autoRevokeEnabledToggle.isChecked)
 
-            // Grant whitelist
-            autoRevokeEnabledToggle.click()
-            eventually {
-                assertFalse(getWhitelistToggle().isChecked)
+                // Grant whitelist
+                autoRevokeEnabledToggle.click()
+                eventually {
+                    assertFalse(getWhitelistToggle().isChecked)
+                }
+
+                // Verify
+                goBack()
+                goBack()
+                goBack()
+                startApp()
+                assertWhitelistState(true)
             }
-
-            // Verify
-            goBack()
-            goBack()
-            goBack()
-            startApp()
-            assertWhitelistState(true)
         }
     }
 
@@ -108,19 +111,21 @@ class AutoRevokeTest : InstrumentationTestCase() {
     @AppModeFull(reason = "Uses separate apps for testing")
     fun _testInstallGrants_notRevokedImmediately() {
         wakeUpScreen()
-        withDummyApp {
-            // Setup
-            instrumentation.uiAutomation.grantRuntimePermission(APK_PACKAGE_NAME, READ_CALENDAR)
-            eventually {
+        withUnusedThresholdMs(TimeUnit.DAYS.toMillis(30)) {
+            withDummyApp {
+                // Setup
+                instrumentation.uiAutomation.grantRuntimePermission(APK_PACKAGE_NAME, READ_CALENDAR)
+                eventually {
+                    assertPermission(PERMISSION_GRANTED)
+                }
+
+                // Run
+                runAutoRevoke()
+                Thread.sleep(500)
+
+                // Verify
                 assertPermission(PERMISSION_GRANTED)
             }
-
-            // Run
-            runAutoRevoke()
-            Thread.sleep(500)
-
-            // Verify
-            assertPermission(PERMISSION_GRANTED)
         }
     }
 
@@ -135,23 +140,29 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     private inline fun <T> withDeviceConfig(
+        namespace: String,
         name: String,
         value: String,
         action: () -> T
     ): T {
         val oldValue = runWithShellPermissionIdentity(ThrowingSupplier {
-            DeviceConfig.getProperty("permissions", name)
+            DeviceConfig.getProperty(namespace, name)
         })
         try {
             runWithShellPermissionIdentity {
-                DeviceConfig.setProperty("permissions", name, value, false /* makeDefault */)
+                DeviceConfig.setProperty(namespace, name, value, false /* makeDefault */)
             }
             return action()
         } finally {
             runWithShellPermissionIdentity {
-                DeviceConfig.setProperty("permissions", name, oldValue, false /* makeDefault */)
+                DeviceConfig.setProperty(namespace, name, oldValue, false /* makeDefault */)
             }
         }
+    }
+
+    private inline fun <T> withUnusedThresholdMs(threshold: Long, action: () -> T): T {
+        return withDeviceConfig(
+                "permissions", "auto_revoke_unused_threshold_millis", threshold.toString(), action)
     }
 
     private fun installApp() {
@@ -228,7 +239,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
         } catch (e: RuntimeException) {
             val ui = instrumentation.uiAutomation.rootInActiveWindow
 
-            val title = ui.depthFirstSearch { viewIdResourceName?.contains("alertTitle") == true  }
+            val title = ui.depthFirstSearch { viewIdResourceName?.contains("alertTitle") == true }
             val okButton = ui.depthFirstSearch {
                 (text as CharSequence?)?.toString()?.equals("OK", ignoreCase = true) ?: false
             }
