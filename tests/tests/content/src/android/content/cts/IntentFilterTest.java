@@ -51,6 +51,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -742,14 +744,25 @@ public class IntentFilterTest extends AndroidTestCase {
                 new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, null, null, null, null),
                 new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, "action1", null, null, null),
                 new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, "action2", null, null, null),
-                new MatchCondition(IntentFilter.NO_MATCH_ACTION, "action3", null, null, null));
+                new MatchCondition(IntentFilter.NO_MATCH_ACTION, "action3", null, null, null),
+                new MatchCondition(IntentFilter.NO_MATCH_ACTION, "action1", null, null, null, false,
+                        Arrays.asList("action1", "action2")),
+                new MatchCondition(IntentFilter.NO_MATCH_ACTION, "action2", null, null, null, false,
+                        Arrays.asList("action1", "action2")),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, "action1", null, null, null,
+                        false, Arrays.asList("action2")));
     }
 
     public void testActionWildCards() throws Exception {
-        IntentFilter filter = new Match(new String[]{"action1"}, null, null, null, null, null);
+        IntentFilter filter =
+                new Match(new String[]{"action1", "action2"}, null, null, null, null, null);
         checkMatches(filter,
                 new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, null, null, null, null, true),
                 new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, "*", null, null, null, true),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_EMPTY, "*", null, null, null, true,
+                        Arrays.asList("action1")),
+                new MatchCondition(IntentFilter.NO_MATCH_ACTION, "*", null, null, null, true,
+                        Arrays.asList("action1", "action2")),
                 new MatchCondition(
                         IntentFilter.NO_MATCH_ACTION, "action3", null, null, null, true));
 
@@ -1289,26 +1302,36 @@ public class IntentFilterTest extends AndroidTestCase {
         public final Uri data;
         public final String[] categories;
         public final boolean wildcardSupported;
+        public final Collection<String> ignoredActions;
 
         public static MatchCondition data(int result, String data) {
             return new MatchCondition(result, null, null, null, data);
         }
         public static MatchCondition data(int result, String data, boolean wildcardSupported) {
-            return new MatchCondition(result, null, null, null, data, wildcardSupported);
+            return new MatchCondition(result, null, null, null, data, wildcardSupported, null);
         }
-
+        public static MatchCondition data(int result, String data, boolean wildcardSupported,
+                Collection<String> ignoredActions) {
+            return new MatchCondition(result, null, null, null, data, wildcardSupported,
+                    ignoredActions);
+        }
         MatchCondition(int result, String action, String[] categories, String mimeType,
                 String data) {
-            this(result, action, categories, mimeType, data, false);
+            this(result, action, categories, mimeType, data, false, null);
         }
         MatchCondition(int result, String action, String[] categories, String mimeType,
                 String data, boolean wildcardSupported) {
+            this(result, action, categories, mimeType, data, wildcardSupported, null);
+        }
+        MatchCondition(int result, String action, String[] categories, String mimeType,
+                String data, boolean wildcardSupported, Collection<String> ignoredActions) {
             this.result = result;
             this.action = action;
             this.mimeType = mimeType;
             this.data = data != null ? Uri.parse(data) : null;
             this.categories = categories;
             this.wildcardSupported = wildcardSupported;
+            this.ignoredActions = ignoredActions;
         }
     }
 
@@ -1325,7 +1348,7 @@ public class IntentFilterTest extends AndroidTestCase {
                 }
             }
             int result = filter.match(mc.action, mc.mimeType, mc.data != null ? mc.data.getScheme()
-                    : null, mc.data, categories, "test", mc.wildcardSupported);
+                    : null, mc.data, categories, "test", mc.wildcardSupported, mc.ignoredActions);
             if ((result & IntentFilter.MATCH_CATEGORY_MASK) !=
                     (mc.result & IntentFilter.MATCH_CATEGORY_MASK)) {
                 StringBuilder msg = new StringBuilder();
