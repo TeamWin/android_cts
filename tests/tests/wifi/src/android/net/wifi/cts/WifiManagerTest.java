@@ -16,6 +16,7 @@
 
 package android.net.wifi.cts;
 
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
 import static android.net.wifi.WifiManager.TrafficStateCallback.DATA_ACTIVITY_INOUT;
@@ -1774,20 +1775,22 @@ public class WifiManagerTest extends AndroidTestCase {
         TestNetworkCallback networkCallbackListener = new TestNetworkCallback(mLock);
         synchronized (mLock) {
             try {
+                NetworkRequest.Builder networkRequestBuilder = new NetworkRequest.Builder()
+                        .addTransportType(TRANSPORT_WIFI);
+                if (expectMetered) {
+                    networkRequestBuilder.removeCapability(NET_CAPABILITY_NOT_METERED);
+                } else {
+                    networkRequestBuilder.addCapability(NET_CAPABILITY_NOT_METERED);
+                }
                 // File a request for wifi network.
                 mConnectivityManager.registerNetworkCallback(
-                        new NetworkRequest.Builder()
-                                .addTransportType(TRANSPORT_WIFI)
-                                .build(),
-                        networkCallbackListener);
+                        networkRequestBuilder.build(), networkCallbackListener);
                 // now wait for callback
                 mLock.wait(TEST_WAIT_DURATION_MS);
             } catch (InterruptedException e) {
             }
         }
         assertTrue(networkCallbackListener.onAvailableCalled);
-        assertNotEquals(expectMetered, networkCallbackListener.networkCapabilities.hasCapability(
-                NetworkCapabilities.NET_CAPABILITY_NOT_METERED));
     }
 
     /**
@@ -1835,6 +1838,9 @@ public class WifiManagerTest extends AndroidTestCase {
             }
             // check if we got the success callback
             assertTrue(actionListener.onSuccessCalled);
+            // Ensure we disconnected on marking the network metered & connect back.
+            waitForDisconnection();
+            waitForConnection();
             // Check the network capabilities to ensure that the network is marked metered now.
             waitForNetworkCallbackAndCheckForMeteredness(true);
 
