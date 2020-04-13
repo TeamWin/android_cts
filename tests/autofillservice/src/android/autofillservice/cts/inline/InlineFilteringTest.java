@@ -35,6 +35,10 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
 
     private static final String TAG = "InlineLoginActivityTest";
 
+    public InlineFilteringTest() {
+        super(getInlineUiBot());
+    }
+
     @Override
     protected void enableService() {
         Helper.enableAutofillService(getContext(), SERVICE_NAME);
@@ -64,25 +68,25 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         // Trigger autofill, then make sure it's showing initially.
         mUiBot.selectByRelativeId(ID_USERNAME);
         mUiBot.waitForIdleSync();
-        mUiBot.assertSuggestionStrip(2);
+        mUiBot.assertDatasets("The Dude", "Second Dude");
         sReplier.getNextFillRequest();
 
         // Filter out one of the datasets.
         mActivity.onUsername((v) -> v.setText("t"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("Second Dude");
 
         // Filter out both datasets.
         mActivity.onUsername((v) -> v.setText("ta"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasets();
 
         // Backspace to bring back one dataset.
         mActivity.onUsername((v) -> v.setText("t"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("Second Dude");
 
-        mUiBot.selectSuggestion(0);
+        mUiBot.selectDataset("Second Dude");
         mUiBot.waitForIdleSync();
         mActivity.assertAutoFilled();
     }
@@ -103,26 +107,26 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.selectByRelativeId(ID_USERNAME);
         mActivity.onUsername((v) -> v.setText("s"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("sergey");
         sReplier.getNextFillRequest();
 
         // Enter the wrong second char - filters out dataset.
         mActivity.onUsername((v) -> v.setText("sa"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasets();
 
         // Backspace to bring back the dataset.
         mActivity.onUsername((v) -> v.setText("s"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("sergey");
 
         // Enter the correct second char, then check that suggestions are no longer shown.
         mActivity.onUsername((v) -> v.setText("se"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasets();
         mActivity.onUsername((v) -> v.setText(""));
         mUiBot.waitForIdleSync();
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasetsEver();
     }
 
     /**
@@ -145,7 +149,7 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.selectByRelativeId(ID_USERNAME);
         mActivity.onUsername((v) -> v.setText("ser"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("sergey");
         sReplier.getNextFillRequest();
 
         // Enter a couple different strings, then check that suggestions are no longer shown.
@@ -153,10 +157,10 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername((v) -> v.setText("bbb"));
         mActivity.onUsername((v) -> v.setText("ser"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasets();
         mActivity.onUsername((v) -> v.setText(""));
         mUiBot.waitForIdleSync();
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasetsEver();
     }
 
     @Test
@@ -174,7 +178,7 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.selectByRelativeId(ID_USERNAME);
         mActivity.onUsername((v) -> v.setText("aaa"));
         mUiBot.waitForIdleSync();
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("pinned");
         sReplier.getNextFillRequest();
     }
 }
