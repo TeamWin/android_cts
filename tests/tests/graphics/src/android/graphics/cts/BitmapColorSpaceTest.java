@@ -1177,4 +1177,61 @@ public class BitmapColorSpaceTest {
                     dst.getColor(0, 0), .001f);
         }
     }
+
+    @Test
+    public void testGrayscaleProfile() throws IOException {
+        ImageDecoder.Source source = ImageDecoder.createSource(mResources.getAssets(),
+                "gimp-d65-grayscale.jpg");
+        Bitmap bm = ImageDecoder.decodeBitmap(source, (decoder, info, s) -> {
+            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+        });
+        ColorSpace cs = bm.getColorSpace();
+        assertNotNull(cs);
+        assertTrue(cs instanceof ColorSpace.Rgb);
+        ColorSpace.Rgb rgbCs = (ColorSpace.Rgb) cs;
+
+        // A gray color space uses a special primaries array of all 1s.
+        float[] primaries = rgbCs.getPrimaries();
+        assertNotNull(primaries);
+        assertEquals(6, primaries.length);
+        for (float primary : primaries) {
+            assertEquals(0, Float.compare(primary, 1.0f));
+        }
+
+        // A gray color space will have all zeroes in the transform
+        // and inverse transform, except for the diagonal.
+        for (float[] transform : new float[][]{rgbCs.getTransform(), rgbCs.getInverseTransform()}) {
+            assertNotNull(transform);
+            assertEquals(9, transform.length);
+            for (int index : new int[] { 1, 2, 3, 5, 6, 7 }) {
+                assertEquals(0, Float.compare(0.0f, transform[index]));
+            }
+        }
+
+        // When creating another Bitmap with the same ColorSpace, the two
+        // ColorSpaces should be equal.
+        Bitmap otherBm = Bitmap.createBitmap(null, 100, 100, Bitmap.Config.ARGB_8888, true, cs);
+        assertEquals(cs, otherBm.getColorSpace());
+
+        // Same for a scaled bitmap.
+        Bitmap scaledBm = Bitmap.createScaledBitmap(bm, bm.getWidth() / 4, bm.getHeight() / 4,
+                true);
+        assertEquals(cs, scaledBm.getColorSpace());
+
+        // A previous ColorSpace bug resulted in a Bitmap created like scaledBm
+        // having all black pixels. Verify that the Bitmap contains colors other
+        // than black and white.
+        boolean foundOtherColor = false;
+        final int width = scaledBm.getWidth();
+        final int height = scaledBm.getHeight();
+        int[] pixels = new int[width * height];
+        scaledBm.getPixels(pixels, 0, width, 0, 0, width, height);
+        for (int pixel : pixels) {
+            if (pixel != Color.BLACK && pixel != Color.WHITE) {
+                foundOtherColor = true;
+                break;
+            }
+        }
+        assertTrue(foundOtherColor);
+    }
 }
