@@ -171,6 +171,8 @@ public class TelephonyManagerTest {
     private static final String TEST_FORWARD_NUMBER = "54321";
     private static final String TESTING_PLMN = "12345";
 
+    private static final int RADIO_HAL_VERSION_1_3 = makeRadioVersion(1, 3);
+
     static {
         EMERGENCY_NUMBER_SOURCE_SET = new HashSet<Integer>();
         EMERGENCY_NUMBER_SOURCE_SET.add(EmergencyNumber.EMERGENCY_NUMBER_SOURCE_NETWORK_SIGNALING);
@@ -201,6 +203,7 @@ public class TelephonyManagerTest {
 
     private int mTestSub;
     private TelephonyManagerTest.CarrierConfigReceiver mReceiver;
+    private int mRadioVersion;
 
     private static class CarrierConfigReceiver extends BroadcastReceiver {
         private CountDownLatch mLatch = new CountDownLatch(1);
@@ -242,6 +245,8 @@ public class TelephonyManagerTest {
         mTelephonyManager = getContext().getSystemService(TelephonyManager.class)
                 .createForSubscriptionId(mTestSub);
         mReceiver = new CarrierConfigReceiver(mTestSub);
+        Pair<Integer, Integer> radioVersion = mTelephonyManager.getRadioHalVersion();
+        mRadioVersion = makeRadioVersion(radioVersion.first, radioVersion.second);
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
         getContext().registerReceiver(mReceiver, filter);
@@ -1166,8 +1171,12 @@ public class TelephonyManagerTest {
             mTelephonyManager.setSystemSelectionChannels(Collections.emptyList(),
                     getContext().getMainExecutor(), queue::offer);
             Boolean result = queue.poll(1000, TimeUnit.MILLISECONDS);
+            // Ensure we get a result
             assertNotNull(result);
-            assertTrue(result);
+            // Only verify the result for supported devices on IRadio 1.3+
+            if (mRadioVersion >= RADIO_HAL_VERSION_1_3) {
+                assertTrue(result);
+            }
         } catch (InterruptedException e) {
             fail("interrupted");
         } finally {
@@ -2835,6 +2844,11 @@ public class TelephonyManagerTest {
             return false;
         }
         return mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM;
+    }
+
+    private static int makeRadioVersion(int major, int minor) {
+        if (major < 0 || minor < 0) return 0;
+        return major * 100 + minor;
     }
 }
 
