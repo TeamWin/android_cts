@@ -232,7 +232,7 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
             getDevice().setProperty("init.userspace_reboot.watchdog.timeoutmillis", "1000");
             rebootUserspaceAndWaitForBootComplete();
             assertUserspaceRebootFailed();
-            assertLastBootReasonIs("userspace_failed,watchdog_triggered");
+            assertLastBootReasonIs("userspace_failed,watchdog_triggered,failed_to_boot");
         } finally {
             getDevice().setProperty("init.userspace_reboot.watchdog.timeoutmillis", defaultValue);
         }
