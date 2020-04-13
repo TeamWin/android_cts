@@ -16,6 +16,8 @@
 
 package com.android.compatibility.common.util;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.content.res.Resources;
 import android.text.TextUtils;
 import android.util.Log;
@@ -23,6 +25,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -30,6 +33,9 @@ import org.junit.runners.model.Statement;
 /**
  * Custom JUnit4 rule that does not run a test case if the device does not define the given system
  * resource.
+ *
+ * <p>The tests are skipped by throwing a {@link AssumptionViolatedException}.  CTS test runners
+ * will report this as a {@code ASSUMPTION_FAILED}.
  */
 public class RequiredSystemResourceRule implements TestRule {
 
@@ -59,6 +65,8 @@ public class RequiredSystemResourceRule implements TestRule {
                     Log.d(TAG, "skipping "
                             + description.getClassName() + "#" + description.getMethodName()
                             + " because device does not have system resource '" + mName + "'");
+                    assumeTrue("Device does not have system resource '" + mName + "'",
+                            mHasResource);
                     return;
                 }
                 base.evaluate();
