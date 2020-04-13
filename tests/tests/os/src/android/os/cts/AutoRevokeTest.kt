@@ -43,8 +43,6 @@ private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
 /**
  * Test for auto revoke
  */
-// TODO test pregrants exempt
-// TODO test manifest whitelist
 class AutoRevokeTest : InstrumentationTestCase() {
 
     companion object {
