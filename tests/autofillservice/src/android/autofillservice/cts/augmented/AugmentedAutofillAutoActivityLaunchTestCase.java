@@ -20,6 +20,7 @@ import static android.autofillservice.cts.Helper.disallowOverlays;
 
 import android.autofillservice.cts.AbstractAutoFillActivity;
 import android.autofillservice.cts.AutoFillServiceTestCase;
+import android.autofillservice.cts.UiBot;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedReplier;
 import android.content.AutofillOptions;
 import android.view.autofill.AutofillManager;
@@ -52,6 +53,12 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
     private static final RuleChain sRequiredFeatures = RuleChain
             .outerRule(sRequiredFeatureRule)
             .around(sRequiredResource);
+
+    public AugmentedAutofillAutoActivityLaunchTestCase() {}
+
+    public AugmentedAutofillAutoActivityLaunchTestCase(UiBot uiBot) {
+        super(uiBot);
+    }
 
     @BeforeClass
     public static void allowAugmentedAutofill() {
