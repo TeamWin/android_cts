@@ -52,6 +52,10 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         BOTH
     }
 
+    public InlineAuthenticationTest() {
+        super(getInlineUiBot());
+    }
+
     @Override
     protected void enableService() {
         Helper.enableAutofillService(getContext(), SERVICE_NAME);
@@ -90,32 +94,32 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        assertSuggestionShownBySelectViewId(ID_USERNAME, /* childrenCount */ 1);
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth");
         sReplier.getNextFillRequest();
 
         // Make sure UI is show on 2nd field as well
-        assertSuggestionShownBySelectViewId(ID_PASSWORD, /* childrenCount */ 1);
+        assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth");
 
         // Now tap on 1st field to show it again...
-        assertSuggestionShownBySelectViewId(ID_USERNAME, /* childrenCount */ 1);
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth");
 
         if (cancelFirstAttempt) {
             // Trigger the auth dialog, but emulate cancel.
             AuthenticationActivity.setResultCode(RESULT_CANCELED);
-            mUiBot.selectSuggestion(0);
+            mUiBot.selectDataset("auth");
             mUiBot.waitForIdle();
-            mUiBot.assertSuggestionStrip(1);
+            mUiBot.assertDatasets("auth");
 
             // Make sure it's still shown on other fields...
-            assertSuggestionShownBySelectViewId(ID_PASSWORD, /* childrenCount */ 1);
+            assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth");
 
             // Tap on 1st field to show it again...
-            assertSuggestionShownBySelectViewId(ID_USERNAME, /* childrenCount */ 1);
+            assertSuggestionShownBySelectViewId(ID_USERNAME, "auth");
         }
 
         // ...and select it this time
         AuthenticationActivity.setResultCode(RESULT_OK);
-        mUiBot.selectSuggestion(0);
+        mUiBot.selectDataset("auth");
         mUiBot.waitForIdle();
 
         // Check the results.
@@ -148,24 +152,24 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill, make sure it's showing initially.
-        assertSuggestionShownBySelectViewId(ID_USERNAME, /* childrenCount */ 1);
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth");
         sReplier.getNextFillRequest();
 
         // ...then type something to hide it.
         mActivity.onUsername((v) -> v.setText("a"));
         // Suggestion strip was not shown.
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasetsEver();
         mUiBot.waitForIdle();
 
         // ...now type something again to show it, as the input will have 2 chars.
         mActivity.onUsername((v) -> v.setText("aa"));
         mUiBot.waitForIdle();
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("auth");
 
         // ...and select it
-        mUiBot.selectSuggestion(0);
+        mUiBot.selectDataset("auth");
         mUiBot.waitForIdle();
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasets();
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -220,11 +224,11 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill, make sure it's showing initially.
-        assertSuggestionShownBySelectViewId(ID_USERNAME, /* childrenCount */ 1);
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth");
         sReplier.getNextFillRequest();
 
         // Tap authentication request.
-        mUiBot.selectSuggestion(0);
+        mUiBot.selectDataset("auth");
         mUiBot.waitForIdle();
 
         // Check the results.
@@ -257,10 +261,10 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         Helper.assertAuthenticationClientState("on save", saveRequest.data, "CSI", expectedValue);
     }
 
-    private void assertSuggestionShownBySelectViewId(String id, int childrenCount)
+    private void assertSuggestionShownBySelectViewId(String id, String...names)
             throws Exception {
         mUiBot.selectByRelativeId(id);
         mUiBot.waitForIdle();
-        mUiBot.assertSuggestionStrip(childrenCount);
+        mUiBot.assertDatasets(names);
     }
 }
