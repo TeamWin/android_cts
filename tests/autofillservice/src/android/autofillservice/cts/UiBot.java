@@ -70,7 +70,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.RetryableException;
 import com.android.compatibility.common.util.Timeout;
-import com.android.cts.mockime.MockIme;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -95,8 +94,6 @@ public class UiBot {
     private static final String RESOURCE_ID_SAVE_BUTTON_NO = "autofill_save_no";
     private static final String RESOURCE_ID_SAVE_BUTTON_YES = "autofill_save_yes";
     private static final String RESOURCE_ID_OVERFLOW = "overflow";
-    //TODO: Change magic constant
-    private static final String RESOURCE_ID_SUGGESTION_STRIP = "message";
 
     private static final String RESOURCE_STRING_SAVE_TITLE = "autofill_save_title";
     private static final String RESOURCE_STRING_SAVE_TITLE_WITH_TYPE =
@@ -135,8 +132,6 @@ public class UiBot {
     private static final BySelector SAVE_UI_SELECTOR = By.res("android", RESOURCE_ID_SAVE_SNACKBAR);
     private static final BySelector DATASET_HEADER_SELECTOR =
             By.res("android", RESOURCE_ID_DATASET_HEADER);
-    private static final BySelector SUGGESTION_STRIP_SELECTOR =
-            By.res("android", RESOURCE_ID_SUGGESTION_STRIP);
 
     // TODO: figure out a more reliable solution that does not depend on SystemUI resources.
     private static final String SPLIT_WINDOW_DIVIDER_ID =
@@ -270,14 +265,6 @@ public class UiBot {
     }
 
     /**
-     * Asserts the suggestion strip was never shown.
-     */
-    public void assertNoSuggestionStripEver() throws Exception {
-        assertNeverShown("suggestion strip", SUGGESTION_STRIP_SELECTOR,
-                DATASET_PICKER_NOT_SHOWN_NAPTIME_MS);
-    }
-
-    /**
      * Asserts the dataset chooser is shown and contains exactly the given datasets.
      *
      * @return the dataset picker object.
@@ -333,32 +320,6 @@ public class UiBot {
         assertWithMessage("wrong elements on dataset picker").that(getChildrenAsText(picker))
                 .containsExactlyElementsIn(expectedChild).inOrder();
         return picker;
-    }
-
-    /**
-     * Asserts the suggestion strip on the {@link MockIme} is shown and contains the given number
-     * of child suggestions.
-     *
-     * @param childrenCount the expected number of children.
-     *
-     * @return the suggestion strip object
-     */
-    public UiObject2 assertSuggestionStrip(int childrenCount) throws Exception {
-        final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
-        assertThat(strip.getChildCount()).isEqualTo(childrenCount);
-        return strip;
-    }
-
-    /**
-     * Selects the suggestion in the {@link MockIme}'s suggestion strip at the given index.
-     *
-     * @param index the index of the suggestion to select.
-     */
-    public void selectSuggestion(int index) throws Exception {
-        final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
-        assertThat(index).isAtLeast(0);
-        assertThat(index).isLessThan(strip.getChildCount());
-        strip.getChildren().get(index).click();
     }
 
     /**
@@ -1065,10 +1026,6 @@ public class UiBot {
         }
 
         return picker;
-    }
-
-    protected UiObject2 findSuggestionStrip(Timeout timeout) throws Exception {
-        return waitForObject(SUGGESTION_STRIP_SELECTOR, timeout);
     }
 
     /**
