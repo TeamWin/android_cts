@@ -30,8 +30,13 @@ public class KeepAliveForegroundService extends Service {
     private static final String EXTRA_FOREGROUND_SERVICE_LIFESPAN =
             "android.permission.cts.OneTimePermissionTest.EXTRA_FOREGROUND_SERVICE_LIFESPAN";
 
+    private static final String EXTRA_FOREGROUND_SERVICE_STICKY =
+            "android.permission.cts.OneTimePermissionTest.EXTRA_FOREGROUND_SERVICE_STICKY";
+
     private static final String CHANNEL_ID = "channelId";
     private static final String CHANNEL_NAME = "channelName";
+
+    private static final long DEFAULT_LIFESPAN = 5000;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -40,7 +45,15 @@ public class KeepAliveForegroundService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        long lifespan = intent.getLongExtra(EXTRA_FOREGROUND_SERVICE_LIFESPAN, 5000);
+        long lifespan;
+        boolean sticky;
+        if (intent == null) {
+            lifespan = DEFAULT_LIFESPAN;
+            sticky = false;
+        } else {
+            lifespan = intent.getLongExtra(EXTRA_FOREGROUND_SERVICE_LIFESPAN, DEFAULT_LIFESPAN);
+            sticky = intent.getBooleanExtra(EXTRA_FOREGROUND_SERVICE_STICKY, false);
+        }
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(
                 new NotificationChannel(CHANNEL_ID, CHANNEL_NAME,
@@ -51,6 +64,9 @@ public class KeepAliveForegroundService extends Service {
         startForeground(1, notification);
         new Handler(Looper.getMainLooper()).postDelayed(
                 () -> stopForeground(Service.STOP_FOREGROUND_REMOVE), lifespan);
+        if (sticky) {
+            return START_STICKY;
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 }
