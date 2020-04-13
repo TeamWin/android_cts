@@ -16,8 +16,12 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
+import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -36,12 +40,16 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Point;
+import android.graphics.drawable.ColorDrawable;
 import android.hardware.HardwareBuffer;
 import android.os.SystemClock;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -67,6 +75,7 @@ public class AccessibilityTakeScreenshotTest {
      * The timeout for waiting screenshot had been taken done.
      */
     private static final long TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS = 1000;
+    public static final int SECURE_WINDOW_CONTENT_COLOR = Color.BLUE;
 
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
@@ -181,6 +190,66 @@ public class AccessibilityTakeScreenshotTest {
             verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onFailure(
                     AccessibilityService.ERROR_TAKE_SCREENSHOT_INVALID_DISPLAY);
         }
+    }
+
+    @Test
+    public void testTakeScreenshotWithSecureWindow_GetScreenshotAndVerifyBitmap() throws Throwable {
+        final Activity activity = launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
+                sInstrumentation, sUiAutomation, AccessibilityWindowQueryActivity.class,
+                Display.DEFAULT_DISPLAY);
+
+        final ImageView image = new ImageView(activity);
+        image.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN);
+        image.setImageDrawable(new ColorDrawable(SECURE_WINDOW_CONTENT_COLOR));
+
+        final WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        params.width = WindowManager.LayoutParams.MATCH_PARENT;
+        params.height = WindowManager.LayoutParams.MATCH_PARENT;
+        params.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        params.flags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                | WindowManager.LayoutParams.FLAG_SECURE;
+
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> {
+                    activity.getWindowManager().addView(image, params);
+                }),
+                filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED),
+                DEFAULT_TIMEOUT_MS);
+        takeScreenshot(Display.DEFAULT_DISPLAY);
+
+        verify(mCallback, timeout(TIMEOUT_TAKE_SCREENSHOT_DONE_MILLIS)).onSuccess(
+                mSuccessResultArgumentCaptor.capture());
+
+        final AccessibilityService.ScreenshotResult newScreenshot =
+                mSuccessResultArgumentCaptor.getValue();
+        final Bitmap bitmap = Bitmap.wrapHardwareBuffer(newScreenshot.getHardwareBuffer(),
+                newScreenshot.getColorSpace());
+
+        assertTrue(doesBitmapDisplaySecureContent(activity, bitmap, SECURE_WINDOW_CONTENT_COLOR));
+    }
+
+    private boolean doesBitmapDisplaySecureContent(Activity activity, Bitmap screenshot, int color) {
+        final Display display = activity.getWindowManager().getDefaultDisplay();
+        final Point displaySize = new Point();
+        display.getRealSize(displaySize);
+
+        final int[] pixels = new int[displaySize.x * displaySize.y];
+        final Bitmap bitmap = screenshot.copy(Bitmap.Config.ARGB_8888, false);
+        bitmap.getPixels(pixels, 0, displaySize.x, 0, 0, displaySize.x,
+                displaySize.y);
+        for (int pixel : pixels) {
+            if ((Color.red(pixel) == Color.red(color))
+                    && (Color.green(pixel) == Color.green(color))
+                    && (Color.blue(pixel) == Color.blue(color))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void takeScreenshot(int displayId) {
