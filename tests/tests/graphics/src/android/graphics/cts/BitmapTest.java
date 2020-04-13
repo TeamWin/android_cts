@@ -1694,6 +1694,36 @@ public class BitmapTest {
         p.recycle();
     }
 
+    /**
+     * Although not specified as required behavior, it's something that some apps appear
+     * to rely upon when sending bitmaps between themselves
+     */
+    @Test
+    public void testWriteToParcelPreserveMutability() {
+        Bitmap source = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
+        assertTrue(source.isMutable());
+        Parcel p = Parcel.obtain();
+        source.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        Bitmap result = Bitmap.CREATOR.createFromParcel(p);
+        p.recycle();
+        assertTrue(result.isMutable());
+    }
+
+    @Test
+    public void testWriteToParcelPreserveImmutability() {
+        // Kinda silly way to create an immutable bitmap but it works
+        Bitmap source = Bitmap.createBitmap(100, 100, Config.ARGB_8888)
+                .copy(Config.ARGB_8888, false);
+        assertFalse(source.isMutable());
+        Parcel p = Parcel.obtain();
+        source.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        Bitmap result = Bitmap.CREATOR.createFromParcel(p);
+        p.recycle();
+        assertFalse(result.isMutable());
+    }
+
     @Test
     public void testWriteHwBitmapToParcel() {
         mBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
