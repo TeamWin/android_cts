@@ -99,6 +99,11 @@ public class SplitScreenTests extends ActivityManagerTestBase {
                         + " task size");
     }
 
+
+// TODO: Add test to make sure you can't register to split-windowing mode organization if test
+//  doesn't support it.
+
+
     @Test
     public void testStackList() throws Exception {
         launchActivity(TEST_ACTIVITY);
@@ -186,7 +191,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
 
         // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
         separateTestJournal();
-        removeStacksInWindowingModes(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        SystemUtil.runWithShellPermissionIdentity(() -> mTaskOrganizer.dismissedSplitScreen());
         final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
                 TEST_ACTIVITY);
         assertEquals(1, lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
