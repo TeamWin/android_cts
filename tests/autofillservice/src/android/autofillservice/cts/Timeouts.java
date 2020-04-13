@@ -112,7 +112,7 @@ public final class Timeouts {
      * Timeout used when the dataset picker is not expected to be shown - test will sleep for that
      * amount of time as there is no callback that be received to assert it's not shown.
      */
-    static final long DATASET_PICKER_NOT_SHOWN_NAPTIME_MS = ONE_NAPTIME_TO_RULE_THEN_ALL_MS;
+    public static final long DATASET_PICKER_NOT_SHOWN_NAPTIME_MS = ONE_NAPTIME_TO_RULE_THEN_ALL_MS;
 
     /**
      * Timeout (in milliseconds) for an activity to be brought out to top.

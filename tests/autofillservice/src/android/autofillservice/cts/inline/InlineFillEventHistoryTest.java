@@ -83,10 +83,9 @@ public class InlineFillEventHistoryTest extends FillEventHistoryCommonTestCase {
         sReplier.getNextFillRequest();
 
         // Suggestion strip was shown.
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("Dataset");
+        mUiBot.selectDataset("Dataset");
         mUiBot.waitForIdle();
-
-        mUiBot.selectSuggestion(0);
 
         // Change username and password
         mActivity.syncRunOnUiThread(() ->  mActivity.onUsername((v) -> v.setText("ID")));

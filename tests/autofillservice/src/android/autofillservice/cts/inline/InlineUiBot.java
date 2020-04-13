@@ -16,10 +16,12 @@
 
 package android.autofillservice.cts.inline;
 
+import static android.autofillservice.cts.Timeouts.DATASET_PICKER_NOT_SHOWN_NAPTIME_MS;
 import static android.autofillservice.cts.Timeouts.UI_TIMEOUT;
 
 import android.autofillservice.cts.UiBot;
 import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.Timeout;
@@ -31,6 +33,11 @@ import com.android.cts.mockime.MockIme;
 public final class InlineUiBot extends UiBot {
 
     private static final String TAG = "AutoFillInlineCtsUiBot";
+    //TODO: Change magic constant
+    private static final String RESOURCE_ID_SUGGESTION_STRIP = "message";
+
+    private static final BySelector SUGGESTION_STRIP_SELECTOR =
+            By.res("android", RESOURCE_ID_SUGGESTION_STRIP);
 
     public InlineUiBot() {
         this(UI_TIMEOUT);
@@ -42,12 +49,13 @@ public final class InlineUiBot extends UiBot {
 
     @Override
     public void assertNoDatasets() throws Exception {
-        assertNoSuggestionStripEver();
+        assertNoDatasetsEver();
     }
 
     @Override
     public void assertNoDatasetsEver() throws Exception {
-        assertNoSuggestionStripEver();
+        assertNeverShown("suggestion strip", SUGGESTION_STRIP_SELECTOR,
+                DATASET_PICKER_NOT_SHOWN_NAPTIME_MS);
     }
 
     /**
@@ -71,5 +79,9 @@ public final class InlineUiBot extends UiBot {
     public UiObject2 assertDatasets(String...names) throws Exception {
         final UiObject2 picker = findSuggestionStrip(UI_TIMEOUT);
         return assertDatasets(picker, names);
+    }
+
+    private UiObject2 findSuggestionStrip(Timeout timeout) throws Exception {
+        return waitForObject(SUGGESTION_STRIP_SELECTOR, timeout);
     }
 }
