@@ -43,6 +43,10 @@ public class InlineSimpleSaveActivityTest
     private static final String TAG = "InlineSimpleSaveActivityTest";
     protected SimpleSaveActivity mActivity;
 
+    public InlineSimpleSaveActivityTest() {
+        super(getInlineUiBot());
+    }
+
     @Override
     protected void enableService() {
         Helper.enableAutofillService(getContext(), SERVICE_NAME);
@@ -76,7 +80,7 @@ public class InlineSimpleSaveActivityTest
         sReplier.getNextFillRequest();
 
         // Suggestion strip was never shown.
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasetsEver();
 
         // Change input
         mActivity.syncRunOnUiThread(() -> mActivity.getInput().setText("ID"));
@@ -120,10 +124,10 @@ public class InlineSimpleSaveActivityTest
         sReplier.getNextFillRequest();
 
         // Confirm one suggestion
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("YO");
 
         // Select suggestion
-        mUiBot.selectSuggestion(0);
+        mUiBot.selectDataset("YO");
         mUiBot.waitForIdle();
 
         // Check the results.
