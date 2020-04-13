@@ -116,6 +116,7 @@ public class AppStandbyTests {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        assumeTrue("Battery not present on device, abort setUp", hasBattery());
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = new AtomicInteger(0);
         updateAlarmManagerConstants();
@@ -253,6 +254,9 @@ public class AppStandbyTests {
 
     @After
     public void tearDown() throws Exception {
+        if (!hasBattery()) {
+            return;
+        }
         setPowerWhitelisted(false);
         setBatteryCharging(true);
         deleteAlarmManagerConstants();
@@ -332,5 +336,11 @@ public class AppStandbyTests {
     @FunctionalInterface
     interface Condition {
         boolean isMet();
+    }
+
+    /** Determine if device has battery and is supported AppStandby  */
+    private boolean hasBattery() throws Exception {
+        final String batteryinfo = executeAndLog("dumpsys battery");
+        return batteryinfo.contains("present: true");
     }
 }
