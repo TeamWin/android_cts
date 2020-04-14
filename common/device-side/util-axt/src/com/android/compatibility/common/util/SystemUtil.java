@@ -290,6 +290,47 @@ public class SystemUtil {
         }
     }
 
+    /**
+     * Make sure that a {@link Callable} eventually finishes without throwing a {@link
+     * Exception}.
+     *
+     * @param c The {@link Callable} to run.
+     *
+     * @return The return value of {@code c}
+     */
+    public static <T> T getEventually(@NonNull Callable<T> c) throws Exception {
+        return getEventually(c, TIMEOUT_MILLIS);
+    }
+
+    /**
+     * Make sure that a {@link Callable} eventually finishes without throwing a {@link
+     * Exception}.
+     *
+     * @param c The {@link Callable} to run.
+     * @param timeoutMillis The number of milliseconds to wait for r to not throw
+     *
+     * @return The return value of {@code c}
+     */
+    public static <T> T getEventually(@NonNull Callable<T> c, long timeoutMillis) throws Exception {
+        long start = System.currentTimeMillis();
+
+        while (true) {
+            try {
+                return c.call();
+            } catch (Throwable e) {
+                if (System.currentTimeMillis() - start < timeoutMillis) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ignored) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    throw e;
+                }
+            }
+        }
+    }
+
     public interface ThrowingRunnable extends Runnable {
         void runOrThrow() throws Exception;
 
