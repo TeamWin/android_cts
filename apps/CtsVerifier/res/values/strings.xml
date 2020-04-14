@@ -2241,7 +2241,8 @@
     <string name="cacert_info">This test checks that when a CA Certificate is installed, the user is notified.</string>
     <string name="cacert_do_something">Do it</string>
     <string name="cacert_done">Done</string>
-    <string name="cacert_install_cert">Use the CertInstaller to install the certificate "MyCA.cer" from device storage. When it opens, choose any name and tap "Okay". If this button does nothing, pass the test and move on.</string>
+    <string name="cacert_install_cert_title">Tap to install a CA certificate</string>
+    <string name="cacert_install_cert">Press the button to open Security settings. Navigate to \"Install a certificate\" (normally under \"Encryptions &amp; credentials\") and select \"CA certificate\". Pick \"MyCA.cer\" from device storage and proceed with the installation. If this button does nothing, pass the test and move on.</string>
     <string name="cacert_check_cert_in_settings">Visit the user-installed trusted credentials page and confirm that the "Internet Widgits Pty Ltd" cert appears in the list.</string>
     <string name="cacert_remove_screen_lock">You may have been prompted to set a screen lock when installing the certificate. If so, remove it. If not, you may skip this step.</string>
     <string name="cacert_check_notification">Look at the system notifications. Confirm that:\n

@@ -4,6 +4,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -81,7 +82,7 @@ public class CANotifyOnBootActivity extends PassFailButtons.Activity {
             }
 
             try {
-                startActivity(new Intent("android.credentials.INSTALL"));
+                startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS));
             } catch (ActivityNotFoundException e) {
                 // do nothing
             }
