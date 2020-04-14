@@ -36,6 +36,10 @@ public class InlineAugmentedLoginActivityTest
 
     protected AugmentedLoginActivity mActivity;
 
+    public InlineAugmentedLoginActivityTest() {
+        super(getInlineUiBot());
+    }
+
     @Override
     protected AutofillActivityTestRule<AugmentedLoginActivity> getActivityRule() {
         return new AutofillActivityTestRule<AugmentedLoginActivity>(
@@ -79,12 +83,12 @@ public class InlineAugmentedLoginActivityTest
         assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
 
         // Confirm one suggestion
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("dude");
 
         mActivity.expectAutoFill("dude", "sweet");
 
         // Select suggestion
-        mUiBot.selectSuggestion(0);
+        mUiBot.selectDataset("dude");
         mUiBot.waitForIdle();
 
         mActivity.assertAutoFilled();
@@ -125,13 +129,13 @@ public class InlineAugmentedLoginActivityTest
         // Assert request
         assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
 
-        // Confirm one suggestion
-        mUiBot.assertSuggestionStrip(2);
+        // Confirm two suggestion
+        mUiBot.assertDatasets("dude", "DUDE");
 
         mActivity.expectAutoFill("DUDE", "SWEET");
 
         // Select suggestion
-        mUiBot.selectSuggestion(1);
+        mUiBot.selectDataset("DUDE");
         mUiBot.waitForIdle();
 
         mActivity.assertAutoFilled();
@@ -165,13 +169,13 @@ public class InlineAugmentedLoginActivityTest
         sReplier.getNextFillRequest();
         final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
 
-        mUiBot.assertSuggestionStrip(1);
+        mUiBot.assertDatasets("dude");
 
         mActivity.expectAutoFill("dude", "sweet");
 
-        mUiBot.selectSuggestion(0);
+        mUiBot.selectDataset("dude");
         mUiBot.waitForIdle();
 
-        mUiBot.assertNoSuggestionStripEver();
+        mUiBot.assertNoDatasets();
     }
 }

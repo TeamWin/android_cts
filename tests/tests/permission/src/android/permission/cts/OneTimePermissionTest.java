@@ -17,7 +17,9 @@
 package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static com.android.compatibility.common.util.SystemUtil.eventually;
@@ -52,9 +54,11 @@ public class OneTimePermissionTest {
             "/data/local/tmp/cts/permissions/CtsAppThatRequestsOneTimePermission.apk";
     private static final String EXTRA_FOREGROUND_SERVICE_LIFESPAN =
             "android.permission.cts.OneTimePermissionTest.EXTRA_FOREGROUND_SERVICE_LIFESPAN";
+    private static final String EXTRA_FOREGROUND_SERVICE_STICKY =
+            "android.permission.cts.OneTimePermissionTest.EXTRA_FOREGROUND_SERVICE_STICKY";
 
     private static final long ONE_TIME_TIMEOUT_MILLIS = 5000;
-    private static final long ONE_TIME_TIMER_LOWER_GRACE_PERIOD = 500;
+    private static final long ONE_TIME_TIMER_LOWER_GRACE_PERIOD = 1000;
     private static final long ONE_TIME_TIMER_UPPER_GRACE_PERIOD = 10000;
 
     private final Context mContext =
@@ -126,7 +130,7 @@ public class OneTimePermissionTest {
         clickOneTimeButton();
 
         long expectedLifespanMillis = 2 * ONE_TIME_TIMEOUT_MILLIS;
-        startAppForegroundService(expectedLifespanMillis);
+        startAppForegroundService(expectedLifespanMillis, false);
 
         exitApp();
 
@@ -149,12 +153,46 @@ public class OneTimePermissionTest {
         assertGranted(5000);
 
         mUiDevice.waitForIdle();
-
-        ActivityManager activityManager = mContext.getSystemService(ActivityManager.class);
         SystemUtil.runWithShellPermissionIdentity(() ->
-                activityManager.killBackgroundProcesses(APP_PKG_NAME));
+                mActivityManager.killBackgroundProcesses(APP_PKG_NAME));
 
+        runWithShellPermissionIdentity(
+                () -> Thread.sleep(DeviceConfig.getLong(DeviceConfig.NAMESPACE_PERMISSIONS,
+                "one_time_permissions_killed_delay_millis", 5000L)));
         assertDenied(500);
+    }
+
+    @Test
+    public void testStickyServiceMaintainsPermissionOnRestart() throws Throwable {
+        startApp();
+
+        clickOneTimeButton();
+
+        startAppForegroundService(2 * ONE_TIME_TIMEOUT_MILLIS, true);
+
+        exitApp();
+
+        assertGranted(5000);
+        mUiDevice.waitForIdle();
+        Thread.sleep(ONE_TIME_TIMEOUT_MILLIS);
+
+        runShellCommand("am crash " + APP_PKG_NAME);
+
+        eventually(() -> runWithShellPermissionIdentity(() -> {
+            if (mActivityManager.getPackageImportance(APP_PKG_NAME) <= IMPORTANCE_CACHED) {
+                throw new AssertionError("App was never killed");
+            }
+        }));
+
+        eventually(() -> runWithShellPermissionIdentity(() -> {
+            if (mActivityManager.getPackageImportance(APP_PKG_NAME)
+                    > IMPORTANCE_FOREGROUND_SERVICE) {
+                throw new AssertionError("Foreground service never resumed");
+            }
+            Assert.assertEquals("Service resumed without permission",
+                    PackageManager.PERMISSION_GRANTED, mContext.getPackageManager()
+                            .checkPermission(ACCESS_FINE_LOCATION, APP_PKG_NAME));
+        }));
     }
 
     private void assertGrantedState(String s, int permissionGranted, long timeoutMillis) {
@@ -214,11 +252,12 @@ public class OneTimePermissionTest {
         mContext.startActivity(startApp);
     }
 
-    private void startAppForegroundService(long lifespanMillis) {
-        Intent intent = new Intent();
-        intent.setComponent(new ComponentName(
-                APP_PKG_NAME, APP_PKG_NAME + ".KeepAliveForegroundService"));
-        intent.putExtra(EXTRA_FOREGROUND_SERVICE_LIFESPAN, lifespanMillis);
+    private void startAppForegroundService(long lifespanMillis, boolean sticky) {
+        Intent intent = new Intent()
+                .setComponent(new ComponentName(
+                APP_PKG_NAME, APP_PKG_NAME + ".KeepAliveForegroundService"))
+                .putExtra(EXTRA_FOREGROUND_SERVICE_LIFESPAN, lifespanMillis)
+                .putExtra(EXTRA_FOREGROUND_SERVICE_STICKY, sticky);
         mContext.startService(intent);
     }
 
