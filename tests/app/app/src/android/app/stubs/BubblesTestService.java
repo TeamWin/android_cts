@@ -21,12 +21,12 @@ import static android.app.Notification.CATEGORY_CALL;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Person;
-import android.app.RemoteInput;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.os.IBinder;
+import android.os.SystemClock;
 
 /**
  * Used by NotificationManagerTest for testing policy around bubbles.
@@ -35,6 +35,7 @@ public class BubblesTestService extends Service {
 
     // Should be same as wht NotificationManagerTest is using
     private static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
+    private static final String BUBBLE_SHORTCUT_ID_DYNAMIC = "bubbleShortcutIdDynamic";
 
     // Must configure foreground service notification in different ways for different tests
     public static final String EXTRA_TEST_CASE =
@@ -57,37 +58,30 @@ public class BubblesTestService extends Service {
         return null;
     }
 
-    private Notification getNotificationForTest(final int testCase, final Context context) {
+    private Notification getNotificationForTest(int testCase, Context context) {
         final Intent intent = new Intent(context, SendBubbleActivity.class);
         final PendingIntent pendingIntent =
                 PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
-        Notification.Builder nb = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("foofoo")
-                .setContentIntent(pendingIntent)
-                .setSmallIcon(android.R.drawable.sym_def_app_icon);
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();
-        Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder()
-                .setIcon(Icon.createWithResource(context, R.drawable.black))
-                .setIntent(pendingIntent)
-                .build();
-        nb.addPerson(person);
+        Notification.Builder nb = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("foofoo")
+                .setContentIntent(pendingIntent)
+                .setSmallIcon(android.R.drawable.sym_def_app_icon)
+                .setStyle(new Notification.MessagingStyle(person)
+                        .setConversationTitle("Bubble Chat")
+                        .addMessage("Hello?",
+                                SystemClock.currentThreadTimeMillis() - 300000, person)
+                        .addMessage("Is it me you're looking for?",
+                                SystemClock.currentThreadTimeMillis(), person));
+        Notification.BubbleMetadata data = new Notification.BubbleMetadata.Builder(pendingIntent,
+                Icon.createWithResource(context, R.drawable.black)).build();
         if (testCase != TEST_MESSAGING) {
-            nb.setCategory(CATEGORY_CALL);
+            nb.setCategory(Notification.CATEGORY_CALL);
         }
+        nb.setShortcutId(BUBBLE_SHORTCUT_ID_DYNAMIC);
         nb.setBubbleMetadata(data);
-        if (testCase == TEST_MESSAGING) {
-            // For messaging policy we need inline reply action
-            RemoteInput remoteInput =
-                    new RemoteInput.Builder("reply_key").setLabel("reply").build();
-            PendingIntent inputIntent = PendingIntent.getActivity(context, 0, new Intent(), 0);
-            Icon icon = Icon.createWithResource(context, android.R.drawable.sym_def_app_icon);
-            Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
-                    inputIntent).addRemoteInput(remoteInput)
-                    .build();
-            nb.setActions(replyAction);
-        }
         return nb.build();
     }
 }
