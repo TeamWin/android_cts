@@ -3233,10 +3233,13 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_turn_off_work_launcher">Starting work apps when work profile is off</string>
     <string name="provisioning_byod_turn_off_work_launcher_instruction">
         This test verifies that work applications cannot be started if work profile is off.\n
-        1. Press home to go to the launcher.\n
-        2. Verify that work applications are greyed out.\n
-        3. Tap on a work application.\n
-        4. Verify that the application does not start.\n
+        1. Open settings to turn work profile back on, either manually or using the "Open Settings to toggle work" on the previous page.\n
+        2. Add a work app to your home screen.\n
+        3. Turn work profile off from Settings.\n
+        4. Press home to go to the launcher.\n
+        5. Verify that the work app is greyed out.\n
+        6. Tap on the work app.\n
+        7. Verify that the application does not start.\n
     </string>
 
     <string name="provisioning_byod_turn_off_work_turned_on">Please turn work profile back on</string>
