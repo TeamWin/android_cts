@@ -253,6 +253,7 @@ public class SplitPermissionTest {
      * If a permission was granted before the split happens, the new permission should inherit the
      * granted state.
      */
+    @FlakyTest(bugId = 152580253)
     @Test
     public void inheritGrantedPermissionState() throws Exception {
         install(APK_LOCATION_29);
@@ -285,7 +286,6 @@ public class SplitPermissionTest {
      *
      * <p>App using a shared uid
      */
-    @FlakyTest(bugId = 129764636)
     @Test
     public void inheritGrantedPermissionStateSharedUidApp() throws Exception {
         install(APK_SHARED_UID_LOCATION_29);
@@ -302,7 +302,7 @@ public class SplitPermissionTest {
      *
      * <p>(Pre-M version of test)
      */
-    @FlakyTest(bugId = 129764636)
+    @FlakyTest(bugId = 152580253)
     @Test
     public void inheritFlagsPreM() {
         install(APK_CONTACTS_16);
@@ -319,7 +319,7 @@ public class SplitPermissionTest {
      * If a permission has flags before the split happens, the new permission should inherit the
      * flags.
      */
-    @FlakyTest(bugId = 129764636)
+    @FlakyTest(bugId = 152580253)
     @Test
     public void inheritFlags() {
         install(APK_LOCATION_29);
