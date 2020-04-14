@@ -553,9 +553,21 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // Ensure that auto-enter pip failed and that the resumed activity in the pinned stack is
         // still the first activity
         final ActivityTask pinnedStack = getPinnedStack();
-        assertEquals(1, pinnedStack.getTasks().size());
-        assertEquals(getActivityName(ALWAYS_FOCUSABLE_PIP_ACTIVITY),
-                pinnedStack.getTasks().get(0).mRealActivity);
+        assertEquals(getActivityName(ALWAYS_FOCUSABLE_PIP_ACTIVITY), pinnedStack.mRealActivity);
+    }
+
+    @Test
+    public void testDismissPipWhenLaunchNewOne() throws Exception {
+        // Launch another PIP activity
+        launchActivity(LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY);
+        waitForEnterPip(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
+        assertPinnedStackExists();
+        final ActivityTask pinnedStack = getPinnedStack();
+
+        launchActivityInNewTask(LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY);
+        waitForEnterPip(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
+
+        assertEquals(1, mWmState.countStacks(WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD));
     }
 
     @Test
