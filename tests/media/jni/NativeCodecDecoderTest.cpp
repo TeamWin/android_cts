@@ -26,7 +26,7 @@
 #include <fstream>
 
 #include "NativeCodecTestBase.h"
-#include "NativeMediaConstants.h"
+#include "NativeMediaCommon.h"
 
 class CodecDecoderTest final : public CodecTestBase {
   private:
