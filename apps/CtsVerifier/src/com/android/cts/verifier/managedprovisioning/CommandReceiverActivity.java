@@ -403,28 +403,6 @@ public class CommandReceiverActivity extends Activity {
                             PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
                             PackageManager.DONT_KILL_APP);
                 } break;
-                case COMMAND_CREATE_MANAGED_PROFILE: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
-                        return;
-                    }
-                    if (mUm.getUserProfiles().size() > 1) {
-                        return;
-                    }
-                    startActivityForResult(new Intent(
-                            DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE)
-                            .putExtra(DevicePolicyManager
-                                    .EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
-                                    CompDeviceAdminTestReceiver.getReceiverComponentName())
-                            .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true)
-                            .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT,
-                                true), 0);
-                } break;
-                case COMMAND_REMOVE_MANAGED_PROFILE: {
-                    if (!mDpm.isDeviceOwnerApp(getPackageName())) {
-                        return;
-                    }
-                    removeManagedProfile();
-                } break;
                 case COMMAND_SET_ALWAYS_ON_VPN: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
                         return;
