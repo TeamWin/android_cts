@@ -28,6 +28,7 @@ import android.support.test.uiautomator.UiObject2
 import android.test.InstrumentationTestCase
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
+import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.*
 import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UiAutomatorUtils
@@ -35,6 +36,7 @@ import com.android.compatibility.common.util.UiDumpUtils
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.Assert.assertThat
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
@@ -211,16 +213,18 @@ class AutoRevokeTest : InstrumentationTestCase() {
 
     private fun getWhitelistToggle(): AccessibilityNodeInfo {
         waitForIdle()
-        val ui = instrumentation.uiAutomation.rootInActiveWindow
-        return ui.depthFirstSearch {
-            depthFirstSearch {
-                (text as CharSequence?).toString() == "Remove permissions if app isn’t used"
-            } != null &&
-                    depthFirstSearch { className == Switch::class.java.name } != null
-        }.assertNotNull {
-            "No auto-revoke whitelist toggle found in\n" +
-                    buildString { UiDumpUtils.dumpNodes(ui, this) }
-        }.depthFirstSearch { className == Switch::class.java.name }!!
+        return eventually {
+            val ui = instrumentation.uiAutomation.rootInActiveWindow
+            return@eventually ui.depthFirstSearch {
+                depthFirstSearch {
+                    (text as CharSequence?).toString() == "Remove permissions if app isn’t used"
+                } != null &&
+                        depthFirstSearch { className == Switch::class.java.name } != null
+            }.assertNotNull {
+                "No auto-revoke whitelist toggle found in\n" +
+                        buildString { UiDumpUtils.dumpNodes(ui, this) }
+            }.depthFirstSearch { className == Switch::class.java.name }!!
+        }
     }
 
     private fun waitForIdle() {
@@ -229,6 +233,14 @@ class AutoRevokeTest : InstrumentationTestCase() {
 
     private fun <T> T?.assertNotNull(errorMsg: () -> String): T {
         return if (this == null) throw AssertionError(errorMsg()) else this
+    }
+
+    private inline fun <T> eventually(crossinline action: () -> T): T {
+        val res = AtomicReference<T>()
+        SystemUtil.eventually {
+            res.set(action())
+        }
+        return res.get()
     }
 
     private fun waitFindObject(selector: BySelector): UiObject2 {
@@ -268,10 +280,10 @@ fun AccessibilityNodeInfo.depthFirstSearch(
     condition: AccessibilityNodeInfo.() -> Boolean
 ): AccessibilityNodeInfo? {
     for (child in children) {
-        child.depthFirstSearch(condition)?.let { return it }
+        child?.depthFirstSearch(condition)?.let { return it }
     }
     if (this.condition()) return this
     return null
 }
 
-val AccessibilityNodeInfo.children get() = List(childCount) { i -> getChild(i) }
+val AccessibilityNodeInfo.children: List<AccessibilityNodeInfo?> get() = List(childCount) { i -> getChild(i) }
