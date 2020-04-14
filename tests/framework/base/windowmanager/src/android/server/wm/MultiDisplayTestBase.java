@@ -52,11 +52,10 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
+import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.settings.SettingsSession;
-import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.util.Size;
 import android.view.WindowManager;
@@ -186,12 +185,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             if (overrideSize != null) {
                 setSize(overrideSize);
             } else {
-                executeShellCommand(WM_SIZE + " reset");
+                executeShellCommand(WM_SIZE + " reset -d " + mDisplayId);
             }
             if (overrideDensity != null) {
                 setDensity(overrideDensity);
             } else {
-                executeShellCommand(WM_DENSITY + " reset");
+                executeShellCommand(WM_DENSITY + " reset -d " + mDisplayId);
             }
         }
 
