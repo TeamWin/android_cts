@@ -18,18 +18,30 @@ package android.autofillservice.cts.inline;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
+import static android.autofillservice.cts.Helper.NULL_DATASET_ID;
+import static android.autofillservice.cts.Helper.assertFillEventForDatasetSelected;
+import static android.autofillservice.cts.Helper.assertFillEventForDatasetShown;
 import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicRequestInfo;
+import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.CLIENT_STATE_KEY;
+import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.CLIENT_STATE_VALUE;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
 import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
 import android.autofillservice.cts.augmented.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
+import android.autofillservice.cts.augmented.CtsAugmentedAutofillService;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
+import android.service.autofill.FillEventHistory;
+import android.service.autofill.FillEventHistory.Event;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
 import org.junit.Test;
+
+import java.util.List;
 
 public class InlineAugmentedLoginActivityTest
         extends AugmentedAutofillAutoActivityLaunchTestCase<AugmentedLoginActivity> {
@@ -57,41 +69,24 @@ public class InlineAugmentedLoginActivityTest
         enableService();
         enableAugmentedService();
 
-        // Set expectations
-        final EditText username = mActivity.getUsername();
-        final EditText password = mActivity.getPassword();
-        final AutofillId usernameId = username.getAutofillId();
-        final AutofillId passwordId = password.getAutofillId();
-        final AutofillValue usernameValue = username.getAutofillValue();
-        sReplier.addResponse(NO_RESPONSE);
-        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
-                .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
-                        .setField(usernameId, "dude", createInlinePresentation("dude"))
-                        .setField(passwordId, "sweet", createInlinePresentation("sweet"))
-                        .build())
-                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req1")
-                        .build(), usernameId)
-                .build());
+        testBasicLoginAutofill();
+    }
 
-        // Trigger auto-fill
-        mUiBot.selectByRelativeId(ID_USERNAME);
-        mUiBot.waitForIdle();
-        sReplier.getNextFillRequest();
-        final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
+    @Test
+    public void testAugmentedAutofillFillHistory_oneDatasetThenFilled() throws Exception {
+        // Set services
+        enableService();
+        final CtsAugmentedAutofillService augmentedService = enableAugmentedService();
 
-        // Assert request
-        assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
+        testBasicLoginAutofill();
 
-        // Confirm one suggestion
-        mUiBot.assertDatasets("dude");
-
-        mActivity.expectAutoFill("dude", "sweet");
-
-        // Select suggestion
-        mUiBot.selectDataset("dude");
-        mUiBot.waitForIdle();
-
-        mActivity.assertAutoFilled();
+        // Verify events history
+        final FillEventHistory history = augmentedService.getFillEventHistory(2);
+        assertThat(history).isNotNull();
+        final List<Event> events = history.getEvents();
+        assertFillEventForDatasetShown(events.get(0), CLIENT_STATE_KEY, CLIENT_STATE_VALUE);
+        assertFillEventForDatasetSelected(events.get(1), NULL_DATASET_ID, CLIENT_STATE_KEY,
+                CLIENT_STATE_VALUE);
     }
 
     @Test
@@ -129,13 +124,51 @@ public class InlineAugmentedLoginActivityTest
         // Assert request
         assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
 
-        // Confirm two suggestion
+        // Confirm one suggestion
         mUiBot.assertDatasets("dude", "DUDE");
 
         mActivity.expectAutoFill("DUDE", "SWEET");
 
         // Select suggestion
         mUiBot.selectDataset("DUDE");
+        mUiBot.waitForIdle();
+
+        mActivity.assertAutoFilled();
+    }
+
+    private void testBasicLoginAutofill() throws Exception {
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final EditText password = mActivity.getPassword();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillId passwordId = password.getAutofillId();
+        final AutofillValue usernameValue = username.getAutofillValue();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude", createInlinePresentation("dude"))
+                        .setField(passwordId, "sweet", createInlinePresentation("sweet"))
+                        .build())
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req1")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        final AugmentedFillRequest request1 = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
+
+        // Confirm two suggestion
+        mUiBot.assertDatasets("dude");
+
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Select suggestion
+        mUiBot.selectDataset("dude");
         mUiBot.waitForIdle();
 
         mActivity.assertAutoFilled();
