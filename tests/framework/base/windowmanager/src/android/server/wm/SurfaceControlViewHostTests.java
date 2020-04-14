@@ -26,10 +26,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.content.Context;
+import android.content.pm.ConfigurationInfo;
+import android.content.pm.FeatureInfo;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.platform.test.annotations.RequiresDevice;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -148,6 +153,41 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
 
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
+    }
+
+    private static int getGlEsVersion(Context context) {
+        ActivityManager activityManager =
+                (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        ConfigurationInfo configInfo = activityManager.getDeviceConfigurationInfo();
+        if (configInfo.reqGlEsVersion != ConfigurationInfo.GL_ES_VERSION_UNDEFINED) {
+            return getMajorVersion(configInfo.reqGlEsVersion);
+        } else {
+            return 1; // Lack of property means OpenGL ES version 1
+        }
+    }
+
+    /** @see FeatureInfo#getGlEsVersion() */
+    private static int getMajorVersion(int glEsVersion) {
+        return ((glEsVersion & 0xffff0000) >> 16);
+    }
+
+    @Test
+    @RequiresDevice
+    @FlakyTest(bugId = 152103238)
+    public void testEmbeddedViewIsHardwareAccelerated() throws Throwable {
+        // Hardware accel may not be supported on devices without GLES 2.0
+        if (getGlEsVersion(mActivity) < 2) {
+            return;
+        }
+        mEmbeddedView = new Button(mActivity);
+        mEmbeddedView.setOnClickListener((View v) -> {
+            mClicked = true;
+        });
+
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(mEmbeddedView.isHardwareAccelerated());
     }
 
     @Test
