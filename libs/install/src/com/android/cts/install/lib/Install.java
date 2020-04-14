@@ -21,6 +21,8 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -203,22 +205,32 @@ public class Install {
      */
     private int createEmptyInstallSession(boolean multiPackage, boolean isApex)
             throws IOException {
-        PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(mSessionMode);
-        if (multiPackage) {
-            params.setMultiPackage();
-        }
-        if (isApex) {
-            params.setInstallAsApex();
-        }
         if (mIsStaged) {
-            params.setStaged();
+            SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check true");
         }
-        params.setRequestDowngrade(mIsDowngrade);
-        params.setEnableRollback(mEnableRollback, mRollbackDataPolicy);
-        if (mInstallFlags != 0) {
-            InstallUtils.mutateInstallFlags(params, mInstallFlags);
+        try {
+            PackageInstaller.SessionParams params =
+                    new PackageInstaller.SessionParams(mSessionMode);
+            if (multiPackage) {
+                params.setMultiPackage();
+            }
+            if (isApex) {
+                params.setInstallAsApex();
+            }
+            if (mIsStaged) {
+                params.setStaged();
+            }
+            params.setRequestDowngrade(mIsDowngrade);
+            params.setEnableRollback(mEnableRollback, mRollbackDataPolicy);
+            if (mInstallFlags != 0) {
+                InstallUtils.mutateInstallFlags(params, mInstallFlags);
+            }
+            return InstallUtils.getPackageInstaller().createSession(params);
+        } finally {
+            if (mIsStaged) {
+                SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check false");
+            }
         }
-        return InstallUtils.getPackageInstaller().createSession(params);
     }
 
     /**
