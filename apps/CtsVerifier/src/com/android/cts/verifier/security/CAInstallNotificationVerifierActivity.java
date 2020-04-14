@@ -20,7 +20,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.security.KeyChain;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -55,9 +55,9 @@ public class CAInstallNotificationVerifierActivity extends DialogTestListActivit
     @Override
     protected void setupTests(final ArrayTestListAdapter testAdapter) {
         testAdapter.add(new InstallCertItem(this,
-                R.string.cacert_install_cert,
+                R.string.cacert_install_cert_title,
                 "install_cert",
-                KeyChain.createInstallIntent()));
+                new Intent(Settings.ACTION_SECURITY_SETTINGS)));
         testAdapter.add(new DialogTestListItem(this,
                 R.string.cacert_check_cert_in_settings,
                 "check_cert",
