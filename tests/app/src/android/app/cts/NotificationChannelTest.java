@@ -59,7 +59,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, channel.getAudioAttributes());
         assertEquals(null, channel.getGroup());
         assertTrue(channel.getLightColor() == 0);
-        assertTrue(channel.canBubble());
+        assertFalse(channel.canBubble());
         assertFalse(channel.isImportanceLockedByOEM());
         assertEquals(IMPORTANCE_UNSPECIFIED, channel.getOriginalImportance());
         assertNull(channel.getConversationId());
