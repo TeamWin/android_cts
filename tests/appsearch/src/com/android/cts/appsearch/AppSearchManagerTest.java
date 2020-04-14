@@ -131,7 +131,6 @@ public class AppSearchManagerTest {
                         .setSubject("testPut example")
                         .setBody("This is the body of the testPut email")
                         .build();
-
         assertThat(mAppSearch.putDocuments(ImmutableList.of(inEmail)).isSuccess()).isTrue();
 
         // Query for the document
@@ -172,6 +171,44 @@ public class AppSearchManagerTest {
         results = doQuery("body", "Test");
         assertThat(results).hasSize(1);
         assertThat(results).containsExactly(inDoc);
+    }
+
+    @Test
+    public void testDelete() {
+        // Schema registration
+        assertThat(mAppSearch.setSchema(AppSearchEmail.SCHEMA).isSuccess()).isTrue();
+
+        // Index documents
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("uri1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("uri2")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example 2")
+                        .setBody("This is the body of the testPut second email")
+                        .build();
+        assertThat(mAppSearch.putDocuments(ImmutableList.of(email1, email2)).isSuccess()).isTrue();
+
+        // Check the presence of the documents
+        assertThat(doGet("uri1")).hasSize(1);
+        assertThat(doGet("uri2")).hasSize(1);
+
+        // Delete the document
+        assertThat(mAppSearch.delete(ImmutableList.of("uri1")).isSuccess()).isTrue();
+
+        // Make sure it's really gone
+        AppSearchBatchResult<String, AppSearchDocument> getResult =
+                mAppSearch.getDocuments(ImmutableList.of("uri1", "uri2"));
+        assertThat(getResult.isSuccess()).isFalse();
+        assertThat(getResult.getFailures().get("uri1").getResultCode())
+                .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
+        assertThat(getResult.getSuccesses().get("uri2")).isEqualTo(email2);
     }
 
     private List<AppSearchDocument> doGet(String... uris) {
