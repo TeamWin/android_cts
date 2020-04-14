@@ -17,13 +17,7 @@ package android.hardware.cts.helpers;
 
 import android.hardware.Sensor;
 import android.os.Environment;
-import android.os.Process;
 import android.util.Log;
-
-import androidx.test.InstrumentationRegistry;
-
-import com.android.compatibility.common.util.SystemUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -473,19 +467,5 @@ public class SensorCtsHelper {
             hexChars[i * 3 + 2] = ' ';
         }
         return new String(hexChars);
-    }
-
-    public static void makeMyPackageActive() throws IOException {
-        final String command = "cmd sensorservice reset-uid-state "
-                +  InstrumentationRegistry.getTargetContext().getPackageName()
-                + " --user " + Process.myUserHandle().getIdentifier();
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
-    }
-
-    public static void makeMyPackageIdle() throws IOException {
-        final String command = "cmd sensorservice set-uid-state "
-                + InstrumentationRegistry.getTargetContext().getPackageName() + " idle"
-                + " --user " + Process.myUserHandle().getIdentifier();
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 }
