@@ -940,4 +940,8 @@ public class MediaExtractorTest extends AndroidTestCase {
     public void testEAC3inTS() throws Exception {
         setDataSource(R.raw.testeac3ts);
     }
+
+    public void testAC4inMP4() throws Exception {
+        setDataSource(R.raw.multi0);
+    }
 }
