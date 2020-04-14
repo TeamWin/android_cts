@@ -52,7 +52,7 @@ public final class Timeouts {
     /**
      * Timeout to get the expected number of fill events.
      */
-    static final Timeout FILL_EVENTS_TIMEOUT = new Timeout("FILL_EVENTS_TIMEOUT",
+    public static final Timeout FILL_EVENTS_TIMEOUT = new Timeout("FILL_EVENTS_TIMEOUT",
             ONE_TIMEOUT_TO_RULE_THEN_ALL_MS, 2F, ONE_TIMEOUT_TO_RULE_THEN_ALL_MS);
 
     /**
