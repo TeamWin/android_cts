@@ -271,6 +271,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         waitUntilConnected();
         sReplier.getNextFillRequest();
         mUiBot.selectDataset("dataset1");
+        mUiBot.waitForIdleSync();
         mActivity.assertAutoFilled();
 
         {
@@ -285,6 +286,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         // Second request
         sReplier.addResponse(NO_RESPONSE);
         mActivity.onPassword(View::requestFocus);
+        mUiBot.waitForIdleSync();
         sReplier.getNextFillRequest();
         mUiBot.assertNoDatasets();
         waitUntilDisconnected();
@@ -307,9 +309,11 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
 
         // Trigger autofill and IME.
         mUiBot.focusByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
         waitUntilConnected();
         sReplier.getNextFillRequest();
         mUiBot.selectDataset("dataset1");
+        mUiBot.waitForIdleSync();
         mActivity.assertAutoFilled();
 
         {
@@ -324,9 +328,9 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         // Second request
         sReplier.addResponse(new CannedFillResponse.Builder().returnFailure("D'OH!").build());
         mActivity.onPassword(View::requestFocus);
+        mUiBot.waitForIdleSync();
         sReplier.getNextFillRequest();
         mUiBot.assertNoDatasets();
-        mUiBot.assertNoSuggestionStripEver();
         waitUntilDisconnected();
 
         InstrumentedAutoFillService.assertNoFillEventHistory();

@@ -536,6 +536,11 @@ public class WindowManagerState {
     }
 
     boolean containsStack(int windowingMode, int activityType) {
+        return countStacks(windowingMode, activityType) > 0;
+    }
+
+    int countStacks(int windowingMode, int activityType) {
+        int count = 0;
         for (ActivityTask stack : mRootTasks) {
             if (activityType != ACTIVITY_TYPE_UNDEFINED
                     && activityType != stack.getActivityType()) {
@@ -545,9 +550,9 @@ public class WindowManagerState {
                     && windowingMode != stack.getWindowingMode()) {
                 continue;
             }
-            return true;
+            ++count;
         }
-        return false;
+        return count;
     }
 
     ActivityTask getRootTask(int taskId) {
