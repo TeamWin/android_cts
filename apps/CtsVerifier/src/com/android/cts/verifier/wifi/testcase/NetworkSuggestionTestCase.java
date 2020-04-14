@@ -101,7 +101,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         mSetBssid = setBssid;
         mSetRequiresAppInteraction = setRequiresAppInteraction;
         mSimulateConnectionFailure = simulateConnectionFailure;
-        mSetMeteredPostConnection = true;
+        mSetMeteredPostConnection = setMeteredPostConnection;
     }
 
     // Create a network specifier based on the test type.
