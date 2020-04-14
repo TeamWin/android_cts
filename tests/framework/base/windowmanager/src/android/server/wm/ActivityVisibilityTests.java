@@ -255,6 +255,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         getLaunchActivityBuilder()
                 .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
                 .setWaitForLaunched(true)
+                .setUseInstrumentation()
                 .execute();
         mWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
         // Launch something to fullscreen stack to make it focused.
