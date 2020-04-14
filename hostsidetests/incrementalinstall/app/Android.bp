@@ -80,3 +80,29 @@ android_test_helper_app {
     aapt_include_all_resources: true,
     manifest: "AndroidManifestV2.xml",
 }
+
+genrule {
+  // copy apks and id sig to gendir.
+  name: "IncrementalTestAppRule",
+  srcs: [":IncrementalTestApp",
+         ":IncrementalTestApp2_v1",
+         ":IncrementalTestApp2_v2",
+         ":IncrementalTestAppDynamicAsset",
+         ":IncrementalTestAppDynamicCode",
+         ":IncrementalTestAppCompressedNativeLib",
+         ":IncrementalTestAppUncompressedNativeLib",],
+  out: ["IncrementalTestApp.apk.idsig",
+        "IncrementalTestApp2_v1.apk.idsig",
+        "IncrementalTestApp2_v2.apk.idsig",
+        "IncrementalTestAppDynamicAsset.apk", "IncrementalTestAppDynamicAsset.apk.idsig",
+        "IncrementalTestAppDynamicCode.apk", "IncrementalTestAppDynamicCode.apk.idsig",
+        "IncrementalTestAppCompressedNativeLib.apk", "IncrementalTestAppCompressedNativeLib.apk.idsig",
+        "IncrementalTestAppUncompressedNativeLib.apk", "IncrementalTestAppUncompressedNativeLib.apk.idsig",],
+  cmd: "cp $(locations :IncrementalTestApp) $(genDir)" +
+       " && cp $(locations :IncrementalTestApp2_v1) $(genDir)" +
+       " && cp $(locations :IncrementalTestApp2_v2) $(genDir)" +
+       " && cp $(locations :IncrementalTestAppDynamicAsset) $(genDir)" +
+       " && cp $(locations :IncrementalTestAppDynamicCode) $(genDir)" +
+       " && cp $(locations :IncrementalTestAppCompressedNativeLib) $(genDir)" +
+       " && cp $(locations :IncrementalTestAppUncompressedNativeLib) $(genDir)",
+  }
