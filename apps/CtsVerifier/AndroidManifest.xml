@@ -3275,11 +3275,6 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".managedprovisioning.CompTestActivity"
-                android:launchMode="singleTask"
-                android:label="@string/comp_test">
-        </activity>
-
         <activity android:name=".managedprovisioning.ByodProvisioningTestActivity"
                 android:label="@string/provisioning_tests_byod">
             <intent-filter>
@@ -4124,25 +4119,6 @@
                 <action android:name="android.telephony.VisualVoicemailService"/>
             </intent-filter>
         </service>
-
-        <receiver android:name=".managedprovisioning.CompDeviceAdminTestReceiver"
-                android:label="@string/afw_device_admin"
-                android:permission="android.permission.BIND_DEVICE_ADMIN">
-            <meta-data android:name="android.app.device_admin"
-                       android:resource="@xml/device_admin_comp_profile" />
-            <intent-filter>
-                <action android:name="android.app.action.PROFILE_PROVISIONING_COMPLETE"/>
-            </intent-filter>
-        </receiver>
-
-        <activity android:name=".managedprovisioning.CompHelperActivity">
-            <intent-filter>
-                <action android:name="com.android.cts.verifier.managedprovisioning.COMP_SET_ALWAYS_ON_VPN" />
-                <action android:name="com.android.cts.verifier.managedprovisioning.COMP_INSTALL_CA_CERT" />
-                <action android:name="com.android.cts.verifier.managedprovisioning.COMP_SET_MAXIMUM_PASSWORD_ATTEMPTS" />
-                <category android:name="android.intent.category.DEFAULT"></category>
-            </intent-filter>
-        </activity>
 
         <activity
             android:name=".telecom.EnablePhoneAccountTestActivity"
