@@ -21,6 +21,7 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.app.Notification.EXTRA_TITLE;
 import static android.content.Context.BIND_AUTO_CREATE;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
+import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.location.Criteria.ACCURACY_FINE;
 import static android.provider.Settings.RESET_MODE_PACKAGE_DEFAULTS;
 import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_DELAY_MILLIS;
@@ -449,21 +450,23 @@ public class LocationAccessCheckTest {
             String pkg = ri.activityInfo.packageName;
 
             if (pkg.equals(PERMISSION_CONTROLLER_PKG)) {
-                permissionControllerSetupIntent = new Intent();
-                permissionControllerSetupIntent.setClassName(pkg, ri.activityInfo.name);
-            }
-        }
+                permissionControllerSetupIntent = new Intent()
+                        .setClassName(pkg, ri.activityInfo.name)
+                        .setFlags(FLAG_RECEIVER_FOREGROUND)
+                        .setPackage(PERMISSION_CONTROLLER_PKG);
 
-        if (permissionControllerSetupIntent != null) {
-            sContext.sendBroadcast(permissionControllerSetupIntent);
+                sContext.sendBroadcast(permissionControllerSetupIntent);
+            }
         }
 
         // Wait until jobs are set up
         eventually(() -> {
             JobSchedulerServiceDumpProto dump = getJobSchedulerDump();
+
             for (RegisteredJob job : dump.registeredJobs) {
                 if (job.dump.sourceUserId == currentUserId
-                        && job.dump.sourcePackageName.equals(PERMISSION_CONTROLLER_PKG)) {
+                        && job.dump.sourcePackageName.equals(PERMISSION_CONTROLLER_PKG)
+                        && job.dump.jobInfo.service.className.contains("LocationAccessCheck")) {
                     return;
                 }
             }
