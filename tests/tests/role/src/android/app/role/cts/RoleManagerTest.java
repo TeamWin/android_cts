@@ -45,13 +45,11 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.telecom.TelecomManager;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -185,7 +183,6 @@ public class RoleManagerTest {
         assertThat(intent.getStringExtra(Intent.EXTRA_ROLE_NAME)).isEqualTo(ROLE_NAME);
     }
 
-    @FlakyTest
     @Test
     public void requestRoleAndDenyThenIsNotRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
@@ -194,7 +191,6 @@ public class RoleManagerTest {
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, false);
     }
 
-    @FlakyTest
     @Test
     public void requestRoleAndAllowThenIsRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
@@ -203,7 +199,6 @@ public class RoleManagerTest {
         assertIsRoleHolder(ROLE_NAME, APP_PACKAGE_NAME, true);
     }
 
-    @FlakyTest
     @Test
     public void requestRoleFirstTimeNoDontAskAgain() throws Exception {
         requestRole(ROLE_NAME);
@@ -214,7 +209,6 @@ public class RoleManagerTest {
         respondToRoleRequest(false);
     }
 
-    @FlakyTest
     @Test
     public void requestRoleAndDenyThenHasDontAskAgain() throws Exception {
         requestRole(ROLE_NAME);
@@ -228,7 +222,6 @@ public class RoleManagerTest {
         respondToRoleRequest(false);
     }
 
-    @FlakyTest
     @Test
     public void requestRoleAndDenyWithDontAskAgainReturnsCanceled() throws Exception {
         requestRole(ROLE_NAME);
@@ -241,7 +234,6 @@ public class RoleManagerTest {
         assertThat(result.first).isEqualTo(Activity.RESULT_CANCELED);
     }
 
-    @FlakyTest
     @Test
     public void requestRoleAndDenyWithDontAskAgainThenDeniedAutomatically() throws Exception {
         requestRole(ROLE_NAME);
@@ -257,7 +249,6 @@ public class RoleManagerTest {
         assertThat(result.first).isEqualTo(Activity.RESULT_CANCELED);
     }
 
-    @FlakyTest
     @Test
     public void requestRoleAndDenyWithDontAskAgainAndClearDataThenShowsUiWithoutDontAskAgain()
             throws Exception {
@@ -288,7 +279,6 @@ public class RoleManagerTest {
         });
     }
 
-    @FlakyTest
     @Test
     public void requestRoleAndDenyWithDontAskAgainAndReinstallThenShowsUiWithoutDontAskAgain()
             throws Exception {
