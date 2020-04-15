@@ -17,6 +17,8 @@
 package android.server.wm;
 
 import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -650,6 +652,7 @@ public class WindowTest {
             throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             mWindow.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+            mWindow.getDecorView().setSystemUiVisibility(SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         });
         mInstrumentation.waitForIdleSync();
         assertEquals(mActivity.getContentView().getRootWindowInsets().getSystemWindowInsets(),
