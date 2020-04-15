@@ -39,14 +39,6 @@ public class AccessSerialModernTest {
         assertTrue("Build.SERIAL must not work for modern apps",
                 Build.UNKNOWN.equals(Build.SERIAL));
 
-        // We don't have the read phone state permission, so this should throw
-        try {
-            Build.getSerial();
-            fail("getSerial() must be gated on the READ_PHONE_STATE permission");
-        } catch (SecurityException e) {
-            /* expected */
-        }
-
         // Now grant ourselves READ_PHONE_STATE
         grantReadPhoneStatePermission();
 
