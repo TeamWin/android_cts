@@ -46,6 +46,7 @@ public class ImeSettings {
     private static final String WINDOW_FLAGS_MASK = "WindowFlagsMask";
     private static final String FULLSCREEN_MODE_ALLOWED = "FullscreenModeAllowed";
     private static final String INPUT_VIEW_SYSTEM_UI_VISIBILITY = "InputViewSystemUiVisibility";
+    private static final String WATERMARK_ENABLED = "WatermarkEnabled";
     private static final String HARD_KEYBOARD_CONFIGURATION_BEHAVIOR_ALLOWED =
             "HardKeyboardConfigurationBehaviorAllowed";
     private static final String INLINE_SUGGESTIONS_ENABLED = "InlineSuggestionsEnabled";
@@ -105,6 +106,10 @@ public class ImeSettings {
 
     public int getInputViewSystemUiVisibility(int defaultFlags) {
         return mBundle.getInt(INPUT_VIEW_SYSTEM_UI_VISIBILITY, defaultFlags);
+    }
+
+    public boolean isWatermarkEnabled(boolean defaultValue) {
+        return mBundle.getBoolean(WATERMARK_ENABLED, defaultValue);
     }
 
     public boolean getHardKeyboardConfigurationBehaviorAllowed(boolean defaultValue) {
@@ -208,6 +213,18 @@ public class ImeSettings {
          */
         public Builder setInputViewSystemUiVisibility(int visibilityFlags) {
             mBundle.putInt(INPUT_VIEW_SYSTEM_UI_VISIBILITY, visibilityFlags);
+            return this;
+        }
+
+        /**
+         * Sets whether a unique watermark image needs to be shown on the software keyboard or not.
+         *
+         * <p>This needs to be enabled to use</p>
+         *
+         * @param enabled {@code true} when such a watermark image is requested.
+         */
+        public Builder setWatermarkEnabled(boolean enabled) {
+            mBundle.putBoolean(WATERMARK_ENABLED, enabled);
             return this;
         }
 
