@@ -65,7 +65,6 @@ import android.app.NotificationManager;
 import android.app.NotificationManager.Policy;
 import android.app.PendingIntent;
 import android.app.Person;
-import android.app.RemoteInput;
 import android.app.UiAutomation;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.BubbledActivity;
@@ -138,14 +137,13 @@ import java.util.concurrent.TimeUnit;
 public class NotificationManagerTest extends AndroidTestCase {
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
-    final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
+    static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
 
     private static final String DELEGATOR = "com.android.test.notificationdelegator";
     private static final String DELEGATE_POST_CLASS = DELEGATOR + ".NotificationDelegateAndPost";
     private static final String REVOKE_CLASS = DELEGATOR + ".NotificationRevoker";
     private static final long SHORT_WAIT_TIME = 100;
     private static final long MAX_WAIT_TIME = 2000;
-    private static final String BUBBLE_SHORTCUT_ID_MANIFEST = "bubbleShortcutIdManifest";
     private static final String BUBBLE_SHORTCUT_ID_DYNAMIC = "bubbleShortcutIdDynamic";
 
     private PackageManager mPackageManager;
@@ -231,14 +229,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
 
         // Restore bubbles setting
-        toggleBubbleSetting(mBubblesEnabledSettingToRestore);
-    }
-
-    private void toggleBubbleSetting(boolean enabled) throws InterruptedException {
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                Settings.Global.putInt(mContext.getContentResolver(),
-                        Settings.Global.NOTIFICATION_BUBBLES, enabled ? 1 : 0));
-        Thread.sleep(500); // wait for ranking update
+        setBubblesGlobal(mBubblesEnabledSettingToRestore);
     }
 
     private boolean isNotificationCancelled(int id, boolean all) {
@@ -631,6 +622,35 @@ public class NotificationManagerTest extends AndroidTestCase {
                 nm.isNotificationListenerAccessGranted(listenerComponent) == on);
     }
 
+    private void setBubblesGlobal(boolean enabled)
+            throws InterruptedException {
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                Settings.Global.putInt(mContext.getContentResolver(),
+                        Settings.Global.NOTIFICATION_BUBBLES, enabled ? 1 : 0));
+        Thread.sleep(500); // wait for ranking update
+    }
+
+    private void setBubblesAppPref(int pref) throws Exception {
+        int userId = mContext.getUser().getIdentifier();
+        String pkg = mContext.getPackageName();
+        String command = " cmd notification set_bubbles " + pkg
+                + " " + Integer.toString(pref)
+                + " " + userId;
+        runCommand(command, InstrumentationRegistry.getInstrumentation());
+        Thread.sleep(500); // wait for ranking update
+    }
+
+    private void setBubblesChannelAllowed(boolean allowed) throws Exception {
+        int userId = mContext.getUser().getIdentifier();
+        String pkg = mContext.getPackageName();
+        String command = " cmd notification set_bubbles_channel " + pkg
+                + " " + NOTIFICATION_CHANNEL_ID
+                + " " + Boolean.toString(allowed)
+                + " " + userId;
+        runCommand(command, InstrumentationRegistry.getInstrumentation());
+        Thread.sleep(500); // wait for ranking update
+    }
+
     private void runCommand(String command, Instrumentation instrumentation) throws IOException {
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
         // Execute command
@@ -686,6 +706,49 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
 
         assertEquals(expectedState, mNotificationManager.getCurrentInterruptionFilter());
+    }
+
+    /** Creates a dynamic, longlived shortcut. Ensure to call {@link #deleteShortcuts()} after. */
+    private void createDynamicShortcut() {
+        ShortcutManager scManager =
+                (ShortcutManager) mContext.getSystemService(Context.SHORTCUT_SERVICE);
+        Intent shortcutIntent = new Intent(mContext, SendBubbleActivity.class);
+        shortcutIntent.setAction(Intent.ACTION_VIEW);
+        ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, BUBBLE_SHORTCUT_ID_DYNAMIC)
+                .setShortLabel(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                .setIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
+                .setIntent(shortcutIntent)
+                .setLongLived(true)
+                .build();
+        scManager.addDynamicShortcuts(Arrays.asList(shortcut));
+    }
+
+    private void deleteShortcuts() {
+        ShortcutManager scManager =
+                (ShortcutManager) mContext.getSystemService(Context.SHORTCUT_SERVICE);
+        scManager.removeAllDynamicShortcuts();
+    }
+
+    /**
+     * Notification fulfilling conversation policy; for the shortcut to be valid
+     * call {@link #createDynamicShortcut()}
+     */
+    private Notification.Builder getConversationNotification() {
+        Person person = new Person.Builder()
+                .setName("bubblebot")
+                .build();
+        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("foo")
+                .setShortcutId(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                .setStyle(new Notification.MessagingStyle(person)
+                        .setConversationTitle("Bubble Chat")
+                        .addMessage("Hello?",
+                                SystemClock.currentThreadTimeMillis() - 300000, person)
+                        .addMessage("Is it me you're looking for?",
+                                SystemClock.currentThreadTimeMillis(), person)
+                )
+                .setSmallIcon(android.R.drawable.sym_def_app_icon);
+        return nb;
     }
 
     /**
@@ -1388,7 +1451,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
 
         // turn on bubbles globally
-        toggleBubbleSetting(true);
+        setBubblesGlobal(true);
 
         assertEquals(1, Settings.Global.getInt(
                 mContext.getContentResolver(), Settings.Global.NOTIFICATION_BUBBLES));
@@ -1408,13 +1471,13 @@ public class NotificationManagerTest extends AndroidTestCase {
         for (String key : rankingMap.getOrderedKeys()) {
             if (key.contains(mListener.getPackageName())) {
                 rankingMap.getRanking(key, outRanking);
-                // by default everything can bubble
-                assertTrue(outRanking.canBubble());
+                // by default nothing can bubble
+                assertFalse(outRanking.canBubble());
             }
         }
 
         // turn off bubbles globally
-        toggleBubbleSetting(false);
+        setBubblesGlobal(false);
 
         rankingMap = mListener.mRankingMap;
         outRanking = new NotificationListenerService.Ranking();
@@ -2483,7 +2546,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testAreBubblesAllowed() {
-        assertTrue(mNotificationManager.areBubblesAllowed());
+        assertFalse(mNotificationManager.areBubblesAllowed());
     }
 
     public void testNotificationIcon() {
@@ -2781,71 +2844,26 @@ public class NotificationManagerTest extends AndroidTestCase {
                 badNumberString);
     }
 
-    public void testNotificationManagerBubblePolicy_flagForMessage_passesNoRemoteInput()
-            throws InterruptedException {
+    public void testNotificationManagerBubblePolicy_flag_intentBubble()
+            throws Exception {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
             return;
         }
-        // turn on bubbles globally
-        toggleBubbleSetting(true);
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
 
-        Person person = new Person.Builder()
-                .setName("bubblebot")
-                .build();
-        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("foo")
-                .setStyle(new Notification.MessagingStyle(person)
-                        .setConversationTitle("Bubble Chat")
-                        .addMessage("Hello?",
-                                SystemClock.currentThreadTimeMillis() - 300000, person)
-                        .addMessage("Is it me you're looking for?",
-                                SystemClock.currentThreadTimeMillis(), person)
-                )
-                .setSmallIcon(android.R.drawable.sym_def_app_icon);
-        boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-        sendAndVerifyBubble(1, nb, null /* use default metadata */, shouldBeBubble);
-    }
-
-    public void testNotificationManagerBubblePolicy_flagForMessage_succeeds()
-            throws InterruptedException {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
-            return;
+            Notification.Builder nb = getConversationNotification();
+            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+            sendAndVerifyBubble(1, nb, null /* use default metadata */, shouldBeBubble);
+        } finally {
+            deleteShortcuts();
         }
-
-        // turn on bubbles globally
-        toggleBubbleSetting(true);
-
-        Person person = new Person.Builder()
-                .setName("bubblebot")
-                .build();
-
-        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel(
-                "reply").build();
-        PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-        Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
-        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
-                inputIntent).addRemoteInput(remoteInput)
-                .build();
-
-        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("foo")
-                .setStyle(new Notification.MessagingStyle(person)
-                        .setConversationTitle("Bubble Chat")
-                        .addMessage("Hello?",
-                                SystemClock.currentThreadTimeMillis() - 300000, person)
-                        .addMessage("Is it me you're looking for?",
-                                SystemClock.currentThreadTimeMillis(), person)
-                )
-                .setActions(replyAction)
-                .setSmallIcon(android.R.drawable.sym_def_app_icon);
-
-        boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-        sendAndVerifyBubble(1, nb, null /* use default metadata */, shouldBeBubble);
     }
 
-    public void testNotificationManagerBubblePolicy_flagForMessagingWithService_fails()
+    public void testNotificationManagerBubblePolicy_noFlag_service()
             throws Exception {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
@@ -2853,23 +2871,24 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_MESSAGING);
-
         try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
             setUpNotifListener();
 
             mContext.startService(serviceIntent);
 
+            // No services in R (allowed in Q)
             verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
         } finally {
+            deleteShortcuts();
             mContext.stopService(serviceIntent);
         }
     }
 
-    public void testNotificationManagerBubblePolicy_noflagForPhonecall()
-            throws InterruptedException {
+    public void testNotificationManagerBubblePolicy_noFlag_phonecall()
+            throws Exception {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
             return;
@@ -2878,52 +2897,55 @@ public class NotificationManagerTest extends AndroidTestCase {
         serviceIntent.putExtra(EXTRA_TEST_CASE, TEST_CALL);
 
         try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
             setUpNotifListener();
 
             mContext.startService(serviceIntent);
 
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false);
+            // No phonecalls in R (allowed in Q)
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
         } finally {
+            deleteShortcuts();
             mContext.stopService(serviceIntent);
         }
     }
 
-    public void testNotificationManagerBubblePolicy_flagForAppForeground_fails() throws Exception {
+    public void testNotificationManagerBubblePolicy_noFlag_foreground() throws Exception {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
             return;
         }
         try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
             setUpNotifListener();
 
             // Start & get the activity
             SendBubbleActivity a = startSendBubbleActivity();
-
             // Send a bubble that doesn't fulfill policy from foreground
             a.sendInvalidBubble(false /* autoExpand */);
 
-            // Just because app is foreground, doesn't mean they get to bubble
+            // No foreground bubbles that don't fulfill policy in R (allowed in Q)
             verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
         } finally {
+            deleteShortcuts();
             cleanupSendBubbleActivity();
         }
     }
 
-    public void testNotificationManagerBubble_ensureFlaggedDocumentLaunchMode() throws Exception {
+    public void testNotificationManagerBubble_checkActivityFlagsDocumentLaunchMode()
+            throws Exception {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
             return;
         }
         try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
             setUpNotifListener();
 
             // make ourselves foreground so we can auto-expand the bubble & check the intent flags
@@ -2948,101 +2970,23 @@ public class NotificationManagerTest extends AndroidTestCase {
             assertTrue((activity.getIntent().getFlags() & FLAG_ACTIVITY_NEW_DOCUMENT) != 0);
             assertTrue((activity.getIntent().getFlags() & FLAG_ACTIVITY_MULTIPLE_TASK) != 0);
         } finally {
+            deleteShortcuts();
             cleanupSendBubbleActivity();
         }
     }
 
-    public void testNotificationManagerBubblePolicy_flagForShortcut_manifest_fails()
+    public void testNotificationManagerBubblePolicy_flag_shortcutBubble()
             throws Exception {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
             return;
         }
-        // turn on bubbles globally
-        toggleBubbleSetting(true);
-
-        // Message notif
-        Person person = new Person.Builder()
-                .setName("bubblebot")
-                .build();
-
-        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel(
-                "reply").build();
-        PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-        Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
-        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
-                inputIntent).addRemoteInput(remoteInput)
-                .build();
-
-        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("foo")
-                .setStyle(new Notification.MessagingStyle(person)
-                        .setConversationTitle("Bubble Chat")
-                        .addMessage("Hello?",
-                                SystemClock.currentThreadTimeMillis() - 300000, person)
-                        .addMessage("Is it me you're looking for?",
-                                SystemClock.currentThreadTimeMillis(), person)
-                )
-                .setActions(replyAction)
-                .setSmallIcon(android.R.drawable.sym_def_app_icon);
-
-        // BubbleMetadata with manifest shortcut
-        Notification.BubbleMetadata data =
-                new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_MANIFEST).build();
-
-        sendAndVerifyBubble(1, nb, data, false /* shouldBeBubble */);
-    }
-
-    public void testNotificationManagerBubblePolicy_flagForShortcut_dynamic_succeeds()
-            throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
-            return;
-        }
-
-        ShortcutManager scmanager = mContext.getSystemService(ShortcutManager.class);
-
         try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
 
-            // Make dynamic shortcut
-            Intent shortcutIntent = new Intent(mContext, SendBubbleActivity.class);
-            shortcutIntent.setAction(Intent.ACTION_VIEW);
-            ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, BUBBLE_SHORTCUT_ID_DYNAMIC)
-                    .setShortLabel(BUBBLE_SHORTCUT_ID_DYNAMIC)
-                    .setIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
-                    .setIntent(shortcutIntent)
-                    .setLongLived(true)
-                    .build();
-            scmanager.addDynamicShortcuts(Arrays.asList(shortcut));
-
-            // Message notif
-            Person person = new Person.Builder()
-                    .setName("bubblebot")
-                    .build();
-
-            RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel(
-                    "reply").build();
-            PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-            Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
-            Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
-                    inputIntent).addRemoteInput(remoteInput)
-                    .build();
-
-            Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                    .setContentTitle("foo")
-                    .setStyle(new Notification.MessagingStyle(person)
-                            .setConversationTitle("Bubble Chat")
-                            .addMessage("Hello?",
-                                    SystemClock.currentThreadTimeMillis() - 300000, person)
-                            .addMessage("Is it me you're looking for?",
-                                    SystemClock.currentThreadTimeMillis(), person)
-                    )
-                    .setActions(replyAction)
-                    .setSmallIcon(android.R.drawable.sym_def_app_icon);
-
-            // BubbleMetadata with our dynamic shortcut ic
+            Notification.Builder nb = getConversationNotification();
             Notification.BubbleMetadata data =
                     new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
                             .build();
@@ -3050,69 +2994,158 @@ public class NotificationManagerTest extends AndroidTestCase {
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
             sendAndVerifyBubble(1, nb, data, shouldBeBubble);
         } finally {
-            // remove the shortcut
-            scmanager.removeAllDynamicShortcuts();
+            deleteShortcuts();
         }
     }
 
-    public void testNotificationManagerBubblePolicy_flagForShortcut_fails_invalidShortcut()
+    public void testNotificationManagerBubblePolicy_noFlag_invalidShortcut()
             throws Exception {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
             return;
         }
-        // turn on bubbles globally
-        toggleBubbleSetting(true);
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
 
-        // Message notif
-        Person person = new Person.Builder()
-                .setName("bubblebot")
-                .build();
+            Notification.Builder nb = getConversationNotification();
+            nb.setShortcutId("invalid");
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder("invalid")
+                            .build();
 
-        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel(
-                "reply").build();
-        PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-        Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
-        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
-                inputIntent).addRemoteInput(remoteInput)
-                .build();
-
-        Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle("foo")
-                .setStyle(new Notification.MessagingStyle(person)
-                        .setConversationTitle("Bubble Chat")
-                        .addMessage("Hello?",
-                                SystemClock.currentThreadTimeMillis() - 300000, person)
-                        .addMessage("Is it me you're looking for?",
-                                SystemClock.currentThreadTimeMillis(), person)
-                )
-                .setActions(replyAction)
-                .setSmallIcon(android.R.drawable.sym_def_app_icon);
-
-        // BubbleMetadata with shortcut that doesn't exist
-        Notification.BubbleMetadata data =
-                new Notification.BubbleMetadata.Builder("shortcutDoesntExist")
-                        .build();
-
-        sendAndVerifyBubble(1, nb, data, false);
+            sendAndVerifyBubble(1, nb, data, false);
+        } finally {
+            deleteShortcuts();
+        }
     }
 
-    public void testNotificationManagerBubblePolicy_flagForShortcut_fails_invalidNotif()
+    public void testNotificationManagerBubblePolicy_noFlag_invalidNotif()
             throws Exception {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
             return;
         }
-        // turn on bubbles globally
-        toggleBubbleSetting(true);
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
 
-        // BubbleMetadata with manifest shortcut
-        Notification.BubbleMetadata data =
-                new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_MANIFEST)
-                        .build();
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                            .build();
 
-        sendAndVerifyBubble(1, null /* use default notif builder */, data,
-                false /* shouldBeBubble */);
+            sendAndVerifyBubble(1, null /* use default notif builder */, data,
+                    false /* shouldBeBubble */);
+        } finally {
+            deleteShortcuts();
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_appAll_globalOn() throws Exception {
+        if (FeatureUtil.isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                            .build();
+            Notification.Builder nb = getConversationNotification();
+
+            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+            sendAndVerifyBubble(1, nb, data, shouldBeBubble);
+        } finally {
+            deleteShortcuts();
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_appAll_globalOff() throws Exception {
+        if (FeatureUtil.isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(false);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                            .build();
+            Notification.Builder nb = getConversationNotification();
+
+            sendAndVerifyBubble(1, nb, data, false);
+        } finally {
+            deleteShortcuts();
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_appSelected_channelNo() throws Exception {
+        if (FeatureUtil.isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(2 /* selected */);
+            setBubblesChannelAllowed(false);
+            createDynamicShortcut();
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                            .build();
+            Notification.Builder nb = getConversationNotification();
+
+            sendAndVerifyBubble(1, nb, data, false);
+        } finally {
+            deleteShortcuts();
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_appSelected_channelYes() throws Exception {
+        if (FeatureUtil.isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(2 /* selected */);
+            setBubblesChannelAllowed(true);
+            createDynamicShortcut();
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                            .build();
+            Notification.Builder nb = getConversationNotification();
+
+            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
+            sendAndVerifyBubble(1, nb, data, shouldBeBubble);
+        } finally {
+            deleteShortcuts();
+        }
+    }
+
+    public void testNotificationManagerBubblePolicy_appNone_channelNo() throws Exception {
+        if (FeatureUtil.isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(0 /* none */);
+            setBubblesChannelAllowed(false);
+            createDynamicShortcut();
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                            .build();
+            Notification.Builder nb = getConversationNotification();
+
+            sendAndVerifyBubble(1, nb, data, false);
+        } finally {
+            deleteShortcuts();
+        }
     }
 
     public void testNotificationManagerBubblePolicy_noFlag_shortcutRemoved()
@@ -3122,68 +3155,24 @@ public class NotificationManagerTest extends AndroidTestCase {
             return;
         }
 
-        ShortcutManager scmanager = mContext.getSystemService(ShortcutManager.class);
-
         try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
-            setUpNotifListener();
-
-            // Make dynamic shortcut
-            Intent shortcutIntent = new Intent(mContext, SendBubbleActivity.class);
-            shortcutIntent.setAction(Intent.ACTION_VIEW);
-            ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, BUBBLE_SHORTCUT_ID_DYNAMIC)
-                    .setShortLabel(BUBBLE_SHORTCUT_ID_DYNAMIC)
-                    .setIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
-                    .setIntent(shortcutIntent)
-                    .setLongLived(true)
-                    .build();
-            scmanager.addDynamicShortcuts(Arrays.asList(shortcut));
-
-            // Message notif
-            Person person = new Person.Builder()
-                    .setName("bubblebot")
-                    .build();
-
-            RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel(
-                    "reply").build();
-            PendingIntent inputIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-            Icon icon = Icon.createWithResource(mContext, android.R.drawable.sym_def_app_icon);
-            Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
-                    inputIntent).addRemoteInput(remoteInput)
-                    .build();
-
-            Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                    .setContentTitle("foo")
-                    .setStyle(new Notification.MessagingStyle(person)
-                            .setConversationTitle("Bubble Chat")
-                            .addMessage("Hello?",
-                                    SystemClock.currentThreadTimeMillis() - 300000, person)
-                            .addMessage("Is it me you're looking for?",
-                                    SystemClock.currentThreadTimeMillis(), person)
-                    )
-                    .setActions(replyAction)
-                    .setSmallIcon(android.R.drawable.sym_def_app_icon);
-
-            // BubbleMetadata with our dynamic shortcut
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
             Notification.BubbleMetadata data =
                     new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
                             .build();
+            Notification.Builder nb = getConversationNotification();
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
             sendAndVerifyBubble(1, nb, data, shouldBeBubble);
-
             mListener.resetData();
 
-            // Now lets delete the shortcut and make sure the notif has been updated to not
-            // be a bubble.
-            scmanager.removeAllDynamicShortcuts();
+            deleteShortcuts();
 
             verifyNotificationBubbleState(1, false /* should be bubble */);
         } finally {
-            // remove the shortcut
-            scmanager.removeAllDynamicShortcuts();
+            deleteShortcuts();
         }
     }
 
@@ -3193,9 +3182,9 @@ public class NotificationManagerTest extends AndroidTestCase {
             return;
         }
         try {
-            // turn on bubbles globally
-            toggleBubbleSetting(true);
-
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            createDynamicShortcut();
             setUpNotifListener();
 
             // make ourselves foreground so we can specify suppress notification flag
@@ -3230,11 +3219,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             assertFalse(metadata.isNotificationSuppressed());
         } finally {
             cleanupSendBubbleActivity();
-
-            // turn off bubbles globally
-            toggleBubbleSetting(false);
-
-            mListener.resetData();
+            deleteShortcuts();
         }
     }
 

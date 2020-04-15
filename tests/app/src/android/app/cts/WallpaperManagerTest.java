@@ -51,8 +51,6 @@ import android.view.WindowManager;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.SystemUtil;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -104,7 +102,6 @@ public class WallpaperManagerTest {
 
     @After
     public void tearDown() throws Exception {
-        mWallpaperManager.clear();
         mContext.unregisterReceiver(mBroadcastReceiver);
     }
 
@@ -320,16 +317,13 @@ public class WallpaperManagerTest {
 
     @Test
     public void highRatioWallpaper_largeWidth() throws Exception {
-        final String sysuiPid = getSysuiPid();
-        Bitmap highRatioWallpaper = Bitmap.createBitmap(800, 8000, Bitmap.Config.ARGB_8888);
+        Bitmap highRatioWallpaper = Bitmap.createBitmap(8000, 800, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(highRatioWallpaper);
         canvas.drawColor(Color.RED);
 
         try {
             mWallpaperManager.setBitmap(highRatioWallpaper);
-
-            Assert.assertTrue(mCountDownLatch.await(5, TimeUnit.SECONDS));
-            Assert.assertTrue(sysuiPid.contentEquals(getSysuiPid()));
+            assertBitmapDimensions(mWallpaperManager.getBitmap());
         } finally {
             highRatioWallpaper.recycle();
         }
@@ -337,16 +331,13 @@ public class WallpaperManagerTest {
 
     @Test
     public void highRatioWallpaper_largeHeight() throws Exception {
-        final String sysuiPid = getSysuiPid();
-        Bitmap highRatioWallpaper = Bitmap.createBitmap(8000, 800, Bitmap.Config.ARGB_8888);
+        Bitmap highRatioWallpaper = Bitmap.createBitmap(800, 8000, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(highRatioWallpaper);
         canvas.drawColor(Color.RED);
 
         try {
             mWallpaperManager.setBitmap(highRatioWallpaper);
-
-            Assert.assertTrue(mCountDownLatch.await(5, TimeUnit.SECONDS));
-            Assert.assertTrue(sysuiPid.contentEquals(getSysuiPid()));
+            assertBitmapDimensions(mWallpaperManager.getBitmap());
         } finally {
             highRatioWallpaper.recycle();
         }
@@ -354,16 +345,13 @@ public class WallpaperManagerTest {
 
     @Test
     public void highResolutionWallpaper() throws Exception {
-        final String sysuiPid = getSysuiPid();
         Bitmap highResolutionWallpaper = Bitmap.createBitmap(10000, 10000, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(highResolutionWallpaper);
         canvas.drawColor(Color.BLUE);
 
         try {
             mWallpaperManager.setBitmap(highResolutionWallpaper);
-
-            Assert.assertTrue(mCountDownLatch.await(5, TimeUnit.SECONDS));
-            Assert.assertTrue(sysuiPid.contentEquals(getSysuiPid()));
+            assertBitmapDimensions(mWallpaperManager.getBitmap());
         } finally {
             highResolutionWallpaper.recycle();
         }
@@ -414,10 +402,13 @@ public class WallpaperManagerTest {
         }
     }
 
-    private static String getSysuiPid() {
-        final String sysuiPkgName = "com.android.systemui";
-        final String sysuiPid = "pidof " + sysuiPkgName;
-        return SystemUtil.runShellCommand(sysuiPid);
+    private void assertBitmapDimensions(Bitmap bitmap) {
+        int maxSize = getMaxTextureSize();
+        boolean safe = false;
+        if (bitmap != null) {
+            safe = bitmap.getWidth() <= maxSize && bitmap.getHeight() <= maxSize;
+        }
+        assertThat(safe).isTrue();
     }
 
     private void assertDesiredDimension(Point suggestedSize, Point expectedSize) {

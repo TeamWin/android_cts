@@ -2241,7 +2241,8 @@
     <string name="cacert_info">This test checks that when a CA Certificate is installed, the user is notified.</string>
     <string name="cacert_do_something">Do it</string>
     <string name="cacert_done">Done</string>
-    <string name="cacert_install_cert">Use the CertInstaller to install the certificate "MyCA.cer" from device storage. When it opens, choose any name and tap "Okay". If this button does nothing, pass the test and move on.</string>
+    <string name="cacert_install_cert_title">Tap to install a CA certificate</string>
+    <string name="cacert_install_cert">Press the button to open Security settings. Navigate to \"Install a certificate\" (normally under \"Encryptions &amp; credentials\") and select \"CA certificate\". Pick \"MyCA.cer\" from device storage and proceed with the installation. If this button does nothing, pass the test and move on.</string>
     <string name="cacert_check_cert_in_settings">Visit the user-installed trusted credentials page and confirm that the "Internet Widgits Pty Ltd" cert appears in the list.</string>
     <string name="cacert_remove_screen_lock">You may have been prompted to set a screen lock when installing the certificate. If so, remove it. If not, you may skip this step.</string>
     <string name="cacert_check_notification">Look at the system notifications. Confirm that:\n
@@ -4143,17 +4144,6 @@ You should be prompted to select credentials; choose the ones you just installed
         6) Press the Finish button to clear the always-on VPN.
     </string>
     <string name="enterprise_privacy_set_always_on_vpn">Set VPN</string>
-    <string name="enterprise_privacy_comp_always_on_vpn">Always-on VPN (managed profile)</string>
-    <string name="enterprise_privacy_comp_always_on_vpn_info">
-        Please do the following:\n
-        1) Press the Start button to create a work profile.\n
-        2) Press the Open Settings button.\n
-        3) In the screen that opens, verify that you are not told that an always-on VPN is set.\n
-        4) Use the Back button to return to this page.\n
-        5) Press the Set VPN button to set an always-on VPN in your work profile.\n
-        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that an always-on VPN is set in your work profile.\n
-        7) Press the Finish button to remove the work profile and always-on VPN.
-    </string>
     <string name="enterprise_privacy_start">Start</string>
     <string name="enterprise_privacy_global_http_proxy">Global HTTP Proxy</string>
     <string name="enterprise_privacy_global_http_proxy_info">
@@ -4176,17 +4166,6 @@ You should be prompted to select credentials; choose the ones you just installed
         6) Press the Finish button to clear the cert.
     </string>
     <string name="enterprise_privacy_install_cert">Install Cert</string>
-    <string name="enterprise_privacy_comp_ca_certs">Trusted CA certs (managed profile)</string>
-    <string name="enterprise_privacy_comp_ca_certs_info">
-        Please do the following:\n
-        1) Press the Start button to create a work profile.\n
-        2) Press the Settings button.\n
-        3) In the screen that opens, verify that you are not told that your administrator installed trusted CA certs.\n
-        4) Use the Back button to return to this page.\n
-        5) Press the Install Cert button to install a trusted CA cert in your work profile.\n
-        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that the administrator has installed at least one trusted CA cert in your work profile.\n
-        7) Press the Finish button to remove the work profile and cert.
-    </string>
     <string name="enterprise_privacy_settings">Settings</string>
     <string name="enterprise_privacy_set_proxy">Set Proxy</string>
     <string name="enterprise_privacy_clear_proxy">Clear Proxy</string>
@@ -4201,17 +4180,6 @@ You should be prompted to select credentials; choose the ones you just installed
         6) Press the Finish button to clear the maximum number of password attempts.
     </string>
     <string name="enterprise_privacy_set_limit">Set Limit</string>
-    <string name="enterprise_privacy_comp_failed_password_wipe">Wipe on authentication failure (managed profile)</string>
-    <string name="enterprise_privacy_comp_failed_password_wipe_info">
-        Please do the following:\n
-        1) Press the Start button to create a work profile.\n
-        2) Press the Open Settings button.\n
-        3) In the screen that opens, verify that you are not told work profile data will be deleted if you mistype your password too many times.\n
-        4) Use the Back button to return to this page.\n
-        5) Press the Set Limit button to set the maximum number of password attempts.\n
-        6) Repeat steps (2) through (4), verifying that in step (3), you are told now that work profile data will be deleted if you mistype your password 100 times.\n
-        7) Press the Finish button to remove the work profile.
-    </string>
     <string name="enterprise_privacy_quick_settings">Quick settings disclosure</string>
     <string name="enterprise_privacy_quick_settings_info">
         Please do the following:\n
@@ -4304,10 +4272,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_set_lockscreen_message_button">Set lock screen message</string>
     <string name="device_owner_set_lockscreen_message_hint">My lock screen message</string>
     <string name="device_owner_lockscreen_message_cannot_be_empty">Lock screen message cannot be empty.</string>
-
-    <string name="comp_test">Corporate Owned Managed Profile</string>
-    <string name="comp_provision_profile_dialog_title">Provision work profile</string>
-    <string name="comp_provision_profile_dialog_text">Press the OK button to start the managed provisioning flow, and complete the flow to create a work profile</string>
 
     <string name="managed_user_test">Managed User</string>
     <string name="managed_user_positive_tests">Managed User positive tests</string>

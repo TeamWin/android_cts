@@ -22,7 +22,6 @@ import android.app.Notification.BubbleMetadata;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
-import android.app.RemoteInput;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
@@ -38,6 +37,7 @@ public class SendBubbleActivity extends Activity {
 
     // Should be same as wht NotificationManagerTest is using
     private static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
+    private static final String BUBBLE_SHORTCUT_ID_DYNAMIC = "bubbleShortcutIdDynamic";
 
     public static final String BUBBLE_ACTIVITY_OPENED =
             "android.app.stubs.BUBBLE_ACTIVITY_OPENED";
@@ -83,17 +83,11 @@ public class SendBubbleActivity extends Activity {
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();
-        // It needs remote input to be bubble-able
-        RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel("reply").build();
-        PendingIntent inputIntent = PendingIntent.getActivity(context, 0, new Intent(), 0);
-        Icon icon = Icon.createWithResource(context, android.R.drawable.sym_def_app_icon);
-        Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
-                inputIntent).addRemoteInput(remoteInput)
-                .build();
         // Make it messaging style
         Notification n = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.black)
                 .setContentTitle("Bubble Chat")
+                .setShortcutId(BUBBLE_SHORTCUT_ID_DYNAMIC)
                 .setStyle(new Notification.MessagingStyle(person)
                         .setConversationTitle("Bubble Chat")
                         .addMessage("Hello?",
@@ -101,7 +95,6 @@ public class SendBubbleActivity extends Activity {
                         .addMessage("Is it me you're looking for?",
                                 SystemClock.currentThreadTimeMillis(), person)
                 )
-                .setActions(replyAction)
                 .setBubbleMetadata(getBubbleMetadata(autoExpand, suppressNotification))
                 .build();
 
@@ -118,9 +111,8 @@ public class SendBubbleActivity extends Activity {
         final PendingIntent pendingIntent =
                 PendingIntent.getActivity(context, 0, intent, 0);
 
-        return new Notification.BubbleMetadata.Builder()
-                .setIcon(Icon.createWithResource(context, R.drawable.black))
-                .setIntent(pendingIntent)
+        return new Notification.BubbleMetadata.Builder(pendingIntent,
+                Icon.createWithResource(context, R.drawable.black))
                 .setAutoExpandBubble(autoExpand)
                 .setSuppressNotification(suppressNotification)
                 .build();
