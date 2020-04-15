@@ -36,6 +36,7 @@ cc_test_library {
     ],
     sdk_version: "current",
     stl: "none",
+    header_libs: ["jni_headers"],
     shared_libs: [
         "libGLESv2",
         "liblog",
