@@ -241,6 +241,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                                 physicalStaticInfo.getCharacteristics().get(
                                         CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS);
 
+                        if (phyCombinations == null) {
+                            Log.i(TAG, "No mandatory stream combinations for physical camera device: " + id + " skip test");
+                            continue;
+                        }
+
                         for (MandatoryStreamCombination combination : phyCombinations) {
                             if (!combination.isReprocessable()) {
                                 testMandatoryStreamCombination(id, physicalStaticInfo,
