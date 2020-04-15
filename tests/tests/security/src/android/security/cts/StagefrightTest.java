@@ -1459,10 +1459,10 @@ public class StagefrightTest {
         String rname = resources.getResourceEntryName(rid);
         String url = server.getAssetUrl("raw/" + rname);
         verifyServer(rid, url);
-        policy.setCleartextTrafficPermitted(false);
         doStagefrightTestMediaPlayer(url, config);
         doStagefrightTestMediaCodec(url, config);
         doStagefrightTestMediaMetadataRetriever(url, config);
+        policy.setCleartextTrafficPermitted(false);
         server.shutdown();
     }
 
