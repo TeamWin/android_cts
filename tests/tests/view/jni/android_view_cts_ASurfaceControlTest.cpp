@@ -33,31 +33,10 @@
 
 #include <errno.h>
 #include <jni.h>
+#include <jniAssert.h>
 #include <time.h>
 
 namespace {
-
-// Raises a java exception
-static void fail(JNIEnv* env, const char* format, ...) {
-    va_list args;
-
-    va_start(args, format);
-    char* msg;
-    vasprintf(&msg, format, args);
-    va_end(args);
-
-    jclass exClass;
-    const char* className = "java/lang/AssertionError";
-    exClass = env->FindClass(className);
-    env->ThrowNew(exClass, msg);
-    free(msg);
-}
-
-#define ASSERT(condition, format, args...) \
-    if (!(condition)) {                    \
-        fail(env, format, ##args);         \
-        return;                            \
-    }
 
 #define NANOS_PER_SECOND 1000000000LL
 int64_t systemTime() {
