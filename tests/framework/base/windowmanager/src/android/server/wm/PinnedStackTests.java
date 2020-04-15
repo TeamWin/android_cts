@@ -23,7 +23,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.content.pm.PackageManager.FEATURE_LEANBACK;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.UiDeviceUtils.pressWindowButton;
@@ -77,7 +76,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -193,7 +191,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testNonTappablePipActivity() throws Exception {
-        assumeFalse(hasDeviceFeature(FEATURE_LEANBACK));
         // Launch the tap-to-finish activity at a specific place
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
