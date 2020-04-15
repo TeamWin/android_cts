@@ -218,9 +218,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
                 TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
         // Adb cannot add a split to an existing install, so we'll use pm to install just the
-        // dynamic code
-        // split.
-        String deviceLocalPath = "data/local/tmp/";
+        // dynamic code split.
+        String deviceLocalPath = "/data/local/tmp/";
         getDevice().executeAdbCommand("push", getFilePathFromBuildInfo(TEST_APP_DYNAMIC_CODE_NAME),
                 deviceLocalPath);
         getDevice().executeShellCommand(String.format("pm install -p %s %s", TEST_APP_PACKAGE_NAME,

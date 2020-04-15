@@ -22,9 +22,10 @@ import static org.junit.Assert.assertEquals;
 
 import android.app.Instrumentation;
 import android.content.Context;
+import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -42,6 +43,7 @@ public class WindowContextTests extends MultiDisplayTestBase {
 
     @Test
     @FlakyTest(bugId = 150251036)
+    @AppModeFull
     public void testWindowContextConfigChanges() {
         final WindowManagerState.DisplayContent display =  createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
@@ -51,17 +53,22 @@ public class WindowContextTests extends MultiDisplayTestBase {
             WindowManager wm = windowContext.getSystemService(WindowManager.class);
             wm.addView(view, new WindowManager.LayoutParams(TYPE_APPLICATION_OVERLAY));
         });
-        mWmState.computeState();
-
         final DisplayMetricsSession displayMetricsSession =
                 createManagedDisplayMetricsSession(display.mId);
+
+        mWmState.computeState();
+
+        Rect bounds = windowContext.getSystemService(WindowManager.class).getCurrentWindowMetrics()
+                .getBounds();
+        assertBoundsEquals(displayMetricsSession.getDisplayMetrics(), bounds);
 
         displayMetricsSession.changeDisplayMetrics(1.2 /* sizeRatio */, 1.1 /* densityRatio */);
 
         mWmState.computeState();
 
-        assertDisplayMetricsEquals(displayMetricsSession.getDisplayMetrics(),
-                windowContext.getResources().getDisplayMetrics());
+        bounds = windowContext.getSystemService(WindowManager.class).getCurrentWindowMetrics()
+                .getBounds();
+        assertBoundsEquals(displayMetricsSession.getDisplayMetrics(), bounds);
     }
 
     private Context createWindowContext(int displayId) {
@@ -70,10 +77,9 @@ public class WindowContextTests extends MultiDisplayTestBase {
                 null /* options */);
     }
 
-    private void assertDisplayMetricsEquals(ReportedDisplayMetrics expectedMetrics,
-            DisplayMetrics actualMetrics) {
-        assertEquals(expectedMetrics.getSize().getWidth(), actualMetrics.widthPixels);
-        assertEquals(expectedMetrics.getSize().getHeight(), actualMetrics.heightPixels);
-        assertEquals(expectedMetrics.getDensity(), actualMetrics.densityDpi);
+    private void assertBoundsEquals(ReportedDisplayMetrics expectedMetrics,
+            Rect bounds) {
+        assertEquals(expectedMetrics.getSize().getWidth(), bounds.width());
+        assertEquals(expectedMetrics.getSize().getHeight(), bounds.height());
     }
 }

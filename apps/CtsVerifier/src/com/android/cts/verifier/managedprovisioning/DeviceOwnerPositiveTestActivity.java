@@ -73,7 +73,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DISALLOW_USER_SWITCH_TEST_ID = "DISALLOW_USER_SWITCH";
     private static final String USER_SWITCHER_MESSAGE_TEST_ID = "USER_SWITCHER_MESSAGE";
     private static final String ENABLE_LOGOUT_TEST_ID = "ENABLE_LOGOUT";
-    private static final String COMP_TEST_ID = "COMP_UI";
     private static final String MANAGED_USER_TEST_ID = "MANAGED_USER_UI";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
     private static final String DISALLOW_AMBIENT_DISPLAY_ID = "DISALLOW_AMBIENT_DISPLAY";
@@ -354,15 +353,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         adapter.add(createTestItem(this, ENTERPRISE_PRIVACY_TEST_ID,
                 R.string.enterprise_privacy_test,
                 enterprisePolicyTestIntent));
-
-        // COMP
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)) {
-            Intent compIntent = new Intent(this, CompTestActivity.class)
-                    .putExtra(PolicyTransparencyTestActivity.EXTRA_TEST_ID, COMP_TEST_ID);
-            adapter.add(createTestItem(this, COMP_TEST_ID,
-                    R.string.comp_test,
-                    compIntent));
-        }
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)
                 && UserManager.supportsMultipleUsers()) {
