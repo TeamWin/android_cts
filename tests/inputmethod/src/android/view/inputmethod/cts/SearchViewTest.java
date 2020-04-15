@@ -140,8 +140,7 @@ public class SearchViewTest extends EndToEndImeTestBase {
                     CHECK_EXIT_EVENT_ONLY, TIMEOUT);
 
             // Make sure that "setQuery" triggers "hideSoftInput" in the IME side.
-            InstrumentationRegistry.getInstrumentation().runOnMainSync(
-                    () -> searchView.setQuery("test", true /* submit */));
+            runOnMainSync(() -> searchView.setQuery("test", true /* submit */));
             expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
         }
     }
