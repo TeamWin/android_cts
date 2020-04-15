@@ -17,6 +17,7 @@
 package com.android.cts.rollback;
 
 import static com.android.cts.rollback.lib.RollbackInfoSubject.assertThat;
+import static com.android.cts.rollback.lib.RollbackUtils.getRollbackManager;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -79,8 +80,10 @@ public class RollbackManagerTest {
     public void testBasic() throws Exception {
         Install.single(TestApp.A1).commit();
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
-        assertThat(RollbackUtils.getAvailableRollback(TestApp.A)).isNull();
-        assertThat(RollbackUtils.getCommittedRollback(TestApp.A)).isNull();
+        RollbackUtils.waitForRollbackGone(
+                () -> getRollbackManager().getAvailableRollbacks(), TestApp.A);
+        RollbackUtils.waitForRollbackGone(
+                () -> getRollbackManager().getRecentlyCommittedRollbacks(), TestApp.A);
 
         Install.single(TestApp.A2).setEnableRollback().commit();
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
