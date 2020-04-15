@@ -43,7 +43,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -545,6 +544,35 @@ public class CodecEncoderSurfaceTest {
         }
         mDecoder.release();
         mExtractor.release();
+    }
+
+    private native boolean nativeTestSimpleEncode(String encoder, String decoder, String mime,
+            String testFile, String muxFile, int bitrate, int framerate);
+
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSimpleEncodeFromSurfaceNative() throws IOException {
+        MediaFormat decoderFormat = setUpSource(mTestFile);
+        MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        String decoder = codecList.findDecoderForFormat(decoderFormat);
+        if (decoder == null) {
+            mExtractor.release();
+            fail("no suitable decoder found for format: " + decoderFormat.toString());
+        }
+        ArrayList<String> listOfEncoders = CodecTestBase.selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        for (String encoder : listOfEncoders) {
+            String tmpPath = null;
+            if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP8) ||
+                    mMime.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+                tmpPath = File.createTempFile("tmp", ".webm").getAbsolutePath();
+            } else {
+                tmpPath = File.createTempFile("tmp", ".mp4").getAbsolutePath();
+            }
+            assertTrue(
+                    nativeTestSimpleEncode(encoder, decoder, mMime, mInpPrefix + mTestFile, tmpPath,
+                            mBitrate, mFrameRate));
+        }
     }
 }
 
