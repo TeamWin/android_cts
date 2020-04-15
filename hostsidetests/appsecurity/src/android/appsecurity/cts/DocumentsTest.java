@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableSet;
  */
 public class DocumentsTest extends DocumentsTestCase {
     private static final String PROVIDER_PKG = "com.android.cts.documentprovider";
+    private static final String DUMMYIME_PKG = "com.android.cts.dummyime";
     private static final String PROVIDER_APK = "CtsDocumentProvider.apk";
     private static final String DUMMYIME_APK = "CtsDummyIme.apk";
 
@@ -46,7 +47,7 @@ public class DocumentsTest extends DocumentsTestCase {
         super.tearDown();
 
         getDevice().uninstallPackage(PROVIDER_PKG);
-        getDevice().uninstallPackage(DUMMYIME_APK);
+        getDevice().uninstallPackage(DUMMYIME_PKG);
     }
 
     public void testOpenSimple() throws Exception {

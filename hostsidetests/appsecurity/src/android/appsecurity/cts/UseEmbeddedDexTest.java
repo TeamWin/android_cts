@@ -19,6 +19,7 @@ package android.appsecurity.cts;
 import android.platform.test.annotations.AppModeFull;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +35,11 @@ public final class UseEmbeddedDexTest extends BaseAppSecurityTest {
             "CtsUseEmbeddedDexAppSplit_Canonical.apk";
     private static final String APK_SPLIT_COMPRESSED_DEX =
             "CtsUseEmbeddedDexAppSplit_CompressedDex.apk";
+
+    @After
+    public void tearDown() throws Exception {
+        getDevice().uninstallPackage(PACKAGE_NAME);
+    }
 
     @Test
     public void testCanonicalInstall() throws Exception {
