@@ -18,6 +18,8 @@ package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
+import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
@@ -203,11 +205,15 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
             expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
 
+            expectImeVisible(TIMEOUT);
+
             imeSession.callRequestHideSelf(0);
             expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
             expectEvent(stream, event -> "onFinishInputView".equals(event.getEventName()), TIMEOUT);
             expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                     View.GONE, TIMEOUT);
+
+            expectImeInvisible(TIMEOUT);
         }
     }
 
@@ -223,11 +229,15 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             notExpectEvent(
                     stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
 
+            expectImeInvisible(TIMEOUT);
+
             imeSession.callRequestShowSelf(0);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
             expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
             expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                     View.VISIBLE, TIMEOUT);
+
+            expectImeVisible(TIMEOUT);
         }
     }
 
