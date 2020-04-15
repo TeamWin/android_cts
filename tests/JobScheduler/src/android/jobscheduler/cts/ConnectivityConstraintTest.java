@@ -492,7 +492,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      */
     static void setWifiState(final boolean enable,
             final ConnectivityManager cm, final WifiManager wm) throws InterruptedException {
-        if (enable != wm.isWifiEnabled()) {
+        if (enable != isWiFiConnected(cm, wm)) {
             NetworkRequest nr = new NetworkRequest.Builder().addCapability(
                     NetworkCapabilities.NET_CAPABILITY_NOT_METERED).build();
             NetworkTracker tracker = new NetworkTracker(false, enable, cm);
@@ -503,12 +503,19 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             } else {
                 SystemUtil.runShellCommand("svc wifi disable");
             }
+
+            tracker.waitForStateChange();
+
             assertTrue("Wifi must be " + (enable ? "connected to" : "disconnected from")
                             + " an access point for this test.",
-                    tracker.waitForStateChange() || enable == wm.isWifiEnabled());
+                    enable == isWiFiConnected(cm, wm));
 
             cm.unregisterNetworkCallback(tracker);
         }
+    }
+
+    private static boolean isWiFiConnected(final ConnectivityManager cm, final WifiManager wm) {
+        return wm.isWifiEnabled() && cm.getActiveNetwork() != null && !cm.isActiveNetworkMetered();
     }
 
     /**
