@@ -16,7 +16,11 @@
 package android.packageinstaller.install.cts
 
 import android.app.Activity
+import android.content.Intent
+import android.content.Intent.ACTION_INSTALL_PACKAGE
 import android.content.pm.PackageInstaller
+import android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
+import android.net.Uri
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -26,7 +30,6 @@ import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 
 private const val INSTALL_BUTTON_ID = "button1"
-private const val NEW_PACKAGE_INSTALLER_PACKAGE_NAME = "com.google.android.packageinstaller"
 
 @RunWith(AndroidJUnit4::class)
 @AppModeFull(reason = "Instant apps cannot install packages")
@@ -37,6 +40,8 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
 
     @Test
     fun installViaIntent() {
+        val packageInstallerPackageName = getPackageInstallerPackageName()
+
         val installation = startInstallationViaIntent()
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
@@ -44,8 +49,8 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         assertThat(installation.get(TIMEOUT, TimeUnit.MILLISECONDS)).isEqualTo(Activity.RESULT_OK)
 
         val info = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
-        assertThat(info.getInstallingPackageName()).isEqualTo(NEW_PACKAGE_INSTALLER_PACKAGE_NAME)
-        assertThat(info.getInitiatingPackageName()).isEqualTo(NEW_PACKAGE_INSTALLER_PACKAGE_NAME)
+        assertThat(info.getInstallingPackageName()).isEqualTo(packageInstallerPackageName)
+        assertThat(info.getInitiatingPackageName()).isEqualTo(packageInstallerPackageName)
         assertThat(info.getOriginatingPackageName()).isNull()
     }
 
@@ -61,5 +66,12 @@ class InstallSourceInfoTest : PackageInstallerTestBase() {
         assertThat(info.getInstallingPackageName()).isEqualTo(ourPackageName)
         assertThat(info.getInitiatingPackageName()).isEqualTo(ourPackageName)
         assertThat(info.getOriginatingPackageName()).isNull()
+    }
+
+    private fun getPackageInstallerPackageName(): String {
+        val installerIntent = Intent(ACTION_INSTALL_PACKAGE)
+        installerIntent.setDataAndType(Uri.parse("content://com.example/"),
+                "application/vnd.android.package-archive")
+        return installerIntent.resolveActivityInfo(pm, MATCH_DEFAULT_ONLY).packageName
     }
 }
