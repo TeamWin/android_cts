@@ -44,7 +44,9 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static org.junit.Assert.assertTrue;
@@ -332,23 +334,37 @@ public class CodecDecoderTest extends CodecTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        final ArrayList<String> cddRequiredMimeList =
-                new ArrayList<>(Arrays.asList(
-                        MediaFormat.MIMETYPE_AUDIO_MPEG,
-                        MediaFormat.MIMETYPE_AUDIO_AAC,
-                        MediaFormat.MIMETYPE_AUDIO_FLAC,
-                        MediaFormat.MIMETYPE_AUDIO_VORBIS,
-                        MediaFormat.MIMETYPE_AUDIO_OPUS,
-                        MediaFormat.MIMETYPE_AUDIO_RAW,
-                        MediaFormat.MIMETYPE_AUDIO_AMR_NB,
-                        MediaFormat.MIMETYPE_AUDIO_AMR_WB,
-                        MediaFormat.MIMETYPE_VIDEO_MPEG4,
-                        MediaFormat.MIMETYPE_VIDEO_H263,
-                        MediaFormat.MIMETYPE_VIDEO_AVC,
-                        MediaFormat.MIMETYPE_VIDEO_HEVC,
-                        MediaFormat.MIMETYPE_VIDEO_VP8,
-                        MediaFormat.MIMETYPE_VIDEO_VP9));
-        if (isTv()) cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
+        Set<String> list = new HashSet<>();
+        if (hasAudioOutput()) {
+            // sec 5.1.2
+            list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
+            list.add(MediaFormat.MIMETYPE_AUDIO_FLAC);
+            list.add(MediaFormat.MIMETYPE_AUDIO_MPEG);
+            list.add(MediaFormat.MIMETYPE_AUDIO_VORBIS);
+            list.add(MediaFormat.MIMETYPE_AUDIO_RAW);
+            list.add(MediaFormat.MIMETYPE_AUDIO_OPUS);
+        }
+        if (isHandheld() || isTv() || isAutomotive()) {
+            // sec 2.2.2, 2.3.2, 2.5.2
+            list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
+            list.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+            list.add(MediaFormat.MIMETYPE_VIDEO_MPEG4);
+            list.add(MediaFormat.MIMETYPE_VIDEO_H263);
+            list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+            list.add(MediaFormat.MIMETYPE_VIDEO_VP9);
+        }
+        if (isHandheld()) {
+            // sec 2.2.2
+            list.add(MediaFormat.MIMETYPE_AUDIO_AMR_NB);
+            list.add(MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+            list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+        }
+        if (isTv()) {
+            // sec 2.3.2
+            list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+            list.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
+        }
+        ArrayList<String> cddRequiredMimeList = new ArrayList<>(list);
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_1ch_8kHz_lame_cbr.mp3",
                         "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3",
