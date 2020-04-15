@@ -229,6 +229,7 @@ public class OverlayHostTest extends BaseAppSecurityTest {
                     .contains(" " + OVERLAY_ALL_PACKAGE + "\n"));
         } finally {
             getDevice().uninstallPackage(OVERLAY_ALL_PACKAGE);
+            getDevice().uninstallPackage(TARGET_PACKAGE);
         }
     }
 
