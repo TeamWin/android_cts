@@ -188,15 +188,19 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             mExtractor.advance();
             mSignaledEos = mExtractor.getSampleTrackIndex() == -1
                     || timestampUs >= mLastBufferTimestampUs;
-            codec.getQueueRequest(index)
-                    .setLinearBlock(
-                            input.block,
-                            input.offset,
-                            written)
-                    .setPresentationTimeUs(timestampUs)
-                    .setFlags(
-                            mSignaledEos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0)
-                    .queue();
+            MediaCodec.QueueRequest request = codec.getQueueRequest(index);
+            request.setLinearBlock(input.block, input.offset, written);
+            request.setPresentationTimeUs(timestampUs);
+            request.setFlags(mSignaledEos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+            if (mSetParams) {
+                request.setIntegerParameter("vendor.int", 0);
+                request.setLongParameter("vendor.long", 0);
+                request.setFloatParameter("vendor.float", (float)0);
+                request.setStringParameter("vendor.string", "str");
+                request.setByteBufferParameter("vendor.buffer", ByteBuffer.allocate(1));
+                mSetParams = false;
+            }
+            request.queue();
             input.offset += written;
             if (mTimestampQueue != null) {
                 mTimestampQueue.offer(timestampUs);
@@ -208,6 +212,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         private final boolean mObtainBlockForEachBuffer;
         private final LinkedBlockingQueue<Long> mTimestampQueue;
         private boolean mSignaledEos = false;
+        private boolean mSetParams = true;
     }
 
     private static interface OutputSlotListener {
