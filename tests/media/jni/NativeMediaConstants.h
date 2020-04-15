@@ -45,6 +45,7 @@ typedef enum {
 // from MediaCodecConstants.h (are these going to be deprecated)
 constexpr int COLOR_FormatYUV420SemiPlanar = 21;
 constexpr int COLOR_FormatYUV420Flexible = 0x7F420888;
+constexpr int COLOR_FormatSurface = 0x7f000789;
 
 // constants not defined in NDK
 extern const char* TBD_AMEDIACODEC_PARAMETER_KEY_REQUEST_SYNC_FRAME;
