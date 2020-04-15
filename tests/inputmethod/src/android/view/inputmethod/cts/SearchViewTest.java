@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
+import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.EventFilterMode.CHECK_EXIT_EVENT_ONLY;
@@ -139,9 +141,13 @@ public class SearchViewTest extends EndToEndImeTestBase {
                             && !event.getExitState().hasDummyInputConnection(),
                     CHECK_EXIT_EVENT_ONLY, TIMEOUT);
 
+            expectImeVisible(TIMEOUT);
+
             // Make sure that "setQuery" triggers "hideSoftInput" in the IME side.
             runOnMainSync(() -> searchView.setQuery("test", true /* submit */));
             expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
+
+            expectImeInvisible(TIMEOUT);
         }
     }
 
@@ -167,6 +173,8 @@ public class SearchViewTest extends EndToEndImeTestBase {
                     "showSoftInput".equals(event.getEventName())
                             && !event.getExitState().hasDummyInputConnection(),
                     CHECK_EXIT_EVENT_ONLY, TIMEOUT);
+
+            expectImeVisible(TIMEOUT);
         }
     }
 
@@ -192,6 +200,8 @@ public class SearchViewTest extends EndToEndImeTestBase {
                             "showSoftInput".equals(event.getEventName())
                                     && !event.getExitState().hasDummyInputConnection(),
                     CHECK_EXIT_EVENT_ONLY, TIMEOUT);
+
+            expectImeVisible(TIMEOUT);
 
             notExpectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()),
                     NOT_EXPECT_TIMEOUT);
