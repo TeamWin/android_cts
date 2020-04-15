@@ -40,7 +40,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static org.junit.Assert.assertTrue;
@@ -219,15 +221,25 @@ public class CodecDecoderSurfaceTest extends CodecTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        final ArrayList<String> cddRequiredMimeList =
-                new ArrayList<>(Arrays.asList(
-                        MediaFormat.MIMETYPE_VIDEO_MPEG4,
-                        MediaFormat.MIMETYPE_VIDEO_H263,
-                        MediaFormat.MIMETYPE_VIDEO_AVC,
-                        MediaFormat.MIMETYPE_VIDEO_HEVC,
-                        MediaFormat.MIMETYPE_VIDEO_VP8,
-                        MediaFormat.MIMETYPE_VIDEO_VP9));
-        if (isTv()) cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
+        Set<String> list = new HashSet<>();
+        if (isHandheld() || isTv() || isAutomotive()) {
+            // sec 2.2.2, 2.3.2, 2.5.2
+            list.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+            list.add(MediaFormat.MIMETYPE_VIDEO_MPEG4);
+            list.add(MediaFormat.MIMETYPE_VIDEO_H263);
+            list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+            list.add(MediaFormat.MIMETYPE_VIDEO_VP9);
+        }
+        if (isHandheld()) {
+            // sec 2.2.2
+            list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+        }
+        if (isTv()) {
+            // sec 2.3.2
+            list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+            list.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
+        }
+        ArrayList<String> cddRequiredMimeList = new ArrayList<>(list);
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_340x280_768kbps_30fps_mpeg2.mp4",
                         "bbb_520x390_1mbps_30fps_mpeg2.mp4"},
