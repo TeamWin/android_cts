@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE;
@@ -27,6 +28,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -37,6 +39,8 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Type;
 import android.view.WindowInsetsAnimation;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.test.filters.FlakyTest;
@@ -100,6 +104,20 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             });
             PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
         }
+    }
+
+    @Test
+    public void testImeShowAndHide() {
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+        getInstrumentation().runOnMainSync(() -> {
+            rootView.getWindowInsetsController().show(ime());
+        });
+        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
+        getInstrumentation().runOnMainSync(() -> {
+            rootView.getWindowInsetsController().hide(ime());
+        });
+        PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(ime()));
     }
 
     @Test
@@ -287,19 +305,36 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         }
     }
 
-    public static class TestActivity extends FocusableActivity { }
+    private static View setViews(Activity activity) {
+        LinearLayout layout = new LinearLayout(activity);
+        View text = new TextView(activity);
+        EditText editor = new EditText(activity);
+        layout.addView(text);
+        layout.addView(editor);
+        activity.setContentView(layout);
+        editor.requestFocus();
+        return layout;
+    }
+
+    public static class TestActivity extends FocusableActivity {
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setViews(this);
+        }
+    }
 
     public static class TestHideOnCreateActivity extends FocusableActivity {
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            View content = new TextView(this);
-            setContentView(content);
+            View layout = setViews(this);
             ANIMATION_CALLBACK.reset();
             getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
             getWindow().getInsetsController().hide(statusBars());
-            content.getWindowInsetsController().hide(navigationBars());
+            layout.getWindowInsetsController().hide(navigationBars());
         }
     }
 }
