@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
+
 import static com.android.cts.mockime.ImeEventStreamTestUtils.EventFilterMode.CHECK_EXIT_EVENT_ONLY;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
@@ -138,8 +140,7 @@ public class SearchViewTest extends EndToEndImeTestBase {
                     CHECK_EXIT_EVENT_ONLY, TIMEOUT);
 
             // Make sure that "setQuery" triggers "hideSoftInput" in the IME side.
-            InstrumentationRegistry.getInstrumentation().runOnMainSync(
-                    () -> searchView.setQuery("test", true /* submit */));
+            runOnMainSync(() -> searchView.setQuery("test", true /* submit */));
             expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
         }
     }
@@ -157,9 +158,8 @@ public class SearchViewTest extends EndToEndImeTestBase {
             // Expect input to bind since checkInputConnectionProxy() returns true.
             expectBindInput(stream, Process.myPid(), TIMEOUT);
 
-            InstrumentationRegistry.getInstrumentation()
-                    .getTargetContext().getSystemService(InputMethodManager.class)
-                    .showSoftInput(searchView, 0);
+            runOnMainSync(() -> searchView.getContext().getSystemService(InputMethodManager.class)
+                    .showSoftInput(searchView, 0));
 
             // Wait until "showSoftInput" gets called on searchView's inner editor
             // (SearchAutoComplete) with real InputConnection.
