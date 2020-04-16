@@ -53,7 +53,13 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
             "com.android.cts.userspacereboot.bootcompleted";
 
     private void runDeviceTest(String pkgName, String className, String testName) throws Exception {
-        assertThat(runDeviceTests(pkgName, pkgName + "." + className, testName)).isTrue();
+        runDeviceTests(pkgName, pkgName + "." + className, testName);
+    }
+
+    private void runDeviceTest(String pkgName, String className, String testName, Duration timeout)
+            throws Exception {
+        runDeviceTests(
+                getDevice(), pkgName, pkgName + "." + className, testName, timeout.toMillis());
     }
 
     private void installApk(String apkFileName) throws Exception {
@@ -148,13 +154,10 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
                     "prepareFile");
             rebootUserspaceAndWaitForBootComplete();
             assertUserspaceRebootSucceed();
-            // Sleep for 30s to make sure that system_server has sent out BOOT_COMPLETED broadcast.
-            Thread.sleep(Duration.ofSeconds(30).toMillis());
-            getDevice().executeShellV2Command("am wait-for-broadcast-idle");
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
                     "testVerifyCeStorageUnlocked");
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
-                    "testVerifyReceivedBootCompletedBroadcast");
+                    "testVerifyReceivedBootCompletedBroadcast", Duration.ofMinutes(6));
         } finally {
             getDevice().executeShellV2Command("cmd lock_settings clear --old 1543");
         }
@@ -179,13 +182,10 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
                     "prepareFile");
             rebootUserspaceAndWaitForBootComplete();
             assertUserspaceRebootSucceed();
-            // Sleep for 30s to make sure that system_server has sent out BOOT_COMPLETED broadcast.
-            Thread.sleep(Duration.ofSeconds(30).toMillis());
-            getDevice().executeShellV2Command("am wait-for-broadcast-idle");
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
                     "testVerifyCeStorageUnlocked");
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
-                    "testVerifyReceivedBootCompletedBroadcast");
+                    "testVerifyReceivedBootCompletedBroadcast", Duration.ofMinutes(6));
         } finally {
             getDevice().executeShellV2Command("cmd lock_settings clear --old 1543");
         }

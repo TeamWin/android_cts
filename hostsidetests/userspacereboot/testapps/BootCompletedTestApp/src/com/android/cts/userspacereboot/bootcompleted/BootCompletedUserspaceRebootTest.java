@@ -26,13 +26,17 @@ import android.content.Intent;
 import android.os.UserManager;
 import android.util.Log;
 
+import com.android.compatibility.common.util.TestUtils;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.time.Duration;
 import java.util.Scanner;
 
 /**
@@ -48,6 +52,8 @@ public class BootCompletedUserspaceRebootTest {
     private static final String SECRET_MESSAGE = "wow, much secret";
 
     private static final String RECEIVED_BROADCASTS_FILE = "received_broadcasts.txt";
+
+    private static final Duration BOOT_TIMEOUT = Duration.ofMinutes(6);
 
     private final Context mCeContext =
             getInstrumentation().getContext().createCredentialProtectedStorageContext();
@@ -87,6 +93,11 @@ public class BootCompletedUserspaceRebootTest {
      */
     @Test
     public void testVerifyReceivedBootCompletedBroadcast() throws Exception {
+        final File probe = new File(mDeContext.getFilesDir(), RECEIVED_BROADCASTS_FILE);
+        TestUtils.waitUntil(
+                "Failed to stat " + probe.getAbsolutePath() + " in " + BOOT_TIMEOUT,
+                (int) BOOT_TIMEOUT.getSeconds(),
+                probe::exists);
         try (Scanner scanner = new Scanner(mDeContext.openFileInput(RECEIVED_BROADCASTS_FILE))) {
             final String intent = scanner.nextLine();
             assertThat(intent).isEqualTo(Intent.ACTION_BOOT_COMPLETED);
