@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.inputmethodservice.InputMethodService;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -58,6 +59,8 @@ import android.view.inputmethod.InlineSuggestionsResponse;
 import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -433,36 +436,50 @@ public final class MockIme extends InputMethodService {
                     getResources().getColor(android.R.color.holo_orange_dark, null);
 
             final int mainSpacerHeight = mSettings.getInputViewHeight(LayoutParams.WRAP_CONTENT);
+            mLayout = new LinearLayout(getContext());
+            mLayout.setOrientation(LinearLayout.VERTICAL);
+
+            if (mSettings.getInlineSuggestionsEnabled()) {
+                final ScrollView scrollView = new ScrollView(getContext());
+                final LayoutParams scrollViewParams = new LayoutParams(MATCH_PARENT, 100);
+                scrollView.setLayoutParams(scrollViewParams);
+
+                sSuggestionView = new LinearLayout(getContext());
+                sSuggestionView.setBackgroundColor(0xFFEEEEEE);
+                //TODO: Change magic id
+                sSuggestionView.setId(0x0102000b);
+                scrollView.addView(sSuggestionView,
+                        new LayoutParams(MATCH_PARENT, MATCH_PARENT));
+
+                mLayout.addView(scrollView);
+            }
+
             {
-                mLayout = new LinearLayout(getContext());
-                mLayout.setOrientation(LinearLayout.VERTICAL);
-
-                if (mSettings.getInlineSuggestionsEnabled()) {
-                    final ScrollView scrollView = new ScrollView(getContext());
-                    final LayoutParams scrollViewParams = new LayoutParams(MATCH_PARENT, 100);
-                    scrollView.setLayoutParams(scrollViewParams);
-
-                    sSuggestionView = new LinearLayout(getContext());
-                    sSuggestionView.setBackgroundColor(0xFFEEEEEE);
-                    //TODO: Change magic id
-                    sSuggestionView.setId(0x0102000b);
-                    scrollView.addView(sSuggestionView,
-                            new LayoutParams(MATCH_PARENT, MATCH_PARENT));
-
-                    mLayout.addView(scrollView);
-                }
+                final FrameLayout secondaryLayout = new FrameLayout(getContext());
+                secondaryLayout.setForegroundGravity(Gravity.CENTER);
 
                 final TextView textView = new TextView(getContext());
-                final LayoutParams params = new LayoutParams(MATCH_PARENT, WRAP_CONTENT);
-                textView.setLayoutParams(params);
+                textView.setLayoutParams(new LayoutParams(MATCH_PARENT, WRAP_CONTENT));
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
                 textView.setGravity(Gravity.CENTER);
                 textView.setText(getImeId());
-                textView.setBackgroundColor(mSettings.getBackgroundColor(defaultBackgroundColor));
-                mLayout.addView(textView);
+                textView.setBackgroundColor(
+                        mSettings.getBackgroundColor(defaultBackgroundColor));
+                secondaryLayout.addView(textView);
 
-                addView(mLayout, MATCH_PARENT, mainSpacerHeight);
+                if (mSettings.isWatermarkEnabled(true /* defaultValue */)) {
+                    final ImageView imageView = new ImageView(getContext());
+                    final Bitmap bitmap = Watermark.create();
+                    imageView.setImageBitmap(bitmap);
+                    secondaryLayout.addView(imageView,
+                            new FrameLayout.LayoutParams(bitmap.getWidth(), bitmap.getHeight(),
+                                    Gravity.CENTER));
+                }
+
+                mLayout.addView(secondaryLayout);
             }
+
+            addView(mLayout, MATCH_PARENT, mainSpacerHeight);
 
             final int systemUiVisibility = mSettings.getInputViewSystemUiVisibility(0);
             if (systemUiVisibility != 0) {

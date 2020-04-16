@@ -16,7 +16,13 @@
 
 package android.server.wm;
 
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
 import static android.server.wm.DisplayCutoutTests.TestActivity.EXTRA_CUTOUT_MODE;
+import static android.server.wm.DisplayCutoutTests.TestActivity.EXTRA_ORIENTATION;
 import static android.server.wm.DisplayCutoutTests.TestDef.Which.DISPATCHED;
 import static android.server.wm.DisplayCutoutTests.TestDef.Which.ROOT;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -27,7 +33,6 @@ import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_M
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThan;
@@ -54,6 +59,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
+import android.view.WindowInsets.Type;
 
 import androidx.test.rule.ActivityTestRule;
 
@@ -66,6 +72,9 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -79,11 +88,28 @@ import java.util.stream.Collectors;
  */
 @Presubmit
 @android.server.wm.annotation.Group3
+@RunWith(Parameterized.class)
 public class DisplayCutoutTests {
     static final String LEFT = "left";
     static final String TOP = "top";
     static final String RIGHT = "right";
     static final String BOTTOM = "bottom";
+
+    @Parameterized.Parameters(name= "{1}({0})")
+    public static Object[][] data() {
+        return new Object[][]{
+                {SCREEN_ORIENTATION_PORTRAIT, "SCREEN_ORIENTATION_PORTRAIT"},
+                {SCREEN_ORIENTATION_LANDSCAPE, "SCREEN_ORIENTATION_LANDSCAPE"},
+                {SCREEN_ORIENTATION_REVERSE_LANDSCAPE, "SCREEN_ORIENTATION_REVERSE_LANDSCAPE"},
+                {SCREEN_ORIENTATION_REVERSE_PORTRAIT, "SCREEN_ORIENTATION_REVERSE_PORTRAIT"},
+        };
+    }
+
+    @Parameter(0)
+    public int orientation;
+
+    @Parameter(1)
+    public String orientationName;
 
     @Rule
     public final ErrorCollector mErrorCollector = new ErrorCollector();
@@ -144,8 +170,9 @@ public class DisplayCutoutTests {
     }
 
     @Test
-    public void testDisplayCutout_default_portrait() {
-        runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT, (activity, insets, displayCutout, which) -> {
+    public void testDisplayCutout_default() {
+        runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT,
+                (activity, insets, displayCutout, which) -> {
             if (displayCutout == null) {
                 return;
             }
@@ -160,33 +187,38 @@ public class DisplayCutoutTests {
     }
 
     @Test
-    public void testDisplayCutout_landscape() {
-        // TODO add landscape variants
-    }
-
-    @Test
-    public void testDisplayCutout_shortEdges_portrait() {
-        runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES, (a, insets, displayCutout, which) -> {
+    public void testDisplayCutout_shortEdges() {
+        runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES, (a, insets, cutout, which) -> {
             if (which == ROOT) {
-                assertThat("cutout is either null or the short edge insets must be equal to "
-                                + "those of the Display.getCutout() and the long edge "
-                                + "side insets must be 0",
-                        safeInsets(displayCutout),
-                        anyOf(is(nullValue()), onlyHasShortEdgeInsetsAndEqualsTo(
-                                safeInsets(a.getDisplay().getCutout()))));
+                final Rect appBounds = getAppBounds(a);
+                final Insets displaySafeInsets = Insets.of(safeInsets(a.getDisplay().getCutout()));
+                final Insets expected;
+                if (appBounds.height() > appBounds.width()) {
+                    // Portrait display
+                    expected = Insets.of(0, displaySafeInsets.top, 0, displaySafeInsets.bottom);
+                } else if (appBounds.height() < appBounds.width()) {
+                    // Landscape display
+                    expected = Insets.of(displaySafeInsets.left, 0, displaySafeInsets.right, 0);
+                } else {
+                    expected = Insets.NONE;
+                }
+                assertThat("cutout must provide the display's safe insets on short edges and zero"
+                                + " on the long edges.",
+                        Insets.of(safeInsets(cutout)),
+                        equalTo(expected));
             }
         });
     }
 
     @Test
-    public void testDisplayCutout_never_portrait() {
+    public void testDisplayCutout_never() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER, (a, insets, displayCutout, which) -> {
             assertThat("must not layout in cutout area in never mode", displayCutout, nullValue());
         });
     }
 
     @Test
-    public void testDisplayCutout_always_portrait() {
+    public void testDisplayCutout_always() {
         runTest(LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS, (a, insets, displayCutout, which) -> {
             if (which == ROOT) {
                 assertThat("Display.getCutout() must equal view root cutout",
@@ -196,8 +228,12 @@ public class DisplayCutoutTests {
     }
 
     private void runTest(int cutoutMode, TestDef test) {
+        runTest(cutoutMode, test, orientation);
+    }
+
+    private void runTest(int cutoutMode, TestDef test, int orientation) {
         final TestActivity activity = launchAndWait(mDisplayCutoutActivity,
-                cutoutMode);
+                cutoutMode, orientation);
 
         WindowInsets insets = getOnMainSync(activity::getRootInsets);
         WindowInsets dispatchedInsets = getOnMainSync(activity::getDispatchedInsets);
@@ -213,6 +249,7 @@ public class DisplayCutoutTests {
                 shortEdgeAsserts(activity, insets, displayCutout);
             }
             assertCutoutsAreConsistentWithInsets(activity, displayCutout);
+            assertSafeInsetsAreConsistentWithDisplayCutoutInsets(insets);
         }
         test.run(activity, insets, displayCutout, ROOT);
 
@@ -222,8 +259,22 @@ public class DisplayCutoutTests {
                 shortEdgeAsserts(activity, insets, displayCutout);
             }
             assertCutoutsAreConsistentWithInsets(activity, dispatchedDisplayCutout);
+            if (cutoutMode != LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT) {
+                assertSafeInsetsAreConsistentWithDisplayCutoutInsets(dispatchedInsets);
+            }
         }
         test.run(activity, dispatchedInsets, dispatchedDisplayCutout, DISPATCHED);
+    }
+
+    private void assertSafeInsetsAreConsistentWithDisplayCutoutInsets(WindowInsets insets) {
+        DisplayCutout cutout = insets.getDisplayCutout();
+        Insets safeInsets = Insets.of(safeInsets(cutout));
+        assertEquals("WindowInsets.getInsets(displayCutout()) must equal"
+                        + " DisplayCutout.getSafeInsets()",
+                safeInsets, insets.getInsets(Type.displayCutout()));
+        assertEquals("WindowInsets.getInsetsIgnoringVisibility(displayCutout()) must equal"
+                        + " DisplayCutout.getSafeInsets()",
+                safeInsets, insets.getInsetsIgnoringVisibility(Type.displayCutout()));
     }
 
     private void commonAsserts(TestActivity activity, DisplayCutout cutout) {
@@ -302,16 +353,15 @@ public class DisplayCutoutTests {
 
     private void assertOnlyShortEdgeHasInsets(TestActivity activity,
             DisplayCutout displayCutout) {
-        final Point displaySize = new Point();
-        runOnMainSync(() -> activity.getDecorView().getDisplay().getRealSize(displaySize));
-        if (displaySize.y > displaySize.x) {
+        final Rect appBounds = getAppBounds(activity);
+        if (appBounds.height() > appBounds.width()) {
             // Portrait display
             assertThat("left edge has a cutout despite being long edge",
                     displayCutout.getSafeInsetLeft(), is(0));
             assertThat("right edge has a cutout despite being long edge",
                     displayCutout.getSafeInsetRight(), is(0));
         }
-        if (displaySize.y < displaySize.x) {
+        if (appBounds.height() < appBounds.width()) {
             // Landscape display
             assertThat("top edge has a cutout despite being long edge",
                     displayCutout.getSafeInsetTop(), is(0));
@@ -321,10 +371,8 @@ public class DisplayCutoutTests {
     }
 
     private void assertOnlyShortEdgeHasBounds(TestActivity activity, DisplayCutout cutout) {
-        final Point displaySize = new Point();
-        runOnMainSync(() -> activity.getDecorView().getDisplay().getRealSize(displaySize));
         final Rect appBounds = getAppBounds(activity);
-        if (displaySize.y > displaySize.x) {
+        if (appBounds.height() > appBounds.width()) {
             // Portrait display
             assertThat("left edge has a cutout despite being long edge",
                     hasBound(LEFT, cutout, appBounds), is(false));
@@ -332,7 +380,7 @@ public class DisplayCutoutTests {
             assertThat("right edge has a cutout despite being long edge",
                     hasBound(RIGHT, cutout, appBounds), is(false));
         }
-        if (displaySize.y < displaySize.x) {
+        if (appBounds.height() < appBounds.width()) {
             // Landscape display
             assertThat("top edge has a cutout despite being long edge",
                     hasBound(TOP, cutout, appBounds), is(false));
@@ -409,18 +457,6 @@ public class DisplayCutoutTests {
         };
     }
 
-    private static Matcher<Rect> onlyHasShortEdgeInsetsAndEqualsTo(Rect expect) {
-        return new CustomTypeSafeMatcher<Rect>(
-                "must be 0 on long edge insets and equal on short edge insets to "
-                        + expect) {
-            @Override
-            protected boolean matchesSafely(Rect actual) {
-                return actual != null && actual.left == 0 && actual.top == expect.top
-                        && actual.right == 0 && actual.bottom == expect.bottom;
-            }
-        };
-    }
-
     private static Matcher<Rect> intersectsWith(Rect safeRect) {
         return new CustomTypeSafeMatcher<Rect>("intersects with " + safeRect) {
             @Override
@@ -455,16 +491,27 @@ public class DisplayCutoutTests {
         getInstrumentation().runOnMainSync(runnable);
     }
 
-    private <T extends Activity> T launchAndWait(ActivityTestRule<T> rule, int cutoutMode) {
+    private <T extends TestActivity> T launchAndWait(ActivityTestRule<T> rule, int cutoutMode,
+            int orientation) {
         final T activity = rule.launchActivity(
-                new Intent().putExtra(EXTRA_CUTOUT_MODE, cutoutMode));
+                new Intent().putExtra(EXTRA_CUTOUT_MODE, cutoutMode)
+                        .putExtra(EXTRA_ORIENTATION, orientation));
         PollingCheck.waitFor(activity::hasWindowFocus);
+        PollingCheck.waitFor(() -> {
+            final Rect appBounds = getAppBounds(activity);
+            final Point displaySize = new Point();
+            activity.getDisplay().getRealSize(displaySize);
+            // During app launch into a different rotation, we have temporarily have the display
+            // in a different rotation than the app itself. Wait for this to settle.
+            return (appBounds.width() > appBounds.height()) == (displaySize.x > displaySize.y);
+        });
         return activity;
     }
 
     public static class TestActivity extends Activity {
 
         static final String EXTRA_CUTOUT_MODE = "extra.cutout_mode";
+        static final String EXTRA_ORIENTATION = "extra.orientation";
         private WindowInsets mDispatchedInsets;
 
         @Override
@@ -474,6 +521,8 @@ public class DisplayCutoutTests {
             if (getIntent() != null) {
                 getWindow().getAttributes().layoutInDisplayCutoutMode = getIntent().getIntExtra(
                         EXTRA_CUTOUT_MODE, LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT);
+                setRequestedOrientation(getIntent().getIntExtra(
+                        EXTRA_ORIENTATION, SCREEN_ORIENTATION_UNSPECIFIED));
             }
             View view = new View(this);
             view.setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
