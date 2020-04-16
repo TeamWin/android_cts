@@ -21,6 +21,7 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.NFC_PREFERRED_PAYMENT_INFO" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <application>
         <uses-library android:name="android.test.runner"/>
 
