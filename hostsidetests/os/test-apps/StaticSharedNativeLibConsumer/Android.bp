@@ -38,6 +38,7 @@ cc_test_library {
         "-Werror",
     ],
     srcs: ["**/*.cpp"],
+    header_libs: ["jni_headers"],
     shared_libs: [
         "liblog",
         "libstaticsharednativelibprovider",

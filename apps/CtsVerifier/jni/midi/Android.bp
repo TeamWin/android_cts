@@ -25,6 +25,7 @@ cc_test_library {
         "frameworks/av/media/ndk/include",
         "system/core/include/cutils",
     ],
+    header_libs: ["jni_headers"],
     sdk_version: "current",
     //stl: "c++_static"
     stl: "system",
