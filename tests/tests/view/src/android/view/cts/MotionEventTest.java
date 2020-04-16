@@ -72,6 +72,12 @@ public class MotionEventTest {
     private static final float DELTA               = 0.01f;
     private static final float RAW_COORD_TOLERANCE = 0.001f;
 
+    private static native void nativeMotionEventTest(MotionEvent event);
+
+    static {
+        System.loadLibrary("ctsview_jni");
+    }
+
     @Before
     public void setup() {
         mDownTime = SystemClock.uptimeMillis();
@@ -979,5 +985,12 @@ public class MotionEventTest {
     public void testGetClassification() {
         assertEquals(MotionEvent.CLASSIFICATION_NONE, mMotionEvent1.getClassification());
         assertEquals(MotionEvent.CLASSIFICATION_NONE, mMotionEvent2.getClassification());
+    }
+
+    @Test
+    public void testNativeConverter() {
+        final MotionEvent event = MotionEvent.obtain(mDownTime, mEventTime,
+                MotionEvent.ACTION_MOVE, X_3F, Y_4F, META_STATE);
+        nativeMotionEventTest(event);
     }
 }

@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
+import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 
@@ -152,6 +154,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             notExpectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeInvisible(TIMEOUT);
 
             assertTrue("isActive() must return true if the View has IME focus",
                     getOnMainSync(() -> imm.isActive(editText)));
@@ -164,6 +167,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
             expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                     View.VISIBLE, TIMEOUT);
+            expectImeVisible(TIMEOUT);
 
             // Test hideSoftInputFromWindow() flow
             assertTrue("hideSoftInputFromWindow must success if the View has IME focus",
@@ -173,6 +177,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
             expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                     View.GONE, TIMEOUT);
+            expectImeInvisible(TIMEOUT);
         }
     }
 
@@ -195,6 +200,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
             expectEvent(stream, editorMatcher("onStartInput", focusedMarker), TIMEOUT);
 
+            expectImeInvisible(TIMEOUT);
             assertFalse("isActive() must return false if the View does not have IME focus",
                     getOnMainSync(() -> imm.isActive(nonFocusedEditText)));
             assertFalse("showSoftInput must fail if the View does not have IME focus",
@@ -205,6 +211,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     getOnMainSync(() -> imm.hideSoftInputFromWindow(
                             nonFocusedEditText.getWindowToken(), 0)));
             notExpectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
+            expectImeInvisible(TIMEOUT);
         }
     }
 
@@ -224,18 +231,21 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             notExpectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeInvisible(TIMEOUT);
 
             // Test toggleSoftInputFromWindow() flow
             runOnMainSync(() -> imm.toggleSoftInputFromWindow(editText.getWindowToken(), 0, 0));
 
             expectEvent(stream.copy(), showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
             expectEvent(stream.copy(), editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeVisible(TIMEOUT);
 
             // Calling toggleSoftInputFromWindow() must hide the IME.
             runOnMainSync(() -> imm.toggleSoftInputFromWindow(editText.getWindowToken(), 0, 0));
 
             expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
             expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectImeInvisible(TIMEOUT);
         }
     }
 }

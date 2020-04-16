@@ -24,16 +24,14 @@ import android.util.Pair;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.drm.DrmInitData;
-import com.google.android.exoplayer2.extractor.ExtractorInput;
 import com.google.android.exoplayer2.extractor.SeekMap;
 import com.google.android.exoplayer2.extractor.SeekPoint;
 import com.google.android.exoplayer2.extractor.TrackOutput;
 import com.google.android.exoplayer2.testutil.FakeExtractorOutput;
-import com.google.android.exoplayer2.util.MimeTypes;
+import com.google.android.exoplayer2.upstream.DataReader;
 import com.google.android.exoplayer2.video.ColorInfo;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.ArrayList;
 
 public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer {
@@ -92,18 +90,10 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
     @Override
     public void onSampleDataFound(int trackIndex, MediaParser.InputReader inputReader)
             throws IOException {
-        try {
-            mFakeExtractorOutput
-                    .track(trackIndex, C.TRACK_TYPE_UNKNOWN)
-                    .sampleData(
-                            new ExtractorInputAdapter(inputReader),
-                            (int) inputReader.getLength(),
-                            false);
-        } catch (InterruptedException e) {
-            // TODO: Remove this exception replacement once we update the ExoPlayer
-            // version.
-            throw new InterruptedIOException();
-        }
+        mFakeExtractorOutput
+                .track(trackIndex, C.TRACK_TYPE_UNKNOWN)
+                .sampleData(
+                        new DataReaderAdapter(inputReader), (int) inputReader.getLength(), false);
     }
 
     @Override
@@ -191,55 +181,37 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
                         : 0;
 
         String language = mediaFormat.getString(MediaFormat.KEY_LANGUAGE, /* defaultValue= */ null);
+        int channels =
+                mediaFormat.getInteger(
+                        MediaFormat.KEY_CHANNEL_COUNT, /* defaultValue= */ Format.NO_VALUE);
+        int sampleRate =
+                mediaFormat.getInteger(
+                        MediaFormat.KEY_SAMPLE_RATE, /* defaultValue= */ Format.NO_VALUE);
+        int accessibilityChannel =
+                mediaFormat.getInteger(
+                        MediaFormat.KEY_CAPTION_SERVICE_NUMBER,
+                        /* defaultValue= */ Format.NO_VALUE);
 
-        // TODO: Replace this with Format.Builder once available.
-        if (MimeTypes.isVideo(sampleMimeType)) {
-            return Format.createVideoSampleFormat(
-                    id,
-                    sampleMimeType,
-                    codecs,
-                    bitrate,
-                    maxInputSize,
-                    width,
-                    height,
-                    frameRate,
-                    initData,
-                    rotationDegrees,
-                    pixelAspectRatio,
-                    /* projectionData= */ null,
-                    /* stereoMode= */ Format.NO_VALUE,
-                    colorInfo,
-                    drmInitData);
-        } else if (MimeTypes.isAudio(sampleMimeType)) {
-            int channels = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-            int sampleRate = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-            return Format.createAudioContainerFormat(
-                    id,
-                    /* label= */ null,
-                    /* containerMimeType= */ null,
-                    sampleMimeType,
-                    codecs,
-                    /* metadata= */ null,
-                    bitrate,
-                    channels,
-                    sampleRate,
-                    initData,
-                    selectionFlags,
-                    /* roleFlags= */ 0,
-                    language);
-        } else { // Application or Text.
-            return Format.createTextSampleFormat(
-                    id,
-                    sampleMimeType,
-                    codecs,
-                    bitrate,
-                    selectionFlags,
-                    language,
-                    /* accessibilityChannel= */ 0, // TODO: Add once ag/9864463 is submitted.
-                    /* drmInitData= */ drmInitData,
-                    /* subsampleOffsetUs= */ Format.OFFSET_SAMPLE_RELATIVE,
-                    initData);
-        }
+        return new Format.Builder()
+                .setId(id)
+                .setSampleMimeType(sampleMimeType)
+                .setCodecs(codecs)
+                .setPeakBitrate(bitrate)
+                .setMaxInputSize(maxInputSize)
+                .setWidth(width)
+                .setHeight(height)
+                .setFrameRate(frameRate)
+                .setInitializationData(initData)
+                .setRotationDegrees(rotationDegrees)
+                .setPixelWidthHeightRatio(pixelAspectRatio)
+                .setColorInfo(colorInfo)
+                .setDrmInitData(drmInitData)
+                .setChannelCount(channels)
+                .setSampleRate(sampleRate)
+                .setSelectionFlags(selectionFlags)
+                .setLanguage(language)
+                .setAccessibilityChannel(accessibilityChannel)
+                .build();
     }
 
     private static DrmInitData getExoPlayerDrmInitData(android.media.DrmInitData drmInitData) {
@@ -321,100 +293,17 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
 
     // Internal classes.
 
-    private class ExtractorInputAdapter implements ExtractorInput {
+    private static class DataReaderAdapter implements DataReader {
 
         private final MediaParser.InputReader mInputReader;
 
-        private ExtractorInputAdapter(MediaParser.InputReader inputReader) {
+        private DataReaderAdapter(MediaParser.InputReader inputReader) {
             mInputReader = inputReader;
         }
 
         @Override
-        public int read(byte[] target, int offset, int length)
-                throws IOException, InterruptedException {
+        public int read(byte[] target, int offset, int length) throws IOException {
             return mInputReader.read(target, offset, length);
-        }
-
-        @Override
-        public boolean readFully(byte[] target, int offset, int length, boolean allowEndOfInput)
-                throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void readFully(byte[] target, int offset, int length)
-                throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int skip(int length) throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean skipFully(int length, boolean allowEndOfInput)
-                throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void skipFully(int length) throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int peek(byte[] target, int offset, int length)
-                throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean peekFully(byte[] target, int offset, int length, boolean allowEndOfInput)
-                throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void peekFully(byte[] target, int offset, int length)
-                throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean advancePeekPosition(int length, boolean allowEndOfInput)
-                throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void advancePeekPosition(int length) throws IOException, InterruptedException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void resetPeekPosition() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public long getPeekPosition() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public long getPosition() {
-            return mInputReader.getPosition();
-        }
-
-        @Override
-        public long getLength() {
-            return mInputReader.getLength();
-        }
-
-        @Override
-        public <E extends Throwable> void setRetryPosition(long position, E e) throws E {
-            throw new UnsupportedOperationException();
         }
     }
 }
