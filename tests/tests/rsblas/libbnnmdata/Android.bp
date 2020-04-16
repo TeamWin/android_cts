@@ -22,4 +22,5 @@ cc_library_shared {
         "-Werror",
         "-Wno-unused-const-variable",
     ],
+    header_libs: ["jni_headers"]
 }
