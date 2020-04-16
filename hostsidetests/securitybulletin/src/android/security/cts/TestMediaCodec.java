@@ -87,6 +87,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/35430570
      * Vulnerability Behaviour: SIGSEGV in self
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2017-11")
     public void testPocCVE_2017_0851() throws Exception {
         String inputFiles[] = {"cve_2017_0851.hevc"};
@@ -163,6 +164,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/62896384
      * Vulnerability Behaviour: SIGSEGV in self
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2017-11")
     public void testPocCVE_2017_0833() throws Exception {
         String inputFiles[] = {"cve_2017_0833.h264"};
@@ -191,6 +193,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/38328132
      * Vulnerability Behaviour: SIGSEGV in self
      */
+    @Test
     @SecurityTest(minPatchLevel = "2017-12")
     public void testPocCVE_2017_13150() throws Exception {
         String inputFiles[] = {"cve_2017_13150.m2v"};
@@ -202,6 +205,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/64550583
      * Vulnerability Behaviour: SIGSEGV in self
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2018-01")
     public void testPocCVE_2017_13205() throws Exception {
         String inputFiles[] = {"cve_2017_13205.m2v"};
@@ -251,6 +255,7 @@ public class TestMediaCodec extends SecurityTestCase {
      * b/62887820
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2017-11")
     public void testPocCVE_2017_0832() throws Exception {
         String inputFiles[] = {"cve_2017_0832.m2v"};
