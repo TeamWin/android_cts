@@ -28,7 +28,9 @@ public class ProximityPendingIntentCapture extends BroadcastCapture {
 
         mLocationManager = context.getSystemService(LocationManager.class);
         mPendingIntent = PendingIntent.getBroadcast(context, sRequestCode.getAndIncrement(),
-                new Intent(ACTION).setPackage(context.getPackageName()),
+                new Intent(ACTION)
+                        .setPackage(context.getPackageName())
+                        .addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
                 PendingIntent.FLAG_CANCEL_CURRENT);
         mProximityChanges = new LinkedBlockingQueue<>();
 

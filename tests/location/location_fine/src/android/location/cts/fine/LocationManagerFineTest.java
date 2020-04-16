@@ -54,7 +54,6 @@ import android.location.cts.common.BroadcastCapture;
 import android.location.cts.common.GetCurrentLocationCapture;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
-import android.location.cts.common.ProximityPendingIntentCapture;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.HandlerThread;
@@ -77,10 +76,9 @@ import org.junit.runner.RunWith;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class LocationManagerFineTest {
@@ -106,9 +104,7 @@ public class LocationManagerFineTest {
 
         mRandom = new Random(seed);
         mContext = ApplicationProvider.getApplicationContext();
-        mManager = mContext.getSystemService(LocationManager.class);
-
-        assertThat(mManager).isNotNull();
+        mManager = Objects.requireNonNull(mContext.getSystemService(LocationManager.class));
 
         for (String provider : mManager.getAllProviders()) {
             mManager.removeTestProvider(provider);
@@ -129,8 +125,10 @@ public class LocationManagerFineTest {
 
     @After
     public void tearDown() throws Exception {
-        for (String provider : mManager.getAllProviders()) {
-            mManager.removeTestProvider(provider);
+        if (mManager != null) {
+            for (String provider : mManager.getAllProviders()) {
+                mManager.removeTestProvider(provider);
+            }
         }
 
         LocationUtils.registerMockLocationProvider(InstrumentationRegistry.getInstrumentation(),
@@ -427,7 +425,7 @@ public class LocationManagerFineTest {
                 true,
                 Criteria.POWER_LOW,
                 Criteria.ACCURACY_FINE);
-        setTestProviderEnabled(FUSED_PROVIDER, true);
+        mManager.setTestProviderEnabled(FUSED_PROVIDER, true);
 
         Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
@@ -571,7 +569,7 @@ public class LocationManagerFineTest {
                 true,
                 Criteria.POWER_LOW,
                 Criteria.ACCURACY_COARSE);
-        setTestProviderEnabled(NETWORK_PROVIDER, true);
+        mManager.setTestProviderEnabled(NETWORK_PROVIDER, true);
         mManager.setTestProviderLocation(NETWORK_PROVIDER, networkLocation);
 
         // reset gps provider to give it a cold start scenario
@@ -668,7 +666,7 @@ public class LocationManagerFineTest {
         providers = mManager.getProviders(true);
         assertThat(providers.contains(TEST_PROVIDER)).isTrue();
 
-        setTestProviderEnabled(TEST_PROVIDER, false);
+        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
 
         providers = mManager.getProviders(false);
         assertThat(providers.contains(TEST_PROVIDER)).isTrue();
@@ -727,7 +725,7 @@ public class LocationManagerFineTest {
         criteria.setPowerRequirement(Criteria.POWER_LOW);
         assertThat(mManager.getBestProvider(criteria, false)).isEqualTo(TEST_PROVIDER);
 
-        setTestProviderEnabled(TEST_PROVIDER, false);
+        mManager.setTestProviderEnabled(TEST_PROVIDER, false);
         assertThat(mManager.getBestProvider(criteria, true)).isNotEqualTo(TEST_PROVIDER);
     }
 
@@ -882,7 +880,7 @@ public class LocationManagerFineTest {
                     assertThat(received.isFromMockProvider()).isTrue();
                     assertThat(mManager.getLastKnownLocation(provider)).isEqualTo(loc1);
 
-                    setTestProviderEnabled(provider, false);
+                    mManager.setTestProviderEnabled(provider, false);
                     mManager.setTestProviderLocation(provider, loc2);
                     assertThat(mManager.getLastKnownLocation(provider)).isNull();
                     assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
@@ -976,130 +974,6 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    public void testAddProximityAlert() throws Exception {
-        if (isNotSystemUser()) {
-            Log.i(TAG, "Skipping test on secondary user");
-            return;
-        }
-
-        mManager.addTestProvider(FUSED_PROVIDER,
-                true,
-                false,
-                true,
-                false,
-                false,
-                false,
-                false,
-                Criteria.POWER_MEDIUM,
-                Criteria.ACCURACY_FINE);
-        setTestProviderEnabled(FUSED_PROVIDER, true);
-        mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 30, 30, 10));
-
-        try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
-            mManager.addProximityAlert(0, 0, 1000, -1, capture.getPendingIntent());
-
-            // adding a proximity alert is asynchronous for no good reason, so we have to wait and
-            // hope the alert is added in the mean time.
-            Thread.sleep(500);
-
-            mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0, 10));
-            assertThat(capture.getNextProximityChange(TIMEOUT_MS)).isEqualTo(Boolean.TRUE);
-
-            mManager.setTestProviderLocation(FUSED_PROVIDER,
-                    createLocation(FUSED_PROVIDER, 30, 30, 10));
-            assertThat(capture.getNextProximityChange(TIMEOUT_MS)).isEqualTo(Boolean.FALSE);
-        }
-
-        try {
-            mManager.addProximityAlert(0, 0, 1000, -1, null);
-            fail("Should throw IllegalArgumentException if pending intent is null!");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
-
-        try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
-            try {
-                mManager.addProximityAlert(0, 0, 0, -1, capture.getPendingIntent());
-                fail("Should throw IllegalArgumentException if radius == 0!");
-            } catch (IllegalArgumentException e) {
-                // expected
-            }
-
-            try {
-                mManager.addProximityAlert(0, 0, -1, -1, capture.getPendingIntent());
-                fail("Should throw IllegalArgumentException if radius < 0!");
-            } catch (IllegalArgumentException e) {
-                // expected
-            }
-
-            try {
-                mManager.addProximityAlert(1000, 1000, 1000, -1, capture.getPendingIntent());
-                fail("Should throw IllegalArgumentException if lat/lon are illegal!");
-            } catch (IllegalArgumentException e) {
-                // expected
-            }
-        }
-    }
-
-    @Test
-    public void testAddProximityAlert_StartProximate() throws Exception {
-        if (isNotSystemUser()) {
-            Log.i(TAG, "Skipping test on secondary user");
-            return;
-        }
-
-        mManager.addTestProvider(FUSED_PROVIDER,
-                true,
-                false,
-                true,
-                false,
-                false,
-                false,
-                false,
-                Criteria.POWER_MEDIUM,
-                Criteria.ACCURACY_FINE);
-        setTestProviderEnabled(FUSED_PROVIDER, true);
-        mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0, 10));
-
-        try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
-            mManager.addProximityAlert(0, 0, 1000, -1, capture.getPendingIntent());
-            assertThat(capture.getNextProximityChange(TIMEOUT_MS)).isEqualTo(Boolean.TRUE);
-        }
-    }
-
-    @Test
-    public void testAddProximityAlert_Expires() throws Exception {
-        if (isNotSystemUser()) {
-            Log.i(TAG, "Skipping test on secondary user");
-            return;
-        }
-
-        mManager.addTestProvider(FUSED_PROVIDER,
-                true,
-                false,
-                true,
-                false,
-                false,
-                false,
-                false,
-                Criteria.POWER_MEDIUM,
-                Criteria.ACCURACY_FINE);
-        setTestProviderEnabled(FUSED_PROVIDER, true);
-        mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 30, 30, 10));
-
-        try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
-            mManager.addProximityAlert(0, 0, 1000, 1, capture.getPendingIntent());
-
-            // adding a proximity alert is asynchronous for no good reason, so we have to wait and
-            // hope the alert is added in the mean time.
-            Thread.sleep(500);
-
-            mManager.setTestProviderLocation(FUSED_PROVIDER, createLocation(FUSED_PROVIDER, 0, 0, 10));
-            assertThat(capture.getNextProximityChange(FAILURE_TIMEOUT_MS)).isNull();
-        }
-    }
-
-    @Test
     public void testGetGnssYearOfHardware() {
         mManager.getGnssYearOfHardware();
     }
@@ -1164,34 +1038,5 @@ public class LocationManagerFineTest {
     private boolean hasGpsFeature() {
         return mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_LOCATION_GPS);
-    }
-
-    private boolean isNotSystemUser() {
-        return !mContext.getSystemService(UserManager.class).isSystemUser();
-    }
-
-    private void setTestProviderEnabled(String provider, boolean enabled) throws InterruptedException {
-        // prior to R, setTestProviderEnabled is asynchronous, so we have to wait for provider
-        // state to settle.
-        if (VERSION.SDK_INT <= VERSION_CODES.Q) {
-            CountDownLatch latch = new CountDownLatch(1);
-            BroadcastReceiver receiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    latch.countDown();
-                }
-            };
-            mContext.registerReceiver(receiver,
-                    new IntentFilter(PROVIDERS_CHANGED_ACTION));
-            mManager.setTestProviderEnabled(provider, enabled);
-
-            // it's ok if this times out, as we don't notify for noop changes
-            if (!latch.await(500, TimeUnit.MILLISECONDS)) {
-                Log.i(TAG, "timeout while waiting for provider enabled change");
-            }
-            mContext.unregisterReceiver(receiver);
-        } else {
-            mManager.setTestProviderEnabled(provider, enabled);
-        }
     }
 }
