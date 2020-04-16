@@ -16,18 +16,9 @@
   -->
 
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Keep shortcutId in sync with BUBBLE_SHORTCUT_ID_MANIFEST
-         in NotificationManagerTest.java. -->
-    <shortcut
-        android:shortcutId="bubbleShortcutIdManifest"
-        android:enabled="true"
-        android:icon="@drawable/icon_black"
-        android:shortcutShortLabel="@string/bubble_shortcut_label">
-        <intent
-            android:action="android.intent.action.VIEW"
-            android:targetPackage="android.app.stubs"
-            android:targetClass="android.app.stubs.SendBubbleActivity" />
-        <categories android:name="android.shortcut.conversation" />
-    </shortcut>
-
+    <share-target android:targetClass="android.app.stubs.SendBubbleActivity">
+        <data android:mimeType="text/plain" />
+        <data android:mimeType="image/*" />
+        <category android:name="android.app.stubs.SHARE_SHORTCUT_CATEGORY" />
+    </share-target>
 </shortcuts>
