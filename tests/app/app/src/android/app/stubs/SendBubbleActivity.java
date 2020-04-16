@@ -35,9 +35,9 @@ import android.os.SystemClock;
 public class SendBubbleActivity extends Activity {
     final String TAG = SendBubbleActivity.class.getSimpleName();
 
-    // Should be same as wht NotificationManagerTest is using
+    // Should be same as what NotificationManagerTest is using
     private static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
-    private static final String BUBBLE_SHORTCUT_ID_DYNAMIC = "bubbleShortcutIdDynamic";
+    private static final String SHARE_SHORTCUT_ID = "shareShortcut";
 
     public static final String BUBBLE_ACTIVITY_OPENED =
             "android.app.stubs.BUBBLE_ACTIVITY_OPENED";
@@ -87,7 +87,7 @@ public class SendBubbleActivity extends Activity {
         Notification n = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.black)
                 .setContentTitle("Bubble Chat")
-                .setShortcutId(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                .setShortcutId(SHARE_SHORTCUT_ID)
                 .setStyle(new Notification.MessagingStyle(person)
                         .setConversationTitle("Bubble Chat")
                         .addMessage("Hello?",
