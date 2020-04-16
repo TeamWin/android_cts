@@ -19,7 +19,6 @@ package android.net.wifi.cts;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
-import static android.net.wifi.WifiManager.TrafficStateCallback.DATA_ACTIVITY_INOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -2239,40 +2238,28 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     /**
-     * Tests {@link WifiManager#factoryReset()}.
+     * Tests {@link WifiManager#factoryReset()} cannot be invoked from a non-privileged app.
      *
-     * Note: This test assumes that the device only has 1 or more saved networks before the test.
-     * The test will restore those when the test exits. But, it does not restore the softap
-     * configuration, suggestions, etc which will also have been lost on factory reset.
-     * TODO(b/152637504): Re-enabel this test.
+     * Note: This intentionally does not test the full reset functionality because it causes
+     * the existing saved networks on the device to be lost after the test. If you add the
+     * networks back after reset, the ownership of saved networks will change.
      */
-    public void ignoreTestFactoryReset() throws Exception {
+    public void testFactoryReset() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
         }
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        List<WifiConfiguration> savedNetworks = null;
+        List<WifiConfiguration> beforeSavedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getConfiguredNetworks);
         try {
-            uiAutomation.adoptShellPermissionIdentity();
-            // These below API's only work with privileged permissions (obtained via shell identity
-            // for test)
-            savedNetworks = mWifiManager.getPrivilegedConfiguredNetworks();
-
             mWifiManager.factoryReset();
-            // Ensure all the saved networks are removed.
-            assertEquals(0, mWifiManager.getConfiguredNetworks().size());
-        } finally {
-            // Restore the original saved networks.
-            if (savedNetworks != null) {
-                for (WifiConfiguration network : savedNetworks) {
-                    network.networkId = WifiConfiguration.INVALID_NETWORK_ID;
-                    int networkId = mWifiManager.addNetwork(network);
-                    mWifiManager.enableNetwork(networkId, false);
-                }
-            }
-            uiAutomation.dropShellPermissionIdentity();
+            fail("Factory reset should not be allowed for non-privileged apps");
+        } catch (SecurityException e) {
+            // expected
         }
+        List<WifiConfiguration> afterSavedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
+                mWifiManager::getConfiguredNetworks);
+        assertEquals(beforeSavedNetworks.size(), afterSavedNetworks.size());
     }
 
     /**
