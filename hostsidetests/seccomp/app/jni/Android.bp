@@ -20,6 +20,7 @@ cc_test_library {
         "android_seccomp_cts_app_SeccompDeviceTest.cpp",
     ],
     sdk_version: "current",
+    header_libs: ["jni_headers"],
     static_libs: ["cpufeatures"],
     cflags: [
         "-Wall",
