@@ -915,8 +915,9 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             // TODO(ntfschr): propagate these exceptions to the instrumentation thread.
             assertTrue("Expected onPageStarted to be called before onPageFinished",
                     mOnPageStartedCalled);
-            assertTrue("Expected onLoadResource to be called before onPageFinished",
-                    mOnLoadResourceCalled);
+            assertTrue(
+                    "Expected onLoadResource or onReceivedError to be called before onPageFinished",
+                    mOnLoadResourceCalled || mOnReceivedResourceError != null);
             mOnPageFinishedCalled = true;
         }
 
