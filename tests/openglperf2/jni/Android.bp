@@ -29,6 +29,8 @@ cc_library_shared {
     // Get all cpp files but not hidden files
     srcs: ["**/*.cpp"],
 
+    header_libs: ["jni_headers"],
+
     shared_libs: [
         "libEGL",
         "libGLESv2",
