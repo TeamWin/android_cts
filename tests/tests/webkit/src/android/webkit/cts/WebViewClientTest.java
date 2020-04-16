@@ -781,7 +781,9 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
             assertTrue(mOnPageStartedCalled);
-            assertTrue(mOnLoadResourceCalled);
+            assertTrue(
+                    "Expected onLoadResource or onReceivedError to be called before onPageFinished",
+                    mOnLoadResourceCalled || mOnReceivedResourceError != null);
             mOnPageFinishedCalled = true;
         }
 
