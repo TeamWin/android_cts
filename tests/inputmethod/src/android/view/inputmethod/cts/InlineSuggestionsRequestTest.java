@@ -108,14 +108,17 @@ public class InlineSuggestionsRequestTest {
     @Test
     public void testInlineSuggestionsRequestValues() {
         final int suggestionCount = 3;
-        ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
-        LocaleList localeList = LocaleList.forLanguageTags("fa-IR");
-        Bundle extra = new Bundle();
+        final LocaleList localeList = LocaleList.forLanguageTags("fa-IR");
+        final Bundle extra = new Bundle();
         extra.putString("key", "value");
-        Bundle style = new Bundle();
+        final Bundle style = new Bundle();
         style.putString("style", "value");
-        InlineSuggestionsRequest request =
-                new InlineSuggestionsRequest.Builder(presentationSpecs)
+        final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
+        presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
+                new Size(400, 100)).setStyle(style).build());
+        final InlineSuggestionsRequest request =
+                new InlineSuggestionsRequest.Builder(new ArrayList<InlinePresentationSpec>())
+                        .setInlinePresentationSpecs(presentationSpecs)
                         .addInlinePresentationSpecs(
                                 new InlinePresentationSpec.Builder(new Size(100, 100),
                                         new Size(400, 100)).setStyle(style).build())
@@ -125,7 +128,7 @@ public class InlineSuggestionsRequestTest {
 
         assertThat(request.getMaxSuggestionCount()).isEqualTo(suggestionCount);
         assertThat(request.getInlinePresentationSpecs()).isNotNull();
-        assertThat(request.getInlinePresentationSpecs().size()).isEqualTo(1);
+        assertThat(request.getInlinePresentationSpecs().size()).isEqualTo(2);
         assertThat(request.getInlinePresentationSpecs().get(0).getStyle()).isEqualTo(style);
         assertThat(request.getExtras()).isEqualTo(extra);
         assertThat(request.getSupportedLocales()).isEqualTo(localeList);
