@@ -499,7 +499,7 @@ class AppOpsLoggingTest {
 
             assertThat(asyncNoted[0].message).contains(locationListener::class.java.name)
             assertThat(asyncNoted[0].message).contains(
-                Integer.toHexString(System.identityHashCode(locationListener)))
+                Integer.toString(System.identityHashCode(locationListener)))
         }
     }
 
@@ -540,12 +540,7 @@ class AppOpsLoggingTest {
                 eventually {
                     assertThat(asyncNoted.map { it.op }).contains(OPSTR_FINE_LOCATION)
                     assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
-
-                    assertThat(asyncNoted[0].message).contains(
-                        proximityAlertReceiverPendingIntent::class.java.name)
-                    assertThat(asyncNoted[0].message).contains(
-                        Integer.toHexString(
-                            System.identityHashCode(proximityAlertReceiverPendingIntent)))
+                    assertThat(asyncNoted[0].message).contains(PROXIMITY_ALERT_ACTION)
                 }
             } finally {
                 locationManager.removeProximityAlert(proximityAlertReceiverPendingIntent)
