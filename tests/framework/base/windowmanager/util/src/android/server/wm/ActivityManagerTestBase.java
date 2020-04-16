@@ -949,6 +949,11 @@ public abstract class ActivityManagerTestBase {
                 || PRETEND_DEVICE_SUPPORTS_FREEFORM;
     }
 
+    /** Whether or not the device supports lock screen. */
+    protected boolean supportsLockScreen() {
+        return supportsInsecureLock() || supportsSecureLock();
+    }
+
     /** Whether or not the device supports pin/pattern/password lock. */
     protected boolean supportsSecureLock() {
         return hasDeviceFeature(FEATURE_SECURE_LOCK_SCREEN);
