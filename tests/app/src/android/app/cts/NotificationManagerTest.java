@@ -107,6 +107,7 @@ import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.service.notification.ZenPolicy;
 import android.test.AndroidTestCase;
+import android.util.ArraySet;
 import android.util.Log;
 import android.widget.RemoteViews;
 
@@ -128,6 +129,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -144,7 +146,9 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final String REVOKE_CLASS = DELEGATOR + ".NotificationRevoker";
     private static final long SHORT_WAIT_TIME = 100;
     private static final long MAX_WAIT_TIME = 2000;
-    private static final String BUBBLE_SHORTCUT_ID_DYNAMIC = "bubbleShortcutIdDynamic";
+    private static final String SHARE_SHORTCUT_ID = "shareShortcut";
+    private static final String SHARE_SHORTCUT_CATEGORY =
+            "android.app.stubs.SHARE_SHORTCUT_CATEGORY";
 
     private PackageManager mPackageManager;
     private AudioManager mAudioManager;
@@ -708,18 +712,31 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(expectedState, mNotificationManager.getCurrentInterruptionFilter());
     }
 
-    /** Creates a dynamic, longlived shortcut. Ensure to call {@link #deleteShortcuts()} after. */
+    /** Creates a dynamic, longlived, sharing shortcut. Call {@link #deleteShortcuts()} after. */
     private void createDynamicShortcut() {
-        ShortcutManager scManager =
-                (ShortcutManager) mContext.getSystemService(Context.SHORTCUT_SERVICE);
+        Person person = new Person.Builder()
+                .setBot(false)
+                .setIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
+                .setName("BubbleBot")
+                .setImportant(true)
+                .build();
+
+        Set<String> categorySet = new ArraySet<>();
+        categorySet.add(SHARE_SHORTCUT_CATEGORY);
         Intent shortcutIntent = new Intent(mContext, SendBubbleActivity.class);
         shortcutIntent.setAction(Intent.ACTION_VIEW);
-        ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, BUBBLE_SHORTCUT_ID_DYNAMIC)
-                .setShortLabel(BUBBLE_SHORTCUT_ID_DYNAMIC)
+
+        ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, SHARE_SHORTCUT_ID)
+                .setShortLabel(SHARE_SHORTCUT_ID)
                 .setIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
                 .setIntent(shortcutIntent)
+                .setPerson(person)
+                .setCategories(categorySet)
                 .setLongLived(true)
                 .build();
+
+        ShortcutManager scManager =
+                (ShortcutManager) mContext.getSystemService(Context.SHORTCUT_SERVICE);
         scManager.addDynamicShortcuts(Arrays.asList(shortcut));
     }
 
@@ -739,7 +756,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 .build();
         Notification.Builder nb = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("foo")
-                .setShortcutId(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                .setShortcutId(SHARE_SHORTCUT_ID)
                 .setStyle(new Notification.MessagingStyle(person)
                         .setConversationTitle("Bubble Chat")
                         .addMessage("Hello?",
@@ -2988,7 +3005,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             Notification.Builder nb = getConversationNotification();
             Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
                             .build();
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
@@ -3033,7 +3050,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             createDynamicShortcut();
 
             Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
                             .build();
 
             sendAndVerifyBubble(1, null /* use default notif builder */, data,
@@ -3053,7 +3070,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesAppPref(1 /* all */);
             createDynamicShortcut();
             Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
                             .build();
             Notification.Builder nb = getConversationNotification();
 
@@ -3074,7 +3091,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesAppPref(1 /* all */);
             createDynamicShortcut();
             Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
                             .build();
             Notification.Builder nb = getConversationNotification();
 
@@ -3095,7 +3112,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesChannelAllowed(false);
             createDynamicShortcut();
             Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
                             .build();
             Notification.Builder nb = getConversationNotification();
 
@@ -3116,7 +3133,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesChannelAllowed(true);
             createDynamicShortcut();
             Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
                             .build();
             Notification.Builder nb = getConversationNotification();
 
@@ -3138,7 +3155,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesChannelAllowed(false);
             createDynamicShortcut();
             Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
                             .build();
             Notification.Builder nb = getConversationNotification();
 
@@ -3160,7 +3177,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesAppPref(1 /* all */);
             createDynamicShortcut();
             Notification.BubbleMetadata data =
-                    new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID_DYNAMIC)
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
                             .build();
             Notification.Builder nb = getConversationNotification();
 

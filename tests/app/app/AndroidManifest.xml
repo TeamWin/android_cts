@@ -399,14 +399,11 @@
 
         <activity android:name="android.app.stubs.SendBubbleActivity"
                   android:turnScreenOn="true">
-            <!-- for testing shortcut based bubbles. -->
-            <meta-data android:name="android.app.shortcuts"
-                       android:resource="@xml/shortcuts" />
-            <!-- needs action launcher to be able to have xml shortcuts. -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.SEND" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
 
@@ -426,6 +423,9 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <meta-data android:name="android.app.shortcuts"
+                       android:resource="@xml/shortcuts" />
         </activity>
 
     </application>
