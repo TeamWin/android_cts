@@ -121,8 +121,7 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testBaseApkAdbUninstall() throws Exception {
-        assertTrue(
-                installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(installWithAdbInstaller(TEST_APP_BASE_APK_NAME));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
@@ -137,7 +136,7 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         // Create a copy of original apk but not its idsig.
         copyTestFile(TEST_APP_BASE_APK_NAME, newApkName);
         String output = installWithAdbInstaller(newApkName);
-        assertFalse(output.contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandFailure(output);
         assertTrue(output.contains(String.format("Failed to stat signature file %s",
                 getFilePathFromBuildInfo(newApkName) + SIG_SUFFIX)));
 
@@ -160,14 +159,14 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
             raf.seek(byteToContaminate);
             raf.writeByte((byte) (~raf.readByte()));
         }
-        assertFalse(installWithAdbInstaller(newApkName).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandFailure(installWithAdbInstaller(newApkName));
         verifyPackageNotInstalled(TEST_APP_PACKAGE_NAME);
     }
 
     @Test
     public void testDynamicAssetMultiSplitAdbInstall() throws Exception {
-        assertTrue(installWithAdbInstaller(TEST_APP_BASE_APK_NAME,
-                TEST_APP_DYNAMIC_ASSET_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(
+                installWithAdbInstaller(TEST_APP_BASE_APK_NAME, TEST_APP_DYNAMIC_ASSET_NAME));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
@@ -176,8 +175,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testDynamicCodeMultiSplitAdbInstall() throws Exception {
-        assertTrue(installWithAdbInstaller(TEST_APP_BASE_APK_NAME,
-                TEST_APP_DYNAMIC_CODE_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(
+                installWithAdbInstaller(TEST_APP_BASE_APK_NAME, TEST_APP_DYNAMIC_CODE_NAME));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
@@ -188,8 +187,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     public void testCompressedNativeLibMultiSplitAdbInstall() throws Exception {
         assertTrue(checkNativeLibInApkCompression(TEST_APP_COMPRESSED_NATIVE_NAME,
                 "libcompressednativeincrementaltest.so", true));
-        assertTrue(installWithAdbInstaller(TEST_APP_BASE_APK_NAME,
-                TEST_APP_COMPRESSED_NATIVE_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(
+                installWithAdbInstaller(TEST_APP_BASE_APK_NAME, TEST_APP_COMPRESSED_NATIVE_NAME));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
@@ -200,8 +199,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     public void testUncompressedNativeLibMultiSplitAdbInstall() throws Exception {
         assertTrue(checkNativeLibInApkCompression(TEST_APP_COMPRESSED_NATIVE_NAME,
                 "libuncompressednativeincrementaltest.so", false));
-        assertTrue(installWithAdbInstaller(TEST_APP_BASE_APK_NAME,
-                TEST_APP_UNCOMPRESSED_NATIVE_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(
+                installWithAdbInstaller(TEST_APP_BASE_APK_NAME, TEST_APP_UNCOMPRESSED_NATIVE_NAME));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
@@ -211,8 +210,7 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testAddSplitToExistingInstallNonIfsMigration() throws Exception {
-        assertTrue(
-                installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(installWithAdbInstaller(TEST_APP_BASE_APK_NAME));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
@@ -232,17 +230,13 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testZeroVersionUpdateAdbInstall() throws Exception {
-        assertTrue(
-                installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(installWithAdbInstaller(TEST_APP_BASE_APK_NAME));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
         // Install second implementation of app with the same version code.
-        assertTrue(
-                installWithAdbInstaller(/* shouldUpdate= */ true,
-                        TEST_APP_BASE_APK_2_V1_NAME).contains(
-                        INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(installWithAdbInstaller(TEST_APP_BASE_APK_2_V1_NAME));
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT_2);
@@ -250,17 +244,13 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testVersionUpdateAdbInstall() throws Exception {
-        assertTrue(
-                installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(installWithAdbInstaller(TEST_APP_BASE_APK_NAME));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
         // Install second implementation of app with the same version code.
-        assertTrue(
-                installWithAdbInstaller(/* shouldUpdate= */ true,
-                        TEST_APP_BASE_APK_2_V2_NAME).contains(
-                        INSTALL_SUCCESS_OUTPUT));
+        verifyInstallCommandSuccess(installWithAdbInstaller(TEST_APP_BASE_APK_2_V2_NAME));
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V2_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT_2);
@@ -387,6 +377,26 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
             }
         }
         return conformsToCompressionStatus;
+    }
+
+    private void verifyInstallCommandSuccess(String adbOutput) {
+        logInstallCommandOutput(adbOutput);
+        assertTrue(adbOutput.contains(INSTALL_SUCCESS_OUTPUT));
+    }
+
+    private void verifyInstallCommandFailure(String adbOutput) {
+        logInstallCommandOutput(adbOutput);
+        assertFalse(adbOutput.contains(INSTALL_SUCCESS_OUTPUT));
+    }
+
+    private void logInstallCommandOutput(String adbOutput) {
+        // Get calling method for logging
+        StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
+        StackTraceElement e = stacktrace[3]; //test method
+        String methodName = e.getMethodName();
+        LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO,
+                String.format("CtsIncrementalInstallHostTestCases#%s: adb install output: %s",
+                        methodName, adbOutput));
     }
 
     private boolean hasIncrementalFeature() throws Exception {
