@@ -20,6 +20,7 @@ cc_test_library {
         "-Wall",
         "-Werror",
     ],
+    header_libs: ["jni_headers"],
     shared_libs: ["libandroid"],
     sdk_version: "current",
 

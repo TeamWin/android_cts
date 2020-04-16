@@ -19,6 +19,7 @@ cc_test_library {
         "android_drm_cts_NativeCodeTest.cpp",
     ],
     gtest: false,
+    header_libs: ["jni_headers"],
     shared_libs: [
         "liblog",
         "libdl",
