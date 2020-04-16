@@ -640,6 +640,26 @@ public class SmsManagerTest {
         assertNotNull(getSmsManager());
     }
 
+    @Test
+    public void testGetSmscAddress() {
+        try {
+            getSmsManager().getSmscAddress();
+            fail("SmsManager.getSmscAddress() should throw a SecurityException");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testSetSmscAddress() {
+        try {
+            getSmsManager().setSmscAddress("fake smsc");
+            fail("SmsManager.setSmscAddress() should throw a SecurityException");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
     protected ArrayList<String> divideMessage(String text) {
         return getSmsManager().divideMessage(text);
     }
