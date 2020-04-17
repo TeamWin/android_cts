@@ -76,7 +76,7 @@ public final class InputMethodVisibilityVerifier {
         if (condition.test(uiAutomation)) {
             return true;
         }
-        while ((SystemClock.elapsedRealtime() - startTime) > timeout) {
+        while ((SystemClock.elapsedRealtime() - startTime) < timeout) {
             SystemClock.sleep(SCREENSHOT_TIME_SLICE);
             if (condition.test(uiAutomation)) {
                 return true;
