@@ -54,6 +54,7 @@ android_test_helper_app {
         ":StagedInstallTestApexV2_AdditionalFile",
         ":StagedInstallTestApexV2_AdditionalFolder",
         ":StagedInstallTestApexV2_DifferentCertificate",
+        ":StagedInstallTestApexV2_DifferentPackageName",
         ":StagedInstallTestApexV2_NoHashtree",
         ":StagedInstallTestApexV2_WithPostInstallHook",
         ":StagedInstallTestApexV2_WithPreInstallHook",
@@ -377,6 +378,26 @@ prebuilt_apex {
         },
     },
     filename: "com.android.apex.cts.shim.v2_different_certificate.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "StagedInstallTestApexV2_DifferentPackageName",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_different_package_name.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_different_package_name.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_different_package_name.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_different_package_name.apex",
+        },
+    },
+    filename: "com.android.apex.cts.shim.v2_different_package_name.apex",
     installable: false,
 }
 
