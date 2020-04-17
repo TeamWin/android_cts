@@ -21,6 +21,8 @@ import android.media.MediaFormat;
 import android.media.MediaParser;
 import android.util.Pair;
 
+import androidx.annotation.Nullable;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.drm.DrmInitData;
@@ -164,7 +166,9 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
                         ? Format.NO_VALUE
                         : pixelAspectWidth / pixelAspectHeight;
         ColorInfo colorInfo = getExoPlayerColorInfo(mediaFormat);
-        DrmInitData drmInitData = getExoPlayerDrmInitData(trackData.drmInitData);
+        DrmInitData drmInitData =
+                getExoPlayerDrmInitData(
+                        mediaFormat.getString("crypto-mode-fourcc"), trackData.drmInitData);
 
         int selectionFlags =
                 mediaFormat.getInteger(MediaFormat.KEY_IS_AUTOSELECT, /* defaultValue= */ 0) != 0
@@ -214,9 +218,22 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
                 .build();
     }
 
-    private static DrmInitData getExoPlayerDrmInitData(android.media.DrmInitData drmInitData) {
-        // TODO: Implement once ag/10253368 is resolved.
-        return null;
+    @Nullable
+    private static DrmInitData getExoPlayerDrmInitData(
+            @Nullable String encryptionScheme, @Nullable android.media.DrmInitData drmInitData) {
+        if (drmInitData == null) {
+            return null;
+        }
+        DrmInitData.SchemeData[] schemeDatas =
+                new DrmInitData.SchemeData[drmInitData.getSchemeInitDataCount()];
+        for (int i = 0; i < schemeDatas.length; i++) {
+            android.media.DrmInitData.SchemeInitData schemeInitData =
+                    drmInitData.getSchemeInitDataAt(i);
+            schemeDatas[i] =
+                    new DrmInitData.SchemeData(
+                            schemeInitData.uuid, schemeInitData.mimeType, schemeInitData.data);
+        }
+        return new DrmInitData(encryptionScheme, schemeDatas);
     }
 
     private static ColorInfo getExoPlayerColorInfo(MediaFormat mediaFormat) {
