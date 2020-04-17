@@ -2432,6 +2432,15 @@
         <activity android:name=".notifications.BubbleActivity"
                   android:label="@string/bubble_activity_title"
                   android:resizeableActivity="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <meta-data android:name="android.app.shortcuts"
+                       android:resource="@xml/shortcuts" />
         </activity>
 
         <service android:name=".notifications.MockListener"

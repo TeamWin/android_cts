@@ -498,6 +498,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
      */
     @Test
     public void testStackFocusSwitchOnStackEmptiedInSleeping() {
+        assumeTrue(supportsLockScreen());
+
         validateStackFocusSwitchOnStackEmptied(createManagedVirtualDisplaySession(),
                 createManagedLockScreenSession());
     }
@@ -582,6 +584,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     @Test
     public void testStackFocusSwitchOnTouchEventAfterKeyguard() {
         assumeFalse(perDisplayFocusEnabled());
+        assumeTrue(supportsLockScreen());
 
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY);

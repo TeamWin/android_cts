@@ -17,6 +17,7 @@ package android.os.cts.batterysaving;
 
 import static android.provider.Settings.Global.BATTERY_SAVER_CONSTANTS;
 import static android.provider.Settings.Secure.LOCATION_MODE_OFF;
+
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
@@ -30,6 +31,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.UiModeManager;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -123,6 +125,8 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
         SettingsUtils.set(SettingsUtils.NAMESPACE_GLOBAL,
                 Settings.Global.LOCATION_IGNORE_SETTINGS_PACKAGE_WHITELIST,
                 "android.os.cts.batterysaving");
+
+        getContext().getSystemService(UiModeManager.class).disableCarMode(0);
     }
 
     @After

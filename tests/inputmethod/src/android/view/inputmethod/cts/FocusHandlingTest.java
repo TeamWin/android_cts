@@ -18,7 +18,10 @@ package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
+import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
+import static android.widget.PopupWindow.INPUT_METHOD_NEEDED;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -360,6 +363,64 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             TestUtils.waitOnMainUntil(
                     () -> TextUtils.equals(editText.getText(), "Done!"), TIMEOUT);
             instrumentation.runOnMainSync(() -> editText.setText(""));
+        }
+    }
+
+    /**
+     * Test case for Bug 152698568.
+     *
+     * <p>This test ensures that showing a non-focusable {@link PopupWindow} with
+     * {@link PopupWindow#INPUT_METHOD_NEEDED} does not affect IME visibility.</p>
+     */
+    @Test
+    public void testNonFocusablePopupWindowDoesNotAffectImeVisibility() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            // Wait until the MockIme is connected to the edit text.
+            runOnMainSync(editText::requestFocus);
+            expectBindInput(stream, Process.myPid(), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            expectImeInvisible(TIMEOUT);
+
+            // Show IME.
+            runOnMainSync(() -> editText.getContext().getSystemService(InputMethodManager.class)
+                    .showSoftInput(editText, 0));
+
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Create a non-focusable PopupWindow with INPUT_METHOD_NEEDED.
+            final PopupWindow popupWindow = TestUtils.getOnMainSync(() -> {
+                final Context context = instrumentation.getTargetContext();
+                final PopupWindow popup = new PopupWindow(context);
+                popup.setFocusable(false);
+                popup.setInputMethodMode(INPUT_METHOD_NEEDED);
+                final TextView textView = new TextView(context);
+                textView.setText("Popup");
+                popup.setContentView(textView);
+                return popup;
+            });
+
+            // Show the popup window.
+            runOnMainSync(() -> popupWindow.showAsDropDown(editText));
+            instrumentation.waitForIdleSync();
+
+            // Make sure that the IME remains to be visible.
+            expectImeVisible(TIMEOUT);
+
+            SystemClock.sleep(NOT_EXPECT_TIMEOUT);
+
+            // Make sure that the IME remains to be visible.
+            expectImeVisible(TIMEOUT);
         }
     }
 

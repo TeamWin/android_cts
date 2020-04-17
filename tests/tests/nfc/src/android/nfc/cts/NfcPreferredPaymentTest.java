@@ -20,8 +20,11 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.PackageManager;
+import android.content.ComponentName;
+import android.content.Context;
 import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.CardEmulation;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -34,14 +37,19 @@ import java.util.Arrays;
 import java.util.List;
 
 public class NfcPreferredPaymentTest {
+    private final static String mTag = "Nfc";
 
     private final static String mRouteDestination = "Host";
     private final static String mDescription = "CTS Nfc Test Service";
     private final static List<String> mAids = Arrays.asList("A000000004101011",
                                                             "A000000004101012",
                                                             "A000000004101013");
+    private static final ComponentName CtsNfcTestService =
+            new ComponentName("android.nfc.cts", "android.nfc.cts.CtsMyHostApduService");
+
     private NfcAdapter mAdapter;
     private CardEmulation mCardEmulation;
+    private Context mContext;
 
     private boolean supportsHardware() {
         final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
@@ -51,9 +59,13 @@ public class NfcPreferredPaymentTest {
     @Before
     public void setUp() throws Exception {
         assumeTrue(supportsHardware());
-        mAdapter = NfcAdapter.getDefaultAdapter(InstrumentationRegistry.getContext());
+        mContext = InstrumentationRegistry.getContext();
+        mAdapter = NfcAdapter.getDefaultAdapter(mContext);
         assertNotNull(mAdapter);
         mCardEmulation = CardEmulation.getInstance(mAdapter);
+        Settings.Secure.putString(mContext.getContentResolver(),
+                Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
+                CtsNfcTestService.flattenToString());
     }
 
     @After
@@ -65,6 +77,9 @@ public class NfcPreferredPaymentTest {
     public void testAidsForPreferredPaymentService() {
         try {
             List<String> aids = mCardEmulation.getAidsForPreferredPaymentService();
+            for (String aid :aids) {
+                Log.i(mTag, "AidsForPreferredPaymentService: " + aid);
+            }
 
             assertTrue("Retrieve incorrect preferred payment aid list", mAids.equals(aids));
         } catch (Exception e) {
@@ -78,6 +93,7 @@ public class NfcPreferredPaymentTest {
         try {
             String routeDestination =
                     mCardEmulation.getRouteDestinationForPreferredPaymentService();
+            Log.i(mTag, "RouteDestinationForPreferredPaymentService: " + routeDestination);
 
             assertTrue("Retrieve incorrect preferred payment route destination",
                     routeDestination.equals(mRouteDestination));
@@ -91,6 +107,7 @@ public class NfcPreferredPaymentTest {
     public void testDescriptionForPreferredPaymentService() {
         try {
             CharSequence description = mCardEmulation.getDescriptionForPreferredPaymentService();
+            Log.i(mTag, "DescriptionForPreferredPaymentService: " + description.toString());
 
             assertTrue("Retrieve incorrect preferred payment description",
                 description.toString().equals(mDescription.toString()));

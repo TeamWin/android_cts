@@ -8,6 +8,7 @@ cc_test_library {
         "frameworks/av/media/ndk/include",
         "system/core/include/cutils",
     ],
+    header_libs: ["jni_headers"],
     shared_libs: [
         "libaaudio",
         "liblog",

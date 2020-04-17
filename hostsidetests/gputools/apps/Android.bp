@@ -23,6 +23,7 @@ cc_test_library {
         "-Wall",
         "-Werror",
     ],
+    header_libs: ["jni_headers"],
     shared_libs: [
         "libandroid",
         "libvulkan",

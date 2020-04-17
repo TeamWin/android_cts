@@ -211,4 +211,38 @@ public class InlineAugmentedLoginActivityTest
 
         mUiBot.assertNoDatasets();
     }
+
+    @Test
+    public void testAugmentedAutoFill_startTypingThenHideInlineSuggestion() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude", createInlinePresentation("dude"))
+                        .build())
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req1")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        sAugmentedReplier.getNextFillRequest();
+
+        mUiBot.assertDatasets("dude");
+
+        // Now pretend user typing something by updating the value in the input field.
+        mActivity.onUsername((v) -> v.setText("d"));
+        mUiBot.waitForIdle();
+
+        // Expect the inline suggestion to disappear.
+        mUiBot.assertNoDatasets();
+    }
 }

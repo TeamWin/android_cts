@@ -50,7 +50,7 @@ public abstract class AbstractUserAuthenticationTest extends PassFailButtons.Act
 
     private static final String TAG = "AbstractUserAuthenticationCredentialTest";
 
-    private static final int TIMED_KEY_DURATION = 1;
+    private static final int TIMED_KEY_DURATION = 3;
     private static final byte[] PAYLOAD = new byte[] {1, 2, 3, 4, 5, 6};
 
     abstract class ExpectedResults {

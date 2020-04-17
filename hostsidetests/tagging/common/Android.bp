@@ -29,6 +29,7 @@ cc_test_library {
         "-Wall",
         "-Werror",
     ],
+    header_libs: ["jni_headers"],
     sdk_version: "current",
     gtest: false,
 }

@@ -27,6 +27,7 @@ cc_test_library {
         "-Wno-unused-parameter",
         "-DAGENT_NR=1",
     ],
+    header_libs: ["jni_headers"],
 }
 
 cc_test_library {
@@ -40,6 +41,7 @@ cc_test_library {
         "-Wno-unused-parameter",
         "-DAGENT_NR=2",
     ],
+    header_libs: ["jni_headers"],
 }
 
 cc_test_library {
@@ -53,6 +55,7 @@ cc_test_library {
         "-Wno-unused-parameter",
         "-DAGENT_NR=3",
     ],
+    header_libs: ["jni_headers"],
 }
 
 cc_test_library {
@@ -66,4 +69,5 @@ cc_test_library {
         "-Wno-unused-parameter",
         "-DAGENT_NR=4",
     ],
+    header_libs: ["jni_headers"],
 }
