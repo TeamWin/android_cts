@@ -36,6 +36,7 @@ import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
 import android.os.PersistableBundle;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 
@@ -2466,6 +2467,8 @@ public class AudioTrackTest {
             Thread.sleep(300 /* millis */); // warm up track
 
             int anticipatedPosition = track.getPlaybackHeadPosition();
+            long timeMs = SystemClock.elapsedRealtime();
+            final long startTimeMs = timeMs;
             for (int j = 0; j < testSteps; ++j) {
                 // set playback settings
                 final float pitch = playbackParams.getPitch();
@@ -2482,14 +2485,17 @@ public class AudioTrackTest {
 
                 // sleep for playback
                 Thread.sleep(TEST_DELTA_MS);
+                final long newTimeMs = SystemClock.elapsedRealtime();
                 // Log.d(TAG, "position[" + j + "] " + track.getPlaybackHeadPosition());
                 anticipatedPosition +=
-                        playbackParams.getSpeed() * TEST_DELTA_MS * TEST_SR / 1000;
+                        playbackParams.getSpeed() * (newTimeMs - timeMs) * TEST_SR / 1000;
+                timeMs = newTimeMs;
                 playbackParams.setPitch(playbackParams.getPitch() + pitchInc);
                 playbackParams.setSpeed(playbackParams.getSpeed() + speedInc);
             }
             final int endPosition = track.getPlaybackHeadPosition();
             final int tolerance100MsInFrames = 100 * TEST_SR / 1000;
+            Log.d(TAG, "Total playback time: " + (timeMs - startTimeMs));
             assertEquals(TAG, anticipatedPosition, endPosition, tolerance100MsInFrames);
             track.stop();
 
