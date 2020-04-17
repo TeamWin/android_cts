@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,16 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test_helper_app {
-    name: "BootCompletedUserspaceRebootTestApp",
-    srcs:  ["src/**/*.java"],
-    manifest : "AndroidManifest.xml",
-    static_libs: [
-        "androidx.test.runner",
-        "androidx.test.core",
-        "compatibility-device-util-axt",
-        "testng",
-        "truth-prebuilt",
+android_test {
+    name: "CtsControlsDeviceTestCases",
+    defaults: ["cts_defaults"],
+
+    test_suites: [
+        "cts",
+        "general-tests",
     ],
-    min_sdk_version: "30",
+
+    static_libs: [
+        "androidx.test.rules",
+        "androidx.test.ext.junit",
+        "androidx.test.uiautomator_uiautomator",
+        "compatibility-device-util-axt",
+     ],
+
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+    ],
+
+    srcs: ["src/**/*.java"],
+    sdk_version: "test_current",
 }
