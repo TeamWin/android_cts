@@ -206,6 +206,11 @@
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2019-2126->/data/local/tmp/CVE-2019-2126" />
 
+        <!--__________________-->
+        <!-- Bulletin 2019-09 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2019-9313->/data/local/tmp/CVE-2019-9313" />
+
         <option name="append-bitness" value="true" />
     </target_preparer>
 
