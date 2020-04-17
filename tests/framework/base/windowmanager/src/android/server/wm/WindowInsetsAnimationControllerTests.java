@@ -331,6 +331,12 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             );
             mAnimator.setDuration(1000);
             mAnimator.addUpdateListener((animator1) -> {
+                if (!mListener.mController.isReady()) {
+                    // Lost control - Don't crash the instrumentation below.
+                    mErrorCollector.addError(new AssertionError("Unexpectedly lost control."));
+                    mAnimator.cancel();
+                    return;
+                }
                 Insets insets = (Insets) mAnimator.getAnimatedValue();
                 mOnProgressCalled = false;
                 mListener.mController.setInsetsAndAlpha(insets, 1.0f,
@@ -394,6 +400,9 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             // Collect errors here and below, so we don't crash the main thread.
             mErrorCollector.checkThat(controller, notNullValue());
             mErrorCollector.checkThat(types, not(equalTo(0)));
+            mErrorCollector.checkThat("isReady", controller.isReady(), is(true));
+            mErrorCollector.checkThat("isFinished", controller.isFinished(), is(false));
+            mErrorCollector.checkThat("isCancelled", controller.isCancelled(), is(false));
             report(READY);
         }
 
@@ -401,12 +410,20 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         public void onFinished(@NonNull WindowInsetsAnimationController controller) {
             mErrorCollector.checkThat(controller, notNullValue());
             mErrorCollector.checkThat(controller, sameInstance(mController));
+            mErrorCollector.checkThat("isReady", controller.isReady(), is(false));
+            mErrorCollector.checkThat("isFinished", controller.isFinished(), is(true));
+            mErrorCollector.checkThat("isCancelled", controller.isCancelled(), is(false));
             report(FINISHED);
         }
 
         @Override
         public void onCancelled(@Nullable WindowInsetsAnimationController controller) {
             mErrorCollector.checkThat(controller, sameInstance(mController));
+            if (controller != null) {
+                mErrorCollector.checkThat("isReady", controller.isReady(), is(false));
+                mErrorCollector.checkThat("isFinished", controller.isFinished(), is(false));
+                mErrorCollector.checkThat("isCancelled", controller.isCancelled(), is(true));
+            }
             report(CANCELLED);
         }
 
