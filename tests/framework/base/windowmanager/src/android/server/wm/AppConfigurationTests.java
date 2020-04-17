@@ -240,9 +240,6 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
         setActivityTaskWindowingMode(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final SizeInfo dockedSizes = getActivityDisplaySize(activityName);
         assertSizesAreSane(initialFullscreenSizes, dockedSizes);
-        // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
-        // will come up.
-        launchActivity(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
 
         // Resize docked stack to fullscreen size. This will trigger activity relaunch with
         // non-empty override configuration corresponding to fullscreen size.
