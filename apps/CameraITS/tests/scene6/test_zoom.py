@@ -123,9 +123,18 @@ def find_center_circle(img, name, color, min_area, debug):
 
     # mark image center
     size = gray.shape
-    cv2.drawMarker(img, (size[1]/2, size[0]/2), LINE_COLOR,
-                   markerType=cv2.MARKER_CROSS, markerSize=LINE_THICKNESS*10,
-                   thickness=LINE_THICKNESS)
+    m_x, m_y = size[1]/2, size[0]/2
+    marker_size = LINE_THICKNESS * 10
+    if cv2_version.startswith('2.4.'):
+        cv2.line(img, (m_x-marker_size/2, m_y), (m_x+marker_size/2, m_y),
+                 LINE_COLOR, LINE_THICKNESS)
+        cv2.line(img, (m_x, m_y-marker_size/2), (m_x, m_y+marker_size/2),
+                 LINE_COLOR, LINE_THICKNESS)
+    elif cv2_version.startswith('3.2.'):
+        cv2.drawMarker(img, (m_x, m_y), LINE_COLOR,
+                       markerType=cv2.MARKER_CROSS,
+                       markerSize=marker_size,
+                       thickness=LINE_THICKNESS)
 
     # add circle to saved image
     center_i = (int(round(circle[0], 0)), int(round(circle[1], 0)))
