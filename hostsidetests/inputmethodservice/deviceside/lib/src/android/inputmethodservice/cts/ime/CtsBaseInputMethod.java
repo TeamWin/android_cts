@@ -84,6 +84,27 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
     }
 
     @Override
+    public boolean onEvaluateFullscreenMode() {
+        // Opt-out the fullscreen mode regardless of the existence of the hardware keyboard
+        // and screen rotation.  Otherwise test scenarios become unpredictable.
+        return false;
+    }
+
+    @Override
+    public boolean onEvaluateInputViewShown() {
+        // Always returns true regardless of the existence of the hardware keyboard.
+        // Otherwise test scenarios become unpredictable.
+        return true;
+    }
+
+    @Override
+    public boolean onShowInputRequested(int flags, boolean configChange) {
+        // Always returns true regardless of the existence of the hardware keyboard.
+        // Otherwise test scenarios become unpredictable.
+        return true;
+    }
+
+    @Override
     public void onStartInput(EditorInfo editorInfo, boolean restarting) {
         if (DEBUG) {
             Log.d(mLogTag, "onStartInput:"
