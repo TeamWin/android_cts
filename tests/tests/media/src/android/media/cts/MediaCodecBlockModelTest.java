@@ -37,6 +37,10 @@ import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -104,6 +108,28 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
      */
     public void testEncodeShortAudio() throws InterruptedException {
         runThread(() -> runEncodeShortAudio());
+    }
+
+    public void testFormatChange() throws InterruptedException {
+        List<FormatChangeEvent> events = new ArrayList<>();
+        runThread(() -> runDecodeShortVideo(
+                INPUT_RESOURCE_ID,
+                LAST_BUFFER_TIMESTAMP_US,
+                true /* obtainBlockForEachBuffer */,
+                MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 320, 240),
+                events));
+        int width = 320;
+        int height = 240;
+        for (FormatChangeEvent event : events) {
+            if (event.changedKeys.contains(MediaFormat.KEY_WIDTH)) {
+                width = event.format.getInteger(MediaFormat.KEY_WIDTH);
+            }
+            if (event.changedKeys.contains(MediaFormat.KEY_HEIGHT)) {
+                height = event.format.getInteger(MediaFormat.KEY_HEIGHT);
+            }
+        }
+        assertEquals("Width should have been updated", 480, width);
+        assertEquals("Height should have been updated", 360, height);
     }
 
     private void runThread(BooleanSupplier supplier) throws InterruptedException {
@@ -254,9 +280,12 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
 
     private static class SurfaceOutputSlotListener implements OutputSlotListener {
         public SurfaceOutputSlotListener(
-                OutputSurface surface, LinkedBlockingQueue<Long> timestampQueue) {
+                OutputSurface surface,
+                LinkedBlockingQueue<Long> timestampQueue,
+                List<FormatChangeEvent> events) {
             mOutputSurface = surface;
             mTimestampQueue = timestampQueue;
+            mEvents = (events != null) ? events : new ArrayList<>();
         }
 
         @Override
@@ -275,6 +304,10 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 mTimestampQueue.poll();
             }
 
+            if (!frame.getChangedKeys().isEmpty()) {
+                mEvents.add(new FormatChangeEvent(ts, frame.getChangedKeys(), frame.getFormat()));
+            }
+
             codec.releaseOutputBuffer(index, render);
             if (render) {
                 mOutputSurface.awaitNewImage();
@@ -285,6 +318,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
 
         private final OutputSurface mOutputSurface;
         private final LinkedBlockingQueue<Long> mTimestampQueue;
+        private final List<FormatChangeEvent> mEvents;
     }
 
     private static class SlotEvent {
@@ -300,14 +334,51 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             int inputResourceId,
             long lastBufferTimestampUs,
             boolean obtainBlockForEachBuffer) {
+        return runDecodeShortVideo(
+                inputResourceId, lastBufferTimestampUs, obtainBlockForEachBuffer, null, null);
+    }
+
+    private static class FormatChangeEvent {
+        FormatChangeEvent(long ts, Set<String> keys, MediaFormat fmt) {
+            timestampUs = ts;
+            changedKeys = new HashSet<>(keys);
+            format = new MediaFormat(fmt);
+        }
+
+        long timestampUs;
+        Set<String> changedKeys;
+        MediaFormat format;
+
+        @Override
+        public String toString() {
+            return Long.toString(timestampUs) + "us: changed keys=" + changedKeys
+                + " format=" + format;
+        }
+    }
+
+    private boolean runDecodeShortVideo(
+            int inputResourceId,
+            long lastBufferTimestampUs,
+            boolean obtainBlockForEachBuffer,
+            MediaFormat format,
+            List<FormatChangeEvent> events) {
         OutputSurface outputSurface = null;
         MediaExtractor mediaExtractor = null;
         MediaCodec mediaCodec = null;
         try {
             outputSurface = new OutputSurface(1, 1);
             mediaExtractor = getMediaExtractorForMimeType(inputResourceId, "video/");
-            MediaFormat mediaFormat =
-                    mediaExtractor.getTrackFormat(mediaExtractor.getSampleTrackIndex());
+            MediaFormat mediaFormat = mediaExtractor.getTrackFormat(mediaExtractor.getSampleTrackIndex());
+            if (format != null) {
+                // copy CSD
+                for (int i = 0; i < 3; ++i) {
+                    String key = "csd-" + i;
+                    if (mediaFormat.containsKey(key)) {
+                        format.setByteBuffer(key, mediaFormat.getByteBuffer(key));
+                    }
+                }
+                mediaFormat = format;
+            }
             // TODO: b/147748978
             String[] codecs = MediaUtils.getDecoderNames(true /* isGoog */, mediaFormat);
             if (codecs.length == 0) {
@@ -327,7 +398,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                             lastBufferTimestampUs,
                             obtainBlockForEachBuffer,
                             timestampQueue),
-                    new SurfaceOutputSlotListener(outputSurface, timestampQueue));
+                    new SurfaceOutputSlotListener(outputSurface, timestampQueue, events));
             if (result) {
                 assertTrue("Timestamp should match between input / output",
                         timestampQueue.isEmpty());
