@@ -2143,14 +2143,18 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         public MaxStreamSizes(StaticMetadata sm, String cameraId, Context context) {
             Size[] privSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.PRIVATE,
-                    StaticMetadata.StreamDirection.Output);
+                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
             Size[] yuvSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.YUV_420_888,
-                    StaticMetadata.StreamDirection.Output);
+                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
+
             Size[] y8Sizes = sm.getAvailableSizesForFormatChecked(ImageFormat.Y8,
-                    StaticMetadata.StreamDirection.Output);
-            Size[] jpegSizes = sm.getJpegOutputSizesChecked();
-            Size[] rawSizes = sm.getRawOutputSizesChecked();
-            Size[] heicSizes = sm.getHeicOutputSizesChecked();
+                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
+            Size[] jpegSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.JPEG,
+                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
+            Size[] rawSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.RAW_SENSOR,
+                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
+            Size[] heicSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.HEIC,
+                    StaticMetadata.StreamDirection.Output, /*fastSizes*/true, /*slowSizes*/false);
 
             Size maxPreviewSize = getMaxPreviewSize(context, cameraId);
 
