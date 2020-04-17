@@ -81,7 +81,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     private static final String SIMPLE_APP_APK = "CtsSimpleApp.apk";
 
-    private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.MINUTES.toMillis(2);
+    private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.MINUTES.toMillis(3);
 
     private static final String PARAM_PROFILE_ID = "profile-id";
 
