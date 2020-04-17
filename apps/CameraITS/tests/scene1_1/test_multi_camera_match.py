@@ -41,6 +41,7 @@ def main():
         for i in ids:
             physical_props = cam.get_camera_properties_by_id(i)
             its.caps.skip_unless(not its.caps.mono_camera(physical_props))
+            its.caps.skip_unless(its.caps.backward_compatible(physical_props))
             yuv_sizes[i] = its.objects.get_available_output_sizes(
                     'yuv', physical_props)
             if i == ids[0]:  # get_available_output_sizes returns sorted list
