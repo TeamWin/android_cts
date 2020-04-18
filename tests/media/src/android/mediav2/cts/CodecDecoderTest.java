@@ -19,10 +19,8 @@ package android.mediav2.cts;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.os.Build;
 import android.os.PersistableBundle;
 import android.util.Log;
 import android.util.Pair;
@@ -46,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static org.junit.Assert.assertTrue;
@@ -334,8 +331,9 @@ public class CodecDecoderTest extends CodecTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        final List<String> cddRequiredMimeList =
-                Arrays.asList(MediaFormat.MIMETYPE_AUDIO_MPEG,
+        final ArrayList<String> cddRequiredMimeList =
+                new ArrayList<>(Arrays.asList(
+                        MediaFormat.MIMETYPE_AUDIO_MPEG,
                         MediaFormat.MIMETYPE_AUDIO_AAC,
                         MediaFormat.MIMETYPE_AUDIO_FLAC,
                         MediaFormat.MIMETYPE_AUDIO_VORBIS,
@@ -348,7 +346,7 @@ public class CodecDecoderTest extends CodecTestBase {
                         MediaFormat.MIMETYPE_VIDEO_AVC,
                         MediaFormat.MIMETYPE_VIDEO_HEVC,
                         MediaFormat.MIMETYPE_VIDEO_VP8,
-                        MediaFormat.MIMETYPE_VIDEO_VP9);
+                        MediaFormat.MIMETYPE_VIDEO_VP9));
         if (isTv()) cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_1ch_8kHz_lame_cbr.mp3",
@@ -405,49 +403,7 @@ public class CodecDecoderTest extends CodecTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_340x280_768kbps_30fps_av1.mp4", null,
                         "bbb_520x390_1mbps_30fps_av1.mp4", -1.0f},
         });
-        ArrayList<String> mimes = new ArrayList<>();
-        if (codecSelKeys.contains(CODEC_SEL_VALUE)) {
-            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
-            for (MediaCodecInfo codecInfo : codecInfos) {
-                if (codecInfo.isEncoder()) continue;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
-                String[] types = codecInfo.getSupportedTypes();
-                for (String type : types) {
-                    if (!mimes.contains(type)) {
-                        mimes.add(type);
-                    }
-                }
-            }
-            for (String mime : cddRequiredMimeList) {
-                if (!mimes.contains(mime)) {
-                    fail("no codec found to decode mime " + mime + " as required by cdd");
-                }
-            }
-        } else {
-            for (Map.Entry<String, String> entry : codecSelKeyMimeMap.entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-                if (codecSelKeys.contains(key) && !mimes.contains(value)) mimes.add(value);
-            }
-        }
-        final List<Object[]> argsList = new ArrayList<>();
-        for (String mime : mimes) {
-            boolean miss = true;
-            for (int i = 0; i < exhaustiveArgsList.size(); i++) {
-                if (mime.equals(exhaustiveArgsList.get(i)[0])) {
-                    argsList.add(exhaustiveArgsList.get(i));
-                    miss = false;
-                }
-            }
-            if (miss) {
-                if (cddRequiredMimeList.contains(mime)) {
-                    fail("no testvectors for required mimetype " + mime);
-                }
-                Log.w(LOG_TAG, "no test vectors available for optional mime type " + mime);
-            }
-        }
-        return argsList;
+        return prepareParamList(cddRequiredMimeList, exhaustiveArgsList, false);
     }
 
     /**
@@ -544,6 +500,23 @@ public class CodecDecoderTest extends CodecTestBase {
             }
         }
         mExtractor.release();
+    }
+
+    private native boolean nativeTestSimpleDecode(String decoder, String mime, String testFile,
+            String refFile, float rmsError);
+
+
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSimpleDecodeNative() {
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestSimpleDecode(decoder, mMime, mInpPrefix + mTestFile,
+                    mInpPrefix + mRefFile, mRmsError));
+        }
     }
 
     /**
@@ -668,6 +641,21 @@ public class CodecDecoderTest extends CodecTestBase {
             }
             mCodec.release();
             mExtractor.release();
+        }
+    }
+
+    private native boolean nativeTestFlush(String decoder, String mime, String testFile);
+
+    @Ignore("TODO(b/147576107)")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testFlushNative() {
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestFlush(decoder, mMime, mInpPrefix + mTestFile));
         }
     }
 
@@ -900,6 +888,20 @@ public class CodecDecoderTest extends CodecTestBase {
         mExtractor.release();
     }
 
+    private native boolean nativeTestOnlyEos(String decoder, String mime, String testFile);
+
+    @SmallTest
+    @Test
+    public void testOnlyEosNative() {
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestOnlyEos(decoder, mMime, mInpPrefix + mTestFile));
+        }
+    }
+
     /**
      * Test Decoder by Queuing CSD separately
      */
@@ -991,6 +993,24 @@ public class CodecDecoderTest extends CodecTestBase {
                 }
             }
             mCodec.release();
+        }
+        mExtractor.release();
+    }
+
+    private native boolean nativeTestSimpleDecodeQueueCSD(String decoder, String mime,
+            String testFile);
+
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSimpleDecodeQueueCSDNative() throws IOException {
+        MediaFormat format = setUpSource(mTestFile);
+        Assume.assumeTrue("Format has no CSD, ignoring test for mime:" + mMime, hasCSD(format));
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestSimpleDecodeQueueCSD(decoder, mMime, mInpPrefix + mTestFile));
         }
         mExtractor.release();
     }

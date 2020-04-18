@@ -28,6 +28,7 @@ android_test {
     jni_libs: [
         "libctsmediav2muxer_jni",
         "libctsmediav2extractor_jni",
+        "libctsmediav2codec_jni",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
