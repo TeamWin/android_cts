@@ -22,6 +22,7 @@ import android.media.MediaFormat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Pair;
+import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 
@@ -522,6 +523,47 @@ public class CodecDecoderSurfaceTest extends CodecTestBase {
             }
             mCodec.release();
             mSurface = null;
+        }
+        tearDownSurface();
+    }
+
+    private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
+            String testFile, String refFile, float rmsError);
+
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSimpleDecodeToSurfaceNative() throws IOException {
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        MediaFormat format = setUpSource(mTestFile);
+        mExtractor.release();
+        setUpSurface();
+        setScreenParams(getWidth(format), getHeight(format), false);
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestSimpleDecode(decoder, mSurface, mMime, mInpPrefix + mTestFile,
+                    mInpPrefix + mReconfigFile, -1.0f));
+        }
+        tearDownSurface();
+    }
+
+    private native boolean nativeTestFlush(String decoder, Surface surface, String mime,
+            String testFile);
+
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testFlushNative() throws IOException {
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        MediaFormat format = setUpSource(mTestFile);
+        mExtractor.release();
+        setUpSurface();
+        setScreenParams(getWidth(format), getHeight(format), true);
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestFlush(decoder, mSurface, mMime, mInpPrefix + mTestFile));
         }
         tearDownSurface();
     }

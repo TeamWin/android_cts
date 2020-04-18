@@ -24,6 +24,7 @@ import android.media.MediaFormat;
 import android.os.PersistableBundle;
 import android.util.Log;
 import android.util.Pair;
+import android.view.Surface;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
@@ -502,8 +503,8 @@ public class CodecDecoderTest extends CodecTestBase {
         mExtractor.release();
     }
 
-    private native boolean nativeTestSimpleDecode(String decoder, String mime, String testFile,
-            String refFile, float rmsError);
+    private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
+            String testFile, String refFile, float rmsError);
 
 
     @LargeTest
@@ -514,7 +515,7 @@ public class CodecDecoderTest extends CodecTestBase {
             fail("no suitable codecs found for mime: " + mMime);
         }
         for (String decoder : listOfDecoders) {
-            assertTrue(nativeTestSimpleDecode(decoder, mMime, mInpPrefix + mTestFile,
+            assertTrue(nativeTestSimpleDecode(decoder, null, mMime, mInpPrefix + mTestFile,
                     mInpPrefix + mRefFile, mRmsError));
         }
     }
@@ -644,7 +645,8 @@ public class CodecDecoderTest extends CodecTestBase {
         }
     }
 
-    private native boolean nativeTestFlush(String decoder, String mime, String testFile);
+    private native boolean nativeTestFlush(String decoder, Surface surface, String mime,
+            String testFile);
 
     @Ignore("TODO(b/147576107)")
     @LargeTest
@@ -655,7 +657,7 @@ public class CodecDecoderTest extends CodecTestBase {
             fail("no suitable codecs found for mime: " + mMime);
         }
         for (String decoder : listOfDecoders) {
-            assertTrue(nativeTestFlush(decoder, mMime, mInpPrefix + mTestFile));
+            assertTrue(nativeTestFlush(decoder, null, mMime, mInpPrefix + mTestFile));
         }
     }
 
