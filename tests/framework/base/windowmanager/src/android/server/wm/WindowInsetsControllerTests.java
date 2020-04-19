@@ -196,6 +196,15 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
+    public void testShowImeOnCreate() throws Exception {
+        final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+        PollingCheck.waitFor(TIMEOUT,
+                () -> rootView.getRootWindowInsets().isVisible(ime()));
+    }
+
+    @Test
     public void testInsetsDispatch() throws Exception {
         // Start an activity which hides system bars.
         final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
@@ -335,6 +344,18 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
             getWindow().getInsetsController().hide(statusBars());
             layout.getWindowInsetsController().hide(navigationBars());
+        }
+    }
+
+    public static class TestShowOnCreateActivity extends FocusableActivity {
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            View layout = setViews(this);
+            ANIMATION_CALLBACK.reset();
+            getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
+            getWindow().getInsetsController().show(ime());
         }
     }
 }
