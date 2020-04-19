@@ -334,6 +334,11 @@ public class MediaParserTest {
         testExtractAsset("mp3/play-trimmed.mp3");
     }
 
+    @Test
+    public void testMp3WithId3() throws IOException, InterruptedException {
+        testExtractAsset("mp3/bear-id3.mp3");
+    }
+
     // WAV.
 
     @Test
@@ -460,6 +465,11 @@ public class MediaParserTest {
     @Test
     public void testTsWithSdt() throws IOException, InterruptedException {
         testExtractAsset("ts/sample_with_sdt.ts");
+    }
+
+    @Test
+    public void testTsWithH265() throws IOException, InterruptedException {
+        testExtractAsset("ts/sample_h265.ts");
     }
 
     // MKV.
