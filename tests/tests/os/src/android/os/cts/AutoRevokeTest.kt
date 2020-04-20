@@ -17,11 +17,16 @@
 package android.os.cts
 
 import android.Manifest.permission.READ_CALENDAR
+import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_DENIED
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.graphics.Rect
+import android.net.Uri
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
+import android.provider.Settings.*
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
@@ -35,6 +40,7 @@ import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.UiDumpUtils
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.Assert.assertThat
+import java.lang.reflect.Modifier
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
@@ -54,11 +60,14 @@ class AutoRevokeTest : InstrumentationTestCase() {
     @AppModeFull(reason = "Uses separate apps for testing")
     fun testUnusedApp_getsPermissionRevoked() {
         wakeUpScreen()
-        withUnusedThresholdMs(1L) {
+        withUnusedThresholdMs(3L) {
             withDummyApp {
                 // Setup
                 startApp()
                 clickPermissionAllow()
+                eventually {
+                    assertPermission(PERMISSION_GRANTED)
+                }
                 goHome()
                 Thread.sleep(5)
 
@@ -73,8 +82,30 @@ class AutoRevokeTest : InstrumentationTestCase() {
         }
     }
 
-    // TODO once implemented, use:
-    // Intent(Intent.ACTION_AUTO_REVOKE_PERMISSIONS).putExtra(Intent.EXTRA_PACKAGE_NAME, packageName)
+    @AppModeFull(reason = "Uses separate apps for testing")
+    fun testUsedApp_doesntGetPermissionRevoked() {
+        wakeUpScreen()
+        withUnusedThresholdMs(100_000L) {
+            withDummyApp {
+                // Setup
+                startApp()
+                clickPermissionAllow()
+                eventually {
+                    assertPermission(PERMISSION_GRANTED)
+                }
+                goHome()
+                Thread.sleep(5)
+
+                // Run
+                runAutoRevoke()
+                Thread.sleep(500)
+
+                // Verify
+                assertPermission(PERMISSION_GRANTED)
+            }
+        }
+    }
+
     @AppModeFull(reason = "Uses separate apps for testing")
     fun testAutoRevoke_userWhitelisting() {
         wakeUpScreen()
@@ -114,7 +145,10 @@ class AutoRevokeTest : InstrumentationTestCase() {
         withUnusedThresholdMs(TimeUnit.DAYS.toMillis(30)) {
             withDummyApp {
                 // Setup
-                instrumentation.uiAutomation.grantRuntimePermission(APK_PACKAGE_NAME, READ_CALENDAR)
+                runWithShellPermissionIdentity {
+                    instrumentation.uiAutomation
+                            .grantRuntimePermission(APK_PACKAGE_NAME, READ_CALENDAR)
+                }
                 eventually {
                     assertPermission(PERMISSION_GRANTED)
                 }
@@ -200,39 +234,69 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     private fun assertPermission(state: Int) {
-        assertEquals(
-                state,
-                context.packageManager.checkPermission(READ_CALENDAR, APK_PACKAGE_NAME))
+        // For some reason this incorrectly always returns PERMISSION_DENIED
+//        runWithShellPermissionIdentity {
+//            assertEquals(
+//                permissionStateToString(state),
+//                permissionStateToString(context.packageManager.checkPermission(READ_CALENDAR, APK_PACKAGE_NAME)))
+//        }
+
+        try {
+            context.startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.fromParts("package", APK_PACKAGE_NAME, null))
+                    .addFlags(FLAG_ACTIVITY_NEW_TASK))
+
+            waitFindObject(byTextIgnoreCase("Permissions")).click()
+
+            waitForIdle()
+            val ui = instrumentation.uiAutomation.rootInActiveWindow
+            val permStateSection = ui.lowestCommonAncestor(
+                    { textAsString.equals("Allowed", ignoreCase = true) },
+                    { textAsString.equals("Denied", ignoreCase = true) }
+            ).assertNotNull {
+                "Cannot find permissions state section in\n${dumpUi(ui)}"
+            }
+            val sectionHeaderIndex = permStateSection.children.indexOfFirst {
+                it?.depthFirstSearch {
+                    textAsString.equals(
+                            if (state == PERMISSION_GRANTED) "Allowed" else "Denied",
+                            ignoreCase = true)
+                } != null
+            }
+            permStateSection.getChild(sectionHeaderIndex + 1).depthFirstSearch {
+                textAsString.equals("Calendar", ignoreCase = true)
+            }.assertNotNull {
+                "Permission must be ${permissionStateToString(state)}\n${dumpUi(ui)}"
+            }
+        } finally {
+            goBack()
+            goBack()
+        }
     }
 
     private fun assertWhitelistState(state: Boolean) {
         assertThat(
-                waitFindObject(By.textStartsWith("Auto-revoke whitelisted: ")).text,
-                containsString(state.toString()))
+            waitFindObject(By.textStartsWith("Auto-revoke whitelisted: ")).text,
+            containsString(state.toString()))
     }
 
     private fun getWhitelistToggle(): AccessibilityNodeInfo {
         waitForIdle()
         return eventually {
             val ui = instrumentation.uiAutomation.rootInActiveWindow
-            return@eventually ui.depthFirstSearch {
-                depthFirstSearch {
-                    (text as CharSequence?).toString() == "Remove permissions if app isn’t used"
-                } != null &&
-                        depthFirstSearch { className == Switch::class.java.name } != null
-            }.assertNotNull {
-                "No auto-revoke whitelist toggle found in\n" +
-                        buildString { UiDumpUtils.dumpNodes(ui, this) }
+            return@eventually ui.lowestCommonAncestor(
+                { textAsString == "Remove permissions if app isn’t used" },
+                { className == Switch::class.java.name }
+            ).assertNotNull {
+                "No auto-revoke whitelist toggle found in\n${dumpUi(ui)}"
             }.depthFirstSearch { className == Switch::class.java.name }!!
         }
     }
 
     private fun waitForIdle() {
         instrumentation.uiAutomation.waitForIdle(2000, 5000)
-    }
-
-    private fun <T> T?.assertNotNull(errorMsg: () -> String): T {
-        return if (this == null) throw AssertionError(errorMsg()) else this
+        Thread.sleep(500)
+        instrumentation.uiAutomation.waitForIdle(2000, 5000)
     }
 
     private inline fun <T> eventually(crossinline action: () -> T): T {
@@ -268,6 +332,10 @@ class AutoRevokeTest : InstrumentationTestCase() {
     private fun byTextIgnoreCase(txt: String): BySelector {
         return By.text(Pattern.compile(txt, Pattern.CASE_INSENSITIVE))
     }
+
+    private fun permissionStateToString(state: Int): String {
+        return constToString<PackageManager>("PERMISSION_", state)
+    }
 }
 
 val AccessibilityNodeInfo.bounds: Rect get() = Rect().also { getBoundsInScreen(it) }
@@ -286,4 +354,36 @@ fun AccessibilityNodeInfo.depthFirstSearch(
     return null
 }
 
-val AccessibilityNodeInfo.children: List<AccessibilityNodeInfo?> get() = List(childCount) { i -> getChild(i) }
+fun AccessibilityNodeInfo.lowestCommonAncestor(
+    condition1: AccessibilityNodeInfo.() -> Boolean,
+    condition2: AccessibilityNodeInfo.() -> Boolean
+): AccessibilityNodeInfo? {
+    return depthFirstSearch {
+        depthFirstSearch(condition1) != null &&
+            depthFirstSearch(condition2) != null
+    }
+}
+
+val AccessibilityNodeInfo.children: List<AccessibilityNodeInfo?> get() =
+    List(childCount) { i -> getChild(i) }
+
+val AccessibilityNodeInfo.textAsString: String? get() = (text as CharSequence?).toString()
+
+inline fun <reified T> constToString(prefix: String, value: Int): String {
+    return T::class.java.declaredFields.filter {
+        Modifier.isStatic(it.modifiers) && it.name.startsWith(prefix)
+    }.map {
+        it.isAccessible = true
+        it.name to it.get(null)
+    }.find { (k, v) ->
+        v == value
+    }.assertNotNull {
+        "None of ${T::class.java.simpleName}.$prefix* == $value"
+    }.first
+}
+
+inline fun <T> T?.assertNotNull(errorMsg: () -> String): T {
+    return if (this == null) throw AssertionError(errorMsg()) else this
+}
+
+fun dumpUi(ui: AccessibilityNodeInfo?) = buildString { UiDumpUtils.dumpNodes(ui, this) }
