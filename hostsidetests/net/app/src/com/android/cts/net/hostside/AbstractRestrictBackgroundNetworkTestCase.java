@@ -215,7 +215,9 @@ abstract class AbstractRestrictBackgroundNetworkTestCase extends Instrumentation
         do {
             attempts++;
             count = getNumberBroadcastsReceived(receiverName, ACTION_RESTRICT_BACKGROUND_CHANGED);
-            if (count >= expectedCount) {
+            assertFalse("Expected count " + expectedCount + " but actual is " + count,
+                    count > expectedCount);
+            if (count == expectedCount) {
                 break;
             }
             Log.d(TAG, "Expecting count " + expectedCount + " but actual is " + count + " after "
