@@ -20,7 +20,7 @@ import org.junit.Assert.fail
 import android.app.AppOpsManager
 import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.internal.util.FrameworkStatsLog.RUNTIME_APP_OP_ACCESS__SAMPLING_STRATEGY__RARELY_USED
+import com.android.internal.util.FrameworkStatsLog.RUNTIME_APP_OP_ACCESS__SAMPLING_STRATEGY__UNIFORM
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -71,7 +71,7 @@ class RuntimeMessageCollectionTest {
                         assertThat(message.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
                         assertThat(message.message).isEqualTo(MESSAGE)
                         assertThat(message.samplingStrategy)
-                                .isEqualTo(RUNTIME_APP_OP_ACCESS__SAMPLING_STRATEGY__RARELY_USED)
+                                .isNotEqualTo(RUNTIME_APP_OP_ACCESS__SAMPLING_STRATEGY__UNIFORM)
                         return
                     }
                 }
