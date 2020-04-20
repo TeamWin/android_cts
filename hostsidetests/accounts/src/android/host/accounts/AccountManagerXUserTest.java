@@ -72,7 +72,7 @@ public class AccountManagerXUserTest extends BaseMultiUserTest implements IBuild
     public void setUp() throws Exception {
         super.setUp();
 
-        assumeTrue(mSupportsMultiUser);
+        assumeTrue(mSupportsMultiUser && mSupportsManagedUsers);
 
         mOldVerifierValue =
                 getDevice().executeShellCommand("settings get global package_verifier_enable");
