@@ -1580,6 +1580,31 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     }
 
     /**
+     * Asserts that a call does not have any of the specified call capability bits specified.
+     *
+     * @param call The call.
+     * @param capabilities The capability or capabilities which are not expected.
+     */
+    public void assertDoesNotHaveCallCapabilities(final Call call, final int capabilities) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        int callCapabilities = call.getDetails().getCallCapabilities();
+                        return !Call.Details.hasProperty(callCapabilities, capabilities);
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should not have capabilities " + capabilities
+        );
+    }
+
+    /**
      * Asserts that a call does not have any of the specified call property bits specified.
      *
      * @param call The call.
