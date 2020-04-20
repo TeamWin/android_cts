@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.CANCELLED;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.FINISHED;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.READY;
+import static android.server.wm.WindowInsetsAnimationUtils.INSETS_EVALUATOR;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
@@ -27,7 +28,6 @@ import static androidx.test.internal.runner.junit4.statement.UiThreadStatement.r
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
@@ -39,7 +39,6 @@ import static org.junit.Assert.fail;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.graphics.Insets;
 import android.os.CancellationSignal;
@@ -58,7 +57,6 @@ import android.view.animation.LinearInterpolator;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -323,7 +321,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     private void runTransition(boolean show) throws Throwable {
         runOnUiThread(() -> {
             mAnimator = ValueAnimator.ofObject(
-                    sInsetsEvaluator,
+                    INSETS_EVALUATOR,
                     show ? mListener.mController.getHiddenStateInsets()
                             : mListener.mController.getShownStateInsets(),
                     show ? mListener.mController.getShownStateInsets()
@@ -437,13 +435,6 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             assertEquals(event + " not expected, but was called", 1, latch.getCount());
         }
     }
-
-    private static TypeEvaluator<Insets> sInsetsEvaluator =
-            (fraction, startValue, endValue) -> Insets.of(
-                    (int) (startValue.left + fraction * (endValue.left - startValue.left)),
-                    (int) (startValue.top + fraction * (endValue.top - startValue.top)),
-                    (int) (startValue.right + fraction * (endValue.right - startValue.right)),
-                    (int) (startValue.bottom + fraction * (endValue.bottom - startValue.bottom)));
 
 
     private class VerifyingCallback extends Callback {
