@@ -14,6 +14,7 @@
 
 aidl_interface {
     name: "AppOpsUserServiceAidlNative",
+    unstable: true,
 
     local_include_dir: "src",
 
