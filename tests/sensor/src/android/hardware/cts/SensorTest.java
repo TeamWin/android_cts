@@ -552,11 +552,18 @@ public class SensorTest extends SensorTestCase {
                 " " + sensor.getName(), sensor.getResolution() > 0);
         boolean hasHifiSensors = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_HIFI_SENSORS);
-        if (SensorCtsHelper.hasResolutionRequirement(sensor, hasHifiSensors)) {
-            float requiredResolution = SensorCtsHelper.getRequiredResolutionForSensor(sensor);
-            assertTrue("Resolution must be <= " + requiredResolution + ". Resolution=" +
+        if (SensorCtsHelper.hasMaxResolutionRequirement(sensor, hasHifiSensors)) {
+            float maxResolution = SensorCtsHelper.getRequiredMaxResolutionForSensor(sensor);
+            assertTrue("Resolution must be <= " + maxResolution + ". Resolution=" +
                     sensor.getResolution() + " " + sensor.getName(),
-                    sensor.getResolution() <= requiredResolution);
+                    sensor.getResolution() <= maxResolution);
+        }
+
+        if (SensorCtsHelper.hasMinResolutionRequirement(sensor)) {
+            float minResolution = SensorCtsHelper.getRequiredMinResolutionForSensor(sensor);
+            assertTrue("Resolution must be >= " + minResolution + ". Resolution =" +
+                    sensor.getResolution() + " " + sensor.getName(),
+                    sensor.getResolution() >= minResolution);
         }
 
         assertNotNull("Vendor name must not be null " + sensor.getName(), sensor.getVendor());
