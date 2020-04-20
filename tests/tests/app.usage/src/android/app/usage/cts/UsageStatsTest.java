@@ -162,6 +162,9 @@ public class UsageStatsTest {
             setUsageSourceSetting(mCachedUsageSourceSetting);
             mUsageStatsManager.forceUsageSourceSettingRead();
         }
+        // Force stop test package to avoid any running test code from carrying over to the next run
+        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
+        mUiDevice.pressHome();
     }
 
     private static void assertLessThan(long left, long right) {
@@ -714,7 +717,6 @@ public class UsageStatsTest {
     @Test
     public void testIsAppInactive() throws Exception {
         setStandByBucket(mTargetPackage, "rare");
-        setStandByBucket(TEST_APP_PKG, "rare");
 
         try {
             BatteryUtils.runDumpsysBatteryUnplug();
@@ -733,6 +735,8 @@ public class UsageStatsTest {
                             + "isAppInactive",
                     isAppInactiveAsPermissionlessApp(mTargetPackage));
 
+            mUiDevice.pressHome();
+            setStandByBucket(TEST_APP_PKG, "rare");
             // Querying for self does not require the PACKAGE_USAGE_STATS
             waitUntil(() -> mUsageStatsManager.isAppInactive(TEST_APP_PKG), true);
             assertTrue(
