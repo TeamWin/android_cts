@@ -324,8 +324,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testFactoryResetProtectionPolicy() throws Exception {
-        boolean hasPersistentDataBlock = hasService("persistent_data_block");
-        if (!mHasFeature || !hasPersistentDataBlock) {
+        if (!mHasFeature) {
             return;
         }
 
