@@ -16,12 +16,15 @@
 package android.telephony.cts;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 
 import androidx.test.InstrumentationRegistry;
 
+import org.junit.Before;
 import org.junit.Test;
 
 
@@ -45,6 +48,12 @@ public class TelephonyProtectedBroadcastsTest {
             "android.telephony.action.SIM_CARD_STATE_CHANGED",
             "android.telephony.action.SIM_SLOT_STATUS_CHANGED",
     };
+
+    @Before
+    public void setUp() throws Exception {
+        assumeTrue(getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+    }
 
     @Test
     public void testBroadcasts() {
