@@ -335,6 +335,18 @@ public class MediaSessionTest extends AndroidTestCase {
     }
 
     /**
+     * Test public APIs of {@link VolumeProvider}.
+     */
+    public void testVolumeProvider() {
+        VolumeProvider vp = new VolumeProvider(VolumeProvider.VOLUME_CONTROL_RELATIVE,
+                TEST_MAX_VOLUME, TEST_CURRENT_VOLUME, TEST_VOLUME_CONTROL_ID) {};
+        assertEquals(VolumeProvider.VOLUME_CONTROL_RELATIVE, vp.getVolumeControl());
+        assertEquals(TEST_MAX_VOLUME, vp.getMaxVolume());
+        assertEquals(TEST_CURRENT_VOLUME, vp.getCurrentVolume());
+        assertEquals(TEST_VOLUME_CONTROL_ID, vp.getVolumeControlId());
+    }
+
+    /**
      * Test {@link MediaSession#setPlaybackToLocal} and {@link MediaSession#setPlaybackToRemote}.
      */
     public void testPlaybackToLocalAndRemote() throws Exception {
