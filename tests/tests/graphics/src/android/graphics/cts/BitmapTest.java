@@ -758,6 +758,22 @@ public class BitmapTest {
     }
 
     @Test
+    public void testGetHardwareBufferClosed() {
+        HardwareBuffer hwBuffer = createTestBuffer(128, 128, false);
+        Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+        assertNotNull(bitmap);
+
+        hwBuffer.close();
+
+        try (HardwareBuffer hwBuffer2 = bitmap.getHardwareBuffer()) {
+            assertNotNull(hwBuffer2);
+            assertFalse(hwBuffer2.isClosed());
+            assertNotEquals(hwBuffer, hwBuffer2);
+        }
+        bitmap.recycle();
+    }
+
+    @Test
     public void testGenerationId() {
         Bitmap bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
         int genId = bitmap.getGenerationId();
