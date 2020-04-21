@@ -597,6 +597,12 @@ def zoom_ratio_range(props):
            props['android.control.zoomRatioRange'] is not None
 
 
+def jpeg_quality(props):
+    """Returns whether a device supports JPEG quality."""
+    return props.has_key('camera.characteristics.requestKeys') and \
+              'android.jpeg.quality' in props['camera.characteristics.requestKeys']
+
+
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
     """
