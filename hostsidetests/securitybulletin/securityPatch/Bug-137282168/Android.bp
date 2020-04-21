@@ -1,4 +1,4 @@
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,27 +14,13 @@
 
 cc_test {
     name: "Bug-137282168",
+    defaults: ["cts_hostsidetests_securitybulletin_defaults"],
     srcs: ["poc.cpp"],
-    compile_multilib: "both",
-    multilib: {
-        lib32: {
-            suffix: "32",
-        },
-        lib64: {
-            suffix: "64",
-        },
-    },
-    test_suites: ["cts"],
     shared_libs: [
         "libbinder",
         "liblog",
         "libutils",
     ],
-    arch: {
-        arm: {
-            instruction_set: "arm",
-        },
-    },
     cflags: [
         "-Wall",
         "-Werror",
