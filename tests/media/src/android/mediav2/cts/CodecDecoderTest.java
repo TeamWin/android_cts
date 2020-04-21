@@ -502,6 +502,23 @@ public class CodecDecoderTest extends CodecTestBase {
         mExtractor.release();
     }
 
+    private native boolean nativeTestSimpleDecode(String decoder, String mime, String testFile,
+            String refFile, float rmsError);
+
+
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSimpleDecodeNative() {
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestSimpleDecode(decoder, mMime, mInpPrefix + mTestFile,
+                    mInpPrefix + mRefFile, mRmsError));
+        }
+    }
+
     /**
      * Tests flush when codec is in sync and async mode. In these scenarios, Timestamp
      * ordering is verified. The output has to be consistent (not flaky) in all runs
@@ -624,6 +641,21 @@ public class CodecDecoderTest extends CodecTestBase {
             }
             mCodec.release();
             mExtractor.release();
+        }
+    }
+
+    private native boolean nativeTestFlush(String decoder, String mime, String testFile);
+
+    @Ignore("TODO(b/147576107)")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testFlushNative() {
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestFlush(decoder, mMime, mInpPrefix + mTestFile));
         }
     }
 
@@ -856,6 +888,20 @@ public class CodecDecoderTest extends CodecTestBase {
         mExtractor.release();
     }
 
+    private native boolean nativeTestOnlyEos(String decoder, String mime, String testFile);
+
+    @SmallTest
+    @Test
+    public void testOnlyEosNative() {
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestOnlyEos(decoder, mMime, mInpPrefix + mTestFile));
+        }
+    }
+
     /**
      * Test Decoder by Queuing CSD separately
      */
@@ -947,6 +993,24 @@ public class CodecDecoderTest extends CodecTestBase {
                 }
             }
             mCodec.release();
+        }
+        mExtractor.release();
+    }
+
+    private native boolean nativeTestSimpleDecodeQueueCSD(String decoder, String mime,
+            String testFile);
+
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSimpleDecodeQueueCSDNative() throws IOException {
+        MediaFormat format = setUpSource(mTestFile);
+        Assume.assumeTrue("Format has no CSD, ignoring test for mime:" + mMime, hasCSD(format));
+        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+        if (listOfDecoders.isEmpty()) {
+            fail("no suitable codecs found for mime: " + mMime);
+        }
+        for (String decoder : listOfDecoders) {
+            assertTrue(nativeTestSimpleDecodeQueueCSD(decoder, mMime, mInpPrefix + mTestFile));
         }
         mExtractor.release();
     }

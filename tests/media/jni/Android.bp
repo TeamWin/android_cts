@@ -55,3 +55,26 @@ cc_test_library {
     ],
     gtest: false,
 }
+
+cc_test_library {
+    name: "libctsmediav2codec_jni",
+    srcs: [
+        "NativeMediaConstants.cpp",
+        "NativeCodecDecoderTest.cpp",
+        "NativeCodecEncoderTest.cpp",
+        "NativeCodecTestBase.cpp",
+    ],
+    shared_libs: [
+        "libmediandk",
+        "liblog",
+    ],
+    include_dirs: [
+        "frameworks/av/media/ndk/include/media",
+    ],
+    stl: "libc++_static",
+    cflags: [
+        "-Werror",
+        "-Wall",
+    ],
+    gtest: false,
+}
