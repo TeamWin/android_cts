@@ -1090,9 +1090,9 @@
         android:description="@string/permgroupdesc_phone"
         android:priority="500" />
 
-    <!-- Allows read only access to phone state, including the phone number of the device,
-         current cellular network information, the status of any ongoing calls, and a list of any
-         {@link android.telecom.PhoneAccount}s registered on the device.
+    <!-- Allows read only access to phone state, including the current cellular network information,
+         the status of any ongoing calls, and a list of any {@link android.telecom.PhoneAccount}s
+         registered on the device.
          <p class="note"><strong>Note:</strong> If <em>both</em> your <a
          href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#min">{@code
          minSdkVersion}</a> and <a
@@ -1101,12 +1101,13 @@
          grants your app this permission. If you don't need this permission, be sure your <a
          href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#target">{@code
          targetSdkVersion}</a> is 4 or higher.
-         <p>Protection level: normal
+         <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.READ_PHONE_STATE"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_readPhoneState"
         android:description="@string/permdesc_readPhoneState"
-        android:protectionLevel="normal" />
+        android:protectionLevel="dangerous" />
 
     <!-- Allows read access to the device's phone number(s). This is a subset of the capabilities
          granted by {@link #READ_PHONE_STATE} but is exposed to instant applications.
