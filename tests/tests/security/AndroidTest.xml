@@ -24,6 +24,14 @@
         <option name="test-file-name" value="CtsSecurityTestCases.apk" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.CrashReporter" />
+
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command"
+            value="appops set android.security.cts REQUEST_INSTALL_PACKAGES allow" />
+        <option name="teardown-command"
+            value="appops reset android.security.cts" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.security.cts" />
         <option name="runtime-hint" value="1h40m18s" />

@@ -340,6 +340,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testDevicePolicyApn() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
         // These methods aren't accessible to anything except system and phone by design, so we just
         // look for security exceptions here.
         try {
@@ -1161,6 +1165,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testSetSystemSelectionChannels() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(1);
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -1885,6 +1893,10 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testGetUiccCardsInfoException() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
         try {
             // Requires READ_PRIVILEGED_PHONE_STATE or carrier privileges
             List<UiccCardInfo> infos = mTelephonyManager.getUiccCardsInfo();

@@ -34,6 +34,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.AppOpsManager;
 import android.app.PendingIntent;
@@ -58,6 +59,8 @@ import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
@@ -133,6 +136,9 @@ public class SmsManagerTest {
 
     @Before
     public void setUp() throws Exception {
+        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+
         mContext = getContext();
         mTelephonyManager =
             (TelephonyManager) getContext().getSystemService(
@@ -163,9 +169,6 @@ public class SmsManagerTest {
 
     @Test
     public void testDivideMessage() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
         ArrayList<String> dividedMessages = divideMessage(LONG_TEXT);
         assertNotNull(dividedMessages);
         if (TelephonyUtils.isSkt(mTelephonyManager)) {
@@ -181,9 +184,6 @@ public class SmsManagerTest {
 
     @Test
     public void testDivideUnicodeMessage() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
         ArrayList<String> dividedMessages = divideMessage(LONG_TEXT_WITH_32BIT_CHARS);
         assertNotNull(dividedMessages);
         assertTrue(isComplete(dividedMessages, 3, LONG_TEXT_WITH_32BIT_CHARS));
@@ -207,10 +207,6 @@ public class SmsManagerTest {
 
     @Test
     public void testSmsRetriever() throws Exception {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-
         assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
                 TextUtils.isEmpty(mDestAddr));
 
@@ -302,10 +298,6 @@ public class SmsManagerTest {
 
     @Test
     public void testSendAndReceiveMessages() throws Exception {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-
         assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
                 TextUtils.isEmpty(mDestAddr));
 
@@ -334,10 +326,6 @@ public class SmsManagerTest {
 
     @Test
     public void testSmsBlocking() throws Exception {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-
         assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
                 TextUtils.isEmpty(mDestAddr));
 
@@ -427,10 +415,6 @@ public class SmsManagerTest {
 
     @Test
     public void testSmsNotPersisted_failsWithoutCarrierPermissions() throws Exception {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
-
         assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
                 TextUtils.isEmpty(mDestAddr));
 
@@ -445,9 +429,6 @@ public class SmsManagerTest {
 
     @Test
     public void testContentProviderAccessRestriction() throws Exception {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
-        }
         Uri dummySmsUri = null;
         Context context = getInstrumentation().getContext();
         ContentResolver contentResolver = context.getContentResolver();
