@@ -209,6 +209,7 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        its.caps.skip_unless(its.caps.jpeg_quality(props))
         cam.do_3a()
 
         # do captures over jpeg quality range
