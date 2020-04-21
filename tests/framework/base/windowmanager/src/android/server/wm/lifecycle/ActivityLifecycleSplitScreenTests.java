@@ -69,6 +69,8 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
     public void setUp() throws Exception {
         super.setUp();
         assumeTrue(supportsSplitScreenMultiWindow());
+        // TODO(b/149338177): Fix test to pass with organizer API.
+        mUseTaskOrganizer = false;
     }
 
     @FlakyTest(bugId = 137329632)
