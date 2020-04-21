@@ -437,6 +437,8 @@ abstract class CodecTestBase {
     static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
     static final long Q_DEQ_TIMEOUT_US = 5000;
     static final String mInpPrefix = WorkDir.getMediaDirString();
+    static final PackageManager pm =
+            InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
     static String codecSelKeys;
 
     CodecAsyncHandler mAsyncHandle;
@@ -487,8 +489,34 @@ abstract class CodecTestBase {
     }
 
     static boolean isTv() {
-        return InstrumentationRegistry.getInstrumentation().getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        return pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    static boolean hasMicrophone() {
+        return pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE);
+    }
+
+    static boolean hasCamera() {
+        return pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY);
+    }
+
+    static boolean isWatch() {
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
+
+    static boolean isAutomotive() {
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    static boolean hasAudioOutput() {
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
+    }
+
+    static boolean isHandheld() {
+        // handheld nature is not exposed to package manager, for now
+        // we check for touchscreen and NOT watch and NOT tv
+        return pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) && !isWatch() && !isTv() &&
+                !isAutomotive();
     }
 
     static List<Object[]> prepareParamList(ArrayList<String> cddRequiredMimeList,
@@ -506,6 +534,14 @@ abstract class CodecTestBase {
                         mimes.add(type);
                     }
                 }
+            }
+            // TODO(b/154423708): add checks for video o/p port and display length >= 2.5"
+            /* sec 5.2: device implementations include an embedded screen display with the
+            diagonal length of at least 2.5inches or include a video output port or declare the
+            support of a camera */
+            if (isEncoder && hasCamera() && !mimes.contains(MediaFormat.MIMETYPE_VIDEO_AVC) &&
+                    !mimes.contains(MediaFormat.MIMETYPE_VIDEO_VP8)) {
+                fail("device must support at least one of VP8 or AVC video encoders");
             }
             for (String mime : cddRequiredMimeList) {
                 if (!mimes.contains(mime)) {
