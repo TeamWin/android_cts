@@ -409,6 +409,22 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+
+#ifdef USING_VERSION_1
+  ::ndk::ScopedAStatus RepeatStringNullableLater(const std::string& in_value,
+                                                 std::string* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+#else
+  ::ndk::ScopedAStatus RepeatStringNullableLater(
+      const std::optional<std::string>& in_value,
+      std::optional<std::string>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+#endif
+
 #ifndef USING_VERSION_1
   // All methods added from now on should be within this macro
   ::ndk::ScopedAStatus NewMethodThatReturns10(int32_t* _aidl_return) override {
