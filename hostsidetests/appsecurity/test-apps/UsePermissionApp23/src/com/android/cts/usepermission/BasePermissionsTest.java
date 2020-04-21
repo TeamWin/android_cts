@@ -374,7 +374,7 @@ public abstract class BasePermissionsTest {
             scroller.setSwipeDeadZonePercentage(0.25);
             return scroller.scrollTextIntoView(text);
         } catch (UiObjectNotFoundException e) {
-            throw new AssertionError("View with text '" + text + "' was not found!", e);
+            return false;
         }
     }
 
