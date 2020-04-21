@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MEDIACTSNATIVE_NATIVE_MEDIA_CONSTANTS_H
-#define MEDIACTSNATIVE_NATIVE_MEDIA_CONSTANTS_H
+#ifndef MEDIACTSNATIVE_NATIVE_MEDIA_COMMON_H
+#define MEDIACTSNATIVE_NATIVE_MEDIA_COMMON_H
+
+#include <NdkMediaFormat.h>
 
 extern const char* AMEDIA_MIMETYPE_VIDEO_VP8;
 extern const char* AMEDIA_MIMETYPE_VIDEO_VP9;
+extern const char* AMEDIA_MIMETYPE_VIDEO_AV1;
 extern const char* AMEDIA_MIMETYPE_VIDEO_AVC;
 extern const char* AMEDIA_MIMETYPE_VIDEO_HEVC;
 extern const char* AMEDIA_MIMETYPE_VIDEO_MPEG4;
@@ -56,4 +59,7 @@ static const int TBD_AMEDIACODEC_BUFFER_FLAG_KEY_FRAME = 0x1;
 
 static const int kBitrateModeConstant = 2;
 
-#endif  // MEDIACTSNATIVE_NATIVE_MEDIA_CONSTANTS_H
+// common utility functions
+bool isCSDIdentical(AMediaFormat* refFormat, AMediaFormat* testFormat);
+
+#endif  // MEDIACTSNATIVE_NATIVE_MEDIA_COMMON_H
