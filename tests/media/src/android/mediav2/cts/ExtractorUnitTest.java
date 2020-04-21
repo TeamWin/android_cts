@@ -23,7 +23,6 @@ import android.os.ParcelFileDescriptor;
 
 import androidx.test.filters.SmallTest;
 
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
