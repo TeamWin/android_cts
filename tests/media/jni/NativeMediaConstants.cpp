@@ -16,7 +16,9 @@
 
 #include "NativeMediaConstants.h"
 
-/* Note: constants used by the native media tests but not available in media ndk api */
+/* TODO(b/153592281)
+ * Note: constants used by the native media tests but not available in media ndk api
+ */
 const char* AMEDIA_MIMETYPE_VIDEO_VP8 = "video/x-vnd.on2.vp8";
 const char* AMEDIA_MIMETYPE_VIDEO_VP9 = "video/x-vnd.on2.vp9";
 const char* AMEDIA_MIMETYPE_VIDEO_AVC = "video/avc";
@@ -30,3 +32,8 @@ const char* AMEDIA_MIMETYPE_AUDIO_AAC = "audio/mp4a-latm";
 const char* AMEDIA_MIMETYPE_AUDIO_VORBIS = "audio/vorbis";
 const char* AMEDIA_MIMETYPE_AUDIO_OPUS = "audio/opus";
 
+/* TODO(b/153592281) */
+const char* TBD_AMEDIACODEC_PARAMETER_KEY_REQUEST_SYNC_FRAME = "request-sync";
+const char* TBD_AMEDIACODEC_PARAMETER_KEY_VIDEO_BITRATE = "video-bitrate";
+const char* TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES = "max-bframes";
+const char* TBD_AMEDIAFORMAT_KEY_BIT_RATE_MODE = "bitrate-mode";

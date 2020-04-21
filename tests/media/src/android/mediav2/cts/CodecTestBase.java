@@ -435,7 +435,7 @@ abstract class CodecTestBase {
     static final boolean ENABLE_LOGS = false;
     static final int PER_TEST_TIMEOUT_LARGE_TEST_MS = 300000;
     static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
-    static final long Q_DEQ_TIMEOUT_US = 500;
+    static final long Q_DEQ_TIMEOUT_US = 5000;
     static final String mInpPrefix = WorkDir.getMediaDirString();
     static String codecSelKeys;
 
@@ -458,6 +458,8 @@ abstract class CodecTestBase {
     Surface mSurface;
 
     static {
+        System.loadLibrary("ctsmediav2codec_jni");
+
         codecSelKeyMimeMap.put("vp8", MediaFormat.MIMETYPE_VIDEO_VP8);
         codecSelKeyMimeMap.put("vp9", MediaFormat.MIMETYPE_VIDEO_VP9);
         codecSelKeyMimeMap.put("av1", MediaFormat.MIMETYPE_VIDEO_AV1);
