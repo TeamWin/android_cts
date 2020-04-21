@@ -98,6 +98,7 @@ public class SeccompDeviceTest {
         }
     }
 
+    @Test
     @SecurityTest(minPatchLevel = "2019-05")
     public void testPtraceSeccomp_CVE_2019_2054() throws Exception {
         Assert.assertTrue(testPtrace_CVE_2019_2054());
