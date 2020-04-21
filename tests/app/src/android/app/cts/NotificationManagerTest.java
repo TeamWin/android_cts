@@ -3101,6 +3101,27 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testNotificationManagerBubblePolicy_appAll_channelNo() throws Exception {
+        if (FeatureUtil.isAutomotive()) {
+            // Automotive does not support notification bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(false);
+            createDynamicShortcut();
+            Notification.BubbleMetadata data =
+                    new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
+                            .build();
+            Notification.Builder nb = getConversationNotification();
+
+            sendAndVerifyBubble(1, nb, data, false);
+        } finally {
+            deleteShortcuts();
+        }
+    }
+
     public void testNotificationManagerBubblePolicy_appSelected_channelNo() throws Exception {
         if (FeatureUtil.isAutomotive()) {
             // Automotive does not support notification bubbles.
