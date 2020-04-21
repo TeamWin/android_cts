@@ -210,7 +210,7 @@ public class PermissionUtils {
             }
         } else if (permission.equals(PACKAGE_USAGE_STATS)) {
             setAppOpByName(packageName, OPSTR_GET_USAGE_STATS, MODE_ALLOWED);
-        } else {
+        } else if (permissionToOp(permission) != null) {
             setAppOp(packageName, permission, MODE_ALLOWED);
         }
     }
@@ -237,7 +237,7 @@ public class PermissionUtils {
             }
         } else if (permission.equals(PACKAGE_USAGE_STATS)) {
             setAppOpByName(packageName, OPSTR_GET_USAGE_STATS, MODE_IGNORED);
-        } else {
+        } else if (permissionToOp(permission) != null) {
             setAppOp(packageName, permission, MODE_IGNORED);
         }
     }
