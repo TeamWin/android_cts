@@ -63,6 +63,7 @@ cc_test_library {
         "NativeCodecDecoderTest.cpp",
         "NativeCodecEncoderTest.cpp",
         "NativeCodecTestBase.cpp",
+        "NativeCodecUnitTest.cpp",
     ],
     shared_libs: [
         "libmediandk",
