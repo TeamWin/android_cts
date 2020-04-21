@@ -32,7 +32,7 @@
 #include <map>
 #include <vector>
 
-#include "NativeMediaConstants.h"
+#include "NativeMediaCommon.h"
 
 static media_status_t insertPerFrameSubtitles(AMediaMuxer* muxer, long pts, size_t trackID) {
     const char* greeting = "hello world";
