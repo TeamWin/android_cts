@@ -19,6 +19,9 @@ package android.telephony.cts;
 
 import static junit.framework.Assert.fail;
 
+import static org.junit.Assume.assumeTrue;
+
+import android.content.pm.PackageManager;
 import android.os.UserHandle;
 import android.telephony.CbGeoUtils.Geometry;
 import android.telephony.CellBroadcastIntents;
@@ -30,6 +33,7 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.internal.telephony.gsm.SmsCbConstants;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -57,6 +61,12 @@ public class CellBroadcastIntentsTest {
     private static final int TEST_RECEIVED_TIME = 11000;
     private static final int TEST_SLOT = 0;
     private static final int TEST_SUB_ID = 1;
+
+    @Before
+    public void setUp() throws Exception {
+        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+    }
 
     @Test
     public void testGetIntentForBackgroundReceivers() {
