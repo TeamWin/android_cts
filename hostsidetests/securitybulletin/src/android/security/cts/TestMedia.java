@@ -40,7 +40,6 @@ public class TestMedia extends SecurityTestCase {
      * existing test methods
      ******************************************************************************/
 
-
     /******************************************************************************
      * To prevent merge conflicts, add tests for P below this comment, before any
      * existing test methods
