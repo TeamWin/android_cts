@@ -41,8 +41,8 @@
                 value="com.android.cts.core.runner.ExpectationBasedFilter" />
         <option name="core-expectation" value="/knownfailures.txt" />
         <option name="runtime-hint" value="35m"/>
-        <!-- 20x default timeout of 600sec -->
-        <option name="shell-timeout" value="12000000"/>
+        <!-- shell-timeout is the amount of time we wait for an output before stopping the instrumentation -->
+        <option name="shell-timeout" value="45m"/>
         <option name="hidden-api-checks" value="false"/>
     </test>
 
