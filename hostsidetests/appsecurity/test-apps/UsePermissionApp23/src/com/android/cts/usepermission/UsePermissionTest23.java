@@ -41,12 +41,14 @@ public class UsePermissionTest23 extends BasePermissionsTest {
 
     private boolean mLeanback;
     private boolean mWatch;
+    private boolean mAutomotive;
 
     @Before
     public void initialize() {
         PackageManager pm = getInstrumentation().getContext().getPackageManager();
         mLeanback = pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
         mWatch = pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+        mAutomotive = pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     @Test
@@ -677,7 +679,7 @@ public class UsePermissionTest23 extends BasePermissionsTest {
     }
 
     private void denyWithPrejudice() throws Exception {
-        if (mLeanback || mWatch) {
+        if (mLeanback || mWatch || mAutomotive) {
             clickDontAskAgainButton();
         } else {
             clickDontAskAgainCheckbox();
