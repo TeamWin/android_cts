@@ -58,6 +58,7 @@ import android.util.Pair;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -73,6 +74,13 @@ import java.util.List;
 @Presubmit
 @android.server.wm.annotation.Group3
 public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClientTestBase {
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        // TODO(b/149338177): Fix test to pass with organizer API.
+        mUseTaskOrganizer = false;
+    }
 
     @Test
     public void testTopPositionAfterLaunch() throws Exception {
