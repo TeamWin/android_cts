@@ -24,7 +24,7 @@
 #include <thread>
 
 #include "NativeCodecTestBase.h"
-#include "NativeMediaConstants.h"
+#include "NativeMediaCommon.h"
 
 class NativeCodecUnitTest final : CodecTestBase {
   private:
