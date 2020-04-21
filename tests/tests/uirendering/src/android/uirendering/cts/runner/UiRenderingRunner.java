@@ -16,10 +16,10 @@
 
 package android.uirendering.cts.runner;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.test.uiautomator.UiDevice;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnitRunner;
 
 /**
@@ -36,10 +36,11 @@ public class UiRenderingRunner extends AndroidJUnitRunner {
     public void onCreate(Bundle arguments) {
         super.onCreate(arguments);
 
-        final UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        final UiDevice device = UiDevice.getInstance(this);
         try {
             device.wakeUp();
             device.executeShellCommand("wm dismiss-keyguard");
+            getContext().sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
         } catch (Exception e) {
         }
     }
