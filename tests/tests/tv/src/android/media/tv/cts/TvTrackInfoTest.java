@@ -16,19 +16,20 @@
 
 package android.media.tv.cts;
 
-import static android.content.pm.PackageManager.FEATURE_LIVE_TV;
 import static android.media.tv.cts.TvTrackInfoSubject.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.content.Context;
 import android.media.tv.TvTrackInfo;
 import android.os.Bundle;
 
 import androidx.test.core.os.Parcelables;
 
+import com.android.compatibility.common.util.RequiredServiceRule;
+
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 
 /**
  * Test {@link android.media.tv.TvTrackInfo}.
@@ -36,7 +37,8 @@ import org.junit.rules.TestRule;
 public class TvTrackInfoTest {
 
     @Rule
-    public final TestRule mRequiresLiveTvFeature = Utils.assumeFeatureRule(FEATURE_LIVE_TV);
+    public final RequiredServiceRule requiredServiceRule = new RequiredServiceRule(
+            Context.TV_INPUT_SERVICE);
 
     @Test
     public void setHardOfHearing_invalid() {
