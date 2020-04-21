@@ -26,7 +26,9 @@ import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_ON_MOT
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -67,6 +69,8 @@ public class AnrTests extends ActivityManagerTestBase {
     @Before
     public void setup() throws Exception {
         super.setUp();
+        assumeTrue(mAtm.currentUiModeSupportsErrorDialogs(mContext));
+
         mLogSeparator = separateLogs(); // add a new separator for logs
         mHideDialogSetting = new SettingsSession<>(
                 Settings.Global.getUriFor(Settings.Global.HIDE_ERROR_DIALOGS),
@@ -76,7 +80,7 @@ public class AnrTests extends ActivityManagerTestBase {
 
     @After
     public void teardown() {
-        mHideDialogSetting.close();
+        if (mHideDialogSetting != null) mHideDialogSetting.close();
         stopTestPackage(UNRESPONSIVE_ACTIVITY.getPackageName());
         stopTestPackage(HOST_ACTIVITY.getPackageName());
     }
