@@ -82,119 +82,340 @@ android_test_helper_app {
 
 prebuilt_apex {
     name: "ApexKeyRotationTestV2_SignedBob",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_signed_bob.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_signed_bob.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_signed_bob.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_signed_bob.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_signed_bob.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_signed_bob.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "ApexKeyRotationTestV2_SignedBobRot",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_signed_bob_rot.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_signed_bob_rot.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_signed_bob_rot.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_signed_bob_rot.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_signed_bob_rot.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_signed_bob_rot.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "ApexKeyRotationTestV2_SignedBobRotRollback",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "ApexKeyRotationTestV3_SignedBob",
-    src: "testdata/apex/com.android.apex.cts.shim.v3_signed_bob.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v3_signed_bob.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v3_signed_bob.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v3_signed_bob.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v3_signed_bob.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v3_signed_bob.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "ApexKeyRotationTestV3_SignedBobRot",
-    src: "testdata/apex/com.android.apex.cts.shim.v3_signed_bob_rot.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v3_signed_bob_rot.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v3_signed_bob_rot.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v3_signed_bob_rot.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v3_signed_bob_rot.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v3_signed_bob_rot.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV1",
-    src: "testdata/apex/com.android.apex.cts.shim.v1.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v1.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v1.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v1.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v1.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v1.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV2",
-    src: "testdata/apex/com.android.apex.cts.shim.v2.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV3",
-    src: "testdata/apex/com.android.apex.cts.shim.v3.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v3.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v3.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v3.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v3.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v3.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV2_AdditionalFile",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_additional_file.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_additional_file.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_additional_file.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_additional_file.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_additional_file.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_additional_file.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV2_AdditionalFolder",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_additional_folder.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_additional_folder.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_additional_folder.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_additional_folder.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_additional_folder.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_additional_folder.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV2_WithPostInstallHook",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_with_post_install_hook.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_with_post_install_hook.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_with_post_install_hook.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_with_post_install_hook.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_with_post_install_hook.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_with_post_install_hook.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV2_WithPreInstallHook",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_with_pre_install_hook.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_with_pre_install_hook.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_with_pre_install_hook.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_with_pre_install_hook.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_with_pre_install_hook.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_with_pre_install_hook.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV2_WrongSha",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_wrong_sha.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_wrong_sha.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_wrong_sha.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_wrong_sha.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_wrong_sha.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_wrong_sha.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV1_NotPreInstalled",
-    src: "testdata/apex/com.android.apex.cts.shim_not_pre_installed.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim_not_pre_installed.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim_not_pre_installed.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim_not_pre_installed.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim_not_pre_installed.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim_not_pre_installed.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV2_DifferentCertificate",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_different_certificate.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_different_certificate.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_different_certificate.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_different_certificate.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_different_certificate.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_different_certificate.apex",
     installable: false,
 }
 
 prebuilt_apex {
     name: "StagedInstallTestApexV2_NoHashtree",
-    src: "testdata/apex/com.android.apex.cts.shim.v2_no_hashtree.apex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_no_hashtree.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_no_hashtree.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_no_hashtree.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_no_hashtree.apex",
+        },
+    },
     filename: "com.android.apex.cts.shim.v2_no_hashtree.apex",
     installable: false,
 }
 
 prebuilt_apex {
   name: "StagedInstallTestApexV2_SdkTargetP",
-  src: "testdata/apex/com.android.apex.cts.shim.v2_sdk_target_p.apex",
+  arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_sdk_target_p.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_sdk_target_p.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_sdk_target_p.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_sdk_target_p.apex",
+        },
+    },
   filename: "com.android.apex.cts.shim.v2_sdk_target_p.apex",
   installable: false,
 }
