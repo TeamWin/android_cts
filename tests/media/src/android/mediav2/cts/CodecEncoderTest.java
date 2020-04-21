@@ -42,7 +42,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -366,19 +368,26 @@ public class CodecEncoderTest extends CodecTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        final ArrayList<String> cddRequiredMimeList =
-                new ArrayList<>(Arrays.asList(
-                        MediaFormat.MIMETYPE_AUDIO_FLAC,
-                        MediaFormat.MIMETYPE_AUDIO_OPUS,
-                        MediaFormat.MIMETYPE_AUDIO_AAC,
-                        MediaFormat.MIMETYPE_AUDIO_AMR_NB,
-                        MediaFormat.MIMETYPE_AUDIO_AMR_WB,
-                        MediaFormat.MIMETYPE_VIDEO_MPEG4,
-                        MediaFormat.MIMETYPE_VIDEO_H263,
-                        MediaFormat.MIMETYPE_VIDEO_AVC,
-                        MediaFormat.MIMETYPE_VIDEO_HEVC,
-                        MediaFormat.MIMETYPE_VIDEO_VP8,
-                        MediaFormat.MIMETYPE_VIDEO_VP9));
+        Set<String> list = new HashSet<>();
+        if (hasMicrophone()) {
+            // sec 5.1.1
+            // TODO(b/154423550)
+            // list.add(MediaFormat.MIMETYPE_AUDIO_RAW);
+            list.add(MediaFormat.MIMETYPE_AUDIO_FLAC);
+            list.add(MediaFormat.MIMETYPE_AUDIO_OPUS);
+        }
+        if (isHandheld() || isTv() || isAutomotive()) {
+            // sec 2.2.2, 2.3.2, 2.5.2
+            list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
+            list.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+            list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+        }
+        if (isHandheld()) {
+            // sec 2.2.2
+            list.add(MediaFormat.MIMETYPE_AUDIO_AMR_NB);
+            list.add(MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+        }
+        ArrayList<String> cddRequiredMimeList = new ArrayList<>(list);
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, arrays of bit-rates, sample rates, channel counts
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{64000, 128000}, new int[]{8000, 11025,
