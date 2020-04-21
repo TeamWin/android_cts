@@ -680,6 +680,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             // Install and enable assistant, notice that profile can't have assistant.
             installAppAsUser(ASSIST_APP_APK, mPrimaryUserId);
+            waitForBroadcastIdle();
             setVoiceInteractionService(ASSIST_INTERACTION_SERVICE);
             setScreenCaptureDisabled_assist(mUserId, true /* disabled */);
         } finally {
