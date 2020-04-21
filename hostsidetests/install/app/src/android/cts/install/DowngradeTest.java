@@ -16,19 +16,7 @@
 
 package android.cts.install;
 
-import static android.cts.install.InstallRule.VERSION_CODE_INVALID;
-
-import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
-
 import static com.google.common.truth.Truth.assertThat;
-
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageInstaller;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
@@ -44,12 +32,9 @@ import org.junit.runners.Parameterized.Parameters;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(Parameterized.class)
-public final class InstallTest {
+public final class DowngradeTest {
     @Parameter(0)
     public INSTALL_TYPE mInstallType;
 
@@ -79,61 +64,77 @@ public final class InstallTest {
     @Rule
     public SessionRule mSessionRule = new SessionRule();
 
-    private static final int VERSION_CODE_TARGET = 2;
+    private static final int VERSION_CODE_CURRENT = 3;
+    private static final int VERSION_CODE_DOWNGRADE = 2;
 
     /**
      * Cleans up test environment.
      *
      * This is marked as @Test to take advantage of @Before/@After methods of hostside test cases.
      * Actual purpose of this method to be called before and after each test case of
-     * {@link android.cts.install.host.InstallTest} to reduce tests flakiness.
+     * {@link android.cts.install.host.DowngradeTest} to reduce tests flakiness.
      */
     @Test
     public void cleanUp_phase() throws Exception {
         mSessionRule.cleanUp();
     }
 
+    /** Install the version {@link #VERSION_CODE_CURRENT} of the apps to be downgraded. */
+    @Test
+    public void arrange_phase() throws Exception {
+        getParameterizedInstall(VERSION_CODE_CURRENT).commit();
+    }
+
+    /** Verify the version of the arranged apps. */
+    @Test
+    public void assert_postArrange_phase() {
+        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_CURRENT);
+    }
+
+    /** Commits the downgrade. */
     @Test
     public void action_phase() throws Exception {
-        Install install = getParameterizedInstall(VERSION_CODE_TARGET);
-        int sessionId = install.commit();
+        Install install = getParameterizedInstall(VERSION_CODE_DOWNGRADE);
+        int sessionId = install.setRequestDowngrade().commit();
         mSessionRule.recordSessionId(sessionId);
     }
 
+    /** Confirms target version of the apps installed. */
     @Test
-    public void assert_commitFailure_phase() {
-        Install install = getParameterizedInstall(VERSION_CODE_TARGET);
-        InstallUtils.commitExpectingFailure(IllegalArgumentException.class,
-                "APEX files can only be installed as part of a staged session.", install);
+    public void assert_downgradeSuccess_phase() {
+        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_DOWNGRADE);
     }
 
+    /** Confirms the staged downgrade failed. */
     @Test
-    public void assert_phase() {
-        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_TARGET);
+    public void assert_downgradeFail_phase() throws Exception {
+        assertThat(mSessionRule.retrieveSessionInfo().isStagedSessionFailed()).isTrue();
+        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_CURRENT);
     }
 
+    /** Confirms versions before staged downgrades applied. */
     @Test
     public void assert_preReboot_phase() throws Exception {
-        assertNoSessionCommitBroadcastSent();
         assertThat(mSessionRule.retrieveSessionInfo().isStagedSessionReady()).isTrue();
-        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_INVALID);
+        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_CURRENT);
     }
 
+    /** Confirms versions after staged downgrades applied. */
     @Test
     public void assert_postReboot_phase() throws Exception {
         assertThat(mSessionRule.retrieveSessionInfo().isStagedSessionApplied()).isTrue();
-        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_TARGET);
-        assertNoSessionCommitBroadcastSent();
+        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_DOWNGRADE);
     }
 
     @Test
-    public void action_abandonSession_phase() throws Exception {
-        getPackageInstaller().abandonSession(mSessionRule.retrieveSessionId());
-    }
-
-    @Test
-    public void assert_abandonSession_phase() {
-        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_INVALID);
+    public void assert_commitNotRequestedDowngrade_phase() {
+        Install install = getParameterizedInstall(VERSION_CODE_DOWNGRADE);
+        InstallUtils.commitExpectingFailure(AssertionError.class,
+                "INSTALL_FAILED_VERSION_DOWNGRADE" + "|"
+                        + "Downgrade of APEX package com\\.android\\.apex\\.cts\\.shim is not "
+                        + "allowed",
+                install);
+        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_CURRENT);
     }
 
     /** Gets parameterized {@link Install} of test packages with specific version. */
@@ -149,30 +150,5 @@ public final class InstallTest {
             install.setEnableRollback();
         }
         return install;
-    }
-
-    private static void assertNoSessionCommitBroadcastSent() throws InterruptedException {
-        BlockingQueue<PackageInstaller.SessionInfo> committedSessions = new LinkedBlockingQueue<>();
-        BroadcastReceiver sessionCommittedReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                try {
-                    PackageInstaller.SessionInfo info =
-                            intent.getParcelableExtra(PackageInstaller.EXTRA_SESSION);
-                    committedSessions.put(info);
-                } catch (InterruptedException e) {
-                    throw new AssertionError(e);
-                }
-            }
-        };
-
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        context.registerReceiver(sessionCommittedReceiver,
-                new IntentFilter(PackageInstaller.ACTION_SESSION_COMMITTED));
-
-        PackageInstaller.SessionInfo info = committedSessions.poll(10, TimeUnit.SECONDS);
-        context.unregisterReceiver(sessionCommittedReceiver);
-
-        assertThat(info).isNull();
     }
 }

@@ -128,6 +128,7 @@ final class InstallRule extends ExternalResource {
         testAppMap.put(TestApp.A, 3, TestApp.A3);
         testAppMap.put(TestApp.B, 1, TestApp.B1);
         testAppMap.put(TestApp.B, 2, TestApp.B2);
+        testAppMap.put(TestApp.B, 3, TestApp.B3);
         testAppMap.put(TestApp.Apex, 1, TestApp.Apex1);
         testAppMap.put(TestApp.Apex, 2, TestApp.Apex2);
         testAppMap.put(TestApp.Apex, 3, TestApp.Apex3);
