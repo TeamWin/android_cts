@@ -293,6 +293,10 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
+    TestTaskOrganizer mTaskOrganizer = new TestTaskOrganizer();
+    // If the specific test should run using the task organizer or older API.
+    // TODO(b/149338177): Fix all places setting this to fail to be able to use organizer API.
+    public boolean mUseTaskOrganizer = true;
 
     public WindowManagerStateHelper getWmState() {
         return mWmState;
@@ -476,6 +480,8 @@ public abstract class ActivityManagerTestBase {
     private void tearDownBase() {
         mObjectTracker.tearDown(mPostAssertionRule::addError);
 
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mTaskOrganizer.unregisterOrganizerIfNeeded());
         // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
         // home are cleaned up from the stack at the end of each test. Am force stop shell commands
         // might be asynchronous and could interrupt the stack cleanup process if executed first.
@@ -774,10 +780,14 @@ public abstract class ActivityManagerTestBase {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             launchActivity(activityName);
             final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-            mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
-                    SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
-                    true /* onTop */, false /* animate */,
-                    null /* initialBounds */, true /* showRecents */);
+            if (mUseTaskOrganizer) {
+                mTaskOrganizer.putTaskInSplitPrimary(taskId);
+            } else {
+                mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
+                        SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
+                        true /* onTop */, false /* animate */,
+                        null /* initialBounds */, true /* showRecents */);
+            }
 
             mWmState.waitForValidState(
                     new WaitForValidActivityState.Builder(activityName)
@@ -803,10 +813,15 @@ public abstract class ActivityManagerTestBase {
     public void moveTaskToPrimarySplitScreen(int taskId, boolean showSideActivity) {
         final boolean isHomeRecentsComponent = mWmState.isHomeRecentsComponent();
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
-                    SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true /* onTop */,
-                    false /* animate */,
-                    null /* initialBounds */, showSideActivity && !isHomeRecentsComponent);
+            if (mUseTaskOrganizer) {
+                mTaskOrganizer.putTaskInSplitPrimary(taskId);
+            } else {
+                mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
+                        SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true /* onTop */,
+                        false /* animate */, null /* initialBounds */,
+                        showSideActivity && !isHomeRecentsComponent);
+            }
+
             mWmState.waitForRecentsActivityVisible();
 
             if (showSideActivity) {
