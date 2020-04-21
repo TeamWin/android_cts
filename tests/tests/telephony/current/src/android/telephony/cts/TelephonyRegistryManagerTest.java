@@ -4,8 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
@@ -34,6 +36,9 @@ public class TelephonyRegistryManagerTest {
 
     @Before
     public void setUp() throws Exception {
+        assumeTrue(InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
+
         mTelephonyRegistryMgr = (TelephonyRegistryManager) InstrumentationRegistry.getContext()
             .getSystemService(Context.TELEPHONY_REGISTRY_SERVICE);
     }
