@@ -27,6 +27,7 @@ import android.os.Build;
 import android.os.PersistableBundle;
 import android.util.Log;
 import android.util.Pair;
+import android.view.Surface;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -428,7 +429,7 @@ class OutputManager {
 
 abstract class CodecTestBase {
     private static final String LOG_TAG = CodecTestBase.class.getSimpleName();
-    private static final String CODEC_SEL_KEY = "codec-sel";
+    static final String CODEC_SEL_KEY = "codec-sel";
     static final String CODEC_SEL_VALUE = "default";
     static final Map<String, String> codecSelKeyMimeMap = new HashMap<>();
     static final boolean ENABLE_LOGS = false;
@@ -454,6 +455,7 @@ abstract class CodecTestBase {
     OutputManager mOutputBuff;
 
     MediaCodec mCodec;
+    Surface mSurface;
 
     static {
         codecSelKeyMimeMap.put("vp8", MediaFormat.MIMETYPE_VIDEO_VP8);
@@ -545,9 +547,11 @@ abstract class CodecTestBase {
         // signalEOS flag has nothing to do with configure. We are using this flag to try all
         // available configure apis
         if (signalEOSWithLastFrame) {
-            mCodec.configure(format, null, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+            mCodec.configure(format, mSurface, null,
+                    isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
         } else {
-            mCodec.configure(format, null, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0, null);
+            mCodec.configure(format, mSurface, isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0,
+                    null);
         }
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "codec configured");
