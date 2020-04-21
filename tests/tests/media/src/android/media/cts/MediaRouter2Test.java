@@ -1006,6 +1006,9 @@ public class MediaRouter2Test {
         transferCallback.onTransfer(null, null);
         transferCallback.onTransferFailure(null);
 
+        ControllerCallback controllerCallback = new ControllerCallback() {};
+        controllerCallback.onControllerUpdated(null);
+
         OnGetControllerHintsListener listener = route -> null;
         listener.onGetControllerHints(null);
     }
