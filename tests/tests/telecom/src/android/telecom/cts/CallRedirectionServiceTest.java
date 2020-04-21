@@ -149,9 +149,12 @@ public class CallRedirectionServiceTest extends BaseTelecomTestWithMockServices 
         mCall = mInCallService.getLastCall();
         assertEquals(SAMPLE_REDIRECT_HANDLE_WITH_POST_DIAL,
                 mCall.getDetails().getGatewayInfo().getGatewayAddress());
-        assertEquals(SAMPLE_HANDLE_WITH_POST_DIAL,
-                mCall.getDetails().getGatewayInfo().getOriginalAddress());
-        assertEquals(SAMPLE_HANDLE_WITH_POST_DIAL,
+        // The , (pause) separators get URI encoded in the call intent; compare decoded scheme to
+        // ensure proper equality for what it essentially the same thing.
+        assertEquals(Uri.decode(SAMPLE_HANDLE_WITH_POST_DIAL.getSchemeSpecificPart()),
+                Uri.decode(mCall.getDetails().getGatewayInfo().getOriginalAddress()
+                        .getSchemeSpecificPart()));
+        assertEquals(SAMPLE_REDIRECT_HANDLE_WITH_POST_DIAL,
                 mCall.getDetails().getHandle());
         assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, mCall.getDetails().getAccountHandle());
         assertTrue(Call.STATE_DISCONNECTED != mCall.getState());
