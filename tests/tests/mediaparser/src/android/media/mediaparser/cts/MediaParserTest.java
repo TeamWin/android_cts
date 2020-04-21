@@ -455,7 +455,7 @@ public class MediaParserTest {
     }
 
     @Test
-    public void testTsWithH264() throws IOException, InterruptedException {
+    public void testTsWithH264MpegAudio() throws IOException, InterruptedException {
         testExtractAsset("ts/sample_h264_mpeg_audio.ts");
     }
 
@@ -464,6 +464,14 @@ public class MediaParserTest {
         testExtractAsset(
                 "ts/sample_h264_no_access_unit_delimiters.ts",
                 Collections.singletonMap(MediaParser.PARAMETER_TS_DETECT_ACCESS_UNITS, true));
+    }
+
+    @Test
+    public void testTsWithH264DtsAudio() throws IOException, InterruptedException {
+        testExtractAsset(
+                "ts/sample_h264_dts_audio.ts",
+                Collections.singletonMap(
+                        MediaParser.PARAMETER_TS_ENABLE_HDMV_DTS_AUDIO_STREAMS, true));
     }
 
     @Test
