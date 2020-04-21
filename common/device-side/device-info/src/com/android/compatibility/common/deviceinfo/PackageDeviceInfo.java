@@ -15,6 +15,10 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import android.annotation.TargetApi;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -26,11 +30,15 @@ import com.android.compatibility.common.util.PackageUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * PackageDeviceInfo collector.
  */
+@TargetApi(Build.VERSION_CODES.N)
 public class PackageDeviceInfo extends DeviceInfo {
 
     private static final String PACKAGE = "package";
@@ -55,12 +63,28 @@ public class PackageDeviceInfo extends DeviceInfo {
 
     private static final String SHA256_CERT = "sha256_cert";
 
+    private static final String CONFIG_NOTIFICATION_ACCESS = "config_defaultListenerAccessPackages";
+    private static final String HAS_DEFAULT_NOTIFICATION_ACCESS = "has_default_notification_access";
+
+    private static final String UID = "uid";
+    private static final String IS_ACTIVE_ADMIN = "is_active_admin";
+
+    private static final String CONFIG_ACCESSIBILITY_SERVICE = "config_defaultAccessibilityService";
+    private static final String DEFAULT_ACCESSIBILITY_SERVICE = "is_default_accessibility_service";
+
+
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         final PackageManager pm = getContext().getPackageManager();
 
         final List<PackageInfo> allPackages =
                 pm.getInstalledPackages(PackageManager.GET_PERMISSIONS);
+        final Set<String> defaultNotificationListeners =
+                getColonSeparatedPackageList(CONFIG_NOTIFICATION_ACCESS);
+
+        final Set<String> deviceAdminPackages = getActiveDeviceAdminPackages();
+
+        final ComponentName defaultAccessibilityComponent = getDefaultAccessibilityComponent();
 
         store.startArray(PACKAGE);
         for (PackageInfo pkg : allPackages) {
@@ -68,41 +92,67 @@ public class PackageDeviceInfo extends DeviceInfo {
             store.addResult(NAME, pkg.packageName);
             store.addResult(VERSION_NAME, pkg.versionName);
 
-            store.startArray(REQUESTED_PERMISSIONS);
-            if (pkg.requestedPermissions != null && pkg.requestedPermissions.length > 0) {
-                for (String permission : pkg.requestedPermissions) {
-                    try {
-                        final PermissionInfo pi = pm.getPermissionInfo(permission, 0);
+            collectPermissions(store, pm, pkg);
+            collectionApplicationInfo(store, pm, pkg);
 
-                        store.startGroup();
-                        store.addResult(PERMISSION_NAME, permission);
-                        writePermissionsDetails(pi, store);
-                        store.endGroup();
-                    } catch (PackageManager.NameNotFoundException e) {
-                        // ignore unrecognized permission and continue
-                    }
-                }
-            }
-            store.endArray();
+            store.addResult(HAS_DEFAULT_NOTIFICATION_ACCESS,
+                    defaultNotificationListeners.contains(pkg.packageName));
 
-            final ApplicationInfo appInfo = pkg.applicationInfo;
-            if (appInfo != null) {
-                String dir = appInfo.sourceDir;
-                store.addResult(SYSTEM_PRIV, dir != null && dir.startsWith(PRIV_APP_DIR));
+            store.addResult(IS_ACTIVE_ADMIN, deviceAdminPackages.contains(pkg.packageName));
 
-                store.addResult(MIN_SDK, appInfo.minSdkVersion);
-                store.addResult(TARGET_SDK, appInfo.targetSdkVersion);
+            final boolean isDefaultAccessibilityComponent = pkg.packageName.equals(
+                    defaultAccessibilityComponent.getPackageName()
+            );
+            store.addResult(DEFAULT_ACCESSIBILITY_SERVICE, isDefaultAccessibilityComponent);
 
-                store.addResult(HAS_SYSTEM_UID, appInfo.uid < Process.FIRST_APPLICATION_UID);
-
-                final boolean canInstall = sharesUidWithInstallerPackage(pm, appInfo.uid);
-                store.addResult(SHARES_INSTALL_PERMISSION, canInstall);
-            }
             String sha256_cert = PackageUtil.computePackageSignatureDigest(pkg.packageName);
             store.addResult(SHA256_CERT, sha256_cert);
+
             store.endGroup();
         }
         store.endArray(); // "package"
+    }
+
+    private static void collectPermissions(DeviceInfoStore store,
+                                           PackageManager pm,
+                                           PackageInfo pkg) throws IOException
+    {
+        store.startArray(REQUESTED_PERMISSIONS);
+        if (pkg.requestedPermissions != null && pkg.requestedPermissions.length > 0) {
+            for (String permission : pkg.requestedPermissions) {
+                try {
+                    final PermissionInfo pi = pm.getPermissionInfo(permission, 0);
+
+                    store.startGroup();
+                    store.addResult(PERMISSION_NAME, permission);
+                    writePermissionsDetails(pi, store);
+                    store.endGroup();
+                } catch (PackageManager.NameNotFoundException e) {
+                    // ignore unrecognized permission and continue
+                }
+            }
+        }
+        store.endArray();
+    }
+
+    private static void collectionApplicationInfo(DeviceInfoStore store,
+                                                  PackageManager pm,
+                                                  PackageInfo pkg) throws IOException {
+        final ApplicationInfo appInfo = pkg.applicationInfo;
+        if (appInfo != null) {
+            String dir = appInfo.sourceDir;
+            store.addResult(SYSTEM_PRIV, dir != null && dir.startsWith(PRIV_APP_DIR));
+
+            store.addResult(MIN_SDK, appInfo.minSdkVersion);
+            store.addResult(TARGET_SDK, appInfo.targetSdkVersion);
+
+            store.addResult(HAS_SYSTEM_UID, appInfo.uid < Process.FIRST_APPLICATION_UID);
+
+            final boolean canInstall = sharesUidWithInstallerPackage(pm, appInfo.uid);
+            store.addResult(SHARES_INSTALL_PERMISSION, canInstall);
+
+            store.addResult(UID, appInfo.uid);
+        }
     }
 
     private static boolean sharesUidWithInstallerPackage(PackageManager pm, int uid) {
@@ -155,6 +205,52 @@ public class PackageDeviceInfo extends DeviceInfo {
             store.addResult(PERMISSION_PROTECTION_FLAGS,
                     pi.protectionLevel & ~PermissionInfo.PROTECTION_MASK_BASE);
         }
+    }
+
+    private Set<String> getActiveDeviceAdminPackages() {
+        final DevicePolicyManager dpm = (DevicePolicyManager)
+                getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+
+        final List<ComponentName> components = dpm.getActiveAdmins();
+        if (components == null) {
+            return new HashSet<>(0);
+        }
+
+        final HashSet<String> packages = new HashSet<>(components.size());
+        for (ComponentName component : components) {
+            packages.add(component.getPackageName());
+        }
+
+        return packages;
+    }
+
+    private ComponentName getDefaultAccessibilityComponent() {
+        final String defaultAccessibilityServiceComponent =
+                getRawDeviceConfig(CONFIG_ACCESSIBILITY_SERVICE);
+        return ComponentName.unflattenFromString(defaultAccessibilityServiceComponent);
+    }
+
+    /**
+     * Parses and returns a set of package ids from a configuration value
+     * e.g config_defaultListenerAccessPackages
+     **/
+    private Set<String> getColonSeparatedPackageList(String name) {
+        String raw = getRawDeviceConfig(name);
+        String[] packages = raw.split(":");
+        return new HashSet<>(Arrays.asList(packages));
+    }
+
+    /** Returns the value of a device configuration setting available in android.internal.R.* **/
+    private String getRawDeviceConfig(String name) {
+        return getContext()
+                .getResources()
+                .getString(getDeviceResourcesIdentifier(name, "string"));
+    }
+
+    private int getDeviceResourcesIdentifier(String name, String type) {
+        return getContext()
+                .getResources()
+                .getIdentifier(name, type, "android");
     }
 }
 
