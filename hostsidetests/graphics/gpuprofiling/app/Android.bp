@@ -17,6 +17,7 @@ cc_test {
     srcs: [
         "android_graphics_cts_GpuProfilingData.cpp",
     ],
+    test_suites: ["cts"],
     compile_multilib: "both",
     multilib: {
         lib32: {
