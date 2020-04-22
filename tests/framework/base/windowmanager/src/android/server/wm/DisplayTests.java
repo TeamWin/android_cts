@@ -24,6 +24,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.res.Configuration;
@@ -137,6 +138,8 @@ public class DisplayTests extends MultiDisplayTestBase {
      */
     @Test
     public void testForceDisplayMetrics() {
+        assumeTrue(supportsLockScreen());
+
         launchHomeActivity();
 
         final DisplayMetricsSession displayMetricsSession =
