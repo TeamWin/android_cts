@@ -49,6 +49,7 @@ public enum CecMessage {
     CEC_VERSION(0x9e),
     GET_CEC_VERSION(0x9f),
     INITIATE_ARC(0xc0),
+    ARC_INITIATED(0xc1),
     REQUEST_ARC_INITIATION(0xc3),
     REQUEST_ARC_TERMINATION(0xc4),
     TERMINATE_ARC(0xc5),
