@@ -1519,6 +1519,42 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         );
     }
 
+    void assertIsOutgoingCallPermitted(boolean isPermitted, PhoneAccountHandle handle) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return isPermitted;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return mTelecomManager.isOutgoingCallPermitted(handle);
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Expected isOutgoingCallPermitted to be " + isPermitted
+        );
+    }
+
+    void assertIsIncomingCallPermitted(boolean isPermitted, PhoneAccountHandle handle) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return isPermitted;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return mTelecomManager.isIncomingCallPermitted(handle);
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Expected isIncomingCallPermitted to be " + isPermitted
+        );
+    }
+
     void assertIsInCall(boolean isIncall) {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
