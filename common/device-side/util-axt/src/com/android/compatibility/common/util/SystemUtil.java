@@ -253,6 +253,23 @@ public class SystemUtil {
     }
 
     /**
+     * Calls a {@link Callable} adopting Shell's permissions.
+     *
+     * @param callable The code to call with Shell's identity.
+     * @param permissions A subset of Shell's permissions. Passing {@code null} will use all
+     *                    available permissions.     */
+    public static <T> T callWithShellPermissionIdentity(@NonNull Callable<T> callable,
+            String... permissions) throws Exception {
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        automan.adoptShellPermissionIdentity(permissions);
+        try {
+            return callable.call();
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Make sure that a {@link Runnable} eventually finishes without throwing a {@link
      * Exception}.
      *
