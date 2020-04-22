@@ -23,6 +23,7 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
+        "device-policy-log-verifier-util",
     ],
     test_suites: [
         "cts",
