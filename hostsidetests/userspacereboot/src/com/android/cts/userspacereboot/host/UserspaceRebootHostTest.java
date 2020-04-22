@@ -22,6 +22,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.platform.test.annotations.RequiresDevice;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -197,6 +199,7 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
      * given timeout.
      */
     @Test
+    @RequiresDevice // TODO(b/154709530): Remove dependency on physical device
     public void testUserspaceRebootFailsKillingProcesses() throws Exception {
         assumeTrue("Userspace reboot not supported on the device",
                 getDevice().getBooleanProperty(USERSPACE_REBOOT_SUPPORTED_PROP, false));
