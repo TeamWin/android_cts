@@ -34,30 +34,37 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Environment;
 import android.os.IBinder;
+import android.os.LimitExceededException;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.SystemClock;
 import android.provider.DeviceConfig;
+import android.util.ArrayMap;
 import android.util.Log;
+import android.util.LongSparseArray;
+import android.util.Pair;
 
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.cts.blob.R;
 import com.android.cts.blob.ICommandReceiver;
 import com.android.utils.blob.DummyBlobData;
+import com.android.utils.blob.Utils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -74,9 +81,13 @@ public class BlobStoreManagerTest {
 
     // TODO: Make it a @TestApi or move the test using this to a different location.
     // Copy of DeviceConfig.NAMESPACE_BLOBSTORE constant
-    public static final String NAMESPACE_BLOBSTORE = "blobstore";
-    public static final String KEY_LEASE_ACQUISITION_WAIT_DURATION_MS =
+    private static final String NAMESPACE_BLOBSTORE = "blobstore";
+    private static final String KEY_LEASE_ACQUISITION_WAIT_DURATION_MS =
             "lease_acquisition_wait_time_ms";
+    private static final String KEY_TOTAL_BYTES_PER_APP_LIMIT_FLOOR =
+            "total_bytes_per_app_limit_floor";
+    public static final String KEY_TOTAL_BYTES_PER_APP_LIMIT_FRACTION =
+            "total_bytes_per_app_limit_fraction";
 
     private static final String HELPER_PKG = "com.android.cts.blob.helper";
     private static final String HELPER_PKG2 = "com.android.cts.blob.helper2";
@@ -99,6 +110,13 @@ public class BlobStoreManagerTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mBlobStoreManager = (BlobStoreManager) mContext.getSystemService(
                 Context.BLOB_STORE_SERVICE);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        for (BlobHandle blobHandle : mBlobStoreManager.getLeasedBlobs()) {
+            mBlobStoreManager.releaseLease(blobHandle);
+        }
     }
 
     @Test
@@ -680,28 +698,27 @@ public class BlobStoreManagerTest {
         final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         final long waitDurationMs = TimeUnit.SECONDS.toMillis(1);
-        runWithKeyValue(KEY_LEASE_ACQUISITION_WAIT_DURATION_MS, String.valueOf(waitDurationMs),
-                () -> {
-                    try {
-                        commitBlob(blobData);
+        runWithKeyValues(() -> {
+            try {
+                commitBlob(blobData);
 
-                        acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
-                                blobData.getExpiryTimeMillis());
-                        assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+                acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                        blobData.getExpiryTimeMillis());
+                assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
 
-                        SystemClock.sleep(waitDurationMs);
+                SystemClock.sleep(waitDurationMs);
 
-                        releaseLease(mContext, blobData.getBlobHandle());
-                        assertNoLeasedBlobs(mBlobStoreManager);
+                releaseLease(mContext, blobData.getBlobHandle());
+                assertNoLeasedBlobs(mBlobStoreManager);
 
-                        assertThrows(SecurityException.class, () -> mBlobStoreManager.acquireLease(
-                                blobData.getBlobHandle(), R.string.test_desc,
-                                blobData.getExpiryTimeMillis()));
-                        assertNoLeasedBlobs(mBlobStoreManager);
-                    } finally {
-                        blobData.delete();
-                    }
-                });
+                assertThrows(SecurityException.class, () -> mBlobStoreManager.acquireLease(
+                        blobData.getBlobHandle(), R.string.test_desc,
+                        blobData.getExpiryTimeMillis()));
+                assertNoLeasedBlobs(mBlobStoreManager);
+            } finally {
+                blobData.delete();
+            }
+        }, Pair.create(KEY_LEASE_ACQUISITION_WAIT_DURATION_MS, String.valueOf(waitDurationMs)));
     }
 
     @Test
@@ -894,27 +911,115 @@ public class BlobStoreManagerTest {
         }
     }
 
-    private static void runWithKeyValue(String key, String value, ThrowingRunnable runnable)
-            throws Exception {
-        final AtomicReference<String> previousValue = new AtomicReference<>();
+    @Test
+    public void testLeaseQuotaExceeded() throws Exception {
+        final long totalBytes = Environment.getDataDirectory().getTotalSpace();
+        final long limitBytes = 100 * Utils.MB_IN_BYTES;
+        runWithKeyValues(() -> {
+            final LongSparseArray<BlobHandle> blobs = new LongSparseArray<>();
+            for (long blobSize : new long[] {20L, 30L, 40L}) {
+                final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                        .setFileSize(blobSize * Utils.MB_IN_BYTES)
+                        .build();
+                blobData.prepare();
+
+                commitBlob(blobData);
+                acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                        blobData.getExpiryTimeMillis());
+                blobs.put(blobSize, blobData.getBlobHandle());
+            }
+            final long blobSize = 40L;
+            final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                    .setFileSize(blobSize * Utils.MB_IN_BYTES)
+                    .build();
+            blobData.prepare();
+            commitBlob(blobData);
+            assertThrows(LimitExceededException.class, () -> mBlobStoreManager.acquireLease(
+                    blobData.getBlobHandle(), R.string.test_desc, blobData.getExpiryTimeMillis()));
+
+            releaseLease(mContext, blobs.get(20L));
+            assertThrows(LimitExceededException.class, () -> mBlobStoreManager.acquireLease(
+                    blobData.getBlobHandle(), R.string.test_desc, blobData.getExpiryTimeMillis()));
+
+            releaseLease(mContext, blobs.get(30L));
+            acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                    blobData.getExpiryTimeMillis());
+        }, Pair.create(KEY_TOTAL_BYTES_PER_APP_LIMIT_FLOOR, String.valueOf(limitBytes)),
+                Pair.create(KEY_TOTAL_BYTES_PER_APP_LIMIT_FRACTION,
+                        String.valueOf((double) limitBytes / totalBytes)));
+    }
+
+    @Test
+    public void testLeaseQuotaExceeded_singleFileExceedsLimit() throws Exception {
+        final long totalBytes = Environment.getDataDirectory().getTotalSpace();
+        final long limitBytes = 50 * Utils.MB_IN_BYTES;
+        runWithKeyValues(() -> {
+            final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                    .setFileSize(limitBytes + (5 * Utils.MB_IN_BYTES))
+                    .build();
+            blobData.prepare();
+            commitBlob(blobData);
+            assertThrows(LimitExceededException.class, () -> mBlobStoreManager.acquireLease(
+                    blobData.getBlobHandle(), R.string.test_desc, blobData.getExpiryTimeMillis()));
+        }, Pair.create(KEY_TOTAL_BYTES_PER_APP_LIMIT_FLOOR, String.valueOf(limitBytes)),
+                Pair.create(KEY_TOTAL_BYTES_PER_APP_LIMIT_FRACTION,
+                        String.valueOf((double) limitBytes / totalBytes)));
+    }
+
+    @Test
+    public void testRemainingLeaseQuota() throws Exception {
+        final long initialRemainingQuota = mBlobStoreManager.getRemainingLeaseQuotaBytes();
+        final long blobSize = 100 * Utils.MB_IN_BYTES;
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                .setFileSize(blobSize)
+                .build();
+        blobData.prepare();
+
+        commitBlob(blobData);
+        acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                blobData.getExpiryTimeMillis());
+        assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+
+        assertThat(mBlobStoreManager.getRemainingLeaseQuotaBytes())
+                .isEqualTo(initialRemainingQuota - blobSize);
+
+        releaseLease(mContext, blobData.getBlobHandle());
+        assertNoLeasedBlobs(mBlobStoreManager);
+
+        assertThat(mBlobStoreManager.getRemainingLeaseQuotaBytes())
+                .isEqualTo(initialRemainingQuota);
+    }
+
+    private static void runWithKeyValues(ThrowingRunnable runnable,
+            Pair<String, String>... keyValues) throws Exception {
+        final Map<String, String> previousValues = new ArrayMap();
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            previousValue.set(DeviceConfig.getProperty(NAMESPACE_BLOBSTORE, key));
-            Log.i(TAG, key + " previous value: " + previousValue.get());
-            assertThat(DeviceConfig.setProperty(NAMESPACE_BLOBSTORE, key, value,
-                    false /* makeDefault */)).isTrue();
-            Log.i(TAG, key + " value set: " + value);
+            for (Pair<String, String> pair : keyValues) {
+                final String key = pair.first;
+                final String value = pair.second;
+                final String previousValue = DeviceConfig.getProperty(NAMESPACE_BLOBSTORE, key);
+                if (!Objects.equals(previousValue, value)) {
+                    previousValues.put(key, previousValue);
+                    Log.i(TAG, key + " previous value: " + previousValue);
+                    assertThat(DeviceConfig.setProperty(NAMESPACE_BLOBSTORE, key, value,
+                            false /* makeDefault */)).isTrue();
+                }
+                Log.i(TAG, key + " value set: " + value);
+            }
         });
         try {
             runnable.run();
         } finally {
             SystemUtil.runWithShellPermissionIdentity(() -> {
-                final String currentValue = DeviceConfig.getProperty(
-                        NAMESPACE_BLOBSTORE, key);
-                if (!Objects.equals(previousValue.get(), currentValue)) {
-                    assertThat(DeviceConfig.setProperty(NAMESPACE_BLOBSTORE,
-                            key, previousValue.get(), false /* makeDefault */)).isTrue();
-                    Log.i(TAG, key + " value restored: " + previousValue.get());
-                }
+                previousValues.forEach((key, previousValue) -> {
+                    final String currentValue = DeviceConfig.getProperty(
+                            NAMESPACE_BLOBSTORE, key);
+                    if (!Objects.equals(previousValue, currentValue)) {
+                        assertThat(DeviceConfig.setProperty(NAMESPACE_BLOBSTORE,
+                                key, previousValue, false /* makeDefault */)).isTrue();
+                        Log.i(TAG, key + " value restored: " + previousValue);
+                    }
+                });
             });
         }
     }
