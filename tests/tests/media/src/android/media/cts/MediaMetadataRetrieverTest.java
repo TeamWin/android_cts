@@ -409,6 +409,15 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 mRetriever.getEmbeddedPicture());
     }
 
+    public void testMp4AlbumArt() {
+        setDataSourceFd(R.raw.swirl_128x128_h264_albumart);
+        assertEquals("Mime type was other than expected",
+                "video/mp4",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
+        assertNotNull("no album art",
+                mRetriever.getEmbeddedPicture());
+    }
+
     public void testGenreParsing() {
         Object [][] genres = {
             { R.raw.id3test0, null },
