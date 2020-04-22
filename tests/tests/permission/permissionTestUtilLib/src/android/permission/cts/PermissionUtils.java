@@ -57,6 +57,8 @@ import java.util.List;
  * Common utils for permission tests
  */
 public class PermissionUtils {
+    private static String GRANT_RUNTIME_PERMISSIONS = "android.permission.GRANT_RUNTIME_PERMISSIONS";
+    private static String MANAGE_APP_OPS_MODES = "android.permission.MANAGE_APP_OPS_MODES";
 
     private static final int TESTED_FLAGS = FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_USER_FIXED
             | FLAG_PERMISSION_REVOKE_ON_UPGRADE | FLAG_PERMISSION_REVIEW_REQUIRED
@@ -81,10 +83,9 @@ public class PermissionUtils {
      */
     public static int getAppOp(@NonNull String packageName, @NonNull String permission)
             throws Exception {
-        return callWithShellPermissionIdentity(
-                () -> sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
+        return sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
                         permissionToOp(permission),
-                        sContext.getPackageManager().getPackageUid(packageName, 0), packageName));
+                        sContext.getPackageManager().getPackageUid(packageName, 0), packageName);
     }
 
     /**
@@ -131,7 +132,8 @@ public class PermissionUtils {
     public static void setAppOpByName(@NonNull String packageName, @NonNull String op, int mode) {
         runWithShellPermissionIdentity(
                 () -> sContext.getSystemService(AppOpsManager.class).setUidMode(op,
-                        sContext.getPackageManager().getPackageUid(packageName, 0), mode));
+                        sContext.getPackageManager().getPackageUid(packageName, 0), mode),
+                MANAGE_APP_OPS_MODES);
     }
 
     /**
@@ -263,7 +265,8 @@ public class PermissionUtils {
         try {
             return callWithShellPermissionIdentity(
                     () -> sContext.getPackageManager().getPermissionFlags(permission, packageName,
-                            UserHandle.getUserHandleForUid(Process.myUid())) & TESTED_FLAGS);
+                            UserHandle.getUserHandleForUid(Process.myUid())) & TESTED_FLAGS,
+                    GRANT_RUNTIME_PERMISSIONS);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -281,7 +284,8 @@ public class PermissionUtils {
             int mask, int flags) {
         runWithShellPermissionIdentity(
                 () -> sContext.getPackageManager().updatePermissionFlags(permission, packageName,
-                        mask, flags, UserHandle.getUserHandleForUid(Process.myUid())));
+                        mask, flags, UserHandle.getUserHandleForUid(Process.myUid())),
+                GRANT_RUNTIME_PERMISSIONS);
     }
 
     /**
