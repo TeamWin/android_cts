@@ -535,6 +535,7 @@ public class MediaExtractorTest extends AndroidTestCase {
         mExtractor.setDataSource(url);
         long cachedDurationUs = mExtractor.getCachedDuration();
         assertTrue("cached duration should be non-negative", cachedDurationUs >= 0);
+        foo.shutdown();
     }
 
     public void testExtractorHasCacheReachedEndOfStream() throws Exception {
@@ -925,23 +926,60 @@ public class MediaExtractorTest extends AndroidTestCase {
         doTestAdvance(R.raw.video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz);
     }
 
+    private void readAllData() {
+        // 1MB is enough for any sample.
+        final ByteBuffer buf = ByteBuffer.allocate(1024*1024);
+        final int trackCount = mExtractor.getTrackCount();
+
+        for (int i = 0; i < trackCount; i++) {
+            mExtractor.selectTrack(i);
+        }
+        do {
+            mExtractor.readSampleData(buf, 0);
+        } while (mExtractor.advance());
+        mExtractor.seekTo(0, MediaExtractor.SEEK_TO_NEXT_SYNC);
+        do {
+            mExtractor.readSampleData(buf, 0);
+        } while (mExtractor.advance());
+    }
+
     public void testAC3inMP4() throws Exception {
         setDataSource(R.raw.testac3mp4);
+        readAllData();
     }
 
     public void testEAC3inMP4() throws Exception {
         setDataSource(R.raw.testeac3mp4);
+        readAllData();
     }
 
     public void testAC3inTS() throws Exception {
         setDataSource(R.raw.testac3ts);
+        readAllData();
     }
 
     public void testEAC3inTS() throws Exception {
         setDataSource(R.raw.testeac3ts);
+        readAllData();
     }
 
     public void testAC4inMP4() throws Exception {
         setDataSource(R.raw.multi0);
+        readAllData();
     }
+
+    public void testFragmentedRead() throws Exception {
+        setDataSource(R.raw.psshtest);
+        readAllData();
+    }
+
+    public void testFragmentedHttpRead() throws Exception {
+        CtsTestServer server = new CtsTestServer(getContext());
+        String rname = mResources.getResourceEntryName(R.raw.psshtest);
+        String url = server.getAssetUrl("raw/" + rname);
+        mExtractor.setDataSource(url);
+        readAllData();
+        server.shutdown();
+    }
+
 }
