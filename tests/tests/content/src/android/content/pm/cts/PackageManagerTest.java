@@ -35,6 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Intent;
@@ -979,6 +980,19 @@ public class PackageManagerTest {
         assertWithMessage("Shim apex wasn't supposed to be found").that(shimApex).isEmpty();
     }
 
+    @Test
+    public void testGetApplicationInfo_ApexSupported_MatchesApex() throws Exception {
+        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
+
+        ApplicationInfo ai = mPackageManager.getApplicationInfo(
+                SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
+        assertThat(ai.sourceDir).isEqualTo("/system/apex/com.android.apex.cts.shim.apex");
+        assertThat(ai.publicSourceDir).isEqualTo(ai.sourceDir);
+        assertThat(ai.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(ApplicationInfo.FLAG_SYSTEM);
+        assertThat(ai.flags & ApplicationInfo.FLAG_INSTALLED)
+                .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
+    }
+
     private boolean isUpdatingApexSupported() {
         return SystemProperties.getBoolean("ro.apex.updatable", false);
     }
@@ -989,6 +1003,8 @@ public class PackageManagerTest {
         assertThat(packageInfo.isApex).isTrue();
         assertThat(packageInfo.applicationInfo.sourceDir).isEqualTo(
                 "/system/apex/com.android.apex.cts.shim.apex");
+        assertThat(packageInfo.applicationInfo.publicSourceDir)
+                .isEqualTo(packageInfo.applicationInfo.sourceDir);
         // Verify that legacy mechanism for handling signatures is supported.
         Signature[] pastSigningCertificates =
                 packageInfo.signingInfo.getSigningCertificateHistory();
