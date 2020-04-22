@@ -408,7 +408,9 @@ public class MediaParserTest {
     @Test
     public void testAdtsTruncatedWithConstantBitrateSeeking()
             throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_cbs_truncated.adts");
+        testExtractAsset(
+                "ts/sample_cbs_truncated.adts",
+                Collections.singletonMap(MediaParser.PARAMETER_ADTS_ENABLE_CBR_SEEKING, true));
     }
 
     @Test
@@ -418,7 +420,9 @@ public class MediaParserTest {
 
     @Test
     public void testAdtsWithConstantBitrateSeeking() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_cbs.adts");
+        testExtractAsset(
+                "ts/sample_cbs.adts",
+                Collections.singletonMap(MediaParser.PARAMETER_ADTS_ENABLE_CBR_SEEKING, true));
     }
 
     // AC-3.
