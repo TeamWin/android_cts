@@ -329,6 +329,8 @@
 
         <activity android:name="android.app.stubs.KeyboardShortcutsActivity" />
 
+        <activity android:name="android.app.stubs.ActivityNonConfigInstanceActivity" />
+
         <activity android:name="android.app.stubs.NewDocumentTestActivity"
                   android:documentLaunchMode="intoExisting" />
 

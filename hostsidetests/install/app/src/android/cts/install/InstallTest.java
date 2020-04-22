@@ -81,11 +81,15 @@ public final class InstallTest {
 
     private static final int VERSION_CODE_TARGET = 2;
 
+    /**
+     * Cleans up test environment.
+     *
+     * This is marked as @Test to take advantage of @Before/@After methods of hostside test cases.
+     * Actual purpose of this method to be called before and after each test case of
+     * {@link android.cts.install.host.InstallTest} to reduce tests flakiness.
+     */
     @Test
     public void cleanUp_phase() throws Exception {
-        // This is marked as @Test to take advantage of @Before/@After methods of this class. Actual
-        // purpose of this method to be called before and after each test case of
-        // android.cts.install.host.InstallTest to reduce tests flakiness.
         mSessionRule.cleanUp();
     }
 

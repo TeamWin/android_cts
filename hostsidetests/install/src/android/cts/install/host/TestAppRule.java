@@ -95,7 +95,7 @@ final class TestAppRule extends ExternalResource {
         assertThat(shim.sourceDir).startsWith("/system");
     }
 
-    private boolean isUpdatingApexSupported() throws DeviceNotAvailableException {
+    boolean isUpdatingApexSupported() throws DeviceNotAvailableException {
         final String updatable = mHostTest.getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");
     }

@@ -183,15 +183,20 @@ public final class CarUserManagerTest extends CarApiTestBase {
             } else if (actualUserHandle.getIdentifier() != newUserId) {
                 errors.add("wrong user: expected " + newUserId + ", got " + actualUserHandle);
             }
-
-            // TODO(b/144120654): check for previous handle (not set yet)
-            if (false) {
-                UserHandle previousUserHandle = event.getPreviousUserHandle();
-                if (previousUserHandle == null) {
-                    errors.add("no previous user handle");
-                } else if (previousUserHandle.getIdentifier() != oldUserId) {
-                    errors.add("wrong previous user: expected " + oldUserId + ", got "
-                            + previousUserHandle);
+            UserHandle previousUserHandle = null;
+            if (actualType == CarUserManager.USER_LIFECYCLE_EVENT_TYPE_SWITCHING) {
+                try {
+                    previousUserHandle = event.getPreviousUserHandle();
+                    if (previousUserHandle == null) {
+                        errors.add("no previous user handle");
+                    } else if (previousUserHandle.getIdentifier() != oldUserId) {
+                        errors.add("wrong previous user: expected " + oldUserId + ", got "
+                                + previousUserHandle);
+                    }        
+                } catch (Exception e) {
+                    String msg = "failed to get previous user handle: ";
+                    errors.add(msg + e);
+                    Log.d(TAG, msg, e);
                 }
             }
 

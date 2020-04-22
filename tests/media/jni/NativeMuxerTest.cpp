@@ -32,7 +32,7 @@
 #include <map>
 #include <vector>
 
-#include "NativeMediaConstants.h"
+#include "NativeMediaCommon.h"
 
 /**
  * MuxerNativeTestHelper breaks a media file to elements that a muxer can use to rebuild its clone.
@@ -277,8 +277,9 @@ bool MuxerNativeTestHelper::equals(MuxerNativeTestHelper* that) {
             const char* thatMime = nullptr;
             AMediaFormat_getString(thatFormat, AMEDIAFORMAT_KEY_MIME, &thatMime);
             if (thisMime != nullptr && thatMime != nullptr && !strcmp(thisMime, thatMime)) {
+                if (!isCSDIdentical(thisFormat, thatFormat)) continue;
                 if (mBufferInfo[i].size() == that->mBufferInfo[j].size()) {
-                    int flagsDiff = 0, sizeDiff = 0, tsDiff = 0;
+                    int flagsDiff = 0, sizeDiff = 0, tsDiff = 0, buffDiff = 0;
                     for (int k = 0; k < mBufferInfo[i].size(); k++) {
                         AMediaCodecBufferInfo* thisInfo = mBufferInfo[i][k];
                         AMediaCodecBufferInfo* thatInfo = that->mBufferInfo[j][k];
@@ -287,17 +288,21 @@ bool MuxerNativeTestHelper::equals(MuxerNativeTestHelper* that) {
                         }
                         if (thisInfo->size != thatInfo->size) {
                             sizeDiff++;
+                        } else if (memcmp(mBuffer + thisInfo->offset,
+                                          that->mBuffer + thatInfo->offset, thisInfo->size)) {
+                            buffDiff++;
                         }
                         if (abs(thisInfo->presentationTimeUs - thatInfo->presentationTimeUs) >
                             STTS_TOLERANCE) {
                             tsDiff++;
                         }
                     }
-                    if (flagsDiff == 0 && sizeDiff == 0 && tsDiff == 0)
+                    if (flagsDiff == 0 && sizeDiff == 0 && tsDiff == 0 && buffDiff == 0)
                         break;
                     else {
-                        ALOGV("For mime %s, Total Samples %d, flagsDiff %d, sizeDiff %d, tsDiff %d",
-                              thisMime, (int)mBufferInfo[i].size(), flagsDiff, sizeDiff, tsDiff);
+                        ALOGV("For mime %s, Total Samples %d, flagsDiff %d, sizeDiff %d, tsDiff "
+                              "%d, buffDiff %d", thisMime, (int)mBufferInfo[i].size(), flagsDiff,
+                              sizeDiff, tsDiff, buffDiff);
                     }
                 }
             }

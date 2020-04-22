@@ -18,9 +18,9 @@ package android.widget.cts;
 
 import static android.widget.RichContentReceiver.FLAG_CONVERT_TO_PLAIN_TEXT;
 import static android.widget.RichContentReceiver.SOURCE_AUTOFILL;
+import static android.widget.RichContentReceiver.SOURCE_CLIPBOARD;
 import static android.widget.RichContentReceiver.SOURCE_DRAG_AND_DROP;
 import static android.widget.RichContentReceiver.SOURCE_INPUT_METHOD;
-import static android.widget.RichContentReceiver.SOURCE_MENU;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -164,7 +164,7 @@ public class TextViewRichContentReceiverTest {
         String[] receiverMimeTypes = mDefaultReceiver.getSupportedMimeTypes().toArray(
                 new String[0]);
         assertThat(editorInfo.contentMimeTypes).isEqualTo(receiverMimeTypes);
-        assertThat(receiverMimeTypes).isEqualTo(new String[] {"text/*"});
+        assertThat(receiverMimeTypes).isEqualTo(new String[]{"text/*"});
     }
 
     @UiThreadTest
@@ -261,7 +261,7 @@ public class TextViewRichContentReceiverTest {
         initTextViewForEditing("xz", 1);
 
         ClipData clip = ClipData.newPlainText("test", "y");
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, 0);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD, 0);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("xyz", 2);
@@ -277,7 +277,7 @@ public class TextViewRichContentReceiverTest {
         ssb.setSpan(underlineSpan, 3, 7, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ClipData clip = ClipData.newPlainText("test", ssb);
 
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, 0);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD, 0);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("xhi worldz", 9);
@@ -291,7 +291,8 @@ public class TextViewRichContentReceiverTest {
         initTextViewForEditing("xz", 1);
 
         ClipData clip = ClipData.newPlainText("test", "y");
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, FLAG_CONVERT_TO_PLAIN_TEXT);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD,
+                FLAG_CONVERT_TO_PLAIN_TEXT);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("xyz", 2);
@@ -307,7 +308,8 @@ public class TextViewRichContentReceiverTest {
         ssb.setSpan(underlineSpan, 3, 7, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ClipData clip = ClipData.newPlainText("test", ssb);
 
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, FLAG_CONVERT_TO_PLAIN_TEXT);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD,
+                FLAG_CONVERT_TO_PLAIN_TEXT);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("xhi worldz", 9);
@@ -321,7 +323,7 @@ public class TextViewRichContentReceiverTest {
         initTextViewForEditing("xz", 1);
 
         ClipData clip = ClipData.newHtmlText("test", "*y*", "<b>y</b>");
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, 0);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD, 0);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("xyz", 2);
@@ -333,7 +335,8 @@ public class TextViewRichContentReceiverTest {
         initTextViewForEditing("xz", 1);
 
         ClipData clip = ClipData.newHtmlText("test", "*y*", "<b>y</b>");
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, FLAG_CONVERT_TO_PLAIN_TEXT);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD,
+                FLAG_CONVERT_TO_PLAIN_TEXT);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("x*y*z", 4);
@@ -346,7 +349,7 @@ public class TextViewRichContentReceiverTest {
 
         ClipData clip = new ClipData("test", new String[]{"video/mp4"},
                 new ClipData.Item("text", "html", null, Uri.parse("content://com.example/path")));
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, 0);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD, 0);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("xhtmlz", 5);
@@ -360,7 +363,8 @@ public class TextViewRichContentReceiverTest {
 
         ClipData clip = new ClipData("test", new String[]{"video/mp4"},
                 new ClipData.Item("text", "html", null, Uri.parse("content://com.example/path")));
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, FLAG_CONVERT_TO_PLAIN_TEXT);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD,
+                FLAG_CONVERT_TO_PLAIN_TEXT);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("xtextz", 5);
@@ -374,7 +378,7 @@ public class TextViewRichContentReceiverTest {
         ClipData clip = ClipData.newPlainText("test", "ONE");
         clip.addItem(new ClipData.Item("TWO"));
         clip.addItem(new ClipData.Item("THREE"));
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, 0);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD, 0);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("xONE\nTWO\nTHREEz", 14);
@@ -391,7 +395,7 @@ public class TextViewRichContentReceiverTest {
 
         // Pasting should still work (should just insert the text at the beginning).
         ClipData clip = ClipData.newPlainText("test", "y");
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, 0);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD, 0);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("yxz", 1);
@@ -409,7 +413,7 @@ public class TextViewRichContentReceiverTest {
 
         // Pasting should still work (should still successfully overwrite the selection).
         ClipData clip = ClipData.newPlainText("test", "i");
-        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_MENU, 0);
+        boolean result = onReceive(mDefaultReceiver, clip, SOURCE_CLIPBOARD, 0);
 
         assertThat(result).isTrue();
         assertTextAndCursorPosition("hi", 2);
@@ -456,7 +460,7 @@ public class TextViewRichContentReceiverTest {
         // Trigger the "Paste" action and assert that the custom receiver was executed.
         triggerContextMenuAction(android.R.id.paste);
         verify(mMockReceiver, times(1)).onReceive(
-                eq(mTextView), any(ClipData.class), eq(SOURCE_MENU), eq(0));
+                eq(mTextView), any(ClipData.class), eq(SOURCE_CLIPBOARD), eq(0));
         verifyNoMoreInteractions(mMockReceiver);
         assertTextAndCursorPosition("xz", 1);
     }
@@ -480,7 +484,7 @@ public class TextViewRichContentReceiverTest {
         // the MIME type of the content is not one of the receiver's supported MIME types.
         triggerContextMenuAction(android.R.id.paste);
         verify(mMockReceiver, times(1)).onReceive(
-                eq(mTextView), any(ClipData.class), eq(SOURCE_MENU), eq(0));
+                eq(mTextView), any(ClipData.class), eq(SOURCE_CLIPBOARD), eq(0));
         verifyNoMoreInteractions(mMockReceiver);
         assertTextAndCursorPosition("xz", 1);
     }
@@ -521,7 +525,7 @@ public class TextViewRichContentReceiverTest {
         triggerContextMenuAction(android.R.id.pasteAsPlainText);
         verify(mMockReceiver, times(1)).onReceive(
                 eq(mTextView), any(ClipData.class),
-                eq(SOURCE_MENU), eq(FLAG_CONVERT_TO_PLAIN_TEXT));
+                eq(SOURCE_CLIPBOARD), eq(FLAG_CONVERT_TO_PLAIN_TEXT));
         verifyNoMoreInteractions(mMockReceiver);
         assertTextAndCursorPosition("xz", 1);
     }
@@ -723,8 +727,8 @@ public class TextViewRichContentReceiverTest {
 
     private void assertTextAndSelection(String expectedText, int start, int end) {
         assertThat(mTextView.getText().toString()).isEqualTo(expectedText);
-        int[] expected = new int[] {start, end};
-        int[] actual = new int[] {mTextView.getSelectionStart(), mTextView.getSelectionEnd()};
+        int[] expected = new int[]{start, end};
+        int[] actual = new int[]{mTextView.getSelectionStart(), mTextView.getSelectionEnd()};
         assertWithMessage("Unexpected selection start/end indexes")
                 .that(actual).isEqualTo(expected);
     }

@@ -17,26 +17,24 @@
 package android.server.wm;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
-import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_BOTTOM_OR_RIGHT;
-import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.wm.WindowManagerState.TRANSIT_WALLPAPER_OPEN;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.DOCKED_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
-import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_INSTANCE_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_TASK_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
+import static android.server.wm.app.Components.TEST_ACTIVITY_WITH_SAME_AFFINITY;
+import static android.server.wm.app.Components.TRANSLUCENT_TEST_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVITY;
@@ -50,10 +48,8 @@ import static android.view.Surface.ROTATION_90;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -98,6 +94,11 @@ public class SplitScreenTests extends ActivityManagerTestBase {
                 "Devices supporting multi-window must be larger than the default minimum"
                         + " task size");
     }
+
+
+// TODO: Add test to make sure you can't register to split-windowing mode organization if test
+//  doesn't support it.
+
 
     @Test
     public void testStackList() throws Exception {
@@ -186,7 +187,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
 
         // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
         separateTestJournal();
-        removeStacksInWindowingModes(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        SystemUtil.runWithShellPermissionIdentity(() -> mTaskOrganizer.dismissedSplitScreen());
         final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
                 TEST_ACTIVITY);
         assertEquals(1, lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
@@ -567,5 +568,39 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         final int recentsStackIndex = mWmState.getStackIndexByActivityType(ACTIVITY_TYPE_RECENTS);
         assertThat("Recents stack should be on top of home stack",
                 recentsStackIndex, lessThan(homeStackIndex));
+    }
+
+
+    /**
+     * Asserts that the activity is visible when the top opaque activity finishes and with another
+     * translucent activity on top while in split-screen-secondary task.
+     */
+    @Test
+    public void testVisibilityWithTranslucentAndTopFinishingActivity() throws Exception {
+        // Launch two activities in split-screen mode.
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY));
+
+        // Launch two more activities on a different task on top of split-screen-secondary and
+        // only the top opaque activity should be visible.
+        getLaunchActivityBuilder().setTargetActivity(TRANSLUCENT_TEST_ACTIVITY)
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .execute();
+        getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .execute();
+        mWmState.assertVisibility(TEST_ACTIVITY, true);
+        mWmState.waitForActivityState(TRANSLUCENT_TEST_ACTIVITY, STATE_STOPPED);
+        mWmState.assertVisibility(TRANSLUCENT_TEST_ACTIVITY, false);
+        mWmState.assertVisibility(TEST_ACTIVITY_WITH_SAME_AFFINITY, false);
+
+        // Finish the top opaque activity and both the two activities should be visible.
+        mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
+        mWmState.computeState(new WaitForValidActivityState(TRANSLUCENT_TEST_ACTIVITY));
+        mWmState.assertVisibility(TRANSLUCENT_TEST_ACTIVITY, true);
+        mWmState.assertVisibility(TEST_ACTIVITY_WITH_SAME_AFFINITY, true);
     }
 }

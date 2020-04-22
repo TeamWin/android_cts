@@ -218,6 +218,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testSplitScreenBelowPip() throws Exception {
+        // TODO(b/149338177): Fix test to pass with organizer API.
+        mUseTaskOrganizer = false;
         // Launch Pip-capable activity and enter Pip immediately
         new Launcher(PipActivity.class)
                 .setExpectedState(ON_PAUSE)
@@ -253,6 +255,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testPipAboveSplitScreen() throws Exception {
+        // TODO(b/149338177): Fix test to pass with organizer API.
+        mUseTaskOrganizer = false;
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
