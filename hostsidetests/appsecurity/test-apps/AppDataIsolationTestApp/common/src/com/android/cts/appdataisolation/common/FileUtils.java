@@ -19,6 +19,7 @@ package com.android.cts.appdataisolation.common;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.fail;
 import static org.testng.Assert.expectThrows;
 
 import java.io.File;
@@ -31,8 +32,9 @@ import java.io.IOException;
  */
 public class FileUtils {
 
-    private static final String CE_DATA_FILE_NAME = "ce_data_file";
-    private static final String DE_DATA_FILE_NAME = "de_data_file";
+    public static final String CE_DATA_FILE_NAME = "ce_data_file";
+    public static final String DE_DATA_FILE_NAME = "de_data_file";
+    public final static String EXTERNAL_DATA_FILE_NAME = "external_data_file";
 
     private static final String JAVA_FILE_PERMISSION_DENIED_MSG =
             "open failed: EACCES (Permission denied)";
@@ -50,8 +52,8 @@ public class FileUtils {
     }
 
     public static void assertDirDoesNotExist(String path) {
-        // Trying to access a file that does not exist in that directory, it should return
-        // permission denied not file not found.
+        // Trying to access a file/directory that does exist, but is not visible to the caller, it
+        // should return file not found.
         Exception exception = expectThrows(FileNotFoundException.class, () -> {
             new FileInputStream(new File(path));
         });
@@ -66,9 +68,11 @@ public class FileUtils {
         assertFileDoesNotExist(path, "FILE_DOES_NOT_EXIST");
     }
 
-    public static void assertFileIsAccessible(String path) throws IOException {
+    public static void assertFileIsAccessible(String path) {
         try (FileInputStream is = new FileInputStream(path)) {
             is.read();
+        } catch (IOException e) {
+            fail("Could not read file: " + path, e);
         }
     }
 

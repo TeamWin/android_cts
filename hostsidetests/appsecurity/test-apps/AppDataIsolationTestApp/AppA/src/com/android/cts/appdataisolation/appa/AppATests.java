@@ -16,6 +16,9 @@
 
 package com.android.cts.appdataisolation.appa;
 
+import static com.android.cts.appdataisolation.common.FileUtils.CE_DATA_FILE_NAME;
+import static com.android.cts.appdataisolation.common.FileUtils.DE_DATA_FILE_NAME;
+import static com.android.cts.appdataisolation.common.FileUtils.EXTERNAL_DATA_FILE_NAME;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirDoesNotExist;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsAccessible;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsNotAccessible;
@@ -23,6 +26,7 @@ import static com.android.cts.appdataisolation.common.FileUtils.assertFileDoesNo
 import static com.android.cts.appdataisolation.common.FileUtils.assertFileExists;
 import static com.android.cts.appdataisolation.common.FileUtils.touchFile;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.BroadcastReceiver;
@@ -40,6 +44,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -50,9 +55,6 @@ import java.util.concurrent.TimeUnit;
 public class AppATests {
 
     private static final String APPB_PKG = "com.android.cts.appdataisolation.appb";
-
-    private final static String CE_DATA_FILE_NAME = "ce_data_file";
-    private final static String DE_DATA_FILE_NAME = "de_data_file";
 
     private Context mContext;
     private UiDevice mDevice;
@@ -84,6 +86,14 @@ public class AppATests {
     }
 
     @Test
+    public void testCreateExternalDataDir() throws Exception {
+        String externalStoragePath = mContext.getExternalFilesDir("").getAbsolutePath();
+        assertFileDoesNotExist(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
+        touchFile(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
+        assertFileExists(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
+    }
+
+    @Test
     public void testAppACeDataExists() {
         assertFileExists(mCePath, CE_DATA_FILE_NAME);
     }
@@ -101,6 +111,23 @@ public class AppATests {
     @Test
     public void testAppADeDataDoesNotExist() {
         assertFileDoesNotExist(mDePath, DE_DATA_FILE_NAME);
+    }
+
+    @Test
+    public void testAppAExternalDataDoesExist() {
+        String externalStoragePath = mContext.getExternalFilesDir("").getAbsolutePath();
+        assertFileExists(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
+    }
+
+    @Test
+    public void testAppAExternalDataDoesNotExist() {
+        String externalStoragePath = mContext.getExternalFilesDir("").getAbsolutePath();
+        assertFileDoesNotExist(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
+    }
+
+    @Test
+    public void testAppAExternalDataUnavailable() {
+        assertNull(mContext.getExternalFilesDir(""));
     }
 
     @Test
@@ -143,7 +170,7 @@ public class AppATests {
     }
 
     @Test
-    public void testAppAUnlockDeviceAndVerifyCeDeDataExist() throws Exception {
+    public void testAppAUnlockDeviceAndVerifyCeDeExternalDataExist() throws Exception {
 
         final CountDownLatch unlocked = new CountDownLatch(1);
         final CountDownLatch bootCompleted = new CountDownLatch(1);
@@ -171,6 +198,7 @@ public class AppATests {
         // The test app process should be still running, make sure CE DE now is available
         testAppACeDataExists();
         testAppADeDataExists();
+        testAppAExternalDataDoesExist();
         testAppACurProfileDataAccessible();
         testAppARefProfileDataNotAccessible();
     }
