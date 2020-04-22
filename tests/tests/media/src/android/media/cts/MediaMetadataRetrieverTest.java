@@ -333,6 +333,49 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_WRITER));
     }
 
+    public void testID3v2Unsynchronization() {
+        setDataSourceFd(R.raw.testmp3_4);
+        assertEquals("Mime type was other than expected",
+                "audio/mpeg",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
+    }
+
+    public void testID3v240ExtHeader() {
+        setDataSourceFd(R.raw.sinesweepid3v24ext);
+        assertEquals("Mime type was other than expected",
+                "audio/mpeg",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
+        assertEquals("Title was other than expected",
+                "sinesweep",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
+        assertNotNull("no album art",
+                mRetriever.getEmbeddedPicture());
+    }
+
+    public void testID3v230ExtHeader() {
+        setDataSourceFd(R.raw.sinesweepid3v23ext);
+        assertEquals("Mime type was other than expected",
+                "audio/mpeg",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
+        assertEquals("Title was other than expected",
+                "sinesweep",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
+        assertNotNull("no album art",
+                mRetriever.getEmbeddedPicture());
+    }
+
+    public void testID3v230ExtHeaderBigEndian() {
+        setDataSourceFd(R.raw.sinesweepid3v23extbe);
+        assertEquals("Mime type was other than expected",
+                "audio/mpeg",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
+        assertEquals("Title was other than expected",
+                "sinesweep",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
+        assertNotNull("no album art",
+                mRetriever.getEmbeddedPicture());
+    }
+
     public void testGenreParsing() {
         Object [][] genres = {
             { R.raw.id3test0, null },

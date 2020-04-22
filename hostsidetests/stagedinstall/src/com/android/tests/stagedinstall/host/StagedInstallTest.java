@@ -70,16 +70,27 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
                 phase)).isTrue();
     }
 
+    // We do not assert the success of cleanup phase since it might fail due to flaky reasons.
+    private void cleanUp() throws Exception {
+        try {
+            runDeviceTests(PACKAGE_NAME,
+                    "com.android.tests.stagedinstall.StagedInstallTest",
+                    "cleanUp");
+        } catch (AssertionError e) {
+            Log.e(TAG, e);
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
-        runPhase("cleanUp");
+        cleanUp();
         uninstallShimApexIfNecessary();
         storeDefaultLauncher();
     }
 
     @After
     public void tearDown() throws Exception {
-        runPhase("cleanUp");
+        cleanUp();
         uninstallShimApexIfNecessary();
         setDefaultLauncher(mDefaultLauncher);
     }

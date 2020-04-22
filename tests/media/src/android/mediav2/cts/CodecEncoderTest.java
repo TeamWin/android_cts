@@ -20,9 +20,8 @@ import android.graphics.ImageFormat;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
 import android.media.MediaFormat;
-import android.os.Build;
+import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.util.Log;
 
@@ -30,6 +29,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -76,6 +75,8 @@ public class CodecEncoderTest extends CodecTestBase {
     private byte[] mInputData;
     private int mNumBytesSubmitted;
     private long mInputOffsetPts;
+    private int mNumSyncFramesReceived;
+    private ArrayList<Integer> mSyncFramesPos;
 
     private int mWidth, mHeight;
     private int mChannels;
@@ -92,8 +93,9 @@ public class CodecEncoderTest extends CodecTestBase {
         mBitrates = bitrates;
         mEncParamList1 = encoderInfo1;
         mEncParamList2 = encoderInfo2;
-        mAsyncHandle = new CodecAsyncHandler();
         mFormats = new ArrayList<>();
+        mSyncFramesPos = new ArrayList<>();
+        mAsyncHandle = new CodecAsyncHandler();
         mIsAudio = mMime.startsWith("audio/");
         mInputFile = mIsAudio ? mInputAudioFile : mInputVideoFile;
     }
@@ -103,6 +105,8 @@ public class CodecEncoderTest extends CodecTestBase {
         super.resetContext(isAsync, signalEOSWithLastFrame);
         mNumBytesSubmitted = 0;
         mInputOffsetPts = 0;
+        mNumSyncFramesReceived = 0;
+        mSyncFramesPos.clear();
     }
 
     @Override
@@ -116,6 +120,8 @@ public class CodecEncoderTest extends CodecTestBase {
         }
         mPrevOutputPts = mInputOffsetPts - 1;
         mNumBytesSubmitted = 0;
+        mNumSyncFramesReceived = 0;
+        mSyncFramesPos.clear();
     }
 
     private void setUpSource(String srcFile) throws IOException {
@@ -262,20 +268,26 @@ public class CodecEncoderTest extends CodecTestBase {
     }
 
     void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
-        if (info.size > 0 && mSaveToMem) {
-            ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-            mOutputBuff.saveToMemory(buf, info);
-        }
-        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-            mSawOutputEOS = true;
-        }
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "output: id: " + bufferIndex + " flags: " + info.flags + " size: " +
                     info.size + " timestamp: " + info.presentationTimeUs);
         }
-        if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
-            mOutputBuff.saveOutPTS(info.presentationTimeUs);
-            mOutputCount++;
+        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+            mSawOutputEOS = true;
+        }
+        if (info.size > 0) {
+            if (mSaveToMem) {
+                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
+                mOutputBuff.saveToMemory(buf, info);
+            }
+            if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+                mOutputBuff.saveOutPTS(info.presentationTimeUs);
+                mOutputCount++;
+            }
+            if ((info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
+                mNumSyncFramesReceived += 1;
+                mSyncFramesPos.add(mOutputCount);
+            }
         }
         mCodec.releaseOutputBuffer(bufferIndex, false);
     }
@@ -305,6 +317,27 @@ public class CodecEncoderTest extends CodecTestBase {
         mSaveToMem = false;
     }
 
+    /**
+     * Selects encoder input color format in byte buffer mode. As of now ndk tests support only
+     * 420p, 420sp. COLOR_FormatYUV420Flexible although can represent any form of yuv, it doesn't
+     * work in ndk due to lack of AMediaCodec_GetInputImage()
+     */
+    private static int findByteBufferColorFormat(String encoder, String mime) throws IOException {
+        MediaCodec codec = MediaCodec.createByCodecName(encoder);
+        MediaCodecInfo.CodecCapabilities cap = codec.getCodecInfo().getCapabilitiesForType(mime);
+        int colorFormat = -1;
+        for (int c : cap.colorFormats) {
+            if (c == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar ||
+                    c == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar) {
+                Log.v(LOG_TAG, "selecting color format: " + c);
+                colorFormat = c;
+                break;
+            }
+        }
+        codec.release();
+        return colorFormat;
+    }
+
     @Override
     PersistableBundle validateMetrics(String codec, MediaFormat format) {
         PersistableBundle metrics = super.validateMetrics(codec, format);
@@ -313,10 +346,29 @@ public class CodecEncoderTest extends CodecTestBase {
         return metrics;
     }
 
+    private void forceSyncFrame() {
+        final Bundle syncFrame = new Bundle();
+        syncFrame.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
+        if (ENABLE_LOGS) {
+            Log.v(LOG_TAG, "requesting key frame");
+        }
+        mCodec.setParameters(syncFrame);
+    }
+
+    private void updateBitrate(int bitrate) {
+        final Bundle bitrateUpdate = new Bundle();
+        bitrateUpdate.putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, bitrate);
+        if (ENABLE_LOGS) {
+            Log.v(LOG_TAG, "requesting bitrate to be changed to " + bitrate);
+        }
+        mCodec.setParameters(bitrateUpdate);
+    }
+
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        final List<String> cddRequiredMimeList =
-                Arrays.asList(MediaFormat.MIMETYPE_AUDIO_FLAC,
+        final ArrayList<String> cddRequiredMimeList =
+                new ArrayList<>(Arrays.asList(
+                        MediaFormat.MIMETYPE_AUDIO_FLAC,
                         MediaFormat.MIMETYPE_AUDIO_OPUS,
                         MediaFormat.MIMETYPE_AUDIO_AAC,
                         MediaFormat.MIMETYPE_AUDIO_AMR_NB,
@@ -326,7 +378,7 @@ public class CodecEncoderTest extends CodecTestBase {
                         MediaFormat.MIMETYPE_VIDEO_AVC,
                         MediaFormat.MIMETYPE_VIDEO_HEVC,
                         MediaFormat.MIMETYPE_VIDEO_VP8,
-                        MediaFormat.MIMETYPE_VIDEO_VP9);
+                        MediaFormat.MIMETYPE_VIDEO_VP9));
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, arrays of bit-rates, sample rates, channel counts
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{64000, 128000}, new int[]{8000, 11025,
@@ -341,64 +393,22 @@ public class CodecEncoderTest extends CodecTestBase {
                         , 96000, 192000}, new int[]{1, 2}},
 
                 // Video - CodecMime, arrays of bit-rates, height, width
-                {MediaFormat.MIMETYPE_VIDEO_H263, new int[]{64000}, new int[]{176}, new int[]{144}},
-                {MediaFormat.MIMETYPE_VIDEO_MPEG4, new int[]{64000}, new int[]{176},
+                {MediaFormat.MIMETYPE_VIDEO_H263, new int[]{32000, 64000}, new int[]{176},
                         new int[]{144}},
-                {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{512000}, new int[]{176, 352, 352, 480}
-                        , new int[]{144, 240, 288, 360}},
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{512000}, new int[]{176, 352, 352,
-                        480}, new int[]{144, 240, 288, 360}},
-                {MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{512000}, new int[]{176, 352, 352, 480}
-                        , new int[]{144, 240, 288, 360}},
-                {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{512000}, new int[]{176, 352, 352, 480}
-                        , new int[]{144, 240, 288, 360}},
-                {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{512000}, new int[]{176, 352, 352, 480}
-                        , new int[]{144, 240, 288, 360}},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, new int[]{32000, 64000}, new int[]{176},
+                        new int[]{144}},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, new int[]{256000, 512000}, new int[]{176, 352,
+                        352, 480}, new int[]{144, 240, 288, 360}},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, new int[]{256000, 512000}, new int[]{176, 352,
+                        352, 480}, new int[]{144, 240, 288, 360}},
+                {MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{256000, 512000}, new int[]{176, 352,
+                        352, 480}, new int[]{144, 240, 288, 360}},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{256000, 512000}, new int[]{176, 352,
+                        352, 480}, new int[]{144, 240, 288, 360}},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{256000, 512000}, new int[]{176, 352,
+                        352, 480}, new int[]{144, 240, 288, 360}},
         });
-
-        ArrayList<String> mimes = new ArrayList<>();
-        if (codecSelKeys.contains(CODEC_SEL_VALUE)) {
-            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
-            for (MediaCodecInfo codecInfo : codecInfos) {
-                if (!codecInfo.isEncoder()) continue;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
-                String[] types = codecInfo.getSupportedTypes();
-                for (String type : types) {
-                    if (!mimes.contains(type)) {
-                        mimes.add(type);
-                    }
-                }
-            }
-            for (String mime : cddRequiredMimeList) {
-                if (!mimes.contains(mime)) {
-                    fail("no codec found to encoder mime " + mime + " as required by cdd");
-                }
-            }
-        } else {
-            for (Map.Entry<String, String> entry : codecSelKeyMimeMap.entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-                if (codecSelKeys.contains(key) && !mimes.contains(value)) mimes.add(value);
-            }
-        }
-        final List<Object[]> argsList = new ArrayList<>();
-        for (String mime : mimes) {
-            boolean miss = true;
-            for (int i = 0; i < exhaustiveArgsList.size(); i++) {
-                if (mime.equals(exhaustiveArgsList.get(i)[0])) {
-                    argsList.add(exhaustiveArgsList.get(i));
-                    miss = false;
-                }
-            }
-            if (miss) {
-                if (cddRequiredMimeList.contains(mime)) {
-                    fail("no testvectors for required mimetype " + mime);
-                }
-                Log.w(LOG_TAG, "no test vectors available for optional mime type " + mime);
-            }
-        }
-        return argsList;
+        return prepareParamList(cddRequiredMimeList, exhaustiveArgsList, true);
     }
 
     private void setUpParams(int limit) {
@@ -522,6 +532,25 @@ public class CodecEncoderTest extends CodecTestBase {
         }
     }
 
+    private native boolean nativeTestSimpleEncode(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSimpleEncodeNative() throws IOException {
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestSimpleEncode(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+                    mEncParamList1, mEncParamList2, colorFormat));
+        }
+    }
+
     /**
      * Tests flush when codec is in sync and async mode. In these scenarios, Timestamp
      * ordering is verified. The output has to be consistent (not flaky) in all runs
@@ -559,7 +588,6 @@ public class CodecEncoderTest extends CodecTestBase {
                 doWork(23);
                 assertTrue(log + " pts is not strictly increasing",
                         mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts));
-
                 boolean checkMetrics = (mOutputCount != 0);
 
                 /* test flush in running state */
@@ -612,6 +640,26 @@ public class CodecEncoderTest extends CodecTestBase {
         }
     }
 
+    private native boolean nativeTestFlush(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @Ignore("TODO(b/147576107, b/148652492, b/148651699)")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testFlushNative() throws IOException {
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestFlush(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+                    mEncParamList1, mEncParamList2, colorFormat));
+        }
+    }
+
     /**
      * Tests reconfigure when codec is in sync and async mode. In these
      * scenarios, Timestamp ordering is verified. The output has to be consistent (not flaky)
@@ -633,6 +681,13 @@ public class CodecEncoderTest extends CodecTestBase {
                 MediaFormat format = mFormats.get(1);
                 encodeToMemory(mInputFile, encoder, Integer.MAX_VALUE, format);
                 configRef = mOutputBuff;
+                if (mIsAudio) {
+                    assertTrue("config reference output pts is not strictly increasing",
+                            configRef.isPtsStrictlyIncreasing(mPrevOutputPts));
+                } else {
+                    assertTrue("input pts list and reconfig ref output pts list are not identical",
+                            configRef.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
+                }
             }
             MediaFormat format = mFormats.get(0);
             encodeToMemory(mInputFile, encoder, Integer.MAX_VALUE, format);
@@ -729,6 +784,26 @@ public class CodecEncoderTest extends CodecTestBase {
         }
     }
 
+    private native boolean nativeTestReconfigure(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @Ignore("TODO(b/147348711, b/149981033)")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testReconfigureNative() throws IOException {
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestReconfigure(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+                    mEncParamList1, mEncParamList2, colorFormat));
+        }
+    }
+
     /**
      * Tests encoder for only EOS frame
      */
@@ -775,6 +850,224 @@ public class CodecEncoderTest extends CodecTestBase {
                 loopCounter++;
             }
             mCodec.release();
+        }
+    }
+
+    private native boolean nativeTestOnlyEos(String encoder, String mime, int[] list0, int[] list1,
+            int[] list2, int colorFormat);
+
+    @SmallTest
+    @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
+    public void testOnlyEosNative() throws IOException {
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestOnlyEos(encoder, mMime, mBitrates, mEncParamList1, mEncParamList2,
+                    colorFormat));
+        }
+    }
+
+    /**
+     * Test set parameters : force key frame
+     */
+    @Ignore("TODO(b/151302863)")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSetForceSyncFrame() throws IOException, InterruptedException {
+        Assume.assumeTrue(!mIsAudio);
+        // Maximum allowed key frame interval variation from the target value.
+        final int MAX_KEYFRAME_INTERVAL_VARIATION = 3;
+        setUpParams(1);
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        boolean[] boolStates = {true, false};
+        setUpSource(mInputFile);
+        MediaFormat format = mFormats.get(0);
+        format.removeKey(MediaFormat.KEY_I_FRAME_INTERVAL);
+        format.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 500.f);
+        mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
+        mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
+        final int KEY_FRAME_INTERVAL = 2; // force key frame every 2 seconds.
+        final int KEY_FRAME_POS = mFrameRate * KEY_FRAME_INTERVAL;
+        final int NUM_KEY_FRAME_REQUESTS = 7;
+        mOutputBuff = new OutputManager();
+        for (String encoder : listOfEncoders) {
+            mCodec = MediaCodec.createByCodecName(encoder);
+            for (boolean isAsync : boolStates) {
+                String log = String.format(
+                        "format: %s \n codec: %s, file: %s, mode: %s:: ", format, encoder,
+                        mInputFile, (isAsync ? "async" : "sync"));
+                mOutputBuff.reset();
+                configureCodec(format, isAsync, false, true);
+                mCodec.start();
+                for (int i = 0; i < NUM_KEY_FRAME_REQUESTS; i++) {
+                    doWork(KEY_FRAME_POS);
+                    assertTrue(!mSawInputEOS);
+                    forceSyncFrame();
+                    mNumBytesSubmitted = 0;
+                }
+                queueEOS();
+                waitForAllOutputs();
+                /* TODO(b/147348711) */
+                if (false) mCodec.stop();
+                else mCodec.reset();
+                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
+                assertTrue(log + "no input sent", 0 != mInputCount);
+                assertTrue(log + "output received", 0 != mOutputCount);
+                assertTrue(log + "input count != output count, act/exp: " + mOutputCount + " / " +
+                        mInputCount, mInputCount == mOutputCount);
+                assertTrue(log + " input pts list and output pts list are not identical",
+                        mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
+                assertTrue(log + "sync frames exp/act: " + NUM_KEY_FRAME_REQUESTS + " / " +
+                        mNumSyncFramesReceived, mNumSyncFramesReceived >= NUM_KEY_FRAME_REQUESTS);
+                for (int i = 0, expPos = 0, index = 0; i < NUM_KEY_FRAME_REQUESTS; i++) {
+                    int j = index;
+                    for (; j < mSyncFramesPos.size(); j++) {
+                        // Check key frame intervals:
+                        // key frame position should not be greater than target value + 3
+                        // key frame position should not be less than target value - 3
+                        if (Math.abs(expPos - mSyncFramesPos.get(j)) <=
+                                MAX_KEYFRAME_INTERVAL_VARIATION) {
+                            index = j;
+                            break;
+                        }
+                    }
+                    if (j == mSyncFramesPos.size()) {
+                        Log.w(LOG_TAG, "requested key frame at frame index " + expPos +
+                                " none found near by");
+                    }
+                    expPos += KEY_FRAME_POS;
+                }
+            }
+            mCodec.release();
+        }
+    }
+
+    private native boolean nativeTestSetForceSyncFrame(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @Ignore("TODO(b/) = test sometimes timesout")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testSetForceSyncFrameNative() throws IOException {
+        Assume.assumeTrue(!mIsAudio);
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestSetForceSyncFrame(encoder, mInpPrefix + mInputFile, mMime,
+                    mBitrates, mEncParamList1, mEncParamList2, colorFormat));
+        }
+    }
+
+    /**
+     * Test set parameters : change bitrate dynamically
+     */
+    @Ignore("TODO(b/151302863)")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testAdaptiveBitRate() throws IOException, InterruptedException {
+        Assume.assumeTrue(!mIsAudio);
+        setUpParams(1);
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        boolean[] boolStates = {true, false};
+        setUpSource(mInputFile);
+        MediaFormat format = mFormats.get(0);
+        mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
+        mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
+        final int ADAPTIVE_BR_INTERVAL = 3; // change br every 3 seconds.
+        final int ADAPTIVE_BR_DUR_FRM = mFrameRate * ADAPTIVE_BR_INTERVAL;
+        final int BR_CHANGE_REQUESTS = 7;
+        mOutputBuff = new OutputManager();
+        mSaveToMem = true;
+        for (String encoder : listOfEncoders) {
+            /* TODO(b/147574800) */
+            if (encoder.equals("c2.android.hevc.encoder")) continue;
+            mCodec = MediaCodec.createByCodecName(encoder);
+            format.removeKey(MediaFormat.KEY_BITRATE_MODE);
+            MediaCodecInfo.EncoderCapabilities cap =
+                    mCodec.getCodecInfo().getCapabilitiesForType(mMime).getEncoderCapabilities();
+            if (cap.isBitrateModeSupported(MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)) {
+                format.setInteger(MediaFormat.KEY_BITRATE_MODE,
+                        MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR);
+            } else {
+                format.setInteger(MediaFormat.KEY_BITRATE_MODE,
+                        MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
+            }
+            for (boolean isAsync : boolStates) {
+                String log = String.format(
+                        "format: %s \n codec: %s, file: %s, mode: %s:: ", format, encoder,
+                        mInputFile, (isAsync ? "async" : "sync"));
+                mOutputBuff.reset();
+                configureCodec(format, isAsync, false, true);
+                mCodec.start();
+                int expOutSize = 0;
+                int bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
+                for (int i = 0; i < BR_CHANGE_REQUESTS; i++) {
+                    doWork(ADAPTIVE_BR_DUR_FRM);
+                    assertTrue(!mSawInputEOS);
+                    expOutSize += ADAPTIVE_BR_INTERVAL * bitrate;
+                    if ((i & 1) == 1) bitrate *= 2;
+                    else bitrate /= 2;
+                    updateBitrate(bitrate);
+                    mNumBytesSubmitted = 0;
+                }
+                queueEOS();
+                waitForAllOutputs();
+                /* TODO(b/147348711) */
+                if (false) mCodec.stop();
+                else mCodec.reset();
+                assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
+                assertTrue(log + "no input sent", 0 != mInputCount);
+                assertTrue(log + "output received", 0 != mOutputCount);
+                assertTrue(log + "input count != output count, act/exp: " + mOutputCount + " / " +
+                        mInputCount, mInputCount == mOutputCount);
+                assertTrue(log + " input pts list and output pts list are not identical",
+                        mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
+                /* TODO: validate output br with sliding window constraints Sec 5.2 cdd */
+                int outSize = mOutputBuff.getOutStreamSize() * 8;
+                float brDev = Math.abs(expOutSize - outSize) * 100.0f / expOutSize;
+                if (ENABLE_LOGS) {
+                    Log.d(LOG_TAG, log + "relative br error is " + brDev + '%');
+                }
+                if (brDev > 50) {
+                    fail(log + "relative br error is too large " + brDev + '%');
+                }
+            }
+            mCodec.release();
+        }
+    }
+
+    private native boolean nativeTestAdaptiveBitRate(String encoder, String file, String mime,
+            int[] list0, int[] list1, int[] list2, int colorFormat);
+
+    @Ignore("TODO(b/) = test sometimes timesout")
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testAdaptiveBitRateNative() throws IOException {
+        Assume.assumeTrue(!mIsAudio);
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        int colorFormat = -1;
+        for (String encoder : listOfEncoders) {
+            /* TODO(b/147574800) */
+            if (encoder.equals("c2.android.hevc.encoder")) continue;
+            if (!mIsAudio) {
+                colorFormat = findByteBufferColorFormat(encoder, mMime);
+                assertTrue("no valid color formats received", colorFormat != -1);
+            }
+            assertTrue(nativeTestAdaptiveBitRate(encoder, mInpPrefix + mInputFile, mMime, mBitrates,
+                    mEncParamList1, mEncParamList2, colorFormat));
         }
     }
 }

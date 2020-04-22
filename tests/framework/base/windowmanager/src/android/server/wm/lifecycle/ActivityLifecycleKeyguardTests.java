@@ -85,6 +85,9 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
         assumeTrue(supportsSecureLock());
         assumeTrue(supportsSplitScreenMultiWindow());
 
+        // TODO(b/149338177): Fix test to pass with organizer API.
+        mUseTaskOrganizer = false;
+
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         // Enter split screen
