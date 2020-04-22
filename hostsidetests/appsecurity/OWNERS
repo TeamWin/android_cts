@@ -43,3 +43,8 @@ per-file BasePermissionsTest.java = moltmann@google.com
 per-file RequestsOnlyCalendarApp22.java = moltmann@google.com
 per-file ReviewPermissionHelper = moltmann@google.com
 per-file UsePermission*.java = moltmann@google.com
+# CTS shim packages
+per-file CtsShim*.apk = dariofreni@google.com
+per-file CtsShim*.apk = ioffe@google.com
+per-file com.android.apex.cts.shim.*.apex = dariofreni@google.com
+per-file com.android.apex.cts.shim.*.apex = ioffe@google.com
