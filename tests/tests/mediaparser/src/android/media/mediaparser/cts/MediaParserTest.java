@@ -408,7 +408,9 @@ public class MediaParserTest {
     @Test
     public void testAdtsTruncatedWithConstantBitrateSeeking()
             throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_cbs_truncated.adts");
+        testExtractAsset(
+                "ts/sample_cbs_truncated.adts",
+                Collections.singletonMap(MediaParser.PARAMETER_ADTS_ENABLE_CBR_SEEKING, true));
     }
 
     @Test
@@ -418,7 +420,9 @@ public class MediaParserTest {
 
     @Test
     public void testAdtsWithConstantBitrateSeeking() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_cbs.adts");
+        testExtractAsset(
+                "ts/sample_cbs.adts",
+                Collections.singletonMap(MediaParser.PARAMETER_ADTS_ENABLE_CBR_SEEKING, true));
     }
 
     // AC-3.
@@ -455,7 +459,7 @@ public class MediaParserTest {
     }
 
     @Test
-    public void testTsWithH264() throws IOException, InterruptedException {
+    public void testTsWithH264MpegAudio() throws IOException, InterruptedException {
         testExtractAsset("ts/sample_h264_mpeg_audio.ts");
     }
 
@@ -464,6 +468,14 @@ public class MediaParserTest {
         testExtractAsset(
                 "ts/sample_h264_no_access_unit_delimiters.ts",
                 Collections.singletonMap(MediaParser.PARAMETER_TS_DETECT_ACCESS_UNITS, true));
+    }
+
+    @Test
+    public void testTsWithH264DtsAudio() throws IOException, InterruptedException {
+        testExtractAsset(
+                "ts/sample_h264_dts_audio.ts",
+                Collections.singletonMap(
+                        MediaParser.PARAMETER_TS_ENABLE_HDMV_DTS_AUDIO_STREAMS, true));
     }
 
     @Test

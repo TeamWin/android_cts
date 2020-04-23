@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     private static final String USER_STATE_LOCKED = "RUNNING_LOCKED";
-    private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.MINUTES.toMillis(2);
+    private static final long TIMEOUT_USER_LOCKED_MILLIS = TimeUnit.MINUTES.toMillis(3);
     // Password needs to be in sync with ResetPasswordWithTokenTest.PASSWORD1
     private static final String RESET_PASSWORD_TEST_DEFAULT_PASSWORD = "123456";
 
