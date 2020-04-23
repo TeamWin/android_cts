@@ -79,6 +79,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
@@ -1227,6 +1228,38 @@ public class AbsListViewTest {
         assertFalse(listView.isOnScrollChangedCalled());
         listView.requestChildRectangleOnScreen(row, r, true);
         assertTrue(listView.isOnScrollChangedCalled());
+    }
+
+    @Test
+    public void testEnterKey() throws Throwable {
+        final MyListView listView = new MyListView(mContext, mAttributeSet);
+
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, listView, () -> {
+            mActivityRule.getActivity().setContentView(listView);
+            listView.setAdapter(mCountriesAdapter);
+            listView.setTextFilterEnabled(true);
+            listView.requestFocus();
+        });
+
+        // KEYCODE_ENTER is handled by isConfirmKey, so it comsumed before sendToTextFilter called.
+        // because of this, make keyevent with repeat count.
+        KeyEvent event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER, 1);
+        CtsKeyEventUtil.sendKey(mInstrumentation, listView, event);
+        assertTrue(listView.isTextFilterEnabled());
+
+        // we expect keyevent will be passed with nothing to do
+        assertFalse(listView.hasTextFilter());
+        assertEquals(-1, listView.getOnFilterCompleteCount());
+
+        // KEYCODE_NUMPAD_ENTER is handled by isConfirmKey, too.
+        // so make keyevent with repeat count.
+        event = new KeyEvent(0, 0, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_NUMPAD_ENTER, 1);
+        CtsKeyEventUtil.sendKey(mInstrumentation, listView, event);
+        assertTrue(listView.isTextFilterEnabled());
+
+        // we expect keyevent will be passed with nothing to do, like KEYCODE_ENTER
+        assertFalse(listView.hasTextFilter());
+        assertEquals(-1, listView.getOnFilterCompleteCount());
     }
 
     /**
