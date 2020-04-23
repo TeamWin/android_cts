@@ -90,6 +90,27 @@ public class AccessibilityNodeInfoTest {
     }
 
     /**
+     * Tests if {@link AccessibilityNodeInfo} are correctly constructed.
+     */
+    @SmallTest
+    @Test
+    public void testConstructor() {
+        final View view = new View(getContext());
+        AccessibilityNodeInfo firstInfo = new AccessibilityNodeInfo(view);
+        AccessibilityNodeInfo secondInfo = new AccessibilityNodeInfo();
+        secondInfo.setSource(view);
+
+        assertEquals(firstInfo.getWindowId(), secondInfo.getWindowId());
+        assertEquals(firstInfo.getSourceNodeId(), secondInfo.getSourceNodeId());
+
+        firstInfo = new AccessibilityNodeInfo(view, /* virtualDescendantId */ 1);
+        secondInfo.setSource(view, /* virtualDescendantId */ 1);
+
+        assertEquals(firstInfo.getWindowId(), secondInfo.getWindowId());
+        assertEquals(firstInfo.getSourceNodeId(), secondInfo.getSourceNodeId());
+    }
+
+    /**
      * Tests if {@link AccessibilityNodeInfo}s are properly reused.
      */
     @SmallTest
