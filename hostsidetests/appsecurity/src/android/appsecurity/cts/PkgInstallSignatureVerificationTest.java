@@ -19,15 +19,14 @@ package android.appsecurity.cts;
 import android.platform.test.annotations.SecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.FileUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -778,21 +777,37 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     public void testInstallV4WithV2Signer() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
         // APK generated with:
         // apksigner sign --v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled
         assertInstallV4Succeeds("v4-digest-v2.apk");
     }
 
     public void testInstallV4WithV3Signer() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
         // APK generated with:
         // apksigner sign --v2-signing-enabled false --v3-signing-enabled true --v4-signing-enabled
         assertInstallV4Succeeds("v4-digest-v3.apk");
     }
 
     public void testInstallV4WithV2V3Signer() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
         // APK generated with:
         // apksigner sign --v2-signing-enabled true --v3-signing-enabled true --v4-signing-enabled
         assertInstallV4Succeeds("v4-digest-v2v3.apk");
+    }
+
+    private boolean hasIncrementalFeature() throws DeviceNotAvailableException {
+        return getDevice().hasFeature("android.software.incremental_delivery");
     }
 
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
