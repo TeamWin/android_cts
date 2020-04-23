@@ -68,6 +68,18 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsAppEnumerationQueriesProviderViaAction",
+    manifest: "AndroidManifest-queriesProviderAction.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
     name: "CtsAppEnumerationQueriesUnexportedActivityViaAction",
     manifest: "AndroidManifest-queriesUnexportedActivityAction.xml",
     defaults: ["CtsAppEnumerationQueriesDefaults"],
@@ -94,6 +106,18 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsAppEnumerationQueriesUnexportedProviderViaAuthority",
     manifest: "AndroidManifest-queriesUnexportedProviderAuthority.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationQueriesUnexportedProviderViaAction",
+    manifest: "AndroidManifest-queriesUnexportedProviderAction.xml",
     defaults: ["CtsAppEnumerationQueriesDefaults"],
     // Tag this module as a cts test artifact
     test_suites: [
