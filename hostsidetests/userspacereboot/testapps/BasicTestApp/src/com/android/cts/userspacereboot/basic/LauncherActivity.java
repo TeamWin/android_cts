@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.userspacereboot.bootcompleted;
+package com.android.cts.userspacereboot.basic;
 
 import android.app.Activity;
 
