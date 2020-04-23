@@ -64,12 +64,52 @@ public final class DevicePolicyEventLogVerifier {
         }
     }
 
+    /**
+     * Asserts that <code>expectedLogs</code> were not logged as a result of executing
+     * <code>action</code>. Note that {@link Action#apply() } is always
+     * invoked on the <code>action</code> parameter, even if statsd expectedLogs are disabled.
+     */
+    public static void assertMetricsNotLogged(ITestDevice device, Action action,
+            DevicePolicyEventWrapper... expectedLogs) throws Exception {
+        final AtomMetricTester logVerifier = new AtomMetricTester(device);
+        if (logVerifier.isStatsdDisabled()) {
+            action.apply();
+            return;
+        }
+        try {
+            logVerifier.cleanLogs();
+            logVerifier.createAndUploadConfig(Atom.DEVICE_POLICY_EVENT_FIELD_NUMBER);
+            action.apply();
+
+            Thread.sleep(WAIT_TIME_SHORT);
+
+            final List<EventMetricData> data = logVerifier.getEventMetricDataList();
+            for (DevicePolicyEventWrapper expectedLog : expectedLogs) {
+                assertExpectedMetricNotLogged(data, expectedLog);
+            }
+        } finally {
+            logVerifier.cleanLogs();
+        }
+    }
+
     public static boolean isStatsdEnabled(ITestDevice device) throws DeviceNotAvailableException {
         final AtomMetricTester logVerifier = new AtomMetricTester(device);
         return !logVerifier.isStatsdDisabled();
     }
 
     private static void assertExpectedMetricLogged(List<EventMetricData> data,
+            DevicePolicyEventWrapper expectedLog) {
+        assertWithMessage("Expected metric was not logged.")
+                .that(isExpectedMetricLogged(data, expectedLog)).isTrue();
+    }
+
+    private static void assertExpectedMetricNotLogged(List<EventMetricData> data,
+            DevicePolicyEventWrapper expectedLog) {
+        assertWithMessage("Expected metric was logged.")
+                .that(isExpectedMetricLogged(data, expectedLog)).isFalse();
+    }
+
+    private static boolean isExpectedMetricLogged(List<EventMetricData> data,
             DevicePolicyEventWrapper expectedLog) {
         final List<DevicePolicyEventWrapper> closestMatches = new ArrayList<>();
         AtomMetricTester.dropWhileNot(data, atom -> {
@@ -80,7 +120,6 @@ public final class DevicePolicyEventLogVerifier {
             }
             return Objects.equals(actualLog, expectedLog);
         });
-        assertWithMessage("Expected metric was not logged.")
-                .that(closestMatches).contains(expectedLog);
+        return closestMatches.contains(expectedLog);
     }
 }
