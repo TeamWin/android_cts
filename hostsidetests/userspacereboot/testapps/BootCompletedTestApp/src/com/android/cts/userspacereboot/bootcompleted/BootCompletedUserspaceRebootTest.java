@@ -50,10 +50,8 @@ public class BootCompletedUserspaceRebootTest {
 
     private static final Duration BOOT_TIMEOUT = Duration.ofMinutes(6);
 
-    private final Context mCeContext =
-            getInstrumentation().getContext().createCredentialProtectedStorageContext();
-    private final Context mDeContext =
-            getInstrumentation().getContext().createDeviceProtectedStorageContext();
+    private final Context mCeContext = getInstrumentation().getContext();
+    private final Context mDeContext = mCeContext.createDeviceProtectedStorageContext();
 
     /**
      * Writes to a file in CE storage of {@link BootCompletedUserspaceRebootTest}.
@@ -75,7 +73,7 @@ public class BootCompletedUserspaceRebootTest {
     @Test
     public void testVerifyCeStorageUnlocked() throws Exception {
         UserManager um = getInstrumentation().getContext().getSystemService(UserManager.class);
-        assertThat(um.isUserUnlocked(0)).isTrue();
+        assertThat(um.isUserUnlocked()).isTrue();
         try (Scanner scanner = new Scanner(mCeContext.openFileInput(FILE_NAME))) {
             final String content = scanner.nextLine();
             assertThat(content).isEqualTo(SECRET_MESSAGE);
