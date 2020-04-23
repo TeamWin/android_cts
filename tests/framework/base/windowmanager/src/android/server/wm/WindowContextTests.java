@@ -20,27 +20,25 @@ import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import static org.junit.Assert.assertEquals;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Rect;
-import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 
 import androidx.test.filters.FlakyTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 
+/**
+ * Tests that verify the behavior of window context
+ *
+ * Build/Install/Run:
+ *     atest CtsWindowManagerDeviceTestCases:WindowContextTests
+ */
 @Presubmit
-public class WindowContextTests extends MultiDisplayTestBase {
-    private Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
-    private Context mContext = mInstrumentation.getTargetContext();
-    private DisplayManager mDisplayManager = mContext.getSystemService(DisplayManager.class);
-
+public class WindowContextTests extends WindowContextTestBase {
     @Test
     @FlakyTest(bugId = 150251036)
     @AppModeFull
@@ -69,12 +67,6 @@ public class WindowContextTests extends MultiDisplayTestBase {
         bounds = windowContext.getSystemService(WindowManager.class).getCurrentWindowMetrics()
                 .getBounds();
         assertBoundsEquals(displayMetricsSession.getDisplayMetrics(), bounds);
-    }
-
-    private Context createWindowContext(int displayId) {
-        final Display display = mDisplayManager.getDisplay(displayId);
-        return mContext.createDisplayContext(display).createWindowContext(TYPE_APPLICATION_OVERLAY,
-                null /* options */);
     }
 
     private void assertBoundsEquals(ReportedDisplayMetrics expectedMetrics,
