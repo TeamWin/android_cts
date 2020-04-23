@@ -23,6 +23,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import android.os.Process;
@@ -118,6 +119,7 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
             CountDownLatch controlLatch = new CountDownLatch(1);
             WindowInsetsAnimationController[] animController =
                     new WindowInsetsAnimationController[1];
+            boolean[] cancelled = new boolean[1];
 
             InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
                 editText.getWindowInsetsController().addOnControllableInsetsChangedListener(
@@ -131,7 +133,8 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
                                 if ((typeMask & ime()) != 0 && !mControlling) {
                                     mControlling = true;
                                     controller.controlWindowInsetsAnimation(ime(), -1, null, null,
-                                            createControlListener(animController, controlLatch));
+                                            createControlListener(animController, controlLatch,
+                                                    cancelled));
                                 }
                             }
                         });
@@ -166,11 +169,14 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
 
             // Verify new height
             assertEquals(NEW_KEYBOARD_HEIGHT, lastInsets[0].getInsets(ime()).bottom);
+
+            assertFalse(cancelled[0]);
         }
     }
 
     private WindowInsetsAnimationControlListener createControlListener(
-            WindowInsetsAnimationController[] outController, CountDownLatch controlLatch) {
+            WindowInsetsAnimationController[] outController, CountDownLatch controlLatch,
+            boolean[] outCancelled) {
         return new WindowInsetsAnimationControlListener() {
             @Override
             public void onReady(
@@ -188,7 +194,7 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
             @Override
             public void onCancelled(
                     @Nullable WindowInsetsAnimationController controller) {
-                fail("Unexpected cancel");
+                outCancelled[0] = true;
             }
         };
     }
