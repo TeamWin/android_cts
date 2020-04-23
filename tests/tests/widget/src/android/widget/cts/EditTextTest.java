@@ -35,6 +35,7 @@ import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.util.Xml;
+import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.EditText;
 import android.widget.TextView.BufferType;
@@ -45,6 +46,9 @@ import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CtsKeyEventUtil;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -75,6 +79,11 @@ public class EditTextTest {
 
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.edittext_layout);
         mAttributeSet = Xml.asAttributeSet(parser);
+    }
+
+    @After
+    public void teardown() throws Throwable {
+        mActivityRule.runOnUiThread(() -> mEditText1.setSingleLine(false));
     }
 
     @Test
@@ -449,4 +458,21 @@ public class EditTextTest {
             Editable text = getText();
         }
     }
+
+    @Test
+    public void testEnterKey() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mEditText1.setSingleLine(true);
+            mEditText1.requestFocus();
+        });
+
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mEditText1, KeyEvent.KEYCODE_ENTER);
+        mInstrumentation.waitForIdleSync();
+        assertTrue(mEditText2.hasFocus());
+
+        mActivityRule.runOnUiThread(() -> mEditText1.requestFocus());
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mEditText1, KeyEvent.KEYCODE_NUMPAD_ENTER);
+        assertTrue(mEditText2.hasFocus());
+    }
+
 }
