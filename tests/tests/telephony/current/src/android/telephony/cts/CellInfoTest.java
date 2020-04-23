@@ -666,6 +666,8 @@ public class CellInfoTest {
 
         verifyCsgInfo(lte.getClosedSubscriberGroupInfo());
 
+        verifyCellIdentityLteLocationSanitation(lte);
+
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
             assertTrue("TAC is required for registered cells", tac != Integer.MAX_VALUE);
@@ -675,6 +677,14 @@ public class CellInfoTest {
             assertTrue("MNC is required for registered cells",
                     lte.getMncString() != null || lte.getMnc() != Integer.MAX_VALUE);
         }
+    }
+
+    private void verifyCellIdentityLteLocationSanitation(CellIdentityLte lte) {
+        CellIdentityLte sanitized = lte.sanitizeLocationInfo();
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getCi());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getEarfcn());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getPci());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getTac());
     }
 
     private void verifyCellIdentityLteParcel(CellIdentityLte lte) {
