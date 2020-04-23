@@ -78,6 +78,11 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 eventually {
                     assertPermission(PERMISSION_DENIED)
                 }
+                runShellCommand("cmd statusbar expand-notifications")
+                waitFindObject(By.text("App permissions automatically removed"))
+                        .click()
+                waitFindObject(By.text(APK_PACKAGE_NAME))
+                waitFindObject(By.text("Calendar permission removed"))
             }
         }
     }
