@@ -22,5 +22,7 @@ android_test_helper_app {
         "testng",
         "truth-prebuilt",
     ],
-    min_sdk_version: "30",
+    min_sdk_version: "29",
+    // TODO(ioffe): change to number when SDK is finalized.
+    sdk_version: "system_current",
 }
