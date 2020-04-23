@@ -36,6 +36,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -117,6 +118,14 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mActivity = startActivity(TestActivity.class);
         mRootView = mActivity.getWindow().getDecorView();
         mListener = new ControlListener(mErrorCollector);
+        assumeTestCompatibility();
+    }
+
+    private void assumeTestCompatibility() {
+        if (mType == navigationBars() || mType == statusBars()) {
+            assumeTrue(Insets.NONE
+                    != mRootView.getRootWindowInsets().getInsetsIgnoringVisibility(mType));
+        }
     }
 
     @Test
