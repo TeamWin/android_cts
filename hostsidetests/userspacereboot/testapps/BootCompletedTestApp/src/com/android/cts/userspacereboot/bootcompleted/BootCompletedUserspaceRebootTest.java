@@ -20,11 +20,11 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.UserManager;
-import android.util.Log;
 
 import com.android.compatibility.common.util.TestUtils;
 
@@ -32,10 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.time.Duration;
 import java.util.Scanner;
 
@@ -50,8 +47,6 @@ public class BootCompletedUserspaceRebootTest {
 
     private static final String FILE_NAME = "secret.txt";
     private static final String SECRET_MESSAGE = "wow, much secret";
-
-    private static final String RECEIVED_BROADCASTS_FILE = "received_broadcasts.txt";
 
     private static final Duration BOOT_TIMEOUT = Duration.ofMinutes(6);
 
@@ -88,37 +83,25 @@ public class BootCompletedUserspaceRebootTest {
     }
 
     /**
-     * Tests that {@link BootCompletedUserspaceRebootTest} received a {@link
-     * Intent.ACTION_BOOT_COMPLETED} broadcast.
+     * Tests that {@link Intent.ACTION_BOOT_COMPLETED} broadcast was sent.
      */
     @Test
     public void testVerifyReceivedBootCompletedBroadcast() throws Exception {
-        final File probe = new File(mDeContext.getFilesDir(), RECEIVED_BROADCASTS_FILE);
         TestUtils.waitUntil(
-                "Failed to stat " + probe.getAbsolutePath() + " in " + BOOT_TIMEOUT,
+                "Didn't receive broadcast " + Intent.ACTION_BOOT_COMPLETED + " in " + BOOT_TIMEOUT,
                 (int) BOOT_TIMEOUT.getSeconds(),
-                probe::exists);
-        try (Scanner scanner = new Scanner(mDeContext.openFileInput(RECEIVED_BROADCASTS_FILE))) {
-            final String intent = scanner.nextLine();
-            assertThat(intent).isEqualTo(Intent.ACTION_BOOT_COMPLETED);
-        }
+                () -> queryBroadcast(Intent.ACTION_BOOT_COMPLETED));
     }
 
-    /**
-     * Receiver of {@link Intent.ACTION_BOOT_COMPLETED} broadcast.
-     */
-    public static class BootReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.i(TAG, "Received! " + intent);
-            try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(
-                    context.createDeviceProtectedStorageContext().openFileOutput(
-                            RECEIVED_BROADCASTS_FILE, Context.MODE_PRIVATE)))) {
-                writer.println(intent.getAction());
-            } catch (IOException e) {
-                Log.w(TAG, "Failed to append to " + RECEIVED_BROADCASTS_FILE, e);
-            }
+    private boolean queryBroadcast(String intent) {
+        Uri uri = Uri.parse("content://com.android.cts.userspacereboot.basic/files/"
+                + intent.toLowerCase());
+        Cursor cursor = mDeContext.getContentResolver().query(uri, null, null, null, null);
+        if (cursor == null) {
+            return false;
         }
+        cursor.moveToFirst();
+        int index = cursor.getColumnIndex("exists");
+        return cursor.getInt(index) == 1;
     }
 }
