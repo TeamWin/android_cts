@@ -167,6 +167,38 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     /**
+     * Tests that when top SHOW_WHEN_LOCKED activity is finishing and the next one is also
+     * SHOW_WHEN_LOCKED, it should be able to resume next SHOW_WHEN_LOCKED activity.
+     */
+    @Test
+    public void testFinishMultipleShowWhenLockedActivities() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final ActivitySessionClient activitySession = createManagedActivityClientSession();
+
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        final ActivitySession showWhenLockedActivitySession =
+                activitySession.startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setNewTask(true)
+                        .setMultipleTask(true)
+                        .setTargetActivity(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY));
+
+        mWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY, SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY, true);
+        lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
+
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY, true);
+        mWmState.assertKeyguardShowingAndOccluded();
+
+        showWhenLockedActivitySession.finish();
+        mWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+        mWmState.assertKeyguardShowingAndOccluded();
+    }
+
+    /**
      * If we have a translucent SHOW_WHEN_LOCKED_ACTIVITY, the wallpaper should also be showing.
      */
     @Test
