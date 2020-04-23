@@ -230,6 +230,11 @@ public class GestureUtils {
         public void describeTo(Description description) {
             description.appendText("Matching to action " + MotionEvent.actionToString(mAction));
         }
+
+        public void describeMismatchSafely(MotionEvent event, Description description) {
+            description.appendText(
+                    "received " + MotionEvent.actionToString(event.getActionMasked()));
+        }
     }
 
     public static Matcher<MotionEvent> isAtPoint(final PointF point) {
@@ -246,6 +251,11 @@ public class GestureUtils {
             @Override
             public void describeTo(Description description) {
                 description.appendText("Matching to point " + point);
+            }
+
+            public void describeMismatchSafely(MotionEvent event, Description description) {
+                description.appendText(
+                        "received (" + event.getX() + ", " + event.getY() + ")");
             }
         };
     }
@@ -264,6 +274,12 @@ public class GestureUtils {
             @Override
             public void describeTo(Description description) {
                 description.appendText("Matching to point " + point);
+            }
+
+            @Override
+            public void describeMismatchSafely(MotionEvent event, Description description) {
+                description.appendText(
+                        "received (" + event.getRawX() + ", " + event.getRawY() + ")");
             }
         };
     }
