@@ -39,9 +39,11 @@ import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_Q;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
 import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
+import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_AUTH;
 import static android.appenumeration.cts.Constants.QUERIES_SERVICE_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_ACTIVITY_ACTION;
+import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_PROVIDER_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_PROVIDER_AUTH;
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_SERVICE_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_ACTION;
@@ -239,6 +241,8 @@ public class AppEnumerationTests {
                 ACTION_MANIFEST_SERVICE, this::queryIntentServices);
         assertQueryable(QUERIES_PROVIDER_AUTH, TARGET_FILTERS,
                 ACTION_MANIFEST_PROVIDER, this::queryIntentProviders);
+        assertQueryable(QUERIES_PROVIDER_ACTION, TARGET_FILTERS,
+                ACTION_MANIFEST_PROVIDER, this::queryIntentProviders);
     }
 
     @Test
@@ -256,6 +260,7 @@ public class AppEnumerationTests {
         assertNotVisible(QUERIES_ACTIVITY_ACTION, TARGET_NO_API);
         assertNotVisible(QUERIES_SERVICE_ACTION, TARGET_NO_API);
         assertNotVisible(QUERIES_PROVIDER_AUTH, TARGET_NO_API);
+        assertNotVisible(QUERIES_PROVIDER_ACTION, TARGET_NO_API);
     }
 
     @Test
@@ -279,6 +284,11 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesProviderAction_canSeeTarget() throws Exception {
+        assertVisible(QUERIES_PROVIDER_ACTION, TARGET_FILTERS);
+    }
+
+    @Test
     public void queriesActivityAction_cannotSeeUnexportedTarget() throws Exception {
         assertNotVisible(QUERIES_UNEXPORTED_ACTIVITY_ACTION, TARGET_FILTERS);
     }
@@ -291,6 +301,11 @@ public class AppEnumerationTests {
     @Test
     public void queriesProviderAuthority_cannotSeeUnexportedTarget() throws Exception {
         assertNotVisible(QUERIES_UNEXPORTED_PROVIDER_AUTH, TARGET_FILTERS);
+    }
+
+    @Test
+    public void queriesProviderAction_cannotSeeUnexportedTarget() throws Exception {
+        assertNotVisible(QUERIES_UNEXPORTED_PROVIDER_ACTION, TARGET_FILTERS);
     }
 
     @Test

@@ -24,6 +24,9 @@ public class Constants {
     /** Queries for the unexported authority in {@link #TARGET_FILTERS} provider */
     public static final String QUERIES_UNEXPORTED_PROVIDER_AUTH =
             PKG_BASE + "queries.provider.authority.unexported";
+    /** Queries for the unexported action in {@link #TARGET_FILTERS} provider */
+    public static final String QUERIES_UNEXPORTED_PROVIDER_ACTION =
+            PKG_BASE + "queries.provider.action.unexported";
     /** Queries for the unexported action in {@link #TARGET_FILTERS} service filter */
     public static final String QUERIES_UNEXPORTED_SERVICE_ACTION =
             PKG_BASE + "queries.service.action.unexported";
@@ -32,6 +35,8 @@ public class Constants {
             PKG_BASE + "queries.activity.action.unexported";
     /** A package that queries for the authority in {@link #TARGET_FILTERS} provider */
     public static final String QUERIES_PROVIDER_AUTH = PKG_BASE + "queries.provider.authority";
+    /** A package that queries for the authority in {@link #TARGET_FILTERS} provider */
+    public static final String QUERIES_PROVIDER_ACTION = PKG_BASE + "queries.provider.action";
     /** A package that queries for the action in {@link #TARGET_FILTERS} service filter */
     public static final String QUERIES_SERVICE_ACTION = PKG_BASE + "queries.service.action";
     /** A package that queries for the action in {@link #TARGET_FILTERS} activity filter */
