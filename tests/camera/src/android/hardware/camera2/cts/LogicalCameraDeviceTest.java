@@ -59,6 +59,7 @@ import android.view.WindowManager;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.Stat;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
+import com.android.ex.camera2.utils.StateWaiter;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -92,6 +93,8 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final double FRAME_DURATION_THRESHOLD = 0.03;
     private static final double FOV_THRESHOLD = 0.03;
     private static final double ASPECT_RATIO_THRESHOLD = 0.03;
+
+    private StateWaiter mSessionWaiter;
 
     private final int[] sTemplates = new int[] {
         CameraDevice.TEMPLATE_PREVIEW,
@@ -269,13 +272,19 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                         SessionConfiguration.SESSION_REGULAR, false/*defaultSupport*/);
                 assertTrue("Session configuration query for logical camera failed with error",
                         !sessionConfigSupport.error);
-                if (!sessionConfigSupport.callSupported || !sessionConfigSupport.configSupported) {
+                if (!sessionConfigSupport.callSupported) {
                     continue;
                 }
 
                 mSessionListener = new BlockingSessionCallback();
+                mSessionWaiter = mSessionListener.getStateWaiter();
                 mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
                         mSessionListener, mHandler);
+                if (!sessionConfigSupport.configSupported) {
+                    mSessionWaiter.waitForState(BlockingSessionCallback.SESSION_CONFIGURE_FAILED,
+                            SESSION_CONFIGURE_TIMEOUT_MS);
+                    continue;
+                }
 
                 // Test request logical stream with an idle physical stream.
                 CaptureRequest.Builder requestBuilder =
@@ -397,7 +406,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                         SessionConfiguration.SESSION_REGULAR, false/*defaultSupport*/);
                 assertTrue("Session configuration query for logical camera failed with error",
                         !sessionConfigSupport.error);
-                if (!sessionConfigSupport.callSupported || !sessionConfigSupport.configSupported) {
+                if (!sessionConfigSupport.callSupported) {
                     continue;
                 }
 
@@ -408,8 +417,14 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 }
 
                 mSessionListener = new BlockingSessionCallback();
+                mSessionWaiter = mSessionListener.getStateWaiter();
                 mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
                         mSessionListener, mHandler);
+                if (!sessionConfigSupport.configSupported) {
+                    mSessionWaiter.waitForState(BlockingSessionCallback.SESSION_CONFIGURE_FAILED,
+                            SESSION_CONFIGURE_TIMEOUT_MS);
+                    continue;
+                }
 
                 for (int i = 0; i < MAX_IMAGE_COUNT; i++) {
                     mSession.capture(requestBuilder.build(), new SimpleCaptureCallback(), mHandler);
@@ -1062,13 +1077,19 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 SessionConfiguration.SESSION_REGULAR, false/*defaultSupport*/);
         assertTrue("Session configuration query for logical camera failed with error",
                 !sessionConfigSupport.error);
-        if (!sessionConfigSupport.callSupported || !sessionConfigSupport.configSupported) {
+        if (!sessionConfigSupport.callSupported) {
             return;
         }
 
         mSessionListener = new BlockingSessionCallback();
+        mSessionWaiter = mSessionListener.getStateWaiter();
         mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
                 mSessionListener, mHandler);
+        if (!sessionConfigSupport.configSupported) {
+            mSessionWaiter.waitForState(BlockingSessionCallback.SESSION_CONFIGURE_FAILED,
+                    SESSION_CONFIGURE_TIMEOUT_MS);
+            return;
+        }
 
         // Stream logical YUV stream and note down the FPS
         CaptureRequest.Builder requestBuilder =
