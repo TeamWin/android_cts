@@ -18,8 +18,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.cts.userspacereboot.basic" >
 
-    <application>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <application android:forceQueryable="true">
+        <activity android:name=".LauncherActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
         <uses-library android:name="android.test.runner" />
+        <receiver android:name=".BasicUserspaceRebootTest$BootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <provider android:name=".BasicUserspaceRebootTest$Provider"
+                  android:authorities="com.android.cts.userspacereboot.basic"
+                  android:exported="true">
+        </provider>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
