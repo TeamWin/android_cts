@@ -1,4 +1,4 @@
-// Copyright (C) 2016 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-java_test_host {
-    name: "CtsSyncContentHostTestCases",
-    defaults: ["cts_defaults"],
+cc_test {
+    name: "ctsgraphicsgpuprofilinginit",
     srcs: [
-        "src/**/*.java",
-        ":CtsHostsideTestsAppSecurityUtil",
+        "android_graphics_cts_GpuProfilingData.cpp",
     ],
-    libs: [
-        "cts-tradefed",
-        "tradefed",
-        "compatibility-host-util",
-        "device-policy-log-verifier-util",
+    compile_multilib: "both",
+    multilib: {
+        lib32: {
+            suffix: "32",
+        },
+        lib64: {
+            suffix: "64",
+        },
+    },
+    cflags: [
+        "-Wall",
+        "-Werror",
     ],
-    test_suites: [
-        "cts",
-        "vts10",
-        "general-tests",
+    shared_libs: [
+        "libdl",
+        "libandroid",
+        "libvulkan",
+        "liblog",
     ],
+    stl: "c++_static",
+    sdk_version: "current",
 }
