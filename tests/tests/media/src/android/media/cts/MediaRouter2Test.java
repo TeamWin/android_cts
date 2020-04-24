@@ -269,6 +269,7 @@ public class MediaRouter2Test {
         final CountDownLatch successLatch1 = new CountDownLatch(1);
         final CountDownLatch successLatch2 = new CountDownLatch(1);
         final CountDownLatch failureLatch = new CountDownLatch(1);
+        final CountDownLatch stopLatch = new CountDownLatch(1);
         final List<RoutingController> createdControllers = new ArrayList<>();
 
         // Create session with this route
@@ -287,6 +288,11 @@ public class MediaRouter2Test {
             @Override
             public void onTransferFailure(MediaRoute2Info requestedRoute) {
                 failureLatch.countDown();
+            }
+
+            @Override
+            public void onStop(RoutingController controller) {
+                stopLatch.countDown();
             }
         };
 
@@ -307,8 +313,9 @@ public class MediaRouter2Test {
             mRouter2.transferTo(route2);
             assertTrue(successLatch2.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
-            // onTransferFailure should not be called.
+            // onTransferFailure/onStop should not be called.
             assertFalse(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(stopLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
 
             // Created controllers should have proper info
             assertEquals(2, createdControllers.size());

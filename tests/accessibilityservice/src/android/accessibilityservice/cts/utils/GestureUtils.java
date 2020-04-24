@@ -231,6 +231,7 @@ public class GestureUtils {
             description.appendText("Matching to action " + MotionEvent.actionToString(mAction));
         }
 
+        @Override
         public void describeMismatchSafely(MotionEvent event, Description description) {
             description.appendText(
                     "received " + MotionEvent.actionToString(event.getActionMasked()));
@@ -253,6 +254,7 @@ public class GestureUtils {
                 description.appendText("Matching to point " + point);
             }
 
+            @Override
             public void describeMismatchSafely(MotionEvent event, Description description) {
                 description.appendText(
                         "received (" + event.getX() + ", " + event.getY() + ")");
