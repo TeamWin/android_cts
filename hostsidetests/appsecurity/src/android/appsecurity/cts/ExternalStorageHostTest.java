@@ -97,6 +97,12 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String PERM_READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
     private static final String PERM_WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
 
+    /** Copied from PackageManager*/
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
+    private static final String FEATURE_EMBEDDED = "android.hardware.type.embedded";
+    private static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
+    private static final String FEATURE_WATCH = "android.hardware.type.watch";
+
     private int[] mUsers;
 
     private File getTestAppFile(String fileName) throws FileNotFoundException {
@@ -690,8 +696,22 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         return res;
     }
 
+    /**
+     * Bypasses the calling test case if ANY of the given features is available in the device.
+     */
+    private void bypassTestForFeatures(String... features) throws DeviceNotAvailableException {
+        final String featureList = getDevice().executeShellCommand("pm list features");
+        for (String feature : features) {
+            Assume.assumeFalse(featureList.contains(feature));
+        }
+    }
+
     @Test
     public void testSystemGalleryExists() throws Exception {
+        // Watches, TVs and IoT devices are not obligated to have a system gallery
+        bypassTestForFeatures(FEATURE_AUTOMOTIVE, FEATURE_EMBEDDED, FEATURE_LEANBACK_ONLY,
+                FEATURE_WATCH);
+
         final List<RoleUserStateProto> usersRoleStates = getAllUsersRoleStates();
 
         assertEquals("Unexpected number of users returned by dumpsys role",
