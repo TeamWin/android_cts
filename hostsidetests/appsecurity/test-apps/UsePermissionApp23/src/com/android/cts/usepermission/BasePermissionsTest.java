@@ -78,6 +78,7 @@ public abstract class BasePermissionsTest {
     private Context mContext;
     private Resources mPlatformResources;
     private boolean mWatch;
+    private boolean mAutomotive;
 
     protected static Instrumentation getInstrumentation() {
         return InstrumentationRegistry.getInstrumentation();
@@ -261,6 +262,7 @@ public abstract class BasePermissionsTest {
 
         PackageManager packageManager = mContext.getPackageManager();
         mWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
+        mAutomotive = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
         initPermissionToLabelMap(packageManager.isPermissionReviewModeEnabled());
 
         UiObject2 button = getUiDevice().findObject(By.text("Close"));
@@ -298,16 +300,18 @@ public abstract class BasePermissionsTest {
     protected void clickAllowButton() throws Exception {
         scrollToBottomIfWatch();
         getUiDevice().wait(
-            Until.findObject(
-                By.res("com.android.packageinstaller:id/permission_allow_button")),
+            Until.findObject(mAutomotive
+                ? By.res("android:id/button1")
+                : By.res("com.android.packageinstaller:id/permission_allow_button")),
             GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void clickDenyButton() throws Exception {
         scrollToBottomIfWatch();
         getUiDevice().wait(
-            Until.findObject(
-                By.res("com.android.packageinstaller:id/permission_deny_button")),
+            Until.findObject(mAutomotive
+                ? By.res("android:id/button3")
+                : By.res("com.android.packageinstaller:id/permission_deny_button")),
             GLOBAL_TIMEOUT_MILLIS).click();
     }
 
@@ -321,8 +325,9 @@ public abstract class BasePermissionsTest {
     protected void clickDontAskAgainButton() throws Exception {
         scrollToBottomIfWatch();
         getUiDevice().wait(
-            Until.findObject(
-                By.res("com.android.packageinstaller:id/permission_deny_dont_ask_again_button")),
+            Until.findObject(mAutomotive
+                ? By.res("android:id/button2")
+                : By.res("com.android.packageinstaller:id/permission_deny_dont_ask_again_button")),
             GLOBAL_TIMEOUT_MILLIS).click();
     }
 
