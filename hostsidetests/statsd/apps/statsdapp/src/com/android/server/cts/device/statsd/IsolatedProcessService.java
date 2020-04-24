@@ -14,12 +14,24 @@
  * limitations under the License.
  */
 
-package com.android.cts.userspacereboot.bootcompleted;
+package com.android.server.cts.device.statsd;
 
-import android.app.Activity;
+import android.app.Service;
+import android.content.Intent;
+import android.os.IBinder;
+import android.util.StatsLog;
 
-/**
- * An empty launcher activity.
- */
-public class LauncherActivity extends Activity {
+public class IsolatedProcessService extends Service {
+    private static final String TAG = "IsolatedProcessService";
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        StatsLog.logStart(/*label=*/0);
+        return START_NOT_STICKY;
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 }
