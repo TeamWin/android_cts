@@ -57,7 +57,7 @@ public class HostTestHelper {
             "com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex");
     private static final String ApkInShimApexPackageName = "com.android.cts.ctsshim";
     private static final String PrivApkInShimApexPackageName = "com.android.cts.priv.ctsshim";
-    private static final long ApkInShimApexVersion = 28;
+    private static final long ApkInShimApexVersion = 29;
 
     /**
      * Adopts common permissions needed to test rollbacks.
