@@ -2421,6 +2421,32 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testIsApplicationOnUicc() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // Expect a security exception without permission.
+        try {
+            mTelephonyManager.isApplicationOnUicc(TelephonyManager.APPTYPE_SIM);
+            fail("Expected security exception");
+        } catch (SecurityException se1) {
+            // Expected
+        }
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        try {
+            mTelephonyManager.isApplicationOnUicc(TelephonyManager.APPTYPE_SIM);
+        } catch (SecurityException se) {
+            fail("Caller with READ_PRIVILEGED_PHONE_STATE should be able to call API");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void testGetSupportedModemCount() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
