@@ -19,6 +19,7 @@ package android.media.cts;
 import static org.testng.Assert.assertThrows;
 
 import android.content.res.AssetFileDescriptor;
+import android.hardware.HardwareBuffer;
 import android.media.AudioFormat;
 import android.media.AudioPresentation;
 import android.media.MediaCodec;
@@ -67,6 +68,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -313,6 +315,26 @@ public class MediaCodecTest extends AndroidTestCase {
             fail("configure should not return MediaCodec.CodecException on wrong state");
         } catch (IllegalStateException e) { // expected
         }
+        try {
+            codec.getQueueRequest(0);
+            fail("getQueueRequest should throw IllegalStateException when not configured with " +
+                    "CONFIGURE_FLAG_USE_BLOCK_MODEL");
+        } catch (MediaCodec.CodecException e) {
+            logMediaCodecException(e);
+            fail("getQueueRequest should not return " +
+                    "MediaCodec.CodecException on wrong configuration");
+        } catch (IllegalStateException e) { // expected
+        }
+        try {
+            codec.getOutputFrame(0);
+            fail("getOutputFrame should throw IllegalStateException when not configured with " +
+                    "CONFIGURE_FLAG_USE_BLOCK_MODEL");
+        } catch (MediaCodec.CodecException e) {
+            logMediaCodecException(e);
+            fail("getOutputFrame should not return MediaCodec.CodecException on wrong " +
+                    "configuration");
+        } catch (IllegalStateException e) { // expected
+        }
 
         // two flushes should be fine.
         codec.flush();
@@ -345,6 +367,106 @@ public class MediaCodecTest extends AndroidTestCase {
             fail("stop should not return MediaCodec.CodecException on wrong state");
         } catch (IllegalStateException e) { // expected
         }
+
+        // recreate
+        codec = createCodecByType(format.getString(MediaFormat.KEY_MIME), isEncoder);
+
+        // configure improperly
+        try {
+            codec.configure(format, null /* surface */, null /* crypto */,
+                    MediaCodec.CONFIGURE_FLAG_USE_BLOCK_MODEL |
+                    (isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0) /* flags */);
+            fail("configure with detached buffer mode should be done after setCallback");
+        } catch (MediaCodec.CodecException e) {
+            logMediaCodecException(e);
+            fail("configure should not return IllegalStateException when improperly configured");
+        } catch (IllegalStateException e) { // expected
+        }
+
+        final LinkedBlockingQueue<Integer> inputQueue = new LinkedBlockingQueue<>();
+        codec.setCallback(new MediaCodec.Callback() {
+            @Override
+            public void onInputBufferAvailable(MediaCodec codec, int index) {
+                inputQueue.offer(index);
+            }
+            @Override
+            public void onOutputBufferAvailable(
+                    MediaCodec codec, int index, MediaCodec.BufferInfo info) { }
+            @Override
+            public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) { }
+            @Override
+            public void onError(MediaCodec codec, CodecException e) { }
+        });
+
+        // configure with CONFIGURE_FLAG_USE_BLOCK_MODEL (enter Configured State)
+        codec.configure(format, null /* surface */, null /* crypto */,
+                MediaCodec.CONFIGURE_FLAG_USE_BLOCK_MODEL |
+                (isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0) /* flags */);
+
+        // start codec (enter Executing state)
+        codec.start();
+
+        // grab input index (this should happen immediately)
+        Integer index = null;
+        try {
+            index = inputQueue.poll(2, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+        }
+        assertNotNull(index);
+
+        // test a few commands
+        try {
+            codec.getInputBuffers();
+            fail("getInputBuffers called in detached buffer mode should throw exception");
+        } catch (MediaCodec.IncompatibleWithBlockModelException e) { // expected
+        }
+        try {
+            codec.getOutputBuffers();
+            fail("getOutputBuffers called in detached buffer mode should throw exception");
+        } catch (MediaCodec.IncompatibleWithBlockModelException e) { // expected
+        }
+        try {
+            codec.getInputBuffer(index);
+            fail("getInputBuffer called in detached buffer mode should throw exception");
+        } catch (MediaCodec.IncompatibleWithBlockModelException e) { // expected
+        }
+        try {
+            codec.dequeueInputBuffer(0);
+            fail("dequeueInputBuffer called in detached buffer mode should throw exception");
+        } catch (MediaCodec.IncompatibleWithBlockModelException e) { // expected
+        }
+        MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+        try {
+            codec.dequeueOutputBuffer(info, 0);
+            fail("dequeueOutputBuffer called in detached buffer mode should throw exception");
+        } catch (MediaCodec.IncompatibleWithBlockModelException e) { // expected
+        }
+
+        // test getQueueRequest
+        MediaCodec.QueueRequest request = codec.getQueueRequest(index);
+        try {
+            request.queue();
+            fail("QueueRequest should throw IllegalStateException when no buffer is set");
+        } catch (IllegalStateException e) { // expected
+        }
+        // setting a block
+        String[] names = new String[]{ codec.getName() };
+        request.setLinearBlock(MediaCodec.LinearBlock.obtain(1, names), 0, 0);
+        // setting additional block should fail
+        try (HardwareBuffer buffer = HardwareBuffer.create(
+                16 /* width */,
+                16 /* height */,
+                HardwareBuffer.YCBCR_420_888,
+                1 /* layers */,
+                HardwareBuffer.USAGE_CPU_READ_OFTEN | HardwareBuffer.USAGE_CPU_WRITE_OFTEN)) {
+            request.setHardwareBuffer(buffer);
+            fail("QueueRequest should throw IllegalStateException multiple blocks are set.");
+        } catch (IllegalStateException e) { // expected
+        }
+
+        // release codec
+        codec.release();
+
         return true;
     }
 
