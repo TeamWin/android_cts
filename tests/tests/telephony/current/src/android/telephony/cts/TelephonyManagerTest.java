@@ -37,17 +37,22 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.ContentObserver;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.RemoteException;
+import android.os.UserManager;
+import android.provider.Settings;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -1207,6 +1212,73 @@ public class TelephonyManagerTest {
         } else {
             // Non-telephony may still have the property defined if it has a SIM.
         }
+    }
+
+    @Test
+    public void testResetSettings() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        UserManager userManager = getContext().getSystemService(UserManager.class);
+
+        boolean canChangeMobileNetworkSettings = userManager != null
+                && !userManager.hasUserRestriction(UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS);
+        assertTrue("Primary user must be able to configure mobile networks to pass this test",
+                canChangeMobileNetworkSettings);
+
+        //First check permissions are correct
+        try {
+            mTelephonyManager.resetSettings();
+            fail("TelephonyManager#resetSettings requires the"
+                    + " android.Manifest.permission.NETWORK_SETTINGS permission");
+        } catch (SecurityException e) {
+            //expected
+        }
+        // and then do a reset to move data to default.
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    TelephonyManager::resetSettings, "android.permission.NETWORK_SETTINGS");
+        } catch (SecurityException e) {
+            fail("TelephonyManager#resetSettings requires the"
+                    + " android.Manifest.permission.NETWORK_SETTINGS permission");
+        }
+
+        LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(2);
+        final ContentObserver mobileDataChangeObserver = new ContentObserver(
+                new Handler(Looper.getMainLooper())) {
+            @Override
+            public void onChange(boolean selfChange) {
+                queue.offer(isDataEnabled());
+            }
+        };
+
+        getContext().getContentResolver().registerContentObserver(
+                getObservableDataEnabledUri(mTestSub), /* notifyForDescendants= */ false,
+                mobileDataChangeObserver);
+        boolean defaultDataSetting = isDataEnabled();
+
+        // set data to not the default!
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setDataEnabled(!defaultDataSetting));
+        Boolean dataChangedResult = queue.poll(TOLERANCE, TimeUnit.MILLISECONDS);
+        assertNotNull("Data setting was not changed", dataChangedResult);
+        assertEquals("Data enable change didn't work", !defaultDataSetting,
+                dataChangedResult);
+
+        // and then do a reset to move data to default again.
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    TelephonyManager::resetSettings, "android.permission.NETWORK_SETTINGS");
+        } catch (SecurityException e) {
+            fail("TelephonyManager#resetSettings requires the"
+                    + " android.Manifest.permission.NETWORK_SETTINGS permission");
+        }
+        dataChangedResult = queue.poll(TOLERANCE, TimeUnit.MILLISECONDS);
+        assertNotNull("Data setting was not changed", dataChangedResult);
+        assertEquals("resetSettings did not reset default data", defaultDataSetting,
+                dataChangedResult);
     }
 
     @Test
@@ -2646,6 +2718,19 @@ public class TelephonyManagerTest {
             // Call isModemEnabledForSlot for each slot and verify no crash.
             mTelephonyManager.isModemEnabledForSlot(i);
         }
+    }
+
+    private boolean isDataEnabled() {
+        return ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                TelephonyManager::isDataEnabled);
+    }
+
+    private Uri getObservableDataEnabledUri(int subId) {
+        Uri uri = Settings.Global.getUriFor(Settings.Global.MOBILE_DATA);
+        if (mTelephonyManager.getActiveModemCount() != 1) {
+            uri = Settings.Global.getUriFor(Settings.Global.MOBILE_DATA + subId);
+        }
+        return uri;
     }
 
     /**

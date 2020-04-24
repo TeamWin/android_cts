@@ -1700,6 +1700,10 @@ public class ImsServiceTest {
                 TestImsService.LATCH_CREATE_MMTEL));
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_MMTEL_READY));
+        int serviceSlot = sServiceConnector.getCarrierService().getMmTelFeature().getSlotIndex();
+        assertEquals("The slot specified for the test (" + sTestSlot + ") does not match the "
+                        + "assigned slot (" + serviceSlot + "+ for the associated MmTelFeature",
+                sTestSlot, serviceSlot);
         // Wait until ImsSmsDispatcher connects and calls onReady.
         assertTrue(sServiceConnector.getCarrierService().getMmTelFeature().getSmsImplementation()
                 .waitForOnReadyLatch());
@@ -1729,6 +1733,10 @@ public class ImsServiceTest {
         // Make sure the RcsFeature was created in the test service.
         assertNotNull("Device ImsService created, but TestDeviceImsService#createRcsFeature was not"
                 + "called!", sServiceConnector.getCarrierService().getRcsFeature());
+        int serviceSlot = sServiceConnector.getCarrierService().getRcsFeature().getSlotIndex();
+        assertEquals("The slot specified for the test (" + sTestSlot + ") does not match the "
+                        + "assigned slot (" + serviceSlot + "+ for the associated RcsFeature",
+                sTestSlot, serviceSlot);
     }
 
     private void triggerFrameworkConnectToCarrierImsService() throws Exception {
@@ -1744,6 +1752,10 @@ public class ImsServiceTest {
                 .waitForLatchCountdown(TestImsService.LATCH_MMTEL_READY));
         assertNotNull("ImsService created, but ImsService#createMmTelFeature was not called!",
                 sServiceConnector.getCarrierService().getMmTelFeature());
+        int serviceSlot = sServiceConnector.getCarrierService().getMmTelFeature().getSlotIndex();
+        assertEquals("The slot specified for the test (" + sTestSlot + ") does not match the "
+                        + "assigned slot (" + serviceSlot + "+ for the associated MmTelFeature",
+                sTestSlot, serviceSlot);
     }
 
     // Waiting for ImsRcsManager to become public before implementing RegistrationManager,
