@@ -176,6 +176,8 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
                     "testVerifyCeStorageUnlocked");
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
+                    "testVerifyReceivedLockedBootCompletedBroadcast", Duration.ofMinutes(3));
+            runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
                     "testVerifyReceivedBootCompletedBroadcast", Duration.ofMinutes(6));
         } finally {
             getDevice().executeShellV2Command("cmd lock_settings clear --old 1543");
@@ -206,6 +208,8 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
             assertUserspaceRebootSucceed();
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
                     "testVerifyCeStorageUnlocked");
+            runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
+                    "testVerifyReceivedLockedBootCompletedBroadcast", Duration.ofMinutes(3));
             runDeviceTest(BOOT_COMPLETED_TEST_APP_PACKAGE_NAME, "BootCompletedUserspaceRebootTest",
                     "testVerifyReceivedBootCompletedBroadcast", Duration.ofMinutes(6));
         } finally {
