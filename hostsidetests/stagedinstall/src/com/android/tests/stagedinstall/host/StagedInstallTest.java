@@ -114,6 +114,20 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     @LargeTest
+    public void testAbandonStagedApkBeforeReady() throws Exception {
+        runPhase("testAbandonStagedApkBeforeReady_CommitAndAbandon");
+        getDevice().reboot();
+        runPhase("testAbandonStagedApkBeforeReady_VerifyPostReboot");
+    }
+
+    @Test
+    public void testNoSessionUpdatedBroadcastSentForStagedSessionAbandon() throws Exception {
+        assumeTrue(isUpdatingApexSupported());
+        runPhase("testNoSessionUpdatedBroadcastSentForStagedSessionAbandon");
+    }
+
+    @Test
+    @LargeTest
     public void testInstallMultipleStagedApks() throws Exception {
         assumeSystemUser();
 
