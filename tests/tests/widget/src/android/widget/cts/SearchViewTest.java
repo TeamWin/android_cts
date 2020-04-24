@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -28,12 +29,15 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.res.Resources;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.widget.SearchView;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
@@ -54,6 +58,7 @@ import org.junit.runner.RunWith;
 public class SearchViewTest {
     private Activity mActivity;
     private SearchView mSearchView;
+    private Instrumentation mInstrumentation;
 
     @Rule
     public ActivityTestRule<SearchViewCtsActivity> mActivityRule =
@@ -61,6 +66,7 @@ public class SearchViewTest {
 
     @Before
     public void setup() {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         mSearchView = (SearchView) mActivity.findViewById(R.id.search_view);
     }
@@ -269,4 +275,45 @@ public class SearchViewTest {
         mSearchView.setImeOptions(EditorInfo.IME_NULL);
         assertEquals(EditorInfo.IME_NULL, mSearchView.getImeOptions());
     }
+
+    @Test
+    public void testEnterKey() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mSearchView.setIconifiedByDefault(false);
+            mSearchView.setIconified(false);
+        });
+
+        final SearchView.OnQueryTextListener mockQueryTextListener =
+                mock(SearchView.OnQueryTextListener.class);
+        when(mockQueryTextListener.onQueryTextSubmit(anyString())).thenReturn(Boolean.TRUE);
+        mSearchView.setOnQueryTextListener(mockQueryTextListener);
+
+        mActivityRule.runOnUiThread(() -> {
+            mSearchView.setQuery("alpha", false);
+            mSearchView.requestFocus();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSearchView, null);
+
+        verify(mockQueryTextListener, times(1)).onQueryTextChange("alpha");
+        verify(mockQueryTextListener, atLeastOnce()).onQueryTextSubmit("alpha");
+
+        mInstrumentation.waitForIdleSync();
+        mActivityRule.runOnUiThread(() -> {
+            mSearchView.setQuery("beta", false);
+            mSearchView.requestFocus();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_NUMPAD_ENTER);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSearchView, null);
+
+        verify(mockQueryTextListener, times(1)).onQueryTextChange("beta");
+        verify(mockQueryTextListener, atLeastOnce()).onQueryTextSubmit("beta");
+
+        verifyNoMoreInteractions(mockQueryTextListener);
+    }
+
 }

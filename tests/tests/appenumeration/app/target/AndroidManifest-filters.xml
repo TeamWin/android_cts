@@ -61,6 +61,9 @@
         <provider android:name="android.appenumeration.testapp.DummyProviderNotExported"
                   android:authorities="android.appenumeration.testapp.unexported"
                   android:exported="false" >
+            <intent-filter>
+                <action android:name="android.appenumeration.action.PROVIDER_UNEXPORTED" />
+            </intent-filter>
         </provider>
         <receiver android:name="android.appenumeration.testapp.DummyReceiverNotExported"
                   android:exported="false">
