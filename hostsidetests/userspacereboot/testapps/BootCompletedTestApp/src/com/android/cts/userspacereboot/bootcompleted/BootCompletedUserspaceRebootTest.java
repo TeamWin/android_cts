@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.UserManager;
+import android.util.Log;
 
 import com.android.compatibility.common.util.TestUtils;
 
@@ -48,6 +49,7 @@ public class BootCompletedUserspaceRebootTest {
     private static final String FILE_NAME = "secret.txt";
     private static final String SECRET_MESSAGE = "wow, much secret";
 
+    private static final Duration LOCKED_BOOT_TIMEOUT = Duration.ofMinutes(3);
     private static final Duration BOOT_TIMEOUT = Duration.ofMinutes(6);
 
     private final Context mCeContext = getInstrumentation().getContext();
@@ -81,14 +83,26 @@ public class BootCompletedUserspaceRebootTest {
     }
 
     /**
+     * Tests that {@link Intent.ACTION_LOCKED_BOOT_COMPLETED} broadcast was sent.
+     */
+    @Test
+    public void testVerifyReceivedLockedBootCompletedBroadcast() throws Exception {
+        waitForBroadcast(Intent.ACTION_LOCKED_BOOT_COMPLETED, LOCKED_BOOT_TIMEOUT);
+    }
+
+    /**
      * Tests that {@link Intent.ACTION_BOOT_COMPLETED} broadcast was sent.
      */
     @Test
     public void testVerifyReceivedBootCompletedBroadcast() throws Exception {
+        waitForBroadcast(Intent.ACTION_BOOT_COMPLETED, BOOT_TIMEOUT);
+    }
+
+    private void waitForBroadcast(String intent, Duration timeout) throws Exception {
         TestUtils.waitUntil(
-                "Didn't receive broadcast " + Intent.ACTION_BOOT_COMPLETED + " in " + BOOT_TIMEOUT,
-                (int) BOOT_TIMEOUT.getSeconds(),
-                () -> queryBroadcast(Intent.ACTION_BOOT_COMPLETED));
+                "Didn't receive broadcast " + intent + " in " + timeout,
+                (int) timeout.getSeconds(),
+                () -> queryBroadcast(intent));
     }
 
     private boolean queryBroadcast(String intent) {
@@ -98,8 +112,14 @@ public class BootCompletedUserspaceRebootTest {
         if (cursor == null) {
             return false;
         }
-        cursor.moveToFirst();
-        int index = cursor.getColumnIndex("exists");
+        if (!cursor.moveToFirst()) {
+            Log.w(TAG, "Broadcast: " + intent + " cursor is empty");
+            return false;
+        }
+        String column = intent.equals(Intent.ACTION_LOCKED_BOOT_COMPLETED)
+                ? "locked_boot_completed"
+                : "boot_completed";
+        int index = cursor.getColumnIndex(column);
         return cursor.getInt(index) == 1;
     }
 }
