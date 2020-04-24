@@ -20,6 +20,7 @@ import static android.telecom.cts.TestUtils.*;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.Call;
 import android.telecom.Conference;
@@ -31,6 +32,8 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +51,8 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
     private static final String TEST_EXTRA_KEY_2 = "android.telecom.test.KEY2";
     private static final String TEST_EXTRA_VALUE_1 = "test";
     private static final int TEST_EXTRA_VALUE_2 = 42;
+    private static final Uri CONF_HANDLE = Uri.fromParts(PhoneAccount.SCHEME_TEL, "5551213", null);
+    private static final String TEST_CALLER_NAME = "Joe Schmoe";
 
     public static final int CONF_CAPABILITIES = Connection.CAPABILITY_SEPARATE_FROM_CONFERENCE |
             Connection.CAPABILITY_DISCONNECT_FROM_CONFERENCE | Connection.CAPABILITY_HOLD |
@@ -237,6 +242,46 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
 
         mConferenceObject.setActive();
         assertCallState(conf, Call.STATE_ACTIVE);
+
+        mConferenceObject.setAddress(CONF_HANDLE, TelecomManager.PRESENTATION_ALLOWED);
+        assertCallHandle(conf, CONF_HANDLE);
+        // Handle presentation is set at same time as address; so no need to wait for it.
+        assertEquals(TelecomManager.PRESENTATION_ALLOWED,
+                conf.getDetails().getHandlePresentation());
+
+        mConferenceObject.setAddress(null, TelecomManager.PRESENTATION_RESTRICTED);
+        assertCallHandle(conf, null);
+        // Handle presentation is set at same time as address; so no need to wait for it.
+        assertEquals(TelecomManager.PRESENTATION_RESTRICTED,
+                conf.getDetails().getHandlePresentation());
+
+        mConferenceObject.setCallerDisplayName(TEST_CALLER_NAME,
+                TelecomManager.PRESENTATION_ALLOWED);
+        assertCallDisplayName(conf, TEST_CALLER_NAME);
+        assertEquals(TelecomManager.PRESENTATION_ALLOWED,
+                conf.getDetails().getCallerDisplayNamePresentation());
+
+        mConferenceObject.setCallerDisplayName(null, TelecomManager.PRESENTATION_UNKNOWN);
+        assertCallDisplayName(conf, null);
+        assertEquals(TelecomManager.PRESENTATION_UNKNOWN,
+                conf.getDetails().getCallerDisplayNamePresentation());
+
+        // Expect no change; not calling withe correct permission.
+        mConferenceObject.setConferenceState(false);
+        assertCallProperties(conf, Call.Details.PROPERTY_CONFERENCE);
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        try {
+            mConferenceObject.setConferenceState(false);
+            assertDoesNotHaveCallProperties(conf, Call.Details.PROPERTY_CONFERENCE);
+
+            mConferenceObject.setConferenceState(true);
+            assertCallProperties(conf, Call.Details.PROPERTY_CONFERENCE);
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
 
         mConferenceObject.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
         assertCallState(conf, Call.STATE_DISCONNECTED);
