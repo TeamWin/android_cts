@@ -22,6 +22,7 @@ import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.HostSideTestUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.After;
 import org.junit.Before;
@@ -37,6 +38,12 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
     private static final int TIMEOUT_SECONDS = 30;
 
     private Optional<Integer> mProfileUserId = Optional.empty();
+
+    /**
+     * User ID for the system user.
+     * The value is from the UserHandle class.
+     */
+    protected static final int USER_SYSTEM = 0;
 
     /** Create the profile and start it. */
     @Before
@@ -77,10 +84,20 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
 
         assertTrue(mBackupUtils.isBackupActivatedForUser(profileUserId));
 
-        assertTrue(mDevice.removeUser(profileUserId));
+        removeUser(profileUserId);
         mProfileUserId = Optional.empty();
 
         HostSideTestUtils.waitUntil("wait for backup to be deactivated for removed user",
                 TIMEOUT_SECONDS, () -> !mBackupUtils.isBackupActivatedForUser(profileUserId));
+    }
+
+    private void removeUser(int userId) throws Exception  {
+        if (mDevice.listUsers().contains(userId) && userId != USER_SYSTEM) {
+            // Don't log output, as tests sometimes set no debug user restriction, which
+            // causes this to fail, we should still continue and remove the user.
+            CLog.d("Stopping and removing user " + userId);
+            mDevice.stopUser(userId, true, true);
+            assertTrue("Couldn't remove user", mDevice.removeUser(userId));
+        }
     }
 }
