@@ -40,14 +40,6 @@ public class TvTrackInfoTest {
     public final RequiredServiceRule requiredServiceRule = new RequiredServiceRule(
             Context.TV_INPUT_SERVICE);
 
-    @Test
-    public void setHardOfHearing_invalid() {
-        assertThrows(
-                IllegalStateException.class,
-                () -> new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "invalid")
-                        .setHardOfHearing(true)
-        );
-    }
 
     @Test
     public void newAudioTrack_default() {
@@ -62,6 +54,7 @@ public class TvTrackInfoTest {
         assertThat(info).isAudioDescription(false);
         assertThat(info).isEncrypted(false);
         assertThat(info).isHardOfHearing(false);
+        assertThat(info).isSpokenSubtitle(false);
         assertThat(info).extra().isNull();
         assertThat(info).hasContentDescription(0);
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
@@ -80,6 +73,7 @@ public class TvTrackInfoTest {
                 .setEncrypted(true)
                 .setLanguage("eng")
                 .setHardOfHearing(true)
+                .setSpokenSubtitle(true)
                 .setExtra(bundle)
                 .build();
         assertThat(info).hasType(TvTrackInfo.TYPE_AUDIO);
@@ -91,6 +85,7 @@ public class TvTrackInfoTest {
         assertThat(info).isAudioDescription(true);
         assertThat(info).isEncrypted(true);
         assertThat(info).isHardOfHearing(true);
+        assertThat(info).isSpokenSubtitle(true);
         assertThat(info).extra().isEmpty();
         assertThat(info).hasContentDescription(0);
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
@@ -192,5 +187,28 @@ public class TvTrackInfoTest {
         assertThat(info).recreatesEqual(TvTrackInfo.CREATOR);
         TvTrackInfo copy = Parcelables.forceParcel(info, TvTrackInfo.CREATOR);
         assertThat(copy).extra().bool("testTrue").isTrue();
+    }
+
+    @Test
+    public void setHardOfHearing_invalid() {
+        assertThrows(
+                IllegalStateException.class,
+                () -> new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "invalid")
+                        .setHardOfHearing(true)
+        );
+    }
+
+    @Test
+    public void setSpokenSubtitle() {
+        assertThrows(
+                IllegalStateException.class,
+                () -> new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "invalid")
+                        .setSpokenSubtitle(true)
+        );
+        assertThrows(
+                IllegalStateException.class,
+                () -> new TvTrackInfo.Builder(TvTrackInfo.TYPE_SUBTITLE, "invalid")
+                        .setSpokenSubtitle(true)
+        );
     }
 }
