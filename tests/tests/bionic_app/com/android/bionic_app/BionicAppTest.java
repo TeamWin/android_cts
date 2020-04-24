@@ -27,6 +27,6 @@ public class BionicAppTest extends TestCase {
 
   public void test__progname() {
     // https://issuetracker.google.com/152893281
-    assertEquals("bionic_app", progname());
+    assertEquals("com.android.bionic_app", progname());
   }
 }
