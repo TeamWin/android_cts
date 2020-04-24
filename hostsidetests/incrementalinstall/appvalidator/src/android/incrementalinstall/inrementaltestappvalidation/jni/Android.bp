@@ -25,6 +25,7 @@
          "-Wunreachable-code",
          "-Wno-unused-parameter",
      ],
+     header_libs: ["jni_headers"],
      srcs: [
        "path_checker.cpp",
      ],

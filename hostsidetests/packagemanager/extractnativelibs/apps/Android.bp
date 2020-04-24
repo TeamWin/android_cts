@@ -21,6 +21,7 @@ cc_test_library {
         "-Werror",
         "-Wno-unused-parameter",
     ],
+    header_libs: ["jni_headers"],
     sdk_version: "current",
 }
 
