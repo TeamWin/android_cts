@@ -17,13 +17,18 @@
 package android.appsecurity.cts;
 
 import static android.appsecurity.cts.Utils.waitForBootCompleted;
+
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.fail;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,8 +56,8 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             "testAppACurProfileDataAccessible";
     private static final String APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE =
             "testAppARefProfileDataNotAccessible";
-    private static final String APPA_METHOD_UNLOCK_DEVICE_AND_VERIFY_CE_DE_EXIST =
-            "testAppAUnlockDeviceAndVerifyCeDeDataExist";
+    private static final String APPA_METHOD_UNLOCK_DEVICE_AND_VERIFY_CE_DE_EXTERNAL_EXIST =
+            "testAppAUnlockDeviceAndVerifyCeDeExternalDataExist";
     private static final String APPA_METHOD_CANNOT_ACCESS_APPB_DIR = "testCannotAccessAppBDataDir";
 
     private static final String APPA_METHOD_TEST_UNLOCK_DEVICE =
@@ -63,11 +68,25 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
     private static final String APPB_PKG = "com.android.cts.appdataisolation.appb";
     private static final String APPB_CLASS =
             "com.android.cts.appdataisolation.appb.AppBTests";
-    private static final String APPB_METHOD_CANNOT_ACCESS_APPA_DIR = "testCannotAccessAppADataDir";
+    private static final String APPB_METHOD_CAN_NOT_ACCESS_APPA_DIR = "testCanNotAccessAppADataDir";
     private static final String APPB_METHOD_CAN_ACCESS_APPA_DIR = "testCanAccessAppADataDir";
 
     private static final String FBE_MODE_NATIVE = "native";
     private static final String FBE_MODE_EMULATED = "emulated";
+
+    private static final String CHECK_IF_FUSE_DATA_ISOLATION_IS_ENABLED_COMMANDLINE =
+            "getprop persist.sys.vold_app_data_isolation_enabled";
+    private static final String APPA_METHOD_CREATE_EXTERNAL_DATA = "testCreateExternalDataDir";
+    private static final String APPB_METHOD_CAN_NOT_ACCESS_APPA_EXTERNAL_DIR =
+            "testCanNotAccessAppAExternalDataDir";
+    private static final String APPB_METHOD_CAN_ACCESS_APPA_EXTERNAL_DIR =
+            "testCanAccessAppAExternalDataDir";
+    private static final String APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_NOT_EXIST =
+            "testAppAExternalDataDoesNotExist";
+    private static final String APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_EXIST =
+            "testAppAExternalDataDoesExist";
+    private static final String APPA_METHOD_CHECK_EXTERNAL_DATA_UNAVAILABLE =
+            "testAppAExternalDataUnavailable";
 
     @Before
     public void setUp() throws Exception {
@@ -97,23 +116,27 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         new InstallMultiple().addApk(APPA_APK).run();
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_DOES_NOT_EXIST);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_NOT_EXIST);
 
-        // Create data in CE and DE storage
+        // Create data in CE, DE and external storage
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_CE_DE_DATA);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_EXTERNAL_DATA);
 
-        // Verify CE and DE storage contains data, cur profile is accessible and ref profile is
-        // not accessible
+        // Verify CE, DE and external storage contains data, cur profile is accessible and ref
+        // profile is not accessible
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
 
-        // Force stop and verify CE and DE storage contains data, cur profile is accessible and
-        // ref profile is not accessible, to confirm it's binding back the same data directory,
-        // not binding to a wrong one / create a new one.
+        // Force stop and verify CE, DE and external storage contains data, cur profile is
+        // accessible and ref profile is not accessible, to confirm it's binding back the same data
+        // directory, not binding to a wrong one / create a new one.
         forceStopPackage(APPA_PKG);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
     }
@@ -124,22 +147,26 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         new InstallMultiple().addApk(APPA_APK).run();
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_DOES_NOT_EXIST);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_NOT_EXIST);
 
-        // Create data in CE and DE storage
+        // Create data in CE, DE and external storage
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_CE_DE_DATA);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_EXTERNAL_DATA);
 
-        // Verify CE and DE storage contains data, cur profile is accessible and ref profile is
-        // not accessible
+        // Verify CE, DE and external storage contains data, cur profile is accessible and ref
+        // profile is not accessible
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
 
-        // Reboot and verify CE and DE storage contains data, cur profile is accessible and
-        // ref profile is not accessible
+        // Reboot and verify CE, DE and external storage contains data, cur profile is accessible
+        // and ref profile is not accessible
         reboot();
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
     }
@@ -162,14 +189,17 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         new InstallMultiple().addApk(APPB_APK).run();
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_DOES_NOT_EXIST);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_NOT_EXIST);
 
-        // Create data in CE and DE storage
+        // Create data in CE, DE and external storage
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_CE_DE_DATA);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_EXTERNAL_DATA);
 
-        // Verify CE and DE storage contains data, cur profile is accessible and ref profile is
-        // not accessible
+        // Verify CE, DE and external storage contains data, cur profile is accessible and ref
+        // profile is not accessible
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
 
@@ -193,22 +223,26 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             }
             waitForBootCompleted(getDevice());
 
-            // Verify DE data is still readable and writeable, while CE data is not accessible
+            // Verify DE data is still readable and writeable, while CE and external data are not
+            // accessible
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_UNAVAILABLE);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
             // Verify cannot access other apps data
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CANNOT_ACCESS_APPB_DIR);
 
-            // Unlock device and verify CE DE data still exist, without killing the process, as
-            // test process usually will be killed after the test
-            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_UNLOCK_DEVICE_AND_VERIFY_CE_DE_EXIST);
+            // Unlock device and verify CE, DE and external data still exist, without killing the
+            // process, as test process usually will be killed after the test
+            runDeviceTests(APPA_PKG, APPA_CLASS,
+                    APPA_METHOD_UNLOCK_DEVICE_AND_VERIFY_CE_DE_EXTERNAL_EXIST);
 
-            // Reboot and verify CE and DE storage contains data, cur profile is accessible and
-            // ref profile is not accessible
+            // Restart test app and verify CE, DE and external storage contains data, cur profile is
+            // accessible and ref profile is not accessible
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_EXISTS);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_EXISTS);
+            runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_EXIST);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CUR_PROFILE_ACCESSIBLE);
             runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_REF_PROFILE_NOT_ACCESSIBLE);
         } finally {
@@ -240,14 +274,16 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         // Install AppA create CE DE data
         new InstallMultiple().addApk(APPA_APK).run();
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_CE_DE_DATA);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_EXTERNAL_DATA);
 
         // Reinstall AppA
         getDevice().uninstallPackage(APPA_PKG);
         new InstallMultiple().addApk(APPA_APK).run();
 
-        // Verify CE and DE data are removed
+        // Verify CE, DE and external data are removed
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_DOES_NOT_EXIST);
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DATA_DOES_NOT_EXIST);
     }
 
     @Test
@@ -255,7 +291,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         new InstallMultiple().addApk(APPA_APK).run();
         new InstallMultiple().addApk(APPB_APK).run();
 
-        runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CANNOT_ACCESS_APPA_DIR);
+        runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CAN_NOT_ACCESS_APPA_DIR);
     }
 
     @Test
@@ -264,5 +300,32 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         new InstallMultiple().addApk(APP_SHARED_B_APK).run();
 
         runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CAN_ACCESS_APPA_DIR);
+    }
+
+    @Test
+    public void testNormalProcessCannotAccessOtherAppExternalDataDir() throws Exception {
+        assumeThatFuseDataIsolationIsEnabled(getDevice());
+
+        new InstallMultiple().addApk(APPA_APK).run();
+        new InstallMultiple().addApk(APPB_APK).run();
+
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_EXTERNAL_DATA);
+        runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CAN_NOT_ACCESS_APPA_EXTERNAL_DIR);
+    }
+
+    @Test
+    public void testSharedAppAbleToAccessOtherAppExternalDataDir() throws Exception {
+        new InstallMultiple().addApk(APP_SHARED_A_APK).run();
+        new InstallMultiple().addApk(APP_SHARED_B_APK).run();
+
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_EXTERNAL_DATA);
+        runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CAN_ACCESS_APPA_EXTERNAL_DIR);
+    }
+
+    private static void assumeThatFuseDataIsolationIsEnabled(ITestDevice device)
+            throws DeviceNotAvailableException {
+        Assume.assumeThat(device.executeShellCommand(
+                CHECK_IF_FUSE_DATA_ISOLATION_IS_ENABLED_COMMANDLINE).trim(),
+                is("true"));
     }
 }
