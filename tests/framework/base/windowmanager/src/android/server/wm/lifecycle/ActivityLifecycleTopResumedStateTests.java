@@ -55,7 +55,6 @@ import android.server.wm.WindowManagerState.ActivityTask;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
@@ -973,7 +972,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 "topStateLossTimeout");
     }
 
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishOnDifferentDisplay_nonFocused() throws Exception {
         assumeTrue(supportsMultiDisplay());
@@ -1017,7 +1015,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 "destructionOnDifferentDisplay");
     }
 
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishOnDifferentDisplay_focused() throws Exception {
         assumeTrue(supportsMultiDisplay());
