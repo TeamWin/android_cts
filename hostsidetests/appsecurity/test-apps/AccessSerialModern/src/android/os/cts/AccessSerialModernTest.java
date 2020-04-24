@@ -35,7 +35,22 @@ public class AccessSerialModernTest {
     public void testAccessSerialPermissionNeeded() throws Exception {
         // Build.SERIAL should not provide the device serial for modern apps.
         // We don't know the serial but know that it should be the dummy
-        // value returned to unauthorized callers, so make sure that value is returned.
+        // value returned to unauthorized callers, so make sure that value
+        assertTrue("Build.SERIAL must not work for modern apps",
+                Build.UNKNOWN.equals(Build.SERIAL));
+
+        // We don't have the read phone state permission, so this should throw
+        try {
+            Build.getSerial();
+            fail("getSerial() must be gated on the READ_PHONE_STATE permission");
+        } catch (SecurityException e) {
+            /* expected */
+        }
+
+        // Now grant ourselves READ_PHONE_STATE
+        grantReadPhoneStatePermission();
+
+        // Build.SERIAL should not provide the device serial for modern apps.
         assertTrue("Build.SERIAL must not work for modern apps",
                 Build.UNKNOWN.equals(Build.SERIAL));
 
@@ -52,5 +67,11 @@ public class AccessSerialModernTest {
                     + "SecurityException: "
                     + e);
         }
+    }
+
+    private void grantReadPhoneStatePermission() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                InstrumentationRegistry.getContext().getPackageName(),
+                android.Manifest.permission.READ_PHONE_STATE);
     }
 }
