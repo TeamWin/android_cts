@@ -23,15 +23,12 @@ import static com.android.cts.appdataisolation.common.FileUtils.assertFileIsAcce
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
 
 @SmallTest
 public class AppBTests {
@@ -46,24 +43,41 @@ public class AppBTests {
     }
 
     @Test
-    public void testCannotAccessAppADataDir() throws NameNotFoundException {
-        ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(APPA_PKG,
-                0);
-        assertDirDoesNotExist(applicationInfo.dataDir);
-        assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
+    public void testCanNotAccessAppADataDir() {
+        ApplicationInfo applicationInfo = mContext.getApplicationInfo();
+        assertDirDoesNotExist(replacePackageBWithPackageA(applicationInfo.dataDir));
+        assertDirDoesNotExist(replacePackageBWithPackageA(applicationInfo.deviceProtectedDataDir));
         assertDirDoesNotExist("/data/data/" + APPA_PKG);
         assertDirDoesNotExist("/data/misc/profiles/cur/0/" + APPA_PKG);
         assertDirIsNotAccessible("/data/misc/profiles/ref");
     }
 
     @Test
-    public void testCanAccessAppADataDir() throws NameNotFoundException, IOException {
-        ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(APPA_PKG,
-                0);
-        assertDirIsAccessible(applicationInfo.dataDir);
-        assertDirIsAccessible(applicationInfo.deviceProtectedDataDir);
+    public void testCanAccessAppADataDir() {
+        ApplicationInfo applicationInfo = mContext.getApplicationInfo();
+        assertDirIsAccessible(replacePackageBWithPackageA(applicationInfo.dataDir));
+        assertDirIsAccessible(replacePackageBWithPackageA(applicationInfo.deviceProtectedDataDir));
         assertDirIsAccessible("/data/data/" + APPA_PKG);
         assertFileIsAccessible("/data/misc/profiles/cur/0/" + APPA_PKG + "/primary.prof");
         assertDirIsNotAccessible("/data/misc/profiles/ref");
     }
+
+    @Test
+    public void testCanNotAccessAppAExternalDataDir() {
+        String appAExternalDir = replacePackageBWithPackageA(
+                mContext.getExternalFilesDir("").getAbsolutePath());
+        assertDirDoesNotExist(appAExternalDir);
+    }
+
+    @Test
+    public void testCanAccessAppAExternalDataDir() {
+        String appAExternalDir = replacePackageBWithPackageA(
+                mContext.getExternalFilesDir("").getAbsolutePath());
+        assertDirIsAccessible(appAExternalDir);
+    }
+
+    private String replacePackageBWithPackageA(String path) {
+        return path.replace(mContext.getPackageName(), APPA_PKG);
+    }
+
 }
