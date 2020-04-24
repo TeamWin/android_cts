@@ -253,6 +253,20 @@ public class ContentProviderOperationTest {
         assertTrue((res.exception instanceof IllegalArgumentException));
     }
 
+    @Test
+    public void testLayering() throws Exception {
+        op = ContentProviderOperation.newAssertQuery(TEST_URI)
+                .withSelection(TEST_SELECTION, TEST_SELECTION_ARGS)
+                .withExtras(TEST_EXTRAS)
+                .withExtra("test_key", "other_extra")
+                .withValues(TEST_VALUES)
+                .withValue("test_key", "other_value")
+                .build();
+
+        assertEquals("other_extra", op.resolveExtrasBackReferences(null, 0).getString("test_key"));
+        assertEquals("other_value", op.resolveValueBackReferences(null, 0).getAsString("test_key"));
+    }
+
     public static Bundle eqBundle(Bundle bundle) {
         return ArgumentMatchers.argThat((other) -> {
             // Ideally we'd use something like Bundle.kindofEquals() here, but
