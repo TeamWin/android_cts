@@ -20,7 +20,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
@@ -42,10 +41,7 @@ class MainActivity : Activity() {
 
                 setOnClickListener {
                     startActivity(
-                        // TODO use this instead once implemented
-//                        Intent(Intent.ACTION_AUTO_REVOKE_PERMISSIONS)
-//                            .putExtra(Intent.EXTRA_PACKAGE_NAME, packageName))
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        Intent(Intent.ACTION_AUTO_REVOKE_PERMISSIONS)
                             .setData(Uri.fromParts("package", packageName, null)))
                 }
             })
