@@ -19,8 +19,6 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.graphics.Rect;
 import android.support.test.uiautomator.UiObject2;
@@ -59,23 +57,26 @@ public class LoginWithCustomHighlightActivityTest
     }
 
     @Test
-    public void testAutofillCustomHighligth_singleField_noHighligth() throws Exception {
-        testAutofillCustomHighligth(/* singleField= */true);
+    public void testAutofillCustomHighlight_singleField_noHighlight() throws Exception {
+        testAutofillCustomHighlight(/* singleField= */true);
 
         MyDrawable.assertDrawableNotDrawn();
     }
 
     @Test
-    public void testAutofillCustomHighligth_multipleFields_hasHighligth() throws Exception {
-        testAutofillCustomHighligth(/* singleField= */false);
+    public void testAutofillCustomHighlight_multipleFields_hasHighlight() throws Exception {
+        testAutofillCustomHighlight(/* singleField= */false);
 
-        final Rect bounds = MyDrawable.getAutofilledBounds();
-        assertThat(bounds).isNotNull();
-        assertThat(bounds.right).isEqualTo(mActivity.getUsername().getWidth());
-        assertThat(bounds.bottom).isEqualTo(mActivity.getUsername().getHeight());
+        final Rect bounds = new Rect(MyDrawable.getAutofilledBounds());
+        final int width = mActivity.getUsername().getWidth();
+        final int height = mActivity.getUsername().getHeight();
+        if (bounds.isEmpty() || bounds.right != width || bounds.bottom != height) {
+            throw new AssertionError("Field highlight comparison fail. expected: width " + width
+                    + ", height " + height + ", but bounds was " + bounds);
+        }
     }
 
-    private void testAutofillCustomHighligth(boolean singleField) throws Exception {
+    private void testAutofillCustomHighlight(boolean singleField) throws Exception {
         // Set service.
         enableService();
 
