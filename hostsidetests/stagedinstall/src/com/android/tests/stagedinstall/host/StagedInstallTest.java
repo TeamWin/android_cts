@@ -532,6 +532,11 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testApexTargetingOldDevSdkFailsVerification");
     }
 
+    @Test
+    public void testCorruptedApexFailsVerification_b146895998() throws Exception {
+        runPhase("testCorruptedApexFailsVerification_b146895998");
+    }
+
     private boolean isUpdatingApexSupported() throws Exception {
         final String updatable = getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");
