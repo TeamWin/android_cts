@@ -73,6 +73,8 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
         try {
             /* Make sure the device is not booting up/in standby */
             device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+            // b/154737276 - Required for Yukawa
+            device.executeShellCommand("input keyevent KEYCODE_HOME");
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             TimeUnit.SECONDS.sleep(WAIT_TIME);
             hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
