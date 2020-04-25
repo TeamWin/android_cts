@@ -231,6 +231,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testInstallStagedDifferentPackageNameWithInstalledApex_Fails() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testInstallStagedDifferentPackageNameWithInstalledApex_Fails");
+    }
+
+    @Test
     @LargeTest
     public void testStageApkWithSameNameAsApexShouldFail() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
@@ -523,6 +530,11 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testApexTargetingOldDevSdkFailsVerification() throws Exception {
         runPhase("testApexTargetingOldDevSdkFailsVerification");
+    }
+
+    @Test
+    public void testCorruptedApexFailsVerification_b146895998() throws Exception {
+        runPhase("testCorruptedApexFailsVerification_b146895998");
     }
 
     private boolean isUpdatingApexSupported() throws Exception {
