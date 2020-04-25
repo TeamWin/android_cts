@@ -18,6 +18,7 @@ android_test {
     platform_apis: true,
     static_libs: [
         "apache-harmony-tests",
+        "conscrypt-support",
         "conscrypt-tests",
         "core-tests",
         "cts-core-test-runner-axt",

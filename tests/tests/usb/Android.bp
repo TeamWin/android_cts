@@ -1,3 +1,4 @@
+//
 // Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,22 +12,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-cc_test_library {
-    name: "libctsthermal_jni",
-    srcs: [
-        "NativeThermalTest.cpp",
+android_test {
+    name: "CtsUsbManagerTestCases",
+    defaults: ["cts_defaults"],
+    static_libs: [
+	"ctstestrunner-axt",
     ],
-    header_libs: ["jni_headers"],
-    shared_libs: [
-        "libandroid",
-        "liblog",
-        "libbase",
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
     ],
-    stl: "libc++_static",
-    cflags: [
-        "-Werror",
-        "-Wall",
+    srcs: ["src/**/*.java"],
+
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
     ],
-    gtest: false,
 }

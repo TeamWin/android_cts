@@ -17,6 +17,8 @@
 package android.media.cts;
 
 import android.content.res.AssetFileDescriptor;
+import android.hardware.HardwareBuffer;
+import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
@@ -110,6 +112,14 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         runThread(() -> runEncodeShortAudio());
     }
 
+    /**
+     * Tests whether encoding a short video succeeds. The test queues a few video frames
+     * then signals end-of-stream. The test fails if the encoder doesn't output the queued frames.
+     */
+    public void testEncodeShortVideo() throws InterruptedException {
+        runThread(() -> runEncodeShortVideo());
+    }
+
     public void testFormatChange() throws InterruptedException {
         List<FormatChangeEvent> events = new ArrayList<>();
         runThread(() -> runDecodeShortVideo(
@@ -147,20 +157,19 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         thread.join(TIMEOUT_MS);
         Throwable t = throwable.get();
         if (t != null) {
-            Log.e(TAG, "There was an error while running the thread:", t);
-            fail("There was an error while running the thread; please check log");
+            throw new AssertionError("There was an error while running the thread", t);
         }
         assertTrue("timed out decoding to end-of-stream", completed.get());
     }
 
-    private static class InputBlock {
+    private static class LinearInputBlock {
         MediaCodec.LinearBlock block;
         ByteBuffer buffer;
         int offset;
     }
 
     private static interface InputSlotListener {
-        public void onInputSlot(MediaCodec codec, int index, InputBlock input) throws Exception;
+        public void onInputSlot(MediaCodec codec, int index, LinearInputBlock input) throws Exception;
     }
 
     private static class ExtractorInputSlotListener implements InputSlotListener {
@@ -176,7 +185,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
 
         @Override
-        public void onInputSlot(MediaCodec codec, int index, InputBlock input) throws Exception {
+        public void onInputSlot(MediaCodec codec, int index, LinearInputBlock input) throws Exception {
             // Try to feed more data into the codec.
             if (mExtractor.getSampleTrackIndex() == -1 || mSignaledEos) {
                 return;
@@ -522,6 +531,164 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
     }
 
+    private boolean runEncodeShortVideo() {
+        final int kWidth = 176;
+        final int kHeight = 144;
+        final int kFrameRate = 15;
+        MediaCodec mediaCodec = null;
+        ArrayList<HardwareBuffer> hardwareBuffers = new ArrayList<>();
+        try {
+            MediaFormat mediaFormat = MediaFormat.createVideoFormat(
+                    MediaFormat.MIMETYPE_VIDEO_AVC, kWidth, kHeight);
+            mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, kFrameRate);
+            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 1000000);
+            mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+            // TODO: b/147748978
+            String[] codecs = MediaUtils.getEncoderNames(true /* isGoog */, mediaFormat);
+            if (codecs.length == 0) {
+                Log.i(TAG, "No encoder found for format= " + mediaFormat);
+                return true;
+            }
+            mediaCodec = MediaCodec.createByCodecName(codecs[0]);
+
+            long usage = HardwareBuffer.USAGE_CPU_READ_OFTEN;
+            usage |= HardwareBuffer.USAGE_CPU_WRITE_OFTEN;
+            if (mediaCodec.getCodecInfo().isHardwareAccelerated()) {
+                usage |= HardwareBuffer.USAGE_VIDEO_ENCODE;
+            }
+            if (!HardwareBuffer.isSupported(
+                        kWidth, kHeight, HardwareBuffer.YCBCR_420_888, 1 /* layer */, usage)) {
+                Log.i(TAG, "HardwareBuffer doesn't support " + kWidth + "x" + kHeight
+                        + "; YCBCR_420_888; usage(" + Long.toHexString(usage) + ")");
+                return true;
+            }
+
+            LinkedBlockingQueue<Long> timestampQueue = new LinkedBlockingQueue<>();
+
+            final LinkedBlockingQueue<SlotEvent> queue = new LinkedBlockingQueue<>();
+            mediaCodec.setCallback(new MediaCodec.Callback() {
+                @Override
+                public void onInputBufferAvailable(MediaCodec codec, int index) {
+                    queue.offer(new SlotEvent(true, index));
+                }
+
+                @Override
+                public void onOutputBufferAvailable(
+                        MediaCodec codec, int index, MediaCodec.BufferInfo info) {
+                    queue.offer(new SlotEvent(false, index));
+                }
+
+                @Override
+                public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
+                }
+
+                @Override
+                public void onError(MediaCodec codec, CodecException e) {
+                }
+            });
+
+            int flags = MediaCodec.CONFIGURE_FLAG_USE_BLOCK_MODEL;
+            flags |= MediaCodec.CONFIGURE_FLAG_ENCODE;
+
+            mediaCodec.configure(mediaFormat, null, null, flags);
+            mediaCodec.start();
+            boolean eos = false;
+            boolean signaledEos = false;
+            int frameIndex = 0;
+            while (!eos && !Thread.interrupted()) {
+                SlotEvent event;
+                try {
+                    event = queue.take();
+                } catch (InterruptedException e) {
+                    return false;
+                }
+
+                if (event.input) {
+                    if (signaledEos) {
+                        continue;
+                    }
+                    while (hardwareBuffers.size() <= event.index) {
+                        hardwareBuffers.add(null);
+                    }
+                    HardwareBuffer buffer = hardwareBuffers.get(event.index);
+                    if (buffer == null) {
+                        buffer = HardwareBuffer.create(
+                                kWidth, kHeight, HardwareBuffer.YCBCR_420_888, 1, usage);
+                        hardwareBuffers.set(event.index, buffer);
+                    }
+                    try (Image image = MediaCodec.mapHardwareBuffer(buffer)) {
+                        assertNotNull("CPU readable/writable image must be mappable", image);
+                        assertEquals(kWidth, image.getWidth());
+                        assertEquals(kHeight, image.getHeight());
+                        // For Y plane
+                        int rowSampling = 1;
+                        int colSampling = 1;
+                        for (Image.Plane plane : image.getPlanes()) {
+                            ByteBuffer planeBuffer = plane.getBuffer();
+                            for (int row = 0; row < kHeight / rowSampling; ++row) {
+                                int rowOffset = row * plane.getRowStride();
+                                for (int col = 0; col < kWidth / rowSampling; ++col) {
+                                    planeBuffer.put(
+                                            rowOffset + col * plane.getPixelStride(),
+                                            (byte)(frameIndex * 4));
+                                }
+                            }
+                            // For Cb and Cr planes
+                            rowSampling = 2;
+                            colSampling = 2;
+                        }
+                        long timestampUs = 1000000l * frameIndex / kFrameRate;
+                        ++frameIndex;
+                        if (frameIndex >= 32) {
+                            signaledEos = true;
+                        }
+                        timestampQueue.offer(timestampUs);
+                        mediaCodec.getQueueRequest(event.index)
+                                .setHardwareBuffer(buffer)
+                                .setPresentationTimeUs(timestampUs)
+                                .setFlags(signaledEos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0)
+                                .queue();
+                    }
+                } else {
+                    MediaCodec.OutputFrame frame = mediaCodec.getOutputFrame(event.index);
+                    eos = (frame.getFlags() & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
+
+                    if (!eos) {
+                        assertNotNull(frame.getLinearBlock());
+                        frame.getLinearBlock().recycle();
+                    }
+
+                    Long ts = timestampQueue.peek();
+                    if (ts != null && ts == frame.getPresentationTimeUs()) {
+                        timestampQueue.poll();
+                    }
+
+                    mediaCodec.releaseOutputBuffer(event.index, false);
+                }
+            }
+
+            if (!timestampQueue.isEmpty()) {
+                assertTrue("Timestamp should match between input / output",
+                        timestampQueue.isEmpty());
+            }
+            return eos;
+        } catch (IOException e) {
+            throw new RuntimeException("error reading input resource", e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (mediaCodec != null) {
+                mediaCodec.stop();
+                mediaCodec.release();
+            }
+            for (HardwareBuffer buffer : hardwareBuffers) {
+                if (buffer != null) {
+                    buffer.close();
+                }
+            }
+        }
+    }
+
     private boolean runComponentWithLinearInput(
             MediaCodec mediaCodec,
             MediaFormat mediaFormat,
@@ -551,7 +718,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
         });
         String[] codecNames = new String[]{ mediaCodec.getName() };
-        InputBlock input = new InputBlock();
+        LinearInputBlock input = new LinearInputBlock();
         if (!mediaCodec.getCodecInfo().isVendor() && mediaCodec.getName().startsWith("c2.")) {
             assertTrue("Google default c2.* codecs are copy-free compatible with LinearBlocks",
                     MediaCodec.LinearBlock.isCodecCopyFreeCompatible(codecNames));
