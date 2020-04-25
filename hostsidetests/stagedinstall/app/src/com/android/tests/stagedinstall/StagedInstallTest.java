@@ -107,12 +107,17 @@ public class StagedInstallTest {
     private static final String SHIM_PACKAGE_NAME = "com.android.apex.cts.shim";
     private static final String NOT_PREINSTALL_APEX_PACKAGE_NAME =
             "com.android.apex.cts.shim_not_pre_installed";
+    private static final String DIFFERENT_APEX_PACKAGE_NAME = "com.android.apex.cts.shim.different";
+
     private static final TestApp TESTAPP_SAME_NAME_AS_APEX = new TestApp(
             "TestAppSamePackageNameAsApex", SHIM_PACKAGE_NAME, 1, /*isApex*/ false,
             "StagedInstallTestAppSamePackageNameAsApex.apk");
     private static final TestApp Apex2DifferentCertificate = new TestApp(
             "Apex2DifferentCertificate", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2_different_certificate.apex");
+    private static final TestApp Apex2DifferentPackageName = new TestApp(
+            "Apex2DifferentPackageName", DIFFERENT_APEX_PACKAGE_NAME, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2_different_package_name.apex");
     private static final TestApp Apex2SignedBob = new TestApp(
             "Apex2SignedBob", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2_signed_bob.apex");
@@ -482,6 +487,16 @@ public class StagedInstallTest {
         int sessionId = stageSingleApk(ApexNotPreInstalled).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
+    }
+
+    @Test
+    public void testInstallStagedDifferentPackageNameWithInstalledApex_Fails() throws Exception {
+        assertThat(getInstalledVersion(DIFFERENT_APEX_PACKAGE_NAME)).isEqualTo(-1);
+        assertThat(getInstalledVersion(SHIM_PACKAGE_NAME)).isEqualTo(1);
+        int sessionId = stageSingleApk(Apex2DifferentPackageName).assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
+        assertThat(sessionInfo.getStagedSessionErrorMessage()).contains(
+                "It is forbidden to install new APEX packages.");
     }
 
     @Test
