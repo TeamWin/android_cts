@@ -145,7 +145,8 @@ public class StagedInstallTest {
     private static final TestApp Apex2SdkTargetP = new TestApp(
             "StagedInstallTestApexV2_SdkTargetP", SHIM_PACKAGE_NAME, 1,
             /*isApex*/true, "com.android.apex.cts.shim.v2_sdk_target_p.apex");
-
+    private static final TestApp CorruptedApex_b146895998 = new TestApp(
+            "StagedInstallTestCorruptedApex_b146895998", "", 1, true, "corrupted_b146895998.apex");
     @Before
     public void adoptShellPermissions() {
         InstrumentationRegistry
@@ -1060,6 +1061,13 @@ public class StagedInstallTest {
         assertThat(sessionInfo).isStagedSessionFailed();
         assertThat(sessionInfo.getStagedSessionErrorMessage())
                 .contains("Failed to parse APEX package");
+    }
+
+    @Test
+    public void testCorruptedApexFailsVerification_b146895998() throws Exception {
+        int sessionId = stageSingleApk(CorruptedApex_b146895998).assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
+        assertThat(sessionInfo).isStagedSessionFailed();
     }
 
     private static long getInstalledVersion(String packageName) {

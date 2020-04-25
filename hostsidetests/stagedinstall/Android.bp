@@ -61,6 +61,7 @@ android_test_helper_app {
         ":StagedInstallTestApexV2_WrongSha",
         ":StagedInstallTestAppSamePackageNameAsApex",
         ":StagedInstallTestApexV2_SdkTargetP",
+        ":StagedInstallTestCorruptedApex_b146895998",
     ],
     static_libs: [
         "androidx.test.runner",
@@ -438,5 +439,12 @@ prebuilt_apex {
         },
     },
   filename: "com.android.apex.cts.shim.v2_sdk_target_p.apex",
+  installable: false,
+}
+
+prebuilt_apex {
+  name: "StagedInstallTestCorruptedApex_b146895998",
+  src: "testdata/apex/corrupted_b146895998.apex",
+  filename: "corrupted_b146895998.apex",
   installable: false,
 }
