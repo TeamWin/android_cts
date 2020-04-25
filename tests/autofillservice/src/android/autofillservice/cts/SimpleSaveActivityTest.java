@@ -1575,24 +1575,24 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
     }
 
     @Test
-    public void testExplicitySaveButton() throws Exception {
-        explicitySaveButtonTest(false, 0);
+    public void testExplicitlySaveButton() throws Exception {
+        explicitlySaveButtonTest(false, 0);
     }
 
     @Test
-    public void testExplicitySaveButtonWhenAppClearFields() throws Exception {
-        explicitySaveButtonTest(true, 0);
+    public void testExplicitlySaveButtonWhenAppClearFields() throws Exception {
+        explicitlySaveButtonTest(true, 0);
     }
 
     @Test
-    public void testExplicitySaveButtonOnly() throws Exception {
-        explicitySaveButtonTest(false, SaveInfo.FLAG_DONT_SAVE_ON_FINISH);
+    public void testExplicitlySaveButtonOnly() throws Exception {
+        explicitlySaveButtonTest(false, SaveInfo.FLAG_DONT_SAVE_ON_FINISH);
     }
 
     /**
      * Tests scenario where service explicitly indicates which button is used to save.
      */
-    private void explicitySaveButtonTest(boolean clearFieldsOnSubmit, int flags) throws Exception {
+    private void explicitlySaveButtonTest(boolean clearFieldsOnSubmit, int flags) throws Exception {
         final boolean testBitmap = false;
         startActivity();
         mActivity.setAutoCommit(false);
