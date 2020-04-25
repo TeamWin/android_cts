@@ -546,6 +546,7 @@ public class TelephonyManagerTest {
         mTelephonyManager.getCarrierConfig();
         mTelephonyManager.isVoiceCapable();
         mTelephonyManager.isSmsCapable();
+        mTelephonyManager.isLteCdmaEvdoGsmWcdmaEnabled();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isDataConnectionAllowed());
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
