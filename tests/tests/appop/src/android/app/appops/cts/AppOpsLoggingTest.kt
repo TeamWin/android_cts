@@ -65,6 +65,7 @@ import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
@@ -209,6 +210,7 @@ class AppOpsLoggingTest {
         }
     }
 
+    @Ignore("b/154775996")
     @Test
     fun disableCollectedAndNoteSyncOpAndCheckLog() {
         rethrowThrowableFrom {

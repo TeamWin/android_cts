@@ -18,6 +18,8 @@ package android.widget.cts;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -26,6 +28,8 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
+import android.app.UiAutomation;
+import android.app.UiAutomation.AccessibilityEventFilter;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -40,6 +44,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -95,10 +100,12 @@ public class ToastTest {
     @Rule
     public ActivityTestRule<CtsActivity> mActivityRule =
             new ActivityTestRule<>(CtsActivity.class);
+    private UiAutomation mUiAutomation;
 
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getTargetContext();
+        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mLayoutListener = () -> mLayoutDone = true;
     }
 
@@ -748,6 +755,38 @@ public class ToastTest {
         assertNotNull(toast.getWindowParams());
     }
 
+    @Test
+    public void testShow_whenTextToast_sendsAccessibilityEvent() throws Throwable {
+        makeToast();
+        AccessibilityEventFilter filter =
+                event -> event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED;
+
+        AccessibilityEvent event = mUiAutomation.executeAndWaitForEvent(
+                () -> uncheck(() -> mActivityRule.runOnUiThread(mToast::show)), filter, TIME_OUT);
+
+        assertThat(event.getEventType()).isEqualTo(
+                AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED);
+        assertThat(event.getClassName()).isEqualTo(Toast.class.getCanonicalName());
+        assertThat(event.getPackageName()).isEqualTo(mContext.getPackageName());
+        assertThat(event.getText()).contains(TEST_TOAST_TEXT);
+    }
+
+    @Test
+    public void testShow_whenCustomToast_sendsAccessibilityEvent() throws Throwable {
+        makeCustomToast();
+        AccessibilityEventFilter filter =
+                event -> event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED;
+
+        AccessibilityEvent event = mUiAutomation.executeAndWaitForEvent(
+                () -> uncheck(() -> mActivityRule.runOnUiThread(mToast::show)), filter, TIME_OUT);
+
+        assertThat(event.getEventType()).isEqualTo(
+                AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED);
+        assertThat(event.getClassName()).isEqualTo(Toast.class.getCanonicalName());
+        assertThat(event.getPackageName()).isEqualTo(mContext.getPackageName());
+        assertThat(event.getText()).contains(TEST_CUSTOM_TOAST_TEXT);
+    }
+
     private ConditionVariable registerBlockingReceiver(String action) {
         ConditionVariable broadcastReceived = new ConditionVariable(false);
         IntentFilter filter = new IntentFilter(action);
@@ -797,6 +836,18 @@ public class ToastTest {
     private boolean isCar() {
         PackageManager pm = mContext.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    private static void uncheck(ThrowingRunnable runnable) {
+        try {
+            runnable.run();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private interface ThrowingRunnable {
+        void run() throws Throwable;
     }
 
     private static class ConditionCallback extends Toast.Callback {

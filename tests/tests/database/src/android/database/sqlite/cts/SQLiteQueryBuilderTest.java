@@ -41,10 +41,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
+import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
 public class SQLiteQueryBuilderTest {
@@ -146,6 +148,53 @@ public class SQLiteQueryBuilderTest {
                 + "FROM " + TEST_TABLE_NAME));
         assertTrue(sql.contains("name"));
         assertTrue(sql.contains("address"));
+    }
+
+    @Test
+    public void testSetProjectionGreylist() {
+        Map<String, String> projectMap = new HashMap<String, String>();
+        projectMap.put("allowed", "allowed");
+
+        SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
+        builder.setTables(TEST_TABLE_NAME);
+        builder.setDistinct(false);
+        builder.setProjectionMap(projectMap);
+
+        // Allowed is fine
+        builder.buildQuery(new String[] { "allowed" }, null, null, null, null, null);
+
+        // Greylist is blocked
+        try {
+            builder.buildQuery(new String[] { "greylist" }, null, null, null, null, null);
+            fail();
+        } catch (IllegalArgumentException expected) {
+        }
+
+        // Denied is blocked
+        try {
+            builder.buildQuery(new String[] { "denied" }, null, null, null, null, null);
+            fail();
+        } catch (IllegalArgumentException expected) {
+        }
+
+        // Now with a greylist!
+        assertEquals(null, builder.getProjectionGreylist());
+        final Collection<Pattern> greylist = Arrays.asList(Pattern.compile("greylist"));
+        builder.setProjectionGreylist(greylist);
+        assertEquals(greylist, builder.getProjectionGreylist());
+
+        // Allowed is fine
+        builder.buildQuery(new String[] { "allowed" }, null, null, null, null, null);
+
+        // Greylist is fine
+        builder.buildQuery(new String[] { "greylist" }, null, null, null, null, null);
+
+        // Denied is blocked
+        try {
+            builder.buildQuery(new String[] { "denied" }, null, null, null, null, null);
+            fail();
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
     @Test
