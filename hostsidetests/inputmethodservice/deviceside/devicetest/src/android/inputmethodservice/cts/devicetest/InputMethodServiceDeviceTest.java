@@ -276,6 +276,47 @@ public class InputMethodServiceDeviceTest {
     }
 
     /**
+     * Test if IMEs remain to be visible after switching to other IMEs.
+     *
+     * <p>Regression test for Bug 152876819.</p>
+     */
+    @Test
+    public void testImeVisibilityAfterImeSwitching() throws Throwable {
+        final TestHelper helper = new TestHelper();
+
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
+                EditTextAppConstants.URI);
+
+        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
+
+        InputMethodVisibilityVerifier.assertIme1Visible(TIMEOUT);
+
+        // Switch IME from CtsInputMethod1 to CtsInputMethod2.
+        helper.shell(ShellCommandUtils.broadcastIntent(
+                ACTION_IME_COMMAND, Ime1Constants.PACKAGE,
+                "-e", EXTRA_COMMAND, COMMAND_SWITCH_INPUT_METHOD,
+                "-e", EXTRA_ARG_STRING1, Ime2Constants.IME_ID));
+
+        InputMethodVisibilityVerifier.assertIme2Visible(TIMEOUT);
+
+        // Switch IME from CtsInputMethod2 to CtsInputMethod1.
+        helper.shell(ShellCommandUtils.broadcastIntent(
+                ACTION_IME_COMMAND, Ime2Constants.PACKAGE,
+                "-e", EXTRA_COMMAND, COMMAND_SWITCH_INPUT_METHOD,
+                "-e", EXTRA_ARG_STRING1, Ime1Constants.IME_ID));
+
+        InputMethodVisibilityVerifier.assertIme1Visible(TIMEOUT);
+
+        // Switch IME from CtsInputMethod1 to CtsInputMethod2.
+        helper.shell(ShellCommandUtils.broadcastIntent(
+                ACTION_IME_COMMAND, Ime1Constants.PACKAGE,
+                "-e", EXTRA_COMMAND, COMMAND_SWITCH_INPUT_METHOD,
+                "-e", EXTRA_ARG_STRING1, Ime2Constants.IME_ID));
+
+        InputMethodVisibilityVerifier.assertIme2Visible(TIMEOUT);
+    }
+
+    /**
      * Build stream collector of {@link DeviceEvent} collecting sequence that elements have
      * specified types.
      *
