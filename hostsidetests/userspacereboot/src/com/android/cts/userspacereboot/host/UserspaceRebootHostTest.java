@@ -256,7 +256,7 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
             getDevice().setProperty("init.userspace_reboot.sigterm.timeoutmillis", "10");
             rebootUserspaceAndWaitForBootComplete();
             assertUserspaceRebootFailed();
-            assertLastBootReasonIs("userspace_failed,shutdown_aborted");
+            assertLastBootReasonIs("userspace_failed,shutdown_aborted,sigkill");
         } finally {
             getDevice().setProperty("init.userspace_reboot.sigkill.timeoutmillis", sigkillTimeout);
             getDevice().setProperty("init.userspace_reboot.sigterm.timeoutmillis", sigtermTimeout);
