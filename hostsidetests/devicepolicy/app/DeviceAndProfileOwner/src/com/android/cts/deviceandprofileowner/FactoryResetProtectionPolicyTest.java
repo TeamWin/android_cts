@@ -26,6 +26,10 @@ import java.util.List;
 public class FactoryResetProtectionPolicyTest extends BaseDeviceAdminTest {
 
     public void testSetFactoryResetProtectionPolicy() {
+        if (!mDevicePolicyManager.isFactoryResetProtectionPolicySupported()) {
+            return;
+        }
+
         List<String> accounts = new ArrayList<>();
         accounts.add("Account 1");
         accounts.add("Account 2");
@@ -45,6 +49,10 @@ public class FactoryResetProtectionPolicyTest extends BaseDeviceAdminTest {
     }
 
     public void testSetFactoryResetProtectionPolicy_nullPolicy() {
+        if (!mDevicePolicyManager.isFactoryResetProtectionPolicySupported()) {
+            return;
+        }
+
         // Set a non-default policy
         FactoryResetProtectionPolicy policy = new FactoryResetProtectionPolicy.Builder()
                 .setFactoryResetProtectionAccounts(new ArrayList<>())
