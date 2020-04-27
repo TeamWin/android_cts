@@ -97,6 +97,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mInitialRestrictBackground = SystemUtil
                 .runShellCommand(getInstrumentation(), RESTRICT_BACKGROUND_GET_CMD)
                 .contains("enabled");
+        setDataSaverEnabled(false);
     }
 
     @Override
@@ -225,7 +226,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         if (!checkDeviceSupportsMobileData()) {
             return;
         }
-        setDataSaverEnabled(false);
         disconnectWifiToConnectToMobile();
 
         kTestEnvironment.setExpectedExecutions(1);
@@ -253,7 +253,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         if (!checkDeviceSupportsMobileData()) {
             return;
         }
-        setDataSaverEnabled(false);
         disconnectWifiToConnectToMobile();
 
         kTestEnvironment.setExpectedExecutions(1);
@@ -275,7 +274,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         if (!checkDeviceSupportsMobileData()) {
             return;
         }
-        setDataSaverEnabled(false);
         disconnectWifiToConnectToMobile();
         mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
         mTestAppInterface.startAndKeepTestActivity();
@@ -306,7 +304,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         if (!checkDeviceSupportsMobileData()) {
             return;
         }
-        setDataSaverEnabled(false);
         disconnectWifiToConnectToMobile();
 
         kTestEnvironment.setExpectedExecutions(1);
@@ -551,6 +548,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     }
 
     private static class NetworkTracker extends ConnectivityManager.NetworkCallback {
+        private static final int MSG_CHECK_ACTIVE_NETWORK = 1;
         private final ConnectivityManager mCm;
 
         private final CountDownLatch mReceiveLatch = new CountDownLatch(1);
@@ -559,41 +557,14 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         private final boolean mExpectedConnected;
 
-        private final THandler mHandler = new THandler(Looper.getMainLooper());
-
-        private class THandler extends Handler {
-            private static final int MSG_CHECK_ACTIVE_NETWORK = 1;
-
-            THandler(Looper looper) {
-                super(looper);
-            }
-
+        private final Handler mHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
-                checkActiveNetwork();
-            }
-
-            void checkActiveNetwork() {
-                if (mExpectedConnected) {
-                    if (mNetworkMetered == mCm.isActiveNetworkMetered()) {
-                        mReceiveLatch.countDown();
-                    } else {
-                        postCheckActiveNetwork();
-                    }
-                } else if (mNetworkMetered == mCm.isActiveNetworkMetered()) {
-                    postCheckActiveNetwork();
-                } else {
-                    mReceiveLatch.countDown();
+                if (msg.what == MSG_CHECK_ACTIVE_NETWORK) {
+                    checkActiveNetwork();
                 }
             }
-
-            void postCheckActiveNetwork() {
-                if (mReceiveLatch.getCount() > 0) {
-                    sendEmptyMessageDelayed(MSG_CHECK_ACTIVE_NETWORK, 5000);
-                }
-            }
-        }
-
+        };
 
         private NetworkTracker(boolean networkMetered, boolean expectedConnected,
                 ConnectivityManager cm) {
@@ -606,16 +577,39 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
                 LinkProperties linkProperties, boolean blocked) {
             // Available doesn't mean it's the active network. We need to check that separately.
-            mHandler.checkActiveNetwork();
+            checkActiveNetwork();
         }
 
         @Override
         public void onLost(Network network) {
-            mHandler.checkActiveNetwork();
+            checkActiveNetwork();
         }
 
         boolean waitForStateChange() throws InterruptedException {
-            return mReceiveLatch.await(30, TimeUnit.SECONDS);
+            checkActiveNetwork();
+            return mReceiveLatch.await(60, TimeUnit.SECONDS);
+        }
+
+        private void checkActiveNetwork() {
+            if (mReceiveLatch.getCount() == 0) {
+                return;
+            }
+
+            if (mExpectedConnected) {
+                if (mCm.getActiveNetwork() != null
+                        && mNetworkMetered == mCm.isActiveNetworkMetered()) {
+                    mReceiveLatch.countDown();
+                } else {
+                    mHandler.sendEmptyMessageDelayed(MSG_CHECK_ACTIVE_NETWORK, 5000);
+                }
+            } else {
+                if (mCm.getActiveNetwork() != null
+                        && mNetworkMetered != mCm.isActiveNetworkMetered()) {
+                    mReceiveLatch.countDown();
+                } else {
+                    mHandler.sendEmptyMessageDelayed(MSG_CHECK_ACTIVE_NETWORK, 5000);
+                }
+            }
         }
     }
 }
