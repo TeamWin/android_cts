@@ -875,5 +875,41 @@ public class ProvisioningTest {
         store.deleteCredentialByName("test");
     }
 
+    @Test
+    public void testProvisionAcpIdNotInValidRange() throws IdentityCredentialException {
+        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+
+        Context appContext = InstrumentationRegistry.getTargetContext();
+        IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
+
+        WritableIdentityCredential wc =
+                store.createCredential("testAcpNotInValidRange", "org.iso.18013-5.2019.mdl");
+
+        Collection<X509Certificate> certificateChain =
+                wc.getCredentialKeyCertificateChain("SomeChallenge".getBytes());
+
+        // Profile 32 (no authentication) - invalid profile id
+        AccessControlProfile noAuthProfile =
+                new AccessControlProfile.Builder(new AccessControlProfileId(32))
+                        .setUserAuthenticationRequired(false)
+                        .build();
+
+        Collection<AccessControlProfileId> idsNoAuth = new ArrayList<AccessControlProfileId>();
+        idsNoAuth.add(new AccessControlProfileId(32));
+        String mdlNs = "org.iso.18013-5.2019";
+        PersonalizationData personalizationData =
+                new PersonalizationData.Builder()
+                        .addAccessControlProfile(noAuthProfile)
+                        .putEntry("com.example.ns", "Name", idsNoAuth, Util.cborEncodeString("Alan"))
+                        .build();
+
+        // personalize() should fail because of the invalid profile id
+        try {
+            byte[] proofOfProvisioningSignature = wc.personalize(personalizationData);
+            assertTrue(false);
+        } catch (Exception e) {
+            // This is the expected path...
+        }
+    }
 
 }
