@@ -2661,6 +2661,17 @@ public class ImageDecoderTest {
     }
 
     @Test(expected = FileNotFoundException.class)
+    public void testUriWithoutScheme() throws IOException {
+        Uri uri = new Uri.Builder()
+                .authority("authority")
+                .appendPath("missing")
+                .appendPath("scheme")
+                .build();
+        ImageDecoder.Source src = ImageDecoder.createSource(getContentResolver(), uri);
+        ImageDecoder.decodeDrawable(src);
+    }
+
+    @Test(expected = FileNotFoundException.class)
     public void testBadCallable() throws IOException {
         ImageDecoder.Source src = ImageDecoder.createSource(() -> null);
         ImageDecoder.decodeDrawable(src);
