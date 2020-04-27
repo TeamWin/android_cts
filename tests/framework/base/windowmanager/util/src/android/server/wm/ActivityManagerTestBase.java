@@ -2306,4 +2306,8 @@ public abstract class ActivityManagerTestBase {
      */
     public static class SideActivity extends Activity {
     }
+
+    /** Activity that can handle all config changes. */
+    public static class ConfigChangeHandlingActivity extends CommandSession.BasicTestActivity {
+    }
 }
