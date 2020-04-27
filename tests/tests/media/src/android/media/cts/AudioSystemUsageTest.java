@@ -58,6 +58,12 @@ public class AudioSystemUsageTest {
     }
 
     @Test
+    public void getSupportedSystemUsages_throwsException() {
+        assertThrows(SecurityException.class, () ->
+                mAudioManager.getSupportedSystemUsages());
+    }
+
+    @Test
     public void setSupportedSystemUsage_throwsException() {
         assertThrows(SecurityException.class, () ->
                 mAudioManager.setSupportedSystemUsages(new int[0]));
