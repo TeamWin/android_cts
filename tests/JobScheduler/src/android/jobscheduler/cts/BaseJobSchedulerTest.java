@@ -30,6 +30,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -198,5 +199,14 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     void assertJobNotReady(int jobId) throws Exception {
         String state = getJobState(jobId);
         assertTrue("Job unexpectedly ready, in state: " + state, !state.contains("ready"));
+    }
+
+    /** Asks (not forces) JobScheduler to run the job if constraints are met. */
+    void runSatisfiedJob(int jobId) throws Exception {
+        SystemUtil.runShellCommand(getInstrumentation(),
+                "cmd jobscheduler run -s"
+                + " -u " + UserHandle.myUserId()
+                + " " + kJobServiceComponent.getPackageName()
+                + " " + jobId);
     }
 }
