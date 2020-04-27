@@ -95,7 +95,8 @@ public class BasicUserspaceRebootTest {
     }
 
     /**
-     * Receiver of {@link Intent.ACTION_BOOT_COMPLETED} broadcast.
+     * Receiver of {@link Intent.ACTION_LOCKED_BOOT_COMPLETED} and
+     * {@link Intent.ACTION_BOOT_COMPLETED} broadcasts.
      */
     public static class BootReceiver extends BroadcastReceiver {
 
@@ -114,7 +115,8 @@ public class BasicUserspaceRebootTest {
     }
 
     /**
-     * Returns whenever {@link Intent.ACTION_BOOT_COMPLETED} broadcast was received.
+     * Returns whenever {@link Intent.ACTION_LOCKED_BOOT_COMPLETED} and
+     * {@link Intent.ACTION_BOOT_COMPLETED} broadcast were received.
      */
     public static class Provider extends ContentProvider {
 
@@ -132,9 +134,14 @@ public class BasicUserspaceRebootTest {
         public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
                 String sortOrder) {
             Context de = getContext().createDeviceProtectedStorageContext();
-            File file = new File(de.getFilesDir(), Intent.ACTION_BOOT_COMPLETED.toLowerCase());
-            MatrixCursor cursor = new MatrixCursor(new String[]{"exists"});
-            cursor.addRow(new Object[] { file.exists() ? 1 : 0});
+            File locked_boot_completed = new File(
+                    de.getFilesDir(), Intent.ACTION_LOCKED_BOOT_COMPLETED.toLowerCase());
+            File boot_completed = new File(
+                    de.getFilesDir(), Intent.ACTION_BOOT_COMPLETED.toLowerCase());
+            MatrixCursor cursor = new MatrixCursor(
+                    new String[]{ "locked_boot_completed", "boot_completed"});
+            cursor.addRow(new Object[] {
+                    locked_boot_completed.exists() ? 1 : 0, boot_completed.exists() ? 1 : 0 });
             return cursor;
         }
 
