@@ -47,6 +47,7 @@
     <string name="test_category_telephony">Telephony</string>
     <string name="test_category_tv">TV</string>
     <string name="test_category_instant_apps">Instant Apps</string>
+    <string name="test_category_display_cutout">DisplayCutout</string>
     <string name="test_category_other">Other</string>
     <string name="clear">Clear</string>
     <string name="test_results_clear_title">Remove all test results?</string>
@@ -5539,5 +5540,14 @@ Follow the instructions on the screen to measure the frequency response for the 
         1. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to the 3.5mm headset jack.\n
         2. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to a USB-C headset adapter.\n
         3. Connect a USB audio interface peripheral and connect the outputs to the inputs with an audio patch cable.
+    </string>
+
+    <string name="display_cutout_test">DisplayCutout Test</string>
+    <string name="display_cutout_test_instruction">\n
+    This test is to make sure that the area inside the safe insets from the DisplayCutout should be
+    fully visible and touchable. \n\n
+    Please check the below items: \n
+    1. All buttons are fully visible \n
+    2. All buttons are clickable. \n
     </string>
 </resources>
