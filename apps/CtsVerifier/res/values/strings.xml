@@ -2494,11 +2494,10 @@ You should be prompted to select credentials; choose the ones you just installed
 
         1. Open a work app.\n
         2. Verify that a screen asking you for your work credentials is shown.\n
-        3. Verify that the background image contains a suitcase.\n
-        4. Verify that the background color of the remaining image is blue.\n
-        5. Verify that the header text says \"CtsVerifier\".\n
-        6. Confirm your credentials and verify that the credentials you entered previously work.\n
-        7. The work app should be launched.
+        3. Verify that the icon is a briefcase.\n
+        4. Verify that the header text says \"CtsVerifier\".\n
+        5. Confirm your credentials and verify that the credentials you entered previously work.\n
+        6. The work app should be launched.
     </string>
     <string name="provisioning_byod_confirm_work_credentials_header">
         CtsVerifier
