@@ -20,6 +20,7 @@ import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.BODY_SENSORS;
+import static android.Manifest.permission.READ_CALENDAR;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.WRITE_CALENDAR;
 import static android.app.AppOpsManager.MODE_ALLOWED;
@@ -28,8 +29,12 @@ import static android.app.AppOpsManager.permissionToOp;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.permission.PermissionControllerManager.REASON_INSTALLER_POLICY_VIOLATION;
 import static android.permission.PermissionControllerManager.REASON_MALWARE;
+import static android.permission.cts.PermissionUtils.grantPermission;
+import static android.permission.cts.PermissionUtils.isGranted;
+import static android.permission.cts.PermissionUtils.isPermissionGranted;
 
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.SystemUtil.eventually;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -164,7 +169,7 @@ public class PermissionControllerTest {
             String app) throws Exception {
         int numRuntimeGranted = 0;
         for (String permission : runtimePermissions) {
-            if (PermissionUtils.isPermissionGranted(app, permission)) {
+            if (isPermissionGranted(app, permission)) {
                 numRuntimeGranted++;
             }
         }
@@ -413,5 +418,60 @@ public class PermissionControllerTest {
         assertThat(permissionInfos).isNotEmpty();
         assertThat(runtimePermissions.size()).isEqualTo(5);
         assertRuntimePermissionLabelsAreValid(runtimePermissions, permissionInfos, 4, APP2);
+    }
+
+    @Test
+    public void revokePermissionAutomaticallyExtendsToWholeGroup() throws Exception {
+        grantPermission(APP2, READ_CALENDAR);
+        grantPermission(APP2, WRITE_CALENDAR);
+
+        runWithShellPermissionIdentity(
+                () -> {
+                    sController.revokeRuntimePermission(APP2, READ_CALENDAR);
+
+                    eventually(() -> {
+                        assertThat(isGranted(APP2, READ_CALENDAR)).isEqualTo(false);
+                        // revokePermission automatically extends the revocation to whole group
+                        assertThat(isGranted(APP2, WRITE_CALENDAR)).isEqualTo(false);
+                    });
+                });
+    }
+
+    @Test
+    public void revokePermissionCustom() throws Exception {
+        sUiAutomation.grantRuntimePermission(APP2, CUSTOM_PERMISSION);
+
+        runWithShellPermissionIdentity(
+                () -> {
+                    sController.revokeRuntimePermission(APP2, CUSTOM_PERMISSION);
+
+                    eventually(() -> {
+                        assertThat(isPermissionGranted(APP2, CUSTOM_PERMISSION)).isEqualTo(false);
+                    });
+                });
+    }
+
+    @Test
+    public void revokePermissionWithInvalidPkg() throws Exception {
+        // No return value, call is ignored
+        runWithShellPermissionIdentity(
+                () -> sController.revokeRuntimePermission("invalid.package", READ_CALENDAR));
+    }
+
+    @Test
+    public void revokePermissionWithInvalidPermission() throws Exception {
+        // No return value, call is ignored
+        runWithShellPermissionIdentity(
+                () -> sController.revokeRuntimePermission(APP2, "invalid.permission"));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void revokePermissionWithNullPkg() throws Exception {
+        sController.revokeRuntimePermission(null, READ_CALENDAR);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void revokePermissionWithNullPermission() throws Exception {
+        sController.revokeRuntimePermission(APP2, null);
     }
 }
