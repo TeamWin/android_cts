@@ -214,7 +214,8 @@ public final class AutoFillServiceTestCase {
         public static final MockImeSessionRule sMockImeSessionRule = new MockImeSessionRule(
                 InstrumentationRegistry.getTargetContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder().setInlineSuggestionsEnabled(true));
+                new ImeSettings.Builder().setInlineSuggestionsEnabled(true)
+                        .setInlineSuggestionViewContentDesc(InlineUiBot.SUGGESTION_STRIP_DESC));
 
         protected static final RequiredFeatureRule sRequiredFeatureRule =
                 new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);

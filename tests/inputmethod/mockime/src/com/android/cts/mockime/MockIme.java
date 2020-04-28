@@ -450,8 +450,11 @@ public final class MockIme extends InputMethodService {
 
                 final LinearLayout suggestionView = new LinearLayout(getContext());
                 suggestionView.setBackgroundColor(0xFFEEEEEE);
-                //TODO: Change magic id
-                suggestionView.setId(0x0102000b);
+                final String suggestionViewContentDesc =
+                        mSettings.getInlineSuggestionViewContentDesc(null /* default */);
+                if (suggestionViewContentDesc != null) {
+                    suggestionView.setContentDescription(suggestionViewContentDesc);
+                }
                 scrollView.addView(suggestionView, new LayoutParams(MATCH_PARENT, MATCH_PARENT));
                 mSuggestionView = suggestionView;
 

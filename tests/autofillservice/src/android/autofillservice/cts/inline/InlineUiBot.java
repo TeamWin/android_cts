@@ -33,11 +33,9 @@ import com.android.cts.mockime.MockIme;
 public final class InlineUiBot extends UiBot {
 
     private static final String TAG = "AutoFillInlineCtsUiBot";
-    //TODO: Change magic constant
-    private static final String RESOURCE_ID_SUGGESTION_STRIP = "message";
+    public static final String SUGGESTION_STRIP_DESC = "MockIme Inline Suggestion View";
 
-    private static final BySelector SUGGESTION_STRIP_SELECTOR =
-            By.res("android", RESOURCE_ID_SUGGESTION_STRIP);
+    private static final BySelector SUGGESTION_STRIP_SELECTOR = By.desc(SUGGESTION_STRIP_DESC);
 
     public InlineUiBot() {
         this(UI_TIMEOUT);
