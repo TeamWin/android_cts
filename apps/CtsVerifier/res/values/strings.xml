@@ -4723,10 +4723,8 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="proAudioHasProAudiolbl">Has Pro Audio</string>
     <string name="proAudioHasLLAlbl">Has Low-Latency Audio</string>
-    <string name="proAudioInputLbl">Audio Input:</string>
-    <string name="proAudioOutputLbl">Audio Output:</string>
-    <string name="proAudioRoundTripLbl">Round Trip Latency:</string>
-    <string name="proAudioConfidenceLbl">Confidence:</string>
+    <string name="audioLoopbackInputLbl">Audio Input:</string>
+    <string name="audioLoopbackOutputLbl">Audio Output:</string>
 
     <string name="proAudioMidiHasMIDILbl">Has MIDI Support</string>
     <string name="proAudioMIDIInputLbl">MIDI Input:</string>
@@ -4736,8 +4734,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="proAudioHDMISupportLbl">HDMI Support:</string>
     <string name="proAudioHasHDMICheckBox">Has HDMI Support</string>
 
-    <string name="audio_proaudio_loopbackbtn">Start Loopback</string>
-    <string name="audio_proaudio_loopbackInfoBtn">Loopback Instructions</string>
     <string name="audio_proaudio_roundtrip">Round-Trip Test</string>
     <string name="audio_proaudio_NA">N/A</string>
     <string name="audio_proaudio_pending">pending...</string>
@@ -5234,11 +5230,12 @@ Follow the instructions on the screen to measure the frequency response for the 
        (not a headset) and that peripheral\'s audio outputs are connected to the peripherals\'s
        audio inputs. Alternatively, for devices with an analog audio jack or USB-c Digital
        to Analog dongle, a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>
-       can be used. Also, any if there is an input level
+       can be used. Also, if there is an input level
        control on the peripheral, it must be set to a non-zero value. When the test has
        verified support for a valid audio peripheral, press the \"Round-Trip Test\" button
-       to complete the test. Note that it may be necessary to run the latency test more than
-       once to get a sufficient confidence value.
+       to complete the test.
+       The latency measurement is generally accurate even when the volume is low. But you may
+       need to increase the volume to bring the confidence number above the threshold.
     </string>
     <string name="proaudio_hdmi_infotitle">HDMI Support</string>
     <string name="proaudio_hdmi_message">Please connect an HDMI peripheral to validate
