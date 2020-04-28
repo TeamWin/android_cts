@@ -700,60 +700,61 @@ public final class MockIme extends InputMethodService {
     @MainThread
     @Override
     public InlineSuggestionsRequest onCreateInlineSuggestionsRequest(Bundle uiExtras) {
-        Log.d(TAG, "onCreateInlineSuggestionsRequest() called");
-        final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
-        presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
-                new Size(400, 100)).build());
-        presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
-                new Size(400, 100)).build());
+        return getTracer().onCreateInlineSuggestionsRequest(() -> {
+            final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
+            presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
+                    new Size(400, 100)).build());
+            presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
+                    new Size(400, 100)).build());
 
-        return new InlineSuggestionsRequest.Builder(presentationSpecs)
-                .setMaxSuggestionCount(6)
-                .build();
+            return new InlineSuggestionsRequest.Builder(presentationSpecs)
+                    .setMaxSuggestionCount(6)
+                    .build();
+        });
     }
 
 
     @MainThread
     @Override
-    public boolean onInlineSuggestionsResponse(InlineSuggestionsResponse response) {
-        Log.d(TAG,
-                "onInlineSuggestionsResponse() called: " + response.getInlineSuggestions().size());
-        final PendingInlineSuggestions pendingInlineSuggestions =
-                new PendingInlineSuggestions(response);
-        if (mPendingInlineSuggestions != null) {
-            mPendingInlineSuggestions.mValid.set(false);
-        }
-        mPendingInlineSuggestions = pendingInlineSuggestions;
-        if (pendingInlineSuggestions.mTotalCount == 0) {
-            updateInlineSuggestions(pendingInlineSuggestions);
-            return true;
-        }
+    public boolean onInlineSuggestionsResponse(@NonNull InlineSuggestionsResponse response) {
+        return getTracer().onInlineSuggestionsResponse(response, () -> {
+            final PendingInlineSuggestions pendingInlineSuggestions =
+                    new PendingInlineSuggestions(response);
+            if (mPendingInlineSuggestions != null) {
+                mPendingInlineSuggestions.mValid.set(false);
+            }
+            mPendingInlineSuggestions = pendingInlineSuggestions;
+            if (pendingInlineSuggestions.mTotalCount == 0) {
+                updateInlineSuggestions(pendingInlineSuggestions);
+                return true;
+            }
 
-        for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
-            final int index = i;
-            InlineSuggestion inlineSuggestion =
-                    pendingInlineSuggestions.mResponse.getInlineSuggestions().get(index);
-            Size size = inlineSuggestion.getInfo().getInlinePresentationSpec().getMaxSize();
-            inlineSuggestion.inflate(
-                    this,
-                    size,
-                    AsyncTask.THREAD_POOL_EXECUTOR,
-                    suggestionView -> {
-                        Log.d(TAG, "new inline suggestion view ready");
-                        if (suggestionView != null) {
-                            pendingInlineSuggestions.mViews[index] = suggestionView;
-                            pendingInlineSuggestions.mViewSizes[index] = size;
-                        }
-                        if (pendingInlineSuggestions.mInflatedViewCount.incrementAndGet()
-                                == pendingInlineSuggestions.mTotalCount
-                                && pendingInlineSuggestions.mValid.get()) {
-                            Log.d(TAG, "ready to display all suggestions");
-                            getMainExecutor().execute(
-                                    () -> updateInlineSuggestions(pendingInlineSuggestions));
-                        }
-                    });
-        }
-        return true;
+            for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
+                final int index = i;
+                InlineSuggestion inlineSuggestion =
+                        pendingInlineSuggestions.mResponse.getInlineSuggestions().get(index);
+                Size size = inlineSuggestion.getInfo().getInlinePresentationSpec().getMaxSize();
+                inlineSuggestion.inflate(
+                        this,
+                        size,
+                        AsyncTask.THREAD_POOL_EXECUTOR,
+                        suggestionView -> {
+                            Log.d(TAG, "new inline suggestion view ready");
+                            if (suggestionView != null) {
+                                pendingInlineSuggestions.mViews[index] = suggestionView;
+                                pendingInlineSuggestions.mViewSizes[index] = size;
+                            }
+                            if (pendingInlineSuggestions.mInflatedViewCount.incrementAndGet()
+                                    == pendingInlineSuggestions.mTotalCount
+                                    && pendingInlineSuggestions.mValid.get()) {
+                                Log.d(TAG, "ready to display all suggestions");
+                                getMainExecutor().execute(
+                                        () -> updateInlineSuggestions(pendingInlineSuggestions));
+                            }
+                        });
+            }
+            return true;
+        });
     }
 
     @MainThread
@@ -998,6 +999,19 @@ public final class MockIme extends InputMethodService {
             final Bundle arguments = new Bundle();
             imeLayoutInfo.writeToBundle(arguments);
             recordEventInternal("onInputViewLayoutChanged", runnable, arguments);
+        }
+
+        InlineSuggestionsRequest onCreateInlineSuggestionsRequest(
+                @NonNull Supplier<InlineSuggestionsRequest> supplier) {
+            return recordEventInternal("onCreateInlineSuggestionsRequest", supplier);
+        }
+
+        boolean onInlineSuggestionsResponse(@NonNull InlineSuggestionsResponse response,
+                @NonNull BooleanSupplier supplier) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("response", response);
+            return recordEventInternal("onInlineSuggestionsResponse", supplier::getAsBoolean,
+                    arguments);
         }
     }
 }
