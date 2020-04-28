@@ -41,6 +41,31 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/65540999
+     * Vulnerability Behaviour: Assert failure
+     **/
+    @SecurityTest(minPatchLevel = "2017-11")
+    @Test
+    public void testPocCVE_2017_0847() throws Exception {
+        String cmdOut = AdbUtils.runCommandLine("ps -eo cmd,gid | grep mediametrics", getDevice());
+        if (cmdOut.length() > 0) {
+            String[] segment = cmdOut.split("\\s+");
+            if (segment.length > 1) {
+                int gid = -1;
+                if ((segment[1]).length() < Integer.toString(Integer.MAX_VALUE).length()) {
+                    try {
+                        gid = Integer.parseInt(segment[1]);
+                    } catch (NumberFormatException e) {
+                    }
+                }
+                if (gid == 0) {
+                    fail("mediametrics has root group id");
+                }
+            }
+        }
+    }
+
+    /**
      * b/32096780
      * Vulnerability Behaviour: SIGSEGV in self
      **/
