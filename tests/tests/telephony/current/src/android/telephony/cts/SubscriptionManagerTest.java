@@ -485,6 +485,20 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testSubscriptionPlanResetNetworkTypes() {
+        SubscriptionPlan plan = SubscriptionPlan.Builder
+                .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
+                        Period.ofMonths(1))
+                .setTitle("CTS")
+                .setNetworkTypes(new int[] {TelephonyManager.NETWORK_TYPE_LTE})
+                .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
+                .setDataUsage(500_000_000, System.currentTimeMillis())
+                .resetNetworkTypes()
+                .build();
+        assertEquals(plan, buildValidSubscriptionPlan());
+    }
+
+    @Test
     public void testSubscriptionGrouping() throws Exception {
         if (!isSupported()) return;
 
