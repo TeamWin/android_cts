@@ -51,27 +51,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="android.security.cts.NanoAppBundleTest$FailActivity"
-            android:label="Test Nano AppBundle customized failure catch activity">
-            <intent-filter>
-                <action android:name="android.intent.action.RUN" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-
-        <service
-            android:name="android.security.cts.NanoAppBundleTest$AuthenticatorService"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accounts.AccountAuthenticator"
-                android:resource="@xml/authenticator" />
-        </service>
-
         <activity android:name="android.security.cts.ActivityManagerTest$NormalActivity" />
         <activity android:name="android.security.cts.ActivityManagerTest$MaliciousActivity" />
         <service android:name="android.security.cts.ActivityManagerTest$AppMonitoringService" />
