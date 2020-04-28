@@ -731,9 +731,11 @@ public class SensorTest extends SensorTestCase {
                 }
                 if (mFlushWhileIdle) {
                     SensorCtsHelper.makeMyPackageIdle();
+                    sensorManager.assertFlushFail();
+                } else {
+                    CountDownLatch flushLatch = sensorManager.requestFlush();
+                    listener.waitForFlushComplete(flushLatch, true);
                 }
-                CountDownLatch flushLatch = sensorManager.requestFlush();
-                listener.waitForFlushComplete(flushLatch, true);
             } finally {
                 sensorManager.unregisterListener();
                 if (mFlushWhileIdle) {
