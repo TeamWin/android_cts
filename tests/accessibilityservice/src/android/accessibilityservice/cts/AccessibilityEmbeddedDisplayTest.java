@@ -257,7 +257,7 @@ public class AccessibilityEmbeddedDisplayTest {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            mActivityView = new ActivityView(this);
+            mActivityView = new ActivityView(this, null, 0, false, true);
             setContentView(mActivityView);
         }
 
