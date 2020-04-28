@@ -42,6 +42,37 @@ public class TimingConstraintsTest extends BaseJobSchedulerTest {
         assertTrue("Timed out waiting for override deadline.", executed);
     }
 
+    public void testSchedulePeriodic() throws Exception {
+        JobInfo periodicJob = new JobInfo.Builder(TIMING_JOB_ID, kJobServiceComponent)
+                .setPeriodic(JobInfo.getMinPeriodMillis())
+                .build();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(periodicJob);
+        runSatisfiedJob(TIMING_JOB_ID);
+        assertTrue("Timed out waiting for periodic jobs to execute",
+                kTestEnvironment.awaitExecution());
+
+        // Make sure the job is rescheduled after it's run
+        assertJobWaiting(TIMING_JOB_ID);
+        assertJobNotReady(TIMING_JOB_ID);
+    }
+
+    /** Test that a periodic job isn't run outside of its flex window. */
+    public void testSchedulePeriodic_lowFlex() throws Exception {
+        JobInfo periodicJob = new JobInfo.Builder(TIMING_JOB_ID, kJobServiceComponent)
+                .setPeriodic(JobInfo.getMinPeriodMillis(), JobInfo.getMinFlexMillis())
+                .build();
+
+        kTestEnvironment.setExpectedExecutions(0);
+        mJobScheduler.schedule(periodicJob);
+        runSatisfiedJob(TIMING_JOB_ID);
+        assertFalse("Timed out waiting for periodic jobs to execute",
+                kTestEnvironment.awaitExecution());
+        assertJobWaiting(TIMING_JOB_ID);
+        assertJobNotReady(TIMING_JOB_ID);
+    }
+
     public void testCancel() throws Exception {
         JobInfo cancelJob = new JobInfo.Builder(CANCEL_JOB_ID, kJobServiceComponent)
                 .setMinimumLatency(5000L) // make sure it doesn't actually run immediately

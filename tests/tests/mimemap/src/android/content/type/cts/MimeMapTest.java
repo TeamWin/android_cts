@@ -173,6 +173,31 @@ public class MimeMapTest {
         assertMimeTypeFromExtension("application/vnd.android.ota", "ota");
     }
 
+    @Test public void bug154667531_consistent() {
+        // Verify that if developers start from a strongly-typed MIME type, that
+        // sending it through a file extension doesn't lose that fidelity. We're
+        // only interested in the major MIME types that are relevant to
+        // permission models; we're not worried about generic types like
+        // "application/x-flac" being mapped to "audio/flac".
+        for (String before : mimeMap.mimeTypes()) {
+            final String beforeMajor = extractMajorMimeType(before);
+            switch (beforeMajor.toLowerCase(Locale.US)) {
+                case "audio":
+                case "video":
+                case "image":
+                    final String extension = mimeMap.guessExtensionFromMimeType(before);
+                    final String after = mimeMap.guessMimeTypeFromExtension(extension);
+                    final String afterMajor = extractMajorMimeType(after);
+                    if (!beforeMajor.equalsIgnoreCase(afterMajor)) {
+                        fail("Expected " + before + " to map back to " + beforeMajor
+                                + "/* after bouncing through file extension, "
+                                + "but instead mapped to " + after);
+                    }
+                    break;
+            }
+        }
+    }
+
     @Test public void wifiConfig_xml() {
         assertExtensionFromMimeType("xml", "application/x-wifi-config");
         assertMimeTypeFromExtension("text/xml", "xml");
@@ -292,5 +317,10 @@ public class MimeMapTest {
     private void assertBidirectional(String mimeType, String extension) {
         assertMimeTypeFromExtension(mimeType, extension);
         assertExtensionFromMimeType(extension, mimeType);
+    }
+
+    private static String extractMajorMimeType(String mimeType) {
+        final int slash = mimeType.indexOf('/');
+        return (slash != -1) ? mimeType.substring(0, slash) : mimeType;
     }
 }
