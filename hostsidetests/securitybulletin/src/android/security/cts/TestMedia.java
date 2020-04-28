@@ -40,6 +40,17 @@ public class TestMedia extends SecurityTestCase {
      * existing test methods
      ******************************************************************************/
 
+    /**
+     * b/30033990
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @SecurityTest(minPatchLevel = "2016-10")
+    @Test
+    public void testPocCVE_2016_3909() throws Exception {
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-3909", null, getDevice(),
+                processPatternStrings);
+    }
 
     /******************************************************************************
      * To prevent merge conflicts, add tests for P below this comment, before any
