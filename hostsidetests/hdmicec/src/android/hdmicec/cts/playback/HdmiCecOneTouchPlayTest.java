@@ -62,6 +62,7 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
     @Test
     public void cect_11_2_1_1_OneTouchPlay() throws Exception {
         ITestDevice device = getDevice();
+        device.reboot();
         device.executeShellCommand("input keyevent KEYCODE_HOME");
         hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
         String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
