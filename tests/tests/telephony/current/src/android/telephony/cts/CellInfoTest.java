@@ -382,30 +382,32 @@ public class CellInfoTest {
     private void verifyCellIdentityCdma(CellIdentityCdma cdma, boolean isRegistered) {
         int networkId = cdma.getNetworkId();
         assertTrue("getNetworkId() out of range [0,65535], networkId=" + networkId,
-                networkId == Integer.MAX_VALUE || (networkId >= 0 && networkId <= NETWORK_ID));
+                networkId == CellInfo.UNAVAILABLE || (networkId >= 0 && networkId <= NETWORK_ID));
 
         int systemId = cdma.getSystemId();
         assertTrue("getSystemId() out of range [0,32767], systemId=" + systemId,
-                systemId == Integer.MAX_VALUE || (systemId >= 0 && systemId <= SYSTEM_ID));
+                systemId == CellInfo.UNAVAILABLE || (systemId >= 0 && systemId <= SYSTEM_ID));
 
         int basestationId = cdma.getBasestationId();
         assertTrue("getBasestationId() out of range [0,65535], basestationId=" + basestationId,
-                basestationId == Integer.MAX_VALUE
+                basestationId == CellInfo.UNAVAILABLE
                         || (basestationId >= 0 && basestationId <= BASESTATION_ID));
 
         int longitude = cdma.getLongitude();
         assertTrue("getLongitude() out of range [-2592000,2592000], longitude=" + longitude,
-                longitude == Integer.MAX_VALUE
+                longitude == CellInfo.UNAVAILABLE
                         || (longitude >= -LONGITUDE && longitude <= LONGITUDE));
 
         int latitude = cdma.getLatitude();
         assertTrue("getLatitude() out of range [-1296000,1296000], latitude=" + latitude,
-                latitude == Integer.MAX_VALUE || (latitude >= -LATITUDE && latitude <= LATITUDE));
+                latitude == CellInfo.UNAVAILABLE
+                        || (latitude >= -LATITUDE && latitude <= LATITUDE));
 
         if (isRegistered) {
-            assertTrue("SID is required for registered cells", systemId != Integer.MAX_VALUE);
-            assertTrue("NID is required for registered cells", networkId != Integer.MAX_VALUE);
-            assertTrue("BSID is required for registered cells", basestationId != Integer.MAX_VALUE);
+            assertTrue("SID is required for registered cells", systemId != CellInfo.UNAVAILABLE);
+            assertTrue("NID is required for registered cells", networkId != CellInfo.UNAVAILABLE);
+            assertTrue("BSID is required for registered cells",
+                    basestationId != CellInfo.UNAVAILABLE);
         }
     }
 
@@ -447,7 +449,7 @@ public class CellInfoTest {
 
         int evdoSnr = cdma.getEvdoSnr();
         assertTrue("getEvdoSnr() out of range [0,8], evdoSnr=" + evdoSnr,
-                (evdoSnr == Integer.MAX_VALUE) || (evdoSnr >= 0 && evdoSnr <= 8));
+                (evdoSnr == CellInfo.UNAVAILABLE) || (evdoSnr >= 0 && evdoSnr <= 8));
     }
 
     private void verifyCellSignalStrengthCdmaParcel(CellSignalStrengthCdma cdma) {
@@ -461,9 +463,9 @@ public class CellInfoTest {
 
     private static void verifyPlmnInfo(String mccStr, String mncStr, int mcc, int mnc) {
         // If either int value is invalid, all values must be invalid
-        if (mcc == Integer.MAX_VALUE) {
+        if (mcc == CellInfo.UNAVAILABLE) {
             assertTrue("MNC and MNC must always be reported together.",
-                    mnc == Integer.MAX_VALUE && mccStr == null && mncStr == null);
+                    mnc == CellInfo.UNAVAILABLE && mccStr == null && mncStr == null);
             return;
         }
 
@@ -560,7 +562,7 @@ public class CellInfoTest {
 
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
-            assertTrue("TAC is required for registered cells", tac != Integer.MAX_VALUE);
+            assertTrue("TAC is required for registered cells", tac != CellInfo.UNAVAILABLE);
             assertTrue("MCC is required for registered cells", nr.getMccString() != null);
             assertTrue("MNC is required for registered cells", nr.getMncString() != null);
         }
@@ -576,17 +578,18 @@ public class CellInfoTest {
 
         assertTrue("getCsiRsrp() out of range [-140, -44] | Integer.MAX_INTEGER, csiRsrp = "
                         + csiRsrp, -140 <= csiRsrp && csiRsrp <= -44
-                || csiRsrp == Integer.MAX_VALUE);
+                || csiRsrp == CellInfo.UNAVAILABLE);
         assertTrue("getCsiRsrq() out of range [-20, -3] | Integer.MAX_INTEGER, csiRsrq = "
-                + csiRsrq, -20 <= csiRsrq && csiRsrq <= -3 || csiRsrq == Integer.MAX_VALUE);
+                + csiRsrq, -20 <= csiRsrq && csiRsrq <= -3 || csiRsrq == CellInfo.UNAVAILABLE);
         assertTrue("getCsiSinr() out of range [-23, 40] | Integer.MAX_INTEGER, csiSinr = "
-                + csiSinr, -23 <= csiSinr && csiSinr <= 40 || csiSinr == Integer.MAX_VALUE);
+                + csiSinr, -23 <= csiSinr && csiSinr <= 40 || csiSinr == CellInfo.UNAVAILABLE);
         assertTrue("getSsRsrp() out of range [-140, -44] | Integer.MAX_INTEGER, ssRsrp = "
-                        + ssRsrp, -140 <= ssRsrp && ssRsrp <= -44 || ssRsrp == Integer.MAX_VALUE);
+                        + ssRsrp, -140 <= ssRsrp && ssRsrp <= -44
+                || ssRsrp == CellInfo.UNAVAILABLE);
         assertTrue("getSsRsrq() out of range [-20, -3] | Integer.MAX_INTEGER, ssRsrq = "
-                + ssRsrq, -20 <= ssRsrq && ssRsrq <= -3 || ssRsrq == Integer.MAX_VALUE);
+                + ssRsrq, -20 <= ssRsrq && ssRsrq <= -3 || ssRsrq == CellInfo.UNAVAILABLE);
         assertTrue("getSsSinr() out of range [-23, 40] | Integer.MAX_INTEGER, ssSinr = "
-                + ssSinr, -23 <= ssSinr && ssSinr <= 40 || ssSinr == Integer.MAX_VALUE);
+                + ssSinr, -23 <= ssSinr && ssSinr <= 40 || ssSinr == CellInfo.UNAVAILABLE);
     }
 
     private void verifyCellInfoLteParcelandHashcode(CellInfoLte lte) {
@@ -605,23 +608,23 @@ public class CellInfoTest {
         // Cell identity ranges from 0 to 268435456.
         int ci = lte.getCi();
         assertTrue("getCi() out of range [0,268435456], ci=" + ci,
-                (ci == Integer.MAX_VALUE) || (ci >= 0 && ci <= CI));
+                (ci == CellInfo.UNAVAILABLE) || (ci >= 0 && ci <= CI));
 
         // Verify LTE physical cell id information.
         // Only physical cell id is available for LTE neighbor.
         int pci = lte.getPci();
         // Physical cell id should be within [0, 503].
         assertTrue("getPci() out of range [0, 503], pci=" + pci,
-                (pci== Integer.MAX_VALUE) || (pci >= 0 && pci <= PCI));
+                (pci == CellInfo.UNAVAILABLE) || (pci >= 0 && pci <= PCI));
 
         // Tracking area code ranges from 0 to 65535.
         int tac = lte.getTac();
         assertTrue("getTac() out of range [0,65535], tac=" + tac,
-                (tac == Integer.MAX_VALUE) || (tac >= 0 && tac <= TAC));
+                (tac == CellInfo.UNAVAILABLE) || (tac >= 0 && tac <= TAC));
 
         int bw = lte.getBandwidth();
         assertTrue("getBandwidth out of range [1400, 20000] | Integer.Max_Value, bw=",
-                bw == Integer.MAX_VALUE || bw >= BANDWIDTH_LOW && bw <= BANDWIDTH_HIGH);
+                bw == CellInfo.UNAVAILABLE || bw >= BANDWIDTH_LOW && bw <= BANDWIDTH_HIGH);
 
         int earfcn = lte.getEarfcn();
         // Reference 3GPP 36.101 Table 5.7.3-1
@@ -630,7 +633,7 @@ public class CellInfoTest {
         // out of the range of the narrowest 1.4Mhz deployment.
         int minEarfcn = 7;
         int maxEarfcn = EARFCN_MAX - 7;
-        if (bw != Integer.MAX_VALUE) {
+        if (bw != CellInfo.UNAVAILABLE) {
             // The number of channels used by a cell is equal to the cell bandwidth divided
             // by the channel raster (bandwidth of a channel). The center channel is the channel
             // the n/2-th channel where n is the number of channels, and since it is the center
@@ -644,7 +647,7 @@ public class CellInfoTest {
         }
         assertTrue(
                 "getEarfcn() out of range [" + minEarfcn + "," + maxEarfcn + "], earfcn=" + earfcn,
-                earfcn == Integer.MAX_VALUE || (earfcn >= minEarfcn && earfcn <= maxEarfcn));
+                earfcn == CellInfo.UNAVAILABLE || (earfcn >= minEarfcn && earfcn <= maxEarfcn));
 
         if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
             int[] bands = lte.getBands();
@@ -670,12 +673,12 @@ public class CellInfoTest {
 
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
-            assertTrue("TAC is required for registered cells", tac != Integer.MAX_VALUE);
-            assertTrue("CID is required for registered cells", ci != Integer.MAX_VALUE);
+            assertTrue("TAC is required for registered cells", tac != CellInfo.UNAVAILABLE);
+            assertTrue("CID is required for registered cells", ci != CellInfo.UNAVAILABLE);
             assertTrue("MCC is required for registered cells",
-                    lte.getMccString() != null || lte.getMcc() != Integer.MAX_VALUE);
+                    lte.getMccString() != null || lte.getMcc() != CellInfo.UNAVAILABLE);
             assertTrue("MNC is required for registered cells",
-                    lte.getMncString() != null || lte.getMnc() != Integer.MAX_VALUE);
+                    lte.getMncString() != null || lte.getMnc() != CellInfo.UNAVAILABLE);
         }
     }
 
@@ -699,32 +702,32 @@ public class CellInfoTest {
     private void verifyCellSignalStrengthLte(CellSignalStrengthLte cellSignalStrengthLte) {
         verifyRssiDbm(cellSignalStrengthLte.getDbm());
 
-        //Integer.MAX_VALUE indicates an unavailable field
+        //ICellInfo.UNAVAILABLE indicates an unavailable field
         int rsrp = cellSignalStrengthLte.getRsrp();
         // RSRP is being treated as RSSI in LTE (they are similar but not quite right)
         // so reusing the constants here.
         assertTrue("getRsrp() out of range, rsrp=" + rsrp, rsrp >= MIN_RSRP && rsrp <= MAX_RSRP);
 
         int rsrq = cellSignalStrengthLte.getRsrq();
-        assertTrue("getRsrq() out of range | Integer.MAX_VALUE, rsrq=" + rsrq,
-            rsrq == Integer.MAX_VALUE || (rsrq >= MIN_RSRQ && rsrq <= MAX_RSRQ));
+        assertTrue("getRsrq() out of range | CellInfo.UNAVAILABLE, rsrq=" + rsrq,
+                rsrq == CellInfo.UNAVAILABLE || (rsrq >= MIN_RSRQ && rsrq <= MAX_RSRQ));
 
         int rssi = cellSignalStrengthLte.getRssi();
-        assertTrue("getRssi() out of range [-113, -51] or Integer.MAX_VALUE if unknown, rssi="
+        assertTrue("getRssi() out of range [-113, -51] or CellInfo.UNAVAILABLE if unknown, rssi="
                 + rssi, rssi == CellInfo.UNAVAILABLE
                 || (rssi >= MIN_LTE_RSSI && rssi <= MAX_LTE_RSSI));
 
         int rssnr = cellSignalStrengthLte.getRssnr();
-        assertTrue("getRssnr() out of range | Integer.MAX_VALUE, rssnr=" + rssnr,
-            rssnr == Integer.MAX_VALUE || (rssnr >= MIN_RSSNR && rssnr <= MAX_RSSNR));
+        assertTrue("getRssnr() out of range | CellInfo.UNAVAILABLE, rssnr=" + rssnr,
+                rssnr == CellInfo.UNAVAILABLE || (rssnr >= MIN_RSSNR && rssnr <= MAX_RSSNR));
 
         int cqi = cellSignalStrengthLte.getCqi();
-        assertTrue("getCqi() out of range | Integer.MAX_VALUE, cqi=" + cqi,
-            cqi == Integer.MAX_VALUE || (cqi >= MIN_CQI && cqi <= MAX_CQI));
+        assertTrue("getCqi() out of range | CellInfo.UNAVAILABLE, cqi=" + cqi,
+                cqi == CellInfo.UNAVAILABLE || (cqi >= MIN_CQI && cqi <= MAX_CQI));
 
         int ta = cellSignalStrengthLte.getTimingAdvance();
-        assertTrue("getTimingAdvance() invalid [0-1282] | Integer.MAX_VALUE, ta=" + ta,
-                ta == Integer.MAX_VALUE || (ta >= 0 && ta <=1282));
+        assertTrue("getTimingAdvance() invalid [0-1282] | CellInfo.UNAVAILABLE, ta=" + ta,
+                ta == CellInfo.UNAVAILABLE || (ta >= 0 && ta <= 1282));
 
         int level = cellSignalStrengthLte.getLevel();
         assertTrue("getLevel() out of range [0,4], level=" + level, level >= 0 && level <= 4);
@@ -735,7 +738,8 @@ public class CellInfoTest {
 
         int timingAdvance = cellSignalStrengthLte.getTimingAdvance();
         assertTrue("getTimingAdvance() out of range [0,1282], timingAdvance=" + timingAdvance,
-                timingAdvance == Integer.MAX_VALUE || (timingAdvance >= 0 && timingAdvance <= 1282));
+                timingAdvance == CellInfo.UNAVAILABLE
+                        || (timingAdvance >= 0 && timingAdvance <= 1282));
 
         if (mRadioHalVersion >= RADIO_HAL_VERSION_1_2) {
             assertTrue("RSRP Must be valid for LTE",
@@ -777,17 +781,17 @@ public class CellInfoTest {
 
         int lac = wcdma.getLac();
         assertTrue("getLac() out of range [0, 65535], lac=" + lac,
-                (lac >= 0 && lac <= LAC) || lac == Integer.MAX_VALUE);
+                (lac >= 0 && lac <= LAC) || lac == CellInfo.UNAVAILABLE);
 
         int cid = wcdma.getCid();
         assertTrue("getCid() out of range [0, 268435455], cid=" + cid,
-                (cid >= 0 && cid <= CID_UMTS) || cid == Integer.MAX_VALUE);
+                (cid >= 0 && cid <= CID_UMTS) || cid == CellInfo.UNAVAILABLE);
 
         // Verify wcdma primary scrambling code information.
         // Primary scrambling code should be within [0, 511].
         int psc = wcdma.getPsc();
         assertTrue("getPsc() out of range [0, 511], psc=" + psc,
-                (psc >= 0 && psc <= PSC) || psc == Integer.MAX_VALUE);
+                (psc >= 0 && psc <= PSC) || psc == CellInfo.UNAVAILABLE);
 
         String mobileNetworkOperator = wcdma.getMobileNetworkOperator();
         assertTrue("getMobileNetworkOperator() out of range [0, 999999], mobileNetworkOperator="
@@ -810,12 +814,12 @@ public class CellInfoTest {
 
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
-            assertTrue("LAC is required for registered cells", lac != Integer.MAX_VALUE);
-            assertTrue("CID is required for registered cells", cid != Integer.MAX_VALUE);
+            assertTrue("LAC is required for registered cells", lac != CellInfo.UNAVAILABLE);
+            assertTrue("CID is required for registered cells", cid != CellInfo.UNAVAILABLE);
             assertTrue("MCC is required for registered cells",
-                    wcdma.getMccString() != null || wcdma.getMcc() != Integer.MAX_VALUE);
+                    wcdma.getMccString() != null || wcdma.getMcc() != CellInfo.UNAVAILABLE);
             assertTrue("MNC is required for registered cells",
-                    wcdma.getMncString() != null || wcdma.getMnc() != Integer.MAX_VALUE);
+                    wcdma.getMncString() != null || wcdma.getMnc() != CellInfo.UNAVAILABLE);
         }
     }
 
@@ -894,15 +898,15 @@ public class CellInfoTest {
         // Local area code and cellid should be with [0, 65535].
         int lac = gsm.getLac();
         assertTrue("getLac() out of range [0, 65535], lac=" + lac,
-                lac == Integer.MAX_VALUE || (lac >= 0 && lac <= LAC));
+                lac == CellInfo.UNAVAILABLE || (lac >= 0 && lac <= LAC));
         int cid = gsm.getCid();
         assertTrue("getCid() out range [0, 65535], cid=" + cid,
-                cid== Integer.MAX_VALUE || (cid >= 0 && cid <= CID_GSM));
+                cid == CellInfo.UNAVAILABLE || (cid >= 0 && cid <= CID_GSM));
 
         int arfcn = gsm.getArfcn();
         // Reference 3GPP 45.005 Table 2-2
         assertTrue("getArfcn() out of range [0,1024], arfcn=" + arfcn,
-                arfcn == Integer.MAX_VALUE || (arfcn >= 0 && arfcn <= ARFCN));
+                arfcn == CellInfo.UNAVAILABLE || (arfcn >= 0 && arfcn <= ARFCN));
 
         String mobileNetworkOperator = gsm.getMobileNetworkOperator();
         assertTrue("getMobileNetworkOperator() out of range [0, 999999], mobileNetworkOperator="
@@ -920,12 +924,12 @@ public class CellInfoTest {
 
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
-            assertTrue("LAC is required for registered cells", lac != Integer.MAX_VALUE);
-            assertTrue("CID is required for registered cells", cid != Integer.MAX_VALUE);
+            assertTrue("LAC is required for registered cells", lac != CellInfo.UNAVAILABLE);
+            assertTrue("CID is required for registered cells", cid != CellInfo.UNAVAILABLE);
             assertTrue("MCC is required for registered cells",
-                    gsm.getMccString() != null || gsm.getMcc() != Integer.MAX_VALUE);
+                    gsm.getMccString() != null || gsm.getMcc() != CellInfo.UNAVAILABLE);
             assertTrue("MNC is required for registered cells",
-                    gsm.getMncString() != null || gsm.getMnc() != Integer.MAX_VALUE);
+                    gsm.getMncString() != null || gsm.getMnc() != CellInfo.UNAVAILABLE);
         }
     }
 
@@ -945,8 +949,8 @@ public class CellInfoTest {
         assertTrue("getLevel() out of range [0,4], level=" + level, level >= 0 && level <= 4);
 
         int ta = gsm.getTimingAdvance();
-        assertTrue("getTimingAdvance() out of range [0,219] | Integer.MAX_VALUE, ta=" + ta,
-                ta == Integer.MAX_VALUE || (ta >= 0 && ta <= 219));
+        assertTrue("getTimingAdvance() out of range [0,219] | CellInfo.UNAVAILABLE, ta=" + ta,
+                ta == CellInfo.UNAVAILABLE || (ta >= 0 && ta <= 219));
 
         assertEquals(gsm.getDbm(), gsm.getRssi());
 
@@ -1004,11 +1008,11 @@ public class CellInfoTest {
 
         int lac = tdscdma.getLac();
         assertTrue("getLac() out of range [0, 65535], lac=" + lac,
-                (lac >= 0 && lac <= LAC) || lac == Integer.MAX_VALUE);
+                (lac >= 0 && lac <= LAC) || lac == CellInfo.UNAVAILABLE);
 
         int cid = tdscdma.getCid();
         assertTrue("getCid() out of range [0, 268435455], cid=" + cid,
-                (cid >= 0 && cid <= CID_UMTS) || cid == Integer.MAX_VALUE);
+                (cid >= 0 && cid <= CID_UMTS) || cid == CellInfo.UNAVAILABLE);
 
         // Verify tdscdma primary scrambling code information.
         // Primary scrambling code should be within [0, 511].
@@ -1036,8 +1040,8 @@ public class CellInfoTest {
 
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
-            assertTrue("LAC is required for registered cells", lac != Integer.MAX_VALUE);
-            assertTrue("CID is required for registered cells", cid != Integer.MAX_VALUE);
+            assertTrue("LAC is required for registered cells", lac != CellInfo.UNAVAILABLE);
+            assertTrue("CID is required for registered cells", cid != CellInfo.UNAVAILABLE);
             assertTrue("MCC is required for registered cells", tdscdma.getMccString() != null);
             assertTrue("MNC is required for registered cells", tdscdma.getMncString() != null);
         }

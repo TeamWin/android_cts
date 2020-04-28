@@ -367,15 +367,6 @@ def main():
                         fmt_iter, fmt_cmpr, w_iter, h_iter, size_cmpr[0],
                         size_cmpr[1])
                 img = its.image.convert_capture_to_rgb_image(frm_iter)
-                if its.caps.distortion_correction(props) and raw_avlb:
-                    w_scale = float(w_iter)/w_raw
-                    h_scale = float(h_iter)/h_raw
-                    k_scale = np.array([[ical[0]*w_scale, ical[4],
-                                         ical[2]*w_scale],
-                                        [0, ical[1]*h_scale, ical[3]*h_scale],
-                                        [0, 0, 1]])
-                    print "k_scale:", k_scale
-                    img = cv2.undistort(img, k_scale, opencv_dist)
                 img_name = "%s_%s_with_%s_w%d_h%d.png" % (NAME,
                                                           fmt_iter, fmt_cmpr,
                                                           w_iter, h_iter)
