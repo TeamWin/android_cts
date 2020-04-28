@@ -41,6 +41,42 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/79662501
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2018-09")
+    @Test
+    public void testPocCVE_2018_9472() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2018-9472", null, getDevice());
+    }
+
+    /**
+     * b/36554207
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @SecurityTest(minPatchLevel = "2017-06")
+    @Test
+    public void testPocCVE_2016_4658() throws Exception {
+        String inputFiles[] = {"cve_2016_4658.xml"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-4658",
+                AdbUtils.TMP_PATH + inputFiles[0] + " \"range(//namespace::*)\"", inputFiles,
+                AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/36554209
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @SecurityTest(minPatchLevel = "2017-06")
+    @Test
+    public void testPocCVE_2016_5131() throws Exception {
+        String inputFiles[] = {"cve_2016_5131.xml"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-5131",
+                AdbUtils.TMP_PATH + inputFiles[0] + " \"name(range-to(///doc))0+0+22\"", inputFiles,
+                AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/62800140
      * Vulnerability Behaviour: SIGSEGV in self
      **/
