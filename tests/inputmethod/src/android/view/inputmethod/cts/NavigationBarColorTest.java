@@ -53,9 +53,9 @@ import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ImeAwareEditText;
@@ -252,7 +252,7 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(), uiAutomation, builder)) {
+                InstrumentationRegistry.getInstrumentation().getContext(), uiAutomation, builder)) {
             final ImeEventStream stream = imeSession.openEventStream();
 
             final TestActivity activity = launchTestActivity(
