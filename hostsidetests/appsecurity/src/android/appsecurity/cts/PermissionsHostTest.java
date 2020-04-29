@@ -122,6 +122,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         getDevice().uninstallPackage(USES_PERMISSION_PKG);
         getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
         getDevice().uninstallPackage(PERMISSION_POLICY_25_PKG);
+        getDevice().uninstallPackage(REVIEW_HELPER_PKG);
 
         getDevice().executeShellCommand("input keyevent KEYCODE_HOME");
     }
