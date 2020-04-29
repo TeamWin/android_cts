@@ -405,7 +405,7 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     public void testPlayMidi() throws Exception {
         runMidiTest(R.raw.midi8sec, 8000 /* duration */);
         runMidiTest(R.raw.testrtttl, 30000 /* duration */);
-        runMidiTest(R.raw.testimy, 5125 /* duration */);
+        runMidiTest(R.raw.testimy, 5625 /* duration */);
         runMidiTest(R.raw.testota, 5906 /* duration */);
         runMidiTest(R.raw.testmxmf, 29095 /* duration */);
     }

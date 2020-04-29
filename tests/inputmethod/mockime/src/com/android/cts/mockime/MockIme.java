@@ -700,60 +700,61 @@ public final class MockIme extends InputMethodService {
     @MainThread
     @Override
     public InlineSuggestionsRequest onCreateInlineSuggestionsRequest(Bundle uiExtras) {
-        Log.d(TAG, "onCreateInlineSuggestionsRequest() called");
-        final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
-        presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
-                new Size(400, 100)).build());
-        presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
-                new Size(400, 100)).build());
+        return getTracer().onCreateInlineSuggestionsRequest(() -> {
+            final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
+            presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
+                    new Size(400, 100)).build());
+            presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
+                    new Size(400, 100)).build());
 
-        return new InlineSuggestionsRequest.Builder(presentationSpecs)
-                .setMaxSuggestionCount(6)
-                .build();
+            return new InlineSuggestionsRequest.Builder(presentationSpecs)
+                    .setMaxSuggestionCount(6)
+                    .build();
+        });
     }
 
 
     @MainThread
     @Override
-    public boolean onInlineSuggestionsResponse(InlineSuggestionsResponse response) {
-        Log.d(TAG,
-                "onInlineSuggestionsResponse() called: " + response.getInlineSuggestions().size());
-        final PendingInlineSuggestions pendingInlineSuggestions =
-                new PendingInlineSuggestions(response);
-        if (mPendingInlineSuggestions != null) {
-            mPendingInlineSuggestions.mValid.set(false);
-        }
-        mPendingInlineSuggestions = pendingInlineSuggestions;
-        if (pendingInlineSuggestions.mTotalCount == 0) {
-            updateInlineSuggestions(pendingInlineSuggestions);
-            return true;
-        }
+    public boolean onInlineSuggestionsResponse(@NonNull InlineSuggestionsResponse response) {
+        return getTracer().onInlineSuggestionsResponse(response, () -> {
+            final PendingInlineSuggestions pendingInlineSuggestions =
+                    new PendingInlineSuggestions(response);
+            if (mPendingInlineSuggestions != null) {
+                mPendingInlineSuggestions.mValid.set(false);
+            }
+            mPendingInlineSuggestions = pendingInlineSuggestions;
+            if (pendingInlineSuggestions.mTotalCount == 0) {
+                updateInlineSuggestions(pendingInlineSuggestions);
+                return true;
+            }
 
-        for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
-            final int index = i;
-            InlineSuggestion inlineSuggestion =
-                    pendingInlineSuggestions.mResponse.getInlineSuggestions().get(index);
-            Size size = inlineSuggestion.getInfo().getInlinePresentationSpec().getMaxSize();
-            inlineSuggestion.inflate(
-                    this,
-                    size,
-                    AsyncTask.THREAD_POOL_EXECUTOR,
-                    suggestionView -> {
-                        Log.d(TAG, "new inline suggestion view ready");
-                        if (suggestionView != null) {
-                            pendingInlineSuggestions.mViews[index] = suggestionView;
-                            pendingInlineSuggestions.mViewSizes[index] = size;
-                        }
-                        if (pendingInlineSuggestions.mInflatedViewCount.incrementAndGet()
-                                == pendingInlineSuggestions.mTotalCount
-                                && pendingInlineSuggestions.mValid.get()) {
-                            Log.d(TAG, "ready to display all suggestions");
-                            getMainExecutor().execute(
-                                    () -> updateInlineSuggestions(pendingInlineSuggestions));
-                        }
-                    });
-        }
-        return true;
+            for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
+                final int index = i;
+                InlineSuggestion inlineSuggestion =
+                        pendingInlineSuggestions.mResponse.getInlineSuggestions().get(index);
+                Size size = inlineSuggestion.getInfo().getInlinePresentationSpec().getMaxSize();
+                inlineSuggestion.inflate(
+                        this,
+                        size,
+                        AsyncTask.THREAD_POOL_EXECUTOR,
+                        suggestionView -> {
+                            Log.d(TAG, "new inline suggestion view ready");
+                            if (suggestionView != null) {
+                                pendingInlineSuggestions.mViews[index] = suggestionView;
+                                pendingInlineSuggestions.mViewSizes[index] = size;
+                            }
+                            if (pendingInlineSuggestions.mInflatedViewCount.incrementAndGet()
+                                    == pendingInlineSuggestions.mTotalCount
+                                    && pendingInlineSuggestions.mValid.get()) {
+                                Log.d(TAG, "ready to display all suggestions");
+                                getMainExecutor().execute(
+                                        () -> updateInlineSuggestions(pendingInlineSuggestions));
+                            }
+                        });
+            }
+            return true;
+        });
     }
 
     @MainThread
@@ -864,45 +865,44 @@ public final class MockIme extends InputMethodService {
             return result;
         }
 
-        public void onCreate(@NonNull Runnable runnable) {
+        void onCreate(@NonNull Runnable runnable) {
             recordEventInternal("onCreate", runnable);
         }
 
-        public void onConfigureWindow(Window win, boolean isFullscreen,
-                boolean isCandidatesOnly, @NonNull Runnable runnable) {
+        void onConfigureWindow(Window win, boolean isFullscreen, boolean isCandidatesOnly,
+                @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putBoolean("isFullscreen", isFullscreen);
             arguments.putBoolean("isCandidatesOnly", isCandidatesOnly);
             recordEventInternal("onConfigureWindow", runnable, arguments);
         }
 
-        public boolean onEvaluateFullscreenMode(@NonNull BooleanSupplier supplier) {
+        boolean onEvaluateFullscreenMode(@NonNull BooleanSupplier supplier) {
             return recordEventInternal("onEvaluateFullscreenMode", supplier::getAsBoolean);
         }
 
-        public boolean onEvaluateInputViewShown(@NonNull BooleanSupplier supplier) {
+        boolean onEvaluateInputViewShown(@NonNull BooleanSupplier supplier) {
             return recordEventInternal("onEvaluateInputViewShown", supplier::getAsBoolean);
         }
 
-        public View onCreateInputView(@NonNull Supplier<View> supplier) {
+        View onCreateInputView(@NonNull Supplier<View> supplier) {
             return recordEventInternal("onCreateInputView", supplier);
         }
 
-        public void onStartInput(EditorInfo editorInfo, boolean restarting,
-                @NonNull Runnable runnable) {
+        void onStartInput(EditorInfo editorInfo, boolean restarting, @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putParcelable("editorInfo", editorInfo);
             arguments.putBoolean("restarting", restarting);
             recordEventInternal("onStartInput", runnable, arguments);
         }
 
-        public void onWindowVisibilityChanged(@NonNull Runnable runnable, int visibility) {
+        void onWindowVisibilityChanged(@NonNull Runnable runnable, int visibility) {
             final Bundle arguments = new Bundle();
             arguments.putInt("visible", visibility);
             recordEventInternal("onWindowVisibilityChanged", runnable, arguments);
         }
 
-        public void onStartInputView(EditorInfo editorInfo, boolean restarting,
+        void onStartInputView(EditorInfo editorInfo, boolean restarting,
                 @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putParcelable("editorInfo", editorInfo);
@@ -910,31 +910,31 @@ public final class MockIme extends InputMethodService {
             recordEventInternal("onStartInputView", runnable, arguments);
         }
 
-        public void onFinishInputView(boolean finishingInput, @NonNull Runnable runnable) {
+        void onFinishInputView(boolean finishingInput, @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putBoolean("finishingInput", finishingInput);
             recordEventInternal("onFinishInputView", runnable, arguments);
         }
 
-        public void onFinishInput(@NonNull Runnable runnable) {
+        void onFinishInput(@NonNull Runnable runnable) {
             recordEventInternal("onFinishInput", runnable);
         }
 
-        public boolean onKeyDown(int keyCode, KeyEvent event, @NonNull BooleanSupplier supplier) {
+        boolean onKeyDown(int keyCode, KeyEvent event, @NonNull BooleanSupplier supplier) {
             final Bundle arguments = new Bundle();
             arguments.putInt("keyCode", keyCode);
             arguments.putParcelable("event", event);
             return recordEventInternal("onKeyDown", supplier::getAsBoolean, arguments);
         }
 
-        public void onUpdateCursorAnchorInfo(CursorAnchorInfo cursorAnchorInfo,
+        void onUpdateCursorAnchorInfo(CursorAnchorInfo cursorAnchorInfo,
                 @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putParcelable("cursorAnchorInfo", cursorAnchorInfo);
             recordEventInternal("onUpdateCursorAnchorInfo", runnable, arguments);
         }
 
-        public boolean onShowInputRequested(int flags, boolean configChange,
+        boolean onShowInputRequested(int flags, boolean configChange,
                 @NonNull BooleanSupplier supplier) {
             final Bundle arguments = new Bundle();
             arguments.putInt("flags", flags);
@@ -942,66 +942,76 @@ public final class MockIme extends InputMethodService {
             return recordEventInternal("onShowInputRequested", supplier::getAsBoolean, arguments);
         }
 
-        public void onDestroy(@NonNull Runnable runnable) {
+        void onDestroy(@NonNull Runnable runnable) {
             recordEventInternal("onDestroy", runnable);
         }
 
-        public void attachToken(IBinder token, @NonNull Runnable runnable) {
+        void attachToken(IBinder token, @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putBinder("token", token);
             recordEventInternal("attachToken", runnable, arguments);
         }
 
-        public void bindInput(InputBinding binding, @NonNull Runnable runnable) {
+        void bindInput(InputBinding binding, @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putParcelable("binding", binding);
             recordEventInternal("bindInput", runnable, arguments);
         }
 
-        public void unbindInput(@NonNull Runnable runnable) {
+        void unbindInput(@NonNull Runnable runnable) {
             recordEventInternal("unbindInput", runnable);
         }
 
-        public void showSoftInput(int flags, ResultReceiver resultReceiver,
-                @NonNull Runnable runnable) {
+        void showSoftInput(int flags, ResultReceiver resultReceiver, @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putInt("flags", flags);
             arguments.putParcelable("resultReceiver", resultReceiver);
             recordEventInternal("showSoftInput", runnable, arguments);
         }
 
-        public void hideSoftInput(int flags, ResultReceiver resultReceiver,
-                @NonNull Runnable runnable) {
+        void hideSoftInput(int flags, ResultReceiver resultReceiver, @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putInt("flags", flags);
             arguments.putParcelable("resultReceiver", resultReceiver);
             recordEventInternal("hideSoftInput", runnable, arguments);
         }
 
-        public AbstractInputMethodImpl onCreateInputMethodInterface(
+        AbstractInputMethodImpl onCreateInputMethodInterface(
                 @NonNull Supplier<AbstractInputMethodImpl> supplier) {
             return recordEventInternal("onCreateInputMethodInterface", supplier);
         }
 
-        public void onReceiveCommand(
-                @NonNull ImeCommand command, @NonNull Runnable runnable) {
+        void onReceiveCommand(@NonNull ImeCommand command, @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             arguments.putBundle("command", command.toBundle());
             recordEventInternal("onReceiveCommand", runnable, arguments);
         }
 
-        public void onHandleCommand(
+        void onHandleCommand(
                 @NonNull ImeCommand command, @NonNull Supplier<Object> resultSupplier) {
             final Bundle arguments = new Bundle();
             arguments.putBundle("command", command.toBundle());
             recordEventInternal("onHandleCommand", resultSupplier, arguments);
         }
 
-        public void onInputViewLayoutChanged(@NonNull ImeLayoutInfo imeLayoutInfo,
+        void onInputViewLayoutChanged(@NonNull ImeLayoutInfo imeLayoutInfo,
                 @NonNull Runnable runnable) {
             final Bundle arguments = new Bundle();
             imeLayoutInfo.writeToBundle(arguments);
             recordEventInternal("onInputViewLayoutChanged", runnable, arguments);
+        }
+
+        InlineSuggestionsRequest onCreateInlineSuggestionsRequest(
+                @NonNull Supplier<InlineSuggestionsRequest> supplier) {
+            return recordEventInternal("onCreateInlineSuggestionsRequest", supplier);
+        }
+
+        boolean onInlineSuggestionsResponse(@NonNull InlineSuggestionsResponse response,
+                @NonNull BooleanSupplier supplier) {
+            final Bundle arguments = new Bundle();
+            arguments.putParcelable("response", response);
+            return recordEventInternal("onInlineSuggestionsResponse", supplier::getAsBoolean,
+                    arguments);
         }
     }
 }

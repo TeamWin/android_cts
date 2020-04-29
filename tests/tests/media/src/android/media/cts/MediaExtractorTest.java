@@ -968,6 +968,26 @@ public class MediaExtractorTest extends AndroidTestCase {
         readAllData();
     }
 
+    public void testAV1InMP4() throws Exception {
+        setDataSource(R.raw.video_dovi_3840x2160_30fps_dav1_10_2);
+        readAllData();
+    }
+
+    public void testDolbyVisionInMP4() throws Exception {
+        setDataSource(R.raw.video_dovi_3840x2160_30fps_dav1_10);
+        readAllData();
+    }
+
+    public void testPcmLeInMov() throws Exception {
+        setDataSource(R.raw.sinesweeppcmlemov);
+        readAllData();
+    }
+
+    public void testPcmBeInMov() throws Exception {
+        setDataSource(R.raw.sinesweeppcmbemov);
+        readAllData();
+    }
+
     public void testFragmentedRead() throws Exception {
         setDataSource(R.raw.psshtest);
         readAllData();
