@@ -21,7 +21,6 @@ import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -51,6 +50,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.cts.R;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -89,6 +89,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+@Presubmit
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class WindowTest {

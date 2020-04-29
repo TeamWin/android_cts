@@ -629,7 +629,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         mMediaRecorder.setMaxFileSize(MAX_FILE_SIZE * 10);
     }
 
-    @CddTest(requirement="5.4.4/C-4-1")
+    @CddTest(requirement="5.4.1/C-1-4")
     public void testGetActiveMicrophones() throws Exception {
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");

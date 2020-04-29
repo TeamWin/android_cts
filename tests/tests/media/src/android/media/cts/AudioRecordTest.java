@@ -963,7 +963,7 @@ public class AudioRecordTest {
         Log.i(TAG, "******");
     }
 
-    @CddTest(requirement="5.4.4/C-4-1")
+    @CddTest(requirement="5.4.1/C-1-4")
     @Test
     public void testGetActiveMicrophones() throws Exception {
         if (!hasMicrophone()) {
