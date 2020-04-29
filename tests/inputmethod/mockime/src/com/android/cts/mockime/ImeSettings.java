@@ -50,6 +50,8 @@ public class ImeSettings {
     private static final String HARD_KEYBOARD_CONFIGURATION_BEHAVIOR_ALLOWED =
             "HardKeyboardConfigurationBehaviorAllowed";
     private static final String INLINE_SUGGESTIONS_ENABLED = "InlineSuggestionsEnabled";
+    private static final String INLINE_SUGGESTION_VIEW_CONTENT_DESC =
+            "InlineSuggestionViewContentDesc";
 
     @NonNull
     private final PersistableBundle mBundle;
@@ -118,6 +120,11 @@ public class ImeSettings {
 
     public boolean getInlineSuggestionsEnabled() {
         return mBundle.getBoolean(INLINE_SUGGESTIONS_ENABLED);
+    }
+
+    @Nullable
+    public String getInlineSuggestionViewContentDesc(@Nullable String defaultValue) {
+        return mBundle.getString(INLINE_SUGGESTION_VIEW_CONTENT_DESC, defaultValue);
     }
 
     static Bundle serializeToBundle(@NonNull String eventCallbackActionName,
@@ -261,5 +268,17 @@ public class ImeSettings {
             mBundle.putBoolean(INLINE_SUGGESTIONS_ENABLED, enabled);
             return this;
         }
+
+        /**
+         * Controls whether inline suggestions are enabled for {@link MockIme}. If enabled, a
+         * suggestion strip will be rendered at the top of the keyboard.
+         *
+         * @param contentDesc content description to be set to the inline suggestion View.
+         */
+        public Builder setInlineSuggestionViewContentDesc(@NonNull String contentDesc) {
+            mBundle.putString(INLINE_SUGGESTION_VIEW_CONTENT_DESC, contentDesc);
+            return this;
+        }
+
     }
 }
