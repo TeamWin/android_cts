@@ -36,6 +36,20 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
 
     private static final int PHYSICAL_ADDRESS = 0x1000;
 
+    /** Intent to launch the remote pairing activity */
+    private static final String ACTION_CONNECT_INPUT_NORMAL =
+            "com.google.android.intent.action.CONNECT_INPUT";
+
+    /** Package name of the Settings app */
+    private static final String SETTINGS_PACKAGE =
+            "com.android.tv.settings";
+
+    /** The command to broadcast an intent. */
+    private static final String START_COMMAND = "am start -a ";
+
+    /** The command to stop an app. */
+    private static final String FORCE_STOP_COMMAND = "am force-stop ";
+
     @Rule
     public HdmiCecClientWrapper hdmiCecClient =
         new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
@@ -48,9 +62,25 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
     @Test
     public void cect_11_2_1_1_OneTouchPlay() throws Exception {
         ITestDevice device = getDevice();
+        device.reboot();
         device.executeShellCommand("input keyevent KEYCODE_HOME");
         hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
         String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
         assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
+    }
+
+    /**
+     * Tests that the device sends a <TEXT_VIEW_ON> when the pairing activity is started on
+     * device, followed by a <ACTIVE_SOURCE> message.
+     */
+    @Test
+    public void cect_PairingActivity_OneTouchPlay() throws Exception {
+        ITestDevice device = getDevice();
+        device.reboot();
+        device.executeShellCommand(START_COMMAND + ACTION_CONNECT_INPUT_NORMAL);
+        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
+        String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
+        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
+        device.executeShellCommand(FORCE_STOP_COMMAND + SETTINGS_PACKAGE);
     }
 }

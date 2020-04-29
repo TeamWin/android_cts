@@ -32,6 +32,7 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.cts.R;
 import android.view.DragEvent;
 import android.view.InputDevice;
@@ -53,6 +54,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class DragDropTest extends WindowManagerTestBase {
     static final String TAG = "DragDropTest";
