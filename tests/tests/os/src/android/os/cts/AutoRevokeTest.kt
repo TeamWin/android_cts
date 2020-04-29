@@ -46,7 +46,10 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
+private const val APK_WHITELISTED_PATH =
+        "/data/local/tmp/cts/os/CtsAutoRevokeWhitelistedDummyApp.apk"
 private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
+private const val APK_WHITELISTED_PACKAGE_NAME = "android.os.cts.autorevokewhitelisteddummyapp"
 
 /**
  * Test for auto revoke
@@ -114,7 +117,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
     @AppModeFull(reason = "Uses separate apps for testing")
     fun testAutoRevoke_userWhitelisting() {
         wakeUpScreen()
-        withUnusedThresholdMs(TimeUnit.DAYS.toMillis(30)) {
+        withUnusedThresholdMs(4L) {
             withDummyApp {
                 // Setup
                 startApp()
@@ -133,12 +136,39 @@ class AutoRevokeTest : InstrumentationTestCase() {
                     assertFalse(getWhitelistToggle().isChecked)
                 }
 
+                // Run
+                goBack()
+                goBack()
+                goBack()
+                runAutoRevoke()
+                Thread.sleep(500L)
+
                 // Verify
-                goBack()
-                goBack()
-                goBack()
                 startApp()
                 assertWhitelistState(true)
+                assertPermission(PERMISSION_GRANTED)
+            }
+        }
+    }
+
+    @AppModeFull(reason = "Uses separate apps for testing")
+    fun testAutoRevoke_manifestWhitelisting() {
+        wakeUpScreen()
+        withUnusedThresholdMs(5L) {
+            withDummyApp(APK_WHITELISTED_PATH, APK_WHITELISTED_PACKAGE_NAME) {
+                // Setup
+                startApp(APK_WHITELISTED_PACKAGE_NAME)
+                clickPermissionAllow()
+                assertWhitelistState(true)
+
+                // Run
+                goHome()
+                Thread.sleep(20L)
+                runAutoRevoke()
+                Thread.sleep(500L)
+
+                // Verify
+                assertPermission(PERMISSION_GRANTED, APK_WHITELISTED_PACKAGE_NAME)
             }
         }
     }
@@ -204,16 +234,16 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 "permissions", "auto_revoke_unused_threshold_millis", threshold.toString(), action)
     }
 
-    private fun installApp() {
-        assertThat(runShellCommand("pm install -r $APK_PATH"), containsString("Success"))
+    private fun installApp(apk: String = APK_PATH) {
+        assertThat(runShellCommand("pm install -r $apk"), containsString("Success"))
     }
 
-    private fun uninstallApp() {
-        assertThat(runShellCommand("pm uninstall $APK_PACKAGE_NAME"), containsString("Success"))
+    private fun uninstallApp(packageName: String = APK_PACKAGE_NAME) {
+        assertThat(runShellCommand("pm uninstall $packageName"), containsString("Success"))
     }
 
-    private fun startApp() {
-        runShellCommand("am start -n $APK_PACKAGE_NAME/$APK_PACKAGE_NAME.MainActivity")
+    private fun startApp(packageName: String = APK_PACKAGE_NAME) {
+        runShellCommand("am start -n $packageName/$packageName.MainActivity")
     }
 
     private fun goHome() {
@@ -229,16 +259,20 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 .click()
     }
 
-    private inline fun withDummyApp(action: () -> Unit) {
-        installApp()
+    private inline fun withDummyApp(
+        apk: String = APK_PATH,
+        packageName: String = APK_PACKAGE_NAME,
+        action: () -> Unit
+    ) {
+        installApp(apk)
         try {
             action()
         } finally {
-            uninstallApp()
+            uninstallApp(packageName)
         }
     }
 
-    private fun assertPermission(state: Int) {
+    private fun assertPermission(state: Int, packageName: String = APK_PACKAGE_NAME) {
         // For some reason this incorrectly always returns PERMISSION_DENIED
 //        runWithShellPermissionIdentity {
 //            assertEquals(
@@ -248,7 +282,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
 
         try {
             context.startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .setData(Uri.fromParts("package", APK_PACKAGE_NAME, null))
+                    .setData(Uri.fromParts("package", packageName, null))
                     .addFlags(FLAG_ACTIVITY_NEW_TASK))
 
             waitFindObject(byTextIgnoreCase("Permissions")).click()
