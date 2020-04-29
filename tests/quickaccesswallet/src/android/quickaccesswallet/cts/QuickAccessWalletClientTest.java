@@ -112,43 +112,21 @@ public class QuickAccessWalletClientTest {
     @Test
     public void testIsWalletFeatureAvailableWhenDeviceLocked_checksSecureSettings() {
         QuickAccessWalletClient client = QuickAccessWalletClient.create(mContext);
-
-
-        String showNotificationsSetting = SettingsUtils.getSecureSetting(
-                Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS);
-        String allowPrivateNotificationsSetting = SettingsUtils.get(
-                Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS);
+        String showCardsAndPasses = SettingsUtils.getSecureSetting(
+                Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT);
 
         try {
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
-                    SETTING_ENABLED);
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
+            SettingsUtils.syncSet(mContext, Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT,
                     SETTING_ENABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isTrue();
 
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
-                    SETTING_ENABLED);
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
-                    SETTING_DISABLED);
-            assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isFalse();
-
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
-                    SETTING_DISABLED);
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
-                    SETTING_ENABLED);
-            assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isFalse();
-
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
-                    SETTING_DISABLED);
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
+            SettingsUtils.syncSet(mContext, Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT,
                     SETTING_DISABLED);
             assertThat(client.isWalletFeatureAvailableWhenDeviceLocked()).isFalse();
         } finally {
-            // return settings to original values
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_SHOW_NOTIFICATIONS,
-                    showNotificationsSetting);
-            SettingsUtils.syncSet(mContext, Settings.Secure.LOCK_SCREEN_ALLOW_PRIVATE_NOTIFICATIONS,
-                    allowPrivateNotificationsSetting);
+            // return setting to original value
+            SettingsUtils.syncSet(mContext, Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT,
+                    showCardsAndPasses);
         }
     }
 
@@ -438,7 +416,7 @@ public class QuickAccessWalletClientTest {
     }
 
     @Test
-    public void testCreateWalletSettingsIntent_parsesXmlAndUsesCorrectIntentAction() {
+    public void testCreateWalletSettingsIntent_usesSettingsActionToFindAppropriateActivity() {
         Intent settingsIntent =
                 QuickAccessWalletClient.create(mContext).createWalletSettingsIntent();
         assertThat(settingsIntent).isNotNull();
