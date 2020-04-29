@@ -36,6 +36,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
 import android.provider.Telephony;
 import android.service.notification.Adjustment;
 import android.service.notification.NotificationAssistantService;
@@ -52,9 +53,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
+import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -191,7 +196,7 @@ public class NotificationAssistantServiceTest {
     }
 
     @Test
-    public void testAdjustNotification_rankingScoreKey() throws Exception {
+    public void testAdjustNotifications_rankingScoreKey() throws Exception {
         setUpListeners();
 
         try {
@@ -225,12 +230,11 @@ public class NotificationAssistantServiceTest {
             signals.putFloat(Adjustment.KEY_RANKING_SCORE, rankingScore1);
             Adjustment adjustment = new Adjustment(sbn1.getPackageName(), sbn1.getKey(), signals, "",
                     sbn1.getUser());
-            mNotificationAssistantService.adjustNotification(adjustment);
-            signals = new Bundle();
-            signals.putFloat(Adjustment.KEY_RANKING_SCORE, rankingScore2);
-            adjustment = new Adjustment(sbn2.getPackageName(), sbn2.getKey(), signals, "",
+            Bundle signals2 = new Bundle();
+            signals2.putFloat(Adjustment.KEY_RANKING_SCORE, rankingScore2);
+            Adjustment adjustment2 = new Adjustment(sbn2.getPackageName(), sbn2.getKey(), signals2, "",
                     sbn2.getUser());
-            mNotificationAssistantService.adjustNotification(adjustment);
+            mNotificationAssistantService.adjustNotifications(List.of(adjustment, adjustment2));
             Thread.sleep(SLEEP_TIME); // wait for adjustments to be processed
 
             mNotificationListenerService.mRankingMap.getRanking(sbn1.getKey(), out1);
@@ -454,6 +458,60 @@ public class NotificationAssistantServiceTest {
     }
 
     @Test
+    public void testOnNotificationSnoozedUntilContext() throws Exception {
+        final String snoozeContext = "@SnoozeContext1@";
+
+        setUpListeners(); // also enables assistant
+
+        sendNotification(1001, ICON_ID);
+        StatusBarNotification sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
+
+        // simulate the user snoozing the notification
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        runCommand(String.format("cmd notification snooze --condition %s %s", snoozeContext,
+                sbn.getKey()), instrumentation);
+
+        Thread.sleep(SLEEP_TIME);
+
+        assertTrue(String.format("snoozed notification <%s> was not removed", sbn.getKey()),
+                mNotificationListenerService.checkRemovedKey(sbn.getKey()));
+
+        assertEquals(String.format("snoozed notification <%s> was not observed by NAS", sbn.getKey()),
+                sbn.getKey(), mNotificationAssistantService.snoozedKey);
+        assertEquals(snoozeContext, mNotificationAssistantService.snoozedUntilContext);
+    }
+
+    @Test
+    public void testUnsnoozeFromNAS() throws Exception {
+        final String snoozeContext = "@SnoozeContext2@";
+
+        setUpListeners(); // also enables assistant
+
+        sendNotification(1002, ICON_ID);
+        StatusBarNotification sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
+
+        // simulate the user snoozing the notification
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        runCommand(String.format("cmd notification snooze --context %s %s", snoozeContext,
+            sbn.getKey()), instrumentation);
+
+        Thread.sleep(SLEEP_TIME);
+
+        // unsnooze from listener
+        mNotificationAssistantService = TestNotificationAssistant.getInstance();
+        android.util.Log.v(TAG, "unsnoozing from listener: " + sbn.getKey());
+        mNotificationAssistantService.unsnoozeNotification(sbn.getKey());
+
+        Thread.sleep(SLEEP_TIME);
+
+        NotificationListenerService.Ranking out = new NotificationListenerService.Ranking();
+        boolean found = mNotificationListenerService.mRankingMap.getRanking(sbn.getKey(), out);
+        assertTrue("notification <" + sbn.getKey()
+                + "> was not restored when unsnoozed from listener",
+                found);
+    }
+
+    @Test
     public void testOnActionInvoked_methodExists() throws Exception {
         setUpListeners();
         final Intent intent = new Intent(Intent.ACTION_MAIN, Telephony.Threads.CONTENT_URI);
@@ -651,12 +709,14 @@ public class NotificationAssistantServiceTest {
     private void runCommand(String command, Instrumentation instrumentation) throws IOException {
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
         // Execute command
+        System.out.println("runCommand: <<<" + command + ">>>");
         try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
             assertNotNull("Failed to execute shell command: " + command, fd);
             // Wait for the command to finish by reading until EOF
-            try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
-                byte[] buffer = new byte[4096];
-                while (in.read(buffer) > 0) {
+            try (BufferedReader in = new BufferedReader(new FileReader(fd.getFileDescriptor()))) {
+                String line;
+                while (null != (line = in.readLine())) {
+                    android.util.Log.v(TAG, "runCommand: output: " + line);
                 }
             } catch (IOException e) {
                 throw new IOException("Could not read stdout of command: " + command, e);
