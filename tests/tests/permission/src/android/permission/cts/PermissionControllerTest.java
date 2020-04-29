@@ -27,6 +27,7 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_FOREGROUND;
 import static android.app.AppOpsManager.permissionToOp;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
+import static android.permission.PermissionControllerManager.COUNT_ONLY_WHEN_GRANTED;
 import static android.permission.PermissionControllerManager.REASON_INSTALLER_POLICY_VIOLATION;
 import static android.permission.PermissionControllerManager.REASON_MALWARE;
 import static android.permission.cts.PermissionUtils.grantPermission;
@@ -39,6 +40,8 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
+
+import static java.util.Collections.singletonList;
 
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
@@ -161,7 +164,7 @@ public class PermissionControllerTest {
 
     private Map<String, List<String>> buildRevokeRequest(@NonNull String app,
             @NonNull String permission) {
-        return Collections.singletonMap(app, Collections.singletonList(permission));
+        return Collections.singletonMap(app, singletonList(permission));
     }
 
     private void assertRuntimePermissionLabelsAreValid(List<String> runtimePermissions,
@@ -309,7 +312,7 @@ public class PermissionControllerTest {
     @Test(expected = NullPointerException.class)
     public void revokePermissionsWithNullPkg() throws Exception {
         Map<String, List<String>> request = Collections.singletonMap(null,
-                Collections.singletonList(ACCESS_FINE_LOCATION));
+                singletonList(ACCESS_FINE_LOCATION));
 
         revokePermissions(request, true);
     }
@@ -324,7 +327,7 @@ public class PermissionControllerTest {
     @Test(expected = NullPointerException.class)
     public void revokePermissionsWithNullPermission() throws Exception {
         Map<String, List<String>> request = Collections.singletonMap(APP,
-                Collections.singletonList(null));
+                singletonList(null));
 
         revokePermissions(request, true);
     }
@@ -473,5 +476,38 @@ public class PermissionControllerTest {
     @Test(expected = NullPointerException.class)
     public void revokePermissionWithNullPermission() throws Exception {
         sController.revokeRuntimePermission(APP2, null);
+    }
+
+    // TODO: Add more tests for countPermissionAppsGranted when the method can be safely called
+    //       multiple times in a row
+
+    @Test
+    public void countPermissionAppsGranted() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    CompletableFuture<Integer> numApps = new CompletableFuture<>();
+
+                    sController.countPermissionApps(singletonList(ACCESS_FINE_LOCATION),
+                            COUNT_ONLY_WHEN_GRANTED, numApps::complete, null);
+
+                    // TODO: Better would be to count before, grant a permission, count again and
+                    //       then compare before and after
+                    assertThat(numApps.get()).isAtLeast(1);
+                });
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void countPermissionAppsNullPermission() {
+        sController.countPermissionApps(null, 0, (n) -> { }, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void countPermissionAppsInvalidFlags() {
+        sController.countPermissionApps(singletonList(ACCESS_FINE_LOCATION), -1, (n) -> { }, null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void countPermissionAppsNullCallback() {
+        sController.countPermissionApps(singletonList(ACCESS_FINE_LOCATION), 0, null, null);
     }
 }
