@@ -421,6 +421,10 @@ public final class MockIme extends InputMethodService {
         private final View.OnLayoutChangeListener mLayoutListener;
 
         private final LinearLayout mLayout;
+
+        @Nullable
+        private final LinearLayout mSuggestionView;
+
         private boolean mDrawsBehindNavBar = false;
 
         KeyboardLayoutView(MockIme mockIme, @NonNull ImeSettings imeSettings,
@@ -444,14 +448,16 @@ public final class MockIme extends InputMethodService {
                 final LayoutParams scrollViewParams = new LayoutParams(MATCH_PARENT, 100);
                 scrollView.setLayoutParams(scrollViewParams);
 
-                sSuggestionView = new LinearLayout(getContext());
-                sSuggestionView.setBackgroundColor(0xFFEEEEEE);
+                final LinearLayout suggestionView = new LinearLayout(getContext());
+                suggestionView.setBackgroundColor(0xFFEEEEEE);
                 //TODO: Change magic id
-                sSuggestionView.setId(0x0102000b);
-                scrollView.addView(sSuggestionView,
-                        new LayoutParams(MATCH_PARENT, MATCH_PARENT));
+                suggestionView.setId(0x0102000b);
+                scrollView.addView(suggestionView, new LayoutParams(MATCH_PARENT, MATCH_PARENT));
+                mSuggestionView = suggestionView;
 
                 mLayout.addView(scrollView);
+            } else {
+                mSuggestionView = null;
             }
 
             {
@@ -557,6 +563,24 @@ public final class MockIme extends InputMethodService {
         protected void onDetachedFromWindow() {
             super.onDetachedFromWindow();
             removeOnLayoutChangeListener(mLayoutListener);
+        }
+
+        @MainThread
+        private void updateInlineSuggestions(
+                @NonNull PendingInlineSuggestions pendingInlineSuggestions) {
+            Log.d(TAG, "updateInlineSuggestions() called: " + pendingInlineSuggestions.mTotalCount);
+            if (mSuggestionView == null || !pendingInlineSuggestions.mValid.get()) {
+                return;
+            }
+            mSuggestionView.removeAllViews();
+            for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
+                View view = pendingInlineSuggestions.mViews[i];
+                Size size = pendingInlineSuggestions.mViewSizes[i];
+                if (view == null || size == null) {
+                    continue;
+                }
+                mSuggestionView.addView(view, size.getWidth(), size.getHeight());
+            }
         }
     }
 
@@ -677,7 +701,6 @@ public final class MockIme extends InputMethodService {
         return new ImeState(hasInputBinding, hasDummyInputConnectionConnection);
     }
 
-    private static LinearLayout sSuggestionView;
     private PendingInlineSuggestions mPendingInlineSuggestions;
 
     private static final class PendingInlineSuggestions {
@@ -725,7 +748,7 @@ public final class MockIme extends InputMethodService {
             }
             mPendingInlineSuggestions = pendingInlineSuggestions;
             if (pendingInlineSuggestions.mTotalCount == 0) {
-                updateInlineSuggestions(pendingInlineSuggestions);
+                mView.updateInlineSuggestions(pendingInlineSuggestions);
                 return true;
             }
 
@@ -748,30 +771,13 @@ public final class MockIme extends InputMethodService {
                                     == pendingInlineSuggestions.mTotalCount
                                     && pendingInlineSuggestions.mValid.get()) {
                                 Log.d(TAG, "ready to display all suggestions");
-                                getMainExecutor().execute(
-                                        () -> updateInlineSuggestions(pendingInlineSuggestions));
+                                getMainExecutor().execute(() ->
+                                        mView.updateInlineSuggestions(pendingInlineSuggestions));
                             }
                         });
             }
             return true;
         });
-    }
-
-    @MainThread
-    private void updateInlineSuggestions(PendingInlineSuggestions pendingInlineSuggestions) {
-        Log.d(TAG, "updateInlineSuggestions() called: " + pendingInlineSuggestions.mTotalCount);
-        if (sSuggestionView == null || !pendingInlineSuggestions.mValid.get()) {
-            return;
-        }
-        sSuggestionView.removeAllViews();
-        for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
-            View view = pendingInlineSuggestions.mViews[i];
-            Size size = pendingInlineSuggestions.mViewSizes[i];
-            if (view == null || size == null) {
-                continue;
-            }
-            sSuggestionView.addView(view, size.getWidth(), size.getHeight());
-        }
     }
 
     /**
