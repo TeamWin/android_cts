@@ -27,8 +27,6 @@ import android.platform.test.annotations.Presubmit;
 import android.view.View;
 import android.view.WindowManager;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Test;
 
 /**
@@ -40,7 +38,6 @@ import org.junit.Test;
 @Presubmit
 public class WindowContextTests extends WindowContextTestBase {
     @Test
-    @FlakyTest(bugId = 150251036)
     @AppModeFull
     public void testWindowContextConfigChanges() {
         final WindowManagerState.DisplayContent display =  createManagedVirtualDisplaySession()
