@@ -63,17 +63,21 @@ public class AppBTests {
     }
 
     @Test
-    public void testCanNotAccessAppAExternalDataDir() {
+    public void testCanNotAccessAppAExternalDirs() {
         String appAExternalDir = replacePackageBWithPackageA(
                 mContext.getExternalFilesDir("").getAbsolutePath());
+        String appAObbDir = replacePackageBWithPackageA(mContext.getObbDir().getAbsolutePath());
         assertDirDoesNotExist(appAExternalDir);
+        assertDirDoesNotExist(appAObbDir);
     }
 
     @Test
-    public void testCanAccessAppAExternalDataDir() {
+    public void testCanAccessAppAExternalDirs() {
         String appAExternalDir = replacePackageBWithPackageA(
                 mContext.getExternalFilesDir("").getAbsolutePath());
+        String appAObbDir = replacePackageBWithPackageA(mContext.getObbDir().getAbsolutePath());
         assertDirIsAccessible(appAExternalDir);
+        assertDirIsAccessible(appAObbDir);
     }
 
     private String replacePackageBWithPackageA(String path) {
