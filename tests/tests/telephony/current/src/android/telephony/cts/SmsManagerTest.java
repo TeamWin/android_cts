@@ -656,6 +656,17 @@ public class SmsManagerTest {
         } catch (SecurityException e) {
             // expected
         }
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        try {
+            getSmsManager().getSmscAddress();
+        } catch (SecurityException se) {
+            fail("Caller with READ_PRIVILEGED_PHONE_STATE should be able to call API");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 
     @Test
@@ -665,6 +676,61 @@ public class SmsManagerTest {
             fail("SmsManager.setSmscAddress() should throw a SecurityException");
         } catch (SecurityException e) {
             // expected
+        }
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        try {
+            getSmsManager().setSmscAddress("fake smsc");
+        } catch (SecurityException se) {
+            fail("Caller with MODIFY_PHONE_STATE should be able to call API");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testGetPremiumSmsConsent() {
+        try {
+            getSmsManager().getPremiumSmsConsent("fake package name");
+            fail("SmsManager.getPremiumSmsConsent() should throw a SecurityException");
+        } catch (SecurityException e) {
+            // expected
+        }
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        try {
+            getSmsManager().getPremiumSmsConsent("fake package name");
+            fail("Caller with permission but only phone/system uid is allowed");
+        } catch (SecurityException se) {
+            // expected
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testSetPremiumSmsConsent() {
+        try {
+            getSmsManager().setPremiumSmsConsent("fake package name", 0);
+            fail("SmsManager.setPremiumSmsConsent() should throw a SecurityException");
+        } catch (SecurityException e) {
+            // expected
+        }
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        try {
+            getSmsManager().setPremiumSmsConsent("fake package name", 0);
+            fail("Caller with permission but only phone/system uid is allowed");
+        } catch (SecurityException se) {
+            // expected
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
     }
 
