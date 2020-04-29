@@ -2506,6 +2506,28 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testIsIccLockEnabled() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // verify SecurityException
+        try {
+            mTelephonyManager.isIccLockEnabled();
+            fail("testIsIccLockEnabled: Expected SecurityException on isIccLockEnabled");
+        } catch (SecurityException se) {
+            // expected
+        }
+
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.isIccLockEnabled());
+        } catch (SecurityException se) {
+            fail("testIsIccLockEnabled: SecurityException not expected");
+        }
+    }
+
+    @Test
     public void testIsDataEnabledForApn() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
