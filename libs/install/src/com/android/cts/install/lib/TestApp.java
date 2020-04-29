@@ -57,6 +57,8 @@ public class TestApp {
 
     public static final TestApp C1 = new TestApp("Cv1", C, 1, /*isApex*/false,
             "TestAppCv1.apk");
+    public static final TestApp C2 = new TestApp("Cv2", C, 2, /*isApex*/false,
+            "TestAppCv2.apk");
 
     // Apex collection
     public static final TestApp Apex1 = new TestApp("Apex1", Apex, 1, /*isApex*/true,

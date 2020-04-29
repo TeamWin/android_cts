@@ -81,6 +81,14 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "TestAppCv2",
+    manifest: "testapp/Cv2.xml",
+    sdk_version: "current",
+    srcs: ["testapp/src/**/*.java"],
+    resource_dirs: ["testapp/res_v2"],
+}
+
+android_test_helper_app {
     name: "TestAppASplitV1",
     manifest: "testapp/Av1.xml",
     sdk_version: "current",
@@ -111,6 +119,7 @@ java_library {
         ":TestAppBv2",
         ":TestAppBv3",
         ":TestAppCv1",
+        ":TestAppCv2",
         ":TestAppACrashingV2",
         ":TestAppASplitV1",
         ":TestAppASplitV2",
