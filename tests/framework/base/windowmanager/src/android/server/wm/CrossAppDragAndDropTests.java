@@ -115,6 +115,7 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
 
         mDm = mContext.getSystemService(DisplayManager.class);
         cleanupState();
+        mUseTaskOrganizer = false;
     }
 
     @After
