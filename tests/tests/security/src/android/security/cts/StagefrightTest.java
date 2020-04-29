@@ -307,12 +307,6 @@ public class StagefrightTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "2016-04")
-    public void testStagefright_bug_26366256() throws Exception {
-        doStagefrightTest(R.raw.bug_26366256);
-    }
-
-    @Test
     @SecurityTest(minPatchLevel = "2017-02")
     public void testStagefright_cve_2016_2429_b_27211885() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2429_b_27211885,
