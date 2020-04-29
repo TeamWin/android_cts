@@ -16,6 +16,9 @@
 
 package android.server.wm;
 
+import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
+import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+import static android.view.View.SYSTEM_UI_FLAG_LOW_PROFILE;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
@@ -23,6 +26,8 @@ import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -43,6 +48,7 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Type;
 import android.view.WindowInsetsAnimation;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -192,6 +198,73 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         dragOnDisplay(rootView.getWidth() / 2f, 0 /* downY */,
                 rootView.getWidth() / 2f, rootView.getHeight() /2f);
         PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(types));
+    }
+
+    @Test
+    public void testSystemUiVisibilityCallbackCausedByInsets() {
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View controlTarget = activity.getWindow().getDecorView();
+        final int[] targetSysUiVis = new int[1];
+        final View nonControlTarget = new View(mTargetContext);
+        final int[] nonTargetSysUiVis = new int[1];
+        final WindowManager.LayoutParams nonTargetAttrs =
+                new WindowManager.LayoutParams(TYPE_APPLICATION);
+        nonTargetAttrs.flags = FLAG_NOT_FOCUSABLE;
+        getInstrumentation().runOnMainSync(() -> {
+            controlTarget.setOnSystemUiVisibilityChangeListener(
+                    visibility -> targetSysUiVis[0] = visibility);
+            nonControlTarget.setOnSystemUiVisibilityChangeListener(
+                    visibility -> nonTargetSysUiVis[0] = visibility);
+            activity.getWindowManager().addView(nonControlTarget, nonTargetAttrs);
+        });
+        waitForIdle();
+        testSysUiVisCallbackCausedByInsets(statusBars(), SYSTEM_UI_FLAG_FULLSCREEN,
+                controlTarget, targetSysUiVis, nonTargetSysUiVis);
+        testSysUiVisCallbackCausedByInsets(navigationBars(), SYSTEM_UI_FLAG_HIDE_NAVIGATION,
+                controlTarget, targetSysUiVis, nonTargetSysUiVis);
+    }
+
+    private void testSysUiVisCallbackCausedByInsets(int insetsType, int sysUiFlag, View target,
+            int[] targetSysUiVis, int[] nonTargetSysUiVis) {
+        if (target.getRootWindowInsets().isVisible(insetsType)) {
+
+            // Controlled by methods
+            getInstrumentation().runOnMainSync(
+                    () -> target.getWindowInsetsController().hide(insetsType));
+            PollingCheck.waitFor(TIMEOUT, () ->
+                    targetSysUiVis[0] == sysUiFlag && targetSysUiVis[0] == nonTargetSysUiVis[0]);
+            getInstrumentation().runOnMainSync(
+                    () -> target.getWindowInsetsController().show(insetsType));
+            PollingCheck.waitFor(TIMEOUT, () ->
+                    targetSysUiVis[0] == 0 && targetSysUiVis[0] == nonTargetSysUiVis[0]);
+
+            // Controlled by legacy flags
+            getInstrumentation().runOnMainSync(
+                    () -> target.setSystemUiVisibility(sysUiFlag));
+            PollingCheck.waitFor(TIMEOUT, () ->
+                    targetSysUiVis[0] == sysUiFlag && targetSysUiVis[0] == nonTargetSysUiVis[0]);
+            getInstrumentation().runOnMainSync(
+                    () -> target.setSystemUiVisibility(0));
+            PollingCheck.waitFor(TIMEOUT, () ->
+                    targetSysUiVis[0] == 0 && targetSysUiVis[0] == nonTargetSysUiVis[0]);
+        }
+    }
+
+    @Test
+    public void testSystemUiVisibilityCallbackCausedByAppearance() {
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View controlTarget = activity.getWindow().getDecorView();
+        final int[] targetSysUiVis = new int[1];
+        getInstrumentation().runOnMainSync(() -> {
+            controlTarget.setOnSystemUiVisibilityChangeListener(
+                    visibility -> targetSysUiVis[0] = visibility);
+        });
+        waitForIdle();
+        final int sysUiFlag = SYSTEM_UI_FLAG_LOW_PROFILE;
+        getInstrumentation().runOnMainSync(() -> controlTarget.setSystemUiVisibility(sysUiFlag));
+        PollingCheck.waitFor(TIMEOUT, () -> targetSysUiVis[0] == sysUiFlag);
+        getInstrumentation().runOnMainSync(() -> controlTarget.setSystemUiVisibility(0));
+        PollingCheck.waitFor(TIMEOUT, () -> targetSysUiVis[0] == 0);
     }
 
     @Test
