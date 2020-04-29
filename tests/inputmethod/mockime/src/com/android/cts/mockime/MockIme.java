@@ -28,7 +28,6 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.inputmethodservice.InputMethodService;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -74,6 +73,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -755,6 +756,7 @@ public final class MockIme extends InputMethodService {
                 return true;
             }
 
+            final ExecutorService executorService = Executors.newCachedThreadPool();
             for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
                 final int index = i;
                 InlineSuggestion inlineSuggestion =
@@ -763,7 +765,7 @@ public final class MockIme extends InputMethodService {
                 inlineSuggestion.inflate(
                         this,
                         size,
-                        AsyncTask.THREAD_POOL_EXECUTOR,
+                        executorService,
                         suggestionView -> {
                             Log.d(TAG, "new inline suggestion view ready");
                             if (suggestionView != null) {
@@ -774,7 +776,7 @@ public final class MockIme extends InputMethodService {
                                     == pendingInlineSuggestions.mTotalCount
                                     && pendingInlineSuggestions.mValid.get()) {
                                 Log.d(TAG, "ready to display all suggestions");
-                                getMainExecutor().execute(() ->
+                                mMainHandler.post(() ->
                                         mView.updateInlineSuggestions(pendingInlineSuggestions));
                             }
                         });
