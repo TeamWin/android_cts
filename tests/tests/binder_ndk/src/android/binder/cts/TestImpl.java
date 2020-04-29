@@ -371,11 +371,6 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
-  public int NewMethodThatReturns10() {
-    return 10;
-  }
-
-  @Override
   public Foo repeatFoo(Foo inFoo) {
     return inFoo;
   }
@@ -398,4 +393,13 @@ public class TestImpl extends ITest.Stub {
     return foo.f;
   }
 
+  @Override
+  public String RepeatStringNullableLater(String in_value) {
+    return in_value;
+  }
+
+  @Override
+  public int NewMethodThatReturns10() {
+    return 10;
+  }
 }

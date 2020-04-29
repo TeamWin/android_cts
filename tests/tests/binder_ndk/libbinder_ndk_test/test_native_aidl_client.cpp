@@ -792,6 +792,36 @@ TEST_P(NdkBinderTest_Aidl, NewMethod) {
   }
 }
 
+TEST_P(NdkBinderTest_Aidl, RepeatStringNullableLater) {
+  std::optional<std::string> res;
+
+  std::string name;
+  EXPECT_OK(iface->GetName(&name));
+
+  // Java considers every type to be nullable, but this is okay, since it will
+  // pass back NullPointerException to the client if it does not handle a null
+  // type, similar to how a C++ server would refuse to unparcel a null
+  // non-nullable type. Of course, this is not ideal, but the problem runs very
+  // deep.
+  const bool supports_nullable = !GetParam().shouldBeOld || name == "Java";
+  if (supports_nullable) {
+    EXPECT_OK(iface->RepeatStringNullableLater(std::nullopt, &res));
+    EXPECT_EQ(std::nullopt, res);
+  } else {
+    ndk::ScopedAStatus status = iface->RepeatStringNullableLater(std::nullopt, &res);
+    ASSERT_EQ(STATUS_UNEXPECTED_NULL, AStatus_getStatus(status.get()));
+  }
+
+  EXPECT_OK(iface->RepeatStringNullableLater("", &res));
+  EXPECT_EQ("", res);
+
+  EXPECT_OK(iface->RepeatStringNullableLater("a", &res));
+  EXPECT_EQ("a", res);
+
+  EXPECT_OK(iface->RepeatStringNullableLater("say what?", &res));
+  EXPECT_EQ("say what?", res);
+}
+
 TEST_P(NdkBinderTest_Aidl, GetInterfaceVersion) {
   int32_t res;
   EXPECT_OK(iface->getInterfaceVersion(&res));
@@ -808,7 +838,7 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceHash) {
   EXPECT_OK(iface->getInterfaceHash(&res));
   if (GetParam().shouldBeOld) {
     // aidl_api/libbinder_ndk_test_interface/1/.hash
-    EXPECT_EQ("d755ae773aaabd1c48d22b823e29501ee387aff1", res);
+    EXPECT_EQ("8e163a1b4a6f366aa0c00b6da7fc13a970ee55d8", res);
   } else {
     EXPECT_EQ("notfrozen", res);
   }
