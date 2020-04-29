@@ -99,6 +99,7 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     public void setup() throws Exception {
         assumeTrue(hasIncrementalFeature());
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
+        assumeTrue(adbBinarySupportsIncremental());
         uninstallApp(TEST_APP_PACKAGE_NAME);
         assertFalse(isPackageInstalled(TEST_APP_PACKAGE_NAME));
     }
@@ -401,5 +402,10 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
 
     private boolean hasIncrementalFeature() throws Exception {
         return hasDeviceFeature(FEATURE_INCREMENTAL_DELIVERY);
+    }
+
+    private boolean adbBinarySupportsIncremental() throws Exception {
+        return !installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(
+                "Unknown option --incremental");
     }
 }
