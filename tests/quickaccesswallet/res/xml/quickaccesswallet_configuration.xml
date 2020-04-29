@@ -16,5 +16,4 @@
 
 <quickaccesswallet-service
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:settingsActivity="android.quickaccesswallet.QuickAccessWalletSettingsActivity"
     android:targetActivity="android.quickaccesswallet.QuickAccessWalletActivity"/>
