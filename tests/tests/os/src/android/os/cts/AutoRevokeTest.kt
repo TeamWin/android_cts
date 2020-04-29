@@ -233,7 +233,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
 
     private inline fun <T> withUnusedThresholdMs(threshold: Long, action: () -> T): T {
         return withDeviceConfig(
-                "permissions", "auto_revoke_unused_threshold_millis", threshold.toString(), action)
+                "permissions", "auto_revoke_unused_threshold_millis2", threshold.toString(), action)
     }
 
     private fun installApp(apk: String = APK_PATH) {
