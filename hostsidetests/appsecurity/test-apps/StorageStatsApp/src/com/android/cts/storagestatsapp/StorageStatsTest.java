@@ -50,6 +50,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.UserHandle;
 import android.os.storage.StorageManager;
+import android.provider.MediaStore;
 import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
@@ -195,6 +196,8 @@ public class StorageStatsTest extends InstrumentationTestCase {
 
         // Rename to ensure that stats are updated
         video.renameTo(new File(dir, System.nanoTime() + ".PnG"));
+
+        MediaStore.waitForIdle(getContext().getContentResolver());
 
         final ExternalStorageStats afterRename = stats.queryExternalStatsForUser(UUID_DEFAULT, user);
 
