@@ -34,6 +34,13 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.quickaccesswallet.QuickAccessWalletSettingsActivity">
+            <intent-filter>
+                <action android:name="android.service.quickaccesswallet.action.VIEW_WALLET_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name="android.quickaccesswallet.TestHostApduService"
             android:exported="true"
