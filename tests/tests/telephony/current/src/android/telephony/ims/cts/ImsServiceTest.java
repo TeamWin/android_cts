@@ -1758,6 +1758,29 @@ public class ImsServiceTest {
                 sTestSlot, serviceSlot);
     }
 
+    // Waiting for ImsRcsManager to become public before implementing RegistrationManager,
+    // Duplicate these methods for now.
+    private void verifyRegistrationState(ImsRcsManager regManager, int expectedState)
+            throws Exception {
+        LinkedBlockingQueue<Integer> mQueue = new LinkedBlockingQueue<>();
+        assertTrue(ImsUtils.retryUntilTrue(() -> {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(regManager,
+                    (m) -> m.getRegistrationState(getContext().getMainExecutor(), mQueue::offer));
+            return waitForIntResult(mQueue) == expectedState;
+        }));
+    }
+
+    // Waiting for ImsRcsManager to become public before implementing RegistrationManager,
+    // Duplicate these methods for now.
+    private void verifyRegistrationTransportType(ImsRcsManager regManager,
+            int expectedTransportType) throws Exception {
+        LinkedBlockingQueue<Integer> mQueue = new LinkedBlockingQueue<>();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(regManager,
+                (m) -> m.getRegistrationTransportType(getContext().getMainExecutor(),
+                        mQueue::offer));
+        assertEquals(expectedTransportType, waitForIntResult(mQueue));
+    }
+
     private void verifyRegistrationState(RegistrationManager regManager, int expectedState)
             throws Exception {
         LinkedBlockingQueue<Integer> mQueue = new LinkedBlockingQueue<>();
