@@ -537,6 +537,22 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testCorruptedApexFailsVerification_b146895998");
     }
 
+    /**
+     * Should fail to pass apk signature check
+     */
+    @Test
+    public void testApexWithUnsignedApkFailsVerification() throws Exception {
+        runPhase("testApexWithUnsignedApkFailsVerification");
+    }
+
+    /**
+     * Should fail to verify apex with unsigned payload
+     */
+    @Test
+    public void testApexWithUnsignedPayloadFailsVerification() throws Exception {
+        runPhase("testApexWithUnsignedPayloadFailsVerification");
+    }
+
     private boolean isUpdatingApexSupported() throws Exception {
         final String updatable = getDevice().getProperty("ro.apex.updatable");
         return updatable != null && updatable.equals("true");
