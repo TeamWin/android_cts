@@ -26,7 +26,7 @@ import android.graphics.Rect
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
-import android.provider.Settings.*
+import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
@@ -34,7 +34,8 @@ import android.test.InstrumentationTestCase
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
 import com.android.compatibility.common.util.SystemUtil
-import com.android.compatibility.common.util.SystemUtil.*
+import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.UiDumpUtils
@@ -68,6 +69,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 eventually {
                     assertPermission(PERMISSION_GRANTED)
                 }
+                goBack()
                 goHome()
                 Thread.sleep(5)
 
@@ -79,7 +81,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
                     assertPermission(PERMISSION_DENIED)
                 }
                 runShellCommand("cmd statusbar expand-notifications")
-                waitFindObject(By.text("App permissions automatically removed"))
+                waitFindObject(By.textContains("unused app"))
                         .click()
                 waitFindObject(By.text(APK_PACKAGE_NAME))
                 waitFindObject(By.text("Calendar permission removed"))
