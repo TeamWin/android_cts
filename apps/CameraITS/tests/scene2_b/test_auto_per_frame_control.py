@@ -28,11 +28,52 @@ AE_STATE_FLASH_REQUIRED = 4
 DELTA_GAIN_THRESH = 0.03  # >3% gain change --> luma change in same dir
 DELTA_LUMA_THRESH = 0.03  # 3% frame-to-frame noise test_burst_sameness_manual
 DELTA_NO_GAIN_THRESH = 0.01  # <1% gain change --> min luma change
+LSC_TOL = 0.005  # allow <0.5% change in lens shading correction
 NAME = os.path.basename(__file__).split('.')[0]
 NUM_CAPS = 1
 NUM_FRAMES = 30
 VALID_STABLE_LUMA_MIN = 0.1
 VALID_STABLE_LUMA_MAX = 0.9
+
+
+def lsc_unchanged(lsc_avlb, lsc, idx):
+    """Determine if lens shading correction unchanged.
+
+    Args:
+        lsc_avlb:   bool; True if lens shading correction available
+        lsc:        list; lens shading correction matrix
+        idx:        int; frame index
+    Returns:
+        boolean
+    """
+    if lsc_avlb:
+        diff = list((np.array(lsc[idx]) - np.array(lsc[idx-1])) /
+                    np.array(lsc[idx-1]))
+        diff = map(abs, diff)
+        max_abs_diff = max(diff)
+        if max_abs_diff > LSC_TOL:
+            print '  max abs(LSC) change:', round(max_abs_diff, 4)
+            return False
+        else:
+            return True
+    else:
+        return True
+
+
+def tonemap_unchanged(raw_cap, tonemap_g, idx):
+    """Determine if tonemap unchanged.
+
+    Args:
+        raw_cap:    bool; True if RAW capture
+        tonemap_g:  list; green tonemap
+        idx:        int; frame index
+    Returns:
+        boolean
+    """
+    if not raw_cap:
+        return tonemap_g[idx-1] == tonemap_g[idx]
+    else:
+        return True
 
 
 def is_awb_af_stable(cap_info, i):
@@ -80,16 +121,21 @@ def main():
             ae_states = []
             lumas = []
             total_gains = []
+            tonemap_g = []
+            lsc = []
             num_caps = NUM_CAPS
             num_frames = NUM_FRAMES
             raw_cap = f == 0 and raw_avlb and debug
+            lsc_avlb = its.caps.lsc_map(props) and not raw_cap
+            print 'lens shading correction available:', lsc_avlb
+            if lsc_avlb:
+                req['android.statistics.lensShadingMapMode'] = 1
             name_suffix = 'YUV'
             if raw_cap:
                 name_suffix = 'RAW'
                 # break up caps if RAW to reduce load
                 num_caps = NUM_CAPS * 6
                 num_frames = NUM_FRAMES / 6
-
             for j in range(num_caps):
                 caps = cam.do_capture([req]*num_frames, fmt)
                 for i, cap in enumerate(caps):
@@ -127,8 +173,12 @@ def main():
                     print 'AWB state: %d, AWB gains: %s\n AWB matrix: %s' % (
                             awb_state, str(frame['awb_gains']),
                             str(awb_ccm))
-                    if debug:
-                        print 'Tonemap curve:', cap['metadata']['android.tonemap.curve']
+                    if not raw_cap:
+                        tonemap = cap['metadata']['android.tonemap.curve']
+                        tonemap_g.append(tonemap['green'])
+                        print 'G tonemap curve:', tonemap_g[idx]
+                    if lsc_avlb:
+                        lsc.append(cap['metadata']['android.statistics.lensShadingCorrectionMap']['map'])
 
                     img = its.image.convert_capture_to_rgb_image(
                             cap, props=props)
@@ -179,32 +229,37 @@ def main():
                     # Threshold change to trigger check. Small delta_gain might
                     # not be enough to generate a reliable delta_luma to
                     # overcome frame-to-frame variation.
-                    if abs(delta_gain_rel) > DELTA_GAIN_THRESH:
-                        print 'frame %d: %.2f%% delta gain,' % (
-                                i, delta_gain_rel*100),
-                        print '%.2f%% delta luma' % (delta_luma_rel*100)
-                        if delta_gain * delta_luma < 0.0:
-                            failed.append(msg)
-                    elif abs(delta_gain_rel) < DELTA_NO_GAIN_THRESH:
-                        print 'frame %d: <|%.1f%%| delta gain,' % (
-                                i, DELTA_NO_GAIN_THRESH*100),
-                        print '%.2f%% delta luma' % (delta_luma_rel*100)
-                        msg = '%s: ' % fmt['format']
-                        msg += 'frame %d: gain %.1f -> %.1f (%.1f%%), ' % (
-                                i, prev_total_gain, total_gain,
-                                delta_gain_rel*100)
-                        msg += 'luma %f -> %f (%.1f%%)  ' % (
-                                prev_luma, luma, delta_luma_rel*100)
-                        msg += '<|%.1f%%| GAIN, >|%.f%%| LUMA DELTA' % (
-                                DELTA_NO_GAIN_THRESH*100, DELTA_LUMA_THRESH*100)
-                        if abs(delta_luma_rel) > DELTA_LUMA_THRESH:
-                            failed.append(msg)
+                    if (tonemap_unchanged(raw_cap, tonemap_g, i) and
+                                lsc_unchanged(lsc_avlb, lsc, i)):
+                        if abs(delta_gain_rel) > DELTA_GAIN_THRESH:
+                            print ' frame %d: %.2f%% delta gain,' % (
+                                    i, delta_gain_rel*100),
+                            print '%.2f%% delta luma' % (delta_luma_rel*100)
+                            if delta_gain * delta_luma < 0.0:
+                                failed.append(msg)
+                        elif abs(delta_gain_rel) < DELTA_NO_GAIN_THRESH:
+                            print ' frame %d: <|%.1f%%| delta gain,' % (
+                                    i, DELTA_NO_GAIN_THRESH*100),
+                            print '%.2f%% delta luma' % (delta_luma_rel*100)
+                            msg = '%s: ' % fmt['format']
+                            msg += 'frame %d: gain %.1f -> %.1f (%.1f%%), ' % (
+                                    i, prev_total_gain, total_gain,
+                                    delta_gain_rel*100)
+                            msg += 'luma %f -> %f (%.1f%%)  ' % (
+                                    prev_luma, luma, delta_luma_rel*100)
+                            msg += '<|%.1f%%| GAIN, >|%.f%%| LUMA DELTA' % (
+                                    DELTA_NO_GAIN_THRESH*100, DELTA_LUMA_THRESH*100)
+                            if abs(delta_luma_rel) > DELTA_LUMA_THRESH:
+                                failed.append(msg)
+                        else:
+                            print ' frame %d: %.1f%% delta gain,' % (
+                                    i, delta_gain_rel*100),
+                            print '%.2f%% delta luma' % (delta_luma_rel*100)
                     else:
-                        print 'frame %d: %.1f%% delta gain,' % (
-                                i, delta_gain_rel*100),
-                        print '%.2f%% delta luma' % (delta_luma_rel*100)
+                        print ' frame %d -> %d: tonemap' % (i-1, i),
+                        print 'or lens shading correction changed'
                 else:
-                    print 'frame %d -> %d: AWB/AF changed' % (i-1, i)
+                    print ' frame %d -> %d: AWB/AF changed' % (i-1, i)
 
             for i in range(len(lumas)):
                 luma = lumas[i]
