@@ -1539,7 +1539,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_RAISE, 66747, 0);
     }
 
-    @CddTest(requirement="5.4.4/C-4-1")
+    @CddTest(requirement="5.4.1/C-1-4")
     public void testGetMicrophones() throws Exception {
         if (!mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_MICROPHONE)) {
