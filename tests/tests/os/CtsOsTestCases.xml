@@ -36,5 +36,8 @@
     <!-- Load additional APKs onto device -->
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAutoRevokeDummyApp.apk->/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk" />
+        <option
+            name="push"
+            value="CtsAutoRevokeWhitelistedDummyApp.apk->/data/local/tmp/cts/os/CtsAutoRevokeWhitelistedDummyApp.apk" />
     </target_preparer>
 </configuration>
