@@ -90,14 +90,14 @@ class RoleControllerManagerTest {
         roleName: String,
         expectedIsVisible: Boolean
     ) {
-        val future = CompletableFuture<Boolean>()
         runWithShellPermissionIdentity {
+            val future = CompletableFuture<Boolean>()
             roleControllerManager.isApplicationVisibleForRole(
                 roleName, packageName, context.mainExecutor, Consumer { future.complete(it) }
             )
+            val isVisible = future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+            assertThat(isVisible).isEqualTo(expectedIsVisible)
         }
-        val isVisible = future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
-        assertThat(isVisible).isEqualTo(expectedIsVisible)
     }
 
     @Test
@@ -117,16 +117,14 @@ class RoleControllerManagerTest {
     }
 
     private fun assertRoleIsVisible(roleName: String, expectedIsVisible: Boolean) {
-        val future = CompletableFuture<Boolean>()
         runWithShellPermissionIdentity {
+            val future = CompletableFuture<Boolean>()
             roleControllerManager.isRoleVisible(
-                roleName, context.mainExecutor, Consumer {
-                    future.complete(it)
-                }
+                roleName, context.mainExecutor, Consumer { future.complete(it) }
             )
+            val isVisible = future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+            assertThat(isVisible).isEqualTo(expectedIsVisible)
         }
-        val isVisible = future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
-        assertThat(isVisible).isEqualTo(expectedIsVisible)
     }
 
     private fun installPackage(apkPath: String) {
