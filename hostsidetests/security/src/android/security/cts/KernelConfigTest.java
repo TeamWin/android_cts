@@ -221,6 +221,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("SM7150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM7250", null);
         put("LITO", null);
+        put("LAGOON", null);
         put("SM8150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM8150P", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM8250", null);
