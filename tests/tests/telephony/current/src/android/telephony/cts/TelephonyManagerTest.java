@@ -2528,6 +2528,29 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testIsTetheringApnRequired() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // verify SecurityException
+        try {
+            mTelephonyManager.isTetheringApnRequired();
+            fail("testIsTetheringApnRequired: Expected SecurityException on "
+                    + "isTetheringApnRequired");
+        } catch (SecurityException se) {
+            // expected
+        }
+
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.isTetheringApnRequired());
+        } catch (SecurityException se) {
+            fail("testIsIccLockEnabled: SecurityException not expected");
+        }
+    }
+
+    @Test
     public void testGetCarrierInfoForImsiEncryption() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
