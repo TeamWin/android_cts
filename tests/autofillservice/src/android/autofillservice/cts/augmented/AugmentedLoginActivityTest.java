@@ -59,6 +59,7 @@ import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
+import android.view.inputmethod.InlineSuggestionsRequest;
 import android.widget.EditText;
 
 import org.junit.Test;
@@ -835,6 +836,13 @@ public class AugmentedLoginActivityTest
 
         // Assert request
         assertBasicRequestInfo(request, mActivity, usernameId, usernameValue);
+        // TODO: Use helper function instead of assert here. There are some cases augment aufill
+        // will ask IME for inline suggestion request, we will have inline suggestion request in
+        // augment aufill cts, we need to re-visit all augment aufill tests. It is not suitable to
+        // use helper function to assert InlineSuggestionsRequest currently.
+        final InlineSuggestionsRequest inlineRequest =
+                request.request.getInlineSuggestionsRequest();
+        assertThat(inlineRequest).isNull();
 
         // Make sure standard Autofill UI is not shown.
         mUiBot.assertNoDatasetsEver();
