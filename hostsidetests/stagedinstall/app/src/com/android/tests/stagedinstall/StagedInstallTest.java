@@ -147,6 +147,13 @@ public class StagedInstallTest {
             /*isApex*/true, "com.android.apex.cts.shim.v2_sdk_target_p.apex");
     private static final TestApp CorruptedApex_b146895998 = new TestApp(
             "StagedInstallTestCorruptedApex_b146895998", "", 1, true, "corrupted_b146895998.apex");
+    private static final TestApp Apex2NoApkSignature = new TestApp(
+            "StagedInstallTestApexV2_NoApkSignature", SHIM_PACKAGE_NAME, 1,
+            /*isApex*/true, "com.android.apex.cts.shim.v2_unsigned_apk_container.apex");
+    private static final TestApp Apex2UnsignedPayload = new TestApp(
+            "StagedInstallTestApexV2_UnsignedPayload", SHIM_PACKAGE_NAME, 1,
+            /*isApex*/true, "com.android.apex.cts.shim.v2_unsigned_payload.apex");
+
     @Before
     public void adoptShellPermissions() {
         InstrumentationRegistry
@@ -1068,6 +1075,27 @@ public class StagedInstallTest {
         int sessionId = stageSingleApk(CorruptedApex_b146895998).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo).isStagedSessionFailed();
+    }
+
+    /**
+     * Should fail to pass apk signature check
+     */
+    @Test
+    public void testApexWithUnsignedApkFailsVerification() throws Exception {
+        assertThat(stageSingleApk(Apex2NoApkSignature).getErrorMessage())
+                .contains("INSTALL_PARSE_FAILED_NO_CERTIFICATES");
+    }
+
+    /**
+     * Should fail to verify apex with unsigned payload
+     */
+    @Test
+    public void testApexWithUnsignedPayloadFailsVerification() throws Exception {
+        int sessionId = stageSingleApk(Apex2UnsignedPayload).assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
+        assertThat(sessionInfo).isStagedSessionFailed();
+        assertThat(sessionInfo.getStagedSessionErrorMessage())
+                .contains("AVB footer verification failed");
     }
 
     private static long getInstalledVersion(String packageName) {

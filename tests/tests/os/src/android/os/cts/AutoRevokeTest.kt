@@ -26,7 +26,7 @@ import android.graphics.Rect
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
-import android.provider.Settings.*
+import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
@@ -34,7 +34,8 @@ import android.test.InstrumentationTestCase
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
 import com.android.compatibility.common.util.SystemUtil
-import com.android.compatibility.common.util.SystemUtil.*
+import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.UiDumpUtils
@@ -46,7 +47,10 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
+private const val APK_WHITELISTED_PATH =
+        "/data/local/tmp/cts/os/CtsAutoRevokeWhitelistedDummyApp.apk"
 private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
+private const val APK_WHITELISTED_PACKAGE_NAME = "android.os.cts.autorevokewhitelisteddummyapp"
 
 /**
  * Test for auto revoke
@@ -68,6 +72,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 eventually {
                     assertPermission(PERMISSION_GRANTED)
                 }
+                goBack()
                 goHome()
                 Thread.sleep(5)
 
@@ -79,7 +84,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
                     assertPermission(PERMISSION_DENIED)
                 }
                 runShellCommand("cmd statusbar expand-notifications")
-                waitFindObject(By.text("App permissions automatically removed"))
+                waitFindObject(By.textContains("unused app"))
                         .click()
                 waitFindObject(By.text(APK_PACKAGE_NAME))
                 waitFindObject(By.text("Calendar permission removed"))
@@ -114,7 +119,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
     @AppModeFull(reason = "Uses separate apps for testing")
     fun testAutoRevoke_userWhitelisting() {
         wakeUpScreen()
-        withUnusedThresholdMs(TimeUnit.DAYS.toMillis(30)) {
+        withUnusedThresholdMs(4L) {
             withDummyApp {
                 // Setup
                 startApp()
@@ -133,12 +138,39 @@ class AutoRevokeTest : InstrumentationTestCase() {
                     assertFalse(getWhitelistToggle().isChecked)
                 }
 
+                // Run
+                goBack()
+                goBack()
+                goBack()
+                runAutoRevoke()
+                Thread.sleep(500L)
+
                 // Verify
-                goBack()
-                goBack()
-                goBack()
                 startApp()
                 assertWhitelistState(true)
+                assertPermission(PERMISSION_GRANTED)
+            }
+        }
+    }
+
+    @AppModeFull(reason = "Uses separate apps for testing")
+    fun testAutoRevoke_manifestWhitelisting() {
+        wakeUpScreen()
+        withUnusedThresholdMs(5L) {
+            withDummyApp(APK_WHITELISTED_PATH, APK_WHITELISTED_PACKAGE_NAME) {
+                // Setup
+                startApp(APK_WHITELISTED_PACKAGE_NAME)
+                clickPermissionAllow()
+                assertWhitelistState(true)
+
+                // Run
+                goHome()
+                Thread.sleep(20L)
+                runAutoRevoke()
+                Thread.sleep(500L)
+
+                // Verify
+                assertPermission(PERMISSION_GRANTED, APK_WHITELISTED_PACKAGE_NAME)
             }
         }
     }
@@ -201,19 +233,19 @@ class AutoRevokeTest : InstrumentationTestCase() {
 
     private inline fun <T> withUnusedThresholdMs(threshold: Long, action: () -> T): T {
         return withDeviceConfig(
-                "permissions", "auto_revoke_unused_threshold_millis", threshold.toString(), action)
+                "permissions", "auto_revoke_unused_threshold_millis2", threshold.toString(), action)
     }
 
-    private fun installApp() {
-        assertThat(runShellCommand("pm install -r $APK_PATH"), containsString("Success"))
+    private fun installApp(apk: String = APK_PATH) {
+        assertThat(runShellCommand("pm install -r $apk"), containsString("Success"))
     }
 
-    private fun uninstallApp() {
-        assertThat(runShellCommand("pm uninstall $APK_PACKAGE_NAME"), containsString("Success"))
+    private fun uninstallApp(packageName: String = APK_PACKAGE_NAME) {
+        assertThat(runShellCommand("pm uninstall $packageName"), containsString("Success"))
     }
 
-    private fun startApp() {
-        runShellCommand("am start -n $APK_PACKAGE_NAME/$APK_PACKAGE_NAME.MainActivity")
+    private fun startApp(packageName: String = APK_PACKAGE_NAME) {
+        runShellCommand("am start -n $packageName/$packageName.MainActivity")
     }
 
     private fun goHome() {
@@ -229,16 +261,20 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 .click()
     }
 
-    private inline fun withDummyApp(action: () -> Unit) {
-        installApp()
+    private inline fun withDummyApp(
+        apk: String = APK_PATH,
+        packageName: String = APK_PACKAGE_NAME,
+        action: () -> Unit
+    ) {
+        installApp(apk)
         try {
             action()
         } finally {
-            uninstallApp()
+            uninstallApp(packageName)
         }
     }
 
-    private fun assertPermission(state: Int) {
+    private fun assertPermission(state: Int, packageName: String = APK_PACKAGE_NAME) {
         // For some reason this incorrectly always returns PERMISSION_DENIED
 //        runWithShellPermissionIdentity {
 //            assertEquals(
@@ -248,7 +284,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
 
         try {
             context.startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .setData(Uri.fromParts("package", APK_PACKAGE_NAME, null))
+                    .setData(Uri.fromParts("package", packageName, null))
                     .addFlags(FLAG_ACTIVITY_NEW_TASK))
 
             waitFindObject(byTextIgnoreCase("Permissions")).click()
