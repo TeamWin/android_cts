@@ -372,10 +372,7 @@ public class MediaStore_Images_MediaTest {
         }
 
         // Now remove ownership, which means that Exif/XMP location data should be redacted
-        ProviderTestUtils.executeShellCommand("content update"
-                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
-                + " --uri " + publishUri + " --bind owner_package_name:n:",
-                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+        ProviderTestUtils.clearOwner(publishUri);
         try (InputStream is = mContentResolver.openInputStream(publishUri)) {
             final ExifInterface exif = new ExifInterface(is);
             final float[] latLong = new float[2];
