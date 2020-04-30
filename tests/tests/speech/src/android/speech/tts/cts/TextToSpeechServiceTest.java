@@ -15,6 +15,7 @@
  */
 package android.speech.tts.cts;
 
+import android.media.AudioAttributes;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Environment;
@@ -27,6 +28,7 @@ import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Tests for {@link android.speech.tts.TextToSpeechService} using StubTextToSpeechService.
@@ -204,6 +206,24 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
         } finally {
             sampleFile.delete();
         }
+    }
+
+    public void testSetLanguage() {
+      TextToSpeech tts = getTts();
+
+      assertEquals(tts.setLanguage(null), TextToSpeech.LANG_NOT_SUPPORTED);
+      assertEquals(tts.setLanguage(new Locale("en", "US")), TextToSpeech.LANG_COUNTRY_AVAILABLE);
+      assertEquals(tts.setLanguage(new Locale("en")), TextToSpeech.LANG_AVAILABLE);
+      assertEquals(tts.setLanguage(new Locale("es", "US")), TextToSpeech.LANG_NOT_SUPPORTED);
+    }
+
+    public void testAddAudioAttributes() {
+      TextToSpeech tts = getTts();
+      AudioAttributes attr =
+          new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build();
+
+      assertEquals(tts.setAudioAttributes(null), TextToSpeech.ERROR);
+      assertEquals(tts.setAudioAttributes(attr), TextToSpeech.SUCCESS);
     }
 
     private HashMap<String, String> createParams(String utteranceId) {
