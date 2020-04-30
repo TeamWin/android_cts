@@ -123,7 +123,14 @@ public class MatchFlagTests {
                 .addFlags(Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER)
                 .addFlags(Intent.FLAG_ACTIVITY_REQUIRE_DEFAULT);
 
-        startActivity(uniqueUriIntentNoBrowserRequireDefault);
+        // with non-browser, we'd expect the resolver
+        // with require default, we'll get activity not found
+        try {
+            startActivity(uniqueUriIntentNoBrowserRequireDefault);
+            fail("Should fail to launch when started with non-browser and require default");
+        } catch (ActivityNotFoundException e) {
+            // hooray!
+        }
     }
 
     private static void startActivity(Intent onlyBrowserIntent) {
