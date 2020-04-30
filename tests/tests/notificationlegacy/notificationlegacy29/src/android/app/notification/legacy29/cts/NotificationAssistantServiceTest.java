@@ -545,7 +545,7 @@ public class NotificationAssistantServiceTest {
     @Test
     public void testOnNotificationVisibilityChanged() throws Exception {
         setUpListeners();
-
+        turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
 
         mNotificationAssistantService.resetNotificationVisibilityCounts();
@@ -573,7 +573,7 @@ public class NotificationAssistantServiceTest {
     @Test
     public void testOnNotificationsSeen() throws Exception {
         setUpListeners();
-
+        turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
 
         mNotificationAssistantService.resetNotificationVisibilityCounts();
@@ -595,7 +595,7 @@ public class NotificationAssistantServiceTest {
     @Test
     public void testOnPanelRevealedAndHidden() throws Exception {
         setUpListeners();
-
+        turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
 
         // Initialize as closed
@@ -668,6 +668,12 @@ public class NotificationAssistantServiceTest {
                         .build();
         mNotificationManager.notify(id, notification);
     }
+
+   private void turnScreenOn() throws IOException {
+       Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+       runCommand("input keyevent KEYCODE_WAKEUP", instrumentation);
+       runCommand("wm dismiss-keyguard", instrumentation);
+   }
 
     private void toggleListenerAccess(boolean on) throws IOException {
 
