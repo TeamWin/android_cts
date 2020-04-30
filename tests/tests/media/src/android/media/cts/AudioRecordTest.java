@@ -576,7 +576,8 @@ public class AudioRecordTest {
                 // For 16 bit data, use shorts
                 final short[] shortData = new short[BUFFER_SAMPLES];
                 final AudioHelper.TimestampVerifier tsVerifier =
-                        new AudioHelper.TimestampVerifier(TAG, RECORD_SAMPLE_RATE);
+                        new AudioHelper.TimestampVerifier(TAG, RECORD_SAMPLE_RATE,
+                                isProAudioDevice());
 
                 while (samplesRead < targetSamples) {
                     final int amount = samplesRead == 0 ? numChannels :
@@ -1598,6 +1599,11 @@ public class AudioRecordTest {
     private boolean isLowLatencyDevice() {
         return getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_AUDIO_LOW_LATENCY);
+    }
+
+    private boolean isProAudioDevice() {
+        return getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUDIO_PRO);
     }
 
     private void verifyContinuousTimestamps(
