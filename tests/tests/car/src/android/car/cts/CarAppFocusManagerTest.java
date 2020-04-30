@@ -17,6 +17,8 @@ package android.car.cts;
 
 import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -42,10 +44,11 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @SmallTest
-@RequiresDevice
 @RunWith(AndroidJUnit4.class)
 public class CarAppFocusManagerTest extends CarApiTestBase {
     private static final String TAG = CarAppFocusManagerTest.class.getSimpleName();
+    private final Context mContext =
+            InstrumentationRegistry.getInstrumentation().getTargetContext();
     private CarAppFocusManager mManager;
 
     @Before
@@ -89,6 +92,26 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
     }
 
     @Test
+    public void testRequestAbandon() throws Exception {
+        FocusOwnershipCallback owner = new FocusOwnershipCallback();
+        int r = mManager.requestAppFocus(APP_FOCUS_TYPE_NAVIGATION, owner);
+        assertThat(r).isEqualTo(CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED);
+        assertThat(mManager.isOwningFocus(owner, APP_FOCUS_TYPE_NAVIGATION)).isTrue();
+        mManager.abandonAppFocus(owner, APP_FOCUS_TYPE_NAVIGATION);
+        assertThat(mManager.isOwningFocus(owner, APP_FOCUS_TYPE_NAVIGATION)).isFalse();
+    }
+
+    @Test
+    public void testRequestAbandon2() throws Exception {
+        FocusOwnershipCallback owner = new FocusOwnershipCallback();
+        int r = mManager.requestAppFocus(APP_FOCUS_TYPE_NAVIGATION, owner);
+        assertThat(r).isEqualTo(CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED);
+        assertThat(mManager.isOwningFocus(owner, APP_FOCUS_TYPE_NAVIGATION)).isTrue();
+        mManager.abandonAppFocus(owner);
+        assertThat(mManager.isOwningFocus(owner, APP_FOCUS_TYPE_NAVIGATION)).isFalse();
+    }
+
+    @Test
     public void testRegisterUnregister() throws Exception {
         FocusChangedListerner listener = new FocusChangedListerner();
         FocusChangedListerner listener2 = new FocusChangedListerner();
@@ -100,12 +123,9 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
     @Test
     public void testFocusChange() throws Exception {
-        Context context =
-                InstrumentationRegistry.getInstrumentation().getTargetContext();
-
         DefaultServiceConnectionListener connectionListener =
                 new DefaultServiceConnectionListener();
-        Car car2 = Car.createCar(context, connectionListener, null);
+        Car car2 = Car.createCar(mContext, connectionListener, null);
         car2.connect();
         connectionListener.waitForConnection(DEFAULT_WAIT_TIMEOUT_MS);
         CarAppFocusManager manager2 = (CarAppFocusManager)
@@ -205,9 +225,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
     public void testFilter() throws Exception {
         DefaultServiceConnectionListener connectionListener =
                 new DefaultServiceConnectionListener();
-        Context context =
-                InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Car car2 = Car.createCar(context, connectionListener);
+        Car car2 = Car.createCar(mContext, connectionListener);
         car2.connect();
         connectionListener.waitForConnection(DEFAULT_WAIT_TIMEOUT_MS);
         CarAppFocusManager manager2 = (CarAppFocusManager)
