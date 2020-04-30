@@ -49,6 +49,7 @@ public class SmsCbMessageTest {
     private static final int TEST_SERIAL = 1234;
     private static final String TEST_PLMN = "111222";
     private static final SmsCbLocation TEST_LOCATION = new SmsCbLocation(TEST_PLMN, -1, -1);
+    private static final int TEST_DCS = 0;
     private static final int TEST_SERVICE_CATEGORY = 4097;
     private static final String TEST_LANGUAGE = "en";
     private static final String TEST_BODY = "test body";
@@ -79,9 +80,9 @@ public class SmsCbMessageTest {
             }
         });
         mSmsCbMessage = new SmsCbMessage(TEST_MESSAGE_FORMAT, TEST_GEO_SCOPE, TEST_SERIAL,
-                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, 0, TEST_BODY, TEST_PRIORITY,
-                TEST_ETWS_INFO, null, TEST_MAX_WAIT_TIME, TEST_GEOS, TEST_RECEIVED_TIME,
-                TEST_SLOT, TEST_SUB_ID);
+                TEST_LOCATION, TEST_SERVICE_CATEGORY, TEST_LANGUAGE, TEST_DCS, TEST_BODY,
+                TEST_PRIORITY, TEST_ETWS_INFO, null, TEST_MAX_WAIT_TIME, TEST_GEOS,
+                TEST_RECEIVED_TIME, TEST_SLOT, TEST_SUB_ID);
     }
 
     @Test
@@ -153,6 +154,11 @@ public class SmsCbMessageTest {
     @Test
     public void testEtwsInfo() {
         assertEquals(TEST_ETWS_INFO, mSmsCbMessage.getEtwsWarningInfo());
+    }
+
+    @Test
+    public void testDataCodingScheme() {
+        assertEquals(TEST_DCS, mSmsCbMessage.getDataCodingScheme());
     }
 
     @Test
