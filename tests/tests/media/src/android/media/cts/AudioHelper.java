@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -251,6 +252,7 @@ public class AudioHelper {
         }
     }
 
+    @CddTest(requirement="5.10/C-1-6,C-1-7")
     public static class TimestampVerifier {
 
         // CDD 5.6 1ms timestamp accuracy
@@ -259,7 +261,7 @@ public class AudioHelper {
         private static final double TEST_STD_JITTER_MS_WARN = 1.;    // CDD requirement warning
 
         // CDD 5.6 100ms track startup latency
-        private static final double TEST_STARTUP_TIME_MS_ALLOWED = 500.; // flaky tolerance 5x
+        private final double TEST_STARTUP_TIME_MS_ALLOWED; // CDD requirement error
         private static final double TEST_STARTUP_TIME_MS_WARN = 100.;    // CDD requirement warning
 
         private static final int MILLIS_PER_SECOND = 1000;
@@ -280,9 +282,12 @@ public class AudioHelper {
         private double mMaxAbsJitterMs = 0.;
         private int mWarmupCount = 0;
 
-        public TimestampVerifier(@Nullable String tag, @IntRange(from=4000) int sampleRate) {
+        public TimestampVerifier(@Nullable String tag, @IntRange(from=4000) int sampleRate,
+                boolean isProAudioDevice) {
             mTag = tag;  // Log accepts null
             mSampleRate = sampleRate;
+            // For pro audio, allow slightly higher than MUST value to account for variability.
+            TEST_STARTUP_TIME_MS_ALLOWED = isProAudioDevice ? 300. /* MUST is 200. */ : 500.;
         }
 
         public int getJitterCount() { return mJitterCount; }
