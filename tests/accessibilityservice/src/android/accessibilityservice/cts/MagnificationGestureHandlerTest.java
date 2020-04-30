@@ -50,6 +50,7 @@ import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.widget.TextView;
 
@@ -67,6 +68,7 @@ import org.junit.runner.RunWith;
 /**
  * Class for testing magnification.
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 public class MagnificationGestureHandlerTest {
