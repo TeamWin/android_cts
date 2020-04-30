@@ -25,6 +25,7 @@ import android.accessibilityservice.AccessibilityButtonController;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -41,6 +42,7 @@ import org.junit.runner.RunWith;
  *
  * TODO: Extend coverage with a more precise signal if a device is compatible with the button
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityButtonTest {
 
