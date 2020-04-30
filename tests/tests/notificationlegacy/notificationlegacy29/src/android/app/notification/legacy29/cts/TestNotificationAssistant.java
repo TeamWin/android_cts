@@ -36,6 +36,8 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     int notificationVisibleCount = 0;
     int notificationSeenCount = 0;
     int notificationHiddenCount = 0;
+    String snoozedKey;
+    String snoozedUntilContext;
     private NotificationManager mNotificationManager;
 
     public static String getId() {
@@ -73,6 +75,8 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     @Override
     public void onNotificationSnoozedUntilContext(StatusBarNotification statusBarNotification,
             String s) {
+        snoozedKey = statusBarNotification.getKey();
+        snoozedUntilContext = s;
     }
 
     @Override
