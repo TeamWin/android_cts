@@ -658,4 +658,19 @@ public class JavaClientTest {
         mInterface.renameBar(foo, "MYBAR");
         assertEquals("MYBAR", foo.d.a);
     }
+
+    @Test
+    public void testRepeatStringNullableLater() throws RemoteException {
+        // see notes in native NdkBinderTest_Aidl RepeatStringNullableLater
+        boolean handlesNull = !mShouldBeOld || mExpectedName == "JAVA";
+        try {
+            assertEquals(null, mInterface.RepeatStringNullableLater(null));
+            assertTrue("should reach here if null is handled", handlesNull);
+        } catch (NullPointerException e) {
+            assertFalse("should reach here if null isn't handled", handlesNull);
+        }
+        assertEquals("", mInterface.RepeatStringNullableLater(""));
+        assertEquals("a", mInterface.RepeatStringNullableLater("a"));
+        assertEquals("foo", mInterface.RepeatStringNullableLater("foo"));
+    }
 }
