@@ -2099,6 +2099,11 @@ public class AudioTrackTest {
                 .isLowRamDevice();
     }
 
+    private boolean isProAudioDevice() {
+        return getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUDIO_PRO);
+    }
+
     @Test
     public void testGetTimestamp() throws Exception {
         if (!hasAudioOutput()) {
@@ -2185,7 +2190,7 @@ public class AudioTrackTest {
 
             long framesWritten = 0;
             final AudioHelper.TimestampVerifier tsVerifier =
-                    new AudioHelper.TimestampVerifier(TAG, sampleRate);
+                    new AudioHelper.TimestampVerifier(TAG, sampleRate, isProAudioDevice());
             for (int i = 0; i < TEST_LOOP_CNT; ++i) {
                 final long trackWriteTimeNs = System.nanoTime();
 
