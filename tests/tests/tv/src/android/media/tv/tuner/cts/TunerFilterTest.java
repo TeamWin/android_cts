@@ -23,13 +23,18 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.media.tv.tuner.Tuner;
+import android.media.tv.tuner.filter.AlpFilterConfiguration;
 import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.DownloadSettings;
 import android.media.tv.tuner.filter.Filter;
+import android.media.tv.tuner.filter.IpFilterConfiguration;
+import android.media.tv.tuner.filter.MmtpFilterConfiguration;
 import android.media.tv.tuner.filter.PesSettings;
 import android.media.tv.tuner.filter.RecordSettings;
 import android.media.tv.tuner.filter.SectionSettingsWithSectionBits;
 import android.media.tv.tuner.filter.SectionSettingsWithTableInfo;
+import android.media.tv.tuner.filter.TlvFilterConfiguration;
+import android.media.tv.tuner.filter.TsFilterConfiguration;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -165,6 +170,101 @@ public class TunerFilterTest {
         assertTrue(settings.isRepeat());
         assertTrue(settings.isRaw());
     }
+
+    @Test
+    public void testAlpFilterConfiguration() throws Exception {
+        if (!hasTuner()) return;
+        AlpFilterConfiguration config =
+                AlpFilterConfiguration
+                        .builder()
+                        .setPacketType(AlpFilterConfiguration.PACKET_TYPE_COMPRESSED)
+                        .setLengthType(AlpFilterConfiguration.LENGTH_TYPE_WITH_ADDITIONAL_HEADER)
+                        .build();
+
+        assertEquals(Filter.TYPE_ALP, config.getType());
+        assertEquals(AlpFilterConfiguration.PACKET_TYPE_COMPRESSED, config.getPacketType());
+        assertEquals(
+                AlpFilterConfiguration.LENGTH_TYPE_WITH_ADDITIONAL_HEADER, config.getLengthType());
+    }
+
+    @Test
+    public void testIpFilterConfiguration() throws Exception {
+        if (!hasTuner()) return;
+        IpFilterConfiguration config =
+                IpFilterConfiguration
+                        .builder()
+                        .setSrcIpAddress(new byte[] {(byte) 0xC0, (byte) 0xA8, 0, 1})
+                        .setDstIpAddress(new byte[] {(byte) 0xC0, (byte) 0xA8, 3, 4})
+                        .setSrcPort(33)
+                        .setDstPort(23)
+                        .setPassthrough(false)
+                        .build();
+
+        assertEquals(Filter.TYPE_IP, config.getType());
+        Assert.assertArrayEquals(new byte[] {(byte) 0xC0, (byte) 0xA8, 0, 1}, config.getSrcIpAddress());
+        Assert.assertArrayEquals(new byte[] {(byte) 0xC0, (byte) 0xA8, 3, 4}, config.getDstIpAddress());
+        assertEquals(33, config.getSrcPort());
+        assertEquals(23, config.getDstPort());
+        assertFalse(config.isPassthrough());
+    }
+
+    @Test
+    public void testMmtpFilterConfiguration() throws Exception {
+        if (!hasTuner()) return;
+        MmtpFilterConfiguration config =
+                MmtpFilterConfiguration
+                        .builder()
+                        .setMmtpPacketId(3)
+                        .build();
+
+        assertEquals(Filter.TYPE_MMTP, config.getType());
+        assertEquals(3, config.getMmtpPacketId());
+    }
+
+    @Test
+    public void testTlvFilterConfiguration() throws Exception {
+        if (!hasTuner()) return;
+        TlvFilterConfiguration config =
+                TlvFilterConfiguration
+                        .builder()
+                        .setPacketType(TlvFilterConfiguration.PACKET_TYPE_IPV4)
+                        .setCompressedIpPacket(true)
+                        .setPassthrough(false)
+                        .build();
+
+        assertEquals(Filter.TYPE_TLV, config.getType());
+        assertEquals(TlvFilterConfiguration.PACKET_TYPE_IPV4, config.getPacketType());
+        assertTrue(config.isCompressedIpPacket());
+        assertFalse(config.isPassthrough());
+    }
+
+    @Test
+    public void testTsFilterConfiguration() throws Exception {
+        if (!hasTuner()) return;
+
+        PesSettings settings =
+                PesSettings
+                        .builder(Filter.TYPE_TS)
+                        .setStreamId(3)
+                        .setRaw(false)
+                        .build();
+
+        TsFilterConfiguration config =
+                TsFilterConfiguration
+                        .builder()
+                        .setTpid(521)
+                        .setSettings(settings)
+                        .build();
+
+        assertEquals(Filter.TYPE_TS, config.getType());
+        assertEquals(521, config.getTpid());
+
+        assertTrue(config.getSettings() instanceof PesSettings);
+        PesSettings pes = (PesSettings) config.getSettings();
+        assertEquals(3, pes.getStreamId());
+        assertFalse(pes.isRaw());
+    }
+
 
     private boolean hasTuner() {
         return mContext.getPackageManager().hasSystemFeature("android.hardware.tv.tuner");
