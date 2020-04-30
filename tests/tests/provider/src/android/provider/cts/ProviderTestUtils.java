@@ -306,6 +306,20 @@ public class ProviderTestUtils {
                 vol.getMediaStoreVolumeName());
     }
 
+    public static void setOwner(Uri uri, String packageName) throws Exception {
+        executeShellCommand("content update"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + uri
+                + " --bind owner_package_name:s:" + packageName);
+    }
+
+    public static void clearOwner(Uri uri) throws Exception {
+        executeShellCommand("content update"
+                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
+                + " --uri " + uri
+                + " --bind owner_package_name:n:");
+    }
+
     public static byte[] hash(InputStream in) throws Exception {
         try (DigestInputStream digestIn = new DigestInputStream(in,
                 MessageDigest.getInstance("SHA-1"));
