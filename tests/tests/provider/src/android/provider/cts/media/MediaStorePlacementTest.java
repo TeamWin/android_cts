@@ -245,6 +245,7 @@ public class MediaStorePlacementTest {
         mValues.put(MediaColumns.DISPLAY_NAME, "edited" + System.nanoTime());
         mValues.put(MediaColumns.MIME_TYPE, "image/png");
         mValues.put(MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_ALARMS + "/");
+        mValues.put(MediaColumns.IS_PENDING, 1);
         try {
             mContentResolver.insert(mExternalImages, mValues, mExtras);
             fail();
@@ -262,6 +263,13 @@ public class MediaStorePlacementTest {
         try (OutputStream out = mContentResolver.openOutputStream(probeUri)) {
             out.write(42);
         }
+
+        // And we should be able to publish it
+        mValues.clear();
+        mValues.put(MediaColumns.IS_PENDING, 0);
+        assertEquals(1, mContentResolver.update(probeUri, mValues, null));
+
+        // And finally able to delete it
         assertEquals(1, mContentResolver.delete(probeUri, null));
     }
 
