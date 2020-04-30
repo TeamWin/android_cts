@@ -48,6 +48,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,6 +69,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Class for testing {@link AccessibilityServiceInfo}.
  */
+@Presubmit
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityMagnificationTest {

@@ -50,6 +50,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.os.SystemClock;
+import android.platform.test.annotations.Presubmit;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Gravity;
@@ -82,6 +83,7 @@ import java.util.concurrent.TimeoutException;
  * Tests that window changes produce the correct events and that AccessibilityWindowInfos are
  * properly populated
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityWindowReportingTest {
     private static final int TIMEOUT_ASYNC_PROCESSING = 5000;
