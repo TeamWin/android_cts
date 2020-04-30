@@ -2107,6 +2107,9 @@ public class TelephonyManagerTest {
         assertEquals(0, cq.getMaxRelativeJitter());
         assertEquals(0, cq.getAverageRoundTripTime());
         assertEquals(0, cq.getCodecType());
+        assertEquals(false, cq.isRtpInactivityDetected());
+        assertEquals(false, cq.isIncomingSilenceDetectedAtCallSetup());
+        assertEquals(false, cq.isOutgoingSilenceDetectedAtCallSetup());
     }
 
 
