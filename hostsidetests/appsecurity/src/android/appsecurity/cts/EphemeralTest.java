@@ -547,33 +547,33 @@ public class EphemeralTest extends BaseAppSecurityTest {
 
     private void installApp(String apk) throws Exception {
         new InstallMultiple(false /* instant */)
-                .addApk(apk)
+                .addFile(apk)
                 .run();
     }
 
     private void installApp(String apk, String installer) throws Exception {
         new InstallMultiple(false /* instant */)
-                .addApk(apk)
+                .addFile(apk)
                 .addArg("-i " + installer)
                 .run();
     }
 
     private void installEphemeralApp(String apk) throws Exception {
         new InstallMultiple(true /* instant */)
-                .addApk(apk)
+                .addFile(apk)
                 .run();
     }
 
     private void installEphemeralApp(String apk, String installer) throws Exception {
         new InstallMultiple(true /* instant */)
-                .addApk(apk)
+                .addFile(apk)
                 .addArg("-i " + installer)
                 .run();
     }
 
     private void installFullApp(String apk) throws Exception {
         new InstallMultiple(false /* instant */)
-                .addApk(apk)
+                .addFile(apk)
                 .addArg("--full")
                 .run();
     }

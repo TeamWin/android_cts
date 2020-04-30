@@ -66,7 +66,7 @@ public class UseProcessTest extends BaseAppSecurityTest {
         testInstallUsePackageSuccess(true);
     }
     private void testInstallUsePackageSuccess(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_SUCCESS).run();
+        new InstallMultiple(instant).addFile(APK_SUCCESS).run();
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
 
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, SUCCESS_UNIT_TEST_CLASS, null);
@@ -83,7 +83,7 @@ public class UseProcessTest extends BaseAppSecurityTest {
         testInstallUsePackageFailApplication(true);
     }
     private void testInstallUsePackageFailApplication(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_FAIL_APPLICATION).runExpectingFailure(
+        new InstallMultiple(instant).addFile(APK_FAIL_APPLICATION).runExpectingFailure(
                 "Failure [INSTALL_FAILED_PROCESS_NOT_DEFINED: Scanning Failed.: " +
                         "Can't install because application");
         assertTrue(!getDevice().getInstalledPackageNames().contains(PKG));
@@ -100,7 +100,7 @@ public class UseProcessTest extends BaseAppSecurityTest {
         testInstallUsePackageFailActivity(true);
     }
     private void testInstallUsePackageFailActivity(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_FAIL_ACTIVITY).runExpectingFailure(
+        new InstallMultiple(instant).addFile(APK_FAIL_ACTIVITY).runExpectingFailure(
                 "Failure [INSTALL_FAILED_PROCESS_NOT_DEFINED: Scanning Failed.: " +
                         "Can't install because activity com.android.cts.useprocess.DummyActivity");
         assertTrue(!getDevice().getInstalledPackageNames().contains(PKG));
@@ -117,7 +117,7 @@ public class UseProcessTest extends BaseAppSecurityTest {
         testInstallUsePackageFailService(true);
     }
     private void testInstallUsePackageFailService(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_FAIL_SERVICE).runExpectingFailure(
+        new InstallMultiple(instant).addFile(APK_FAIL_SERVICE).runExpectingFailure(
                 "Failure [INSTALL_FAILED_PROCESS_NOT_DEFINED: Scanning Failed.: " +
                         "Can't install because service com.android.cts.useprocess.DummyService");
         assertTrue(!getDevice().getInstalledPackageNames().contains(PKG));
@@ -134,7 +134,7 @@ public class UseProcessTest extends BaseAppSecurityTest {
         testInstallUsePackageFailReceiver(true);
     }
     private void testInstallUsePackageFailReceiver(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_FAIL_RECEIVER).runExpectingFailure(
+        new InstallMultiple(instant).addFile(APK_FAIL_RECEIVER).runExpectingFailure(
                 "Failure [INSTALL_FAILED_PROCESS_NOT_DEFINED: Scanning Failed.: " +
                         "Can't install because receiver com.android.cts.useprocess.DummyReceiver");
         assertTrue(!getDevice().getInstalledPackageNames().contains(PKG));
@@ -151,7 +151,7 @@ public class UseProcessTest extends BaseAppSecurityTest {
         testInstallUsePackageFailProvider(true);
     }
     private void testInstallUsePackageFailProvider(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_FAIL_PROVIDER).runExpectingFailure(
+        new InstallMultiple(instant).addFile(APK_FAIL_PROVIDER).runExpectingFailure(
                 "Failure [INSTALL_FAILED_PROCESS_NOT_DEFINED: Scanning Failed.: " +
                         "Can't install because provider com.android.cts.useprocess.DummyProvider");
         assertTrue(!getDevice().getInstalledPackageNames().contains(PKG));
