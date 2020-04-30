@@ -62,7 +62,7 @@ public class ExceptionUtils {
      *
      * @return {@code t} for convenience
      */
-    public static @NonNull Throwable appendCause(@NonNull Throwable t, @Nullable Throwable cause) {
+    public static @NonNull <E extends Throwable> E appendCause(@NonNull E t, @Nullable Throwable cause) {
         if (cause != null) {
             getRootCause(t).initCause(cause);
         }
