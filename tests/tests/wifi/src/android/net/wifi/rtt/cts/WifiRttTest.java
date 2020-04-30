@@ -57,6 +57,9 @@ public class WifiRttTest extends TestBase {
     // Valid Mac Address
     private static final MacAddress MAC = MacAddress.fromString("00:01:02:03:04:05");
 
+    // Interval between two ranging request.
+    private static final int intervalMs = 200;
+
     /**
      * Test Wi-Fi RTT ranging operation:
      * - Scan for visible APs for the test AP (which is validated to support IEEE 802.11mc)
@@ -145,6 +148,8 @@ public class WifiRttTest extends TestBase {
             } else {
                 numFailures++;
             }
+            // Sleep a while to avoid stress AP.
+            Thread.sleep(intervalMs);
         }
 
         // Save results to log
