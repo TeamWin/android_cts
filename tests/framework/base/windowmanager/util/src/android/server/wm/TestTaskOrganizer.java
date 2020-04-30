@@ -23,6 +23,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import android.app.ActivityManager;
 import android.view.Display;
+import android.view.SurfaceControl;
 import android.window.TaskOrganizer;
 import android.window.WindowContainerTransaction;
 
@@ -135,7 +136,8 @@ class TestTaskOrganizer extends TaskOrganizer {
     }
 
     @Override
-    public void onTaskAppeared(@NonNull ActivityManager.RunningTaskInfo taskInfo) {
+    public void onTaskAppeared(@NonNull ActivityManager.RunningTaskInfo taskInfo,
+            SurfaceControl leash) {
         addTask(taskInfo);
     }
 
