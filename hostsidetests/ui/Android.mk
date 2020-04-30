@@ -24,13 +24,8 @@ LOCAL_MODULE := CtsUiHostTestCases
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
-
-$(COMPATIBILITY_TESTCASES_OUT_cts)/CtsUiHostTestCases.jar : $(COMPATIBILITY_TESTCASES_OUT_cts)/com.replica.replicaisland.apk
-
-LOCAL_CTS_TEST_PACKAGE := android.ui.cts
-
 # *Not* tagged as a cts test artifact intentionally: b/109660132
+#$(COMPATIBILITY_TESTCASES_OUT_cts)/CtsUiHostTestCases.jar : $(COMPATIBILITY_TESTCASES_OUT_cts)/com.replica.replicaisland.apk
 LOCAL_COMPATIBILITY_SUITE := general-tests
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
