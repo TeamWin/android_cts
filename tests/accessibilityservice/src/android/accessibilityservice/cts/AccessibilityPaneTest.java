@@ -34,6 +34,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.app.UiAutomation.AccessibilityEventFilter;
+import android.platform.test.annotations.Presubmit;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.TextView;
@@ -52,6 +53,7 @@ import org.junit.runner.RunWith;
 /**
  * Tests reporting of window-like views
  */
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityPaneTest {
     private static Instrumentation sInstrumentation;
