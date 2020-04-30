@@ -319,6 +319,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private boolean mPublicDisplay = false;
         private boolean mResizeDisplay = true;
         private boolean mShowSystemDecorations = false;
+        private boolean mOwnContentOnly = false;
+        private boolean mRequestShowIme = false;
         private boolean mPresentationDisplay = false;
         private ComponentName mLaunchActivity = null;
         private boolean mSimulateDisplay = false;
@@ -358,6 +360,16 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
+        VirtualDisplaySession setOwnContentOnly(boolean ownContentOnly) {
+            mOwnContentOnly = ownContentOnly;
+            return this;
+        }
+
+        VirtualDisplaySession setRequestShowIme(boolean requestShowIme) {
+            mRequestShowIme = requestShowIme;
+            return this;
+        }
+
         VirtualDisplaySession setPresentationDisplay(boolean presentationDisplay) {
             mPresentationDisplay = presentationDisplay;
             return this;
@@ -368,6 +380,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
+        // TODO(b/154565343) move simulate display out of VirtualDisplaySession
         public VirtualDisplaySession setSimulateDisplay(boolean simulateDisplay) {
             mSimulateDisplay = simulateDisplay;
             return this;
@@ -427,11 +440,13 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
          */
         private List<DisplayContent> simulateDisplay() {
             mOverlayDisplayDeviceSession = new OverlayDisplayDevicesSession(mContext);
-            // Create virtual display with custom density dpi and specified size.
-            mOverlayDisplayDeviceSession.set(mSimulationDisplaySize + "/" + mDensityDpi);
-            if (mShowSystemDecorations) {
-                mOverlayDisplayDeviceSession.configureDisplays(
-                        true /* requestShowSysDecors */, true /* requestShowIme */);
+            mOverlayDisplayDeviceSession.createDisplay(
+                    mSimulationDisplaySize,
+                    mDensityDpi,
+                    mOwnContentOnly,
+                    mShowSystemDecorations);
+            if (mRequestShowIme) {
+                mOverlayDisplayDeviceSession.configureDisplays(true /* requestShowIme */);
             }
             return mOverlayDisplayDeviceSession.getCreatedDisplays();
         }
@@ -556,6 +571,16 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     private class OverlayDisplayDevicesSession extends SettingsSession<String> {
         /** See display_manager_overlay_display_name. */
         private static final String OVERLAY_DISPLAY_NAME_PREFIX = "Overlay #";
+
+        /** See {@link OverlayDisplayAdapter#OVERLAY_DISPLAY_FLAG_OWN_CONTENT_ONLY}. */
+        private static final String OVERLAY_DISPLAY_FLAG_OWN_CONTENT_ONLY = ",own_content_only";
+
+        /**
+         * See {@link OverlayDisplayAdapter#OVERLAY_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS}.
+         */
+        private static final String OVERLAY_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS =
+                ",should_show_system_decorations";
+
         /** The displays which are created by this session. */
         private final List<DisplayContent> mDisplays = new ArrayList<>();
         /** The configured displays that need to be restored when this session is closed. */
@@ -583,19 +608,24 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             mDisplays.addAll(assertAndGetNewDisplays(newDisplayCount, originalDisplays));
         }
 
-        void configureDisplays(boolean requestShowSysDecors, boolean requestShowIme) {
+        /** Creates overlay display with custom density dpi, specified size, and test flags. */
+        void createDisplay(Size displaySize, int densityDpi, boolean ownContentOnly,
+                boolean shouldShowSystemDecorations) {
+            String displaySettingsEntry = displaySize + "/" + densityDpi;
+            if (ownContentOnly) {
+                displaySettingsEntry += OVERLAY_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+            }
+            if (shouldShowSystemDecorations) {
+                displaySettingsEntry += OVERLAY_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS;
+            }
+            set(displaySettingsEntry);
+        }
+
+        void configureDisplays(boolean requestShowIme) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 for (DisplayContent display : mDisplays) {
-                    final boolean showSystemDecors = mWm.shouldShowSystemDecors(display.mId);
                     final boolean showIme = mWm.shouldShowIme(display.mId);
-                    mDisplayStates.add(new OverlayDisplayState(
-                            display.mId, showSystemDecors, showIme));
-                    if (requestShowSysDecors != showSystemDecors) {
-                        mWm.setShouldShowSystemDecors(display.mId, requestShowSysDecors);
-                        waitForOrFail("display config show-system-decors to be set",
-                                () -> mWm.shouldShowSystemDecors(
-                                        display.mId) == requestShowSysDecors);
-                    }
+                    mDisplayStates.add(new OverlayDisplayState(display.mId, showIme));
                     if (requestShowIme != showIme) {
                         mWm.setShouldShowIme(display.mId, requestShowIme);
                         waitForOrFail("display config show-IME to be set",
@@ -607,7 +637,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         private void restoreDisplayStates() {
             mDisplayStates.forEach(state -> SystemUtil.runWithShellPermissionIdentity(() -> {
-                mWm.setShouldShowSystemDecors(state.mId, state.mShouldShowSystemDecors);
                 mWm.setShouldShowIme(state.mId, state.mShouldShowIme);
 
                 // Only need to wait the last flag to be set.
@@ -639,12 +668,10 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         private class OverlayDisplayState {
             int mId;
-            boolean mShouldShowSystemDecors;
             boolean mShouldShowIme;
 
-            OverlayDisplayState(int displayId, boolean showSysDecors, boolean showIme) {
+            OverlayDisplayState(int displayId, boolean showIme) {
                 mId = displayId;
-                mShouldShowSystemDecors = showSysDecors;
                 mShouldShowIme = showIme;
             }
         }

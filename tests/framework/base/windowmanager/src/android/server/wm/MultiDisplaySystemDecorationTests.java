@@ -34,6 +34,8 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -364,6 +366,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // Create a virtual display and launch an activity on it.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setShowSystemDecorations(true)
+                .setRequestShowIme(true)
                 .setSimulateDisplay(true)
                 .createDisplay();
         imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
@@ -454,6 +457,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setShowSystemDecorations(true)
                 .setSimulateDisplay(true)
+                .setRequestShowIme(true)
                 .createDisplay();
         imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                 DEFAULT_DISPLAY);
@@ -566,6 +570,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // Create a virtual display and launch an activity on virtual display.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setShowSystemDecorations(true)
+                .setRequestShowIme(true)
                 .setSimulateDisplay(true)
                 .createDisplay();
 
@@ -575,6 +580,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 createManagedTestActivitySession();
         imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                 newDisplay.mId);
+
+        // Verify the activity is launched to the secondary display.
+        final ComponentName imeTestActivityName =
+                imeTestActivitySession.getActivity().getComponentName();
+        assertThat(mWmState.hasActivityInDisplay(newDisplay.mId, imeTestActivityName)).isTrue();
 
         // Tap default display, assume a pointer-out-side event will happened to change the top
         // display.
@@ -590,8 +600,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 .setDisplayId(DEFAULT_DISPLAY).execute();
         waitAndAssertTopResumedActivity(imeTestActivitySession.getActivity().getComponentName(),
                 DEFAULT_DISPLAY, "Activity launched on default display and on top");
-        assertEquals("No stacks on virtual display", 0,
-                mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
+
+        // Activity is no longer on the secondary display
+        assertThat(mWmState.hasActivityInDisplay(newDisplay.mId, imeTestActivityName)).isFalse();
 
         // Verify if tapping default display to request focus on EditText can show soft input.
         final ImeEventStream stream = mockImeSession.openEventStream();
@@ -682,7 +693,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         }
     }
 
-    void assertImeWindowAndDisplayConfiguration(
+    private void assertImeWindowAndDisplayConfiguration(
             WindowState imeWinState, DisplayContent display) {
         final Configuration configurationForIme = imeWinState.mMergedOverrideConfiguration;
         final Configuration configurationForDisplay =  display.mMergedOverrideConfiguration;

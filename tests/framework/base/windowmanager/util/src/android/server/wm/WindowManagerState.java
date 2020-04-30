@@ -949,6 +949,16 @@ public class WindowManagerState {
         return allShown;
     }
 
+    /** Checks whether the display contains the given activity. */
+    boolean hasActivityInDisplay(int displayId, ComponentName activityName) {
+        for (WindowManagerState.ActivityTask stack : getDisplay(displayId).getRootTasks()) {
+            if (stack.containsActivity(activityName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     WindowState findFirstWindowWithType(int type) {
         for (WindowState window : mWindowStates) {
             if (window.getType() == type) {
