@@ -993,6 +993,7 @@ public class MediaExtractorTest extends AndroidTestCase {
         readAllData();
     }
 
+    @AppModeFull(reason = "Instant apps cannot bind sockets.")
     public void testFragmentedHttpRead() throws Exception {
         CtsTestServer server = new CtsTestServer(getContext());
         String rname = mResources.getResourceEntryName(R.raw.psshtest);
