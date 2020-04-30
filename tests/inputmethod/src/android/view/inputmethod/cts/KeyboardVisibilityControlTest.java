@@ -26,9 +26,11 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKey
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.os.SystemClock;
+import android.support.test.uiautomator.UiObject2;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.View;
@@ -37,6 +39,7 @@ import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
+import android.view.inputmethod.cts.util.TestWebView;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -246,6 +249,31 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
             expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
             expectImeInvisible(TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testShowHideKeyboardOnWebView() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final UiObject2 inputTextField = TestWebView.launchTestWebViewActivity(
+                    TimeUnit.SECONDS.toMillis(5));
+            assertNotNull("Editor must exists on WebView", inputTextField);
+
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            notExpectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
+                    TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            inputTextField.click();
+            expectEvent(stream.copy(), showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
+            expectEvent(stream.copy(), event -> "onStartInputView".equals(event.getEventName()),
+                    TIMEOUT);
+            expectImeVisible(TIMEOUT);
         }
     }
 }

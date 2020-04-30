@@ -16,7 +16,7 @@ package android.accessibilityservice.cts.utils;
 
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
-import static android.view.Display.FLAG_PRIVATE;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import android.app.Activity;
 import android.content.Context;
@@ -29,7 +29,6 @@ import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Window;
-import android.view.WindowManager;
 
 import com.android.compatibility.common.util.TestUtils;
 
@@ -37,7 +36,7 @@ import com.android.compatibility.common.util.TestUtils;
  * Utilities needed when interacting with the display
  */
 public class DisplayUtils {
-    private static final int DISPLAY_ADDED_TIMOUT_MS = 5000;
+    private static final int DISPLAY_ADDED_TIMEOUT_MS = 5000;
 
     public static int getStatusBarHeight(Activity activity) {
         final Rect rect = new Rect();
@@ -76,7 +75,11 @@ public class DisplayUtils {
         }
 
         /**
-         * Creates a virtual display and waits until it's in display list.
+         * Creates a virtual display having same size with default display and waits until it's
+         * in display list. The density of the virtual display is based on
+         * {@link DisplayMetrics#xdpi} so that the threshold of gesture detection is same as
+         * the default display's.
+         *
          * @param context
          * @param isPrivate if this display is a private display.
          * @return virtual display.
@@ -110,17 +113,15 @@ public class DisplayUtils {
                     Context.DISPLAY_SERVICE);
             displayManager.registerDisplayListener(listener, null);
 
-            final WindowManager windowManager = (WindowManager) context.getSystemService(
-                    Context.WINDOW_SERVICE);
             final DisplayMetrics metrics = new DisplayMetrics();
-            windowManager.getDefaultDisplay().getRealMetrics(metrics);
+            displayManager.getDisplay(DEFAULT_DISPLAY).getRealMetrics(metrics);
             final Display display = createDisplay(context, metrics.widthPixels,
-                    metrics.heightPixels, metrics.densityDpi, isPrivate);
+                    metrics.heightPixels, (int) metrics.xdpi, isPrivate);
 
             try {
                 TestUtils.waitOn(waitObject,
                         () -> displayManager.getDisplay(display.getDisplayId()) != null,
-                        DISPLAY_ADDED_TIMOUT_MS,
+                        DISPLAY_ADDED_TIMEOUT_MS,
                         String.format("wait for virtual display %d adding", display.getDisplayId()));
             } finally {
                 displayManager.unregisterDisplayListener(listener);

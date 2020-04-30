@@ -36,6 +36,50 @@ NAME = os.path.basename(__file__).split('.')[0]
 TRANS_REF_MATRIX = np.array([0, 0, 0])
 
 
+def select_ids_to_test(ids, props, chart_distance):
+    """Determine the best 2 cameras to test for the rig used.
+
+    Cameras are pre-filtered to only include supportable cameras.
+    Supportable cameras are: YUV(RGB), RAW(Bayer)
+
+    Args:
+        ids:            unicode string; physical camera ids
+        props:          dict; physical camera properties dictionary
+        chart_distance: float; distance to chart in meters
+    Returns:
+        test_ids to be tested
+    """
+    chart_distance = abs(chart_distance)*100  # convert M to CM
+    test_ids = []
+    for i in ids:
+        sensor_size = props[i]['android.sensor.info.physicalSize']
+        focal_l = props[i]['android.lens.info.availableFocalLengths'][0]
+        diag = math.sqrt(sensor_size['height'] ** 2 +
+                         sensor_size['width'] ** 2)
+        fov = round(2 * math.degrees(math.atan(diag / (2 * focal_l))), 2)
+        print 'Camera: %s, FoV: %.2f, chart_distance: %.1fcm' % (
+                i, fov, chart_distance)
+        # determine best combo with rig used or recommend different rig
+        if its.cv2image.FOV_THRESH_TELE < fov < its.cv2image.FOV_THRESH_WFOV:
+            test_ids.append(i)  # RFoV camera
+        elif fov < its.cv2image.FOV_THRESH_SUPER_TELE:
+            print 'Skipping camera. Not appropriate multi-camera testing.'
+            continue  # super-TELE camera
+        elif (fov <= its.cv2image.FOV_THRESH_TELE and
+              np.isclose(chart_distance, its.cv2image.CHART_DISTANCE_RFOV, rtol=0.1)):
+            test_ids.append(i)  # TELE camera in RFoV rig
+        elif (fov >= its.cv2image.FOV_THRESH_WFOV and
+              np.isclose(chart_distance, its.cv2image.CHART_DISTANCE_WFOV, rtol=0.1)):
+            test_ids.append(i)  # WFoV camera in WFoV rig
+        else:
+            print 'Skipping camera. Not appropriate for test rig.'
+
+    e_msg = 'Error: started with 2+ cameras, reduced to <2. Wrong test rig?'
+    e_msg += '\ntest_ids: %s' % str(test_ids)
+    assert len(test_ids) >= 2, e_msg
+    return test_ids[0:2]
+
+
 def determine_valid_out_surfaces(cam, props, fmt, cap_camera_ids, sizes):
     """Determine a valid output surfaces for captures.
 
@@ -331,7 +375,11 @@ def main():
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.read_3a(props) and
                              its.caps.per_frame_control(props) and
-                             its.caps.logical_multi_camera(props))
+                             its.caps.logical_multi_camera(props) and
+                             its.caps.backward_compatible(props))
+        debug = its.caps.debug_mode()
+        avail_fls = props['android.lens.info.availableFocalLengths']
+        pose_reference = props['android.lens.poseReference']
 
         # Convert chart_distance for lens facing back
         if props['android.lens.facing'] == LENS_FACING_BACK:
@@ -339,37 +387,40 @@ def main():
             print 'lens facing BACK'
             chart_distance *= -1
 
-        # Find physical camera IDs and those that support RGB raw
+        # find physical camera IDs
         ids = its.caps.logical_multi_camera_physical_ids(props)
-        props_physical = {}
+        physical_props = {}
         physical_ids = []
         physical_raw_ids = []
         for i in ids:
-            # Find YUV capable physical cameras
-            prop = cam.get_camera_properties_by_id(i)
-            sub_camera_pose_reference = prop['android.lens.poseReference']
-            if sub_camera_pose_reference == UNDEFINED_REFERENCE:
+            physical_props[i] = cam.get_camera_properties_by_id(i)
+            if physical_props[i]['android.lens.poseReference'] == UNDEFINED_REFERENCE:
                 continue
-            physical_ids.append(i)
-            props_physical[i] = prop
-            # Find first 2 RAW+RGB capable physical cameras
-            if (its.caps.raw16(prop) and not its.caps.mono_camera(props)
-                        and len(physical_raw_ids) < 2):
+            # find YUV+RGB capable physical cameras
+            if (its.caps.backward_compatible(physical_props[i]) and
+                        not its.caps.mono_camera(physical_props[i])):
+                physical_ids.append(i)
+            # find RAW+RGB capable physical cameras
+            if (its.caps.backward_compatible(physical_props[i]) and
+                        not its.caps.mono_camera(physical_props[i]) and
+                        its.caps.raw16(physical_props[i])):
                 physical_raw_ids.append(i)
 
-        debug = its.caps.debug_mode()
-        avail_fls = props['android.lens.info.availableFocalLengths']
-        pose_reference = props['android.lens.poseReference']
-
-        # Find highest resolution image and determine formats
+        # determine formats and select cameras
         fmts = ['yuv']
+        if len(physical_raw_ids) >= 2:
+            fmts.insert(0, 'raw')  # add RAW to analysis if enough cameras
+            print 'Selecting RAW+RGB supported cameras'
+            physical_raw_ids = select_ids_to_test(physical_raw_ids,
+                                                  physical_props,
+                                                  chart_distance)
+        print 'Selecting YUV+RGB cameras'
         its.caps.skip_unless(len(physical_ids) >= 2)
-        if len(physical_raw_ids) == 2:
-            fmts.insert(0, 'raw')  # insert in first location in list
-        else:
-            physical_ids = ids[0:2]
+        physical_ids = select_ids_to_test(physical_ids,
+                                          physical_props,
+                                          chart_distance)
 
-        # do captures for different formats
+        # do captures for valid formats
         caps = {}
         for i, fmt in enumerate(fmts):
             physical_sizes = {}
@@ -379,7 +430,7 @@ def main():
                 capture_cam_ids = physical_raw_ids
 
             for physical_id in capture_cam_ids:
-                configs = props_physical[physical_id]['android.scaler.streamConfigurationMap']\
+                configs = physical_props[physical_id]['android.scaler.streamConfigurationMap']\
                                    ['availableStreamConfigurations']
                 if fmt == 'raw':
                     fmt_codes = 0x20
@@ -395,7 +446,7 @@ def main():
             out_surfaces = determine_valid_out_surfaces(
                     cam, props, fmt, capture_cam_ids, physical_sizes)
             caps = take_images(
-                    cam, caps, props_physical, fmt, capture_cam_ids, out_surfaces, debug)
+                    cam, caps, physical_props, fmt, capture_cam_ids, out_surfaces, debug)
 
     # process images for correctness
     for j, fmt in enumerate(fmts):
@@ -414,7 +465,7 @@ def main():
         for i in capture_cam_ids:
             # process image
             img = its.image.convert_capture_to_rgb_image(
-                    caps[(fmt, i)], props=props_physical[i])
+                    caps[(fmt, i)], props=physical_props[i])
             size[i] = (caps[fmt, i]['width'], caps[fmt, i]['height'])
 
             # save images if debug
@@ -431,7 +482,7 @@ def main():
                 img = img.astype(np.uint8)
 
             # load parameters for each physical camera
-            ical = props_physical[i]['android.lens.intrinsicCalibration']
+            ical = physical_props[i]['android.lens.intrinsicCalibration']
             assert len(ical) == 5, 'android.lens.instrisicCalibration incorrect.'
             k[i] = np.array([[ical[0], ical[4], ical[2]],
                              [0, ical[1], ical[3]],
@@ -440,13 +491,13 @@ def main():
                 print 'Camera %s' % i
                 print ' k:', k[i]
 
-            rotation = np.array(props_physical[i]['android.lens.poseRotation'])
+            rotation = np.array(physical_props[i]['android.lens.poseRotation'])
             if j == 0:
                 print ' rotation:', rotation
             assert len(rotation) == 4, 'poseRotation has wrong # of params.'
             r[i] = rotation_matrix(rotation)
 
-            t[i] = np.array(props_physical[i]['android.lens.poseTranslation'])
+            t[i] = np.array(physical_props[i]['android.lens.poseTranslation'])
             if j == 0:
                 print ' translation:', t[i]
             assert len(t[i]) == 3, 'poseTranslation has wrong # of params.'
@@ -469,8 +520,8 @@ def main():
                 print 'r:', r[i]
 
             # Correct lens distortion to image (if available)
-            if its.caps.distortion_correction(props_physical[i]) and fmt == 'raw':
-                distort = np.array(props_physical[i]['android.lens.distortion'])
+            if its.caps.distortion_correction(physical_props[i]) and fmt == 'raw':
+                distort = np.array(physical_props[i]['android.lens.distortion'])
                 assert len(distort) == 5, 'distortion has wrong # of params.'
                 cv2_distort = np.array([distort[0], distort[1],
                                         distort[3], distort[4],
@@ -490,7 +541,7 @@ def main():
             # Undo zoom to image (if applicable). Assume that the maximum
             # physical YUV image size is close to active array size.
             if fmt == 'yuv':
-                ar = props_physical[i]['android.sensor.info.activeArraySize']
+                ar = physical_props[i]['android.sensor.info.activeArraySize']
                 arw = ar['right'] - ar['left']
                 arh = ar['bottom'] - ar['top']
                 cr = caps[(fmt, i)]['metadata']['android.scaler.cropRegion']
@@ -504,7 +555,7 @@ def main():
                 circle[i][2] = circle[i][2] / zoom_ratio
 
             # Find focal length & sensor size
-            fl[i] = props_physical[i]['android.lens.info.availableFocalLengths'][0]
+            fl[i] = physical_props[i]['android.lens.info.availableFocalLengths'][0]
             sensor_diag[i] = math.sqrt(size[i][0] ** 2 + size[i][1] ** 2)
 
         i_ref, i_2nd = define_reference_camera(pose_reference, cam_reference)
