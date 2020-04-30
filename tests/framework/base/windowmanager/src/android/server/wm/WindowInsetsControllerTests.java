@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
@@ -25,6 +26,8 @@ import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_B
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -35,6 +38,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Type;
@@ -48,7 +52,9 @@ import androidx.test.filters.FlakyTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ErrorCollector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +71,9 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds
     private final static AnimationCallback ANIMATION_CALLBACK = new AnimationCallback();
+
+    @Rule
+    public final ErrorCollector mErrorCollector = new ErrorCollector();
 
     @Test
     public void testHide() {
@@ -234,6 +243,28 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             assertFalse(windowInsets.isVisible(statusBars()));
             assertFalse(windowInsets.isVisible(navigationBars()));
         }
+    }
+
+    @Test
+    public void testWindowInsetsController_availableAfterAddView() throws Exception {
+        final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+        PollingCheck.waitFor(TIMEOUT,
+                () -> !rootView.getRootWindowInsets().isVisible(statusBars())
+                        && !rootView.getRootWindowInsets().isVisible(navigationBars()));
+
+        final View childWindow = new View(activity);
+        getInstrumentation().runOnMainSync(() -> {
+            activity.getWindowManager().addView(childWindow,
+                    new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+            mErrorCollector.checkThat(childWindow.getWindowInsetsController(), is(notNullValue()));
+        });
+        getInstrumentation().waitForIdleSync();
+        getInstrumentation().runOnMainSync(() -> {
+            activity.getWindowManager().removeView(childWindow);
+        });
+
     }
 
     private static void hideInsets(View view, int types) throws InterruptedException {
