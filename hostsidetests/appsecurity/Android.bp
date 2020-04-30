@@ -44,6 +44,10 @@ java_test_host {
         "CtsCorruptApkTests_b71360999",
         "CtsCorruptApkTests_b71361168",
         "CtsCorruptApkTests_b79488511",
+        "CtsCorruptApkTests_Compressed_Q",
+        "CtsCorruptApkTests_Compressed_R",
+        "CtsCorruptApkTests_Unaligned_Q",
+        "CtsCorruptApkTests_Unaligned_R",
     ],
 
 }
