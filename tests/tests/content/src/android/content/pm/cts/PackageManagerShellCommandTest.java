@@ -19,6 +19,7 @@ package android.content.pm.cts;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_INCREMENTAL;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_NONE;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_STREAMING;
+import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -29,7 +30,6 @@ import android.content.ComponentName;
 import android.content.pm.DataLoaderParams;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
-import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.os.incremental.IncrementalManager;
 import android.platform.test.annotations.AppModeFull;
@@ -414,9 +414,6 @@ public class PackageManagerShellCommandTest {
             final PackageInstaller installer = getPackageInstaller();
 
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
-            params.installFlags |= PackageManager.INSTALL_ALL_WHITELIST_RESTRICTED_PERMISSIONS;
-            params.installFlags |= PackageManager.INSTALL_ALLOW_TEST;
-            params.installFlags |= PackageManager.INSTALL_GRANT_RUNTIME_PERMISSIONS;
 
             final int sessionId = installer.createSession(params);
             PackageInstaller.Session session = installer.openSession(sessionId);
@@ -440,10 +437,6 @@ public class PackageManagerShellCommandTest {
             final PackageInstaller installer = getPackageInstaller();
 
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
-            params.installFlags |= PackageManager.INSTALL_ALL_WHITELIST_RESTRICTED_PERMISSIONS;
-            params.installFlags |= PackageManager.INSTALL_ALLOW_TEST;
-            params.installFlags |= PackageManager.INSTALL_GRANT_RUNTIME_PERMISSIONS;
-
             final ComponentName componentName = new ComponentName("foo", "bar");
             final String args = "args";
             params.setDataLoaderParams(
@@ -459,6 +452,44 @@ public class PackageManagerShellCommandTest {
             assertEquals("foo", dataLoaderParams.getComponentName().getPackageName());
             assertEquals("bar", dataLoaderParams.getComponentName().getClassName());
             assertEquals("args", dataLoaderParams.getArguments());
+
+            installer.abandonSession(sessionId);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testRemoveFileApiV2() throws Exception {
+        if (!mStreaming) {
+            return;
+        }
+
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+
+            final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.setAppPackageName("com.package.name");
+            final ComponentName componentName = new ComponentName("foo", "bar");
+            final String args = "args";
+            params.setDataLoaderParams(
+                    mIncremental ? DataLoaderParams.forIncremental(componentName, args)
+                            : DataLoaderParams.forStreaming(componentName, args));
+
+            final int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+
+            session.addFile(LOCATION_DATA_APP, "base.apk", 123, "123".getBytes(), null);
+            String[] files = session.getNames();
+            assertEquals(1, files.length);
+            assertEquals("base.apk", files[0]);
+
+            session.removeFile(LOCATION_DATA_APP, "base.apk");
+            files = session.getNames();
+            assertEquals(2, files.length);
+            assertEquals("base.apk", files[0]);
+            assertEquals("base.apk.removed", files[1]);
 
             installer.abandonSession(sessionId);
         } finally {
