@@ -38,7 +38,6 @@ import org.junit.runner.RunWith;
 import java.util.List;
 
 @SmallTest
-@RequiresDevice
 @RunWith(AndroidJUnit4.class)
 public class CarOccupantZoneManagerTest extends CarApiTestBase {
 
