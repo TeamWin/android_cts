@@ -3686,6 +3686,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Return back to this page.
     </string>
     <string name="device_owner_user_restriction_set">Set restriction</string>
+    <string name="device_owner_user_restriction_unset">Clear restriction (before leaving test)</string>
     <string name="device_owner_settings_go">Go</string>
 
     <string name="device_owner_vpn_connection">
