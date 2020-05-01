@@ -19,6 +19,7 @@ package android.uirendering.cts.runner;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.test.uiautomator.UiDevice;
+import android.uirendering.cts.util.BitmapDumper;
 
 import androidx.test.runner.AndroidJUnitRunner;
 
@@ -43,6 +44,8 @@ public class UiRenderingRunner extends AndroidJUnitRunner {
             getContext().sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
         } catch (Exception e) {
         }
+
+        BitmapDumper.initialize(this);
     }
 
     @Override
