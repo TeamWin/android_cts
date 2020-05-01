@@ -1372,8 +1372,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             // check that the output string had an error / disallowed call since it didn't have
             // shell permission to suspend the package
-            assertTrue(outputString.contains("Error"));
-            assertTrue(outputString.contains("Disallowed call"));
+            assertTrue(outputString, outputString.contains("error"));
+            assertTrue(outputString, outputString.contains("permission denied"));
         } catch (InterruptedException e) {
             fail("Unsuccessful shell command");
         }
