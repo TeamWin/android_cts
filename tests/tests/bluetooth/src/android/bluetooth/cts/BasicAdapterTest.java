@@ -19,30 +19,51 @@ package android.bluetooth.cts;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Very basic test, just of the static methods of {@link
  * BluetoothAdapter}.
  */
 public class BasicAdapterTest extends AndroidTestCase {
+    private static final String TAG = "BasicAdapterTest";
     private static final int DISABLE_TIMEOUT = 8000;  // ms timeout for BT disable
     private static final int ENABLE_TIMEOUT = 10000;  // ms timeout for BT enable
     private static final int POLL_TIME = 400;         // ms to poll BT state
     private static final int CHECK_WAIT_TIME = 1000;  // ms to wait before enable/disable
+    private static final int SET_NAME_TIMEOUT = 5000; // ms timeout for setting adapter name
 
     private boolean mHasBluetooth;
+    private ReentrantLock mAdapterNameChangedlock;
+    private Condition mConditionAdapterNameChanged;
+    private boolean mIsAdapterNameChanged;
 
     public void setUp() throws Exception {
         super.setUp();
 
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED);
+        filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
+        mContext.registerReceiver(mAdapterNameChangeReceiver, filter);
+
         mHasBluetooth = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_BLUETOOTH);
+        mAdapterNameChangedlock = new ReentrantLock();
+        mConditionAdapterNameChanged = mAdapterNameChangedlock.newCondition();
+        mIsAdapterNameChanged = false;
     }
 
     public void test_getDefaultAdapter() {
@@ -140,7 +161,7 @@ public class BasicAdapterTest extends AndroidTestCase {
         assertTrue(BluetoothAdapter.checkBluetoothAddress(adapter.getAddress()));
     }
 
-    public void test_getName() {
+    public void test_setName_getName() {
         if (!mHasBluetooth) {
             // Skip the test if bluetooth is not present.
             return;
@@ -150,6 +171,19 @@ public class BasicAdapterTest extends AndroidTestCase {
 
         String name = adapter.getName();
         assertNotNull(name);
+
+        // Check renaming the adapter
+        String genericName = "Generic Device 1";
+        assertTrue(adapter.setName(genericName));
+        assertTrue(waitForAdapterNameChange());
+        mIsAdapterNameChanged = false;
+        assertEquals(genericName, adapter.getName());
+
+        // Check setting adapter back to original name
+        assertTrue(adapter.setName(name));
+        assertTrue(waitForAdapterNameChange());
+        mIsAdapterNameChanged = false;
+        assertEquals(name, adapter.getName());
     }
 
     public void test_getBondedDevices() {
@@ -289,4 +323,40 @@ public class BasicAdapterTest extends AndroidTestCase {
             Thread.sleep(t);
         } catch (InterruptedException e) {}
     }
+
+    private boolean waitForAdapterNameChange() {
+        mAdapterNameChangedlock.lock();
+        try {
+            // Wait for the Adapter name to be changed
+            while (!mIsAdapterNameChanged) {
+                if (!mConditionAdapterNameChanged.await(
+                        SET_NAME_TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    Log.e(TAG, "Timeout while waiting for adapter name change");
+                    break;
+                }
+            }
+        } catch (InterruptedException e) {
+            Log.e(TAG, "waitForAdapterNameChange: interrrupted");
+        } finally {
+            mAdapterNameChangedlock.unlock();
+        }
+        return mIsAdapterNameChanged;
+    }
+
+    private final BroadcastReceiver mAdapterNameChangeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED)) {
+                mAdapterNameChangedlock.lock();
+                mIsAdapterNameChanged = true;
+                try {
+                    mConditionAdapterNameChanged.signal();
+                } catch (IllegalMonitorStateException ex) {
+                } finally {
+                    mAdapterNameChangedlock.unlock();
+                }
+            }
+        }
+    };
 }

@@ -23,6 +23,7 @@ import android.media.MediaRecorder.AudioSource;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.ArrayList;
@@ -40,10 +41,12 @@ public class AudioRecord_BufferSizeTest extends AndroidTestCase {
         11025,
         16000,
         44100,
+        48000,
     };
 
     private AudioRecord mAudioRecord;
 
+    @CddTest(requirement="5.4.1/C-1-1")
     public void testGetMinBufferSize() throws Exception {
         if (!hasMicrophone()) {
             return;

@@ -19,11 +19,17 @@ package android.content.pm.cts;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_INCREMENTAL;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_NONE;
 import static android.content.pm.PackageInstaller.DATA_LOADER_TYPE_STREAMING;
+import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.app.UiAutomation;
+import android.content.ComponentName;
+import android.content.pm.DataLoaderParams;
+import android.content.pm.PackageInstaller;
+import android.content.pm.PackageInstaller.SessionParams;
 import android.os.ParcelFileDescriptor;
 import android.os.incremental.IncrementalManager;
 import android.platform.test.annotations.AppModeFull;
@@ -81,6 +87,14 @@ public class PackageManagerShellCommandTest {
     private boolean mStreaming = false;
     private boolean mIncremental = false;
     private String mInstall = "";
+
+    private static PackageInstaller getPackageInstaller() {
+        return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
+    }
+
+    private static UiAutomation getUiAutomation() {
+        return InstrumentationRegistry.getInstrumentation().getUiAutomation();
+    }
 
     private static String executeShellCommand(String command) throws IOException {
         final ParcelFileDescriptor stdout =
@@ -387,6 +401,100 @@ public class PackageManagerShellCommandTest {
                 "pm " + mInstall + " -t -g " + split + " " + split);
         assertEquals("Failure [failed to add file(s)]\n", commandResult);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testDataLoaderParamsApiV1() throws Exception {
+        if (!mStreaming) {
+            return;
+        }
+
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+
+            final int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+
+            assertEquals(null, session.getDataLoaderParams());
+
+            installer.abandonSession(sessionId);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testDataLoaderParamsApiV2() throws Exception {
+        if (!mStreaming) {
+            return;
+        }
+
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+            final ComponentName componentName = new ComponentName("foo", "bar");
+            final String args = "args";
+            params.setDataLoaderParams(
+                    mIncremental ? DataLoaderParams.forIncremental(componentName, args)
+                            : DataLoaderParams.forStreaming(componentName, args));
+
+            final int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+
+            DataLoaderParams dataLoaderParams = session.getDataLoaderParams();
+            assertEquals(mIncremental ? DATA_LOADER_TYPE_INCREMENTAL : DATA_LOADER_TYPE_STREAMING,
+                    dataLoaderParams.getType());
+            assertEquals("foo", dataLoaderParams.getComponentName().getPackageName());
+            assertEquals("bar", dataLoaderParams.getComponentName().getClassName());
+            assertEquals("args", dataLoaderParams.getArguments());
+
+            installer.abandonSession(sessionId);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testRemoveFileApiV2() throws Exception {
+        if (!mStreaming) {
+            return;
+        }
+
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+
+            final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.setAppPackageName("com.package.name");
+            final ComponentName componentName = new ComponentName("foo", "bar");
+            final String args = "args";
+            params.setDataLoaderParams(
+                    mIncremental ? DataLoaderParams.forIncremental(componentName, args)
+                            : DataLoaderParams.forStreaming(componentName, args));
+
+            final int sessionId = installer.createSession(params);
+            PackageInstaller.Session session = installer.openSession(sessionId);
+
+            session.addFile(LOCATION_DATA_APP, "base.apk", 123, "123".getBytes(), null);
+            String[] files = session.getNames();
+            assertEquals(1, files.length);
+            assertEquals("base.apk", files[0]);
+
+            session.removeFile(LOCATION_DATA_APP, "base.apk");
+            files = session.getNames();
+            assertEquals(2, files.length);
+            assertEquals("base.apk", files[0]);
+            assertEquals("base.apk.removed", files[1]);
+
+            installer.abandonSession(sessionId);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 
     private String createUpdateSession(String packageName) throws IOException {
