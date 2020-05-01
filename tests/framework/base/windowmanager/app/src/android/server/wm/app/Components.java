@@ -465,7 +465,6 @@ public class Components extends ComponentsBase {
         public static final String KEY_COMMAND = "command";
         public static final String KEY_COUNT = "count";
         public static final String KEY_DENSITY_DPI = "density_dpi";
-        public static final String KEY_LAUNCH_TARGET_COMPONENT = "launch_target_component";
         public static final String KEY_PUBLIC_DISPLAY = "public_display";
         public static final String KEY_RESIZE_DISPLAY = "resize_display";
         public static final String KEY_SHOW_SYSTEM_DECORATIONS = "show_system_decorations";
