@@ -19,6 +19,7 @@ package com.android.cts.appdataisolation.appa;
 import static com.android.cts.appdataisolation.common.FileUtils.CE_DATA_FILE_NAME;
 import static com.android.cts.appdataisolation.common.FileUtils.DE_DATA_FILE_NAME;
 import static com.android.cts.appdataisolation.common.FileUtils.EXTERNAL_DATA_FILE_NAME;
+import static com.android.cts.appdataisolation.common.FileUtils.OBB_FILE_NAME;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirDoesNotExist;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsAccessible;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsNotAccessible;
@@ -34,7 +35,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
-import android.os.RemoteException;
 import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
 
@@ -60,6 +60,8 @@ public class AppATests {
     private UiDevice mDevice;
     private String mCePath;
     private String mDePath;
+    private String mExternalDataPath;
+    private String mObbPath;
 
     @Before
     public void setUp() throws Exception {
@@ -67,6 +69,18 @@ public class AppATests {
         mCePath = mContext.getApplicationInfo().dataDir;
         mDePath = mContext.getApplicationInfo().deviceProtectedDataDir;
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        setUpExternalStoragePaths();
+    }
+
+    private void setUpExternalStoragePaths() {
+        File externalFilesDir = mContext.getExternalFilesDir("");
+        if (externalFilesDir != null) {
+            mExternalDataPath = mContext.getExternalFilesDir("").getAbsolutePath();
+        }
+        File obbDir = mContext.getObbDir();
+        if (obbDir != null) {
+            mObbPath = obbDir.getAbsolutePath();
+        }
     }
 
     @Test
@@ -86,11 +100,15 @@ public class AppATests {
     }
 
     @Test
-    public void testCreateExternalDataDir() throws Exception {
-        String externalStoragePath = mContext.getExternalFilesDir("").getAbsolutePath();
-        assertFileDoesNotExist(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
-        touchFile(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
-        assertFileExists(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
+    public void testCreateExternalDirs() throws Exception {
+        assertFileDoesNotExist(mExternalDataPath, EXTERNAL_DATA_FILE_NAME);
+        assertFileDoesNotExist(mObbPath, OBB_FILE_NAME);
+
+        touchFile(mExternalDataPath, EXTERNAL_DATA_FILE_NAME);
+        touchFile(mObbPath, OBB_FILE_NAME);
+
+        assertFileExists(mExternalDataPath, EXTERNAL_DATA_FILE_NAME);
+        assertFileExists(mObbPath, OBB_FILE_NAME);
     }
 
     @Test
@@ -114,20 +132,21 @@ public class AppATests {
     }
 
     @Test
-    public void testAppAExternalDataDoesExist() {
-        String externalStoragePath = mContext.getExternalFilesDir("").getAbsolutePath();
-        assertFileExists(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
+    public void testAppAExternalDirsDoExist() {
+        assertFileExists(mExternalDataPath, EXTERNAL_DATA_FILE_NAME);
+        assertFileExists(mObbPath, OBB_FILE_NAME);
     }
 
     @Test
-    public void testAppAExternalDataDoesNotExist() {
-        String externalStoragePath = mContext.getExternalFilesDir("").getAbsolutePath();
-        assertFileDoesNotExist(externalStoragePath, EXTERNAL_DATA_FILE_NAME);
+    public void testAppAExternalDirsDoNotExist() {
+        assertFileDoesNotExist(mExternalDataPath, EXTERNAL_DATA_FILE_NAME);
+        assertFileDoesNotExist(mObbPath, OBB_FILE_NAME);
     }
 
     @Test
-    public void testAppAExternalDataUnavailable() {
+    public void testAppAExternalDirsUnavailable() {
         assertNull(mContext.getExternalFilesDir(""));
+        assertNull(mContext.getObbDir());
     }
 
     @Test
@@ -191,6 +210,7 @@ public class AppATests {
         mContext.registerReceiver(receiver, new IntentFilter(Intent.ACTION_BOOT_COMPLETED));
 
         testUnlockDevice();
+        setUpExternalStoragePaths();
 
         assertTrue("User not unlocked", unlocked.await(1, TimeUnit.MINUTES));
         assertTrue("No locked boot complete", bootCompleted.await(1, TimeUnit.MINUTES));
@@ -198,7 +218,7 @@ public class AppATests {
         // The test app process should be still running, make sure CE DE now is available
         testAppACeDataExists();
         testAppADeDataExists();
-        testAppAExternalDataDoesExist();
+        testAppAExternalDirsDoExist();
         testAppACurProfileDataAccessible();
         testAppARefProfileDataNotAccessible();
     }
