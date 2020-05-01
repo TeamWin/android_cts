@@ -97,8 +97,6 @@ import android.server.wm.settings.SettingsSession;
 import android.util.Log;
 import android.util.Size;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -838,7 +836,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         });
     }
 
-    @FlakyTest(bugId = 142282126)
     @Test
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
         // Launch a PiP activity and ensure configuration change only happened once, and that the
@@ -1042,7 +1039,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 139111392)
     public void testPinnedStackWithDockedStack() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
