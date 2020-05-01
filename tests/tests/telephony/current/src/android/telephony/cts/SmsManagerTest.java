@@ -57,8 +57,10 @@ import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.provider.Telephony;
 import android.telephony.SmsManager;
+import android.telephony.SmsCbMessage;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
+import android.telephony.cdma.CdmaSmsCbProgramData;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -656,6 +658,36 @@ public class SmsManagerTest {
             getSmsManager().setSmscAddress("fake smsc");
             fail("SmsManager.setSmscAddress() should throw a SecurityException");
         } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testDisableCellBroadcastRange() {
+        try {
+            int ranType = SmsCbMessage.MESSAGE_FORMAT_3GPP;
+            executeWithShellPermissionIdentity(() -> {
+                getSmsManager().disableCellBroadcastRange(
+                        CdmaSmsCbProgramData.CATEGORY_CMAS_PRESIDENTIAL_LEVEL_ALERT,
+                        CdmaSmsCbProgramData.CATEGORY_CMAS_EXTREME_THREAT,
+                        ranType);
+            });
+        } catch (Exception e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testEnableCellBroadcastRange() {
+        try {
+            int ranType = SmsCbMessage.MESSAGE_FORMAT_3GPP;
+            executeWithShellPermissionIdentity(() -> {
+                getSmsManager().enableCellBroadcastRange(
+                        CdmaSmsCbProgramData.CATEGORY_CMAS_PRESIDENTIAL_LEVEL_ALERT,
+                        CdmaSmsCbProgramData.CATEGORY_CMAS_EXTREME_THREAT,
+                        ranType);
+            });
+        } catch (Exception e) {
             // expected
         }
     }
