@@ -22,6 +22,7 @@ import static android.app.AppOpsManager.OPSTR_READ_PHONE_STATE;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_OVERRIDE_BOOL;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_STRING;
 import static android.telephony.CarrierConfigManager.KEY_FORCE_HOME_NETWORK_BOOL;
+import static android.telephony.CarrierConfigManager.Wifi.KEY_HOTSPOT_MAX_CLIENT_COUNT;
 import static android.telephony.ServiceState.STATE_IN_SERVICE;
 
 import static androidx.test.InstrumentationRegistry.getContext;
@@ -296,5 +297,15 @@ public class CarrierConfigManagerTest {
             mConfigManager.overrideConfig(subId, null);
             ui.dropShellPermissionIdentity();
         }
+    }
+
+    @Test
+    public void testGetConfigByComponentForSubId() {
+        PersistableBundle config =
+                mConfigManager.getConfigByComponentForSubId(
+                        CarrierConfigManager.Wifi.KEY_PREFIX,
+                        SubscriptionManager.getDefaultSubscriptionId());
+        assertEquals(config.size(), 1);
+        assertTrue(config.containsKey(KEY_HOTSPOT_MAX_CLIENT_COUNT));
     }
 }
