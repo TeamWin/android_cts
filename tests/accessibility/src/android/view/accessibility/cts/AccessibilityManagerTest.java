@@ -34,7 +34,6 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
-import android.platform.test.annotations.Presubmit;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
@@ -59,7 +58,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Class for testing {@link AccessibilityManager}.
  */
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityManagerTest {
 

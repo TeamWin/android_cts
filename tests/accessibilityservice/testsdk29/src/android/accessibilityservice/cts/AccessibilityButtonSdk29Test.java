@@ -31,7 +31,6 @@ import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityManager;
 
@@ -51,7 +50,6 @@ import java.util.List;
 /**
  * Test to verify accessibility button targeting sdk 29 APIs.
  */
-@Presubmit
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityButtonSdk29Test {
