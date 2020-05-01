@@ -17,7 +17,6 @@
 package android.car.cts;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 import android.car.Car;
 import android.car.FuelType;
@@ -25,14 +24,16 @@ import android.car.PortLocationType;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.Looper;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
+import org.junit.ClassRule;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +41,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public abstract class CarApiTestBase {
+    @ClassRule
+    public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
+            PackageManager.FEATURE_AUTOMOTIVE);
+
     protected static final long DEFAULT_WAIT_TIMEOUT_MS = 1000;
 
     private Car mCar;
@@ -66,8 +71,6 @@ public abstract class CarApiTestBase {
     }
 
     protected void setUp() throws Exception {
-        assumeTrue(FeatureUtil.isAutomotive());
-
         mCar = Car.createCar(sContext, mConnectionListener, null);
         mCar.connect();
         mConnectionListener.waitForConnection(DEFAULT_WAIT_TIMEOUT_MS);
