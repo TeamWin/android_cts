@@ -18,12 +18,16 @@ package android.content.pm.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
+import android.service.dataloader.DataLoaderService;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -122,11 +126,21 @@ public class PackageManagerShellCommandIncrementalTest {
                 PackageManager.FEATURE_INCREMENTAL_DELIVERY));
     }
 
-    // TODO(b/152563692): move v2/v3 tests to appsecurity
     @Test
     public void testInstallWithIdSig() throws Exception {
         installPackage(TEST_APK);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    static class TestDataLoaderService extends DataLoaderService {}
+
+    @Test
+    public void testDataLoaderServiceDefaultImplementation() {
+        DataLoaderService service = new TestDataLoaderService();
+        assertEquals(null, service.onCreateDataLoader(null));
+        IBinder binder = service.onBind(null);
+        assertNotEquals(null, binder);
+        assertEquals(binder, service.onBind(new Intent()));
     }
 
     private boolean isAppInstalled(String packageName) throws IOException {

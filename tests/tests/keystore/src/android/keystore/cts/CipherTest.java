@@ -424,6 +424,59 @@ public class CipherTest extends AndroidTestCase {
         }
     }
 
+    /*
+     * This test performs a round trip en/decryption. It does so while the current thread
+     * is in interrupted state which cannot be signaled to the user of the Java Crypto
+     * API.
+     */
+    public void testEncryptsAndDecryptsInterrupted()
+            throws Exception {
+        Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
+        assertNotNull(provider);
+        final byte[] originalPlaintext = EmptyArray.BYTE;
+        for (String algorithm : EXPECTED_ALGORITHMS) {
+            for (ImportedKey key : importKatKeys(
+                    algorithm,
+                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
+                    false)) {
+                try {
+                    Key encryptionKey = key.getKeystoreBackedEncryptionKey();
+                    byte[] plaintext = truncatePlaintextIfNecessary(
+                            algorithm, encryptionKey, originalPlaintext);
+                    if (plaintext == null) {
+                        // Key is too short to encrypt anything using this transformation
+                        continue;
+                    }
+                    Cipher cipher = Cipher.getInstance(algorithm, provider);
+                    Thread.currentThread().interrupt();
+                    cipher.init(Cipher.ENCRYPT_MODE, encryptionKey);
+                    AlgorithmParameters params = cipher.getParameters();
+                    byte[] ciphertext = cipher.doFinal(plaintext);
+                    byte[] expectedPlaintext = plaintext;
+                    if ("RSA/ECB/NoPadding".equalsIgnoreCase(algorithm)) {
+                        // RSA decryption without padding left-pads resulting plaintext with NUL
+                        // bytes to the length of RSA modulus.
+                        int modulusLengthBytes = (TestUtils.getKeySizeBits(encryptionKey) + 7) / 8;
+                        expectedPlaintext = TestUtils.leftPadWithZeroBytes(
+                                expectedPlaintext, modulusLengthBytes);
+                    }
+
+                    cipher = Cipher.getInstance(algorithm, provider);
+                    Key decryptionKey = key.getKeystoreBackedDecryptionKey();
+                    cipher.init(Cipher.DECRYPT_MODE, decryptionKey, params);
+                    byte[] actualPlaintext = cipher.doFinal(ciphertext);
+                    assertTrue(Thread.currentThread().interrupted());
+                    MoreAsserts.assertEquals(expectedPlaintext, actualPlaintext);
+                } catch (Throwable e) {
+                    throw new RuntimeException(
+                            "Failed for " + algorithm + " with key " + key.getAlias(),
+                            e);
+                }
+            }
+        }
+    }
+
+
     private boolean isDecryptValid(byte[] expectedPlaintext, byte[] ciphertext, Cipher cipher,
             AlgorithmParameters params, ImportedKey key) {
         try {

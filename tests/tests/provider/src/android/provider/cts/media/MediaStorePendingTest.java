@@ -435,6 +435,40 @@ public class MediaStorePendingTest {
         }
     }
 
+    /**
+     * Verify that if clever apps try writing the exact modified time and size
+     * as part of publishing that we still perform a full scan.
+     */
+    @Test
+    public void testMatchingColumns() throws Exception {
+        // Stage pending content
+        final ContentValues values = new ContentValues();
+        values.put(MediaColumns.MIME_TYPE, "image/png");
+        values.put(MediaColumns.IS_PENDING, 1);
+        values.put(MediaColumns.HEIGHT, 32);
+        final Uri uri = mResolver.insert(mExternalImages, values);
+        try (InputStream in = mContext.getResources().openRawResource(R.raw.scenery);
+                OutputStream out = mResolver.openOutputStream(uri)) {
+            FileUtils.copy(in, out);
+        }
+
+        // Fill in modified time and size based on values on disk
+        values.clear();
+        values.put(MediaColumns.IS_PENDING, 0);
+        try (Cursor c = mResolver.query(uri, null, null, null)) {
+            assertTrue(c.moveToFirst());
+            final File file = new File(c.getString(c.getColumnIndexOrThrow(MediaColumns.DATA)));
+            values.put(MediaColumns.DATE_MODIFIED, file.lastModified() / 1000);
+            values.put(MediaColumns.SIZE, file.length());
+        }
+        mResolver.update(uri, values, null, null);
+        try (Cursor c = mResolver.query(uri, null, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertEquals(0, c.getInt(c.getColumnIndexOrThrow(MediaColumns.IS_PENDING)));
+            assertEquals(107, c.getLong(c.getColumnIndexOrThrow(MediaColumns.HEIGHT)));
+        }
+    }
+
     private void assertCreatePending(PendingParams params) {
         MediaStoreUtils.createPending(mContext, params);
     }

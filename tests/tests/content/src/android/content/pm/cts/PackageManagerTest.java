@@ -103,8 +103,8 @@ public class PackageManagerTest {
     private static final String PERMISSIONGROUP_NAME = "android.permission-group.COST_MONEY";
     private static final String PERMISSION_TREE_ROOT =
             "android.content.cts.permission.TEST_DYNAMIC";
-    // There are 11 activities/activity-alias in AndroidManifest
-    private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 11;
+    // Number of activities/activity-alias in AndroidManifest
+    private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 12;
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 

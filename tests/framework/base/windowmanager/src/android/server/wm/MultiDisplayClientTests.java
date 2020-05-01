@@ -160,7 +160,10 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
                 activityClass, mockImeSession, DEFAULT_DISPLAY);
 
         final DisplayContent newDisplay = virtualDisplaySession
-                .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
+                .setSimulateDisplay(true)
+                .setShowSystemDecorations(true)
+                .setRequestShowIme(true)
+                .createDisplay();
 
         // Launch activity on the secondary display and make IME show.
         assertImeShownAndMatchesDisplayId(
