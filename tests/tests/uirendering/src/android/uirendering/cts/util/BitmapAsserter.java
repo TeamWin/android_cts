@@ -34,14 +34,6 @@ public class BitmapAsserter {
     public BitmapAsserter(String className, String name) {
         mClassName = className;
         mDifferenceVisualizer = new PassFailVisualizer();
-
-        // Create a location for the files to be held, if it doesn't exist already
-        BitmapDumper.createSubDirectory(mClassName);
-
-        // If we have a test currently, let's remove the older files if they exist
-        if (name != null) {
-            BitmapDumper.deleteFileInClassFolder(mClassName, name);
-        }
     }
 
     /**
