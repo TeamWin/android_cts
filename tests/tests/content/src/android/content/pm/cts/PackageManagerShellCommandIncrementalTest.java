@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -38,13 +39,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -56,39 +58,26 @@ public class PackageManagerShellCommandIncrementalTest {
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
     private static final String TEST_APK = "HelloWorld5.apk";
 
+    private static UiAutomation getUiAutomation() {
+        return InstrumentationRegistry.getInstrumentation().getUiAutomation();
+    }
+
     private static String executeShellCommand(String command) throws IOException {
-        final ParcelFileDescriptor stdout =
-                InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                        command);
+        final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(command);
         try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
             return readFullStream(inputStream);
         }
     }
 
-    private static String executeShellCommand(String command, File[] inputs)
+    private static String readFullStream(InputStream inputStream, long expected)
             throws IOException {
-        final ParcelFileDescriptor[] pfds =
-                InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                        .executeShellCommandRw(command);
-        ParcelFileDescriptor stdout = pfds[0];
-        ParcelFileDescriptor stdin = pfds[1];
-        try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
-                stdin)) {
-            for (File input : inputs) {
-                try (FileInputStream inputStream = new FileInputStream(input)) {
-                    writeFullStream(inputStream, outputStream, input.length());
-                }
-            }
-        }
-        try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
-            return readFullStream(inputStream);
-        }
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        writeFullStream(inputStream, result, expected);
+        return result.toString("UTF-8");
     }
 
     private static String readFullStream(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
-        writeFullStream(inputStream, result, -1);
-        return result.toString("UTF-8");
+        return readFullStream(inputStream, -1);
     }
 
     private static void writeFullStream(InputStream inputStream, OutputStream outputStream,
@@ -103,6 +92,14 @@ public class PackageManagerShellCommandIncrementalTest {
         }
         if (expected > 0) {
             assertEquals(expected, total);
+        }
+    }
+
+    private static String waitForSubstring(InputStream inputStream, String expected)
+            throws IOException {
+        try (Reader reader = new InputStreamReader(inputStream);
+             BufferedReader lines = new BufferedReader(reader)) {
+            return lines.lines().filter(line -> line.contains(expected)).findFirst().orElse("");
         }
     }
 
@@ -141,6 +138,27 @@ public class PackageManagerShellCommandIncrementalTest {
         IBinder binder = service.onBind(null);
         assertNotEquals(null, binder);
         assertEquals(binder, service.onBind(new Intent()));
+    }
+
+    @Test
+    public void testInstallSysTrace() throws Exception {
+        final String expected = "|page_read:";
+        final ByteArrayOutputStream result = new ByteArrayOutputStream();
+        final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand("atrace adb");
+        final Thread readFromProcess = new Thread(() -> {
+            try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
+                final String found = waitForSubstring(inputStream, expected);
+                result.write(found.getBytes());
+            } catch (IOException ignored) {
+            }
+        });
+        readFromProcess.start();
+
+        installPackage(TEST_APK);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+
+        readFromProcess.join();
+        assertNotEquals("", result.toString());
     }
 
     private boolean isAppInstalled(String packageName) throws IOException {
