@@ -50,6 +50,18 @@ java_test_host {
         "CtsCorruptApkTests_Unaligned_R",
     ],
 
+    data: [
+        ":CtsApkVerityTestApp",
+        ":CtsApkVerityTestAppFsvSig",
+        ":CtsApkVerityTestAppDm",
+        ":CtsApkVerityTestAppDmFsvSig",
+        ":CtsApkVerityTestAppSplit",
+        ":CtsApkVerityTestAppSplitFsvSig",
+        ":CtsApkVerityTestAppSplitDm",
+        ":CtsApkVerityTestAppSplitDmFsvSig",
+        ":CtsApkVerityTestApp2",
+        ":CtsApkVerityTestApp2FsvSig",
+    ],
 }
 
 filegroup {
