@@ -143,8 +143,11 @@ public class StagedInstallTest {
             "ApexNotPreInstalled", NOT_PREINSTALL_APEX_PACKAGE_NAME, 3, /*isApex*/true,
             "com.android.apex.cts.shim_not_pre_installed.apex");
     private static final TestApp Apex2SdkTargetP = new TestApp(
-            "StagedInstallTestApexV2_SdkTargetP", SHIM_PACKAGE_NAME, 1,
+            "StagedInstallTestApexV2_SdkTargetP", SHIM_PACKAGE_NAME, 2,
             /*isApex*/true, "com.android.apex.cts.shim.v2_sdk_target_p.apex");
+    private static final TestApp Apex2ApkInApexSdkTargetP = new TestApp(
+            "StagedInstallTestApexV2_ApkInApexSdkTargetP", SHIM_PACKAGE_NAME, 2,
+            /*isApex*/true, "com.android.apex.cts.shim.v2_apk_in_apex_sdk_target_p.apex");
     private static final TestApp CorruptedApex_b146895998 = new TestApp(
             "StagedInstallTestCorruptedApex_b146895998", "", 1, true, "corrupted_b146895998.apex");
     private static final TestApp Apex2NoApkSignature = new TestApp(
@@ -1068,6 +1071,23 @@ public class StagedInstallTest {
         assertThat(sessionInfo).isStagedSessionFailed();
         assertThat(sessionInfo.getStagedSessionErrorMessage())
                 .contains("Failed to parse APEX package");
+    }
+
+    /**
+     * Apex should fail to install if apk-in-apex fails to get scanned
+     */
+    @Test
+    public void testApexFailsToInstallIfApkInApexFailsToScan_Commit() throws Exception {
+        int sessionId = stageSingleApk(Apex2ApkInApexSdkTargetP).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testApexFailsToInstallIfApkInApexFailsToScan_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailed(sessionId);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
     }
 
     @Test

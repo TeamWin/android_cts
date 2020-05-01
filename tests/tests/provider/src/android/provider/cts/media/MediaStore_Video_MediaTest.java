@@ -285,10 +285,7 @@ public class MediaStore_Video_MediaTest {
         }
 
         // Now remove ownership, which means that location should be redacted
-        ProviderTestUtils.executeShellCommand("content update"
-                + " --user " + InstrumentationRegistry.getTargetContext().getUserId()
-                + " --uri " + publishUri + " --bind owner_package_name:n:",
-                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+        ProviderTestUtils.clearOwner(publishUri);
         try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
             mmr.setDataSource(pfd.getFileDescriptor());
