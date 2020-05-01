@@ -22,9 +22,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import com.android.server.wm.ActivityRecordProto;
+import com.android.server.wm.DisplayAreaProto;
 import com.android.server.wm.DisplayContentProto;
-import com.android.server.wm.IdentifierProto;
 import com.android.server.wm.RootWindowContainerProto;
+import com.android.server.wm.TaskProto;
+import com.android.server.wm.WindowContainerChildProto;
+import com.android.server.wm.WindowContainerProto;
 import com.android.server.wm.WindowManagerServiceDumpProto;
 import com.android.server.wm.WindowStateProto;
 import com.android.server.wm.WindowTokenProto;
@@ -242,7 +246,7 @@ public class TvMicrophoneCaptureIndicatorTest extends BaseHostJUnit4Test {
     }
 
     private void assertIndicatorVisible() throws Exception {
-        final WindowStateProto window = getMicCaptureIndicatorWindow(true);
+        final WindowStateProto window = getMicCaptureIndicatorWindow();
 
         assertNotNull("\"MicrophoneCaptureIndicator\" window does not exist", window);
         assertTrue("\"MicrophoneCaptureIndicator\" window is not visible",
@@ -252,7 +256,7 @@ public class TvMicrophoneCaptureIndicatorTest extends BaseHostJUnit4Test {
     }
 
     private void assertIndicatorInvisible() throws Exception {
-        final WindowStateProto window = getMicCaptureIndicatorWindow(false);
+        final WindowStateProto window = getMicCaptureIndicatorWindow();
         if (window == null) {
             // If window is not present, that's fine, there is no need to check anything else.
             return;
@@ -264,29 +268,18 @@ public class TvMicrophoneCaptureIndicatorTest extends BaseHostJUnit4Test {
                 window.getIsOnScreen());
     }
 
-    private WindowStateProto getMicCaptureIndicatorWindow(boolean aboveAppOnly) throws Exception {
+    private WindowStateProto getMicCaptureIndicatorWindow() throws Exception {
         final WindowManagerServiceDumpProto dump = getDump();
-        final RootWindowContainerProto root = dump.getRootWindowContainer();
-        final List<DisplayContentProto> displays = root.getDisplaysList();
-        for (DisplayContentProto display : displays) {
-            final List<WindowTokenProto> tokens;
-            if (aboveAppOnly) {
-                tokens = display.getAboveAppWindowsList();
-            } else {
-                tokens = new ArrayList<>();
-                tokens.addAll(display.getAboveAppWindowsList());
-                tokens.addAll(display.getImeWindowsList());
-                tokens.addAll(display.getBelowAppWindowsList());
-            }
+        final RootWindowContainerProto rootWindowContainer = dump.getRootWindowContainer();
+        final WindowContainerProto windowContainer = rootWindowContainer.getWindowContainer();
 
-            for (WindowTokenProto token : tokens) {
-                for (WindowStateProto window : token.getWindowsList()) {
-                    final IdentifierProto identifier = window.getIdentifier();
-                    final String title = identifier.getTitle();
-                    if (WINDOW_TITLE_MIC_INDICATOR.equals(title)) {
-                        return window;
-                    }
-                }
+        final List<WindowStateProto> windows = new ArrayList<>();
+        collectWindowStates(windowContainer, windows);
+
+        for (WindowStateProto window : windows) {
+            final String title = window.getIdentifier().getTitle();
+            if (WINDOW_TITLE_MIC_INDICATOR.equals(title)) {
+                return window;
             }
         }
         return null;
@@ -296,5 +289,68 @@ public class TvMicrophoneCaptureIndicatorTest extends BaseHostJUnit4Test {
         final CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
         getDevice().executeShellCommand(SHELL_DUMPSYS_WINDOW, receiver);
         return WindowManagerServiceDumpProto.parser().parseFrom(receiver.getOutput());
+    }
+
+    /**
+     * This methods implements a DFS that goes through a tree of window containers and collects all
+     * the WindowStateProto-s.
+     *
+     * WindowContainer is generic class that can hold windows directly or through its children in a
+     * hierarchy form. WindowContainer's children are WindowContainer as well. This forms a tree of
+     * WindowContainers.
+     *
+     * There are a few classes that extend WindowContainer: Task, DisplayContent, WindowToken etc.
+     * The one we are interested in is WindowState.
+     * Since Proto does not have concept of inheritance, {@link TaskProto}, {@link WindowTokenProto}
+     * etc hold a reference to a {@link WindowContainerProto} (in java code would be {@code super}
+     * reference).
+     * {@link WindowContainerProto} may a have a number of children of type
+     * {@link WindowContainerChildProto}, which represents a generic child of a WindowContainer: a
+     * WindowContainer can have multiple children of different types stored as a
+     * {@link WindowContainerChildProto}, but each instance of {@link WindowContainerChildProto} can
+     * only contain a single type.
+     *
+     * For details see /frameworks/base/core/proto/android/server/windowmanagerservice.proto
+     */
+    private void collectWindowStates(WindowContainerProto windowContainer, List<WindowStateProto> out) {
+        if (windowContainer == null) return;
+
+        final List<WindowContainerChildProto> children = windowContainer.getChildrenList();
+        for (WindowContainerChildProto child : children) {
+            if (child.hasWindowContainer()) {
+                collectWindowStates(child.getWindowContainer(), out);
+            } else if (child.hasDisplayContent()) {
+                final DisplayContentProto displayContent = child.getDisplayContent();
+                for (WindowTokenProto windowToken : displayContent.getOverlayWindowsList()) {
+                    collectWindowStates(windowToken.getWindowContainer(), out);
+                }
+                if (displayContent.hasRootDisplayArea()) {
+                    final DisplayAreaProto displayArea = displayContent.getRootDisplayArea();
+                    collectWindowStates(displayArea.getWindowContainer(), out);
+                }
+                collectWindowStates(displayContent.getWindowContainer(), out);
+            } else if (child.hasDisplayArea()) {
+                final DisplayAreaProto displayArea = child.getDisplayArea();
+                collectWindowStates(displayArea.getWindowContainer(), out);
+            } else if (child.hasTask()) {
+                final TaskProto task = child.getTask();
+                collectWindowStates(task.getWindowContainer(), out);
+            } else if (child.hasActivity()) {
+                final ActivityRecordProto activity = child.getActivity();
+                if (activity.hasWindowToken()) {
+                    final WindowTokenProto windowToken = activity.getWindowToken();
+                    collectWindowStates(windowToken.getWindowContainer(), out);
+                }
+            } else if (child.hasWindowToken()) {
+                final WindowTokenProto windowToken = child.getWindowToken();
+                collectWindowStates(windowToken.getWindowContainer(), out);
+            } else if (child.hasWindow()) {
+                final WindowStateProto window = child.getWindow();
+                // We found a Window!
+                out.add(window);
+                // ... but still aren't done
+                collectWindowStates(window.getWindowContainer(), out);
+            }
+        }
     }
 }
