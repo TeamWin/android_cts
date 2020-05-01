@@ -23,6 +23,7 @@
 
     <application>
         <service android:name=".AudioRecorderService"
+                 android:foregroundServiceType="microphone"
                  android:exported="true"/>
     </application>
 
