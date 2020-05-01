@@ -92,6 +92,7 @@ public final class CarWatchdogDaemonTest {
         // Sleep twice the collection interval to capture the entire write.
         Thread.sleep(CAPTURE_WAIT_MS);
         String contents = runShellCommand("dumpsys " + CAR_WATCHDOG_SERVICE_NAME + " --stop_io");
+        Log.i(TAG, "stop results:" + contents);
         assertWithMessage("Failed to custom collect I/O performance data").that(
                 contents).isNotEmpty();
         PackageManager packageManager = getContext().getPackageManager();
@@ -109,6 +110,7 @@ public final class CarWatchdogDaemonTest {
         while (maxSize != 0) {
             int writeSize = (int) Math.min(Integer.MAX_VALUE,
                     Math.min(Runtime.getRuntime().freeMemory(), maxSize));
+            Log.i(TAG, "writeSize:" + writeSize);
             try {
                 fos.write(new byte[writeSize]);
             } catch (InterruptedIOException e) {
