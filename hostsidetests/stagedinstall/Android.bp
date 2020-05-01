@@ -59,6 +59,7 @@ android_test_helper_app {
         ":StagedInstallTestApexV2_WithPostInstallHook",
         ":StagedInstallTestApexV2_WithPreInstallHook",
         ":StagedInstallTestApexV2_WrongSha",
+        ":StagedInstallTestApexV2_WithoutApkInApex",
         ":StagedInstallTestAppSamePackageNameAsApex",
         ":StagedInstallTestApexV2_SdkTargetP",
         ":StagedInstallTestApexV2_ApkInApexSdkTargetP",
@@ -342,6 +343,26 @@ prebuilt_apex {
         },
     },
     filename: "com.android.apex.cts.shim.v2_wrong_sha.apex",
+    installable: false,
+}
+
+prebuilt_apex {
+    name: "StagedInstallTestApexV2_WithoutApkInApex",
+    arch: {
+        arm: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_without_apk_in_apex.apex",
+        },
+        arm64: {
+              src: "testdata/apex/arm/com.android.apex.cts.shim.v2_without_apk_in_apex.apex",
+        },
+        x86: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_without_apk_in_apex.apex",
+        },
+        x86_64: {
+              src: "testdata/apex/x86/com.android.apex.cts.shim.v2_without_apk_in_apex.apex",
+        },
+    },
+    filename: "com.android.apex.cts.shim.v2_without_apk_in_apex.apex",
     installable: false,
 }
 
