@@ -543,8 +543,17 @@ public class SensorTest extends SensorTestCase {
                 + " " + sensor.getName(), sensor.getMaximumRange() >= 0);
         assertTrue("Max power must be positive. Power=" + sensor.getPower() + " " +
                 sensor.getName(), sensor.getPower() >= 0);
-        assertTrue("Max resolution must be non-zero and positive. Resolution=" + sensor.getResolution() +
-                " " + sensor.getName(), sensor.getResolution() > 0);
+
+        // Only assert sensor resolution is non-zero for official sensor types since that's what's
+        // required by the CDD.
+        if (sensor.getType() < MAX_OFFICIAL_ANDROID_SENSOR_TYPE) {
+            assertTrue("Max resolution must be non-zero and positive. Resolution=" + sensor.getResolution() +
+                    " " + sensor.getName(), sensor.getResolution() > 0);
+        } else {
+            assertTrue("Max resolution must be positive. Resolution=" + sensor.getResolution() +
+                    " " + sensor.getName(), sensor.getResolution() >= 0);
+        }
+
         boolean hasHifiSensors = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_HIFI_SENSORS);
         if (SensorCtsHelper.hasMaxResolutionRequirement(sensor, hasHifiSensors)) {
