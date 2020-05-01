@@ -97,6 +97,7 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         pressHomeButton();
 
         mClicked = false;
+        mEmbeddedLayoutParams = null;
 
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.launchActivity(null);
@@ -120,9 +121,11 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
 
         sv.setChildSurfacePackage(mVr.getSurfacePackage());
 
-        mEmbeddedLayoutParams = new WindowManager.LayoutParams(width, height,
-                WindowManager.LayoutParams.TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
-        mVr.setView(v, mEmbeddedLayoutParams);
+        if (mEmbeddedLayoutParams == null) {
+            mVr.setView(v, width, height);
+        } else {
+            mVr.setView(v, mEmbeddedLayoutParams);
+        }
         assertEquals(v, mVr.getView());
     }
 
@@ -247,6 +250,10 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         mEmbeddedView.setOnClickListener((View v) -> {
             mClicked = true;
         });
+
+        mEmbeddedLayoutParams = new WindowManager.LayoutParams(mEmbeddedViewWidth,
+            mEmbeddedViewHeight, WindowManager.LayoutParams.TYPE_APPLICATION, 0,
+            PixelFormat.OPAQUE);
 
         addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
         mInstrumentation.waitForIdleSync();
