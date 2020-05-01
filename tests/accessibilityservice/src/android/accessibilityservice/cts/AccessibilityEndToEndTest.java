@@ -116,7 +116,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * creating an {@link Activity} and poking around so {@link AccessibilityEvent}s
  * are generated and their correct dispatch verified.
  */
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityEndToEndTest {
 
@@ -164,6 +163,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
+    @Presubmit
     @Test
     public void testTypeViewSelectedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
@@ -206,6 +206,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
+    @Presubmit
     @Test
     public void testTypeViewClickedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
@@ -243,6 +244,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
+    @Presubmit
     @Test
     public void testTypeViewLongClickedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
@@ -280,6 +282,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
+    @Presubmit
     @Test
     public void testTypeViewFocusedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
@@ -303,6 +306,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
+    @Presubmit
     @Test
     public void testTypeViewTextChangedAccessibilityEvent() throws Throwable {
         // focus the edit text
@@ -372,6 +376,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
+    @Presubmit
     @Test
     public void testTypeWindowStateChangedAccessibilityEvent() throws Throwable {
         // create and populate the expected event
@@ -411,6 +416,7 @@ public class AccessibilityEndToEndTest {
     @MediumTest
     @AppModeFull
     @SuppressWarnings("deprecation")
+    @Presubmit
     @Test
     public void testTypeNotificationStateChangedAccessibilityEvent() throws Throwable {
         // No notification UI on televisions.
@@ -563,6 +569,7 @@ public class AccessibilityEndToEndTest {
 
     @AppModeFull
     @MediumTest
+    @Presubmit
     @Test
     public void testPackageNameCannotBeFakedAppWidget() throws Exception {
         if (!hasAppWidgets()) {
@@ -641,6 +648,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
+    @Presubmit
     @Test
     public void testViewHeadingReportedToAccessibility() throws Exception {
         final EditText editText = (EditText) getOnMain(sInstrumentation, () -> {
@@ -669,6 +677,7 @@ public class AccessibilityEndToEndTest {
     }
 
     @MediumTest
+    @Presubmit
     @Test
     public void testTooltipTextReportedToAccessibility() {
         final AccessibilityNodeInfo buttonNode = sUiAutomation.getRootInActiveWindow()

@@ -63,7 +63,6 @@ import org.junit.runner.RunWith;
  * Tests that AccessibilityWindowInfos and AccessibilityNodeInfos from a window on an embedded
  * display that is re-parented to another window are properly populated.
  */
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityEmbeddedDisplayTest {
     private static Instrumentation sInstrumentation;
@@ -125,6 +124,7 @@ public class AccessibilityEmbeddedDisplayTest {
         }
     }
 
+    @Presubmit
     @Test
     public void testA11yWindowInfoHasCorrectLayer() {
         final AccessibilityWindowInfo parentActivityWindow =
@@ -137,6 +137,7 @@ public class AccessibilityEmbeddedDisplayTest {
         assertTrue(parentActivityWindow.getLayer() > activityWindow.getLayer());
     }
 
+    @Presubmit
     @Test
     public void testA11yWindowInfoAndA11yNodeInfoHasCorrectBoundsInScreen() {
         final AccessibilityWindowInfo parentActivityWindow =

@@ -46,7 +46,6 @@ import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.HardwareBuffer;
 import android.os.SystemClock;
-import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -70,7 +69,6 @@ import org.mockito.MockitoAnnotations;
 /**
  * Test cases for accessibility service takeScreenshot API.
  */
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityTakeScreenshotTest {
     /**
