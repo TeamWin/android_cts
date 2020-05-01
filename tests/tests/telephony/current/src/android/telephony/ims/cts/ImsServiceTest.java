@@ -1672,6 +1672,45 @@ public class ImsServiceTest {
         overrideCarrierConfig(null);
     }
 
+    @Test
+    public void testProvisioningManagerRcsProvisioningCaps() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        triggerFrameworkConnectToCarrierImsService();
+
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_PRESENCE_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_RCS_PROVISIONING_REQUIRED_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        ProvisioningManager provisioningManager =
+                ProvisioningManager.createForSubscriptionId(sTestSub);
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            boolean provisioningStatus = provisioningManager.getRcsProvisioningStatusForCapability(
+                    RCS_CAP_PRESENCE);
+            provisioningManager.setRcsProvisioningStatusForCapability(RCS_CAP_PRESENCE,
+                    !provisioningStatus);
+            // Make sure the change in provisioning status is correctly returned.
+            assertEquals(!provisioningStatus,
+                    provisioningManager.getRcsProvisioningStatusForCapability(RCS_CAP_PRESENCE));
+            // TODO: Enhance test to make sure the provisioning change is also sent to the
+            // ImsService
+
+            // set back to current status
+            provisioningManager.setRcsProvisioningStatusForCapability(RCS_CAP_PRESENCE,
+                    provisioningStatus);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        overrideCarrierConfig(null);
+    }
+
     private void verifyIntKey(ProvisioningManager pm,
             LinkedBlockingQueue<Pair<Integer, Integer>> intQueue, int key, int value)
             throws Exception {
