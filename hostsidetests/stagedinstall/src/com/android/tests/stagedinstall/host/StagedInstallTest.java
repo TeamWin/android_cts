@@ -121,6 +121,11 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testStageAnotherSessionImmediatelyAfterAbandon() throws Exception {
+        runPhase("testStageAnotherSessionImmediatelyAfterAbandon");
+    }
+
+    @Test
     public void testNoSessionUpdatedBroadcastSentForStagedSessionAbandon() throws Exception {
         assumeTrue(isUpdatingApexSupported());
         runPhase("testNoSessionUpdatedBroadcastSentForStagedSessionAbandon");
