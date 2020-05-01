@@ -97,9 +97,7 @@ public class PackageManagerShellCommandTest {
     }
 
     private static String executeShellCommand(String command) throws IOException {
-        final ParcelFileDescriptor stdout =
-                InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                        command);
+        final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(command);
         try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
             return readFullStream(inputStream);
         }
@@ -112,9 +110,7 @@ public class PackageManagerShellCommandTest {
 
     private static String executeShellCommand(String command, File[] inputs)
             throws IOException {
-        final ParcelFileDescriptor[] pfds =
-                InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                        .executeShellCommandRw(command);
+        final ParcelFileDescriptor[] pfds = getUiAutomation().executeShellCommandRw(command);
         ParcelFileDescriptor stdout = pfds[0];
         ParcelFileDescriptor stdin = pfds[1];
         try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
