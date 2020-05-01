@@ -31,7 +31,6 @@ import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_CAN_SH
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_COMMAND;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_COUNT;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_DENSITY_DPI;
-import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_LAUNCH_TARGET_COMPONENT;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_PRESENTATION_DISPLAY;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_RESIZE_DISPLAY;
@@ -172,7 +171,6 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
 
         final int densityDpi = entry.extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
         final boolean resizeDisplay = entry.extras.getBoolean(KEY_RESIZE_DISPLAY);
-        final String launchComponentName = entry.extras.getString(KEY_LAUNCH_TARGET_COMPONENT);
         final Surface surface = surfaceHolder.getSurface();
 
         // Initially, the surface will not have a set width or height so rely on the parent.
@@ -215,14 +213,6 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
             mVirtualDisplays.put(surface,
                     new VirtualDisplayEntry(virtualDisplay, entry.surfaceView, densityDpi,
                             resizeDisplay));
-            if (launchComponentName != null) {
-                final ComponentName targetActivity =
-                        ComponentName.unflattenFromString(launchComponentName);
-                final int displayId = virtualDisplay.getDisplay().getDisplayId();
-                Log.d(TAG, "Launch activity after display created: activityName="
-                        + getActivityName(targetActivity) + ", displayId=" + displayId);
-                launchActivity(targetActivity, displayId);
-            }
         } catch (IllegalArgumentException e) {
             final ViewGroup root = findViewById(android.R.id.content);
             // This is expected when trying to create show-when-locked public display.
