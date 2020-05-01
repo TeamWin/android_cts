@@ -17,7 +17,6 @@
 package android.server.wm;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
-import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
@@ -29,7 +28,6 @@ import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_CAN_SH
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_COMMAND;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_COUNT;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_DENSITY_DPI;
-import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_LAUNCH_TARGET_COMPONENT;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_PRESENTATION_DISPLAY;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
 import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_RESIZE_DISPLAY;
@@ -322,7 +320,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private boolean mOwnContentOnly = false;
         private boolean mRequestShowIme = false;
         private boolean mPresentationDisplay = false;
-        private ComponentName mLaunchActivity = null;
         private boolean mSimulateDisplay = false;
         private boolean mMustBeCreated = true;
         private Size mSimulationDisplaySize = new Size(1024 /* width */, 768 /* height */);
@@ -372,11 +369,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         VirtualDisplaySession setPresentationDisplay(boolean presentationDisplay) {
             mPresentationDisplay = presentationDisplay;
-            return this;
-        }
-
-        VirtualDisplaySession setLaunchActivity(ComponentName launchActivity) {
-            mLaunchActivity = launchActivity;
             return this;
         }
 
@@ -505,11 +497,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                     .append(" --ez " + KEY_SHOW_SYSTEM_DECORATIONS + " ")
                     .append(mShowSystemDecorations)
                     .append(" --ez " + KEY_PRESENTATION_DISPLAY + " ").append(mPresentationDisplay);
-            if (mLaunchActivity != null) {
-                createVirtualDisplayCommand
-                        .append(" --es " + KEY_LAUNCH_TARGET_COMPONENT + " ")
-                        .append(getActivityName(mLaunchActivity));
-            }
             executeShellCommand(createVirtualDisplayCommand.toString());
             mVirtualDisplayCreated = true;
 
