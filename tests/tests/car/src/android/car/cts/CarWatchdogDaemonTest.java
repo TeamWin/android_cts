@@ -33,10 +33,11 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
@@ -50,6 +51,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class CarWatchdogDaemonTest {
+    @ClassRule
+    public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
+            PackageManager.FEATURE_AUTOMOTIVE);
+
     private static final String TAG = CarWatchdogDaemonTest.class.getSimpleName();
 
     private static final String CAR_WATCHDOG_SERVICE_NAME
@@ -67,7 +72,6 @@ public final class CarWatchdogDaemonTest {
 
     @Before
     public void setUp() throws IOException {
-        assumeTrue(FeatureUtil.isAutomotive());
         File dataDir = getContext().getDataDir();
         testDir = Files.createTempDirectory(dataDir.toPath(),
                 "CarWatchdogDaemon").toFile();
