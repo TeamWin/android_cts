@@ -17,14 +17,12 @@ package android.car.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.car.Car;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.IBinder;
-import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.annotation.NonNull;
@@ -32,10 +30,10 @@ import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,6 +44,9 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class CarTest {
+    @ClassRule
+    public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
+            PackageManager.FEATURE_AUTOMOTIVE);
 
     private static final long DEFAULT_WAIT_TIMEOUT_MS = 2000;
 
@@ -53,11 +54,6 @@ public class CarTest {
 
     private Car mCar;
     private DefaultServiceConnectionListener mServiceConnectionListener;
-
-    @Before
-    public void setUp() {
-        assumeTrue(FeatureUtil.isAutomotive());
-    }
 
     @After
     public void tearDown() {
