@@ -38,7 +38,6 @@ import org.junit.runner.RunWith;
 /**
  * Verify that accessibility services can control the accessibility volume.
  */
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityVolumeTest {
     Instrumentation mInstrumentation;
@@ -76,6 +75,7 @@ public class AccessibilityVolumeTest {
     }
 
     @Test
+    @Presubmit
     public void testChangeAccessibilityVolume_outsideValidAccessibilityService_shouldFail() {
         if (mSingleVolume || mFixedA11yVolume) {
             return;
