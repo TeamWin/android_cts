@@ -64,7 +64,7 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
 
     T addFile(String file) throws FileNotFoundException {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
-        mFiles.add(buildHelper.getTestFile(file));
+        mFiles.add(buildHelper.getTestFile(file, mAbi));
         return (T) this;
     }
 
