@@ -35,6 +35,7 @@ public class FileUtils {
     public static final String CE_DATA_FILE_NAME = "ce_data_file";
     public static final String DE_DATA_FILE_NAME = "de_data_file";
     public final static String EXTERNAL_DATA_FILE_NAME = "external_data_file";
+    public final static String OBB_FILE_NAME = "obb_file";
 
     private static final String JAVA_FILE_PERMISSION_DENIED_MSG =
             "open failed: EACCES (Permission denied)";

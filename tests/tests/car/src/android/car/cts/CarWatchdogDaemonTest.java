@@ -33,10 +33,11 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
@@ -50,6 +51,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class CarWatchdogDaemonTest {
+    @ClassRule
+    public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
+            PackageManager.FEATURE_AUTOMOTIVE);
+
     private static final String TAG = CarWatchdogDaemonTest.class.getSimpleName();
 
     private static final String CAR_WATCHDOG_SERVICE_NAME
@@ -67,7 +72,6 @@ public final class CarWatchdogDaemonTest {
 
     @Before
     public void setUp() throws IOException {
-        assumeTrue(FeatureUtil.isAutomotive());
         File dataDir = getContext().getDataDir();
         testDir = Files.createTempDirectory(dataDir.toPath(),
                 "CarWatchdogDaemon").toFile();
@@ -88,6 +92,7 @@ public final class CarWatchdogDaemonTest {
         // Sleep twice the collection interval to capture the entire write.
         Thread.sleep(CAPTURE_WAIT_MS);
         String contents = runShellCommand("dumpsys " + CAR_WATCHDOG_SERVICE_NAME + " --stop_io");
+        Log.i(TAG, "stop results:" + contents);
         assertWithMessage("Failed to custom collect I/O performance data").that(
                 contents).isNotEmpty();
         PackageManager packageManager = getContext().getPackageManager();
@@ -105,6 +110,7 @@ public final class CarWatchdogDaemonTest {
         while (maxSize != 0) {
             int writeSize = (int) Math.min(Integer.MAX_VALUE,
                     Math.min(Runtime.getRuntime().freeMemory(), maxSize));
+            Log.i(TAG, "writeSize:" + writeSize);
             try {
                 fos.write(new byte[writeSize]);
             } catch (InterruptedIOException e) {
