@@ -16,6 +16,7 @@
 
 package android.view.inputmethod.cts;
 
+import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
@@ -29,10 +30,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Instrumentation;
+import android.graphics.Color;
 import android.os.SystemClock;
 import android.support.test.uiautomator.UiObject2;
 import android.text.TextUtils;
 import android.util.Pair;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethod;
@@ -44,6 +48,7 @@ import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
@@ -275,5 +280,56 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     TIMEOUT);
             expectImeVisible(TIMEOUT);
         }
+    }
+
+    @Test
+    public void testFloatingImeHideKeyboardAfterBackPressed() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final InputMethodManager imm = instrumentation.getTargetContext().getSystemService(
+                InputMethodManager.class);
+
+        // Initial MockIme with floating IME settings.
+        try (MockImeSession imeSession = MockImeSession.create(
+                instrumentation.getContext(), instrumentation.getUiAutomation(),
+                getFloatingImeSettings(Color.BLACK))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            assertTrue("isActive() must return true if the View has IME focus",
+                    getOnMainSync(() -> imm.isActive(editText)));
+
+            // Test showSoftInput() flow
+            assertTrue("showSoftInput must success if the View has IME focus",
+                    getOnMainSync(() -> imm.showSoftInput(editText, 0)));
+
+            expectEvent(stream, showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.VISIBLE, TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Pressing back key, expect soft-keyboard will become invisible.
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+            expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.GONE, TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+        }
+    }
+
+    private static ImeSettings.Builder getFloatingImeSettings(@ColorInt int navigationBarColor) {
+        final ImeSettings.Builder builder = new ImeSettings.Builder();
+        builder.setWindowFlags(0, FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        // As documented, Window#setNavigationBarColor() is actually ignored when the IME window
+        // does not have FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS.  We are calling setNavigationBarColor()
+        // to ensure it.
+        builder.setNavigationBarColor(navigationBarColor);
+        return builder;
     }
 }
