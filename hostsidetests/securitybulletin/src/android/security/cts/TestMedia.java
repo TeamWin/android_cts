@@ -214,6 +214,18 @@ public class TestMedia extends SecurityTestCase {
     }
 
     /**
+     * b/66969349
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @SecurityTest(minPatchLevel = "2018-01")
+    @Test
+    public void testPocCVE_2017_13180() throws Exception {
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13180", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
      * b/111210196
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
