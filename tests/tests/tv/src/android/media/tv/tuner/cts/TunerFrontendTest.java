@@ -22,22 +22,35 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.media.tv.tuner.Tuner;
+import android.media.tv.tuner.frontend.AnalogFrontendCapabilities;
 import android.media.tv.tuner.frontend.AnalogFrontendSettings;
+import android.media.tv.tuner.frontend.Atsc3FrontendCapabilities;
 import android.media.tv.tuner.frontend.Atsc3FrontendSettings;
 import android.media.tv.tuner.frontend.Atsc3PlpSettings;
+import android.media.tv.tuner.frontend.AtscFrontendCapabilities;
 import android.media.tv.tuner.frontend.AtscFrontendSettings;
+import android.media.tv.tuner.frontend.DvbcFrontendCapabilities;
 import android.media.tv.tuner.frontend.DvbcFrontendSettings;
 import android.media.tv.tuner.frontend.DvbsCodeRate;
+import android.media.tv.tuner.frontend.DvbsFrontendCapabilities;
 import android.media.tv.tuner.frontend.DvbsFrontendSettings;
+import android.media.tv.tuner.frontend.DvbtFrontendCapabilities;
 import android.media.tv.tuner.frontend.DvbtFrontendSettings;
+import android.media.tv.tuner.frontend.FrontendCapabilities;
+import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
+import android.media.tv.tuner.frontend.Isdbs3FrontendCapabilities;
 import android.media.tv.tuner.frontend.Isdbs3FrontendSettings;
+import android.media.tv.tuner.frontend.IsdbsFrontendCapabilities;
 import android.media.tv.tuner.frontend.IsdbsFrontendSettings;
+import android.media.tv.tuner.frontend.IsdbtFrontendCapabilities;
 import android.media.tv.tuner.frontend.IsdbtFrontendSettings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -330,6 +343,132 @@ public class TunerFrontendTest {
         assertEquals(DvbtFrontendSettings.CODERATE_7_8, settings.getCodeRate());
         assertEquals(DvbtFrontendSettings.GUARD_INTERVAL_1_4, settings.getGuardInterval());
         assertEquals(10, settings.getServiceAreaId());
+    }
+
+    @Test
+    public void testFrontendInfo() throws Exception {
+        if (!hasTuner()) return;
+        List<Integer> ids = mTuner.getFrontendIds();
+        for (int id : ids) {
+            FrontendInfo info = mTuner.getFrontendInfoById(id);
+            assertNotNull(info);
+            assertEquals(id, info.getId());
+            assertTrue(info.getFrequencyRange().getLower() > 0);
+            assertTrue(info.getSymbolRateRange().getLower() >= 0);
+            assertTrue(info.getAcquireRange() > 0);
+            info.getExclusiveGroupId();
+
+            FrontendCapabilities caps = info.getFrontendCapabilities();
+            assertNotNull(caps);
+            switch(info.getType()) {
+                case FrontendSettings.TYPE_ANALOG:
+                    testAnalogFrontendCapabilities(caps);
+                    break;
+                case FrontendSettings.TYPE_ATSC3:
+                    testAtsc3FrontendCapabilities(caps);
+                    break;
+                case FrontendSettings.TYPE_ATSC:
+                    testAtscFrontendCapabilities(caps);
+                    break;
+                case FrontendSettings.TYPE_DVBC:
+                    testDvbcFrontendCapabilities(caps);
+                    break;
+                case FrontendSettings.TYPE_DVBS:
+                    testDvbsFrontendCapabilities(caps);
+                    break;
+                case FrontendSettings.TYPE_DVBT:
+                    testDvbtFrontendCapabilities(caps);
+                    break;
+                case FrontendSettings.TYPE_ISDBS3:
+                    testIsdbs3FrontendCapabilities(caps);
+                    break;
+                case FrontendSettings.TYPE_ISDBS:
+                    testIsdbsFrontendCapabilities(caps);
+                    break;
+                case FrontendSettings.TYPE_ISDBT:
+                    testIsdbtFrontendCapabilities(caps);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void testAnalogFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof AnalogFrontendCapabilities);
+        AnalogFrontendCapabilities analogCaps = (AnalogFrontendCapabilities) caps;
+        analogCaps.getSignalTypeCapability();
+        analogCaps.getSifStandardCapability();
+    }
+
+    private void testAtsc3FrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof Atsc3FrontendCapabilities);
+        Atsc3FrontendCapabilities atsc3Caps = (Atsc3FrontendCapabilities) caps;
+        atsc3Caps.getBandwidthCapability();
+        atsc3Caps.getModulationCapability();
+        atsc3Caps.getTimeInterleaveModeCapability();
+        atsc3Caps.getPlpCodeRateCapability();
+        atsc3Caps.getFecCapability();
+        atsc3Caps.getDemodOutputFormatCapability();
+    }
+
+    private void testAtscFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof AtscFrontendCapabilities);
+        AtscFrontendCapabilities atscCaps = (AtscFrontendCapabilities) caps;
+        atscCaps.getModulationCapability();
+    }
+
+    private void testDvbcFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof DvbcFrontendCapabilities);
+        DvbcFrontendCapabilities dvbcCaps = (DvbcFrontendCapabilities) caps;
+        dvbcCaps.getModulationCapability();
+        dvbcCaps.getFecCapability();
+        dvbcCaps.getAnnexCapability();
+    }
+
+    private void testDvbsFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof DvbsFrontendCapabilities);
+        DvbsFrontendCapabilities dvbsCaps = (DvbsFrontendCapabilities) caps;
+        dvbsCaps.getModulationCapability();
+        dvbsCaps.getInnerFecCapability();
+        dvbsCaps.getStandardCapability();
+    }
+
+    private void testDvbtFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof DvbtFrontendCapabilities);
+        DvbtFrontendCapabilities dvbtCaps = (DvbtFrontendCapabilities) caps;
+        dvbtCaps.getTransmissionModeCapability();
+        dvbtCaps.getBandwidthCapability();
+        dvbtCaps.getConstellationCapability();
+        dvbtCaps.getCodeRateCapability();
+        dvbtCaps.getHierarchyCapability();
+        dvbtCaps.getGuardIntervalCapability();
+        dvbtCaps.isT2Supported();
+        dvbtCaps.isMisoSupported();
+    }
+
+    private void testIsdbs3FrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof Isdbs3FrontendCapabilities);
+        Isdbs3FrontendCapabilities isdbs3Caps = (Isdbs3FrontendCapabilities) caps;
+        isdbs3Caps.getModulationCapability();
+        isdbs3Caps.getCodeRateCapability();
+    }
+
+    private void testIsdbsFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof IsdbsFrontendCapabilities);
+        IsdbsFrontendCapabilities isdbsCaps = (IsdbsFrontendCapabilities) caps;
+        isdbsCaps.getModulationCapability();
+        isdbsCaps.getCodeRateCapability();
+    }
+
+    private void testIsdbtFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof IsdbtFrontendCapabilities);
+        IsdbtFrontendCapabilities isdbtCaps = (IsdbtFrontendCapabilities) caps;
+        isdbtCaps.getModeCapability();
+        isdbtCaps.getBandwidthCapability();
+        isdbtCaps.getModulationCapability();
+        isdbtCaps.getCodeRateCapability();
+        isdbtCaps.getGuardIntervalCapability();
     }
 
     private boolean hasTuner() {
