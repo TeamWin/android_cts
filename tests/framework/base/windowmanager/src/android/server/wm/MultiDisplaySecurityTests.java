@@ -101,31 +101,26 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
     }
 
     /**
-     * Tests launching an activity on a virtual display without special permission must be allowed
-     * for activities with same UID.
+     * Tests launching an activity on a virtual display without special permission must not be
+     * allowed.
      */
     @Test
     public void testLaunchWithoutPermissionOnVirtualDisplayByOwner() {
         // Create new virtual display.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
-        // Try to launch an activity and check it security exception was triggered.
+        separateTestJournal();
+
+        // Try to launch an activity and check if security exception was triggered.
         getLaunchActivityBuilder()
                 .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
                 .setDisplayId(newDisplay.mId)
                 .setTargetActivity(TEST_ACTIVITY)
                 .execute();
-
-        mWmState.waitForValidState(TEST_ACTIVITY);
-
-        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
-                "The Activity should be able to launch by virtual display owner");
-
-        final int focusedStackId = mWmState.getFocusedStackId();
-        final ActivityTask focusedStack =
-                mWmState.getRootTask(focusedStackId);
-        assertEquals("Focused stack must be on default display",DEFAULT_DISPLAY,
-                focusedStack.mDisplayId);
+        assertSecurityExceptionFromActivityLauncher();
+        mWmState.computeState(TEST_ACTIVITY);
+        assertFalse("Restricted activity must not be launched",
+                mWmState.containsActivity(TEST_ACTIVITY));
     }
 
     /**
@@ -146,9 +141,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 .setDisplayId(newDisplay.mId)
                 .setTargetActivity(TEST_ACTIVITY)
                 .execute();
-
         assertSecurityExceptionFromActivityLauncher();
-
         mWmState.computeState(TEST_ACTIVITY);
         assertFalse("Restricted activity must not be launched",
                 mWmState.containsActivity(TEST_ACTIVITY));
@@ -303,7 +296,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
      * for a private virtual display to check the start of its own activity.
      */
     @Test
-    public void testCanAccessPrivateVirtualDisplayByOwner() {
+    public void testCantAccessPrivateVirtualDisplayByOwner() {
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setPublicDisplay(false)
                 .createDisplay();
@@ -316,7 +309,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 .putExtra(EXTRA_COMPONENT_NAME, TEST_ACTIVITY)
                 .putExtra(EXTRA_TARGET_DISPLAY, newDisplay.mId));
 
-        assertActivityStartCheckResult(true);
+        assertActivityStartCheckResult(false);
     }
 
     /**
@@ -557,43 +550,6 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         frontStack = mWmState.getRootTask(frontStackId);
         assertEquals("Secondary display must contain 1 task", 1,
                 mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
-    }
-
-    /**
-     * Test that launching from display owner is allowed even when the the display owner
-     * doesn't have anything on the display.
-     */
-    @Test
-    public void testPermissionLaunchFromOwner() {
-        // Create new virtual display.
-        final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
-        mWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-        mWmState.assertFocusedActivity("Virtual display activity must be focused",
-                VIRTUAL_DISPLAY_ACTIVITY);
-        final int defaultDisplayFocusedStackId = mWmState.getFocusedStackId();
-        ActivityTask frontStack =
-                mWmState.getRootTask(defaultDisplayFocusedStackId);
-        assertEquals("Top stack must remain on primary display",
-                DEFAULT_DISPLAY, frontStack.mDisplayId);
-
-        // Launch other activity with different uid on secondary display.
-        final String startCmd = "am start -n " + getActivityName(SECOND_ACTIVITY)
-                + " --display " + newDisplay.mId;
-        executeShellCommand(startCmd);
-
-        waitAndAssertActivityStateOnDisplay(SECOND_ACTIVITY, STATE_RESUMED, newDisplay.mId,
-                "Second activity must be the newly launched one");
-
-        // Check that owner uid can launch its own activity on secondary display.
-        getLaunchActivityBuilder()
-                .setUseBroadcastReceiver(LAUNCH_BROADCAST_RECEIVER, LAUNCH_BROADCAST_ACTION)
-                .setNewTask(true)
-                .setMultipleTask(true)
-                .setDisplayId(newDisplay.mId)
-                .execute();
-
-        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
-                "Top activity must be the newly launched one");
     }
 
     /**
