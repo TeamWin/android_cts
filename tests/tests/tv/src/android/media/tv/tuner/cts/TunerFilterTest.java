@@ -201,8 +201,10 @@ public class TunerFilterTest {
                         .build();
 
         assertEquals(Filter.TYPE_IP, config.getType());
-        Assert.assertArrayEquals(new byte[] {(byte) 0xC0, (byte) 0xA8, 0, 1}, config.getSrcIpAddress());
-        Assert.assertArrayEquals(new byte[] {(byte) 0xC0, (byte) 0xA8, 3, 4}, config.getDstIpAddress());
+        Assert.assertArrayEquals(
+                new byte[] {(byte) 0xC0, (byte) 0xA8, 0, 1}, config.getSrcIpAddress());
+        Assert.assertArrayEquals(
+                new byte[] {(byte) 0xC0, (byte) 0xA8, 3, 4}, config.getDstIpAddress());
         assertEquals(33, config.getSrcPort());
         assertEquals(23, config.getDstPort());
         assertFalse(config.isPassthrough());
