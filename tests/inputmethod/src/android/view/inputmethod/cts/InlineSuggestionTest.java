@@ -30,8 +30,8 @@ import android.view.inputmethod.InlineSuggestionInfo;
 import android.widget.inline.InlineContentView;
 import android.widget.inline.InlinePresentationSpec;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
@@ -77,7 +77,7 @@ public class InlineSuggestionTest {
     @Test
     public void testInflateInvalidSizeThrowsException() {
         InlineSuggestion suggestion = createInlineSuggestion();
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Consumer<InlineContentView> mockConsumer = mock(Consumer.class);
 
         assertThrows(IllegalArgumentException.class,
@@ -88,7 +88,7 @@ public class InlineSuggestionTest {
     @Test
     public void testInflateNoContentProviderAcceptNullView() throws Exception {
         InlineSuggestion suggestion = createInlineSuggestion();
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         CountDownLatch latch = new CountDownLatch(1);
         Consumer<InlineContentView> consumer = view -> {
             assertThat(view).isNull();
@@ -102,7 +102,7 @@ public class InlineSuggestionTest {
     @Test
     public void testInflateTwiceThrowsException() {
         InlineSuggestion suggestion = createInlineSuggestion();
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Consumer<InlineContentView> mockConsumer = mock(Consumer.class);
 
         suggestion.inflate(context, new Size(100, 100), AsyncTask.THREAD_POOL_EXECUTOR,
