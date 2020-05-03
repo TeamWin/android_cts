@@ -47,8 +47,8 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.cts.mockime.ImeCommand;
@@ -181,7 +181,7 @@ public class InputConnectionBlockingMethodTest {
             TestProcedure testProcedure, @Nullable AutoCloseable closeable) throws Exception {
         try (AutoCloseable closeableHolder = closeable;
              MockImeSession imeSession = MockImeSession.create(
-                     InstrumentationRegistry.getContext(),
+                     InstrumentationRegistry.getInstrumentation().getContext(),
                      InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                      new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();

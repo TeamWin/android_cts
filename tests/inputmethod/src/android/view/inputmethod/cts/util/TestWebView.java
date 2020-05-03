@@ -28,13 +28,13 @@ import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.Timeout;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 
 /**
  * A custom {@link WebView} class which provides a simple web page for verifying IME behavior.
