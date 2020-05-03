@@ -28,6 +28,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -59,6 +60,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.NoSuchFileException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -461,7 +463,8 @@ public class MediaStorePendingTest {
             values.put(MediaColumns.DATE_MODIFIED, file.lastModified() / 1000);
             values.put(MediaColumns.SIZE, file.length());
         }
-        mResolver.update(uri, values, null, null);
+        mResolver.applyBatch(MediaStore.AUTHORITY, new ArrayList<>(
+                Arrays.asList(ContentProviderOperation.newUpdate(uri).withValues(values).build())));
         try (Cursor c = mResolver.query(uri, null, null, null)) {
             assertTrue(c.moveToFirst());
             assertEquals(0, c.getInt(c.getColumnIndexOrThrow(MediaColumns.IS_PENDING)));
