@@ -62,9 +62,9 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -133,7 +133,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testOnStartInputCalledOnceIme() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
@@ -163,7 +163,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testSoftInputStateAlwaysVisibleWithoutFocusedEditorView() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
@@ -206,7 +206,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testEditorStartsInput() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
@@ -232,7 +232,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testSoftInputStateAlwaysVisibleFocusedEditorView() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
@@ -273,7 +273,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     public void testFocusableWindowDoesNotInvalidateExistingInputConnection() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
+                instrumentation.getContext(),
                 instrumentation.getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
@@ -376,7 +376,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     public void testNonFocusablePopupWindowDoesNotAffectImeVisibility() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
+                instrumentation.getContext(),
                 instrumentation.getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
@@ -435,7 +435,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     public void testRestartInputWhileOtherProcessHasWindowFocus() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
+                instrumentation.getContext(),
                 instrumentation.getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
@@ -487,7 +487,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testSetShowInputOnFocus() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
