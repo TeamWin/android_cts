@@ -40,8 +40,8 @@ import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.InputConnectionTestUtils;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
@@ -52,7 +52,7 @@ import org.junit.runner.RunWith;
 public class BaseInputConnectionTest {
 
     private static BaseInputConnection createBaseInputConnection() {
-        final View view = new View(InstrumentationRegistry.getTargetContext());
+        final View view = new View(InstrumentationRegistry.getInstrumentation().getTargetContext());
         return new BaseInputConnection(view, true);
     }
 
@@ -199,7 +199,7 @@ public class BaseInputConnectionTest {
         final int selectionEnd = Selection.getSelectionEnd(source);
         final Editable editable = Editable.Factory.getInstance().newEditable(source);
         Selection.setSelection(editable, selectionStart, selectionEnd);
-        final View view = new View(InstrumentationRegistry.getTargetContext());
+        final View view = new View(InstrumentationRegistry.getInstrumentation().getTargetContext());
         return new BaseInputConnection(view, true) {
             @Override
             public Editable getEditable() {

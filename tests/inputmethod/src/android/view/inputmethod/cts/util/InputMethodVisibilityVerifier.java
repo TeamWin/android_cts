@@ -23,7 +23,7 @@ import android.app.UiAutomation;
 import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.Watermark;
