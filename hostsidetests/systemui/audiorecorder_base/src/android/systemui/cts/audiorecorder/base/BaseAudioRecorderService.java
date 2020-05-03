@@ -23,11 +23,9 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
-import android.media.MediaRecorder.AudioSource;
+import android.os.Handler;
 import android.os.IBinder;
-import android.util.Log;
+import android.os.Looper;
 
 public abstract class BaseAudioRecorderService extends Service {
     private static final String ACTION_START =
@@ -43,6 +41,17 @@ public abstract class BaseAudioRecorderService extends Service {
     private static final String NOTIFICATION_TITLE = "Audio Record Service";
     private static final String NOTIFICATION_TEXT = "Recording...";
 
+    private Handler mHandler;
+    private final Runnable mCrashRunnable = () -> {
+        throw new RuntimeException("Commanded to throw!");
+    };
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mHandler = new Handler(Looper.getMainLooper());
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(NOTIFICATION_ID, buildNotification());
@@ -53,7 +62,9 @@ public abstract class BaseAudioRecorderService extends Service {
         } else if (ACTION_STOP.equals(action) && isRecording()) {
             stopRecording();
         } else if (ACTION_THROW.equals(action)) {
-            throw new RuntimeException("Commanded to throw!");
+            // If the service crashes in onStartCommand() the system will try to re-start it. We do
+            // not want that. So we post "crash" commands.
+            mHandler.post(mCrashRunnable);
         }
 
         if (!isRecording()) {
