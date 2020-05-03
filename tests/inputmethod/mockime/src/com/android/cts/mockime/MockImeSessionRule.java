@@ -21,7 +21,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.cts.mockime.ImeSettings.Builder;
 
@@ -41,7 +41,7 @@ public final class MockImeSessionRule implements TestRule {
     private MockImeSession mMockImeSession;
 
     public MockImeSessionRule() {
-        this(InstrumentationRegistry.getTargetContext(),
+        this(InstrumentationRegistry.getInstrumentation().getTargetContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder());
     }
