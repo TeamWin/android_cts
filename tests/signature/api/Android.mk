@@ -32,7 +32,9 @@ endef
 
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
-    $(eval $(call copy_api_txt_file,system-$(ver).txt,prebuilts/sdk/$(ver)/system/api/android.txt))\
+    $(if $(wildcard prebuilts/sdk/$(ver)/system/api/android.txt),\
+      $(eval $(call copy_api_txt_file,system-$(ver).txt,prebuilts/sdk/$(ver)/system/api/android.txt))\
+    )\
   )\
 )
 
