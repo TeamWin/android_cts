@@ -261,6 +261,9 @@ public class CodecDecoderSurfaceTest extends CodecTestBase {
                         "bbb_520x390_1mbps_30fps_vp8.webm"},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_340x280_768kbps_30fps_vp9.webm",
                         "bbb_520x390_1mbps_30fps_vp9.webm"},
+                {MediaFormat.MIMETYPE_VIDEO_VP9,
+                        "bbb_340x280_768kbps_30fps_split_non_display_frame_vp9.webm",
+                        "bbb_520x390_1mbps_30fps_split_non_display_frame_vp9.webm"},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_340x280_768kbps_30fps_av1.mp4",
                         "bbb_520x390_1mbps_30fps_av1.mp4"},
         });
@@ -309,8 +312,6 @@ public class CodecDecoderSurfaceTest extends CodecTestBase {
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
-                assertTrue(log + "input count != output count, act/exp: " + mOutputCount + " / " +
-                        mInputCount, mInputCount == mOutputCount);
                 assertTrue(log + "decoder output is flaky", ref.equals(test));
             }
             mCodec.release();
@@ -389,8 +390,6 @@ public class CodecDecoderSurfaceTest extends CodecTestBase {
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
-                assertTrue(log + "input count != output count, act/exp: " + mOutputCount + " / "
-                        + mInputCount, mInputCount == mOutputCount);
                 assertTrue(log + "decoder output is flaky", ref.equals(test));
 
                 /* test flush in eos state */
@@ -407,8 +406,6 @@ public class CodecDecoderSurfaceTest extends CodecTestBase {
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
-                assertTrue(log + "input count != output count, act/exp: " + mOutputCount + " / "
-                        + mInputCount, mInputCount == mOutputCount);
                 assertTrue(log + "decoder output is flaky", ref.equals(test));
             }
             mCodec.release();
@@ -481,10 +478,6 @@ public class CodecDecoderSurfaceTest extends CodecTestBase {
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
-                if (!mIsAudio) {
-                    assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
-                            " / " + mInputCount, mInputCount == mOutputCount);
-                }
                 assertTrue(log + "decoder output is flaky", ref.equals(test));
 
                 /* test reconfigure codec at eos state */
@@ -501,10 +494,6 @@ public class CodecDecoderSurfaceTest extends CodecTestBase {
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
-                if (!mIsAudio) {
-                    assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
-                            " / " + mInputCount, mInputCount == mOutputCount);
-                }
                 assertTrue(log + "decoder output is flaky", ref.equals(test));
                 mExtractor.release();
 
@@ -526,10 +515,6 @@ public class CodecDecoderSurfaceTest extends CodecTestBase {
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
-                if (!mIsAudio) {
-                    assertTrue(log + "input count != output count, act/exp: " + mOutputCount +
-                            " / " + mInputCount, mInputCount == mOutputCount);
-                }
                 assertTrue(log + "decoder output is flaky", configRef.equals(test));
                 mExtractor.release();
             }
