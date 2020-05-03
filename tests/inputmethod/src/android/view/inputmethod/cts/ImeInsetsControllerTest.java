@@ -24,7 +24,6 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
 
 import android.os.Process;
 import android.os.SystemClock;

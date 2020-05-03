@@ -34,8 +34,8 @@ import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -88,7 +88,7 @@ public class OnScreenPositionTest extends EndToEndImeTestBase {
     @Test
     public void testImeIsNotBehindNavBar() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder()
                         .setInputViewHeight(EXPECTED_KEYBOARD_HEIGHT))) {
