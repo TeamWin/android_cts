@@ -23,7 +23,7 @@ import android.content.Context;
 import android.os.PowerManager;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CommonTestUtils;
 
