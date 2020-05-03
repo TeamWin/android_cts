@@ -24,7 +24,7 @@ import android.inputmethodservice.cts.ime.Watermark;
 import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
