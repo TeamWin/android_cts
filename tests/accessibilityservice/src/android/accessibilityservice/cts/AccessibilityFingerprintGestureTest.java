@@ -31,7 +31,6 @@ import android.app.Instrumentation;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.Presubmit;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
@@ -49,7 +48,6 @@ import org.mockito.MockitoAnnotations;
  * Verify that a service listening for fingerprint gestures gets called back when apps
  * use the fingerprint sensor to authenticate.
  */
-@Presubmit
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityFingerprintGestureTest {

@@ -15,6 +15,11 @@
  */
 package android.view.textclassifier.cts;
 
+import android.app.PendingIntent;
+import android.app.RemoteAction;
+import android.content.Intent;
+import android.graphics.drawable.Icon;
+import android.net.Uri;
 import android.os.CancellationSignal;
 import android.service.textclassifier.TextClassifierService;
 import android.util.ArrayMap;
@@ -45,6 +50,16 @@ public final class CtsTextClassifierService extends TextClassifierService {
 
     private static final String TAG = "CtsTextClassifierService";
     public static final String MY_PACKAGE = "android.view.textclassifier.cts";
+
+    private static final Icon ICON_RES =
+            Icon.createWithResource("android", android.R.drawable.btn_star);
+    static final Icon ICON_URI =
+            Icon.createWithContentUri(new Uri.Builder()
+                  .scheme("content")
+                  .authority("com.android.textclassifier.icons")
+                  .path("android")
+                  .appendPath("" + android.R.drawable.btn_star)
+                  .build());
 
     private final Map<String, List<TextClassificationSessionId>> mRequestSessions =
             new ArrayMap<>();
@@ -87,7 +102,14 @@ public final class CtsTextClassifierService extends TextClassifierService {
             TextClassification.Request request, CancellationSignal cancellationSignal,
             Callback<TextClassification> callback) {
         handleRequest(sessionId, "onClassifyText");
-        callback.onSuccess(TextClassifier.NO_OP.classifyText(request));
+        final TextClassification classification = new TextClassification.Builder()
+                .addAction(new RemoteAction(
+                        ICON_RES,
+                        "Test Action",
+                        "Test Action",
+                        PendingIntent.getActivity(this, 0, new Intent(), 0)))
+                .build();
+        callback.onSuccess(classification);
     }
 
     @Override

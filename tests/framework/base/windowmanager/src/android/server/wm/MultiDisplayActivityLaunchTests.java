@@ -26,10 +26,11 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.wm.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.wm.ActivityLauncher.KEY_NEW_TASK;
-import static android.server.wm.WindowManagerState.STATE_RESUMED;
-import static android.server.wm.WindowManagerState.STATE_STOPPED;
+import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
@@ -53,6 +54,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -60,12 +62,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.WindowManagerState.DisplayContent;
-import android.server.wm.WindowManagerState.ActivityTask;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
+import android.server.wm.WindowManagerState.ActivityTask;
+import android.server.wm.WindowManagerState.DisplayContent;
+import android.util.DisplayMetrics;
+import android.view.SurfaceView;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -767,17 +772,30 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     @Test
     public void testImmediateLaunchOnNewDisplay() {
         // Create new virtual display and immediately launch an activity on it.
-        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
-                .setLaunchActivity(TEST_ACTIVITY)
-                .createDisplay();
+        final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        SurfaceView surfaceView = new SurfaceView(mContext);
+        VirtualDisplay virtualDisplay = displayManager.createVirtualDisplay(
+                "testImmediateLaunchOnNewDisplay", /*width=*/ 400, /*height=*/ 400,
+                /*densityDpi=*/ 320, surfaceView.getHolder().getSurface(),
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+        try {
+            int displayId = virtualDisplay.getDisplay().getDisplayId();
+            ComponentName componentName = new ComponentName(mContext,
+                    ImmediateLaunchTestActivity.class);
+            getLaunchActivityBuilder().setTargetActivity(componentName).setDisplayId(
+                    displayId).setUseInstrumentation().execute();
 
-        // Check that activity is launched and placed correctly.
-        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, newDisplay.mId,
-                "Test activity must be on top");
-        final int frontStackId = mWmState.getFrontRootTaskId(newDisplay.mId);
-        final ActivityTask firstFrontStack = mWmState.getRootTask(frontStackId);
-        assertEquals("Activity launched on secondary display must be resumed",
-                getActivityName(TEST_ACTIVITY), firstFrontStack.mResumedActivity);
+            // Check that activity is launched and placed correctly.
+            waitAndAssertActivityStateOnDisplay(componentName, STATE_RESUMED, displayId,
+                    "Test activity must be on top");
+            final int frontStackId = mWmState.getFrontRootTaskId(displayId);
+            final ActivityTask firstFrontStack = mWmState.getRootTask(frontStackId);
+            assertEquals("Activity launched on secondary display must be resumed",
+                    getActivityName(componentName), firstFrontStack.mResumedActivity);
+        } finally {
+            virtualDisplay.release();
+        }
+
     }
 
     /** Tests launching of activities on a single task instance display. */
@@ -894,4 +912,6 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         return PendingIntent.getActivity(mContext, 1 /* requestCode */, intent,
                 PendingIntent.FLAG_CANCEL_CURRENT);
     }
+
+    public static class ImmediateLaunchTestActivity extends Activity {}
 }
