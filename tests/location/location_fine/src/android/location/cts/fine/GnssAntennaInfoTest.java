@@ -224,9 +224,9 @@ public class GnssAntennaInfoTest {
         assertEquals(60.0d, phaseCenterVariationCorrections.getDeltaTheta(), PRECISION);
         assertEquals(36.0d, phaseCenterVariationCorrections.getDeltaPhi(), PRECISION);
         assertArrayEquals(PHASE_CENTER_VARIATION_CORRECTIONS, phaseCenterVariationCorrections
-                .getCorrectionsMatrix());
+                .getCorrectionsArray());
         assertArrayEquals(PHASE_CENTER_VARIATION_CORRECTION_UNCERTAINTIES,
-                phaseCenterVariationCorrections.getCorrectionUncertaintiesMatrix());
+                phaseCenterVariationCorrections.getCorrectionUncertaintiesArray());
 
         // Signal Gain Corrections Tests -----------------------------------------------------
         SphericalCorrections signalGainCorrections = gnssAntennaInfo.getSignalGainCorrections();
@@ -234,8 +234,8 @@ public class GnssAntennaInfoTest {
         assertEquals(60.0d, signalGainCorrections.getDeltaTheta(), PRECISION);
         assertEquals(36.0d, signalGainCorrections.getDeltaPhi(), PRECISION);
         assertArrayEquals(SIGNAL_GAIN_CORRECTIONS, signalGainCorrections
-                .getCorrectionsMatrix());
+                .getCorrectionsArray());
         assertArrayEquals(SIGNAL_GAIN_CORRECTION_UNCERTAINTIES,
-                signalGainCorrections.getCorrectionUncertaintiesMatrix());
+                signalGainCorrections.getCorrectionUncertaintiesArray());
     }
 }
