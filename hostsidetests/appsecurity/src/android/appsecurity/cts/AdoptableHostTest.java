@@ -29,6 +29,7 @@ import static org.junit.Assert.fail;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.device.CollectingOutputReceiver;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -51,11 +52,15 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
     public static final String FEATURE_ADOPTABLE_STORAGE = "feature:android.software.adoptable_storage";
 
     private boolean mHasAdoptableInitialState;
+    private String mListVolumesInitialState;
 
     @Before
     public void setUp() throws Exception {
         // Start all possible users to make sure their storage is unlocked
         Utils.prepareMultipleUsers(getDevice(), Integer.MAX_VALUE);
+
+        // Initial state of all volumes
+        mListVolumesInitialState = getDevice().executeShellCommand("sm list-volumes");
 
         // TODO(b/146491109): Revert this change before shipping and find long-term solution.
         // Caches the initial state of adoptable feature and sets it to true (if not already set)
@@ -71,6 +76,17 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         // currently have an SD card inserted.
         if (isSupportedDevice()) {
             getDevice().executeShellCommand("sm set-virtual-disk true");
+
+            // Ensure virtual disk is mounted.
+            int attempt = 0;
+            boolean hasVirtualDisk = false;
+            String result = "";
+            while (!hasVirtualDisk && attempt++ < 20) {
+                Thread.sleep(1000);
+                result = getDevice().executeShellCommand("sm list-disks adoptable").trim();
+                hasVirtualDisk = result.startsWith("disk:");
+            }
+            assertTrue("Virtual disk is not ready: " + result, hasVirtualDisk);
         }
     }
 
@@ -80,11 +96,50 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
         if (isSupportedDevice()) {
             getDevice().executeShellCommand("sm set-virtual-disk false");
+
+            // Ensure virtual disk is removed.
+            int attempt = 0;
+            boolean hasVirtualDisk = true;
+            String result = "";
+            while (hasVirtualDisk && attempt++ < 20) {
+                Thread.sleep(1000);
+                result = getDevice().executeShellCommand("sm list-disks adoptable").trim();
+                hasVirtualDisk = result.startsWith("disk:");
+            }
+            if (hasVirtualDisk) {
+                CLog.w("Virtual disk is not removed: " + result);
+            }
+
+            // Ensure all volumes go back to the original state.
+            attempt = 0;
+            boolean volumeStateRecovered = false;
+            result = "";
+            while (!volumeStateRecovered && attempt++ < 20) {
+                Thread.sleep(1000);
+                result = getDevice().executeShellCommand("sm list-volumes");
+                volumeStateRecovered = mListVolumesInitialState.equals(result);
+            }
+            if (!volumeStateRecovered) {
+                CLog.w("Volume state is not recovered: " + result);
+            }
         }
         // Restores the initial cache value (if it is different)
         if (!mHasAdoptableInitialState) {
             getDevice().executeShellCommand("sm set-force-adoptable false");
         }
+    }
+
+    // Ensure no volume is in ejecting or checking state
+    private void waitForVolumeReady() throws Exception {
+        int attempt = 0;
+        boolean noCheckingEjecting = false;
+        String result = "";
+        while (!noCheckingEjecting && attempt++ < 20) {
+            result = getDevice().executeShellCommand("sm list-volumes");
+            noCheckingEjecting = !result.contains("ejecting") && !result.contains("checking");
+            Thread.sleep(100);
+        }
+        assertTrue("Volumes are not ready: " + result, noCheckingEjecting);
     }
 
     @Test
@@ -116,6 +171,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
             // Unmount, remount and verify
             getDevice().executeShellCommand("sm unmount " + vol.volId);
+            waitForVolumeReady();
             getDevice().executeShellCommand("sm mount " + vol.volId);
             waitForInstrumentationReady();
 
@@ -192,6 +248,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
         // Unmount and verify
         getDevice().executeShellCommand("sm unmount " + vol.volId);
+        waitForVolumeReady();
         runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
         getDevice().executeShellCommand("sm mount " + vol.volId);
         waitForInstrumentationReady();
@@ -238,6 +295,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
         // Unmount and verify
         getDevice().executeShellCommand("sm unmount " + vol.volId);
+        waitForVolumeReady();
         runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
         getDevice().executeShellCommand("sm mount " + vol.volId);
         waitForInstrumentationReady();
@@ -301,6 +359,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
             // Now unmount and uninstall; leaving stale package on adopted volume
             getDevice().executeShellCommand("sm unmount " + vol.volId);
+            waitForVolumeReady();
             getDevice().uninstallPackage(PKG);
 
             // Install second copy on internal, but don't write anything
@@ -322,6 +381,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
                 fail("Unexpected data from adopted volume picked up");
             }
             getDevice().executeShellCommand("sm unmount " + vol.volId);
+            waitForVolumeReady();
 
             // Uninstall the internal copy and remount; we should have no record of app
             getDevice().uninstallPackage(PKG);
