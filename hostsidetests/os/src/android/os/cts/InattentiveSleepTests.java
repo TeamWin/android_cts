@@ -25,10 +25,9 @@ import android.os.PowerManagerInternalProto.Wakefulness;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ProtoUtils;
+import com.android.compatibility.common.util.WindowManagerUtil;
 import com.android.server.power.PowerManagerServiceDumpProto;
 import com.android.server.power.PowerServiceSettingsAndConfigurationDumpProto;
-import com.android.server.wm.WindowManagerServiceDumpProto;
-import com.android.server.wm.WindowStateProto;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -37,8 +36,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.List;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class InattentiveSleepTests extends BaseHostJUnit4Test {
@@ -49,7 +46,6 @@ public class InattentiveSleepTests extends BaseHostJUnit4Test {
     private static final long TIME_BEFORE_WARNING_MS = 1200L;
 
     private static final String CMD_DUMPSYS_POWER = "dumpsys power --proto";
-    private static final String CMD_GET_WINDOW_TOKENS = "dumpsys window t --proto";
     private static final String WARNING_WINDOW_TOKEN_TITLE = "InattentiveSleepWarning";
     private static final String CMD_START_APP_TEMPLATE =
             "am start -W -a android.intent.action.MAIN -p %s -c android.intent.category.LAUNCHER";
@@ -234,18 +230,7 @@ public class InattentiveSleepTests extends BaseHostJUnit4Test {
     }
 
     private boolean isWarningShown() throws Exception {
-        WindowManagerServiceDumpProto windowManagerDump = ProtoUtils.getProto(getDevice(),
-                WindowManagerServiceDumpProto.parser(), CMD_GET_WINDOW_TOKENS);
-
-        List<WindowStateProto> windows =
-                windowManagerDump.getRootWindowContainer().getWindowsList();
-        for (WindowStateProto window : windows) {
-            if (WARNING_WINDOW_TOKEN_TITLE.equals(window.getIdentifier().getTitle())) {
-                return true;
-            }
-        }
-
-        return false;
+        return WindowManagerUtil.hasWindowWithTitle(getDevice(), WARNING_WINDOW_TOKEN_TITLE);
     }
 
     private void waitUntilAsleep() throws Exception {
