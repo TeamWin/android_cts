@@ -2598,6 +2598,27 @@ public class TelephonyManagerTest {
         }
     }
 
+    @Test
+    public void testOpportunisticNetworkState() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        boolean isEnabled = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                tm -> tm.isOpportunisticNetworkEnabled());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setOpportunisticNetworkState(true));
+        assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                tm -> tm.isOpportunisticNetworkEnabled()));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setOpportunisticNetworkState(false));
+        assertFalse(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                tm -> tm.isOpportunisticNetworkEnabled()));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setOpportunisticNetworkState(isEnabled));
+    }
+
+
     private boolean isDataEnabled() {
         return ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 TelephonyManager::isDataEnabled);
