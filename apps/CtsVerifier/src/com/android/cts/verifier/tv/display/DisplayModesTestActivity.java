@@ -25,6 +25,7 @@ import androidx.annotation.StringRes;
 
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
+import com.android.cts.verifier.tv.TvUtil;
 
 import com.google.common.base.Throwables;
 import com.google.common.truth.Correspondence;
@@ -35,13 +36,15 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
 /**
  * Test for verifying that the platform correctly reports display resolution and refresh rate. More
- * specifically Display.getMode() and Display.getSupportedModes() APIs are tested against reference
- * displays.
+ * specifically Display.getMode() and Display.getSupportedModes() APIs are tested. In the case for
+ * set-top boxes and TV dongles they are tested against reference displays. For TV panels they are
+ * tested against the hardware capabilities of the device.
  */
 public class DisplayModesTestActivity extends TvAppVerifierActivity {
     private static final int DISPLAY_DISCONNECT_WAIT_TIME_SECONDS = 5;
@@ -80,9 +83,16 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
     @Override
     protected void createTestItems() {
         List<TestStepBase> testSteps = new ArrayList<>();
-        testSteps.add(new NoDisplayTestStep(this));
-        testSteps.add(new Display2160pTestStep(this));
-        testSteps.add(new Display1080pTestStep(this));
+        if (TvUtil.isHdmiSourceDevice()) {
+            // The device is a set-top box or a TV dongle
+            testSteps.add(new NoDisplayTestStep(this));
+            testSteps.add(new Display2160pTestStep(this));
+            testSteps.add(new Display1080pTestStep(this));
+        } else {
+            // The device is a TV Panel
+            testSteps.add(new TvPanelReportedModesAreSupportedTestStep(this));
+            testSteps.add(new TvPanelSupportedModesAreReportedTestStep(this));
+        }
         mTestSequence = new TestSequence(this, testSteps);
         mTestSequence.init();
     }
@@ -171,25 +181,26 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                             new Mode(3840, 2160, 60f),
                             new Mode(3840, 2160, 50f));
 
-             Mode[] expected2160pSupportedModes = new Mode[]{
-                    new Mode(720, 480, 60f),
-                    new Mode(720, 576, 50f),
-                    // 720p modes
-                    new Mode(1280, 720, 50f),
-                    new Mode(1280, 720, 60f),
-                    // 1080p modes
-                    new Mode(1920, 1080, 24f),
-                    new Mode(1920, 1080, 25f),
-                    new Mode(1920, 1080, 30f),
-                    new Mode(1920, 1080, 50f),
-                    new Mode(1920, 1080, 60f),
-                    // 2160p modes
-                    new Mode(3840, 2160, 24f),
-                    new Mode(3840, 2160, 25f),
-                    new Mode(3840, 2160, 30f),
-                    new Mode(3840, 2160, 50f),
-                    new Mode(3840, 2160, 60f)
-            };
+            Mode[] expected2160pSupportedModes =
+                    new Mode[] {
+                        new Mode(720, 480, 60f),
+                        new Mode(720, 576, 50f),
+                        // 720p modes
+                        new Mode(1280, 720, 50f),
+                        new Mode(1280, 720, 60f),
+                        // 1080p modes
+                        new Mode(1920, 1080, 24f),
+                        new Mode(1920, 1080, 25f),
+                        new Mode(1920, 1080, 30f),
+                        new Mode(1920, 1080, 50f),
+                        new Mode(1920, 1080, 60f),
+                        // 2160p modes
+                        new Mode(3840, 2160, 24f),
+                        new Mode(3840, 2160, 25f),
+                        new Mode(3840, 2160, 30f),
+                        new Mode(3840, 2160, 50f),
+                        new Mode(3840, 2160, 60f)
+                    };
             getAsserter()
                     .withMessage("Display.getSupportedModes()")
                     .that(Arrays.asList(display.getSupportedModes()))
@@ -233,24 +244,65 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                             new Mode(1920, 1080, 60f),
                             new Mode(1920, 1080, 50f));
 
-            final Mode[] expected1080pSupportedModes = new Mode[]{
-                    new Mode(720, 480, 60f),
-                    new Mode(720, 576, 50f),
-                    // 720p modes
-                    new Mode(1280, 720, 50f),
-                    new Mode(1280, 720, 60f),
-                    // 1080p modes
-                    new Mode(1920, 1080, 24f),
-                    new Mode(1920, 1080, 25f),
-                    new Mode(1920, 1080, 30f),
-                    new Mode(1920, 1080, 50f),
-                    new Mode(1920, 1080, 60f),
-            };
+            final Mode[] expected1080pSupportedModes =
+                    new Mode[] {
+                        new Mode(720, 480, 60f),
+                        new Mode(720, 576, 50f),
+                        // 720p modes
+                        new Mode(1280, 720, 50f),
+                        new Mode(1280, 720, 60f),
+                        // 1080p modes
+                        new Mode(1920, 1080, 24f),
+                        new Mode(1920, 1080, 25f),
+                        new Mode(1920, 1080, 30f),
+                        new Mode(1920, 1080, 50f),
+                        new Mode(1920, 1080, 60f),
+                    };
             getAsserter()
                     .withMessage("Display.getSupportedModes()")
                     .that(Arrays.asList(display.getSupportedModes()))
                     .comparingElementsUsing(MODE_CORRESPONDENCE)
                     .containsAllIn(expected1080pSupportedModes);
+        }
+    }
+
+    private class TvPanelReportedModesAreSupportedTestStep extends YesNoTestStep {
+        public TvPanelReportedModesAreSupportedTestStep(TvAppVerifierActivity context) {
+            super(context);
+        }
+
+        @Override
+        protected String getStepName() {
+            return mContext.getString(R.string.tv_panel_test_step_reported_are_supported);
+        }
+
+        @Override
+        protected String getInstructionText() {
+            DisplayManager displayManager = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+            Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+            String supportedModes =
+                    Arrays.stream(display.getSupportedModes())
+                            .map(DisplayModesTestActivity::formatDisplayMode)
+                            .collect(Collectors.joining("\n"));
+
+            return mContext.getString(
+                    R.string.tv_panel_display_modes_reported_are_supported, supportedModes);
+        }
+    }
+
+    private class TvPanelSupportedModesAreReportedTestStep extends YesNoTestStep {
+        public TvPanelSupportedModesAreReportedTestStep(TvAppVerifierActivity context) {
+            super(context);
+        }
+
+        @Override
+        protected String getStepName() {
+            return mContext.getString(R.string.tv_panel_test_step_supported_are_reported);
+        }
+
+        @Override
+        protected String getInstructionText() {
+            return mContext.getString(R.string.tv_panel_display_modes_supported_are_reported);
         }
     }
 
@@ -275,7 +327,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
         @Override
         public String toString() {
-            return String.format("%dx%d %.2f Hz", mWidth, mHeight, mRefreshRate);
+            return formatDisplayMode(mWidth, mHeight, mRefreshRate);
         }
     }
 
@@ -292,5 +344,14 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                 failWithActual("expected any of", Arrays.toString(modes));
             }
         }
+    }
+
+    private static String formatDisplayMode(Display.Mode mode) {
+        return formatDisplayMode(
+                mode.getPhysicalWidth(), mode.getPhysicalHeight(), mode.getRefreshRate());
+    }
+
+    private static String formatDisplayMode(int width, int height, float refreshRate) {
+        return String.format("%dx%d %.2f Hz", width, height, refreshRate);
     }
 }

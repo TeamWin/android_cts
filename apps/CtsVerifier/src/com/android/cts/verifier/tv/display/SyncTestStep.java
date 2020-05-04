@@ -19,10 +19,10 @@ package com.android.cts.verifier.tv.display;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /**
- * Encapsulates the logic of a synchronously running test step, which displays a human instructions
+ * Encapsulates the logic of a synchronously running test step, which displays human instructions
  * and a button to start the test. For asynchronous steps see {@link AsyncTestStep}.
  */
-public abstract class SyncTestStep extends TestStepBase {
+public abstract class SyncTestStep extends OneButtonTestStep {
     public SyncTestStep(TvAppVerifierActivity context) {
         super(context);
     }
