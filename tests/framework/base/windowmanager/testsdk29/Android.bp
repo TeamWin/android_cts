@@ -20,6 +20,7 @@ android_test {
     srcs: [
         "src/**/*.java",
         ":cts-wm-decor-inset-test-base",
+        ":cts-wm-force-relayout-test-base"
     ],
 
     // Intentionally don't set the compile SDK to 29, because we want to test
