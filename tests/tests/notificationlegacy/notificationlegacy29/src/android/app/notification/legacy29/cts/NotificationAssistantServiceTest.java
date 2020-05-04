@@ -34,6 +34,7 @@ import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
@@ -201,7 +202,6 @@ public class NotificationAssistantServiceTest {
 
         try {
             mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
-            mNotificationManager.cancelAll();
             mNotificationManager.allowAssistantAdjustment(Adjustment.KEY_RANKING_SCORE);
             mUi.dropShellPermissionIdentity();
 
@@ -220,8 +220,6 @@ public class NotificationAssistantServiceTest {
 
             int currentRank1 = out1.getRank();
             int currentRank2 = out2.getRank();
-            int newRank1 = out2.getRank();
-            int newRank2 = out1.getRank();
 
             float rankingScore1 = (currentRank1 > currentRank2) ? 1f : 0;
             float rankingScore2 = (currentRank1 > currentRank2) ? 0 : 1f;
@@ -240,8 +238,13 @@ public class NotificationAssistantServiceTest {
             mNotificationListenerService.mRankingMap.getRanking(sbn1.getKey(), out1);
             mNotificationListenerService.mRankingMap.getRanking(sbn2.getKey(), out2);
 
-            assertEquals(newRank1, out1.getRank());
-            assertEquals(newRank2, out2.getRank());
+            int newRank1 = out1.getRank();
+            int newRank2 = out2.getRank();
+            if (currentRank1 > currentRank2) {
+                assertTrue(newRank1 < newRank2);
+            } else {
+                assertTrue(newRank1 > newRank2);
+            }
         } finally {
             mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
             mNotificationManager.disallowAssistantAdjustment(Adjustment.KEY_RANKING_SCORE);
@@ -544,6 +547,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnNotificationVisibilityChanged() throws Exception {
+        if (isTelevision()) {
+            return;
+        }
         setUpListeners();
         turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
@@ -572,6 +578,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnNotificationsSeen() throws Exception {
+        if (isTelevision()) {
+            return;
+        }
         setUpListeners();
         turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
@@ -594,6 +603,9 @@ public class NotificationAssistantServiceTest {
 
     @Test
     public void testOnPanelRevealedAndHidden() throws Exception {
+        if (isTelevision()) {
+            return;
+        }
         setUpListeners();
         turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
@@ -669,11 +681,18 @@ public class NotificationAssistantServiceTest {
         mNotificationManager.notify(id, notification);
     }
 
-   private void turnScreenOn() throws IOException {
-       Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-       runCommand("input keyevent KEYCODE_WAKEUP", instrumentation);
-       runCommand("wm dismiss-keyguard", instrumentation);
-   }
+    private void turnScreenOn() throws IOException {
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        runCommand("input keyevent KEYCODE_WAKEUP", instrumentation);
+        runCommand("wm dismiss-keyguard", instrumentation);
+    }
+
+    private boolean isTelevision() {
+        PackageManager packageManager = mContext.getPackageManager();
+        return packageManager != null
+                && (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION));
+    }
 
     private void toggleListenerAccess(boolean on) throws IOException {
 
