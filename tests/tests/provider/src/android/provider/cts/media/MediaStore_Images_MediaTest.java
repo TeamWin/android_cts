@@ -57,7 +57,6 @@ import androidx.test.InstrumentationRegistry;
 
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -297,7 +296,6 @@ public class MediaStore_Images_MediaTest {
         }
     }
 
-    @Ignore("Re-enable as part of b/145737191")
     @Test
     public void testUpsert() throws Exception {
         File file = null;
