@@ -112,15 +112,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testCannotAddSecondaryUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        failToCreateUser();
-    }
-
-    @Test
     public void testCanRelinquishControlOverDevice() throws Exception {
         if (!mHasFeature) {
             return;
@@ -190,14 +181,12 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictionsSetOnParentAreNotPersisted() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testAddUserRestrictionDisallowConfigDateTime_onParent", mUserId);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testHasUserRestrictionDisallowConfigDateTime", mUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testHasUserRestrictionDisallowConfigDateTime", mPrimaryUserId);
         removeOrgOwnedProfile();
@@ -209,6 +198,46 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         // User restrictions are not persist after organization-owned profile owner is removed
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testUserRestrictionDisallowConfigDateTimeIsNotPersisted", mPrimaryUserId);
+    }
+
+    @Test
+    public void testPerProfileUserRestrictionOnParent() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testPerProfileUserRestriction_onParent", mUserId);
+    }
+
+    @Test
+    public void testPerDeviceUserRestrictionOnParent() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                "testPerDeviceUserRestriction_onParent", mUserId);
+    }
+
+    @Test
+    public void testCameraDisabledOnParentIsEnforced() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        try {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                    "testAddUserRestrictionCameraDisabled_onParent", mUserId);
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                    "testCannotOpenCamera", mPrimaryUserId);
+        } finally {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                    "testRemoveUserRestrictionCameraEnabled_onParent", mUserId);
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
+                    "testCanOpenCamera", mPrimaryUserId);
+        }
     }
 
     @Test
