@@ -53,7 +53,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @RunWith(AndroidJUnit4.class)
-@SystemUserOnly(reason = "b/150741315: Needs stabilization on secondary user")
 public class DialogTests {
     private static final String TEST_APP_LABEL = "Suspend Test App";
     private static final long UI_TIMEOUT_MS = 30_000;
@@ -66,10 +65,11 @@ public class DialogTests {
     private UiDevice mUiDevice;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mTestAppInterface = new TestAppInterface(mContext);
+        turnScreenOn();
     }
 
     private void turnScreenOn() throws Exception {
@@ -81,7 +81,6 @@ public class DialogTests {
 
     @Test
     public void testInterceptorActivity_unsuspend() throws Exception {
-        turnScreenOn();
         final SuspendDialogInfo dialogInfo = new SuspendDialogInfo.Builder()
                 .setIcon(R.drawable.ic_settings)
                 .setTitle(R.string.dialog_title)
@@ -119,7 +118,7 @@ public class DialogTests {
         // 3. Unsuspend the test app
         unsuspendButton.click();
 
-        final Intent incomingIntent = sIncomingIntent.poll(10, TimeUnit.SECONDS);
+        final Intent incomingIntent = sIncomingIntent.poll(30, TimeUnit.SECONDS);
         assertNotNull(incomingIntent);
         assertEquals(Intent.ACTION_PACKAGE_UNSUSPENDED_MANUALLY, incomingIntent.getAction());
         assertEquals("Did not receive correct unsuspended package name", TEST_APP_PACKAGE_NAME,
@@ -135,7 +134,6 @@ public class DialogTests {
 
     @Test
     public void testInterceptorActivity_moreDetails() throws Exception {
-        turnScreenOn();
         final SuspendDialogInfo dialogInfo = new SuspendDialogInfo.Builder()
                 .setIcon(R.drawable.ic_settings)
                 .setTitle(R.string.dialog_title)
@@ -171,7 +169,7 @@ public class DialogTests {
 
         // Tapping on the neutral button should start the correct intent.
         moreDetailsButton.click();
-        final Intent incomingIntent = sIncomingIntent.poll(10, TimeUnit.SECONDS);
+        final Intent incomingIntent = sIncomingIntent.poll(30, TimeUnit.SECONDS);
         assertNotNull(incomingIntent);
         assertEquals(Intent.ACTION_SHOW_SUSPENDED_APP_DETAILS, incomingIntent.getAction());
         assertEquals("Wrong package name sent with " + Intent.ACTION_SHOW_SUSPENDED_APP_DETAILS,
