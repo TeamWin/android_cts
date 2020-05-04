@@ -22,6 +22,10 @@ import android.media.AudioManager;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.android.server.hdmi.SadConfigurationReaderTest;
+
+import org.junit.runner.JUnitCore;
+
 /**
  * A simple app that can be used to mute, unmute, set volume or get the volume status of a device.
  * The actions supported are:
@@ -78,6 +82,10 @@ public class HdmiCecAudioManager extends Activity {
                 int volume = minVolume + ((maxVolume - minVolume) * percentVolume / 100);
                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0);
                 Log.i(TAG, "Set volume to " + volume + " (" + percentVolume + "%)");
+                break;
+            case "android.hdmicec.app.GET_SUPPORTED_SAD_FORMATS":
+                JUnitCore junit = new JUnitCore();
+                junit.run(SadConfigurationReaderTest.class);
                 break;
             default:
                 Log.w(TAG, "Unknown intent!");
