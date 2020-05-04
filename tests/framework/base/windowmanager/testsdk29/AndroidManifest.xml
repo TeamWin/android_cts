@@ -27,6 +27,10 @@
             android:name="android.server.wm.DecorInsetTestsBase$TestActivity"
             android:label="DecorInsetTestsBase.TestActivity"
             android:exported="true" />
+
+        <activity
+            android:name="android.server.wm.ForceRelayoutTestBase$TestActivity"
+            android:exported="true" />
     </application>
 
     <instrumentation
