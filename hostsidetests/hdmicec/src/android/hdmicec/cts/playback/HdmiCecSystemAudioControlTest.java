@@ -49,7 +49,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
     @Test
     public void cect_11_2_15_10_GiveSystemAudioModeStatus() throws Exception {
         ITestDevice device = getDevice();
-        // b/154737276 - Required for Yukawa
+        /* Home Key to prevent device from going to deep suspend state */
         device.executeShellCommand("input keyevent KEYCODE_HOME");
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
