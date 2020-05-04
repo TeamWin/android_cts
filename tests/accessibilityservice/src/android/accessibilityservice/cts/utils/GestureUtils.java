@@ -246,7 +246,7 @@ public class GestureUtils {
         return new TypeSafeMatcher<MotionEvent>() {
             @Override
             protected boolean matchesSafely(MotionEvent event) {
-                return Math.hypot(event.getX() - point.x, event.getY() - point.y) < tol;
+                return Math.hypot(event.getX() - point.x, event.getY() - point.y) <= tol;
             }
 
             @Override
@@ -270,7 +270,7 @@ public class GestureUtils {
         return new TypeSafeMatcher<MotionEvent>() {
             @Override
             protected boolean matchesSafely(MotionEvent event) {
-                return Math.hypot(event.getRawX() - point.x, event.getRawY() - point.y) < tol;
+                return Math.hypot(event.getRawX() - point.x, event.getRawY() - point.y) <= tol;
             }
 
             @Override
