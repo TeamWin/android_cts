@@ -31,11 +31,14 @@ import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
@@ -43,8 +46,12 @@ import android.content.ComponentName;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+
+import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
@@ -59,6 +66,9 @@ import org.junit.Test;
 @Presubmit
 @android.server.wm.annotation.Group2
 public class KeyguardLockedTests extends KeyguardTestBase {
+
+    private final static long TIMEOUT_IME = TimeUnit.SECONDS.toMillis(5);
+
     @Before
     @Override
     public void setUp() throws Exception {
@@ -317,7 +327,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         // Make sure the activity has been called showSoftInput & IME window is visible.
         final ImeEventStream stream = mockImeSession.openEventStream();
         expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
+                TIMEOUT_IME);
         // Assert the IME is shown on the expected display.
         mWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
     }
@@ -339,10 +349,60 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         // Make sure the activity has been called showSoftInput & IME window is visible.
         final ImeEventStream stream = mockImeSession.openEventStream();
         expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
+                TIMEOUT_IME);
         // Assert the IME is shown on the expected display.
         mWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
 
+    }
+
+    @Test
+    public void testImeShowsAfterLockScreenOnEditorTap() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
+        final MockImeSession mockImeSession = createManagedMockImeSession(this);
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final TestActivitySession<ShowImeAfterLockscreenActivity> imeTestActivitySession =
+                createManagedTestActivitySession();
+        imeTestActivitySession.launchTestActivityOnDisplaySync(ShowImeAfterLockscreenActivity.class,
+                DEFAULT_DISPLAY);
+
+        final ShowImeAfterLockscreenActivity activity = imeTestActivitySession.getActivity();
+        final View rootView = activity.getWindow().getDecorView();
+
+        CtsTouchUtils.emulateTapOnViewCenter(getInstrumentation(), null, activity.mEditor);
+        PollingCheck.waitFor(
+                TIMEOUT_IME,
+                () -> rootView.getRootWindowInsets().isVisible(ime()));
+
+        lockScreenSession.setLockCredential().gotoKeyguard();
+        assertTrue("Keyguard is showing", mWmState.getKeyguardControllerState().keyguardShowing);
+        lockScreenSession.enterAndConfirmLockCredential();
+        mWmState.waitAndAssertKeyguardGone();
+
+        final ImeEventStream stream = mockImeSession.openEventStream();
+
+        CtsTouchUtils.emulateTapOnViewCenter(getInstrumentation(), null, activity.mEditor);
+
+        // Make sure the activity has been called showSoftInput & IME window is visible.
+        expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
+        // Assert the IME is shown event on the expected display.
+        mWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
+        // Check if IME is actually visible.
+        PollingCheck.waitFor(
+                TIMEOUT_IME,
+                () -> rootView.getRootWindowInsets().isVisible(ime()));
+    }
+
+    public static class ShowImeAfterLockscreenActivity extends Activity {
+
+        EditText mEditor;
+
+        @Override
+        protected void onCreate(Bundle icicle) {
+            super.onCreate(icicle);
+            mEditor = createViews(this, false /* showWhenLocked */);
+        }
     }
 
     public static class ShowWhenLockedImeActivity extends Activity {
@@ -350,21 +410,30 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         @Override
         protected void onCreate(Bundle icicle) {
             super.onCreate(icicle);
-            final EditText editText = new EditText(this);
-            // Set private IME option for editorMatcher to identify which TextView received
-            // onStartInput event.
-            editText.setPrivateImeOptions(
-                    getClass().getName() + "/" + Long.toString(SystemClock.elapsedRealtimeNanos()));
-            final LinearLayout layout = new LinearLayout(this);
-            layout.setOrientation(LinearLayout.VERTICAL);
-            layout.addView(editText);
-            setContentView(layout);
-
-            // Set showWhenLocked as true & request focus for showing soft input.
-            setShowWhenLocked(true);
-            getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-            editText.requestFocus();
+            createViews(this, true /* showWhenLocked */);
         }
+    }
+
+    private static EditText createViews(
+            Activity activity, boolean showWhenLocked /* showWhenLocked */) {
+        EditText editor = new EditText(activity);
+        // Set private IME option for editorMatcher to identify which TextView received
+        // onStartInput event.
+        editor.setPrivateImeOptions(
+                activity.getClass().getName()
+                        + "/" + Long.toString(SystemClock.elapsedRealtimeNanos()));
+        final LinearLayout layout = new LinearLayout(activity);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.addView(editor);
+        activity.setContentView(layout);
+
+        if (showWhenLocked) {
+            // Set showWhenLocked as true & request focus for showing soft input.
+            activity.setShowWhenLocked(true);
+            activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        }
+        editor.requestFocus();
+        return editor;
     }
 
     /**
