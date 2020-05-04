@@ -21,50 +21,55 @@ import android.media.AudioRecord;
 import android.systemui.cts.audiorecorder.base.BaseAudioRecorderService;
 
 public class AudioRecorderService extends BaseAudioRecorderService {
-    private AudioRecord mAudioRecord = null;
-    private int mBufferSizeInBytes;
+    /**
+     * The flag that indicates whether service is recording.
+     * This is only written in UI thread. AudioRecordingThread only reads the value in order to
+     * decide whether it should carry on recording. For such usage model we do not need
+     * synchronization, marking the flag as `volatile` is enough.
+     */
+    private volatile boolean mRecording;
 
-    protected synchronized void startRecording() {
-        final int channelConfig = AudioFormat.CHANNEL_IN_MONO;
-        final int sampleRate = 32000;
-        final int format = AudioFormat.ENCODING_PCM_16BIT;
-        mBufferSizeInBytes = 2 * AudioRecord.getMinBufferSize(sampleRate, channelConfig, format);
-        mAudioRecord =
-                new AudioRecord.Builder()
-                        .setAudioFormat(
-                                new AudioFormat.Builder()
-                                        .setEncoding(format)
-                                        .setSampleRate(sampleRate)
-                                        .setChannelMask(channelConfig)
-                                        .build())
-                        .setBufferSizeInBytes(mBufferSizeInBytes)
-                        .build();
-
-        mAudioRecord.startRecording();
-
-        new Thread(this::readAudioRecordDataUntilStopped).start();
+    protected void startRecording() {
+        mRecording = true;
+        new AudioRecordingThread().start();
     }
 
-    private void readAudioRecordDataUntilStopped() {
-        while (true) {
-            final short[] data = new short[mBufferSizeInBytes / 2];
-            synchronized (this) {
-                if (mAudioRecord == null) {
-                    return;
-                }
+    protected void stopRecording() {
+        mRecording = false;
+    }
 
-                mAudioRecord.read(data, 0, data.length);
+    protected boolean isRecording() {
+        return mRecording;
+    }
+
+    private class AudioRecordingThread extends Thread {
+        @Override
+        public void run() {
+            final int channelConfig = AudioFormat.CHANNEL_IN_MONO;
+            final int sampleRate = 32000;
+            final int format = AudioFormat.ENCODING_PCM_16BIT;
+            final int bufferSizeInBytes = 2 * AudioRecord.getMinBufferSize(sampleRate, channelConfig,
+                    format);
+            AudioRecord audioRecord =
+                    new AudioRecord.Builder()
+                            .setAudioFormat(
+                                    new AudioFormat.Builder()
+                                            .setEncoding(format)
+                                            .setSampleRate(sampleRate)
+                                            .setChannelMask(channelConfig)
+                                            .build())
+                            .setBufferSizeInBytes(bufferSizeInBytes)
+                            .build();
+
+            audioRecord.startRecording();
+
+            while (mRecording) {
+                final short[] data = new short[bufferSizeInBytes / 2];
+                audioRecord.read(data, 0, data.length);
             }
+
+            audioRecord.stop();
+            audioRecord.release();
         }
-    }
-
-    protected synchronized void stopRecording() {
-        mAudioRecord.stop();
-        mAudioRecord.release();
-        mAudioRecord = null;
-    }
-
-    protected synchronized boolean isRecording() {
-        return mAudioRecord != null;
     }
 }
