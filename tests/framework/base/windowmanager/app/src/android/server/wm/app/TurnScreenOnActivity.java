@@ -17,6 +17,7 @@
 package android.server.wm.app;
 
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.WindowManager;
 
 public class TurnScreenOnActivity extends AbstractLifecycleLogActivity {
@@ -32,6 +33,12 @@ public class TurnScreenOnActivity extends AbstractLifecycleLogActivity {
         } else {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
+        }
+
+        final long sleepMs = getIntent().getLongExtra(
+                Components.TurnScreenOnActivity.EXTRA_SLEEP_MS_IN_ON_CREATE, 0);
+        if (sleepMs > 0) {
+            SystemClock.sleep(sleepMs);
         }
     }
 }
