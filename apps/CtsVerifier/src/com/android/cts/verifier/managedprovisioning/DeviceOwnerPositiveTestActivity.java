@@ -181,7 +181,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_CONFIG_WIFI, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_WIFI_SETTINGS))}));
+                                    new Intent(Settings.ACTION_WIFI_SETTINGS)),
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                            UserManager.DISALLOW_CONFIG_WIFI, false))
+            }));
         }
 
         // DISALLOW_AMBIENT_DISPLAY.
@@ -214,7 +219,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 new Intent(Settings.ACTION_VPN_SETTINGS)),
                         new ButtonInfo(
                                 R.string.device_owner_vpn_test,
-                                new Intent(this, VpnTestActivity.class))}));
+                                new Intent(this, VpnTestActivity.class)),
+                        new ButtonInfo(
+                                R.string.device_owner_user_restriction_unset,
+                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                        UserManager.DISALLOW_CONFIG_VPN, false))
+        }));
 
         // DISALLOW_DATA_ROAMING
         if(packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -228,7 +238,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_DATA_ROAMING, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS))}));
+                                    new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS)),
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                            UserManager.DISALLOW_DATA_ROAMING, false))
+            }));
         }
 
         // DISALLOW_FACTORY_RESET
@@ -239,7 +254,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         new ButtonInfo(
                                 R.string.device_owner_user_restriction_set,
                                 CommandReceiverActivity.createSetUserRestrictionIntent(
-                                        UserManager.DISALLOW_FACTORY_RESET, true))}));
+                                        UserManager.DISALLOW_FACTORY_RESET, true)),
+                        new ButtonInfo(
+                                R.string.device_owner_user_restriction_unset,
+                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                        UserManager.DISALLOW_FACTORY_RESET, false))
+        }));
 
         // DISALLOW_CONFIG_BLUETOOTH
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
@@ -253,7 +273,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_CONFIG_BLUETOOTH, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_BLUETOOTH_SETTINGS))}));
+                                    new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)),
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                            UserManager.DISALLOW_CONFIG_BLUETOOTH, false))
+            }));
         }
 
         // DISALLOW_USB_FILE_TRANSFER
@@ -265,7 +290,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 R.string.device_owner_user_restriction_set,
                                 CommandReceiverActivity.createSetUserRestrictionIntent(
                                         UserManager.DISALLOW_USB_FILE_TRANSFER, true)),
-                }));
+                        new ButtonInfo(
+                                R.string.device_owner_user_restriction_unset,
+                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                        UserManager.DISALLOW_USB_FILE_TRANSFER, false))
+        }));
 
         // DISABLE_STATUS_BAR_TEST
         if (isStatusBarEnabled()) {
@@ -325,7 +354,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 createSetUserIconIntent(R.drawable.user_icon_2)),
                         new ButtonInfo(
                                 R.string.device_owner_settings_go,
-                                new Intent(Settings.ACTION_SETTINGS))}));
+                                new Intent(Settings.ACTION_SETTINGS)),
+                        new ButtonInfo(
+                                R.string.device_owner_user_restriction_unset,
+                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                        UserManager.DISALLOW_SET_USER_ICON, false))
+        }));
 
         // setPermissionGrantState
         adapter.add(createTestItem(this, CHECK_PERMISSION_LOCKDOWN_TEST_ID,
@@ -400,7 +434,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_USER_SWITCH, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_USER_SETTINGS))}));
+                                    new Intent(Settings.ACTION_USER_SETTINGS)),
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                            UserManager.DISALLOW_USER_SWITCH, false))
+            }));
 
             // DISALLOW_REMOVE_USER
             adapter.add(createInteractiveTestItem(this, DISALLOW_REMOVE_USER_TEST_ID,
@@ -416,7 +455,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_REMOVE_USER, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_USER_SETTINGS))}));
+                                    new Intent(Settings.ACTION_USER_SETTINGS)),
+                            new ButtonInfo(
+                                    R.string.device_owner_user_restriction_unset,
+                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                            UserManager.DISALLOW_REMOVE_USER, false))
+            }));
         }
 
         // Network logging UI
@@ -519,7 +563,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private boolean isStatusBarEnabled() {
       // Watches don't support the status bar so this is an ok proxy, but this is not the most
       // general test for that. TODO: add a test API to do a real check for status bar support.
-      return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH) && 
+      return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH) &&
              !getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }
