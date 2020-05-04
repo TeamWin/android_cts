@@ -211,7 +211,6 @@ public class NativeMidiEchoTest {
     public void setUp() throws Exception {
         Log.i(TAG, "++ setUp() mContext:" + mContext);
         if (!hasMidiSupport()) {
-            Assert.assertTrue("FEATURE_MIDI Not Supported.", false);
             return; // Not supported so don't test it.
         }
         mMidiManager = (MidiManager)mContext.getSystemService(Context.MIDI_SERVICE);
@@ -249,6 +248,10 @@ public class NativeMidiEchoTest {
     @Test
     public void test_B_SendData() throws Exception {
         Log.i(TAG, "++++ test_B_SendData() this:" + System.identityHashCode(this));
+
+        if (!hasMidiSupport()) {
+            return; // Nothing to test
+        }
 
         Assert.assertEquals("Didn't start with 0 sends", 0, getNumSends(mTestContext));
         Assert.assertEquals("Didn't start with 0 bytes sent", 0, getNumBytesSent(mTestContext));
