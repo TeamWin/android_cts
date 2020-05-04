@@ -22,18 +22,15 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageInstaller;
 import android.content.rollback.RollbackInfo;
 import android.content.rollback.RollbackManager;
 import android.os.storage.StorageManager;
-import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.TestApp;
-import com.android.cts.install.lib.Uninstall;
 import com.android.cts.rollback.lib.Rollback;
 import com.android.cts.rollback.lib.RollbackUtils;
 
@@ -43,7 +40,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 
 /**
  * On-device helper test methods used for host-driven rollback tests.
@@ -57,7 +60,8 @@ public class HostTestHelper {
             "com.android.apex.cts.shim.v2_signed_bob_rot_rollback.apex");
     private static final String ApkInShimApexPackageName = "com.android.cts.ctsshim";
     private static final String PrivApkInShimApexPackageName = "com.android.cts.priv.ctsshim";
-    private static final long ApkInShimApexVersion = 29;
+    private static final String APK_VERSION_FILENAME = "ctsrollback_apkversion";
+    private static final String APK_VERSION_SEPARATOR = ",";
 
     /**
      * Adopts common permissions needed to test rollbacks.
@@ -84,6 +88,8 @@ public class HostTestHelper {
         RollbackManager rm = RollbackUtils.getRollbackManager();
         rm.getAvailableRollbacks().stream().flatMap(info -> info.getPackages().stream())
                 .map(info -> info.getPackageName()).forEach(rm::expireRollbackForPackage);
+        // remove the version file.
+        Files.deleteIfExists(getApkInApexVersionFile().toPath());
     }
 
     /**
@@ -319,6 +325,10 @@ public class HostTestHelper {
     @Test
     public void testApexOnlyStagedRollback_Phase2() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+
+        // keep the versions of the apks in shim apex for verifying in phase3
+        recordApkInApexVersion();
+
         Install.single(TestApp.Apex3).setStaged().setEnableRollback().commit();
     }
 
@@ -329,14 +339,19 @@ public class HostTestHelper {
     @Test
     public void testApexOnlyStagedRollback_Phase3() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(3);
+
+        long[] versions = retrieveApkInApexVersion();
+        final long apkInShimApexVersion = versions[0];
+        final long privApkInShimApexVersion = versions[1];
+
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
                 Rollback.from(ApkInShimApexPackageName, 0)
-                        .to(ApkInShimApexPackageName, ApkInShimApexVersion),
+                        .to(ApkInShimApexPackageName, apkInShimApexVersion),
                 Rollback.from(PrivApkInShimApexPackageName, 0)
-                        .to(PrivApkInShimApexPackageName, ApkInShimApexVersion));
+                        .to(PrivApkInShimApexPackageName, privApkInShimApexVersion));
 
         RollbackUtils.rollback(available.getRollbackId(), TestApp.Apex3);
         RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
@@ -345,9 +360,9 @@ public class HostTestHelper {
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
                 Rollback.from(ApkInShimApexPackageName, 0)
-                        .to(ApkInShimApexPackageName, ApkInShimApexVersion),
+                        .to(ApkInShimApexPackageName, apkInShimApexVersion),
                 Rollback.from(PrivApkInShimApexPackageName, 0)
-                        .to(PrivApkInShimApexPackageName, ApkInShimApexVersion));
+                        .to(PrivApkInShimApexPackageName, privApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(TestApp.Apex3);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
@@ -376,20 +391,29 @@ public class HostTestHelper {
     @Test
     public void testApexOnlySystemVersionStagedRollback_Phase1() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+
+        // keep the versions of the apks in shim apex for verifying in phase2
+        recordApkInApexVersion();
+
         Install.single(TestApp.Apex2).setStaged().setEnableRollback().commit();
     }
 
     @Test
     public void testApexOnlySystemVersionStagedRollback_Phase2() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+
+        long[] versions = retrieveApkInApexVersion();
+        final long apkInShimApexVersion = versions[0];
+        final long privApkInShimApexVersion = versions[1];
+
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(TestApp.Apex2).to(TestApp.Apex1),
                 Rollback.from(ApkInShimApexPackageName, 0)
-                        .to(ApkInShimApexPackageName, ApkInShimApexVersion),
+                        .to(ApkInShimApexPackageName, apkInShimApexVersion),
                 Rollback.from(PrivApkInShimApexPackageName, 0)
-                        .to(PrivApkInShimApexPackageName, ApkInShimApexVersion));
+                        .to(PrivApkInShimApexPackageName, privApkInShimApexVersion));
 
         RollbackUtils.rollback(available.getRollbackId(), TestApp.Apex2);
         RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
@@ -398,9 +422,9 @@ public class HostTestHelper {
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(TestApp.Apex2).to(TestApp.Apex1),
                 Rollback.from(ApkInShimApexPackageName, 0)
-                        .to(ApkInShimApexPackageName, ApkInShimApexVersion),
+                        .to(ApkInShimApexPackageName, apkInShimApexVersion),
                 Rollback.from(PrivApkInShimApexPackageName, 0)
-                        .to(PrivApkInShimApexPackageName, ApkInShimApexVersion));
+                        .to(PrivApkInShimApexPackageName, privApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(TestApp.Apex2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
@@ -435,6 +459,10 @@ public class HostTestHelper {
     public void testApexAndApkStagedRollback_Phase2() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+
+        // keep the versions of the apks in shim apex for verifying in phase3 and phase4
+        recordApkInApexVersion();
+
         Install.multi(TestApp.Apex3, TestApp.A2).setStaged().setEnableRollback().commit();
     }
 
@@ -448,15 +476,19 @@ public class HostTestHelper {
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
         InstallUtils.processUserData(TestApp.A);
 
+        long[] versions = retrieveApkInApexVersion();
+        final long apkInShimApexVersion = versions[0];
+        final long privApkInShimApexVersion = versions[1];
+
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
                 Rollback.from(TestApp.A2).to(TestApp.A1),
                 Rollback.from(ApkInShimApexPackageName, 0)
-                        .to(ApkInShimApexPackageName, ApkInShimApexVersion),
+                        .to(ApkInShimApexPackageName, apkInShimApexVersion),
                 Rollback.from(PrivApkInShimApexPackageName, 0)
-                        .to(PrivApkInShimApexPackageName, ApkInShimApexVersion));
+                        .to(PrivApkInShimApexPackageName, privApkInShimApexVersion));
 
         RollbackUtils.rollback(available.getRollbackId(), TestApp.Apex3, TestApp.A2);
         RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
@@ -466,9 +498,9 @@ public class HostTestHelper {
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
                 Rollback.from(TestApp.A2).to(TestApp.A1),
                 Rollback.from(ApkInShimApexPackageName, 0)
-                        .to(ApkInShimApexPackageName, ApkInShimApexVersion),
+                        .to(ApkInShimApexPackageName, apkInShimApexVersion),
                 Rollback.from(PrivApkInShimApexPackageName, 0)
-                        .to(PrivApkInShimApexPackageName, ApkInShimApexVersion));
+                        .to(PrivApkInShimApexPackageName, privApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(TestApp.Apex3, TestApp.A2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
@@ -489,15 +521,19 @@ public class HostTestHelper {
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
         InstallUtils.processUserData(TestApp.A);
 
+        long[] versions = retrieveApkInApexVersion();
+        final long apkInShimApexVersion = versions[0];
+        final long privApkInShimApexVersion = versions[1];
+
         RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
         assertThat(committed).isStaged();
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(TestApp.Apex3).to(TestApp.Apex2),
                 Rollback.from(TestApp.A2).to(TestApp.A1),
                 Rollback.from(ApkInShimApexPackageName, 0)
-                        .to(ApkInShimApexPackageName, ApkInShimApexVersion),
+                        .to(ApkInShimApexPackageName, apkInShimApexVersion),
                 Rollback.from(PrivApkInShimApexPackageName, 0)
-                        .to(PrivApkInShimApexPackageName, ApkInShimApexVersion));
+                        .to(PrivApkInShimApexPackageName, privApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(TestApp.Apex3, TestApp.A2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
@@ -544,6 +580,10 @@ public class HostTestHelper {
     @Test
     public void testApexKeyRotationStagedRollback_Phase1() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+
+        // keep the versions of the apks in shim apex for verifying in phase2
+        recordApkInApexVersion();
+
         Install.single(Apex2SignedBobRotRollback).setStaged().setEnableRollback().commit();
     }
 
@@ -551,13 +591,17 @@ public class HostTestHelper {
     public void testApexKeyRotationStagedRollback_Phase2() throws Exception {
         assertThat(InstallUtils.getInstalledVersion(TestApp.Apex)).isEqualTo(2);
         RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.Apex);
+        long[] versions = retrieveApkInApexVersion();
+        final long apkInShimApexVersion = versions[0];
+        final long privApkInShimApexVersion = versions[1];
+
         assertThat(available).isStaged();
         assertThat(available).packagesContainsExactly(
                 Rollback.from(Apex2SignedBobRotRollback).to(TestApp.Apex1),
                 Rollback.from(ApkInShimApexPackageName, 0)
-                        .to(ApkInShimApexPackageName, ApkInShimApexVersion),
+                        .to(ApkInShimApexPackageName, apkInShimApexVersion),
                 Rollback.from(PrivApkInShimApexPackageName, 0)
-                        .to(PrivApkInShimApexPackageName, ApkInShimApexVersion));
+                        .to(PrivApkInShimApexPackageName, privApkInShimApexVersion));
 
         RollbackUtils.rollback(available.getRollbackId(), Apex2SignedBobRotRollback);
         RollbackInfo committed = RollbackUtils.getCommittedRollbackById(available.getRollbackId());
@@ -566,9 +610,9 @@ public class HostTestHelper {
         assertThat(committed).packagesContainsExactly(
                 Rollback.from(Apex2SignedBobRotRollback).to(TestApp.Apex1),
                 Rollback.from(ApkInShimApexPackageName, 0)
-                        .to(ApkInShimApexPackageName, ApkInShimApexVersion),
+                        .to(ApkInShimApexPackageName, apkInShimApexVersion),
                 Rollback.from(PrivApkInShimApexPackageName, 0)
-                        .to(PrivApkInShimApexPackageName, ApkInShimApexVersion));
+                        .to(PrivApkInShimApexPackageName, privApkInShimApexVersion));
         assertThat(committed).causePackagesContainsExactly(Apex2SignedBobRotRollback);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
 
@@ -610,5 +654,57 @@ public class HostTestHelper {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
         assertThat(sm.isCheckpointSupported()).isTrue();
+    }
+
+    /**
+     * Record the versions of Apk in shim apex and PrivApk in shim apex
+     * in the order into {@link #APK_VERSION_FILENAME}.
+     *
+     * @see #ApkInShimApexPackageName
+     * @see #PrivApkInShimApexPackageName
+     */
+    private void recordApkInApexVersion() throws Exception {
+        final File versionFile = getApkInApexVersionFile();
+
+        if (!versionFile.exists()) {
+            versionFile.createNewFile();
+        }
+
+        final long apkInApexVersion = InstallUtils.getInstalledVersion(ApkInShimApexPackageName);
+        final long privApkInApexVersion = InstallUtils.getInstalledVersion(
+                PrivApkInShimApexPackageName);
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(versionFile))) {
+            writer.write(apkInApexVersion + APK_VERSION_SEPARATOR + privApkInApexVersion);
+        }
+    }
+
+    /**
+     * Returns the array of the versions of Apk in shim apex and PrivApk in shim apex
+     * in the order from {@link #APK_VERSION_FILENAME}.
+     *
+     * @see #ApkInShimApexPackageName
+     * @see #PrivApkInShimApexPackageName
+     */
+    private long[] retrieveApkInApexVersion() throws Exception {
+        final File versionFile = getApkInApexVersionFile();
+
+        if (!versionFile.exists()) {
+            throw new IllegalStateException("The RollbackTest version file not found");
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(versionFile))) {
+            String[] versions = reader.readLine().split(APK_VERSION_SEPARATOR);
+
+            if (versions.length != 2) {
+                throw new IllegalStateException("The RollbackTest version file is wrong.");
+            }
+            return new long[]{Long.parseLong(versions[0]), Long.parseLong(versions[1])};
+        }
+    }
+
+    private File getApkInApexVersionFile() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        return new File(context.getFilesDir(), APK_VERSION_FILENAME);
     }
 }
