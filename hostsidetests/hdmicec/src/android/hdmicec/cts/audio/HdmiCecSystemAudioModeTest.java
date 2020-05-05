@@ -18,7 +18,9 @@ package android.hdmicec.cts.audio;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static org.junit.Assume.assumeTrue;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 
 import android.hdmicec.cts.CecDevice;
@@ -35,8 +37,13 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /** HDMI CEC test to test system audio mode (Section 11.2.15) */
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -47,6 +54,9 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
 
     /** The class name of the main activity in the APK. */
     private static final String CLASS = "HdmiCecAudioManager";
+
+    /** The tag of the SadConfigurationReaderTest launched by the APK. */
+    private static final String SAD_READER = "SadConfigurationReaderTest";
 
     /** The command to launch the main activity. */
     private static final String START_COMMAND = String.format(
@@ -59,6 +69,11 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     private static final CecDevice AUDIO_DEVICE = CecDevice.AUDIO_SYSTEM;
     private static final int ON = 0x1;
     private static final int OFF = 0x0;
+    private static final int MAX_AUDIO_FORMATS = 4;
+    private static final int MAX_VALID_AUDIO_FORMATS = 2;
+    private static final String SAD_CONFIGURATION_MARKER = "Supported Audio Formats";
+
+    private List<Integer> mSupportedAudioFormats = null;
 
     @Rule
     public HdmiCecClientWrapper hdmiCecClient =
@@ -80,6 +95,71 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         }
         device.executeAdbCommand("logcat", "-c");
         assertThat(testString).isEqualTo(expectedOut);
+    }
+
+    private void lookForLogFromSadConfigurationReaderTest(String expectedOut) throws Exception {
+        ITestDevice device = getDevice();
+        TimeUnit.SECONDS.sleep(WAIT_TIME);
+        String logs =
+                device.executeAdbCommand("logcat", "-v", "brief", "-d", SAD_READER + ":I", "*:S");
+        // Search for string.
+        String testString = "";
+        Scanner in = new Scanner(logs);
+        while (in.hasNextLine()) {
+            String line = in.nextLine();
+            if (line.startsWith("I/" + SAD_READER)) {
+                testString = line.split(":")[1].trim();
+                if (testString.equals(SAD_CONFIGURATION_MARKER)) {
+                    List<String> mFormatsLine =
+                            Arrays.asList(in.nextLine().split(":")[1].trim().split(", "));
+                    List<String> mCodecSADsLine =
+                            Arrays.asList(in.nextLine().split(":")[1].trim().split(", "));
+                    mSupportedAudioFormats =
+                            Lists.transform(mFormatsLine, fl -> Integer.parseInt(fl));
+                    break;
+                }
+            }
+        }
+        device.executeAdbCommand("logcat", "-c");
+        assumeTrue(testString.equals(expectedOut));
+    }
+
+    private String getRequestSadFormatsParams(boolean sendValidFormats) throws Exception {
+        ITestDevice device = getDevice();
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + "android.hdmicec.app.GET_SUPPORTED_SAD_FORMATS");
+        lookForLogFromSadConfigurationReaderTest(SAD_CONFIGURATION_MARKER);
+
+        // Create a list of all the audio format codes according to CEA-861-D. Remove the supported
+        // audio format codes from it, to get the unsupported audio format codes.
+        List<Integer> mAllCodecFormats =
+                IntStream.range(1, 15).boxed().collect(Collectors.toList());
+        List<Integer> unsupportedAudioFormats = new ArrayList<>();
+        unsupportedAudioFormats.addAll(mAllCodecFormats);
+        unsupportedAudioFormats.removeAll(mSupportedAudioFormats);
+        // Create params message for REQUEST_SHORT_AUDIO_DESCRIPTOR
+        String messageParams = "";
+        int i = 0;
+        int listIndex = 0;
+        if (sendValidFormats) {
+            while (i < Math.min(MAX_VALID_AUDIO_FORMATS, mSupportedAudioFormats.size())) {
+                messageParams +=
+                        hdmiCecClient.formatParams(mSupportedAudioFormats.get(listIndex), 2);
+                i++;
+                listIndex++;
+            }
+            listIndex = 0;
+        }
+        while (i < Math.min(MAX_AUDIO_FORMATS, unsupportedAudioFormats.size())) {
+            messageParams += hdmiCecClient.formatParams(unsupportedAudioFormats.get(listIndex), 2);
+            i++;
+            listIndex++;
+        }
+        return messageParams;
     }
 
     private void muteDevice() throws Exception {
@@ -371,6 +451,31 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
 
         /** Mute volume and check the <Report Audio Status> */
         reportAudioStatusMuted();
+    }
+
+    /**
+     * Test 11.2.15-13
+     * Tests that the device responds to a <Request Short Audio Descriptor> message with a
+     * <Report Short Audio Descriptor> message with only those audio descriptors that are supported.
+     */
+    @Test
+    public void cect_11_2_15_13_ValidShortAudioDescriptor() throws Exception {
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+                CecMessage.REQUEST_SHORT_AUDIO_DESCRIPTOR, getRequestSadFormatsParams(true));
+        String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
+                CecMessage.REPORT_SHORT_AUDIO_DESCRIPTOR);
+        /* Each Short Audio Descriptor is 3 bytes long. In the first byte of the params, bits 3-6
+         * will have the audio format. Bit 7 will always 0 for audio format defined in CEA-861-D.
+         * Bits 0-2 represent (Max number of channels - 1). Discard bits 0-2 and check for the
+         * format.
+         * Iterate the params by 3 bytes(6 nibbles) and extract only the first byte(2 nibbles).
+         */
+        for (int i = 0; i < Math.min(mSupportedAudioFormats.size(), MAX_VALID_AUDIO_FORMATS); i++) {
+            int audioFormat =
+                    hdmiCecClient.getParamsFromMessage(message, 6 * i, 6 * i + 2) >>> 3;
+            assertWithMessage("Could not find audio format " + audioFormat)
+                    .that(mSupportedAudioFormats).contains(audioFormat);
+        }
     }
 
     /**
