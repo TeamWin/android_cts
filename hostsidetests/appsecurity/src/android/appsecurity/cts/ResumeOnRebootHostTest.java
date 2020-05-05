@@ -331,8 +331,8 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     private void installTestPackages() throws Exception {
-        new InstallMultiple().addApk(APK).run();
-        new InstallMultiple().addApk(OTHER_APK).run();
+        new InstallMultiple().addFile(APK).run();
+        new InstallMultiple().addFile(OTHER_APK).run();
     }
 
     private void removeTestPackages() throws DeviceNotAvailableException {
