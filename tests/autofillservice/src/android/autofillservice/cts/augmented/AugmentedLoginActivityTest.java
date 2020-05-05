@@ -776,6 +776,93 @@ public class AugmentedLoginActivityTest
     }
 
     @Test
+    public void testAugmentedAutoFill_noPreviousRequest_requestAutofill() throws Exception {
+        // Set services
+        Helper.disableAutofillService(sContext);
+        final CtsAugmentedAutofillService service = enableAugmentedService();
+
+        // Request requestAutofill without any existing request
+        final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+        final ComponentName componentName = mActivity.getComponentName();
+        final boolean requestResult = service.requestAutofill(componentName, usernameId);
+
+        assertThat(requestResult).isFalse();
+    }
+
+    @Test
+    public void testAugmentedAutoFill_hasPreviousRequestViewFocused_requestAutofill()
+            throws Exception {
+        // Set services
+        Helper.disableAutofillService(sContext);
+        final CtsAugmentedAutofillService service = enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillValue usernameValue = username.getAutofillValue();
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        mUiBot.waitForIdleSync();
+        sAugmentedReplier.getNextFillRequest();
+
+        // Set expectations for username again
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude")
+                        .build(), usernameId)
+                .build());
+        // Service requests requestAutofill() for same focused view
+        final ComponentName componentName = mActivity.getComponentName();
+        final boolean requestResult = service.requestAutofill(componentName, usernameId);
+        final AugmentedFillRequest request = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        assertThat(requestResult).isTrue();
+        assertBasicRequestInfo(request, mActivity, usernameId, usernameValue);
+
+        // Make sure standard Autofill UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+
+        // Make sure Augmented Autofill UI is shown.
+        mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
+    }
+
+    @Test
+    public void testAugmentedAutoFill_hasPreviousRequestViewNotFocused_requestAutofill()
+            throws Exception {
+        // Set services
+        Helper.disableAutofillService(sContext);
+        final CtsAugmentedAutofillService service = enableAugmentedService();
+
+        // Set expectations
+        final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger autofill
+        mActivity.onUsername(View::requestFocus);
+        sAugmentedReplier.getNextFillRequest();
+
+        // Clear focus
+        mActivity.clearFocus();
+
+        // Service requests requestAutofill() for non-focused view
+        final ComponentName componentName = mActivity.getComponentName();
+        final boolean requestResult = service.requestAutofill(componentName, usernameId);
+
+        assertThat(requestResult).isFalse();
+    }
+
+    @Test
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutoFill_mainServiceDisabled() throws Exception {
         // Set services
