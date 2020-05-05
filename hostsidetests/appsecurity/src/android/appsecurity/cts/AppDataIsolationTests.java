@@ -113,7 +113,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
     @Test
     public void testAppAbleToAccessItsDataAfterForceStop() throws Exception {
         // Install AppA and verify no data stored
-        new InstallMultiple().addApk(APPA_APK).run();
+        new InstallMultiple().addFile(APPA_APK).run();
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_DO_NOT_EXIST);
@@ -144,7 +144,7 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
     @Test
     public void testAppAbleToAccessItsDataAfterReboot() throws Exception {
         // Install AppA and verify no data stored
-        new InstallMultiple().addApk(APPA_APK).run();
+        new InstallMultiple().addFile(APPA_APK).run();
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_DO_NOT_EXIST);
@@ -185,8 +185,8 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
     @Test
     public void testDirectBootModeWorks() throws Exception {
         // Install AppA and verify no data stored
-        new InstallMultiple().addApk(APP_DIRECT_BOOT_A_APK).run();
-        new InstallMultiple().addApk(APPB_APK).run();
+        new InstallMultiple().addFile(APP_DIRECT_BOOT_A_APK).run();
+        new InstallMultiple().addFile(APPB_APK).run();
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_DE_DATA_DOES_NOT_EXIST);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_EXTERNAL_DIRS_DO_NOT_EXIST);
@@ -272,13 +272,13 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
     @Test
     public void testAppNotAbleToAccessItsDataAfterReinstall() throws Exception {
         // Install AppA create CE DE data
-        new InstallMultiple().addApk(APPA_APK).run();
+        new InstallMultiple().addFile(APPA_APK).run();
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_CE_DE_DATA);
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_EXTERNAL_DIRS);
 
         // Reinstall AppA
         getDevice().uninstallPackage(APPA_PKG);
-        new InstallMultiple().addApk(APPA_APK).run();
+        new InstallMultiple().addFile(APPA_APK).run();
 
         // Verify CE, DE and external data are removed
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CHECK_CE_DATA_DOES_NOT_EXIST);
@@ -288,16 +288,16 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
 
     @Test
     public void testNormalProcessCannotAccessOtherAppDataDir() throws Exception {
-        new InstallMultiple().addApk(APPA_APK).run();
-        new InstallMultiple().addApk(APPB_APK).run();
+        new InstallMultiple().addFile(APPA_APK).run();
+        new InstallMultiple().addFile(APPB_APK).run();
 
         runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CAN_NOT_ACCESS_APPA_DIR);
     }
 
     @Test
     public void testSharedAppAbleToAccessOtherAppDataDir() throws Exception {
-        new InstallMultiple().addApk(APP_SHARED_A_APK).run();
-        new InstallMultiple().addApk(APP_SHARED_B_APK).run();
+        new InstallMultiple().addFile(APP_SHARED_A_APK).run();
+        new InstallMultiple().addFile(APP_SHARED_B_APK).run();
 
         runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CAN_ACCESS_APPA_DIR);
     }
@@ -306,8 +306,8 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
     public void testNormalProcessCannotAccessOtherAppExternalDataDir() throws Exception {
         assumeThatFuseDataIsolationIsEnabled(getDevice());
 
-        new InstallMultiple().addApk(APPA_APK).run();
-        new InstallMultiple().addApk(APPB_APK).run();
+        new InstallMultiple().addFile(APPA_APK).run();
+        new InstallMultiple().addFile(APPB_APK).run();
 
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_EXTERNAL_DIRS);
         runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CAN_NOT_ACCESS_APPA_EXTERNAL_DIRS);
@@ -315,8 +315,8 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
 
     @Test
     public void testSharedAppAbleToAccessOtherAppExternalDataDir() throws Exception {
-        new InstallMultiple().addApk(APP_SHARED_A_APK).run();
-        new InstallMultiple().addApk(APP_SHARED_B_APK).run();
+        new InstallMultiple().addFile(APP_SHARED_A_APK).run();
+        new InstallMultiple().addFile(APP_SHARED_B_APK).run();
 
         runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_CREATE_EXTERNAL_DIRS);
         runDeviceTests(APPB_PKG, APPB_CLASS, APPB_METHOD_CAN_ACCESS_APPA_EXTERNAL_DIRS);

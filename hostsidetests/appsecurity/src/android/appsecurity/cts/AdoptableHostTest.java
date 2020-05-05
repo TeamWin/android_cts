@@ -152,7 +152,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             Assert.assertNotNull("Failed to find APK for ABI " + abi, apk);
 
             // Install simple app on internal
-            new InstallMultiple().useNaturalAbi().addApk(APK).addApk(apk).run();
+            new InstallMultiple().useNaturalAbi().addFile(APK).addFile(apk).run();
             runDeviceTests(PKG, CLASS, "testDataInternal");
             runDeviceTests(PKG, CLASS, "testDataWrite");
             runDeviceTests(PKG, CLASS, "testDataRead");
@@ -228,7 +228,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
     private void verifyPrimaryInternal(String diskId) throws Exception {
         // Write some data to shared storage
-        new InstallMultiple().addApk(APK).run();
+        new InstallMultiple().addFile(APK).run();
         runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume");
         runDeviceTests(PKG, CLASS, "testPrimaryInternal");
         runDeviceTests(PKG, CLASS, "testPrimaryDataWrite");
@@ -277,7 +277,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
     private void verifyPrimaryPhysical(String diskId) throws Exception {
         // Write some data to shared storage
-        new InstallMultiple().addApk(APK).run();
+        new InstallMultiple().addFile(APK).run();
         runDeviceTests(PKG, CLASS, "testPrimaryPhysical");
         runDeviceTests(PKG, CLASS, "testPrimaryDataWrite");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
@@ -324,13 +324,13 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
             // Install directly onto adopted volume
             new InstallMultiple().locationAuto().forceUuid(vol.uuid)
-                    .addApk(APK).addApk(APK_mdpi).run();
+                    .addFile(APK).addFile(APK_mdpi).run();
             runDeviceTests(PKG, CLASS, "testDataNotInternal");
             runDeviceTests(PKG, CLASS, "testDensityBest1");
 
             // Now splice in an additional split which offers better resources
             new InstallMultiple().locationAuto().inheritFrom(PKG)
-                    .addApk(APK_xxhdpi).run();
+                    .addFile(APK_xxhdpi).run();
             runDeviceTests(PKG, CLASS, "testDataNotInternal");
             runDeviceTests(PKG, CLASS, "testDensityBest2");
 
@@ -352,7 +352,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             final LocalVolumeInfo vol = getAdoptionVolume();
 
             // Install directly onto adopted volume, and write data there
-            new InstallMultiple().locationAuto().forceUuid(vol.uuid).addApk(APK).run();
+            new InstallMultiple().locationAuto().forceUuid(vol.uuid).addFile(APK).run();
             runDeviceTests(PKG, CLASS, "testDataNotInternal");
             runDeviceTests(PKG, CLASS, "testDataWrite");
             runDeviceTests(PKG, CLASS, "testDataRead");
@@ -363,7 +363,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             getDevice().uninstallPackage(PKG);
 
             // Install second copy on internal, but don't write anything
-            new InstallMultiple().locationInternalOnly().addApk(APK).run();
+            new InstallMultiple().locationInternalOnly().addFile(APK).run();
             runDeviceTests(PKG, CLASS, "testDataInternal");
 
             // Kick through a remount cycle, which should purge the adopted app
