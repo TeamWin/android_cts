@@ -62,14 +62,18 @@ public class ExtensionTest extends JetpackExtensionTestBase {
     private ActivityTestRule<TestConfigChangeHandlingActivity> mConfigHandlingActivityTestRule =
             new ActivityTestRule<>(TestConfigChangeHandlingActivity.class,
                     false /* initialTouchMode */, false /* launchActivity */);
+    private ActivityTestRule<TestGetWindowLayoutInfoActivity> mGetWindowLayoutInfoActivityTestRule =
+            new ActivityTestRule<>(TestGetWindowLayoutInfoActivity.class,
+                    false /* initialTouchMode */, false /* launchActivity */);
 
     /**
-     * This chain rule will launch TestActivity before each test starts, and cleanup both activities
+     * This chain rule will launch TestActivity before each test starts, and cleanup all activities
      * after each test finishes.
      */
     @Rule
-    public TestRule chain =
-            RuleChain.outerRule(mActivityTestRule).around(mConfigHandlingActivityTestRule);
+    public TestRule chain = RuleChain.outerRule(mActivityTestRule)
+            .around(mConfigHandlingActivityTestRule)
+            .around(mGetWindowLayoutInfoActivityTestRule);
 
     private TestActivity mActivity;
     private TestInterfaceCompat mExtension;
@@ -162,6 +166,21 @@ public class ExtensionTest extends JetpackExtensionTestBase {
 
         assertThat(deviceState1).isEqualTo(deviceState2);
         assertThat(deviceState1).isEqualTo(deviceState3);
+    }
+
+    @Test
+    public void testGetWindowLayoutInfo_activityNotAttached_notReturnIncorrectValue() {
+        // No display feature to compare, finish test early.
+        assumeHasDisplayFeatures();
+
+        // The value is verified inside TestGetWindowLayoutInfoActivity
+        TestGetWindowLayoutInfoActivity.resetResumeCounter();
+        TestGetWindowLayoutInfoActivity testGetWindowLayoutInfoActivity =
+                mGetWindowLayoutInfoActivityTestRule.launchActivity(new Intent());
+
+        // Make sure the activity has gone through all states.
+        assertThat(TestGetWindowLayoutInfoActivity.waitForOnResume()).isTrue();
+        assertThat(testGetWindowLayoutInfoActivity.waitForLayout()).isTrue();
     }
 
     @Test
