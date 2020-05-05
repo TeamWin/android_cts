@@ -41,8 +41,8 @@ public class SessionReferrerUriTest extends BaseAppSecurityTest {
 
     @Before
     public void setup() throws Exception {
-        new InstallMultiple().addApk(SESSION_INSPECTOR_A_APK).run();
-        new InstallMultiple().addApk(SESSION_INSPECTOR_B_APK).run();
+        new InstallMultiple().addFile(SESSION_INSPECTOR_A_APK).run();
+        new InstallMultiple().addFile(SESSION_INSPECTOR_B_APK).run();
     }
 
     @After
