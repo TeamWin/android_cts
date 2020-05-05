@@ -39,7 +39,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
@@ -119,6 +118,9 @@ public class LayoutTests extends WindowManagerTestBase {
 
         // Wait for the global layout triggered by removing window.
         activity.waitForGlobalLayout();
+
+        // Wait for the activity has focus before get the visible frame
+        activity.waitAndAssertWindowFocusState(true);
 
         // Get the visible frame of the main activity after removing the window we added.
         final Rect visibleFrameAfterRemovingWindow = new Rect();
