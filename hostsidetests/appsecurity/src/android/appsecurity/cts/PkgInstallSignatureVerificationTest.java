@@ -715,6 +715,27 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "testGetSigningCertificatesShowsAll");
     }
 
+    public void testInstallV3KeyRotationGetApkContentsSigners() throws Exception {
+        // The GET_SIGNING_CERTIFICATES flag results in a PackageInfo object returned with a
+        // SigningInfo instance that can be used to query all certificates in the lineage or only
+        // the current signer(s) via getApkContentsSigners. This test verifies when a V3 signed
+        // package with a rotated key is queried getApkContentsSigners only returns the current
+        // signer.
+        installApkFromBuild("v3-ec-p256-with-por_1_2-default-caps.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testGetApkContentsSignersShowsCurrent");
+    }
+
+    public void testInstallV2MultipleSignersGetApkContentsSigners() throws Exception {
+        // Similar to the above test, but verifies when an APK is signed with two V2 signers
+        // getApkContentsSigners returns both of the V2 signers.
+        installApkFromBuild("v1v2-ec-p256-two-signers.apk");
+        Utils.runDeviceTests(
+                getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
+                "testGetApkContentsSignersShowsMultipleSigners");
+    }
+
     public void testInstallV3KeyRotationHasSigningCertificate() throws Exception {
         // tests that hasSigningCertificate() recognizes past and current signing certs
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
@@ -879,10 +900,14 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     private void installDeviceTestPkg() throws Exception {
+        installApkFromBuild(DEVICE_TESTS_APK);
+    }
+
+    private void installApkFromBuild(String apkName) throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
-        File apk = buildHelper.getTestFile(DEVICE_TESTS_APK);
-        String result = getDevice().installPackage(apk, true);
-        assertNull("failed to install " + DEVICE_TESTS_APK + ", Reason: " + result, result);
+        File apk = buildHelper.getTestFile(apkName);
+        String result = getDevice().installPackage(apk, true, INSTALL_ARG_FORCE_QUERYABLE);
+        assertNull("failed to install " + apkName + ", Reason: " + result, result);
     }
 
     private String installPackageFromResource(String apkFilenameInResources, boolean ephemeral)
