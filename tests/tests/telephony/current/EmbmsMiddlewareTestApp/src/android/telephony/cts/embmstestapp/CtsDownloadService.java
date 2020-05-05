@@ -67,6 +67,7 @@ public class CtsDownloadService extends Service {
     public static final String METHOD_INITIALIZE = "initialize";
     public static final String METHOD_REQUEST_UPDATE_FILE_SERVICES =
             "requestUpdateFileServices";
+    public static final String METHOD_ADD_SERVICE_ANNOUNCEMENT = "addServiceAnnouncementFile";
     public static final String METHOD_SET_TEMP_FILE_ROOT = "setTempFileRootDirectory";
     public static final String METHOD_RESET_DOWNLOAD_KNOWLEDGE = "resetDownloadKnowledge";
     public static final String METHOD_GET_DOWNLOAD_STATUS = "getDownloadStatus";
@@ -82,6 +83,7 @@ public class CtsDownloadService extends Service {
     public static final String ARGUMENT_DOWNLOAD_REQUEST = "downloadRequest";
     public static final String ARGUMENT_FILE_INFO = "fileInfo";
     public static final String ARGUMENT_RESULT_CODE = "resultCode";
+    public static final String ARGUMENT_SERVICE_ANNOUNCEMENT_FILE = "serviceAnnouncementFile";
 
     public static final String CONTROL_INTERFACE_ACTION =
             "android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE";
@@ -253,6 +255,16 @@ public class CtsDownloadService extends Service {
             b.putParcelable(ARGUMENT_FILE_INFO, fileInfo);
             mReceivedCalls.add(b);
             return MbmsDownloadSession.STATUS_ACTIVELY_DOWNLOADING;
+        }
+
+        @Override
+        public int addServiceAnnouncementFile(int subscriptionId, byte[] announcementFile) {
+            Bundle b = new Bundle();
+            b.putString(METHOD_NAME, METHOD_ADD_SERVICE_ANNOUNCEMENT);
+            b.putInt(ARGUMENT_SUBSCRIPTION_ID, subscriptionId);
+            b.putByteArray(ARGUMENT_SERVICE_ANNOUNCEMENT_FILE, announcementFile);
+            mReceivedCalls.add(b);
+            return MbmsErrors.SUCCESS;
         }
 
         @Override
