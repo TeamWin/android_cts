@@ -18,6 +18,7 @@ package android.media.tv.tuner.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -33,10 +34,32 @@ import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.TimeFilter;
+
+import android.media.tv.tuner.frontend.AnalogFrontendCapabilities;
+import android.media.tv.tuner.frontend.AnalogFrontendSettings;
+import android.media.tv.tuner.frontend.Atsc3FrontendCapabilities;
+import android.media.tv.tuner.frontend.Atsc3FrontendSettings;
 import android.media.tv.tuner.frontend.Atsc3PlpInfo;
+import android.media.tv.tuner.frontend.Atsc3PlpSettings;
+import android.media.tv.tuner.frontend.AtscFrontendCapabilities;
 import android.media.tv.tuner.frontend.AtscFrontendSettings;
+import android.media.tv.tuner.frontend.DvbcFrontendCapabilities;
+import android.media.tv.tuner.frontend.DvbcFrontendSettings;
+import android.media.tv.tuner.frontend.DvbsCodeRate;
+import android.media.tv.tuner.frontend.DvbsFrontendCapabilities;
+import android.media.tv.tuner.frontend.DvbsFrontendSettings;
+import android.media.tv.tuner.frontend.DvbtFrontendCapabilities;
+import android.media.tv.tuner.frontend.DvbtFrontendSettings;
+import android.media.tv.tuner.frontend.FrontendCapabilities;
 import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
+import android.media.tv.tuner.frontend.FrontendStatus;
+import android.media.tv.tuner.frontend.Isdbs3FrontendCapabilities;
+import android.media.tv.tuner.frontend.Isdbs3FrontendSettings;
+import android.media.tv.tuner.frontend.IsdbsFrontendCapabilities;
+import android.media.tv.tuner.frontend.IsdbsFrontendSettings;
+import android.media.tv.tuner.frontend.IsdbtFrontendCapabilities;
+import android.media.tv.tuner.frontend.IsdbtFrontendSettings;
 import android.media.tv.tuner.frontend.ScanCallback;
 
 import androidx.test.InstrumentationRegistry;
@@ -90,7 +113,11 @@ public class TunerTest {
     @Test
     public void testTuning() throws Exception {
         if (!hasTuner()) return;
-        int res = mTuner.tune(getFrontendSettings());
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        int res = mTuner.tune(createFrontendSettings(info));
         assertEquals(Tuner.RESULT_SUCCESS, res);
         res = mTuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
@@ -100,12 +127,13 @@ public class TunerTest {
     public void testScanning() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
         for (int id : ids) {
             FrontendInfo info = mTuner.getFrontendInfoById(id);
             if (info != null && info.getType() == FrontendSettings.TYPE_ATSC) {
                 mLockLatch = new CountDownLatch(1);
                 int res = mTuner.scan(
-                        getFrontendSettings(),
+                        createFrontendSettings(info),
                         Tuner.SCAN_TYPE_AUTO,
                         getExecutor(),
                         getScanCallback());
@@ -116,6 +144,65 @@ public class TunerTest {
             }
         }
         mLockLatch = null;
+    }
+
+    @Test
+    public void testFrontendStatus() throws Exception {
+        if (!hasTuner()) return;
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        int res = mTuner.tune(createFrontendSettings(info));
+        FrontendStatus status = mTuner.getFrontendStatus(
+                new int[] {
+                        FrontendStatus.FRONTEND_STATUS_TYPE_DEMOD_LOCK,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_SNR,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_BER,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_PER,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_PRE_BER,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_QUALITY,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_STRENGTH,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_SYMBOL_RATE,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_FEC,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_MODULATION,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_SPECTRAL,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_LNB_VOLTAGE,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_PLP_ID,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_EWBS,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_AGC,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_LNA,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_LAYER_ERROR,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_MER,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_FREQ_OFFSET,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_HIERARCHY,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_RF_LOCK,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_ATSC3_PLP_INFO
+                });
+        assertNotNull(status);
+
+        status.isDemodLocked();
+        status.getSnr();
+        status.getBer();
+        status.getPer();
+        status.getPerBer();
+        status.getSignalQuality();
+        status.getSignalStrength();
+        status.getSymbolRate();
+        status.getInnerFec();
+        status.getModulation();
+        status.getSpectralInversion();
+        status.getLnbVoltage();
+        status.getPlpId();
+        status.isEwbs();
+        status.getAgc();
+        status.isLnaOn();
+        status.getLayerErrors();
+        status.getMer();
+        status.getFreqOffset();
+        status.getHierarchy();
+        status.isRfLocked();
+        status.getAtsc3PlpTuningInfo();
     }
 
     @Test
@@ -224,12 +311,149 @@ public class TunerTest {
         };
     }
 
-    private FrontendSettings getFrontendSettings() {
-        return AtscFrontendSettings
-                .builder()
-                .setFrequency(2000)
-                .setModulation(AtscFrontendSettings.MODULATION_AUTO)
-                .build();
+    private FrontendSettings createFrontendSettings(FrontendInfo info) {
+            FrontendCapabilities caps = info.getFrontendCapabilities();
+            int minFreq = info.getFrequencyRange().getLower();
+            FrontendCapabilities feCaps = info.getFrontendCapabilities();
+            switch(info.getType()) {
+                case FrontendSettings.TYPE_ANALOG: {
+                    AnalogFrontendCapabilities analogCaps = (AnalogFrontendCapabilities) caps;
+                    int signalType = getFirstCapable(analogCaps.getSignalTypeCapability());
+                    int sif = getFirstCapable(analogCaps.getSifStandardCapability());
+                    return AnalogFrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setSignalType(signalType)
+                            .setSifStandard(sif)
+                            .build();
+                }
+                case FrontendSettings.TYPE_ATSC3: {
+                    Atsc3FrontendCapabilities atsc3Caps = (Atsc3FrontendCapabilities) caps;
+                    int bandwidth = getFirstCapable(atsc3Caps.getBandwidthCapability());
+                    int demod = getFirstCapable(atsc3Caps.getDemodOutputFormatCapability());
+                    return Atsc3FrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setBandwidth(bandwidth)
+                            .setDemodOutputFormat(demod)
+                            .build();
+                }
+                case FrontendSettings.TYPE_ATSC: {
+                    AtscFrontendCapabilities atscCaps = (AtscFrontendCapabilities) caps;
+                    int modulation = getFirstCapable(atscCaps.getModulationCapability());
+                    return AtscFrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setModulation(modulation)
+                            .build();
+                }
+                case FrontendSettings.TYPE_DVBC: {
+                    DvbcFrontendCapabilities dvbcCaps = (DvbcFrontendCapabilities) caps;
+                    int modulation = getFirstCapable(dvbcCaps.getModulationCapability());
+                    int fec = getFirstCapable(dvbcCaps.getFecCapability());
+                    int annex = getFirstCapable(dvbcCaps.getAnnexCapability());
+                    return DvbcFrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setModulation(modulation)
+                            .setInnerFec(fec)
+                            .setAnnex(annex)
+                            .build();
+                }
+                case FrontendSettings.TYPE_DVBS: {
+                    DvbsFrontendCapabilities dvbsCaps = (DvbsFrontendCapabilities) caps;
+                    int modulation = getFirstCapable(dvbsCaps.getModulationCapability());
+                    int standard = getFirstCapable(dvbsCaps.getStandardCapability());
+                    return DvbsFrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setModulation(modulation)
+                            .setStandard(standard)
+                            .build();
+                }
+                case FrontendSettings.TYPE_DVBT: {
+                    DvbtFrontendCapabilities dvbtCaps = (DvbtFrontendCapabilities) caps;
+                    int transmission = getFirstCapable(dvbtCaps.getTransmissionModeCapability());
+                    int bandwidth = getFirstCapable(dvbtCaps.getBandwidthCapability());
+                    int constellation = getFirstCapable(dvbtCaps.getConstellationCapability());
+                    int codeRate = getFirstCapable(dvbtCaps.getCodeRateCapability());
+                    int hierarchy = getFirstCapable(dvbtCaps.getHierarchyCapability());
+                    int guardInterval = getFirstCapable(dvbtCaps.getGuardIntervalCapability());
+                    return DvbtFrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setTransmissionMode(transmission)
+                            .setBandwidth(bandwidth)
+                            .setConstellation(constellation)
+                            .setHierarchy(hierarchy)
+                            .setHighPriorityCodeRate(codeRate)
+                            .setLowPriorityCodeRate(codeRate)
+                            .setGuardInterval(guardInterval)
+                            .setStandard(DvbtFrontendSettings.STANDARD_T)
+                            .setMiso(false)
+                            .build();
+                }
+                case FrontendSettings.TYPE_ISDBS3: {
+                    Isdbs3FrontendCapabilities isdbs3Caps = (Isdbs3FrontendCapabilities) caps;
+                    int modulation = getFirstCapable(isdbs3Caps.getModulationCapability());
+                    int codeRate = getFirstCapable(isdbs3Caps.getCodeRateCapability());
+                    return Isdbs3FrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setModulation(modulation)
+                            .setCodeRate(codeRate)
+                            .build();
+                }
+                case FrontendSettings.TYPE_ISDBS: {
+                    IsdbsFrontendCapabilities isdbsCaps = (IsdbsFrontendCapabilities) caps;
+                    int modulation = getFirstCapable(isdbsCaps.getModulationCapability());
+                    int codeRate = getFirstCapable(isdbsCaps.getCodeRateCapability());
+                    return IsdbsFrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setModulation(modulation)
+                            .setCodeRate(codeRate)
+                            .build();
+                }
+                case FrontendSettings.TYPE_ISDBT: {
+                    IsdbtFrontendCapabilities isdbtCaps = (IsdbtFrontendCapabilities) caps;
+                    int mode = getFirstCapable(isdbtCaps.getModeCapability());
+                    int bandwidth = getFirstCapable(isdbtCaps.getBandwidthCapability());
+                    int modulation = getFirstCapable(isdbtCaps.getModulationCapability());
+                    int codeRate = getFirstCapable(isdbtCaps.getCodeRateCapability());
+                    int guardInterval = getFirstCapable(isdbtCaps.getGuardIntervalCapability());
+                    return IsdbtFrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setModulation(modulation)
+                            .setBandwidth(bandwidth)
+                            .setMode(mode)
+                            .setCodeRate(codeRate)
+                            .setGuardInterval(guardInterval)
+                            .build();
+                }
+                default:
+                    break;
+            }
+        return null;
+    }
+
+    private int getFirstCapable(int caps) {
+        if (caps == 0) return 0;
+        int mask = 1;
+        while ((mask & caps) == 0) {
+            mask = mask << 1;
+        }
+        return (mask & caps);
+    }
+
+    private long getFirstCapable(long caps) {
+        if (caps == 0) return 0;
+        long mask = 1;
+        while ((mask & caps) == 0) {
+            mask = mask << 1;
+        }
+        return (mask & caps);
     }
 
     private ScanCallback getScanCallback() {
