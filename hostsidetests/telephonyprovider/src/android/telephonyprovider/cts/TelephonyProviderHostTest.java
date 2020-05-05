@@ -30,19 +30,29 @@ public class TelephonyProviderHostTest extends CompatChangeGatingTestCase {
     protected static final String TEST_PKG = "android.telephonyprovider.device.cts";
 
     private static final long APN_READING_PERMISSION_CHANGE_ID = 124107808L;
+    private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
 
     @Override
     protected void setUp() throws Exception {
+        if (!getDevice().hasFeature(FEATURE_TELEPHONY)) {
+            return;
+        }
         installPackage(TEST_APK, true);
     }
 
     public void testWithChangeEnabled() throws Exception {
+        if (!getDevice().hasFeature(FEATURE_TELEPHONY)) {
+            return;
+        }
         runDeviceCompatTest(TEST_PKG, ".TelephonyProviderTest", "testAccessToApnsWithChangeEnabled",
                 /*enabledChanges*/ImmutableSet.of(APN_READING_PERMISSION_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of());
     }
 
     public void testWithChangeDisabled() throws Exception {
+        if (!getDevice().hasFeature(FEATURE_TELEPHONY)) {
+            return;
+        }
         runDeviceCompatTest(TEST_PKG, ".TelephonyProviderTest",
                 "testAccessToApnsWithChangeDisabled",
                 /*enabledChanges*/ImmutableSet.of(),
