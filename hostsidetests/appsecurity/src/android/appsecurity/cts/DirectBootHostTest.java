@@ -145,8 +145,8 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
         boolean doTest = true;
         try {
             // Set up test app and secure lock screens
-            new InstallMultiple().addApk(APK).run();
-            new InstallMultiple().addApk(OTHER_APK).run();
+            new InstallMultiple().addFile(APK).run();
+            new InstallMultiple().addFile(OTHER_APK).run();
 
             // To receive boot broadcasts, kick our other app out of stopped state
             getDevice().executeShellCommand("am start -a android.intent.action.MAIN"

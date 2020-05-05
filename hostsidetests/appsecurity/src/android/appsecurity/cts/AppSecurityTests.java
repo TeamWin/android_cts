@@ -108,8 +108,8 @@ public class AppSecurityTests extends BaseAppSecurityTest {
             getDevice().uninstallPackage(SIMPLE_APP_PKG);
             getDevice().uninstallPackage(SIMPLE_APP_DIFF_CERT_APK);
 
-            new InstallMultiple(instant).addApk(SIMPLE_APP_APK).run();
-            new InstallMultiple(instant).addApk(SIMPLE_APP_DIFF_CERT_APK)
+            new InstallMultiple(instant).addFile(SIMPLE_APP_APK).run();
+            new InstallMultiple(instant).addFile(SIMPLE_APP_DIFF_CERT_APK)
                     .runExpectingFailure("INSTALL_FAILED_UPDATE_INCOMPATIBLE");
         } finally {
             getDevice().uninstallPackage(SIMPLE_APP_PKG);
@@ -137,10 +137,10 @@ public class AppSecurityTests extends BaseAppSecurityTest {
             getDevice().uninstallPackage(APP_WITH_DATA_PKG);
             getDevice().uninstallPackage(APP_ACCESS_DATA_PKG);
 
-            new InstallMultiple().addApk(APP_WITH_DATA_APK).run();
+            new InstallMultiple().addFile(APP_WITH_DATA_APK).run();
             runDeviceTests(APP_WITH_DATA_PKG, APP_WITH_DATA_CLASS, APP_WITH_DATA_CREATE_METHOD);
 
-            new InstallMultiple(instant).addApk(APP_ACCESS_DATA_APK).run();
+            new InstallMultiple(instant).addFile(APP_ACCESS_DATA_APK).run();
             runDeviceTests(APP_ACCESS_DATA_PKG, null, null, instant);
         } finally {
             getDevice().uninstallPackage(APP_WITH_DATA_PKG);
@@ -166,13 +166,13 @@ public class AppSecurityTests extends BaseAppSecurityTest {
         try {
             getDevice().uninstallPackage(APP_WITH_DATA_PKG);
 
-            new InstallMultiple(instant).addApk(APP_WITH_DATA_APK).run();
+            new InstallMultiple(instant).addFile(APP_WITH_DATA_APK).run();
             runDeviceTests(
                     APP_WITH_DATA_PKG, APP_WITH_DATA_CLASS, APP_WITH_DATA_CREATE_METHOD);
 
             getDevice().uninstallPackage(APP_WITH_DATA_PKG);
 
-            new InstallMultiple(instant).addApk(APP_WITH_DATA_APK).run();
+            new InstallMultiple(instant).addFile(APP_WITH_DATA_APK).run();
             runDeviceTests(
                     APP_WITH_DATA_PKG, APP_WITH_DATA_CLASS, APP_WITH_DATA_CHECK_NOEXIST_METHOD);
         } finally {
@@ -203,8 +203,8 @@ public class AppSecurityTests extends BaseAppSecurityTest {
             getDevice().uninstallPackage(TARGET_INSTRUMENT_PKG);
             getDevice().uninstallPackage(INSTRUMENT_DIFF_CERT_PKG);
 
-            new InstallMultiple(targetInstant).addApk(TARGET_INSTRUMENT_APK).run();
-            new InstallMultiple(instrumentInstant).addApk(INSTRUMENT_DIFF_CERT_APK).run();
+            new InstallMultiple(targetInstant).addFile(TARGET_INSTRUMENT_APK).run();
+            new InstallMultiple(instrumentInstant).addFile(INSTRUMENT_DIFF_CERT_APK).run();
 
             // if we've installed either the instrumentation or target as an instant application,
             // starting an instrumentation will just fail instead of throwing a security exception
@@ -234,10 +234,10 @@ public class AppSecurityTests extends BaseAppSecurityTest {
             getDevice().uninstallPackage(DECLARE_PERMISSION_COMPAT_PKG);
             getDevice().uninstallPackage(PERMISSION_DIFF_CERT_PKG);
 
-            new InstallMultiple().addApk(DECLARE_PERMISSION_APK).run();
-            new InstallMultiple().addApk(DECLARE_PERMISSION_COMPAT_APK).run();
+            new InstallMultiple().addFile(DECLARE_PERMISSION_APK).run();
+            new InstallMultiple().addFile(DECLARE_PERMISSION_COMPAT_APK).run();
 
-            new InstallMultiple().addApk(PERMISSION_DIFF_CERT_APK).run();
+            new InstallMultiple().addFile(PERMISSION_DIFF_CERT_APK).run();
 
             // Enable alert window permission so it can start activity in background
             enableAlertWindowAppOp(DECLARE_PERMISSION_PKG);
@@ -256,8 +256,8 @@ public class AppSecurityTests extends BaseAppSecurityTest {
     @Test
     public void rebootWithDuplicatePermission() throws Exception {
         try {
-            new InstallMultiple(false).addApk(DECLARE_PERMISSION_APK).run();
-            new InstallMultiple(false).addApk(DUPLICATE_DECLARE_PERMISSION_APK).run();
+            new InstallMultiple(false).addFile(DECLARE_PERMISSION_APK).run();
+            new InstallMultiple(false).addFile(DUPLICATE_DECLARE_PERMISSION_APK).run();
 
             // Enable alert window permission so it can start activity in background
             enableAlertWindowAppOp(DECLARE_PERMISSION_PKG);
