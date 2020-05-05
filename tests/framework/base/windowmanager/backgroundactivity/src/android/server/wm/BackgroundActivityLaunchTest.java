@@ -18,14 +18,15 @@ package android.server.wm;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_ERRORED;
-import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
+import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_FOREGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SECOND_BACKGROUND_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SEND_PENDING_INTENT_RECEIVER;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_SIMPLE_ADMIN_RECEIVER;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_START_ACTIVITY_RECEIVER;
+import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.ACTION_FINISH_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.ACTION_LAUNCH_BACKGROUND_ACTIVITIES;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_BACKGROUND_ACTIVITY_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_INTENTS_EXTRA;
@@ -82,6 +83,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
     private static final String APP_A_PACKAGE_NAME = APP_A_FOREGROUND_ACTIVITY.getPackageName();
+    private static final long ACTIVITY_BG_START_GRACE_PERIOD_MS = 10 * 1000;
 
     private static final String TEST_PACKAGE_APP_A = "android.server.wm.backgroundactivity.appa";
     private static final String TEST_PACKAGE_APP_B = "android.server.wm.backgroundactivity.appb";
@@ -134,6 +136,28 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    @FlakyTest(bugId = 155454710)
+    public void testBackgroundActivityNotBlockedWithinGracePeriod() throws Exception {
+        // Start AppA foreground activity
+        Intent firstIntent = new Intent();
+        firstIntent.setComponent(APP_A_FOREGROUND_ACTIVITY);
+        firstIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(firstIntent);
+        boolean firstResult = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
+        assertTrue("Not able to start foreground activity", firstResult);
+        // Don't press home button to avoid stop app switches
+        mContext.sendBroadcast(new Intent(ACTION_FINISH_ACTIVITY));
+        mWmState.waitForHomeActivityVisible();
+        Thread.sleep(ACTIVITY_BG_START_GRACE_PERIOD_MS / 2);
+        Intent secondIntent = new Intent();
+        secondIntent.setComponent(APP_A_START_ACTIVITY_RECEIVER);
+
+        mContext.sendBroadcast(secondIntent);
+        boolean secondResult = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
+        assertTrue("Should be able to launch background activity", secondResult);
     }
 
     @Test
