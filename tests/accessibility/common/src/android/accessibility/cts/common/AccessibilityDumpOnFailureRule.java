@@ -42,6 +42,7 @@ import org.junit.runner.Description;
  * </pre>
  * <p>And disable external storage isolation:
  * <pre>
+ *  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
  *  <application ... android:requestLegacyExternalStorage="true" ... >
  * </pre>
  */

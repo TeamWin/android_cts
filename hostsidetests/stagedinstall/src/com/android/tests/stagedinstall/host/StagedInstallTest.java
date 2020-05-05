@@ -529,6 +529,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApexTargetingOldDevSdkFailsVerification() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testApexTargetingOldDevSdkFailsVerification");
     }
 
@@ -538,6 +540,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testApexFailsToInstallIfApkInApexFailsToScan() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testApexFailsToInstallIfApkInApexFailsToScan_Commit");
         getDevice().reboot();
         runPhase("testApexFailsToInstallIfApkInApexFailsToScan_VerifyPostReboot");
@@ -545,6 +549,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testCorruptedApexFailsVerification_b146895998() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testCorruptedApexFailsVerification_b146895998");
     }
 
@@ -553,6 +559,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApexWithUnsignedApkFailsVerification() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testApexWithUnsignedApkFailsVerification");
     }
 
@@ -561,6 +569,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApexWithUnsignedPayloadFailsVerification() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
         runPhase("testApexWithUnsignedPayloadFailsVerification");
     }
 
