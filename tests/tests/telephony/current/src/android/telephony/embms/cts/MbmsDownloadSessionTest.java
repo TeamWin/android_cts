@@ -29,11 +29,12 @@ import android.telephony.mbms.DownloadRequest;
 import android.telephony.mbms.FileServiceInfo;
 import android.telephony.mbms.MbmsErrors;
 
+import org.junit.Test;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.junit.Test;
 
 public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
 
@@ -87,6 +88,15 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         // Make sure that the middleware got the call to close
         List<Bundle> closeCalls = getMiddlewareCalls(CtsDownloadService.METHOD_CLOSE);
         assertEquals(1, closeCalls.size());
+    }
+
+    @Test
+    public void testAddServiceAnnouncementFile() throws Exception {
+        byte[] sampleAnnouncementFile = "<xml></xml>".getBytes();
+        mDownloadSession.addServiceAnnouncementFile(sampleAnnouncementFile);
+        List<Bundle> addServiceAnnouncementCalls =
+                getMiddlewareCalls(CtsDownloadService.METHOD_ADD_SERVICE_ANNOUNCEMENT);
+        assertEquals(1, addServiceAnnouncementCalls.size());
     }
 
     @Test
