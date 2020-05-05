@@ -3,13 +3,9 @@ package android.telecom.cts;
 import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDLE;
 import static android.telecom.cts.TestUtils.waitOnAllHandlers;
 
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.Call.Details;
@@ -19,15 +15,12 @@ import android.telecom.DisconnectCause;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telecom.cts.MockCallScreeningService.CallScreeningServiceCallbacks;
-import android.telecom.cts.api29incallservice.CtsApi29InCallService;
-import android.telecom.cts.api29incallservice.CtsApi29InCallServiceControl;
 import android.telecom.cts.api29incallservice.ICtsApi29InCallServiceControl;
 import android.text.TextUtils;
-import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
@@ -599,45 +592,14 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
     }
 
     private ICtsApi29InCallServiceControl setUpControl() throws Exception {
-        TestUtils.executeShellCommand(getInstrumentation(),
-                "telecom add-or-remove-call-companion-app " + CtsApi29InCallService.PACKAGE_NAME
-                        + " 1");
-
-        Intent bindIntent = new Intent(CtsApi29InCallServiceControl.CONTROL_INTERFACE_ACTION);
-        ComponentName controlComponentName =
-                ComponentName.createRelative(
-                        CtsApi29InCallServiceControl.class.getPackage().getName(),
-                        CtsApi29InCallServiceControl.class.getName());
-
-        bindIntent.setComponent(controlComponentName);
-        LinkedBlockingQueue<ICtsApi29InCallServiceControl> result = new LinkedBlockingQueue<>(1);
-
-        mApiCompatControlServiceConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                Log.i(LOG_TAG, "Service Connected: " + name);
-                result.offer(ICtsApi29InCallServiceControl.Stub.asInterface(service));
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-            }
-        };
-
-        boolean success = mContext.bindService(bindIntent,
-                mApiCompatControlServiceConnection, Context.BIND_AUTO_CREATE);
-
-        if (!success) {
-            fail("Failed to get control interface -- bind error");
-        }
-        return result.poll(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        Pair<ServiceConnection, ICtsApi29InCallServiceControl> setupResult =
+                Api29InCallUtils.setupControl(mContext);
+        mApiCompatControlServiceConnection = setupResult.first;
+        return setupResult.second;
     }
 
     private void tearDownControl() throws Exception {
-        mContext.unbindService(mApiCompatControlServiceConnection);
-
-        TestUtils.executeShellCommand(getInstrumentation(),
-                "telecom add-or-remove-call-companion-app " + CtsApi29InCallService.PACKAGE_NAME
-                        + " 0");
+        Api29InCallUtils.tearDownControl(mContext,
+                mApiCompatControlServiceConnection);
     }
 }
