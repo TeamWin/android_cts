@@ -16,6 +16,7 @@
 
 package android.server.wm.backgroundactivity.appa;
 
+import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.ACTION_FINISH_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.ACTION_LAUNCH_BACKGROUND_ACTIVITIES;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_BACKGROUND_ACTIVITY_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_INTENTS_EXTRA;
@@ -45,10 +46,15 @@ public class ForegroundActivity extends Activity {
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // Need to copy as a new array instead of just casting to Intent[] since a new array of
-            // type Parcelable[] is created when deserializing.
-            Parcelable[] intents = intent.getParcelableArrayExtra(LAUNCH_INTENTS_EXTRA);
-            startActivities(Arrays.copyOf(intents, intents.length, Intent[].class));
+            String action = intent.getAction();
+            if (ACTION_LAUNCH_BACKGROUND_ACTIVITIES.equals(action)) {
+                // Need to copy as a new array instead of just casting to Intent[] since a new
+                // array of type Parcelable[] is created when deserializing.
+                Parcelable[] intents = intent.getParcelableArrayExtra(LAUNCH_INTENTS_EXTRA);
+                startActivities(Arrays.copyOf(intents, intents.length, Intent[].class));
+            } else if (ACTION_FINISH_ACTIVITY.equals(action)) {
+                finish();
+            }
         }
     };
 
@@ -84,7 +90,10 @@ public class ForegroundActivity extends Activity {
             newIntent.setClass(this, SecondBackgroundActivity.class);
             startActivity(newIntent);
         }
-        registerReceiver(mReceiver, new IntentFilter(ACTION_LAUNCH_BACKGROUND_ACTIVITIES));
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_LAUNCH_BACKGROUND_ACTIVITIES);
+        filter.addAction(ACTION_FINISH_ACTIVITY);
+        registerReceiver(mReceiver, filter);
     }
 
     @Override
