@@ -44,6 +44,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
@@ -579,11 +580,10 @@ public final class MockIme extends InputMethodService {
             mSuggestionView.removeAllViews();
             for (int i = 0; i < pendingInlineSuggestions.mTotalCount; i++) {
                 View view = pendingInlineSuggestions.mViews[i];
-                Size size = pendingInlineSuggestions.mViewSizes[i];
-                if (view == null || size == null) {
+                if (view == null) {
                     continue;
                 }
-                mSuggestionView.addView(view, size.getWidth(), size.getHeight());
+                mSuggestionView.addView(view);
             }
         }
     }
@@ -711,7 +711,6 @@ public final class MockIme extends InputMethodService {
         final InlineSuggestionsResponse mResponse;
         final int mTotalCount;
         final View[] mViews;
-        final Size[] mViewSizes;
         final AtomicInteger mInflatedViewCount;
         final AtomicBoolean mValid = new AtomicBoolean(true);
 
@@ -719,7 +718,6 @@ public final class MockIme extends InputMethodService {
             mResponse = response;
             mTotalCount = response.getInlineSuggestions().size();
             mViews = new View[mTotalCount];
-            mViewSizes = new Size[mTotalCount];
             mInflatedViewCount = new AtomicInteger(0);
         }
     }
@@ -761,16 +759,14 @@ public final class MockIme extends InputMethodService {
                 final int index = i;
                 InlineSuggestion inlineSuggestion =
                         pendingInlineSuggestions.mResponse.getInlineSuggestions().get(index);
-                Size size = inlineSuggestion.getInfo().getInlinePresentationSpec().getMaxSize();
                 inlineSuggestion.inflate(
                         this,
-                        size,
+                        new Size(WRAP_CONTENT, WRAP_CONTENT),
                         executorService,
                         suggestionView -> {
                             Log.d(TAG, "new inline suggestion view ready");
                             if (suggestionView != null) {
                                 pendingInlineSuggestions.mViews[index] = suggestionView;
-                                pendingInlineSuggestions.mViewSizes[index] = size;
                             }
                             if (pendingInlineSuggestions.mInflatedViewCount.incrementAndGet()
                                     == pendingInlineSuggestions.mTotalCount
