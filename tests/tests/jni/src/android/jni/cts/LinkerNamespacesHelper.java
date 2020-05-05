@@ -82,6 +82,7 @@ class LinkerNamespacesHelper {
     private final static String[] PUBLIC_ART_LIBRARIES = {
         "libicui18n.so",
         "libicuuc.so",
+        "libnativehelper.so"
     };
 
     // The grey-list.
@@ -93,7 +94,6 @@ class LinkerNamespacesHelper {
         "libexpat.so",
         "libgui.so",
         "libmedia.so",
-        "libnativehelper.so",
         "libskia.so",
         "libssl.so",
         "libstagefright.so",

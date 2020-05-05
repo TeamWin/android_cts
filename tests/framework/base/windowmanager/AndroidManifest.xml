@@ -180,6 +180,8 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
         />
 
+        <activity android:name="android.server.wm.KeyguardLockedTests$ShowImeAfterLockscreenActivity" />
+
         <activity android:name="android.server.wm.KeyguardLockedTests$ShowWhenLockedImeActivity" />
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$StandardActivity"
@@ -402,6 +404,9 @@
 
         <activity android:name="android.server.wm.WindowInsetsAnimationTests$TestActivity"
                   android:theme="@android:style/Theme.Material.NoActionBar" />
+
+        <activity android:name="android.server.wm.ForceRelayoutTestBase$TestActivity"
+                  android:exported="true" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -218,7 +218,6 @@ public class NativeMidiEchoTest {
     @Before
     public void setUp() throws Exception {
         if (!hasMidiSupport()) {
-            Assert.assertTrue("FEATURE_MIDI Not Supported.", false);
             return; // Not supported so don't test it.
         }
 
@@ -261,6 +260,10 @@ public class NativeMidiEchoTest {
 
     @Test
     public void test_B_SendData() throws Exception {
+        if (!hasMidiSupport()) {
+            return; // Nothing to test
+        }
+
         if (!hasMidiSupport()) {
             return; // Nothing to test
         }
