@@ -113,4 +113,13 @@ JNIEXPORT jdouble JNICALL Java_com_android_cts_verifier_audio_NativeAnalyzerThre
     return 0.0;
 }
 
+JNIEXPORT jint JNICALL Java_com_android_cts_verifier_audio_NativeAnalyzerThread_getSampleRate
+  (JNIEnv *env __unused, jobject obj __unused, jlong pAnalyzer) {
+    NativeAudioAnalyzer * analyzer = (NativeAudioAnalyzer *) pAnalyzer;
+    if (analyzer != nullptr) {
+        return analyzer->getSampleRate();
+    }
+    return 0;
+}
+
 }
