@@ -24,6 +24,7 @@
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.STOP_APP_SWITCHES" />
     <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -180,6 +181,8 @@
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
         />
 
+        <activity android:name="android.server.wm.KeyguardLockedTests$ShowImeAfterLockscreenActivity" />
+
         <activity android:name="android.server.wm.KeyguardLockedTests$ShowWhenLockedImeActivity" />
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$StandardActivity"
@@ -328,6 +331,9 @@
                   android:showWhenLocked="true"/>
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$FullscreenTestActivity"/>
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$FullscreenWmFlagsTestActivity"/>
+        <activity android:name="android.server.wm.WindowInsetsPolicyTest$ImmersiveFullscreenTestActivity"
+                  android:documentLaunchMode="always"
+                  android:theme="@style/no_animation" />
         <activity android:name="android.server.wm.LayoutTests$TestActivity"
                   android:theme="@style/no_animation" />
         <activity android:name="android.server.wm.LocationOnScreenTests$TestActivity"
@@ -402,6 +408,9 @@
 
         <activity android:name="android.server.wm.WindowInsetsAnimationTests$TestActivity"
                   android:theme="@android:style/Theme.Material.NoActionBar" />
+
+        <activity android:name="android.server.wm.ForceRelayoutTestBase$TestActivity"
+                  android:exported="true" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

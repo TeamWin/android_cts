@@ -17,7 +17,6 @@
 package android.server.wm;
 
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
-import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
@@ -226,17 +225,38 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         testTurnScreenOnActivity(lockScreenSession, activityClient, false /* useWindowFlags */);
     }
 
+    @Test
+    public void testTurnScreenOnActivity_slowLaunch() {
+        assumeTrue(supportsLockScreen());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final ActivitySessionClient activityClient = createManagedActivityClientSession();
+        // The activity will be paused first because the flags turn-screen-on and show-when-locked
+        // haven't been applied from relayout. And if it is slow, the ensure-visibility from pause
+        // timeout should still notify the client activity to be visible. Then the relayout can
+        // send the visible request to apply the flags and turn on screen.
+        testTurnScreenOnActivity(lockScreenSession, activityClient, true /* useWindowFlags */,
+                1000 /* sleepMsInOnCreate */);
+    }
+
     private void testTurnScreenOnActivity(LockScreenSession lockScreenSession,
             ActivitySessionClient activitySessionClient, boolean useWindowFlags) {
+        testTurnScreenOnActivity(lockScreenSession, activitySessionClient, useWindowFlags,
+                0 /* sleepMsInOnCreate */);
+    }
+
+    private void testTurnScreenOnActivity(LockScreenSession lockScreenSession,
+            ActivitySessionClient activitySessionClient, boolean useWindowFlags,
+            int sleepMsInOnCreate) {
         lockScreenSession.sleepDevice();
 
         final ActivitySession activity = activitySessionClient.startActivity(
-                getLaunchActivityBuilder()
-                        .setUseInstrumentation()
-                        .setIntentExtra(extra -> extra.putBoolean(
-                                Components.TurnScreenOnActivity.EXTRA_USE_WINDOW_FLAGS,
-                                useWindowFlags))
-                        .setTargetActivity(TURN_SCREEN_ON_ACTIVITY));
+                getLaunchActivityBuilder().setUseInstrumentation().setIntentExtra(extra -> {
+                    extra.putBoolean(Components.TurnScreenOnActivity.EXTRA_USE_WINDOW_FLAGS,
+                            useWindowFlags);
+                    extra.putLong(Components.TurnScreenOnActivity.EXTRA_SLEEP_MS_IN_ON_CREATE,
+                            sleepMsInOnCreate);
+                }).setTargetActivity(TURN_SCREEN_ON_ACTIVITY));
 
         mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
         assertTrue("Display turns on by " + (useWindowFlags ? "flags" : "APIs"),

@@ -33,7 +33,7 @@ private const val MESSAGE = "Stack trace message"
 
 @AppModeFull(reason = "Test relies on seeing other apps. Instant apps can't see other apps")
 class RuntimeMessageCollectionTest {
-    private val TIMEOUT_MILLIS = 15000L
+    private val TIMEOUT_MILLIS = 5000L
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
@@ -53,7 +53,7 @@ class RuntimeMessageCollectionTest {
 
     @Test
     fun collectAsyncStackTrace() {
-        for (attempt in 0..20) {
+        for (attempt in 0..12) {
             installApk("CtsAppToCollect.apk")
             val start = System.currentTimeMillis()
             runWithShellPermissionIdentity {

@@ -18,7 +18,6 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
 import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_DOWN;
-import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_MOVE;
 import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_UP;
 import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.ceil;
@@ -195,8 +194,8 @@ public class TouchExplorerTest {
     }
 
     /**
-     * Test a two finger drag. TouchExplorer would perform a drag gesture when two fingers moving
-     * in the same direction.
+     * Test a two finger drag. TouchExplorer would perform a drag gesture when two fingers moving in
+     * the same direction.
      */
     @Test
     @AppModeFull
@@ -212,7 +211,8 @@ public class TouchExplorerTest {
         final PointF finger1End = add(finger1Start, 0, mSwipeDistance);
         final PointF finger2Start = add(dragStart, -twoFingerOffset, 0);
         final PointF finger2End = add(finger2Start, 0, mSwipeDistance);
-        dispatch(swipe(finger1Start, finger1End, SWIPE_TIME_MILLIS),
+        dispatch(
+                swipe(finger1Start, finger1End, SWIPE_TIME_MILLIS),
                 swipe(finger2Start, finger2End, SWIPE_TIME_MILLIS));
         List<MotionEvent> twoFingerPoints = mTouchListener.getRawEvents();
 
@@ -220,26 +220,21 @@ public class TouchExplorerTest {
         // adjusted to the middle of two fingers.
         final int numEvents = twoFingerPoints.size();
         final int upEventIndex = numEvents - 1;
-        final float intervalFraction = ((float) (twoFingerPoints.get(1).getEventTime()
-                - twoFingerPoints.get(0).getEventTime())) / SWIPE_TIME_MILLIS;
-        for (int i = 0; i < numEvents; i++) {
-            MotionEvent moveEvent = twoFingerPoints.get(i);
-            float fractionOfDrag = intervalFraction * (i + 1);
-            if (i == 0) {
-                PointF downPoint = add(finger2Start,
-                        ceil(times(fractionOfDrag, diff(dragEnd, dragStart))));
-                assertThat(moveEvent,
-                        both(IS_ACTION_DOWN).and(isRawAtPoint(downPoint)));
-            } else if (i == upEventIndex) {
-                assertThat(moveEvent,
-                        both(IS_ACTION_UP).and(isRawAtPoint(finger2End)));
-            } else {
-                PointF intermediatePoint = add(dragStart,
-                        ceil(times(fractionOfDrag, diff(dragEnd, dragStart))));
-                assertThat(moveEvent,
-                        both(IS_ACTION_MOVE).and(isRawAtPoint(intermediatePoint)));
-            }
-        }
+        final float stepDuration =
+                (float)
+                        (twoFingerPoints.get(1).getEventTime()
+                                - twoFingerPoints.get(0).getEventTime());
+        final float gestureDuration =
+                (float)
+                        (twoFingerPoints.get(upEventIndex).getEventTime()
+                                - twoFingerPoints.get(0).getEventTime());
+        final float intervalFraction =
+                stepDuration * (mSwipeDistance / gestureDuration) / gestureDuration;
+        PointF downPoint = add(dragStart, ceil(times(intervalFraction, diff(dragEnd, dragStart))));
+        assertThat(twoFingerPoints.get(0), both(IS_ACTION_DOWN).and(isRawAtPoint(downPoint, 1.0f)));
+        assertThat(
+                twoFingerPoints.get(upEventIndex),
+                both(IS_ACTION_UP).and(isRawAtPoint(finger2End, 1.0f)));
     }
 
     /** Test a basic single tap which should initiate touch exploration. */

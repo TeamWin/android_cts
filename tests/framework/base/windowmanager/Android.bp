@@ -26,3 +26,8 @@ filegroup {
     name: "cts-wm-decor-inset-test-base",
     srcs: ["src/android/server/wm/DecorInsetTestsBase.java"],
 }
+
+filegroup {
+    name: "cts-wm-force-relayout-test-base",
+    srcs: ["src/android/server/wm/ForceRelayoutTestBase.java"],
+}
