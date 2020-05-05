@@ -16,5 +16,9 @@ android_test_helper_app {
     name: "HdmiCecHelperApp",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
+    static_libs: [
+        "services.core",
+        "guava",
+        "androidx.test.runner",
+    ],
 }
