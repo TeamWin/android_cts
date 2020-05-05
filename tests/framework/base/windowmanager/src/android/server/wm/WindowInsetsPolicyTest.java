@@ -30,6 +30,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -40,6 +41,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Insets;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -62,6 +64,7 @@ import java.util.function.Supplier;
 
 @Presubmit
 public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
+    private static final String TAG = WindowInsetsPolicyTest.class.getSimpleName();
 
     private ComponentName mTestActivityComponentName;
 
@@ -81,6 +84,11 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
     @Rule
     public final ActivityTestRule<FullscreenWmFlagsTestActivity> mFullscreenWmFlagsTestActivity =
             new ActivityTestRule<>(FullscreenWmFlagsTestActivity.class,
+                    false /* initialTouchMode */, false /* launchActivity */);
+
+    @Rule
+    public final ActivityTestRule<ImmersiveFullscreenTestActivity> mImmersiveTestActivity =
+            new ActivityTestRule<>(ImmersiveFullscreenTestActivity.class,
                     false /* initialTouchMode */, false /* launchActivity */);
 
     @Before
@@ -171,6 +179,36 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
         boolean hasFullHeight = decorView.getMeasuredHeight() == contentView.getMeasuredHeight();
 
         assertTrue(hasFullWidth && hasFullHeight);
+    }
+
+    @Test
+    public void testImmersiveFullscreenHidesSystemBars() throws Throwable {
+        // Run the test twice, because the issue that shows system bars even in the immersive mode,
+        // happens at the 2nd try.
+        for (int i = 1; i <= 2; ++i) {
+            Log.d(TAG, "testImmersiveFullscreenHidesSystemBars: try" + i);
+
+            TestActivity immersiveActivity = launchAndWait(mImmersiveTestActivity);
+            WindowInsets insets = getOnMainSync(immersiveActivity::getDispatchedInsets);
+
+            assertFalse(insets.isVisible(WindowInsets.Type.statusBars()));
+            assertFalse(insets.isVisible(WindowInsets.Type.navigationBars()));
+
+            WindowInsets rootInsets = getOnMainSync(immersiveActivity::getRootInsets);
+            assertFalse(rootInsets.isVisible(WindowInsets.Type.statusBars()));
+            assertFalse(rootInsets.isVisible(WindowInsets.Type.navigationBars()));
+
+            View statusBarBgView = getOnMainSync(immersiveActivity::getStatusBarBackgroundView);
+            // The status bar background view can be non-existent or invisible.
+            assertTrue(statusBarBgView == null
+                    || statusBarBgView.getVisibility() == android.view.View.INVISIBLE);
+
+            View navigationBarBgView = getOnMainSync(
+                    immersiveActivity::getNavigationBarBackgroundView);
+            // The navigation bar background view can be non-existent or invisible.
+            assertTrue(navigationBarBgView == null
+                    || navigationBarBgView.getVisibility() == android.view.View.INVISIBLE);
+        }
     }
 
     private void commonAsserts(WindowInsets insets) {
@@ -271,6 +309,14 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
             return getWindow().getDecorView();
         }
 
+        View getStatusBarBackgroundView() {
+            return getWindow().getStatusBarBackgroundView();
+        }
+
+        View getNavigationBarBackgroundView() {
+            return getWindow().getNavigationBarBackgroundView();
+        }
+
         WindowInsets getRootInsets() {
             return getWindow().getDecorView().getRootWindowInsets();
         }
@@ -299,4 +345,22 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
         }
     }
 
+    public static class ImmersiveFullscreenTestActivity extends TestActivity {
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            // See https://developer.android.com/training/system-ui/immersive#EnableFullscreen
+            getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    // Set the content to appear under the system bars so that the
+                    // content doesn't resize when the system bars hide and show.
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    // Hide the nav bar and status bar
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN);
+        }
+    }
 }
