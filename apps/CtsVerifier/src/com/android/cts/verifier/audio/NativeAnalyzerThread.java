@@ -38,6 +38,8 @@ public class NativeAnalyzerThread {
     private volatile boolean mEnabled = false;
     private volatile double mLatencyMillis = 0.0;
     private volatile double mConfidence = 0.0;
+    private volatile int mSampleRate = 0;
+
     private int mInputPreset = 0;
 
     static final int NATIVE_AUDIO_THREAD_MESSAGE_REC_STARTED = 892;
@@ -74,6 +76,7 @@ public class NativeAnalyzerThread {
     private native int analyze(long audio_context);
     private native double getLatencyMillis(long audio_context);
     private native double getConfidence(long audio_context);
+    private native int getSampleRate(long audio_context);
 
     public double getLatencyMillis() {
         return mLatencyMillis;
@@ -82,6 +85,8 @@ public class NativeAnalyzerThread {
     public double getConfidence() {
         return mConfidence;
     }
+
+    public int getSampleRate() { return mSampleRate; }
 
     public synchronized void startTest() {
         if (mThread == null) {
@@ -111,6 +116,8 @@ public class NativeAnalyzerThread {
     private Runnable mBackGroundTask = () -> {
         mLatencyMillis = 0.0;
         mConfidence = 0.0;
+        mSampleRate = 0;
+
         boolean analysisComplete = false;
 
         log(" Started capture test");
@@ -155,6 +162,7 @@ public class NativeAnalyzerThread {
                     }
                     mLatencyMillis = getLatencyMillis(audioContext);
                     mConfidence = getConfidence(audioContext);
+                    mSampleRate = getSampleRate(audioContext);
                     break;
                 } else {
                     try {
