@@ -17,6 +17,7 @@
 package android.view.accessibility.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
@@ -160,21 +161,28 @@ public class AccessibilityRecordTest {
         assertEquals("removedCount has incorrect value", expectedRecord.getRemovedCount(),
                 receivedRecord.getRemovedCount());
         assertEqualsText(expectedRecord.getText(), receivedRecord.getText());
-        assertSame("maxScrollX has incorect value", expectedRecord.getMaxScrollX(),
+        assertSame("maxScrollX has incorrect value", expectedRecord.getMaxScrollX(),
                 receivedRecord.getMaxScrollX());
-        assertSame("maxScrollY has incorect value", expectedRecord.getMaxScrollY(),
+        assertSame("maxScrollY has incorrect value", expectedRecord.getMaxScrollY(),
                 receivedRecord.getMaxScrollY());
-        assertSame("scrollX has incorect value", expectedRecord.getScrollX(),
+        assertSame("scrollX has incorrect value", expectedRecord.getScrollX(),
                 receivedRecord.getScrollX());
-        assertSame("scrollY has incorect value", expectedRecord.getScrollY(),
+        assertSame("scrollY has incorrect value", expectedRecord.getScrollY(),
                 receivedRecord.getScrollY());
-        assertSame("toIndex has incorect value", expectedRecord.getToIndex(),
+        assertSame("toIndex has incorrect value", expectedRecord.getToIndex(),
                 receivedRecord.getToIndex());
-        assertSame("scrollable has incorect value", expectedRecord.isScrollable(),
+        assertSame("scrollable has incorrect value", expectedRecord.isScrollable(),
                 receivedRecord.isScrollable());
-        assertSame("parcelableData has incorect value",
-                ((Message) expectedRecord.getParcelableData()).what,
-                ((Message) receivedRecord.getParcelableData()).what);
+
+        assertFalse("one of the parcelableData is null",
+                expectedRecord.getParcelableData() == null
+                        ^ receivedRecord.getParcelableData() == null);
+        if (expectedRecord.getParcelableData() != null
+                && receivedRecord.getParcelableData() != null) {
+            assertSame("parcelableData has incorrect value",
+                    ((Message) expectedRecord.getParcelableData()).what,
+                    ((Message) receivedRecord.getParcelableData()).what);
+        }
     }
 
     /**
