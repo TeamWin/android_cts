@@ -221,6 +221,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         mTvView.setCallback(mCallback);
 
         CountingTvInputService.sSession = null;
+        CountingTvInputService.sTvInputSessionId = null;
     }
 
     public void testTvInputServiceSession() throws Throwable {
@@ -295,7 +296,9 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             protected boolean check() {
                 final CountingRecordingSession session = CountingTvInputService.sRecordingSession;
+                final String tvInputSessionId = CountingTvInputService.sTvInputSessionId;
                 return session != null && session.mTuneCount > 0
+                        && tvInputSessionId != null
                         && Objects.equals(session.mTunedChannelUri, fakeChannelUri);
             }
         }.run();
@@ -310,7 +313,9 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             protected boolean check() {
                 final CountingRecordingSession session = CountingTvInputService.sRecordingSession;
+                final String tvInputSessionId = CountingTvInputService.sTvInputSessionId;
                 return session != null
+                        && tvInputSessionId != null
                         && session.mTuneCount > 0
                         && session.mTuneWithBundleCount > 0
                         && Objects.equals(session.mTunedChannelUri, fakeChannelUri)
@@ -476,7 +481,9 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             protected boolean check() {
                 final CountingSession session = CountingTvInputService.sSession;
+                final String tvInputSessionId = CountingTvInputService.sTvInputSessionId;
                 return session != null
+                        && tvInputSessionId != null
                         && session.mTuneCount > 0
                         && session.mCreateOverlayView > 0
                         && Objects.equals(session.mTunedChannelUri, fakeChannelUri);
@@ -494,7 +501,9 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             protected boolean check() {
                 final CountingSession session = CountingTvInputService.sSession;
+                final String tvInputSessionId = CountingTvInputService.sTvInputSessionId;
                 return session != null
+                        && tvInputSessionId != null
                         && session.mTuneCount > 0
                         && session.mTuneWithBundleCount > 0
                         && Objects.equals(session.mTunedChannelUri, fakeChannelUri)
@@ -1054,6 +1063,7 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
     public static class CountingTvInputService extends StubTvInputService {
         static CountingSession sSession;
         static CountingRecordingSession sRecordingSession;
+        static String sTvInputSessionId;
 
         @Override
         public Session onCreateSession(String inputId) {
@@ -1066,6 +1076,18 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         public RecordingSession onCreateRecordingSession(String inputId) {
             sRecordingSession = new CountingRecordingSession(this);
             return sRecordingSession;
+        }
+
+        @Override
+        public Session onCreateSession(String inputId, String tvInputSessionId) {
+            sTvInputSessionId = tvInputSessionId;
+            return onCreateSession(inputId);
+        }
+
+        @Override
+        public RecordingSession onCreateRecordingSession(String inputId, String tvInputSessionId) {
+            sTvInputSessionId = tvInputSessionId;
+            return onCreateRecordingSession(inputId);
         }
 
         public static class CountingSession extends Session {
