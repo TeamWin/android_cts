@@ -22,6 +22,7 @@
         <activity
             android:name=".TranslucentActivity"
             android:exported="true"
+            android:visibleToInstantApps="true"
             android:theme="@style/TranslucentTheme" />
     </application>
 </manifest>
