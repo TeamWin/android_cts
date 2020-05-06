@@ -25,6 +25,7 @@ import static android.telephony.TelephonyManager.SET_OPPORTUNISTIC_SUB_SUCCESS;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -211,12 +212,16 @@ public class SubscriptionManagerTest {
         if (!isSupported()) return;
 
         List<SubscriptionInfo> subList = mSm.getActiveSubscriptionInfoList();
+        int[] idList = mSm.getActiveSubscriptionIdList();
         // Assert when there is no sim card present or detected
         assertNotNull("Active subscriber required", subList);
+        assertNotNull("Active subscriber required", idList);
         assertFalse("Active subscriber required", subList.isEmpty());
+        assertNotEquals("Active subscriber required", 0, idList.length);
         for (int i = 0; i < subList.size(); i++) {
             assertTrue(subList.get(i).getSubscriptionId() >= 0);
             assertTrue(subList.get(i).getSimSlotIndex() >= 0);
+            assertTrue(ArrayUtils.contains(idList, subList.get(i).getSubscriptionId()));
             if (i >= 1) {
                 assertTrue(subList.get(i - 1).getSimSlotIndex()
                         <= subList.get(i).getSimSlotIndex());
