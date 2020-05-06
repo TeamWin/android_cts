@@ -67,7 +67,7 @@ public class LoginWithCustomHighlightActivityTest
     public void testAutofillCustomHighlight_multipleFields_hasHighlight() throws Exception {
         testAutofillCustomHighlight(/* singleField= */false);
 
-        final Rect bounds = new Rect(MyDrawable.getAutofilledBounds());
+        final Rect bounds = MyDrawable.getAutofilledBounds();
         final int width = mActivity.getUsername().getWidth();
         final int height = mActivity.getUsername().getHeight();
         if (bounds.isEmpty() || bounds.right != width || bounds.bottom != height) {
