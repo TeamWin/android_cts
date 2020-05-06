@@ -296,6 +296,43 @@ public class MediaStore_Images_MediaTest {
         }
     }
 
+    /**
+     * b/155320967 Test that update with conflict is resolved as replace.
+     */
+    @Test
+    public void testUpdateAndReplace() throws Exception {
+        File file = null;
+        try {
+            // Create file
+            file = copyResourceToFile(R.raw.scenery, DCIM_DIR, "cts" + System.nanoTime() + ".jpg");
+            final String externalPath = file.getAbsolutePath();
+            assertNotNull(MediaStore.scanFile(mContentResolver, file));
+
+            // Insert another file, insertedFile doesn't exist in lower file system.
+            ContentValues values = new ContentValues();
+            final File insertedFile = new File(DCIM_DIR, "cts" + System.nanoTime() + ".jpg");
+            values.put(Media.DATA, insertedFile.getAbsolutePath());
+
+            final Uri uri = mContentResolver.insert(mExternalImages, values);
+            assertNotNull(uri);
+
+            // Now update the second file to the same file path as the first file.
+            values.put(Media.DATA, externalPath);
+            // This update is implemented as update and replace on conflict and shouldn't throw
+            // UNIQUE constraint error.
+            assertEquals(1, mContentResolver.update(uri, values, Bundle.EMPTY));
+            Uri scannedUri = MediaStore.scanFile(mContentResolver, file);
+            assertNotNull(scannedUri);
+
+            // _id in inserted uri and scannedUri should be same.
+            assertEquals(uri.getLastPathSegment(), scannedUri.getLastPathSegment());
+        } finally {
+            if (file != null) {
+                file.delete();
+            }
+        }
+    }
+
     @Test
     public void testUpsert() throws Exception {
         File file = null;

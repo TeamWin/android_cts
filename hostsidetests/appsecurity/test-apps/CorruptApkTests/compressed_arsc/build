@@ -31,11 +31,10 @@ aapt2 link \
     compiled.flata
 
 # Basic R apk
-# STOPSHIP(b/132742131): Change --target-skd-version to 30 when the SDK is finalized
 aapt2 link \
     -I $PATH_TO_FRAMEWORK_RES \
     --manifest AndroidManifest.xml \
-    --target-sdk-version R \
+    --target-sdk-version 30 \
     -o basic_r.apk \
     compiled.flata
 
