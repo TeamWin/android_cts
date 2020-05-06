@@ -12,28 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsControlsDeviceTestCases",
-    defaults: ["cts_defaults"],
-
-    test_suites: [
-        "cts",
-        "general-tests",
+filegroup {
+    name: "cts_securitybulletin_memutils",
+    srcs: [
+        "memutils.c",
     ],
+}
 
-    static_libs: [
-        "androidx.test.rules",
-        "androidx.test.ext.junit",
-        "androidx.test.uiautomator_uiautomator",
-        "compatibility-device-util-axt",
-     ],
-
-    libs: [
-        "android.test.mock",
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+filegroup {
+    name: "cts_securitybulletin_omxutils",
+    srcs: [
+        "omxUtils.cpp",
     ],
-
-    srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
 }

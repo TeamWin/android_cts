@@ -84,8 +84,9 @@ public final class CarWatchdogDaemonTest {
 
     @Test
     public void testRecordsIoPerformanceData() throws Exception {
+        String packageName = getContext().getPackageName();
         runShellCommand("dumpsys " + CAR_WATCHDOG_SERVICE_NAME
-                + " --start_io --interval 5 --max_duration 120");
+                + " --start_io --interval 5 --max_duration 120 --filter_packages " + packageName);
         long writtenBytes = writeToDisk(testDir);
         assertWithMessage("Failed to write data to dir '" + testDir.getAbsolutePath() + "'").that(
                 writtenBytes).isGreaterThan(0L);
@@ -95,8 +96,6 @@ public final class CarWatchdogDaemonTest {
         Log.i(TAG, "stop results:" + contents);
         assertWithMessage("Failed to custom collect I/O performance data").that(
                 contents).isNotEmpty();
-        PackageManager packageManager = getContext().getPackageManager();
-        String packageName = packageManager.getNameForUid(Process.myUid());
         long recordedBytes = parseDump(contents, UserHandle.getUserId(Process.myUid()),
                 packageName);
         assertThat(recordedBytes).isAtLeast(writtenBytes);

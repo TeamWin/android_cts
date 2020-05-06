@@ -62,10 +62,6 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
         return (T) this;
     }
 
-    T addApk(String apk) throws FileNotFoundException {
-        return addFile(apk);
-    }
-
     T addFile(String file) throws FileNotFoundException {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
         mFiles.add(buildHelper.getTestFile(file));
