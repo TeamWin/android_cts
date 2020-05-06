@@ -562,9 +562,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
             TestUtils.waitOnMainUntil(() -> editTextHasWindowFocus.get()
                     && !popupTextHasWindowFocus.get(), TIMEOUT);
-            // Expect there is no "onStartInput" when window focus back to activity's EditText.
-            // Since the EditText still has view focus and served by InputMethodManager.
-            notExpectEvent(stream, editorMatcher("onStartInput", marker), NOT_EXPECT_TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
         }
     }
