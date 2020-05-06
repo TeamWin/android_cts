@@ -250,9 +250,18 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             return;
         }
 
+        try {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceFeatureUtils",
+                    "testHasFactoryResetProtectionPolicy", mUserId);
+        } catch (Exception e) {
+            // Unable to continue running tests because factory reset protection policy is not
+            // supported on the device
+            return;
+        }
+
         assertMetricsLogged(getDevice(), () -> {
-                runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_FACTORY_RESET_PROTECTION_VALUE)
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_FACTORY_RESET_PROTECTION_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .build());
     }
