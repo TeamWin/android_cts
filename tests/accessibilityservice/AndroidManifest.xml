@@ -89,6 +89,19 @@
             android:screenOrientation="locked"/>
 
         <service
+            android:name=".StubSystemActionsAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+                <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/stub_system_actions_a11y_service" />
+        </service>
+
+        <service
                 android:name=".StubGestureAccessibilityService"
                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
