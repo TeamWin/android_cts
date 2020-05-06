@@ -19,8 +19,13 @@ package com.android.cts.appdataisolation.common;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 import static org.testng.Assert.expectThrows;
+
+import android.system.ErrnoException;
+import android.system.Os;
+import android.system.OsConstants;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -60,6 +65,15 @@ public class FileUtils {
         });
         assertThat(exception.getMessage()).contains(JAVA_FILE_NOT_FOUND_MSG);
         assertThat(exception.getMessage()).doesNotContain(JAVA_FILE_PERMISSION_DENIED_MSG);
+
+        // Try to create a directory here, and it should return permission denied not directory
+        // exists.
+        try {
+            Os.mkdir(path, 0700);
+            fail("Should not able to mkdir() on " + path);
+        } catch (ErrnoException e) {
+            assertEquals(e.errno, OsConstants.EACCES);
+        }
     }
 
     public static void assertDirIsAccessible(String path) {
