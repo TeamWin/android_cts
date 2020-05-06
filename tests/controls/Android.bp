@@ -29,6 +29,7 @@ android_test {
      ],
 
     libs: [
+        "android.test.mock",
         "android.test.runner.stubs",
         "android.test.base.stubs",
     ],
