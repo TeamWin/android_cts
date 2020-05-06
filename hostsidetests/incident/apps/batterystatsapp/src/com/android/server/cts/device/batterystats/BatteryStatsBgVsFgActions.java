@@ -63,7 +63,6 @@ public class BatteryStatsBgVsFgActions {
     public static final String KEY_ACTION = "action";
     public static final String ACTION_BLE_SCAN_OPTIMIZED = "action.ble_scan_optimized";
     public static final String ACTION_BLE_SCAN_UNOPTIMIZED = "action.ble_scan_unoptimized";
-    public static final String ACTION_GPS = "action.gps";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_SLEEP_WHILE_BACKGROUND = "action.sleep_background";
@@ -91,9 +90,6 @@ public class BatteryStatsBgVsFgActions {
                 break;
             case ACTION_BLE_SCAN_UNOPTIMIZED:
                 doUnoptimizedBleScan(ctx, requestCode);
-                break;
-            case ACTION_GPS:
-                doGpsUpdate(ctx, requestCode);
                 break;
             case ACTION_JOB_SCHEDULE:
                 doScheduleJob(ctx, requestCode);
@@ -215,51 +211,6 @@ public class BatteryStatsBgVsFgActions {
         if (bluetoothEnabledByTest) {
             bluetoothAdapter.disable();
         }
-    }
-
-    private static void doGpsUpdate(Context ctx, String requestCode) {
-        final LocationManager locManager = ctx.getSystemService(LocationManager.class);
-        if (!locManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Log.e(TAG, "GPS provider is not enabled");
-            tellHostActionFinished(ACTION_GPS, requestCode);
-            return;
-        }
-        CountDownLatch latch = new CountDownLatch(1);
-
-        final LocationListener locListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
-                Log.v(TAG, "onLocationChanged: location has been obtained");
-            }
-
-            public void onProviderDisabled(String provider) {
-                Log.w(TAG, "onProviderDisabled " + provider);
-            }
-
-            public void onProviderEnabled(String provider) {
-                Log.w(TAG, "onProviderEnabled " + provider);
-            }
-
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-                Log.w(TAG, "onStatusChanged " + provider + " " + status);
-            }
-        };
-
-        HandlerThread handlerThread = new HandlerThread("doGpsUpdate_bg");
-        handlerThread.start();
-
-        Handler handler = new Handler(handlerThread.getLooper());
-        handler.post(() -> {
-                    locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 990, 0,
-                            locListener);
-                    sleep(1_000);
-                    locManager.removeUpdates(locListener);
-                    latch.countDown();
-                });
-
-        waitForReceiver(ctx, 59_000, latch, null);
-        handlerThread.quitSafely();
-
-        tellHostActionFinished(ACTION_GPS, requestCode);
     }
 
     private static void doScheduleJob(Context ctx, String requestCode) {
