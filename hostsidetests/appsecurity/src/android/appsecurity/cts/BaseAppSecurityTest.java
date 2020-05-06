@@ -59,7 +59,7 @@ abstract class BaseAppSecurityTest extends BaseHostJUnit4Test {
             userId = mPrimaryUserId;
         }
         new InstallMultiple(instant)
-                .addApk(apk)
+                .addFile(apk)
                 .allowTest()
                 .forUser(userId)
                 .run();

@@ -26,7 +26,9 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 
 import org.junit.Before;
@@ -341,6 +343,45 @@ public class SmsMessageTest {
         }
         int[] result = SmsMessage.calculateLength(LONG_TEXT_WITH_FLAGS, false);
         assertEquals(2, result[0]);
+    }
+
+    @Test
+    public void testGetSmsPdu() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        SmsMessage.SubmitPdu smsPdu;
+        String scAddress = null;
+        String destinationAddress = null;
+        String message = null;
+
+        // Null message, null destination
+        smsPdu = SmsMessage.getSmsPdu(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID,
+                SmsManager.STATUS_ON_ICC_READ,
+                scAddress, destinationAddress, message, System.currentTimeMillis());
+        assertNull(smsPdu);
+
+        message = "This is a test message";
+
+        // Non-null message, null destination
+        smsPdu = SmsMessage.getSmsPdu(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID,
+                SmsManager.STATUS_ON_ICC_READ,
+                scAddress, destinationAddress, message, System.currentTimeMillis());
+        assertNull(smsPdu);
+
+        if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+            // TODO: temp workaround, OCTET encoding for EMS not properly supported
+            return;
+        }
+
+        scAddress = "1650253000";
+        destinationAddress = "18004664411";
+        message = "This is a test message";
+        smsPdu = SmsMessage.getSmsPdu(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID,
+                SmsManager.STATUS_ON_ICC_READ,
+                scAddress, destinationAddress, message, System.currentTimeMillis());
+        assertNotNull(smsPdu);
     }
 
     private final static char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',

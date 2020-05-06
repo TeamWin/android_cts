@@ -202,6 +202,10 @@ double NativeAudioAnalyzer::getConfidence() {
     return mPulseLatencyAnalyzer.getMeasuredConfidence();
 }
 
+int NativeAudioAnalyzer::getSampleRate() {
+    return mOutputSampleRate;
+}
+
 aaudio_result_t NativeAudioAnalyzer::openAudio() {
     AAudioStreamBuilder *builder = nullptr;
 
@@ -234,13 +238,13 @@ aaudio_result_t NativeAudioAnalyzer::openAudio() {
     int32_t outputFramesPerBurst = AAudioStream_getFramesPerBurst(mOutputStream);
     (void) AAudioStream_setBufferSizeInFrames(mOutputStream, outputFramesPerBurst * kDefaultOutputSizeBursts);
 
-    int32_t outputSampleRate = AAudioStream_getSampleRate(mOutputStream);
+    mOutputSampleRate = AAudioStream_getSampleRate(mOutputStream);
     mActualOutputChannelCount = AAudioStream_getChannelCount(mOutputStream);
 
     // Create the INPUT stream -----------------------
     AAudioStreamBuilder_setDirection(builder, AAUDIO_DIRECTION_INPUT);
     AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_UNSPECIFIED);
-    AAudioStreamBuilder_setSampleRate(builder, outputSampleRate); // must match
+    AAudioStreamBuilder_setSampleRate(builder, mOutputSampleRate); // must match
     AAudioStreamBuilder_setChannelCount(builder, 1); // mono
     AAudioStreamBuilder_setDataCallback(builder, nullptr, nullptr);
     AAudioStreamBuilder_setErrorCallback(builder, nullptr, nullptr);

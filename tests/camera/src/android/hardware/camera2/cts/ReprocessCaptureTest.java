@@ -906,6 +906,10 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
                     NUM_REPROCESS_CAPTURES);
             setupReprocessableSession(/*previewSurface*/null, NUM_REPROCESS_CAPTURES);
 
+            // Wait for session READY state after session creation
+            mSessionListener.getStateWaiter().waitForState(
+                    BlockingSessionCallback.SESSION_READY, SESSION_CLOSE_TIMEOUT_MS);
+
             // Test two cases: submitting reprocess requests one by one and in a burst.
             boolean submitInBursts[] = {false, true};
             for (boolean submitInBurst : submitInBursts) {
@@ -916,6 +920,10 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
                 for (int i = 0; i < NUM_REPROCESS_CAPTURES; i++) {
                     TotalCaptureResult result = submitCaptureRequest(mFirstImageReader.getSurface(),
                             /*inputResult*/null);
+
+                    // Wait and drain the READY state for each reprocessing input output.
+                    mSessionListener.getStateWaiter().waitForState(
+                            BlockingSessionCallback.SESSION_READY, SESSION_CLOSE_TIMEOUT_MS);
 
                     mImageWriter.queueInputImage(
                             mFirstImageReaderListener.getImage(CAPTURE_TIMEOUT_MS));
