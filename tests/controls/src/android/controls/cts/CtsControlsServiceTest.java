@@ -16,7 +16,20 @@
 
 package android.controls.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Resources;
 import android.service.controls.Control;
+import android.service.controls.ControlsProviderService;
 import android.service.controls.actions.BooleanAction;
 import android.service.controls.actions.CommandAction;
 import android.service.controls.actions.ControlAction;
@@ -27,6 +40,7 @@ import android.service.controls.templates.RangeTemplate;
 import android.service.controls.templates.TemperatureControlTemplate;
 import android.service.controls.templates.ToggleRangeTemplate;
 import android.service.controls.templates.ToggleTemplate;
+import android.test.mock.MockContext;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -41,12 +55,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
 @RunWith(AndroidJUnit4.class)
 public class CtsControlsServiceTest {
+
+    private static final String ACTION_ADD_CONTROL = "android.service.controls.action.ADD_CONTROL";
+    private static final String EXTRA_CONTROL = "android.service.controls.extra.CONTROL";
 
     private CtsControlsService mControlsService;
 
@@ -138,7 +151,9 @@ public class CtsControlsServiceTest {
         List<Control> loadedControls = new ArrayList<>();
         subscribe(publisher, 10, loadedControls);
 
-        mControlsService.performControlAction("switch", new BooleanAction("action", true),
+        BooleanAction action = new BooleanAction("action", true);
+        assertEquals(action.getActionType(), ControlAction.TYPE_BOOLEAN);
+        mControlsService.performControlAction("switch", action,
                 assertConsumer(ControlAction.RESPONSE_OK));
 
         List<Control> expectedControls = new ArrayList<>();
@@ -160,7 +175,9 @@ public class CtsControlsServiceTest {
         mControlsService.performControlAction("light", new BooleanAction("action", true),
                 assertConsumer(ControlAction.RESPONSE_OK));
 
-        mControlsService.performControlAction("light", new FloatAction("action", 80.0f),
+        FloatAction action = new FloatAction("action", 80.0f);
+        assertEquals(action.getActionType(), ControlAction.TYPE_FLOAT);
+        mControlsService.performControlAction("light", action,
                 assertConsumer(ControlAction.RESPONSE_OK));
 
         List<Control> expectedControls = new ArrayList<>();
@@ -180,7 +197,9 @@ public class CtsControlsServiceTest {
         List<Control> loadedControls = new ArrayList<>();
         subscribe(publisher, 10, loadedControls);
 
-        mControlsService.performControlAction("routine", new CommandAction("action"),
+        CommandAction action = new CommandAction("action");
+        assertEquals(action.getActionType(), ControlAction.TYPE_COMMAND);
+        mControlsService.performControlAction("routine", action,
                 assertConsumer(ControlAction.RESPONSE_OK));
 
         List<Control> expectedControls = new ArrayList<>();
@@ -265,8 +284,9 @@ public class CtsControlsServiceTest {
         List<Control> loadedControls = new ArrayList<>();
         subscribe(publisher, 10, loadedControls);
 
-        mControlsService.performControlAction("thermostat",
-                new ModeAction("action", TemperatureControlTemplate.MODE_COOL),
+        ModeAction action = new ModeAction("action", TemperatureControlTemplate.MODE_COOL);
+        assertEquals(action.getActionType(), ControlAction.TYPE_MODE);
+        mControlsService.performControlAction("thermostat", action,
                 assertConsumer(ControlAction.RESPONSE_OK));
 
         List<Control> expectedControls = new ArrayList<>();
@@ -277,12 +297,35 @@ public class CtsControlsServiceTest {
         assertControlsList(loadedControls, expectedControls);
     }
 
-    private void assertConsumerOk(int status) {
-        assertEquals(status, ControlAction.RESPONSE_OK);
+    @Test
+    public void testRequestAddControl() {
+        Resources res = mock(Resources.class);
+        when(res.getString(anyInt())).thenReturn("");
+
+        final ComponentName testComponent = new ComponentName("TestPkg", "TestClass");
+        final Control control = new Control.StatelessBuilder(mControlsService.buildMower(false))
+                .build();
+
+        Context context = new MockContext() {
+            public Resources getResources() {
+                return res;
+            }
+
+            public void sendBroadcast(Intent intent, String receiverPermission) {
+                assertEquals(intent.getAction(), ACTION_ADD_CONTROL);
+                assertEquals((ComponentName) intent.getParcelableExtra(Intent.EXTRA_COMPONENT_NAME),
+                        testComponent);
+                assertEquals((Control) intent.getParcelableExtra(EXTRA_CONTROL), control);
+                assertEquals(receiverPermission, "android.permission.BIND_CONTROLS");
+            }
+        };
+
+        ControlsProviderService.requestAddControl(context, testComponent, control);
     }
 
     private Consumer<Integer> assertConsumer(int expectedStatus) {
         return (status) -> {
+            ControlAction.isValidResponse(status);
             assertEquals((int) status, expectedStatus);
         };
     }
@@ -324,6 +367,8 @@ public class CtsControlsServiceTest {
         assertEquals(c1.getDeviceType(), c2.getDeviceType());
         assertEquals(c1.getStatus(), c2.getStatus());
         assertEquals(c1.getControlId(), c2.getControlId());
+        assertEquals(c1.getCustomIcon(), c2.getCustomIcon());
+        assertEquals(c1.getCustomColor(), c2.getCustomColor());
 
         assertTemplateEquals(c1.getControlTemplate(), c2.getControlTemplate());
     }
@@ -336,6 +381,8 @@ public class CtsControlsServiceTest {
             assertNotNull(ct2);
         }
 
+        assertNotEquals(ct1, ControlTemplate.getErrorTemplate());
+        assertNotEquals(ct2, ControlTemplate.getErrorTemplate());
         assertEquals(ct1.getTemplateType(), ct2.getTemplateType());
         assertEquals(ct1.getTemplateId(), ct2.getTemplateId());
 
