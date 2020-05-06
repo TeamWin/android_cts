@@ -980,6 +980,47 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
     }
 
+    // Failure reason of staged install should be be persisted for single sessions
+    @Test
+    public void testFailureReasonPersists_SingleSession_Commit() throws Exception {
+        int sessionId = Install.single(TestApp.A1).setStaged().commit();
+        // Install TestApp.A2 so that after reboot TestApp.A1 fails to install as it is downgrade
+        Install.single(TestApp.A2).commit();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testFailureReasonPersists_SingleSession_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionFailedWithMessage(sessionId, "Failed to install sessionId: " + sessionId);
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
+    }
+
+    // If apk installation fails in one staged session, then all staged session should fail.
+    @Test
+    public void testFailureReasonPersists_MultipleSession_Commit() throws Exception {
+        int firstSessionId = Install.single(TestApp.A1).setStaged().commit();
+        int secondSessionId = Install.single(TestApp.B1).setStaged().commit();
+        // Install TestApp.A2 so that after reboot TestApp.A1 fails to install as it is downgrade
+        Install.single(TestApp.A2).commit();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
+        storeSessionIds(Arrays.asList(firstSessionId, secondSessionId));
+    }
+
+    @Test
+    public void testFailureReasonPersists_MultipleSession_VerifyPostReboot() throws Exception {
+        List<Integer> sessionIds = retrieveLastSessionIds();
+        int failingSessionId = sessionIds.get(0);
+        for (int sessionId: sessionIds) {
+            assertSessionFailedWithMessage(sessionId, "Failed to install sessionId: "
+                    + failingSessionId);
+        }
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(2);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
+    }
+
     @Test
     public void testSamegradeSystemApex_Commit() throws Exception {
         final PackageInfo shim = InstrumentationRegistry.getInstrumentation().getContext()
@@ -1197,6 +1238,13 @@ public class StagedInstallTest {
     private static void assertSessionFailed(int sessionId) {
         assertSessionState(sessionId,
                 (session) -> assertThat(session).isStagedSessionFailed());
+    }
+
+    private static void assertSessionFailedWithMessage(int sessionId, String msg) {
+        assertSessionState(sessionId, (session) -> {
+            assertThat(session).isStagedSessionFailed();
+            assertThat(session.getStagedSessionErrorMessage()).contains(msg);
+        });
     }
 
     private static void assertSessionState(
