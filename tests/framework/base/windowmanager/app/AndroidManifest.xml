@@ -497,6 +497,16 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".TestStubbornDream"
+            android:exported="true"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
         <!-- Disable home activities by default or it may disturb other tests by
              showing ResolverActivity when start home activity -->
         <activity-alias android:name=".HomeActivity"
