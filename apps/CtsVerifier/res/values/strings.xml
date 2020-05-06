@@ -4781,9 +4781,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="midiFailedJNILbl">Failed - JNI Error.</string>
 
     <!-- Audio general text -->
-    <string name="audio_general_headset_port_exists">Does this device have a headset port?</string>
-    <string name="audio_general_headset_no">No</string>
-    <string name="audio_general_headset_yes">Yes</string>
+    <string name="audio_wired_exists">Does this device support wired USB or Analog audio peripherals?</string>
+    <string name="audio_wired_no">No</string>
+    <string name="audio_wired_yes">Yes</string>
     <string name="audio_general_deficiency_found">WARNING: Some results show potential deficiencies on the system.
     Please consider addressing them for a future release.</string>
     <string name="audio_general_test_passed">Test Result: Successful</string>

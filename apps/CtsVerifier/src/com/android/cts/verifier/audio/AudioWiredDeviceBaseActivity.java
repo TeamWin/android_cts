@@ -34,18 +34,17 @@ import android.view.View;
 import android.view.View.OnClickListener;
 
 import android.widget.Button;
-//import android.widget.TextView;
 
-abstract class HeadsetHonorSystemActivity extends PassFailButtons.Activity {
-    private static final String TAG = "HeadsetHonorSystemActivity";
+abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
+    private static final String TAG = AudioWiredDeviceBaseActivity.class.getSimpleName();
 
     private OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
 
     abstract protected void enableTestButtons(boolean enabled);
 
-    private void recordHeadsetPortFound(boolean found) {
+    private void recordWiredPortFound(boolean found) {
         getReportLog().addValue(
-                "User Reported Headset Port",
+                "User Reported Wired Port",
                 found ? 1.0 : 0,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
@@ -53,10 +52,8 @@ abstract class HeadsetHonorSystemActivity extends PassFailButtons.Activity {
 
     protected void setup() {
         // The "Honor" system buttons
-        ((Button)findViewById(R.id.audio_general_headset_no)).
-            setOnClickListener(mBtnClickListener);
-        ((Button)findViewById(R.id.audio_general_headset_yes)).
-            setOnClickListener(mBtnClickListener);
+        ((Button)findViewById(R.id.audio_wired_no)).setOnClickListener(mBtnClickListener);
+        ((Button)findViewById(R.id.audio_wired_yes)).setOnClickListener(mBtnClickListener);
 
         enableTestButtons(false);
     }
@@ -65,16 +62,16 @@ abstract class HeadsetHonorSystemActivity extends PassFailButtons.Activity {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.audio_general_headset_no:
-                    Log.i(TAG, "User denies Headset Port existence");
+                case R.id.audio_wired_no:
+                    Log.i(TAG, "User denies wired device existence");
                     enableTestButtons(false);
-                    recordHeadsetPortFound(false);
+                    recordWiredPortFound(false);
                     break;
 
-                case R.id.audio_general_headset_yes:
-                    Log.i(TAG, "User confirms Headset Port existence");
+                case R.id.audio_wired_yes:
+                    Log.i(TAG, "User confirms wired device existence");
                     enableTestButtons(true);
-                    recordHeadsetPortFound(true);
+                    recordWiredPortFound(true);
                     break;
             }
         }
