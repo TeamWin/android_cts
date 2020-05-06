@@ -682,7 +682,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                     } else if (payload.getString(JSON_PACKAGE).equals(mPackageString)) {
                         found.add(tag);
                         boolean lastAudiblyAlertedSet
-                                = payload.getLong(JSON_LAST_AUDIBLY_ALERTED) > -1;
+                                = payload.getLong(JSON_LAST_AUDIBLY_ALERTED) > 0;
                         if (lastAudiblyAlertedSet) {
                             logWithStack(
                                     "noisy notification test: getLastAudiblyAlertedMillis set "
