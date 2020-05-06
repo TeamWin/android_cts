@@ -69,7 +69,7 @@ public class SingleDeviceTest extends AndroidTestCase {
     private static final String TAG = "WifiAwareCtsTests";
 
     // wait for Wi-Fi Aware state changes & network requests callbacks
-    static private final int WAIT_FOR_AWARE_CHANGE_SECS = 10; // 10 seconds
+    static private final int WAIT_FOR_AWARE_CHANGE_SECS = 15; // 15 seconds
     private static final int MIN_DISTANCE_MM = 1 * 1000;
     private static final int MAX_DISTANCE_MM = 3 * 1000;
     private static final byte[] PMK_VALID = "01234567890123456789012345678901".getBytes();
