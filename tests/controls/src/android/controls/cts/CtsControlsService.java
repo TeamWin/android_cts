@@ -15,9 +15,14 @@
  */
 package android.controls.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.drawable.Icon;
 import android.service.controls.Control;
 import android.service.controls.ControlsProviderService;
 import android.service.controls.DeviceTypes;
@@ -54,12 +59,16 @@ public class CtsControlsService extends ControlsProviderService {
     private final Map<String, Control> mControlsById = new HashMap<>();
     private final Context mContext;
     private final PendingIntent mPendingIntent;
+    private ColorStateList mColorStateList;
+    private Icon mIcon;
 
     public CtsControlsService() {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-
         mPendingIntent = PendingIntent.getActivity(mContext, 1, new Intent(),
             PendingIntent.FLAG_UPDATE_CURRENT);
+        mIcon = Icon.createWithResource(mContext, R.drawable.ic_device_unknown);
+        mColorStateList = mContext.getResources().getColorStateList(R.color.custom_mower, null);
+
         mAllControls.add(buildLight(false /* isOn */, 0.0f /* intensity */));
         mAllControls.add(buildLock(false /* isLocked */));
         mAllControls.add(buildRoutine());
@@ -116,6 +125,8 @@ public class CtsControlsService extends ControlsProviderService {
             .setStructure("Vacation")
             .setZone("Outside")
             .setControlTemplate(template)
+            .setCustomIcon(mIcon)
+            .setCustomColor(mColorStateList)
             .build();
     }
 
@@ -213,6 +224,10 @@ public class CtsControlsService extends ControlsProviderService {
             Consumer<Integer> consumer) {
         Control c = mControlsById.get(controlId);
         if (c == null) return;
+
+        // all values are hardcoded for this test
+        assertEquals(action.getTemplateId(), "action");
+        assertNotEquals(action, ControlAction.getErrorAction());
 
         Control.StatefulBuilder builder = controlToBuilder(c);
 
@@ -318,7 +333,9 @@ public class CtsControlsService extends ControlsProviderService {
             .setStructure(c.getStructure())
             .setDeviceType(c.getDeviceType())
             .setZone(c.getZone())
-            .setStatus(Control.STATUS_OK)
-            .setStatusText("Refreshed");
+            .setCustomIcon(c.getCustomIcon())
+            .setCustomColor(c.getCustomColor())
+            .setStatus(c.getStatus())
+            .setStatusText(c.getStatusText());
     }
 }
