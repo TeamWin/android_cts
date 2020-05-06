@@ -110,6 +110,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             // Move app and verify
             assertSuccess(getDevice().executeShellCommand(
                     "pm move-package " + PKG + " " + vol.uuid));
+            waitForBroadcastsIdle();
             runDeviceTests(PKG, CLASS, "testDataNotInternal");
             runDeviceTests(PKG, CLASS, "testDataRead");
             runDeviceTests(PKG, CLASS, "testNative");
@@ -125,6 +126,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
             // Move app back and verify
             assertSuccess(getDevice().executeShellCommand("pm move-package " + PKG + " internal"));
+            waitForBroadcastsIdle();
             runDeviceTests(PKG, CLASS, "testDataInternal");
             runDeviceTests(PKG, CLASS, "testDataRead");
             runDeviceTests(PKG, CLASS, "testNative");
@@ -187,6 +189,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("pm move-primary-storage " + vol.uuid, out, 2,
                 TimeUnit.HOURS, 1);
         assertSuccess(out.getOutput());
+        waitForBroadcastsIdle();
         runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
 
@@ -201,9 +204,10 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
         // Move app and verify backing storage volume is same
         assertSuccess(getDevice().executeShellCommand("pm move-package " + PKG + " " + vol.uuid));
+        waitForBroadcastsIdle();
+
         runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
-
         // And move back to internal
         out = new CollectingOutputReceiver();
         getDevice().executeShellCommand("pm move-primary-storage internal", out, 2,
@@ -214,6 +218,8 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
 
         assertSuccess(getDevice().executeShellCommand("pm move-package " + PKG + " internal"));
+        waitForBroadcastsIdle();
+
         runDeviceTests(PKG, CLASS, "testPrimaryOnSameVolume");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
     }
@@ -383,12 +389,16 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
     private LocalVolumeInfo waitForVolumeReady(LocalVolumeInfo vol) throws Exception {
         int attempt = 0;
         while (attempt++ < 15) {
-            if (getDevice().executeShellCommand("dumpsys package").contains(vol.volId)) {
+            if (getDevice().executeShellCommand("dumpsys package volumes").contains(vol.volId)) {
                 return vol;
             }
             Thread.sleep(1000);
         }
         throw new AssertionError("Volume not ready " + vol.volId);
+    }
+
+    private void waitForBroadcastsIdle() throws Exception {
+        getDevice().executeShellCommand("am wait-for-broadcast-idle");
     }
 
     private void waitForInstrumentationReady() throws Exception {
