@@ -57,7 +57,9 @@ public class TranslucentActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        sendBroadcast(new Intent(ACTION_TRANSLUCENT_ACTIVITY_RESUMED));
+        Intent intent = new Intent(ACTION_TRANSLUCENT_ACTIVITY_RESUMED);
+        intent.addFlags(Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS);
+        sendBroadcast(intent);
     }
 
     @Override
