@@ -38,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -100,14 +99,12 @@ public class CodecEncoderSurfaceTest {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        final ArrayList<String> cddRequiredMimeList =
-                new ArrayList<>(Arrays.asList(
-                        MediaFormat.MIMETYPE_VIDEO_MPEG4,
-                        MediaFormat.MIMETYPE_VIDEO_H263,
-                        MediaFormat.MIMETYPE_VIDEO_AVC,
-                        MediaFormat.MIMETYPE_VIDEO_HEVC,
-                        MediaFormat.MIMETYPE_VIDEO_VP8,
-                        MediaFormat.MIMETYPE_VIDEO_VP9));
+        ArrayList<String> cddRequiredMimeList = new ArrayList<>();
+        if (CodecTestBase.isHandheld() || CodecTestBase.isTv() || CodecTestBase.isAutomotive()) {
+            // sec 2.2.2, 2.3.2, 2.5.2
+            cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+            cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+        }
         final Object[][] exhaustiveArgsList = new Object[][]{
                 // Video - CodecMime, test file, bit rate, frame rate
                 {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_176x144_128kbps_15fps_h263.3gp", 128000, 15},
@@ -131,6 +128,14 @@ public class CodecEncoderSurfaceTest {
                         mimes.add(type);
                     }
                 }
+            }
+            // TODO(b/154423708): add checks for video o/p port and display length >= 2.5"
+            /* sec 5.2: device implementations include an embedded screen display with the diagonal
+            length of at least 2.5inches or include a video output port or declare the support of a
+            camera */
+            if (CodecTestBase.hasCamera() && !mimes.contains(MediaFormat.MIMETYPE_VIDEO_AVC) &&
+                    !mimes.contains(MediaFormat.MIMETYPE_VIDEO_VP8)) {
+                fail("device must support at least one of VP8 or AVC video encoders");
             }
             for (String mime : cddRequiredMimeList) {
                 if (!mimes.contains(mime)) {
