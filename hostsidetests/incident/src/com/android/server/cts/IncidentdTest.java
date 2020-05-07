@@ -40,8 +40,6 @@ public class IncidentdTest extends ProtoDumpTestCase {
             FingerprintIncidentTest.verifyFingerprintServiceDumpProto(dump.getFingerprint(), filterLevel);
         }
 
-        NetstatsIncidentTest.verifyNetworkStatsServiceDumpProto(dump.getNetstats(), filterLevel);
-
         SettingsIncidentTest.verifySettingsServiceDumpProto(dump.getSettings(), filterLevel);
 
         NotificationIncidentTest.verifyNotificationServiceDumpProto(dump.getNotification(), filterLevel);
