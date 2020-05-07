@@ -306,6 +306,32 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testAbandonStagedApkBeforeReady_CommitAndAbandon() throws Exception {
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        abandonSession(sessionId);
+        assertThat(getStagedSessionInfo(sessionId)).isNull();
+    }
+
+    @Test
+    public void testAbandonStagedApkBeforeReady_VerifyPostReboot() throws Exception {
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+    }
+
+    @Test
+    public void testNoSessionUpdatedBroadcastSentForStagedSessionAbandon() throws Exception {
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        // Using an apex in hopes that pre-reboot verification will take longer to complete
+        // and we will manage to abandon it before session becomes ready.
+        int sessionId = stageMultipleApks(TestApp.A1, TestApp.Apex2).assertSuccessful()
+                .getSessionId();
+        abandonSession(sessionId);
+        assertThat(getStagedSessionInfo(sessionId)).isNull();
+        assertNoSessionUpdatedBroadcastSent();
+    }
+
+    @Test
     public void testGetActiveStagedSessions() throws Exception {
         PackageInstaller packageInstaller = getPackageInstaller();
         int firstSessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
@@ -1314,6 +1340,13 @@ public class StagedInstallTest {
     private void assertNoSessionCommitBroadcastSent() throws Exception {
         PackageInstaller.SessionInfo info =
                 SessionUpdateBroadcastReceiver.sessionCommittedBroadcasts.poll(10,
+                        TimeUnit.SECONDS);
+        assertThat(info).isNull();
+    }
+
+    private void assertNoSessionUpdatedBroadcastSent() throws Exception {
+        PackageInstaller.SessionInfo info =
+                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(10,
                         TimeUnit.SECONDS);
         assertThat(info).isNull();
     }
