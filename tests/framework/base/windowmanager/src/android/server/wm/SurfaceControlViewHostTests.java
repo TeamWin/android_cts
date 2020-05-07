@@ -190,6 +190,12 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
         mInstrumentation.waitForIdleSync();
 
+        // If we don't support hardware acceleration on the main activity the embedded
+        // view also won't be.
+        if (!mSurfaceView.isHardwareAccelerated()) {
+            return;
+        }
+
         assertTrue(mEmbeddedView.isHardwareAccelerated());
     }
 
