@@ -86,6 +86,7 @@ public class WindowInsetsBehaviorTests {
             "/sdcard/WindowInsetsBehaviorTests";
     private static final String SETTINGS_PACKAGE_NAME = "com.android.settings";
     private static final String ARGUMENT_KEY_FORCE_ENABLE = "force_enable_gesture_navigation";
+    private static final String NAV_BAR_INTERACTION_MODE_RES_NAME = "config_navBarInteractionMode";
     private static final int STEPS = 10;
 
     // The minimum value of the system gesture exclusion limit is 200 dp. The value here should be
@@ -703,6 +704,8 @@ public class WindowInsetsBehaviorTests {
     public void swipeOutsideLimit_systemUiVisible_allEventsCanceled() throws Throwable {
         assumeTrue(hasSystemGestureFeature());
 
+        assumeGestureNavigationMode();
+
         final int swipeCount = 1;
         final boolean insideLimit = false;
         testSystemGestureExclusionLimit(swipeCount, insideLimit, SYSTEM_UI_FLAG_VISIBLE);
@@ -777,6 +780,14 @@ public class WindowInsetsBehaviorTests {
             insets[0] = view.getRootWindowInsets().getSystemGestureInsets();
         });
         assumeTrue("Gesture navigation required.", insets[0].left > 0);
+    }
+
+    private void assumeGestureNavigationMode() {
+        // TODO: b/153032202 consider the CTS on GSI case.
+        Resources res = mTargetContext.getResources();
+        int naviMode = res.getIdentifier(NAV_BAR_INTERACTION_MODE_RES_NAME, "integer", "android");
+
+        assumeTrue("Gesture navigation required", naviMode == 2);
     }
 
     /**
