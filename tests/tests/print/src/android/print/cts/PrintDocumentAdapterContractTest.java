@@ -70,14 +70,15 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
     private static final String LOG_TAG = "PrintDocumentAdapterContractTest";
 
     @Before
-    public void setDefaultPrinter() throws Exception {
+    public void setup() throws Throwable {
+        clearPrintSpoolerData();
+
         FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());
         SecondPrintService.setCallbacks(createSecondMockPrintServiceCallbacks());
-    }
 
-    @Before
-    public void clearPrintSpoolerState() throws Exception {
-        clearPrintSpoolerData();
+        makeDefaultPrinter(createDefaultPrintDocumentAdapter(1), "Fourth printer");
+
+        resetCounters();
     }
 
     @Test
@@ -130,9 +131,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             // Wait for finish.
             waitForAdapterFinishCallbackCalled();
         }, OPERATION_TIMEOUT_MILLIS * 2);
@@ -378,9 +376,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
         }, OPERATION_TIMEOUT_MILLIS * 2);
     }
@@ -463,9 +458,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             // Wait for a finish.
             waitForAdapterFinishCallbackCalled();
         }, OPERATION_TIMEOUT_MILLIS * 2);
@@ -648,9 +640,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             // Printing will abort automatically
 
             // Wait for a finish.
@@ -729,9 +718,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             // Wait for a finish.
             waitForAdapterFinishCallbackCalled();
         }, OPERATION_TIMEOUT_MILLIS * 2);
@@ -868,9 +854,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             // Wait for a finish.
             waitForAdapterFinishCallbackCalled();
         }, OPERATION_TIMEOUT_MILLIS * 2);
@@ -983,9 +966,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             // Wait for a finish.
             waitForAdapterFinishCallbackCalled();
         }, OPERATION_TIMEOUT_MILLIS * 2);
@@ -1083,9 +1063,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             // Wait for a finish.
             waitForAdapterFinishCallbackCalled();
         }, OPERATION_TIMEOUT_MILLIS * 2);
@@ -1476,9 +1453,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             // Wait for the session to be destroyed to isolate tests.
             waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
         }, OPERATION_TIMEOUT_MILLIS * 2);
@@ -1545,9 +1519,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             // Wait for the session to be destroyed to isolate tests.
             waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
         }, OPERATION_TIMEOUT_MILLIS * 2);
@@ -1961,9 +1932,6 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
         mPrintHelper.submitPrintJob();
 
         eventually(() -> {
-            // Answer the dialog for the print service cloud warning
-            answerPrintServicesWarning(true);
-
             waitForAdapterFinishCallbackCalled();
         }, OPERATION_TIMEOUT_MILLIS * 2);
 
@@ -2042,6 +2010,28 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                         .setCapabilities(thirdCapabilities)
                         .build();
                 printers.add(thirdPrinter);
+
+                session.addPrinters(printers);
+
+                // Add the fourth printer matching the "Save to PDF printer".
+                PrinterId forthPrinterId = service.generatePrinterId("forth_printer");
+                PrinterCapabilitiesInfo fourthCapabilities =
+                        null;
+                try {
+                    fourthCapabilities = new PrinterCapabilitiesInfo.Builder(forthPrinterId)
+                            .addMediaSize(MediaSize.NA_LETTER, true)
+                            .addResolution(new Resolution("300x300", "300x300", 300, 300), true)
+                            .setColorModes(PrintAttributes.COLOR_MODE_COLOR,
+                                    PrintAttributes.COLOR_MODE_COLOR)
+                            .build();
+                } catch (Exception e) {
+                    Log.e(LOG_TAG, "Cannot create fourth printer", e);
+                }
+                PrinterInfo forthPrinter = new PrinterInfo.Builder(forthPrinterId,
+                        "Fourth printer", PrinterInfo.STATUS_IDLE)
+                        .setCapabilities(fourthCapabilities)
+                        .build();
+                printers.add(forthPrinter);
 
                 session.addPrinters(printers);
             }

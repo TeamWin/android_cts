@@ -45,7 +45,7 @@ public class MyDrawable extends Drawable {
     @Override
     public void draw(Canvas canvas) {
         if (sInstance != null && sAutofilledBounds == null) {
-            sAutofilledBounds = getBounds();
+            sAutofilledBounds = new Rect(getBounds());
             Log.d(TAG, "Autofilled at " + sAutofilledBounds);
             sLatch.countDown();
         }
