@@ -195,11 +195,44 @@ public class ExtractorTest {
                 refSample.flags >= 0 && refSample.size >= 0 && refSample.presentationTimeUs >= 0;
     }
 
+    static boolean isCSDIdentical(MediaFormat refFormat, MediaFormat testFormat) {
+        String mime = refFormat.getString(MediaFormat.KEY_MIME);
+        /* TODO(b/154177490) */
+        if (mime.equals(MediaFormat.MIMETYPE_VIDEO_VP9) ||
+                mime.equals(MediaFormat.MIMETYPE_VIDEO_AV1)) {
+            return true;
+        }
+        for (int i = 0; ; i++) {
+            String csdKey = "csd-" + i;
+            boolean refHasCSD = refFormat.containsKey(csdKey);
+            boolean testHasCSD = testFormat.containsKey(csdKey);
+            if (refHasCSD != testHasCSD) {
+                if (ENABLE_LOGS) {
+                    Log.w(LOG_TAG, "error, ref fmt has CSD: " + refHasCSD + "test fmt has CSD: " +
+                            testHasCSD);
+                }
+                return false;
+            }
+            if (refHasCSD) {
+                ByteBuffer r = refFormat.getByteBuffer(csdKey);
+                ByteBuffer t = testFormat.getByteBuffer(csdKey);
+                if (!r.equals(t)) {
+                    if (ENABLE_LOGS) {
+                        Log.w(LOG_TAG, "ref CSD and test CSD buffers are not identical");
+                    }
+                    return false;
+                }
+            } else break;
+        }
+        return true;
+    }
+
     private static boolean isFormatSimilar(MediaFormat refFormat, MediaFormat testFormat) {
         String refMime = refFormat.getString(MediaFormat.KEY_MIME);
         String testMime = testFormat.getString(MediaFormat.KEY_MIME);
 
         if (!refMime.equals(testMime)) return false;
+        if (!isCSDIdentical(refFormat, testFormat)) return false;
         if (refMime.startsWith("audio/")) {
             return refFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) ==
                     testFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) &&
@@ -288,6 +321,13 @@ public class ExtractorTest {
                         if (ENABLE_LOGS) {
                             Log.d(LOG_TAG, "Mime: " + refMime +
                                     " TrackID exp/got: " + testTrackID + '/' + trackIndex);
+                        }
+                        areTracksIdentical = false;
+                        break;
+                    }
+                    if (!testBuffer.equals(refBuffer)) {
+                        if (ENABLE_LOGS) {
+                            Log.d(LOG_TAG, "Mime: " + refMime + "sample data is not identical");
                         }
                         areTracksIdentical = false;
                         break;
