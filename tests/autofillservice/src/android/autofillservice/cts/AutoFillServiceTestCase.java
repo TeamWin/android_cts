@@ -210,7 +210,6 @@ public final class AutoFillServiceTestCase {
             }
         };
 
-        @ClassRule
         public static final MockImeSessionRule sMockImeSessionRule = new MockImeSessionRule(
                 InstrumentationRegistry.getTargetContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
@@ -247,6 +246,9 @@ public final class AutoFillServiceTestCase {
                 // mTestWatcher should always be one the first rules, as it defines the name of the
                 // test being ran and finishes dangling activities at the end
                 .around(mTestWatcher)
+                //
+                // sMockImeSessionRule make sure MockImeSession.create() is used to launch mock IME
+                .around(sMockImeSessionRule)
                 //
                 // mLoggingRule wraps the test but doesn't interfere with it
                 .around(mLoggingRule)
