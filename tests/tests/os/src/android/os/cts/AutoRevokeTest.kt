@@ -16,7 +16,6 @@
 
 package android.os.cts
 
-import android.Manifest.permission.READ_CALENDAR
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
@@ -175,17 +174,18 @@ class AutoRevokeTest : InstrumentationTestCase() {
         }
     }
 
-    // TODO grantRuntimePermission fails to grant permission
     @AppModeFull(reason = "Uses separate apps for testing")
-    fun _testInstallGrants_notRevokedImmediately() {
+    fun testInstallGrants_notRevokedImmediately() {
         wakeUpScreen()
         withUnusedThresholdMs(TimeUnit.DAYS.toMillis(30)) {
             withDummyApp {
                 // Setup
-                runWithShellPermissionIdentity {
-                    instrumentation.uiAutomation
-                            .grantRuntimePermission(APK_PACKAGE_NAME, READ_CALENDAR)
-                }
+                goToPermissions()
+                click("Calendar")
+                click("Allow")
+                goBack()
+                goBack()
+                goBack()
                 eventually {
                     assertPermission(PERMISSION_GRANTED)
                 }
@@ -283,11 +283,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
 //        }
 
         try {
-            context.startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS)
-                    .setData(Uri.fromParts("package", packageName, null))
-                    .addFlags(FLAG_ACTIVITY_NEW_TASK))
-
-            waitFindNode(hasTextThat(containsStringIgnoringCase("Permissions"))).click()
+            goToPermissions(packageName)
 
             waitForIdle()
             val ui = instrumentation.uiAutomation.rootInActiveWindow
@@ -313,6 +309,18 @@ class AutoRevokeTest : InstrumentationTestCase() {
             goBack()
             goBack()
         }
+    }
+
+    private fun goToPermissions(packageName: String = APK_PACKAGE_NAME) {
+        context.startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(Uri.fromParts("package", packageName, null))
+                .addFlags(FLAG_ACTIVITY_NEW_TASK))
+
+        click("Permissions")
+    }
+
+    private fun click(label: String) {
+        waitFindNode(hasTextThat(containsStringIgnoringCase(label))).click()
     }
 
     private fun assertWhitelistState(state: Boolean) {
