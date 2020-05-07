@@ -1145,6 +1145,7 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     private static class Monitor {
         static final String WAIT_FOR_EARLY_ANR = "Waiting after early ANR...  available commands:";
         static final String WAIT_FOR_ANR = "Waiting after ANR...  available commands:";
+        static final String WAIT_FOR_CRASHED = "Waiting after crash...  available commands:";
         static final String CMD_CONTINUE = "c";
         static final String CMD_KILL = "k";
 
@@ -1194,6 +1195,13 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
                     String line = mPendingLines.remove(0);
                     if (TextUtils.equals(line, expected)) {
                         break;
+                    } else if (TextUtils.equals(line, WAIT_FOR_EARLY_ANR)
+                            || TextUtils.equals(line, WAIT_FOR_ANR)
+                            || TextUtils.equals(line, WAIT_FOR_CRASHED)) {
+                        // If we are getting any of the unexpected state,
+                        // for example, get a crash while waiting for an ANR,
+                        // it could be from another unrelated process, kill it directly.
+                        sendCommand(CMD_KILL);
                     }
                 }
             }
