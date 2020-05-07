@@ -22,10 +22,14 @@ import static android.server.wm.ComponentNameUtils.getWindowName;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static android.view.Display.DEFAULT_DISPLAY;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.app.DreamManager;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
+import android.view.Surface;
 
 import androidx.test.filters.FlakyTest;
 
@@ -133,5 +137,19 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
         assertDreamActivityIsGone();
         assertFalse(getIsDreaming());
+    }
+
+    @Test
+    public void testDreamNotFinishAfterRotation() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
+        final RotationSession rotationSession = createManagedRotationSession();
+        rotationSession.set(Surface.ROTATION_0);
+        setActiveDream(TEST_DREAM_SERVICE);
+        startDream(TEST_DREAM_SERVICE);
+        rotationSession.set(Surface.ROTATION_90);
+
+        waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
+                "Dream activity should be the top resumed activity");
     }
 }
