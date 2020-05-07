@@ -18,8 +18,8 @@ package android.telephony.cts;
 
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED;
-import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 import static android.telephony.TelephonyManager.SET_OPPORTUNISTIC_SUB_SUCCESS;
 
@@ -336,12 +336,13 @@ public class SubscriptionManagerTest {
         mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
 
         // Cellular is metered by default
-        assertFalse(cm.getNetworkCapabilities(net).hasCapability(NET_CAPABILITY_NOT_METERED));
+        assertFalse(cm.getNetworkCapabilities(net).hasCapability(
+                NET_CAPABILITY_TEMPORARILY_NOT_METERED));
 
-        // Override should make it go unmetered
+        // Override should make it go temporarily unmetered
         {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
-                return caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+                return caps.hasCapability(NET_CAPABILITY_TEMPORARILY_NOT_METERED);
             });
             mSm.setSubscriptionOverrideUnmetered(mSubId, true, 0);
             assertTrue(latch.await(10, TimeUnit.SECONDS));
@@ -350,7 +351,7 @@ public class SubscriptionManagerTest {
         // Clearing override should make it go metered
         {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
-                return !caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+                return !caps.hasCapability(NET_CAPABILITY_TEMPORARILY_NOT_METERED);
             });
             mSm.setSubscriptionOverrideUnmetered(mSubId, false, 0);
             assertTrue(latch.await(10, TimeUnit.SECONDS));
@@ -371,7 +372,8 @@ public class SubscriptionManagerTest {
         mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
 
         // Cellular is metered by default
-        assertFalse(cm.getNetworkCapabilities(net).hasCapability(NET_CAPABILITY_NOT_METERED));
+        assertFalse(cm.getNetworkCapabilities(net).hasCapability(
+                NET_CAPABILITY_TEMPORARILY_NOT_METERED));
 
         SubscriptionPlan unmeteredPlan = SubscriptionPlan.Builder
                 .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
@@ -384,7 +386,7 @@ public class SubscriptionManagerTest {
         // Unmetered plan should make it go unmetered
         {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
-                return caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+                return caps.hasCapability(NET_CAPABILITY_TEMPORARILY_NOT_METERED);
             });
             mSm.setSubscriptionPlans(mSubId, Arrays.asList(unmeteredPlan));
             assertTrue(latch.await(10, TimeUnit.SECONDS));
@@ -393,7 +395,7 @@ public class SubscriptionManagerTest {
         // Metered plan should make it go metered
         {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
-                return !caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+                return !caps.hasCapability(NET_CAPABILITY_TEMPORARILY_NOT_METERED);
             });
             mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
             assertTrue(latch.await(10, TimeUnit.SECONDS));
