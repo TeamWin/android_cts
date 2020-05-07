@@ -61,25 +61,4 @@ public class UserRestrictionsParentTest extends InstrumentationTestCase {
         assertThat(
                 mUserManager.hasUserRestriction(UserManager.DISALLOW_CONFIG_DATE_TIME)).isFalse();
     }
-
-    public void testAddUserRestrictionDisallowAddUser_onParent() {
-        DevicePolicyManager parentDevicePolicyManager =
-                mDevicePolicyManager.getParentProfileInstance(ADMIN_RECEIVER_COMPONENT);
-        assertNotNull(parentDevicePolicyManager);
-
-        parentDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
-                UserManager.DISALLOW_ADD_USER);
-    }
-
-    public void testHasUserRestrictionDisallowAddUser() {
-        assertThat(mUserManager.hasUserRestriction(UserManager.DISALLOW_ADD_USER)).isTrue();
-    }
-
-    public void testClearUserRestrictionDisallowAddUser() {
-        DevicePolicyManager parentDevicePolicyManager =
-                mDevicePolicyManager.getParentProfileInstance(ADMIN_RECEIVER_COMPONENT);
-
-        parentDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
-                UserManager.DISALLOW_ADD_USER);
-    }
 }
