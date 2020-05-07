@@ -18,6 +18,7 @@ package android.security.cts;
 
 import android.content.Context;
 import android.security.FileIntegrityManager;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
@@ -36,6 +37,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
+@AppModeFull
 @SecurityTest
 public class FileIntegrityManagerTest extends CtsAndroidTestCase {
 
