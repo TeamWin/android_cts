@@ -29,8 +29,15 @@ public abstract class YesNoTestStep extends TestStepBase {
     private View yesButton;
     private View noButton;
 
-    public YesNoTestStep(TvAppVerifierActivity context) {
-        super(context);
+    /**
+     * Constructs a test step containing human instructions for a manual test and two buttons -
+     * Yes and No.
+     *
+     * @param context The test activity which this test step is part of.
+     * @param instructionText The text of the test instruction visible to the user.
+     */
+    public YesNoTestStep(TvAppVerifierActivity context, String instructionText) {
+        super(context, instructionText);
     }
 
     @Override

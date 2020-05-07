@@ -18,6 +18,8 @@ package com.android.cts.verifier.tv.display;
 
 import android.view.View;
 
+import androidx.annotation.StringRes;
+
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
@@ -27,8 +29,9 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
  */
 public abstract class AsyncTestStep extends OneButtonTestStep {
 
-    public AsyncTestStep(TvAppVerifierActivity context) {
-        super(context);
+    public AsyncTestStep(TvAppVerifierActivity context, @StringRes int stepNameStringId,
+            String instructionText, @StringRes int buttonStringId) {
+        super(context, stepNameStringId, instructionText, buttonStringId);
     }
 
     /** Runs the test logic, when finished calls {@link AsyncTestStep#done()}. */

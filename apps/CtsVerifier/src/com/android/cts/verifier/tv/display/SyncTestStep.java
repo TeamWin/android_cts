@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.tv.display;
 
+import androidx.annotation.StringRes;
+
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /**
@@ -23,8 +25,9 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
  * and a button to start the test. For asynchronous steps see {@link AsyncTestStep}.
  */
 public abstract class SyncTestStep extends OneButtonTestStep {
-    public SyncTestStep(TvAppVerifierActivity context) {
-        super(context);
+    public SyncTestStep(TvAppVerifierActivity context, @StringRes int stepNameStringId,
+            String instructionText, @StringRes int buttonStringId) {
+        super(context, stepNameStringId, instructionText, buttonStringId);
     }
 
     public abstract void runTest();

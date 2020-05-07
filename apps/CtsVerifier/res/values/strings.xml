@@ -4597,6 +4597,9 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!-- HDR Capabilities test -->
     <string name="tv_hdr_capabilities_test">HDR Capabilities Test</string>
+    <string name="tv_hdr_capabilities_test_step_hdr_display">HDR Display</string>
+    <string name="tv_hdr_capabilities_test_step_no_display">No Display</string>
+    <string name="tv_hdr_capabilities_test_step_non_hdr_display">Non HDR Display</string>
     <string name="tv_hdr_capabilities_test_info">This test checks if
         Display.getHdrCapabilities correctly reports the HDR capabilities of the display.
     </string>
@@ -4630,8 +4633,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="tv_display_modes_connect_1080p_display">
         Connect a 1080p display and press the "%s" button, below.
     </string>
-    <string name="tv_panel_test_step_reported_are_supported">Reported modes are supported</string>
-    <string name="tv_panel_test_step_supported_are_reported">Supported modes are reported</string>
     <string name="tv_panel_display_modes_reported_are_supported">
         The supported display modes are:\n%s\n\nAre all of the above display modes supported by the hardware?
     </string>

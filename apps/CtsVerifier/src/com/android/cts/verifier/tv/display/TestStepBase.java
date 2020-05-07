@@ -34,13 +34,15 @@ public abstract class TestStepBase {
     private String mFailureDetails;
     private StandardSubjectBuilder mAsserter;
     private View mInstructionView;
+    private String mInstructionText;
 
     /**
      * Constructs a test step containing instruction to the user and a button.
      *
      * @param context The test activity which this test step is part of.
+     * @param instructionText The text of the test instruction visible to the user.
      */
-    public TestStepBase(TvAppVerifierActivity context) {
+    public TestStepBase(TvAppVerifierActivity context, String instructionText) {
         this.mContext = context;
 
         FailureStrategy failureStrategy =
@@ -50,6 +52,7 @@ public abstract class TestStepBase {
                 };
         mAsserter = StandardSubjectBuilder.forCustomFailureStrategy(failureStrategy);
         mHasPassed = true;
+        mInstructionText = instructionText;
     }
 
     public boolean hasPassed() {
@@ -58,7 +61,7 @@ public abstract class TestStepBase {
 
     /** Creates the View for this test step in the context {@link TvAppVerifierActivity}. */
     public void createUiElements() {
-        mInstructionView = mContext.createAutoItem(getInstructionText());
+        mInstructionView = mContext.createAutoItem(mInstructionText);
     }
 
     /** Enables interactivity for this test step - for example, it enables buttons. */
@@ -74,12 +77,6 @@ public abstract class TestStepBase {
     public String getFailureDetails() {
         return mFailureDetails;
     }
-
-    /** Human readable name of this test step to be output to logs. */
-    protected abstract String getStepName();
-
-    /** Returns the text of the test instruction visible to the user. */
-    protected abstract String getInstructionText();
 
     protected void done() {
         TvAppVerifierActivity.setPassState(mInstructionView, mHasPassed);

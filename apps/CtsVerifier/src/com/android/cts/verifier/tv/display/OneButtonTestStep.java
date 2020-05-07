@@ -27,13 +27,26 @@ public abstract class OneButtonTestStep extends TestStepBase {
 
     protected View mButtonView;
 
+    @StringRes
+    private int mButtonStringId;
+
+    @StringRes
+    private int mStepNameStringId;
+
     /**
      * Constructs a test step containing instruction to the user and a button.
      *
      * @param context The test activity which this test step is part of.
+     * @param instructionText The text of the test instruction visible to the user.
+     * @param stepNameStringId Id of a string resource containing human readable name of this step
+     *                         to be used  in logs.
+     * @param buttonStringId Id of a string resource containing the text of the button.
      */
-    public OneButtonTestStep(TvAppVerifierActivity context) {
-        super(context);
+    public OneButtonTestStep(TvAppVerifierActivity context, @StringRes int stepNameStringId,
+            String instructionText, @StringRes int buttonStringId) {
+        super(context, instructionText);
+        mStepNameStringId = stepNameStringId;
+        mButtonStringId = buttonStringId;
     }
 
     @Override
@@ -41,9 +54,10 @@ public abstract class OneButtonTestStep extends TestStepBase {
         super.createUiElements();
         mButtonView =
                 mContext.createButtonItem(
-                        getButtonStringId(),
+                        mButtonStringId,
                         (View view) -> {
-                            appendInfoDetails("Running test step %s...", getStepName());
+                            String stepName = mContext.getString(mStepNameStringId);
+                            appendInfoDetails("Running test step %s...", stepName);
                             onButtonClickRunTest();
                         });
     }
@@ -57,9 +71,6 @@ public abstract class OneButtonTestStep extends TestStepBase {
     public void disableInteractivity() {
         TvAppVerifierActivity.setButtonEnabled(mButtonView, false);
     }
-
-    /** Returns id of string resource containing the text of the button. */
-    protected abstract @StringRes int getButtonStringId();
 
     /** Test logic to be executed when the button is pressed. */
     protected abstract void onButtonClickRunTest();
