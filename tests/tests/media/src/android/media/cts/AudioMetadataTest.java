@@ -19,6 +19,7 @@ package android.media.cts;
 import static org.junit.Assert.*;
 import static org.testng.Assert.assertThrows;
 
+import android.media.AudioFormat;
 import android.media.AudioMetadata;
 import android.media.AudioMetadataMap;
 import android.media.AudioMetadataReadMap;
@@ -115,6 +116,31 @@ public class AudioMetadataTest {
 
         // check creating a map from another map.
         assertEquals(audioMetadata, audioMetadata.dup());
+    }
+
+    @Test
+    public void testFormatKeys() throws Exception {
+        final AudioMetadataMap audioMetadata = AudioMetadata.createMap();
+        audioMetadata.set(AudioMetadata.Format.KEY_ATMOS_PRESENT, true);
+        audioMetadata.set(AudioMetadata.Format.KEY_AUDIO_ENCODING, AudioFormat.ENCODING_MP3);
+        audioMetadata.set(AudioMetadata.Format.KEY_BIT_RATE, 64000);
+        audioMetadata.set(AudioMetadata.Format.KEY_BIT_WIDTH, 16);
+        audioMetadata.set(AudioMetadata.Format.KEY_CHANNEL_MASK, AudioFormat.CHANNEL_OUT_STEREO);
+        audioMetadata.set(AudioMetadata.Format.KEY_MIME, "audio/mp3");
+        audioMetadata.set(AudioMetadata.Format.KEY_SAMPLE_RATE, 48000);
+
+        assertEquals(64000, (int)audioMetadata.get(AudioMetadata.Format.KEY_BIT_RATE));
+        assertEquals(AudioFormat.CHANNEL_OUT_STEREO,
+                (int)audioMetadata.get(AudioMetadata.Format.KEY_CHANNEL_MASK));
+        assertEquals("audio/mp3", (String)audioMetadata.get(AudioMetadata.Format.KEY_MIME));
+        assertEquals(48000, (int)audioMetadata.get(AudioMetadata.Format.KEY_SAMPLE_RATE));
+        assertEquals(16, (int)audioMetadata.get(AudioMetadata.Format.KEY_BIT_WIDTH));
+        assertEquals(true, (boolean)audioMetadata.get(AudioMetadata.Format.KEY_ATMOS_PRESENT));
+        assertEquals(AudioFormat.ENCODING_MP3,
+                (int)audioMetadata.get(AudioMetadata.Format.KEY_AUDIO_ENCODING));
+
+        // Additional test to ensure we can survive parceling
+        testPackingAndUnpacking((AudioMetadata.BaseMap)audioMetadata);
     }
 
     // Vendor keys created by direct override of the AudioMetadata interface.
@@ -276,16 +302,7 @@ public class AudioMetadataTest {
 
     @Test
     public void testUnpackingByteBuffer() throws Exception {
-        ByteBuffer bufferPackedAtJava = AudioMetadata.toByteBuffer(
-                AUDIO_METADATA_REFERENCE, ByteOrder.nativeOrder());
-        assertNotNull(bufferPackedAtJava);
-        ByteBuffer buffer = nativeGetByteBuffer(bufferPackedAtJava, bufferPackedAtJava.limit());
-        assertNotNull(buffer);
-        buffer.order(ByteOrder.nativeOrder());
-
-        AudioMetadata.BaseMap metadataFromByteBuffer = AudioMetadata.fromByteBuffer(buffer);
-        assertNotNull(metadataFromByteBuffer);
-        assertEquals(metadataFromByteBuffer, AUDIO_METADATA_REFERENCE);
+        testPackingAndUnpacking(AUDIO_METADATA_REFERENCE);
     }
 
     @Test
@@ -301,6 +318,19 @@ public class AudioMetadataTest {
         buffer.position(0);
         AudioMetadata.BaseMap metadataFromByteBuffer = AudioMetadata.fromByteBuffer(buffer);
         assertNull(metadataFromByteBuffer);
+    }
+
+    private static void testPackingAndUnpacking(AudioMetadata.BaseMap audioMetadata) {
+        ByteBuffer bufferPackedAtJava = AudioMetadata.toByteBuffer(
+                audioMetadata, ByteOrder.nativeOrder());
+        assertNotNull(bufferPackedAtJava);
+        ByteBuffer buffer = nativeGetByteBuffer(bufferPackedAtJava, bufferPackedAtJava.limit());
+        assertNotNull(buffer);
+        buffer.order(ByteOrder.nativeOrder());
+
+        AudioMetadata.BaseMap metadataFromByteBuffer = AudioMetadata.fromByteBuffer(buffer);
+        assertNotNull(metadataFromByteBuffer);
+        assertEquals(metadataFromByteBuffer, audioMetadata);
     }
 
     static {
