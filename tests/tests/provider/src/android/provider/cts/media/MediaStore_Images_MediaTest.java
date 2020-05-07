@@ -112,16 +112,22 @@ public class MediaStore_Images_MediaTest {
         final long unique2 = System.nanoTime();
         final String TEST_TITLE2 = "Title " + unique2;
 
+        File file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
+                "mediaStoreTest1.jpg");
+        String path = file.getAbsolutePath();
+        ProviderTestUtils.stageFile(R.raw.scenery, file);
+
+        file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
+                "mediaStoreTest2.jpg");
+        path = file.getAbsolutePath();
+        ProviderTestUtils.stageFile(R.raw.scenery, file);
+
         Cursor c = Media.query(mContentResolver, mExternalImages, null, null,
                 "_id ASC");
         int previousCount = c.getCount();
         c.close();
 
         // insert an image by path
-        File file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
-                "mediaStoreTest1.jpg");
-        String path = file.getAbsolutePath();
-        ProviderTestUtils.stageFile(R.raw.scenery, file);
         String stringUrl = null;
         try {
             stringUrl = Media.insertImage(mContentResolver, path, TEST_TITLE1, null);
@@ -134,10 +140,6 @@ public class MediaStore_Images_MediaTest {
         assertInsertionSuccess(stringUrl);
 
         // insert another image by path
-        file = new File(ProviderTestUtils.stageDir(MediaStore.VOLUME_EXTERNAL),
-                "mediaStoreTest2.jpg");
-        path = file.getAbsolutePath();
-        ProviderTestUtils.stageFile(R.raw.scenery, file);
         stringUrl = null;
         try {
             stringUrl = Media.insertImage(mContentResolver, path, TEST_TITLE2, null);
