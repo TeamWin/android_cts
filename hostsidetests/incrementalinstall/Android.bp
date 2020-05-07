@@ -27,5 +27,11 @@ java_test_host {
     test_suites: [
         "cts",
     ],
-    data: [":IncrementalTestAppRule"],
+    data: [
+        ":IncrementalTestAppDynamicAsset",
+        ":IncrementalTestAppDynamicCode",
+        ":IncrementalTestAppCompressedNativeLib",
+        ":IncrementalTestAppUncompressedNativeLib",
+    ],
+
 }
