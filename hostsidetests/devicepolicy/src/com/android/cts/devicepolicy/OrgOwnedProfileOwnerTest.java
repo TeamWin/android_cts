@@ -112,6 +112,15 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testCannotAddSecondaryUser() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        failToCreateUser();
+    }
+
+    @Test
     public void testCanRelinquishControlOverDevice() throws Exception {
         if (!mHasFeature) {
             return;
@@ -181,18 +190,16 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictionsSetOnParentAreNotPersisted() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
+        if (!mHasFeature) {
             return;
         }
-        int secondaryUserId = createUser();
-        setPoAsUser(secondaryUserId);
-
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testAddUserRestrictionDisallowConfigDateTime_onParent", mUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testHasUserRestrictionDisallowConfigDateTime", mUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testHasUserRestrictionDisallowConfigDateTime", secondaryUserId);
+                "testHasUserRestrictionDisallowConfigDateTime", mPrimaryUserId);
         removeOrgOwnedProfile();
         assertHasNoUser(mUserId);
 
@@ -201,29 +208,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         // User restrictions are not persist after organization-owned profile owner is removed
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testUserRestrictionDisallowConfigDateTimeIsNotPersisted", secondaryUserId);
-    }
-
-    @Test
-    public void testUserRestrictionsSetOnParentAreEnforced() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
-        int userId = createUser();
-        removeUser(userId);
-
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testAddUserRestrictionDisallowAddUser_onParent", mUserId);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testHasUserRestrictionDisallowAddUser", mUserId);
-
-        // Make sure the user restriction is enforced
-        failToCreateUser();
-
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testHasUserRestrictionDisallowAddUser", mUserId);
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
-                "testClearUserRestrictionDisallowAddUser", mUserId);
+                "testUserRestrictionDisallowConfigDateTimeIsNotPersisted", mPrimaryUserId);
     }
 
     @Test

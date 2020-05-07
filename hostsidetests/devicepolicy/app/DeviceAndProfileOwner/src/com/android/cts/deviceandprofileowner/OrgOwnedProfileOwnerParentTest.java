@@ -20,6 +20,8 @@ import static com.android.cts.deviceandprofileowner.BaseDeviceAdminTest.ADMIN_RE
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.hardware.camera2.CameraManager;
@@ -94,7 +96,6 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
     private static final Set<String> PROFILE_OWNER_ORGANIZATION_OWNED_GLOBAL_RESTRICTIONS =
             Sets.newSet(
                     UserManager.DISALLOW_CONFIG_DATE_TIME,
-                    UserManager.DISALLOW_ADD_USER,
                     UserManager.DISALLOW_BLUETOOTH,
                     UserManager.DISALLOW_BLUETOOTH_SHARING,
                     UserManager.DISALLOW_CONFIG_BLUETOOTH,
@@ -136,6 +137,25 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
 
         restrictions = mParentDevicePolicyManager.getUserRestrictions(ADMIN_RECEIVER_COMPONENT);
         assertThat(restrictions.get(restriction)).isNull();
+    }
+
+    public void testUnableToAddAndClearBaseUserRestrictions_onParent() {
+        testUnableToAddBaseUserRestriction(UserManager.DISALLOW_REMOVE_MANAGED_PROFILE);
+        testUnableToClearBaseUserRestriction(UserManager.DISALLOW_REMOVE_MANAGED_PROFILE);
+        testUnableToAddBaseUserRestriction(UserManager.DISALLOW_ADD_USER);
+        testUnableToClearBaseUserRestriction(UserManager.DISALLOW_ADD_USER);
+    }
+
+    private void testUnableToAddBaseUserRestriction(String restriction) {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mParentDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                        restriction));
+    }
+
+    private void testUnableToClearBaseUserRestriction(String restriction) {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mParentDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
+                        restriction));
     }
 
     private void checkCanOpenCamera(boolean canOpen) throws Exception {
