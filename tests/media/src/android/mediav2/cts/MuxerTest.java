@@ -260,7 +260,9 @@ class MuxerTestHelper {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MuxerTestHelper that = (MuxerTestHelper) o;
-
+        int MAX_SAMPLE_SIZE = 4 * 1024 * 1024;
+        byte[] refBuffer = new byte[MAX_SAMPLE_SIZE];
+        byte[] testBuffer = new byte[MAX_SAMPLE_SIZE];
         for (int i = 0; i < mTrackCount; i++) {
             MediaFormat thisFormat = mFormat.get(i);
             String thisMime = thisFormat.getString(MediaFormat.KEY_MIME);
@@ -269,8 +271,9 @@ class MuxerTestHelper {
                 MediaFormat thatFormat = that.mFormat.get(j);
                 String thatMime = thatFormat.getString(MediaFormat.KEY_MIME);
                 if (thisMime != null && thisMime.equals(thatMime)) {
+                    if (!ExtractorTest.isCSDIdentical(thisFormat, thatFormat)) continue;
                     if (mBufferInfo.get(i).size() == that.mBufferInfo.get(j).size()) {
-                        int flagsDiff = 0, sizeDiff = 0, tsDiff = 0;
+                        int flagsDiff = 0, sizeDiff = 0, tsDiff = 0, buffDiff = 0;
                         for (int k = 0; k < mBufferInfo.get(i).size(); k++) {
                             MediaCodec.BufferInfo thisInfo = mBufferInfo.get(i).get(k);
                             MediaCodec.BufferInfo thatInfo = that.mBufferInfo.get(j).get(k);
@@ -279,6 +282,17 @@ class MuxerTestHelper {
                             }
                             if (thisInfo.size != thatInfo.size) {
                                 sizeDiff++;
+                            } else {
+                                mBuff.position(thisInfo.offset);
+                                mBuff.get(refBuffer, 0, thisInfo.size);
+                                that.mBuff.position(thatInfo.offset);
+                                that.mBuff.get(testBuffer, 0, thatInfo.size);
+                                for (int count = 0; count < thisInfo.size; count++) {
+                                    if (refBuffer[count] != testBuffer[count]) {
+                                        buffDiff++;
+                                        break;
+                                    }
+                                }
                             }
                             if (Math.abs(
                                     thisInfo.presentationTimeUs - thatInfo.presentationTimeUs) >
@@ -286,13 +300,14 @@ class MuxerTestHelper {
                                 tsDiff++;
                             }
                         }
-                        if (flagsDiff != 0 || sizeDiff != 0 || tsDiff != 0) {
+                        if (flagsDiff != 0 || sizeDiff != 0 || tsDiff != 0 || buffDiff != 0) {
                             if (ENABLE_LOGS) {
                                 Log.d(LOG_TAG, "For track: " + thisMime +
                                         " Total Samples: " + mBufferInfo.get(i).size() +
                                         " flagsDiff: " + flagsDiff +
                                         " sizeDiff: " + sizeDiff +
-                                        " tsDiff: " + tsDiff);
+                                        " tsDiff: " + tsDiff +
+                                        " buffDiff: " + buffDiff);
                             }
                         } else break;
                     } else {
@@ -304,6 +319,8 @@ class MuxerTestHelper {
                     }
                 }
             }
+            mBuff.position(0);
+            that.mBuff.position(0);
             if (j == that.mTrackCount) {
                 if (ENABLE_LOGS) {
                     Log.d(LOG_TAG, "For track: " + thisMime + " Couldn't find a match ");
