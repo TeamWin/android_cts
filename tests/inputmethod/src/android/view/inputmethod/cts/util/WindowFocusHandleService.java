@@ -21,7 +21,6 @@ import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
 import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
-import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import android.app.Service;
@@ -131,12 +130,6 @@ public class WindowFocusHandleService extends Service {
                 150, 150, pos.x, pos.y,
                 TYPE_APPLICATION_OVERLAY, FLAG_NOT_FOCUSABLE,
                 PixelFormat.OPAQUE);
-        // Currently SOFT_INPUT_STATE_UNSPECIFIED isn't appropriate for CTS test because there is no
-        // clear spec about how it behaves.  In order to make our tests deterministic, currently we
-        // must use SOFT_INPUT_STATE_HIDDEN to make sure soft-keyboard will hide after navigating
-        // forward to next window.
-        // TODO(Bug 77152727): Remove the following code once we define how
-        params.softInputMode = SOFT_INPUT_STATE_HIDDEN;
         wm.addView(editText, params);
         return editText;
     }
