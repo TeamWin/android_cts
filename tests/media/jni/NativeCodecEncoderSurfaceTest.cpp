@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 
 #include "NativeCodecTestBase.h"
-#include "NativeMediaConstants.h"
+#include "NativeMediaCommon.h"
 
 class CodecEncoderSurfaceTest {
   private:
