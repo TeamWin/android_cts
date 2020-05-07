@@ -188,6 +188,18 @@ public class AppATests {
         mDevice.waitForIdle();
     }
 
+    private String replacePackageAWithPackageB(String path) {
+        return path.replace(mContext.getPackageName(), APPB_PKG);
+    }
+
+    private void testCanNotAccessAppBExternalDirs() {
+        String appBExternalDir = replacePackageAWithPackageB(
+                mContext.getExternalFilesDir("").getParentFile().getAbsolutePath());
+        String appBObbDir = replacePackageAWithPackageB(mContext.getObbDir().getAbsolutePath());
+        assertDirDoesNotExist(appBExternalDir);
+        assertDirDoesNotExist(appBObbDir);
+    }
+
     @Test
     public void testAppAUnlockDeviceAndVerifyCeDeExternalDataExist() throws Exception {
 
@@ -221,5 +233,9 @@ public class AppATests {
         testAppAExternalDirsDoExist();
         testAppACurProfileDataAccessible();
         testAppARefProfileDataNotAccessible();
+
+        // Verify after unlocking device, app a has still no access to app b dir.
+        testCannotAccessAppBDataDir();
+        testCanNotAccessAppBExternalDirs();
     }
 }
