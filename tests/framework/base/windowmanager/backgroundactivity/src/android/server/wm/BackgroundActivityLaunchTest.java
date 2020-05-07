@@ -454,10 +454,12 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         // Press home key to ensure stopAppSwitches is called because the last-stop-app-switch-time
         // is a criteria of allowing background start.
         pressHomeButton();
+        // Waiting for home visible before resuming app switches to make sure the part that sets the
+        // stop-app-switches time from pressHomeButton() doesn't race with resumeAppSwitches()
+        mWmState.waitForHomeActivityVisible();
         // Resume the stopped state (it won't affect last-stop-app-switch-time) so we don't need to
         // wait extra time to prevent the next launch from being delayed.
         resumeAppSwitches();
-        mWmState.waitForHomeActivityVisible();
     }
 
     private void assertTaskStack(ComponentName[] expectedComponents,
