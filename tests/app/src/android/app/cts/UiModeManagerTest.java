@@ -34,6 +34,7 @@ import junit.framework.Assert;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalTime;
 
 public class UiModeManagerTest extends AndroidTestCase {
     private static final String TAG = "UiModeManagerTest";
@@ -82,6 +83,28 @@ public class UiModeManagerTest extends AndroidTestCase {
                 doTestUnlockedNightMode();
             }
         }
+    }
+
+    public void testSetAndGetCustomTimeStart() {
+        LocalTime time = mUiModeManager.getCustomNightModeStart();
+        // decrease time
+        LocalTime timeNew = LocalTime.of(
+                (time.getHour() + 1) % 12,
+                (time.getMinute() + 30) % 60);
+        setStartTime(timeNew);
+        assertNotSame(time, timeNew);
+        assertEquals(timeNew, mUiModeManager.getCustomNightModeStart());
+    }
+
+    public void testSetAndGetCustomTimeEnd() {
+        LocalTime time = mUiModeManager.getCustomNightModeEnd();
+        // decrease time
+        LocalTime timeNew = LocalTime.of(
+                (time.getHour() + 1) % 12,
+                (time.getMinute() + 30) % 60);
+        setEndTime(timeNew);
+        assertNotSame(time, timeNew);
+        assertEquals(timeNew, mUiModeManager.getCustomNightModeEnd());
     }
 
     public void testNightModeYesPersisted() throws InterruptedException {
@@ -327,7 +350,6 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     private void setNightMode(int mode) {
-        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         String modeString = "unknown";
         switch (mode) {
             case UiModeManager.MODE_NIGHT_AUTO:
@@ -341,6 +363,21 @@ public class UiModeManagerTest extends AndroidTestCase {
                 break;
         }
         final String command = " cmd uimode night " + modeString;
+        applyCommand(command);
+    }
+
+    private void setStartTime(LocalTime t) {
+        final String command = " cmd uimode time start " + t.toString();
+        applyCommand(command);
+    }
+
+    private void setEndTime(LocalTime t) {
+        final String command = " cmd uimode time end " + t.toString();
+        applyCommand(command);
+    }
+
+    private void applyCommand(String command) {
+        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
             Assert.assertNotNull("Failed to execute shell command: " + command, fd);
             // Wait for the command to finish by reading until EOF
@@ -356,4 +393,5 @@ public class UiModeManagerTest extends AndroidTestCase {
             uiAutomation.destroy();
         }
     }
+
 }
