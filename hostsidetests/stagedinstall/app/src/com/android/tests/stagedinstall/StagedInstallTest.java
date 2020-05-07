@@ -319,6 +319,14 @@ public class StagedInstallTest {
     }
 
     @Test
+    public void testStageAnotherSessionImmediatelyAfterAbandon() throws Exception {
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        int sessionId = stageSingleApk(TestApp.Apex2).assertSuccessful().getSessionId();
+        abandonSession(sessionId);
+        stageSingleApk(TestApp.Apex2).assertSuccessful();
+    }
+
+    @Test
     public void testNoSessionUpdatedBroadcastSentForStagedSessionAbandon() throws Exception {
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
@@ -1149,7 +1157,8 @@ public class StagedInstallTest {
         // Commit the session (this will start the installation workflow).
         Log.i(TAG, "Committing session for apk: " + testApp);
         commitSession(sessionId);
-        return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
+        return new StageSessionResult(sessionId,
+                LocalIntentSender.getIntentSenderResult(sessionId));
     }
 
     private static StageSessionResult stageMultipleApks(TestApp... testApps) throws Exception {
