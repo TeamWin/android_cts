@@ -17,7 +17,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "NativeCodecDecoderTest"
 #include <log/log.h>
-
+#include <android/native_window_jni.h>
 #include <NdkMediaExtractor.h>
 #include <jni.h>
 #include <sys/stat.h>
@@ -37,6 +37,7 @@ class CodecDecoderTest final : public CodecTestBase {
     AMediaFormat* mInpDecDupFormat;
     std::vector<std::pair<void*, size_t>> mCsdBuffers;
     int mCurrCsdIdx;
+    ANativeWindow* mWindow;
 
     void setUpAudioReference(const char* refFile);
     void deleteReference();
@@ -52,7 +53,7 @@ class CodecDecoderTest final : public CodecTestBase {
                         OutputManager* ref, int64_t pts, SeekMode mode);
 
   public:
-    explicit CodecDecoderTest(const char* mime);
+    explicit CodecDecoderTest(const char* mime, ANativeWindow* window);
     ~CodecDecoderTest();
 
     bool testSimpleDecode(const char* decoder, const char* testFile, const char* refFile,
@@ -62,14 +63,15 @@ class CodecDecoderTest final : public CodecTestBase {
     bool testSimpleDecodeQueueCSD(const char* decoder, const char* testFile);
 };
 
-CodecDecoderTest::CodecDecoderTest(const char* mime)
+CodecDecoderTest::CodecDecoderTest(const char* mime, ANativeWindow* window)
     : CodecTestBase(mime),
       mRefData(nullptr),
       mRefLength(0),
       mExtractor(nullptr),
       mInpDecFormat(nullptr),
       mInpDecDupFormat(nullptr),
-      mCurrCsdIdx(0) {}
+      mCurrCsdIdx(0),
+      mWindow{window} {}
 
 CodecDecoderTest::~CodecDecoderTest() {
     deleteReference();
@@ -151,7 +153,7 @@ bool CodecDecoderTest::configureCodec(AMediaFormat* format, bool isAsync,
     resetContext(isAsync, signalEOSWithLastFrame);
     CHECK_STATUS(mAsyncHandle.setCallBack(mCodec, isAsync),
                  "AMediaCodec_setAsyncNotifyCallback failed");
-    CHECK_STATUS(AMediaCodec_configure(mCodec, format, nullptr, nullptr,
+    CHECK_STATUS(AMediaCodec_configure(mCodec, format, mWindow, nullptr,
                                        isEncoder ? AMEDIACODEC_CONFIGURE_FLAG_ENCODE : 0),
                  "AMediaCodec_configure failed");
     return true;
@@ -229,7 +231,7 @@ bool CodecDecoderTest::dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* 
     }
     ALOGV("output: id: %zu  size: %d  pts: %d  flags: %d", bufferIndex, info->size,
           (int)info->presentationTimeUs, info->flags);
-    CHECK_STATUS(AMediaCodec_releaseOutputBuffer(mCodec, bufferIndex, false),
+    CHECK_STATUS(AMediaCodec_releaseOutputBuffer(mCodec, bufferIndex, mWindow != nullptr),
                  "AMediaCodec_releaseOutputBuffer failed");
     return !hasSeenError();
 }
@@ -261,7 +263,7 @@ bool CodecDecoderTest::queueCodecConfig() {
 
 bool CodecDecoderTest::decodeToMemory(const char* decoder, AMediaFormat* format, int frameLimit,
                                       OutputManager* ref, int64_t pts, SeekMode mode) {
-    mSaveToMem = true;
+    mSaveToMem = (mWindow == nullptr);
     mOutputBuff = ref;
     AMediaExtractor_seekTo(mExtractor, pts, mode);
     mCodec = AMediaCodec_createCodecByName(decoder);
@@ -285,7 +287,7 @@ bool CodecDecoderTest::testSimpleDecode(const char* decoder, const char* testFil
                                         const char* refFile, float rmsError) {
     bool isPass = true;
     if (!setUpExtractor(testFile)) return false;
-    mSaveToMem = true;
+    mSaveToMem = (mWindow == nullptr);
     auto ref = &mRefBuff;
     auto test = &mTestBuff;
     const bool boolStates[]{true, false};
@@ -451,7 +453,7 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile) {
         if (mIsCodecInAsyncMode) {
             CHECK_STATUS(AMediaCodec_start(mCodec), "AMediaCodec_start failed");
         }
-        mSaveToMem = true;
+        mSaveToMem = (mWindow == nullptr);
         test->reset();
         AMediaExtractor_seekTo(mExtractor, pts, mode);
         if (!doWork(INT32_MAX)) return false;
@@ -504,7 +506,7 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile) {
 bool CodecDecoderTest::testOnlyEos(const char* decoder, const char* testFile) {
     bool isPass = true;
     if (!setUpExtractor(testFile)) return false;
-    mSaveToMem = true;
+    mSaveToMem = (mWindow == nullptr);
     auto ref = &mRefBuff;
     auto test = &mTestBuff;
     const bool boolStates[]{true, false};
@@ -638,16 +640,22 @@ bool CodecDecoderTest::testSimpleDecodeQueueCSD(const char* decoder, const char*
     return isPass;
 }
 
-static jboolean nativeTestSimpleDecode(JNIEnv* env, jobject, jstring jDecoder, jstring jMime,
-                                       jstring jtestFile, jstring jrefFile, jfloat jrmsError) {
+static jboolean nativeTestSimpleDecode(JNIEnv* env, jobject, jstring jDecoder, jobject surface,
+                                       jstring jMime, jstring jtestFile, jstring jrefFile,
+                                       jfloat jrmsError) {
     const char* cDecoder = env->GetStringUTFChars(jDecoder, nullptr);
     const char* cMime = env->GetStringUTFChars(jMime, nullptr);
     const char* cTestFile = env->GetStringUTFChars(jtestFile, nullptr);
     const char* cRefFile = env->GetStringUTFChars(jrefFile, nullptr);
     float cRmsError = jrmsError;
-    auto codecDecoderTest = new CodecDecoderTest(cMime);
+    ANativeWindow* window = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
+    auto* codecDecoderTest = new CodecDecoderTest(cMime, window);
     bool isPass = codecDecoderTest->testSimpleDecode(cDecoder, cTestFile, cRefFile, cRmsError);
     delete codecDecoderTest;
+    if (window) {
+        ANativeWindow_release(window);
+        window = nullptr;
+    }
     env->ReleaseStringUTFChars(jDecoder, cDecoder);
     env->ReleaseStringUTFChars(jMime, cMime);
     env->ReleaseStringUTFChars(jtestFile, cTestFile);
@@ -660,7 +668,7 @@ static jboolean nativeTestOnlyEos(JNIEnv* env, jobject, jstring jDecoder, jstrin
     const char* cDecoder = env->GetStringUTFChars(jDecoder, nullptr);
     const char* cMime = env->GetStringUTFChars(jMime, nullptr);
     const char* cTestFile = env->GetStringUTFChars(jtestFile, nullptr);
-    auto codecDecoderTest = new CodecDecoderTest(cMime);
+    auto* codecDecoderTest = new CodecDecoderTest(cMime, nullptr);
     bool isPass = codecDecoderTest->testOnlyEos(cDecoder, cTestFile);
     delete codecDecoderTest;
     env->ReleaseStringUTFChars(jDecoder, cDecoder);
@@ -669,14 +677,19 @@ static jboolean nativeTestOnlyEos(JNIEnv* env, jobject, jstring jDecoder, jstrin
     return static_cast<jboolean>(isPass);
 }
 
-static jboolean nativeTestFlush(JNIEnv* env, jobject, jstring jDecoder, jstring jMime,
-                                jstring jtestFile) {
+static jboolean nativeTestFlush(JNIEnv* env, jobject, jstring jDecoder, jobject surface,
+                                jstring jMime, jstring jtestFile) {
     const char* cDecoder = env->GetStringUTFChars(jDecoder, nullptr);
     const char* cMime = env->GetStringUTFChars(jMime, nullptr);
     const char* cTestFile = env->GetStringUTFChars(jtestFile, nullptr);
-    auto codecDecoderTest = new CodecDecoderTest(cMime);
+    ANativeWindow* window = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
+    auto* codecDecoderTest = new CodecDecoderTest(cMime, window);
     bool isPass = codecDecoderTest->testFlush(cDecoder, cTestFile);
     delete codecDecoderTest;
+    if (window) {
+        ANativeWindow_release(window);
+        window = nullptr;
+    }
     env->ReleaseStringUTFChars(jDecoder, cDecoder);
     env->ReleaseStringUTFChars(jMime, cMime);
     env->ReleaseStringUTFChars(jtestFile, cTestFile);
@@ -688,7 +701,7 @@ static jboolean nativeTestSimpleDecodeQueueCSD(JNIEnv* env, jobject, jstring jDe
     const char* cDecoder = env->GetStringUTFChars(jDecoder, nullptr);
     const char* cMime = env->GetStringUTFChars(jMime, nullptr);
     const char* cTestFile = env->GetStringUTFChars(jtestFile, nullptr);
-    auto codecDecoderTest = new CodecDecoderTest(cMime);
+    auto codecDecoderTest = new CodecDecoderTest(cMime, nullptr);
     bool isPass = codecDecoderTest->testSimpleDecodeQueueCSD(cDecoder, cTestFile);
     delete codecDecoderTest;
     env->ReleaseStringUTFChars(jDecoder, cDecoder);
@@ -700,16 +713,32 @@ static jboolean nativeTestSimpleDecodeQueueCSD(JNIEnv* env, jobject, jstring jDe
 int registerAndroidMediaV2CtsDecoderTest(JNIEnv* env) {
     const JNINativeMethod methodTable[] = {
             {"nativeTestSimpleDecode",
-             "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;F)Z",
+             "(Ljava/lang/String;Landroid/view/Surface;Ljava/lang/String;Ljava/lang/String;Ljava/"
+             "lang/String;F)Z",
              (void*)nativeTestSimpleDecode},
             {"nativeTestOnlyEos", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z",
              (void*)nativeTestOnlyEos},
-            {"nativeTestFlush", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z",
+            {"nativeTestFlush",
+             "(Ljava/lang/String;Landroid/view/Surface;Ljava/lang/String;Ljava/lang/String;)Z",
              (void*)nativeTestFlush},
             {"nativeTestSimpleDecodeQueueCSD",
              "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z",
              (void*)nativeTestSimpleDecodeQueueCSD},
     };
     jclass c = env->FindClass("android/mediav2/cts/CodecDecoderTest");
+    return env->RegisterNatives(c, methodTable, sizeof(methodTable) / sizeof(JNINativeMethod));
+}
+
+int registerAndroidMediaV2CtsDecoderSurfaceTest(JNIEnv* env) {
+    const JNINativeMethod methodTable[] = {
+            {"nativeTestSimpleDecode",
+             "(Ljava/lang/String;Landroid/view/Surface;Ljava/lang/String;Ljava/lang/String;Ljava/"
+             "lang/String;F)Z",
+             (void*)nativeTestSimpleDecode},
+            {"nativeTestFlush",
+             "(Ljava/lang/String;Landroid/view/Surface;Ljava/lang/String;Ljava/lang/String;)Z",
+             (void*)nativeTestFlush},
+    };
+    jclass c = env->FindClass("android/mediav2/cts/CodecDecoderSurfaceTest");
     return env->RegisterNatives(c, methodTable, sizeof(methodTable) / sizeof(JNINativeMethod));
 }
