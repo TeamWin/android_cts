@@ -64,10 +64,12 @@ cc_test_library {
         "NativeCodecEncoderTest.cpp",
         "NativeCodecTestBase.cpp",
         "NativeCodecUnitTest.cpp",
+        "NativeCodecEncoderSurfaceTest.cpp",
     ],
     shared_libs: [
         "libmediandk",
         "liblog",
+        "libandroid",
     ],
     include_dirs: [
         "frameworks/av/media/ndk/include/media",
