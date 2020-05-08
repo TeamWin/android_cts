@@ -3560,8 +3560,6 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.leanback" />
-            <meta-data android:name="test_required_configs"
-                       android:value="config_hdmi_source"/>
         </activity>
         <activity android:name=".tv.display.DisplayModesTestActivity"
                   android:label="@string/tv_display_modes_test"
