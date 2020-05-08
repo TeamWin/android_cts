@@ -31,4 +31,8 @@
         <!-- test-timeout unit is ms, value = 2 min -->
         <option name="native-test-timeout" value="120000" />
     </test>
+
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.MainlineTestModuleController">
+        <option name="mainline-module-package-name" value="com.google.android.neuralnetworks" />
+    </object>
 </configuration>
