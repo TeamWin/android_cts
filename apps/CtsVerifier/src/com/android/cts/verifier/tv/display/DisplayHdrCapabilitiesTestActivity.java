@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.tv.display;
 
+import android.content.Context;
+import android.hardware.display.DisplayManager;
 import android.view.Display;
 
 import androidx.annotation.StringRes;
@@ -34,12 +36,12 @@ import java.util.List;
 /**
  * Test to verify the HDR Capabilities API is correctly implemented.
  *
- * This test checks if
- * <a href="https://developer.android.com/reference/android/view/Display.html#isHdr()">Display.isHdr()</a>
- * and
- * <a href="https://developer.android.com/reference/android/view/Display.html#getHdrCapabilities()">Display.getHdrCapabilities()</a>
- * return correct results when 1. HDR Display is connected, 2. non-HDR
- * Display is connected and 3. no display is connected.
+ * <p>This test checks if <a
+ * href="https://developer.android.com/reference/android/view/Display.html#isHdr()">Display.isHdr()</a>
+ * and <a
+ * href="https://developer.android.com/reference/android/view/Display.html#getHdrCapabilities()">Display.getHdrCapabilities()</a>
+ * return correct results when 1. HDR Display is connected, 2. non-HDR Display is connected and 3.
+ * no display is connected.
  */
 public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
     private static final float MAX_EXPECTED_LUMINANCE = 10_000f;
@@ -49,8 +51,8 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
 
     @Override
     protected void setInfoResources() {
-        setInfoResources(R.string.tv_hdr_capabilities_test,
-                R.string.tv_hdr_capabilities_test_info, -1);
+        setInfoResources(
+                R.string.tv_hdr_capabilities_test, R.string.tv_hdr_capabilities_test_info, -1);
     }
 
     @Override
@@ -72,32 +74,28 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
     private static class NonHdrDisplayTestStep extends SyncTestStep {
 
         public NonHdrDisplayTestStep(TvAppVerifierActivity context) {
-            super(context);
+            super(
+                    context,
+                    R.string.tv_hdr_capabilities_test_step_non_hdr_display,
+                    getInstructionText(context),
+                    getButtonStringId());
         }
 
-        @Override
-        protected String getInstructionText() {
-            return mContext.getString(R.string.tv_hdr_connect_no_hdr_display,
-                    mContext.getString(getButtonStringId()));
+        private static String getInstructionText(Context context) {
+            return context.getString(
+                    R.string.tv_hdr_connect_no_hdr_display, context.getString(getButtonStringId()));
         }
 
-        @Override
-        protected String getStepName() {
-            return "Non HDR Display";
-        }
-
-        @Override
-        protected @StringRes int getButtonStringId() {
+        private static @StringRes int getButtonStringId() {
             return R.string.tv_start_test;
         }
 
         @Override
         public void runTest() {
-            Display display = mContext.getWindowManager().getDefaultDisplay();
-            getAsserter()
-                    .withMessage("Display.isHdr()")
-                    .that(display.isHdr())
-                    .isFalse();
+            DisplayManager displayManager =
+                    (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+            Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+            getAsserter().withMessage("Display.isHdr()").that(display.isHdr()).isFalse();
             getAsserter()
                     .withMessage("Display.getHdrCapabilities()")
                     .that(display.getHdrCapabilities().getSupportedHdrTypes())
@@ -108,33 +106,29 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
     private static class HdrDisplayTestStep extends SyncTestStep {
 
         public HdrDisplayTestStep(TvAppVerifierActivity context) {
-            super(context);
+            super(
+                    context,
+                    R.string.tv_hdr_capabilities_test_step_hdr_display,
+                    getInstructionText(context),
+                    getButtonStringId());
         }
 
-        @Override
-        protected String getInstructionText() {
-            return mContext.getString(R.string.tv_hdr_connect_hdr_display,
-                    mContext.getString(getButtonStringId()));
+        private static String getInstructionText(Context context) {
+            return context.getString(
+                    R.string.tv_hdr_connect_hdr_display, context.getString(getButtonStringId()));
         }
 
-        @Override
-        protected String getStepName() {
-            return "HDR Display";
-        }
-
-        @Override
-        protected @StringRes int getButtonStringId() {
+        private static @StringRes int getButtonStringId() {
             return R.string.tv_start_test;
         }
 
         @Override
         public void runTest() {
-            Display display = mContext.getWindowManager().getDefaultDisplay();
+            DisplayManager displayManager =
+                    (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+            Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
 
-            getAsserter()
-                    .withMessage("Display.isHdr()")
-                    .that(display.isHdr())
-                    .isTrue();
+            getAsserter().withMessage("Display.isHdr()").that(display.isHdr()).isTrue();
 
             Display.HdrCapabilities hdrCapabilities = display.getHdrCapabilities();
 
@@ -144,12 +138,13 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
             getAsserter()
                     .withMessage("Display.getHdrCapabilities().getSupportedTypes()")
                     .that(supportedHdrTypes)
-                    .isEqualTo(new int[]{
-                        Display.HdrCapabilities.HDR_TYPE_DOLBY_VISION,
-                        Display.HdrCapabilities.HDR_TYPE_HDR10,
-                        Display.HdrCapabilities.HDR_TYPE_HDR10_PLUS,
-                        Display.HdrCapabilities.HDR_TYPE_HLG
-                    });
+                    .isEqualTo(
+                            new int[] {
+                                Display.HdrCapabilities.HDR_TYPE_DOLBY_VISION,
+                                Display.HdrCapabilities.HDR_TYPE_HDR10,
+                                Display.HdrCapabilities.HDR_TYPE_HDR10_PLUS,
+                                Display.HdrCapabilities.HDR_TYPE_HLG
+                            });
 
             float maxLuminance = hdrCapabilities.getDesiredMaxLuminance();
             getAsserter()
@@ -172,41 +167,44 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
 
     private static class NoDisplayTestStep extends AsyncTestStep {
         public NoDisplayTestStep(TvAppVerifierActivity context) {
-            super(context);
+            super(
+                    context,
+                    R.string.tv_hdr_capabilities_test_step_no_display,
+                    getInstructionText(context),
+                    getButtonStringId());
         }
 
-        @Override
-        protected String getInstructionText() {
-            return mContext.getString(R.string.tv_hdr_disconnect_display,
-                    mContext.getString(getButtonStringId()),
+        private static String getInstructionText(Context context) {
+            return context.getString(
+                    R.string.tv_hdr_disconnect_display,
+                    context.getString(getButtonStringId()),
                     DISPLAY_DISCONNECT_WAIT_TIME_SECONDS,
-                    DISPLAY_DISCONNECT_WAIT_TIME_SECONDS+1);
+                    DISPLAY_DISCONNECT_WAIT_TIME_SECONDS + 1);
         }
 
-        @Override
-        protected String getStepName() {
-            return "No Display";
-        }
-
-        @Override
-        protected @StringRes int getButtonStringId() {
+        private static @StringRes int getButtonStringId() {
             return R.string.tv_start_test;
         }
 
         @Override
         public void runTestAsync() {
             // Wait for the user to disconnect the display.
-            mContext.getPostTarget().postDelayed(() -> {
-                try {
-                    // Verify the display APIs do not crash when the display is disconnected
-                    Display display = mContext.getWindowManager().getDefaultDisplay();
-                    display.isHdr();
-                    display.getHdrCapabilities();
-                } catch (Exception e) {
-                    getAsserter().fail(Throwables.getStackTraceAsString(e));
-                }
-                done();
-            }, Duration.ofSeconds(DISPLAY_DISCONNECT_WAIT_TIME_SECONDS).toMillis());
+            final long delay = Duration.ofSeconds(DISPLAY_DISCONNECT_WAIT_TIME_SECONDS).toMillis();
+            mContext.getPostTarget().postDelayed(this::runTest, delay);
+        }
+
+        private void runTest() {
+            try {
+                // Verify the display APIs do not crash when the display is disconnected
+                DisplayManager displayManager =
+                        (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+                Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+                display.isHdr();
+                display.getHdrCapabilities();
+            } catch (Exception e) {
+                getAsserter().fail(Throwables.getStackTraceAsString(e));
+            }
+            done();
         }
     }
 }
