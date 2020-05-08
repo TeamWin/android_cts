@@ -17,7 +17,10 @@ package android.os.cts.batterysaving;
 
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
+import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -99,6 +102,13 @@ public class BatterySaverTest extends BatterySavingTestBase {
     /** Tests that Battery Saver exemptions activate when car mode is active. */
     @Test
     public void testCarModeExceptions() throws Exception {
+        final String nightModeText = runShellCommand("cmd uimode night");
+        final String[] nightModeSplit = nightModeText.split(":");
+        if (nightModeSplit.length != 2) {
+            fail("Failed to get initial night mode value from " + nightModeText);
+        }
+        final String initialNightMode = nightModeSplit[1].trim();
+        runShellCommand("cmd uimode night no");
         UiModeManager uiModeManager = getContext().getSystemService(UiModeManager.class);
         uiModeManager.disableCarMode(0);
 
@@ -147,6 +157,7 @@ public class BatterySaverTest extends BatterySavingTestBase {
                 powerManager.getLocationPowerSaveMode());
         } finally {
             uiModeManager.disableCarMode(0);
+            runShellCommand("cmd uimode night " + initialNightMode);
             SettingsUtils.delete(SettingsUtils.NAMESPACE_GLOBAL, "battery_saver_constants");
         }
     }
