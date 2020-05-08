@@ -126,11 +126,13 @@ public class BleAdvertiserService extends Service {
         mCallback = new BLEAdvertiseCallback();
         mScannableCallback = new BLEAdvertiseCallback();
         mUnscannableCallback = new BLEAdvertiseCallback();
+        // Medium is last. Android TV has a medium advertiser running already, and if only four
+        // are available, that's the one we want to fail
         mPowerLevel = new int[]{
             AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW,
             AdvertiseSettings.ADVERTISE_TX_POWER_LOW,
-            AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM,
-            AdvertiseSettings.ADVERTISE_TX_POWER_HIGH};
+            AdvertiseSettings.ADVERTISE_TX_POWER_HIGH,
+            AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM};
         mPowerCallback = new HashMap<Integer, AdvertiseCallback>();
         for (int x : mPowerLevel) {
             mPowerCallback.put(x, new BLEAdvertiseCallback());
