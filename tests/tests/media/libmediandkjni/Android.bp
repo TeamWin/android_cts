@@ -33,6 +33,7 @@ cc_test_library {
         "-Wall",
         "-DEGL_EGLEXT_PROTOTYPES",
     ],
+    stl: "libc++_static",
     gtest: false,
 }
 
@@ -62,6 +63,7 @@ cc_test_library {
         "-DEGL_EGLEXT_PROTOTYPES",
     ],
     gtest: false,
+    sdk_version: "current",
 }
 
 //------------------------------------------------------------------------------
@@ -91,4 +93,5 @@ cc_test_library {
     ],
     stl: "libc++_static",
     gtest: false,
+    sdk_version: "current",
 }
