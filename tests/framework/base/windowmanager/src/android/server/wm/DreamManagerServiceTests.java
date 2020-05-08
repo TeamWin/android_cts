@@ -83,7 +83,7 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         });
     }
 
-    private void assertDreamActivityIsGone() {
+    private void assertDreamActivityGone() {
         mWmState.computeState();
         assertTrue(!mWmState.containsWindow(getWindowName(mDreamActivityName))
                    && !mWmState.containsActivity(mDreamActivityName));
@@ -94,16 +94,18 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         setActiveDream(TEST_DREAM_SERVICE);
 
         startDream(TEST_DREAM_SERVICE);
-        mWmState.waitForValidState(mDreamActivityName);
-        mWmState.assertVisibility(mDreamActivityName, true);
-        mWmState.assertHomeActivityVisible(false);
+        waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
+                "Dream activity should be the top resumed activity");
+        mWmState.waitForValidState(mWmState.getHomeActivityName());
+        mWmState.assertVisibility(mWmState.getHomeActivityName(), false);
 
         assertTrue(getIsDreaming());
 
         stopDream();
         mWmState.waitAndAssertActivityRemoved(mDreamActivityName);
 
-        mWmState.assertHomeActivityVisible(true);
+        waitAndAssertTopResumedActivity(mWmState.getHomeActivityName(), DEFAULT_DISPLAY,
+                "Home activity should show when dream is stopped");
     }
 
     @Test
@@ -111,14 +113,17 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         setActiveDream(TEST_DREAM_SERVICE);
 
         startDream(TEST_DREAM_SERVICE);
-        mWmState.waitForValidState(mDreamActivityName);
+        waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
+                "Dream activity should be the top resumed activity");
+        mWmState.waitForValidState(mWmState.getHomeActivityName());
+        mWmState.assertVisibility(mWmState.getHomeActivityName(), false);
         assertTrue(getIsDreaming());
 
         stopDream();
 
         Thread.sleep(ACTIVITY_STOP_TIMEOUT);
 
-        assertDreamActivityIsGone();
+        assertDreamActivityGone();
         assertFalse(getIsDreaming());
     }
 
@@ -127,16 +132,19 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         setActiveDream(TEST_STUBBORN_DREAM_SERVICE);
 
         startDream(TEST_STUBBORN_DREAM_SERVICE);
-        mWmState.waitForValidState(mDreamActivityName);
-        mWmState.assertVisibility(mDreamActivityName, true);
-        mWmState.assertHomeActivityVisible(false);
+        waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
+                "Dream activity should be the top resumed activity");
+        mWmState.waitForValidState(mWmState.getHomeActivityName());
+        mWmState.assertVisibility(mWmState.getHomeActivityName(), false);
 
         stopDream();
 
         Thread.sleep(ACTIVITY_FORCE_STOP_TIMEOUT);
 
-        assertDreamActivityIsGone();
+        assertDreamActivityGone();
         assertFalse(getIsDreaming());
+        waitAndAssertTopResumedActivity(mWmState.getHomeActivityName(), DEFAULT_DISPLAY,
+                "Home activity should show when dream is stopped");
     }
 
     @Test
