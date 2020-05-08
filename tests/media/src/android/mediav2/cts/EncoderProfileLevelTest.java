@@ -87,10 +87,13 @@ public class EncoderProfileLevelTest extends CodecTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        final List<String> cddEncodersList =
-                Arrays.asList(MediaFormat.MIMETYPE_VIDEO_H263, MediaFormat.MIMETYPE_VIDEO_AVC,
-                        MediaFormat.MIMETYPE_VIDEO_HEVC, MediaFormat.MIMETYPE_VIDEO_VP8,
-                        MediaFormat.MIMETYPE_VIDEO_VP9);
+        ArrayList<String> cddRequiredMimeList = new ArrayList<>();
+        if (isHandheld() || isTv() || isAutomotive()) {
+            // sec 2.2.2, 2.3.2, 2.5.2
+            cddRequiredMimeList.add(MediaFormat.MIMETYPE_AUDIO_AAC);
+            cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+            cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+        }
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, bit-rate, sample rate, channel count
                 {MediaFormat.MIMETYPE_AUDIO_AAC, 64000, 8000, 1, -1},
@@ -213,7 +216,7 @@ public class EncoderProfileLevelTest extends CodecTestBase {
                 if (!mimes.contains(type)) mimes.add(type);
             }
         }
-        for (String mime : cddEncodersList) {
+        for (String mime : cddRequiredMimeList) {
             if (!mimes.contains(mime)) {
                 fail("media codec encoder list doesn't contain " + mime +
                         " as required by cdd");
@@ -229,7 +232,7 @@ public class EncoderProfileLevelTest extends CodecTestBase {
                 }
             }
             if (miss) {
-                if (cddEncodersList.contains(mime)) {
+                if (cddRequiredMimeList.contains(mime)) {
                     fail("no test vectors available for " + mime);
                 }
                 Log.w(LOG_TAG, "no test vectors available for " + mime);

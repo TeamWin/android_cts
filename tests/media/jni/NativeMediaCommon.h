@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MEDIACTSNATIVE_NATIVE_MEDIA_CONSTANTS_H
-#define MEDIACTSNATIVE_NATIVE_MEDIA_CONSTANTS_H
+#ifndef MEDIACTSNATIVE_NATIVE_MEDIA_COMMON_H
+#define MEDIACTSNATIVE_NATIVE_MEDIA_COMMON_H
+
+#include <NdkMediaFormat.h>
 
 extern const char* AMEDIA_MIMETYPE_VIDEO_VP8;
 extern const char* AMEDIA_MIMETYPE_VIDEO_VP9;
+extern const char* AMEDIA_MIMETYPE_VIDEO_AV1;
 extern const char* AMEDIA_MIMETYPE_VIDEO_AVC;
 extern const char* AMEDIA_MIMETYPE_VIDEO_HEVC;
 extern const char* AMEDIA_MIMETYPE_VIDEO_MPEG4;
@@ -45,6 +48,7 @@ typedef enum {
 // from MediaCodecConstants.h (are these going to be deprecated)
 constexpr int COLOR_FormatYUV420SemiPlanar = 21;
 constexpr int COLOR_FormatYUV420Flexible = 0x7F420888;
+constexpr int COLOR_FormatSurface = 0x7f000789;
 
 // constants not defined in NDK
 extern const char* TBD_AMEDIACODEC_PARAMETER_KEY_REQUEST_SYNC_FRAME;
@@ -55,4 +59,7 @@ static const int TBD_AMEDIACODEC_BUFFER_FLAG_KEY_FRAME = 0x1;
 
 static const int kBitrateModeConstant = 2;
 
-#endif  // MEDIACTSNATIVE_NATIVE_MEDIA_CONSTANTS_H
+// common utility functions
+bool isCSDIdentical(AMediaFormat* refFormat, AMediaFormat* testFormat);
+
+#endif  // MEDIACTSNATIVE_NATIVE_MEDIA_COMMON_H

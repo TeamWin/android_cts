@@ -25,6 +25,8 @@
 #include <cstdlib>
 #include <random>
 
+#include "NativeMediaCommon.h"
+
 static bool isExtractorOKonEOS(AMediaExtractor* extractor) {
     return AMediaExtractor_getSampleTrackIndex(extractor) < 0 &&
            AMediaExtractor_getSampleSize(extractor) < 0 &&
@@ -51,6 +53,7 @@ static bool isFormatSimilar(AMediaFormat* refFormat, AMediaFormat* testFormat) {
     bool hasTestMime = AMediaFormat_getString(testFormat, AMEDIAFORMAT_KEY_MIME, &testMime);
 
     if (!hasRefMime || !hasTestMime || strcmp(refMime, testMime) != 0) return false;
+    if (!isCSDIdentical(refFormat, testFormat)) return false;
     if (!strncmp(refMime, "audio/", strlen("audio/"))) {
         int32_t refSampleRate, testSampleRate, refNumChannels, testNumChannels;
         bool hasRefSampleRate =
@@ -147,6 +150,11 @@ static bool isMediaSimilar(AMediaExtractor* refExtractor, AMediaExtractor* testE
                 if (trackIndex != testTrackID) {
                     ALOGD("Mime: %s  TrackID exp/got %zd / %d : ", refMime, testTrackID,
                           trackIndex);
+                    areTracksIdentical = false;
+                    break;
+                }
+                if (memcmp(refBuffer, testBuffer, refSz)) {
+                    ALOGD("Mime: %s Mismatch in sample data", refMime);
                     areTracksIdentical = false;
                     break;
                 }

@@ -166,7 +166,10 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                     .withMessage("Display.getMode()")
                     .about(MODE_SUBJECT_FACTORY)
                     .that(display.getMode())
-                    .isEquivalentTo(new Mode(3840, 2160, 60f), REFRESH_RATE_PRECISION);
+                    .isEquivalentToAnyOf(
+                            REFRESH_RATE_PRECISION,
+                            new Mode(3840, 2160, 60f),
+                            new Mode(3840, 2160, 50f));
 
              Mode[] expected2160pSupportedModes = new Mode[]{
                     new Mode(720, 480, 60f),
@@ -225,7 +228,10 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                     .withMessage("Display.getMode()")
                     .about(MODE_SUBJECT_FACTORY)
                     .that(display.getMode())
-                    .isEquivalentTo(new Mode(1920, 1080, 60f), REFRESH_RATE_PRECISION);
+                    .isEquivalentToAnyOf(
+                            REFRESH_RATE_PRECISION,
+                            new Mode(1920, 1080, 60f),
+                            new Mode(1920, 1080, 50f));
 
             final Mode[] expected1080pSupportedModes = new Mode[]{
                     new Mode(720, 480, 60f),
@@ -278,9 +284,12 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
             super(failureMetadata, subject);
         }
 
-        public void isEquivalentTo(Mode mode, float refreshRatePrecision) {
-            if (!mode.isEquivalent(actual(), refreshRatePrecision)) {
-                failWithActual("expected", mode);
+        public void isEquivalentToAnyOf(final float refreshRatePrecision, Mode... modes) {
+            boolean found =
+                    Arrays.stream(modes)
+                            .anyMatch(mode -> mode.isEquivalent(actual(), refreshRatePrecision));
+            if (!found) {
+                failWithActual("expected any of", Arrays.toString(modes));
             }
         }
     }
