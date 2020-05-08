@@ -27,4 +27,7 @@ java_test_host {
         "vts10",
         "general-tests",
     ],
+    required: [
+        "CtsBackupHostTestCases",
+    ],
 }
