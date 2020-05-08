@@ -110,7 +110,7 @@ public abstract class TvAppVerifierActivity extends PassFailButtons.Activity {
      * Call this to create a test step where the test automatically evaluates whether
      * an expected condition is satisfied.
      */
-    protected View createAutoItem(int stringId) {
+    public View createAutoItem(int stringId) {
         View item = mInflater.inflate(R.layout.tv_item, mItemList, false);
         TextView instructions = (TextView) item.findViewById(R.id.instructions);
         instructions.setText(stringId);
@@ -119,9 +119,21 @@ public abstract class TvAppVerifierActivity extends PassFailButtons.Activity {
     }
 
     /**
+     * Call this to create a test step where the test automatically evaluates whether
+     * an expected condition is satisfied.
+     */
+    public View createAutoItem(CharSequence instructionCharSequence) {
+        View item = mInflater.inflate(R.layout.tv_item, mItemList, false);
+        TextView instructions = (TextView) item.findViewById(R.id.instructions);
+        instructions.setText(instructionCharSequence);
+        mItemList.addView(item);
+        return item;
+    }
+
+    /**
      * Call this to create alternative choice for the previous test step.
      */
-    protected View createButtonItem(int buttonTextId, View.OnClickListener l) {
+    public View createButtonItem(int buttonTextId, View.OnClickListener l) {
         View item = mInflater.inflate(R.layout.tv_item, mItemList, false);
         Button button = (Button) item.findViewById(R.id.user_action_button);
         button.setVisibility(View.VISIBLE);
