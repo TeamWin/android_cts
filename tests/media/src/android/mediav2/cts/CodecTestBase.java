@@ -212,7 +212,10 @@ class OutputManager {
     }
 
     void saveInPTS(long pts) {
-        inpPtsList.add(pts);
+        // Add only Unique timeStamp, discarding any duplicate frame / non-display frame
+        if (!inpPtsList.contains(pts)) {
+            inpPtsList.add(pts);
+        }
     }
 
     void saveOutPTS(long pts) {
