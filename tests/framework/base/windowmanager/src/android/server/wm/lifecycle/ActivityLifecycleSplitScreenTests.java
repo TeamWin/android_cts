@@ -46,7 +46,6 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
@@ -73,7 +72,6 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         mUseTaskOrganizer = false;
     }
 
-    @FlakyTest(bugId = 137329632)
     @Test
     public void testResumedWhenRecreatedFromInNonFocusedStack() throws Exception {
         // Launch first activity
