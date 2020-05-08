@@ -40,10 +40,6 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class BasicAdapterTest extends AndroidTestCase {
     private static final String TAG = "BasicAdapterTest";
-    private static final int DISABLE_TIMEOUT = 8000;  // ms timeout for BT disable
-    private static final int ENABLE_TIMEOUT = 10000;  // ms timeout for BT enable
-    private static final int POLL_TIME = 400;         // ms to poll BT state
-    private static final int CHECK_WAIT_TIME = 1000;  // ms to wait before enable/disable
     private static final int SET_NAME_TIMEOUT = 5000; // ms timeout for setting adapter name
 
     private boolean mHasBluetooth;
@@ -145,8 +141,8 @@ public class BasicAdapterTest extends AndroidTestCase {
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 
         for (int i=0; i<5; i++) {
-            disable(adapter);
-            enable(adapter);
+            assertTrue(TestUtils.disableAdapter(adapter, mContext));
+            assertTrue(TestUtils.enableAdapter(adapter, mContext));
         }
     }
 
@@ -156,7 +152,7 @@ public class BasicAdapterTest extends AndroidTestCase {
             return;
         }
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        enable(adapter);
+        assertTrue(TestUtils.enableAdapter(adapter, mContext));
 
         assertTrue(BluetoothAdapter.checkBluetoothAddress(adapter.getAddress()));
     }
@@ -167,7 +163,7 @@ public class BasicAdapterTest extends AndroidTestCase {
             return;
         }
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        enable(adapter);
+        assertTrue(TestUtils.enableAdapter(adapter, mContext));
 
         String name = adapter.getName();
         assertNotNull(name);
@@ -192,7 +188,7 @@ public class BasicAdapterTest extends AndroidTestCase {
             return;
         }
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        enable(adapter);
+        assertTrue(TestUtils.enableAdapter(adapter, mContext));
 
         Set<BluetoothDevice> devices = adapter.getBondedDevices();
         assertNotNull(devices);
@@ -208,7 +204,7 @@ public class BasicAdapterTest extends AndroidTestCase {
         }
         // getRemoteDevice() should work even with Bluetooth disabled
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        disable(adapter);
+        assertTrue(TestUtils.disableAdapter(adapter, mContext));
 
         // test bad addresses
         try {
@@ -244,78 +240,12 @@ public class BasicAdapterTest extends AndroidTestCase {
             return;
         }
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        enable(adapter);
+        assertTrue(TestUtils.enableAdapter(adapter, mContext));
 
         BluetoothServerSocket socket = adapter.listenUsingRfcommWithServiceRecord(
                 "test", UUID.randomUUID());
         assertNotNull(socket);
         socket.close();
-    }
-
-    /** Helper to turn BT off.
-     * This method will either fail on an assert, or return with BT turned off.
-     * Behavior of getState() and isEnabled() are validated along the way.
-     */
-    private void disable(BluetoothAdapter adapter) {
-        sleep(CHECK_WAIT_TIME);
-        if (adapter.getState() == BluetoothAdapter.STATE_OFF) {
-            assertFalse(adapter.isEnabled());
-            return;
-        }
-
-        assertEquals(BluetoothAdapter.STATE_ON, adapter.getState());
-        assertTrue(adapter.isEnabled());
-        adapter.disable();
-        boolean turnOff = false;
-        for (int i=0; i<DISABLE_TIMEOUT/POLL_TIME; i++) {
-            sleep(POLL_TIME);
-            int state = adapter.getState();
-            switch (state) {
-            case BluetoothAdapter.STATE_OFF:
-                assertFalse(adapter.isEnabled());
-                return;
-            default:
-                if (state != BluetoothAdapter.STATE_ON || turnOff) {
-                    assertEquals(BluetoothAdapter.STATE_TURNING_OFF, state);
-                    turnOff = true;
-                }
-                break;
-            }
-        }
-        fail("disable() timeout");
-    }
-
-    /** Helper to turn BT on.
-     * This method will either fail on an assert, or return with BT turned on.
-     * Behavior of getState() and isEnabled() are validated along the way.
-     */
-    private void enable(BluetoothAdapter adapter) {
-        sleep(CHECK_WAIT_TIME);
-        if (adapter.getState() == BluetoothAdapter.STATE_ON) {
-            assertTrue(adapter.isEnabled());
-            return;
-        }
-
-        assertEquals(BluetoothAdapter.STATE_OFF, adapter.getState());
-        assertFalse(adapter.isEnabled());
-        adapter.enable();
-        boolean turnOn = false;
-        for (int i=0; i<ENABLE_TIMEOUT/POLL_TIME; i++) {
-            sleep(POLL_TIME);
-            int state = adapter.getState();
-            switch (state) {
-            case BluetoothAdapter.STATE_ON:
-                assertTrue(adapter.isEnabled());
-                return;
-            default:
-                if (state != BluetoothAdapter.STATE_OFF || turnOn) {
-                    assertEquals(BluetoothAdapter.STATE_TURNING_ON, state);
-                    turnOn = true;
-                }
-                break;
-            }
-        }
-        fail("enable() timeout");
     }
 
     private static void sleep(long t) {
