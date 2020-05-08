@@ -30,7 +30,7 @@ public final class Watermark {
     /**
      * A utility class that represents A8R8G8B bitmap as an integer array.
      */
-    private final static class BitmapImage {
+    private static final class BitmapImage {
         @NonNull
         private final int[] mPixels;
         private final int mWidth;
