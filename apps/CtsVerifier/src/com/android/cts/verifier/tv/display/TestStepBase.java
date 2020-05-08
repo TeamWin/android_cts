@@ -19,74 +19,56 @@ package com.android.cts.verifier.tv.display;
 import android.view.View;
 import android.widget.TextView;
 
-import androidx.annotation.StringRes;
-
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 import com.google.common.truth.FailureStrategy;
 import com.google.common.truth.StandardSubjectBuilder;
 
-import java.util.Arrays;
-
-/**
- * Encapsulates the logic of a test step, which displays a human instructions and a button to start
- * the test.
- */
+/** Encapsulates the logic of a test step, which displays human instructions. */
 public abstract class TestStepBase {
-    final protected TvAppVerifierActivity mContext;
-    protected View mViewItem;
+    protected final TvAppVerifierActivity mContext;
+
     private boolean mHasPassed;
     private Runnable mOnDoneListener;
     private String mFailureDetails;
     private StandardSubjectBuilder mAsserter;
+    private View mInstructionView;
+    private String mInstructionText;
 
     /**
      * Constructs a test step containing instruction to the user and a button.
      *
      * @param context The test activity which this test step is part of.
+     * @param instructionText The text of the test instruction visible to the user.
      */
-    public TestStepBase(TvAppVerifierActivity context) {
+    public TestStepBase(TvAppVerifierActivity context, String instructionText) {
         this.mContext = context;
 
-        FailureStrategy failureStrategy = assertionError -> {
-            appendFailureDetails(assertionError.getMessage());
-            mHasPassed = false;
-        };
+        FailureStrategy failureStrategy =
+                assertionError -> {
+                    appendFailureDetails(assertionError.getMessage());
+                    mHasPassed = false;
+                };
         mAsserter = StandardSubjectBuilder.forCustomFailureStrategy(failureStrategy);
         mHasPassed = true;
+        mInstructionText = instructionText;
     }
 
     public boolean hasPassed() {
         return mHasPassed;
     }
 
-    /**
-     * Creates the View for this test step in the context {@link TvAppVerifierActivity}.
-     */
+    /** Creates the View for this test step in the context {@link TvAppVerifierActivity}. */
     public void createUiElements() {
-        mViewItem = mContext.createUserItem(
-                getInstructionText(),
-                getButtonStringId(),
-                (View view) -> {
-                    appendInfoDetails("Running test step %s...", getStepName());
-                    onButtonClickRunTest();
-                });
+        mInstructionView = mContext.createAutoItem(mInstructionText);
     }
 
-    /**
-     * Enables the button of this test step.
-     */
-    public void enableButton() {
-        TvAppVerifierActivity.setButtonEnabled(mViewItem, true);
-    }
+    /** Enables interactivity for this test step - for example, it enables buttons. */
+    public abstract void enableInteractivity();
 
-    /**
-     * Disables the button of this test step.
-     */
-    public void disableButton() {
-        TvAppVerifierActivity.setButtonEnabled(mViewItem, false);
-    }
+    /** Disables interactivity for this test step - for example, it disables buttons. */
+    public abstract void disableInteractivity();
 
     public void setOnDoneListener(Runnable listener) {
         mOnDoneListener = listener;
@@ -96,25 +78,8 @@ public abstract class TestStepBase {
         return mFailureDetails;
     }
 
-    /**
-     * Human readable name of this test step to be output to logs.
-     */
-    protected abstract String getStepName();
-
-    protected abstract void onButtonClickRunTest();
-
-    /**
-     * Returns the text of the test instruction visible to the user.
-     */
-    protected abstract String getInstructionText();
-
-    /**
-     * Returns id of string resource containing the text of the button.
-     */
-    protected abstract @StringRes int getButtonStringId();
-
     protected void done() {
-        TvAppVerifierActivity.setPassState(mViewItem, mHasPassed);
+        TvAppVerifierActivity.setPassState(mInstructionView, mHasPassed);
         if (mOnDoneListener != null) {
             mOnDoneListener.run();
         }
@@ -133,7 +98,8 @@ public abstract class TestStepBase {
     protected void appendFailureDetails(String failure) {
         String details = String.format("Failure: %s", failure);
         appendDetails(details);
-        appendMessageToView(mViewItem, details);
+
+        appendMessageToView(mInstructionView, details);
     }
 
     protected void appendDetails(String details) {
