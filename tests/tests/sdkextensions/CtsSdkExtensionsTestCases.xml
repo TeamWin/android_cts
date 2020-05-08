@@ -26,4 +26,12 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.os.ext.cts" />
     </test>
+
+    <!-- Run CtsSdkExtensionsTestCases when "com.google.android.sdkext" is on device.
+      Otherwise skip. The logic only applies to situations when CtsSdkExtensionsTestCasesdoes
+      is triggered via mts-tradefed. It is disabled for all other *TS.
+    -->
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.MainlineTestModuleController">
+        <option name="mainline-module-package-name" value="com.google.android.sdkext" />
+    </object>
 </configuration>
