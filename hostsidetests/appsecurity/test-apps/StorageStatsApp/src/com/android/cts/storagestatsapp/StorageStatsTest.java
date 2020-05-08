@@ -216,6 +216,20 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
         final UserHandle user = android.os.Process.myUserHandle();
 
+        // Since scoped storage, apps can't access the package-specific Android/
+        // directories anymore. So we compute the current size, and assume the
+        // delta is in Android/*, which unfortunately may have data from
+        // test APKs that aren't cleaned up properly.
+        //
+        // Then, when we compute the new size and compare it with the stats,
+        // we expect the same delta
+        final long manualSizeBefore = getSizeManual(
+                Environment.getExternalStorageDirectory(), true);
+        final long statsSizeBefore = stats.queryExternalStatsForUser(
+                UUID_DEFAULT, user).getTotalBytes();
+
+        final long deltaBefore = statsSizeBefore - manualSizeBefore;
+
         useSpace(getContext());
 
         final File top = Environment.getExternalStorageDirectory();
@@ -240,7 +254,8 @@ public class StorageStatsTest extends InstrumentationTestCase {
         manualSize += getSizeManual(getContext().getExternalCacheDir(), true);
         final long statsSize = stats.queryExternalStatsForUser(UUID_DEFAULT, user).getTotalBytes();
 
-        assertMostlyEquals(manualSize, statsSize);
+        final long deltaAfter = statsSize - manualSize;
+        assertMostlyEquals(deltaBefore, deltaAfter);
     }
 
     public void testVerifyCategory() throws Exception {
