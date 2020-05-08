@@ -50,6 +50,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_28 = "$APK_DIRECTORY/CtsUsePermissionApp28.apk"
         const val APP_APK_PATH_29 = "$APK_DIRECTORY/CtsUsePermissionApp29.apk"
         const val APP_APK_PATH_LATEST = "$APK_DIRECTORY/CtsUsePermissionAppLatest.apk"
+        const val APP_APK_PATH_LATEST_WITH_BACKGROUND =
+                "$APK_DIRECTORY/CtsUsePermissionAppLatestWithBackground.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
     }
 
@@ -266,8 +268,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected fun clickPermissionRequestSettingsLinkAndAllowAlways() {
         clickPermissionRequestSettingsLink()
-        click(By.res("com.android.permissioncontroller:id/allow_always_radio_button"))
+        clickAllowAlwaysInSettings()
         pressBack()
+    }
+
+    protected fun clickAllowAlwaysInSettings() {
+        click(By.res("com.android.permissioncontroller:id/allow_always_radio_button"))
     }
 
     protected fun clickPermissionRequestAllowForegroundButton() =
