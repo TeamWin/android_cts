@@ -51,8 +51,8 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
 
     OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
 
-    Button mHeadsetPortYes;
-    Button mHeadsetPortNo;
+    Button mWiredPortYes;
+    Button mWiredPortNo;
 
     Button mLoopbackPlugReady;
     Button mTestButton;
@@ -106,19 +106,19 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
                     Log.i(TAG, "audio loopback test");
                     startAudioTest();
                     break;
-                case R.id.audio_general_headset_yes:
-                    Log.i(TAG, "User confirms Headset Port existence");
+                case R.id.audio_wired_yes:
+                    Log.i(TAG, "User confirms wired Port existence");
                     mLoopbackPlugReady.setEnabled(true);
                     recordHeasetPortFound(true);
-                    mHeadsetPortYes.setEnabled(false);
-                    mHeadsetPortNo.setEnabled(false);
+                    mWiredPortYes.setEnabled(false);
+                    mWiredPortNo.setEnabled(false);
                     break;
-                case R.id.audio_general_headset_no:
-                    Log.i(TAG, "User denies Headset Port existence");
+                case R.id.audio_wired_no:
+                    Log.i(TAG, "User denies wired Port existence");
                     recordHeasetPortFound(false);
                     getPassButton().setEnabled(true);
-                    mHeadsetPortYes.setEnabled(false);
-                    mHeadsetPortNo.setEnabled(false);
+                    mWiredPortYes.setEnabled(false);
+                    mWiredPortNo.setEnabled(false);
                     break;
             }
         }
@@ -129,10 +129,10 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_frequency_line_activity);
 
-        mHeadsetPortYes = (Button)findViewById(R.id.audio_general_headset_yes);
-        mHeadsetPortYes.setOnClickListener(mBtnClickListener);
-        mHeadsetPortNo = (Button)findViewById(R.id.audio_general_headset_no);
-        mHeadsetPortNo.setOnClickListener(mBtnClickListener);
+        mWiredPortYes = (Button)findViewById(R.id.audio_wired_yes);
+        mWiredPortYes.setOnClickListener(mBtnClickListener);
+        mWiredPortNo = (Button)findViewById(R.id.audio_wired_no);
+        mWiredPortNo.setOnClickListener(mBtnClickListener);
 
         mLoopbackPlugReady = (Button)findViewById(R.id.audio_frequency_line_plug_ready_btn);
         mLoopbackPlugReady.setOnClickListener(mBtnClickListener);
