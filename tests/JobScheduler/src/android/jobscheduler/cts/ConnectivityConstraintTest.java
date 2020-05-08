@@ -497,6 +497,9 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
             if (enable) {
                 SystemUtil.runShellCommand("svc wifi enable");
+                //noinspection deprecation
+                SystemUtil.runWithShellPermissionIdentity(wm::reconnect,
+                        android.Manifest.permission.NETWORK_SETTINGS);
             } else {
                 SystemUtil.runShellCommand("svc wifi disable");
             }

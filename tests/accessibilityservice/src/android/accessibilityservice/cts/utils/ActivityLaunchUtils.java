@@ -17,7 +17,6 @@ package android.accessibilityservice.cts.utils;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.accessibilityservice.AccessibilityService;
@@ -31,7 +30,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Rect;
-import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.text.TextUtils;
@@ -93,7 +91,12 @@ public class ActivityLaunchUtils {
         ActivityLauncher activityLauncher = new ActivityLauncher() {
             @Override
             Activity launchActivity() {
-                return instrumentation.startActivitySync(intent, options.toBundle());
+                uiAutomation.adoptShellPermissionIdentity();
+                try {
+                    return instrumentation.startActivitySync(intent, options.toBundle());
+                } finally {
+                    uiAutomation.dropShellPermissionIdentity();
+                }
             }
         };
         return launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(instrumentation,
