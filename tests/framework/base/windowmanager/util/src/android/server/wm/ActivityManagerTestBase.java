@@ -987,6 +987,10 @@ public abstract class ActivityManagerTestBase {
         return hasDeviceFeature(FEATURE_WATCH);
     }
 
+    protected boolean isCar() {
+        return hasDeviceFeature(FEATURE_AUTOMOTIVE);
+    }
+
     protected boolean isTablet() {
         // Larger than approx 7" tablets
         return mContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
