@@ -341,8 +341,6 @@ bool CodecDecoderTest::testSimpleDecode(const char* decoder, const char* testFil
             CHECK_ERR(hasSeenError(), log, "has seen error", isPass);
             CHECK_ERR((0 == mInputCount), log, "queued 0 inputs", isPass);
             CHECK_ERR((0 == mOutputCount), log, "received 0 outputs", isPass);
-            CHECK_ERR((!mIsAudio && mInputCount != mOutputCount), log, "input cnt != output cnt",
-                      isPass);
             CHECK_ERR(loopCounter != 0 && (!ref->equals(test)), log, "output is flaky", isPass);
             CHECK_ERR(
                     loopCounter == 0 && mIsAudio && (!ref->isPtsStrictlyIncreasing(mPrevOutputPts)),
@@ -462,8 +460,6 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile) {
         CHECK_ERR(hasSeenError(), log, "has seen error", isPass);
         CHECK_ERR((0 == mInputCount), log, "queued 0 inputs", isPass);
         CHECK_ERR((0 == mOutputCount), log, "received 0 outputs", isPass);
-        CHECK_ERR((!mIsAudio && mInputCount != mOutputCount), log, "input cnt != output cnt",
-                  isPass);
         CHECK_ERR((!ref->equals(test)), log, "output is flaky", isPass);
         if (!isPass) continue;
 
@@ -483,8 +479,6 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile) {
         CHECK_ERR(hasSeenError(), log, "has seen error", isPass);
         CHECK_ERR((0 == mInputCount), log, "queued 0 inputs", isPass);
         CHECK_ERR((0 == mOutputCount), log, "received 0 outputs", isPass);
-        CHECK_ERR((!mIsAudio && mInputCount != mOutputCount), log, "input cnt != output cnt",
-                  isPass);
         CHECK_ERR((!ref->equals(test)), log, "output is flaky", isPass);
         if (validateFormat) {
             if (mIsCodecInAsyncMode ? !mAsyncHandle.hasOutputFormatChanged()
@@ -611,8 +605,6 @@ bool CodecDecoderTest::testSimpleDecodeQueueCSD(const char* decoder, const char*
                 CHECK_ERR(hasSeenError(), log, "has seen error", isPass);
                 CHECK_ERR((0 == mInputCount), log, "queued 0 inputs", isPass);
                 CHECK_ERR((0 == mOutputCount), log, "received 0 outputs", isPass);
-                CHECK_ERR((!mIsAudio && mInputCount != mOutputCount), log,
-                          "input cnt != output cnt", isPass);
                 CHECK_ERR(loopCounter != 0 && (!ref->equals(test)), log, "output is flaky", isPass);
                 CHECK_ERR(loopCounter == 0 && mIsAudio &&
                           (!ref->isPtsStrictlyIncreasing(mPrevOutputPts)),
