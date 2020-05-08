@@ -26,7 +26,6 @@ import java.io.IOException;
 public class LeL2capSocketTest extends AndroidTestCase {
 
     private static final int NUM_ITERATIONS_FOR_REPEATED_TEST = 100;
-    private static final int ADAPTER_TOGGLE_TIMEOUT_MS = 4000;
 
     private BluetoothAdapter mAdapter = null;
 
@@ -40,12 +39,8 @@ public class LeL2capSocketTest extends AndroidTestCase {
         assertNotNull("BluetoothAdapter.getDefaultAdapter() returned null. "
                 + "Does this device have a Bluetooth adapter?", mAdapter);
         if (!mAdapter.isEnabled()) {
-            // Note: It's not reliable to listen for Adapter.ACTION_STATE_CHANGED broadcast and
-            // check bluetooth state per comments from BluetoothLeScanTest.java
-            mAdapter.enable();
-            TestUtils.sleep(ADAPTER_TOGGLE_TIMEOUT_MS);
+            assertTrue(TestUtils.enableAdapter(mAdapter, mContext));
         }
-        assertTrue("Bluetooth failed to be enabled", mAdapter.isEnabled());
     }
 
     @Override
@@ -53,9 +48,7 @@ public class LeL2capSocketTest extends AndroidTestCase {
         if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
-        mAdapter.disable();
-        TestUtils.sleep(ADAPTER_TOGGLE_TIMEOUT_MS);
-        assertFalse("Bluetooth failed to be disabled", mAdapter.isEnabled());
+        assertTrue(TestUtils.disableAdapter(mAdapter, mContext));
         mAdapter = null;
         super.tearDown();
     }
