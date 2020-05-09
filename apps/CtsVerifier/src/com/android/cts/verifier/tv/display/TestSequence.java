@@ -40,7 +40,7 @@ public class TestSequence {
         // After a step is completed we enable the button of the next step.
         for (int i = 0; i < steps.size() - 1; i++) {
             final int next = i + 1;
-            steps.get(i).setOnDoneListener(() -> steps.get(next).enableButton());
+            steps.get(i).setOnDoneListener(() -> steps.get(next).enableInteractivity());
         }
 
         // When the last step is done, mark the sequence as done.
@@ -48,7 +48,7 @@ public class TestSequence {
                 .setOnDoneListener(() -> onAllStepsDone());
 
         // Enable the button of the first test step so the user can start it.
-        steps.get(0).enableButton();
+        steps.get(0).enableInteractivity();
     }
 
     public String getFailureDetails() {

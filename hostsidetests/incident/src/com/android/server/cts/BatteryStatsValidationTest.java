@@ -43,7 +43,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     // These constants are those in PackageManager.
     public static final String FEATURE_BLUETOOTH_LE = "android.hardware.bluetooth_le";
     public static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
-    public static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
 
     private static final int STATE_TIME_TOP_INDEX = 4;
     private static final int STATE_TIME_FOREGROUND_SERVICE_INDEX = 5;
@@ -62,7 +61,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     public static final String KEY_ACTION = "action";
     public static final String ACTION_BLE_SCAN_OPTIMIZED = "action.ble_scan_optimized";
     public static final String ACTION_BLE_SCAN_UNOPTIMIZED = "action.ble_scan_unoptimized";
-    public static final String ACTION_GPS = "action.gps";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_SLEEP_WHILE_BACKGROUND = "action.sleep_background";
@@ -343,45 +341,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertValueRange("blem", "", 14, 1*minTime, 1*maxTime); // unoptimizedScanMaxTimeBg
 
         batteryOffScreenOn();
-    }
-
-    public void testGpsUpdates() throws Exception {
-        if (noBattery() || !hasFeature(FEATURE_LOCATION_GPS, true)) {
-            return;
-        }
-
-        final String gpsSensorNumber = "-10000";
-
-        batteryOnScreenOff();
-        installPackage(DEVICE_SIDE_TEST_APK, true);
-        // Whitelist this app against background location request throttling
-        String origWhitelist = getDevice().executeShellCommand(
-                "settings get global location_background_throttle_package_whitelist").trim();
-        getDevice().executeShellCommand(String.format(
-                "settings put global location_background_throttle_package_whitelist %s",
-                DEVICE_SIDE_TEST_PACKAGE));
-
-        try {
-            // Background test.
-            executeBackground(ACTION_GPS, 60_000);
-            assertValueRange("sr", gpsSensorNumber, 6, 1, 1); // count
-            assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
-
-            // Foreground test.
-            executeForeground(ACTION_GPS, 60_000);
-            assertValueRange("sr", gpsSensorNumber, 6, 2, 2); // count
-            assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
-        } finally {
-            if ("null".equals(origWhitelist) || "".equals(origWhitelist)) {
-                getDevice().executeShellCommand(
-                        "settings delete global location_background_throttle_package_whitelist");
-            } else {
-                getDevice().executeShellCommand(String.format(
-                        "settings put global location_background_throttle_package_whitelist %s",
-                        origWhitelist));
-            }
-            batteryOffScreenOn();
-        }
     }
 
     public void testJobBgVsFg() throws Exception {

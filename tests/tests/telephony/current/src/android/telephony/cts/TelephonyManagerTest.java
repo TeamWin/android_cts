@@ -2830,6 +2830,19 @@ public class TelephonyManagerTest {
                 TelephonyManager.SIM_STATE_LOADED).contains(simApplicationState));
     }
 
+    @Test
+    public void testGetSimCardState() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        int simCardState = mTelephonyManager.getSimCardState();
+        assertTrue(Arrays.asList(TelephonyManager.SIM_STATE_UNKNOWN,
+                TelephonyManager.SIM_STATE_ABSENT,
+                TelephonyManager.SIM_STATE_CARD_IO_ERROR,
+                TelephonyManager.SIM_STATE_CARD_RESTRICTED,
+                TelephonyManager.SIM_STATE_PRESENT).contains(simCardState));
+    }
+
 
     private boolean isDataEnabled() {
         return ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
