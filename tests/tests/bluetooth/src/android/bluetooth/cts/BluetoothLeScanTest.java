@@ -64,7 +64,6 @@ public class BluetoothLeScanTest extends AndroidTestCase {
     private static final int SCAN_DURATION_MILLIS = 10000;
     private static final int BATCH_SCAN_REPORT_DELAY_MILLIS = 20000;
     private static final int SCAN_STOP_TIMEOUT = 2000;
-    private static final int ADAPTER_ENABLE_TIMEOUT = 3000;
     private CountDownLatch mFlushBatchScanLatch;
 
     private BluetoothAdapter mBluetoothAdapter;
@@ -81,10 +80,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
                 Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
         if (!mBluetoothAdapter.isEnabled()) {
-            // Note it's not reliable to listen for Adapter.ACTION_STATE_CHANGED broadcast and check
-            // bluetooth state.
-            mBluetoothAdapter.enable();
-            TestUtils.sleep(ADAPTER_ENABLE_TIMEOUT);
+            assertTrue(TestUtils.enableAdapter(mBluetoothAdapter, mContext));
         }
         mScanner = mBluetoothAdapter.getBluetoothLeScanner();
         mLocationOn = TestUtils.isLocationOn(getContext());
@@ -105,8 +101,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         if (!mLocationOn) {
             TestUtils.disableLocation(getContext());
         }
-        mBluetoothAdapter.disable();
-        TestUtils.sleep(ADAPTER_ENABLE_TIMEOUT);
+        assertTrue(TestUtils.disableAdapter(mBluetoothAdapter, mContext));
     }
 
     /**
