@@ -92,7 +92,12 @@ class OutputManager {
     uint32_t adler32(const uint8_t* input, int offset, int len);
 
   public:
-    void saveInPTS(int64_t pts) { inpPtsArray.push_back(pts); }
+    void saveInPTS(int64_t pts) {
+        // Add only Unique timeStamp, discarding any duplicate frame / non-display frame
+        if(0 == std::count(inpPtsArray.begin(), inpPtsArray.end(), pts)) {
+            inpPtsArray.push_back(pts);
+        }
+    }
     void saveOutPTS(int64_t pts) { outPtsArray.push_back(pts); }
     bool isPtsStrictlyIncreasing(int64_t lastPts);
     bool isOutPtsListIdenticalToInpPtsList(bool requireSorting);

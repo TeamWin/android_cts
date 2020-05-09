@@ -4562,6 +4562,9 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!-- HDR Capabilities test -->
     <string name="tv_hdr_capabilities_test">HDR Capabilities Test</string>
+    <string name="tv_hdr_capabilities_test_step_hdr_display">HDR Display</string>
+    <string name="tv_hdr_capabilities_test_step_no_display">No Display</string>
+    <string name="tv_hdr_capabilities_test_step_non_hdr_display">Non HDR Display</string>
     <string name="tv_hdr_capabilities_test_info">This test checks if
         Display.getHdrCapabilities correctly reports the HDR capabilities of the display.
     </string>
@@ -4595,7 +4598,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="tv_display_modes_connect_1080p_display">
         Connect a 1080p display and press the "%s" button, below.
     </string>
-
+    <string name="tv_panel_display_modes_reported_are_supported">
+        The supported display modes are:\n%s\n\nAre all of the above display modes supported by the hardware?
+    </string>
+    <string name="tv_panel_display_modes_supported_are_reported">
+        Are there other modes which are supported by the hardware, but are not listed above?
+    </string>
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>
 
@@ -4781,9 +4789,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="midiFailedJNILbl">Failed - JNI Error.</string>
 
     <!-- Audio general text -->
-    <string name="audio_general_headset_port_exists">Does this device have a headset port?</string>
-    <string name="audio_general_headset_no">No</string>
-    <string name="audio_general_headset_yes">Yes</string>
+    <string name="audio_wired_exists">Does this device support wired USB or Analog audio peripherals?</string>
+    <string name="audio_wired_no">No</string>
+    <string name="audio_wired_yes">Yes</string>
     <string name="audio_general_deficiency_found">WARNING: Some results show potential deficiencies on the system.
     Please consider addressing them for a future release.</string>
     <string name="audio_general_test_passed">Test Result: Successful</string>

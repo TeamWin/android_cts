@@ -39,7 +39,7 @@ import android.widget.TextView;
 /**
  * Tests AudioTrack and AudioRecord (re)Routing messages.
  */
-public class AudioOutputRoutingNotificationsActivity extends HeadsetHonorSystemActivity {
+public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBaseActivity {
     private static final String TAG = "AudioOutputRoutingNotificationsActivity";
 
     Context mContext;
