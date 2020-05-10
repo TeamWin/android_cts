@@ -42,11 +42,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class TestWebView {
 
     private static final class Impl extends WebView {
-        private final static String MY_HTML =
+        private static final String MY_HTML =
                 "<html><body>Editor: <input type='text' name='testInput'></body></html>";
         private UiDevice mUiDevice;
 
-        public Impl(Context context, UiDevice uiDevice) {
+        Impl(Context context, UiDevice uiDevice) {
             super(context);
             mUiDevice = uiDevice;
         }
