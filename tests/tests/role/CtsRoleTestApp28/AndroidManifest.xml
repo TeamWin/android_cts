@@ -22,8 +22,9 @@
 
     <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28"/>
 
-    <application
-        android:label="CtsRoleTestApp28">
+    <uses-permission android:name="android.permission.SEND_SMS" />
+
+    <application android:label="CtsRoleTestApp28">
 
         <activity
             android:name=".ChangeDefaultDialerActivity"
