@@ -40,4 +40,5 @@ cc_test_library {
         "-Wno-deprecated-declarations",
     ],
     gtest: false,
+    sdk_version: "current",
 }
