@@ -46,7 +46,6 @@ android_test {
     ],
     jni_libs: [
         "libaudio_jni",
-        "libc++",
         "libctscodecutils_jni",
         "libctsimagereader_jni",
         "libctsmediadrm_jni",
@@ -67,6 +66,7 @@ android_test {
     // This test uses private APIs
     //sdk_version: "current",
     platform_apis: true,
+    jni_uses_sdk_apis: true,
     libs: [
         "org.apache.http.legacy",
         "android.test.base.stubs",
