@@ -29,9 +29,11 @@ import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.ThrowingSupplier
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -62,6 +64,7 @@ class RoleControllerManagerTest {
 
     @Test
     fun appIsVisibleForRole() {
+        assumeRoleIsVisible()
         assertAppIsVisibleForRole(APP_PACKAGE_NAME, ROLE_NAME, true)
     }
 
@@ -100,32 +103,29 @@ class RoleControllerManagerTest {
         }
     }
 
-    @Test
-    fun roleIsVisible() {
-        assertRoleIsVisible(ROLE_NAME, true)
+    private fun assumeRoleIsVisible() {
+        assumeTrue(isRoleVisible(ROLE_NAME))
     }
 
     @Test
     fun systemGalleryRoleIsNotVisible() {
         // The system gallery role should always be hidden.
-        assertRoleIsVisible(SYSTEM_GALLERY_ROLE_NAME, false)
+        assertThat(isRoleVisible(SYSTEM_GALLERY_ROLE_NAME)).isEqualTo(false)
     }
 
     @Test
     fun invalidRoleIsNotVisible() {
-        assertRoleIsVisible("invalid", false)
+        assertThat(isRoleVisible("invalid")).isEqualTo(false)
     }
 
-    private fun assertRoleIsVisible(roleName: String, expectedIsVisible: Boolean) {
-        runWithShellPermissionIdentity {
+    private fun isRoleVisible(roleName: String): Boolean =
+        runWithShellPermissionIdentity(ThrowingSupplier {
             val future = CompletableFuture<Boolean>()
             roleControllerManager.isRoleVisible(
                 roleName, context.mainExecutor, Consumer { future.complete(it) }
             )
-            val isVisible = future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
-            assertThat(isVisible).isEqualTo(expectedIsVisible)
-        }
-    }
+            future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+        })
 
     private fun installPackage(apkPath: String) {
         assertEquals(
