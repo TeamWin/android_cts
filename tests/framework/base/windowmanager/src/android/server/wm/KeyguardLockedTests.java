@@ -33,9 +33,12 @@ import static android.server.wm.app.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGU
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
@@ -52,12 +55,14 @@ import android.widget.LinearLayout;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
+
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
-import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
@@ -104,8 +109,14 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             keyguardLock.disableKeyguard();
 
             lockScreenSession.setLockCredential();
+            lockScreenSession.gotoKeyguard();
+
             mWmState.waitForKeyguardShowingAndNotOccluded();
             mWmState.assertKeyguardShowingAndNotOccluded();
+            assertTrue(mKeyguardManager.isKeyguardLocked());
+            assertTrue(mKeyguardManager.isDeviceLocked());
+            assertTrue(mKeyguardManager.isDeviceSecure());
+            assertTrue(mKeyguardManager.isKeyguardSecure());
         } finally {
             keyguardLock.reenableKeyguard();
         }
@@ -183,6 +194,9 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardActivity_method_cancelled() {
+        // Pressing the back button does not cancel Keyguard in AAOS.
+        assumeFalse(isCar());
+
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.setLockCredential();
         separateTestJournal();
