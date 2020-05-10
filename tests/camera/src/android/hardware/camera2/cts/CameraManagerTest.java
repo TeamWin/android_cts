@@ -56,8 +56,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -79,6 +81,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
     private Handler mHandler;
     private BlockingStateCallback mCameraListener;
     private CameraErrorCollector mCollector;
+    private Set<Set<String>> mConcurrentCameraIdCombinations;
 
     /** Load validation jni on initialization. */
     static {
@@ -106,6 +109,8 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
         mCollector = new CameraErrorCollector();
+        mConcurrentCameraIdCombinations =
+                CameraTestUtils.getConcurrentCameraIds(mCameraManager, mAdoptShellPerm);
     }
 
     @Override
@@ -160,10 +165,12 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
          * must be matched system features.
          */
         boolean externalCameraConnected = false;
+        Map<String, Integer> lensFacingMap = new HashMap<String, Integer>();
         for (int i = 0; i < ids.length; i++) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
             assertNotNull("Can't get camera characteristics for camera " + ids[i], props);
             Integer lensFacing = props.get(CameraCharacteristics.LENS_FACING);
+            lensFacingMap.put(ids[i], lensFacing);
             assertNotNull("Can't get lens facing info", lensFacing);
             if (lensFacing == CameraCharacteristics.LENS_FACING_FRONT) {
                 assertTrue("System doesn't have front camera feature",
@@ -198,6 +205,38 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
             || mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
             || mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
             || mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_EXTERNAL));
+
+        boolean frontBackAdvertised =
+                mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_CONCURRENT);
+
+        boolean frontBackCombinationFound = false;
+        // Go through all combinations and see that at least one combination has a front + back
+        // camera.
+        for (Set<String> cameraIdCombination : mConcurrentCameraIdCombinations) {
+            boolean frontFacingFound = false, backFacingFound = false;
+            for (String cameraId : cameraIdCombination) {
+                Integer lensFacing = lensFacingMap.get(cameraId);
+                if (lensFacing == CameraCharacteristics.LENS_FACING_FRONT) {
+                    frontFacingFound = true;
+                } else if (lensFacing == CameraCharacteristics.LENS_FACING_BACK) {
+                    backFacingFound = true;
+                }
+                if (frontFacingFound && backFacingFound) {
+                    frontBackCombinationFound = true;
+                    break;
+                }
+            }
+            if (frontBackCombinationFound) {
+                break;
+            }
+        }
+
+        if(mCameraIdsUnderTest.length > 0) {
+            assertTrue("System camera feature FEATURE_CAMERA_CONCURRENT = " + frontBackAdvertised +
+                    " and device actually having a front back combination which can operate " +
+                    "concurrently = " + frontBackCombinationFound +  " do not match",
+                    frontBackAdvertised == frontBackCombinationFound);
+        }
     }
 
     // Test: that properties can be queried from each device, without exceptions.
