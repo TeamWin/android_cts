@@ -71,12 +71,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
     private static final long MINUTE = 1000 * 60;
     private static final int TIMEOUT_MILLIS = 15000;
 
-    // The URL needs to return >61KB of data, since the tagged bytes are compared to total bytes
-    // and they need to be within +/-10% of each other. There is a ~6.1KB constant difference
-    // between the total and the tagged byte counts.
-    // This URL in particular was chosen, as it is accessible from inside PRoC, and is not blocked
-    // by our partners' firewalls.
-    private static final String CHECK_CONNECTIVITY_URL = "https://developer.android.com/guide";
+    private static final String CHECK_CONNECTIVITY_URL = "http://www.265.com/";
     private static final String CHECK_CALLBACK_URL = CHECK_CONNECTIVITY_URL;
 
     private static final int NETWORK_TAG = 0xf00d;
