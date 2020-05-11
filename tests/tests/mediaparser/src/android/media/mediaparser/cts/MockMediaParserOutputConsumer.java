@@ -38,14 +38,31 @@ import java.util.ArrayList;
 
 public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer {
 
+    private final boolean mUsingInBandCryptoInfo;
     private final FakeExtractorOutput mFakeExtractorOutput;
     private final ArrayList<TrackOutput> mTrackOutputs;
 
-    private MediaParser.SeekMap mSeekMap;
+    @Nullable private MediaParser.SeekMap mSeekMap;
+    private int mCompletedSampleCount;
+    @Nullable private MediaCodec.CryptoInfo mLastOutputCryptoInfo;
 
-    public MockMediaParserOutputConsumer(FakeExtractorOutput fakeExtractorOutput) {
-        mFakeExtractorOutput = fakeExtractorOutput;
+    public MockMediaParserOutputConsumer() {
+        this(/* usingInBandCryptoInfo= */ false);
+    }
+
+    public MockMediaParserOutputConsumer(boolean usingInBandCryptoInfo) {
+        mUsingInBandCryptoInfo = usingInBandCryptoInfo;
+        mFakeExtractorOutput = new FakeExtractorOutput();
         mTrackOutputs = new ArrayList<>();
+    }
+
+    public int getCompletedSampleCount() {
+        return mCompletedSampleCount;
+    }
+
+    @Nullable
+    public MediaCodec.CryptoInfo getLastOutputCryptoInfo() {
+        return mLastOutputCryptoInfo;
     }
 
     public void clearTrackOutputs() {
@@ -105,7 +122,12 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
             int flags,
             int size,
             int offset,
-            MediaCodec.CryptoInfo cryptoData) {}
+            @Nullable MediaCodec.CryptoInfo cryptoInfo) {
+        mCompletedSampleCount++;
+        if (!mUsingInBandCryptoInfo) {
+            mLastOutputCryptoInfo = cryptoInfo;
+        }
+    }
 
     // Internal methods.
 
