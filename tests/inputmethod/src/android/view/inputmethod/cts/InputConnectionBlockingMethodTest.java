@@ -62,6 +62,7 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 /**
@@ -184,35 +185,42 @@ public class InputConnectionBlockingMethodTest {
                      InstrumentationRegistry.getInstrumentation().getContext(),
                      InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                      new ImeSettings.Builder())) {
-            final ImeEventStream stream = imeSession.openEventStream();
+            final AtomicBoolean isTestRunning = new AtomicBoolean(true);
+            try {
+                final ImeEventStream stream = imeSession.openEventStream();
 
-            final String marker = getTestMarker();
-            TestActivity.startSync(activity-> {
-                final LinearLayout layout = new LinearLayout(activity);
-                layout.setOrientation(LinearLayout.VERTICAL);
-                final EditText editText = new EditText(activity) {
-                    @Override
-                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
-                        return inputConnectionWrapperProvider.apply(
-                                super.onCreateInputConnection(outAttrs));
-                    }
-                };
-                editText.setPrivateImeOptions(marker);
-                editText.setHint("editText");
-                editText.requestFocus();
+                final String marker = getTestMarker();
+                TestActivity.startSync(activity -> {
+                    final LinearLayout layout = new LinearLayout(activity);
+                    layout.setOrientation(LinearLayout.VERTICAL);
+                    final EditText editText = new EditText(activity) {
+                        @Override
+                        public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                            final InputConnection ic = super.onCreateInputConnection(outAttrs);
+                            // Fall back to the original InputConnection once the test is done.
+                            return isTestRunning.get()
+                                    ? inputConnectionWrapperProvider.apply(ic) : ic;
+                        }
+                    };
+                    editText.setPrivateImeOptions(marker);
+                    editText.setHint("editText");
+                    editText.requestFocus();
 
-                layout.addView(editText);
-                activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-                return layout;
-            });
+                    layout.addView(editText);
+                    activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                    return layout;
+                });
 
-            // Wait until the MockIme gets bound to the TestActivity.
-            expectBindInput(stream, Process.myPid(), TIMEOUT);
+                // Wait until the MockIme gets bound to the TestActivity.
+                expectBindInput(stream, Process.myPid(), TIMEOUT);
 
-            // Wait until "onStartInput" gets called for the EditText.
-            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+                // Wait until "onStartInput" gets called for the EditText.
+                expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
 
-            testProcedure.run(imeSession, stream);
+                testProcedure.run(imeSession, stream);
+            } finally {
+                isTestRunning.set(false);
+            }
         }
     }
 
