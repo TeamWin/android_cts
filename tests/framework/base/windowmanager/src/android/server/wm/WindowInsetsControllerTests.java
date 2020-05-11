@@ -19,7 +19,6 @@ package android.server.wm;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_LOW_PROFILE;
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
@@ -43,7 +42,6 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Type;
@@ -71,7 +69,6 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsControllerTests
  */
-@FlakyTest(detail = "Promote once confirmed non-flaky")
 @Presubmit
 public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
@@ -136,6 +133,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "~1% flaky")
     public void testSetSystemBarsBehavior_showBarsByTouch() throws InterruptedException {
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
@@ -330,7 +328,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         final View childWindow = new View(activity);
         getInstrumentation().runOnMainSync(() -> {
             activity.getWindowManager().addView(childWindow,
-                    new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+                    new WindowManager.LayoutParams(TYPE_APPLICATION));
             mErrorCollector.checkThat(childWindow.getWindowInsetsController(), is(notNullValue()));
         });
         getInstrumentation().waitForIdleSync();
