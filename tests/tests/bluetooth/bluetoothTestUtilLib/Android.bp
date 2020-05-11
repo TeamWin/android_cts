@@ -1,4 +1,4 @@
-// Copyright (C) 2009 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsBluetoothTestCases",
-    defaults: ["cts_defaults"],
+java_library {
+    name: "bluetooth-test-util-lib",
+
     static_libs: [
-        "ctstestrunner-axt",
-        "bluetooth-test-util-lib",
+        "junit",
     ],
-    libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
-    ],
+
     srcs: ["src/**/*.java"],
+
     sdk_version: "current",
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts10",
-        "general-tests",
-    ],
 }
