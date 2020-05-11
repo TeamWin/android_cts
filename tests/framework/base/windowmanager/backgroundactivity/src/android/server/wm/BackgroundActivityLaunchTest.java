@@ -69,6 +69,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 /**
  * This class covers all test cases for starting/blocking background activities.
@@ -212,28 +213,26 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testActivityNotBlockedwhenForegroundActivityLaunchInSameTask() throws Exception {
+    public void testActivityBroughtToTopOfTaskWhenLaunchedInTheBackground() throws Exception {
         // Start foreground activity, and foreground activity able to launch background activity
         // successfully
         Intent intent = new Intent();
         intent.setComponent(APP_A_FOREGROUND_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(LAUNCH_BACKGROUND_ACTIVITY_EXTRA, true);
-        intent.putExtra(START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA, 2000);
         mContext.startActivity(intent);
         boolean result = waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS,
                 APP_A_FOREGROUND_ACTIVITY);
         assertTrue("Not able to launch background activity", result);
         assertTaskStack(new ComponentName[]{APP_A_FOREGROUND_ACTIVITY}, APP_A_FOREGROUND_ACTIVITY);
-
-        // The foreground activity will be paused but will attempt to restart itself in onPause()
         pressHomeAndResumeAppSwitch();
+
+        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A_BACKGROUND_ACTIVITY));
 
         result = waitForActivityFocused(APP_A_FOREGROUND_ACTIVITY);
         assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
         result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertFalse("Previously foreground Activity should not be able to relaunch itself", result);
-        assertTaskStack(new ComponentName[]{APP_A_BACKGROUND_ACTIVITY, APP_A_FOREGROUND_ACTIVITY},
+        assertTaskStack(new ComponentName[] {APP_A_BACKGROUND_ACTIVITY, APP_A_FOREGROUND_ACTIVITY},
                 APP_A_FOREGROUND_ACTIVITY);
     }
 
@@ -322,13 +321,8 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
         // The activity, now in the background, will attempt to start 2 activities in quick
         // succession
-        Intent broadcastIntent = new Intent(ACTION_LAUNCH_BACKGROUND_ACTIVITIES);
-        Intent bgActivity1 = new Intent();
-        bgActivity1.setComponent(APP_A_BACKGROUND_ACTIVITY);
-        Intent bgActivity2 = new Intent();
-        bgActivity2.setComponent(APP_A_SECOND_BACKGROUND_ACTIVITY);
-        broadcastIntent.putExtra(LAUNCH_INTENTS_EXTRA, new Intent[]{bgActivity1, bgActivity2});
-        mContext.sendBroadcast(broadcastIntent);
+        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A_BACKGROUND_ACTIVITY,
+                APP_A_SECOND_BACKGROUND_ACTIVITY));
 
         // There should be 2 activities in the background (not focused) INITIALIZING
         result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
@@ -450,15 +444,31 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertTaskStack(new ComponentName[]{APP_A_BACKGROUND_ACTIVITY}, APP_A_BACKGROUND_ACTIVITY);
     }
 
+    private Intent getLaunchActivitiesBroadcast(ComponentName... componentNames) {
+        Intent broadcastIntent = new Intent(ACTION_LAUNCH_BACKGROUND_ACTIVITIES);
+        Intent[] intents = Stream.of(componentNames)
+                .map(c -> {
+                    Intent intent = new Intent();
+                    intent.setComponent(c);
+                    return intent;
+                })
+                .toArray(Intent[]::new);
+        broadcastIntent.putExtra(LAUNCH_INTENTS_EXTRA, intents);
+        return broadcastIntent;
+    }
+
     private void pressHomeAndResumeAppSwitch() {
         // Press home key to ensure stopAppSwitches is called because the last-stop-app-switch-time
         // is a criteria of allowing background start.
         pressHomeButton();
-        // Waiting for home visible before resuming app switches to make sure the part that sets the
-        // stop-app-switches time from pressHomeButton() doesn't race with resumeAppSwitches()
-        mWmState.waitForHomeActivityVisible();
         // Resume the stopped state (it won't affect last-stop-app-switch-time) so we don't need to
         // wait extra time to prevent the next launch from being delayed.
+        resumeAppSwitches();
+        mWmState.waitForHomeActivityVisible();
+        // Resuming app switches again after home became visible because the previous call might
+        // have raced with pressHomeButton().
+        // TODO(b/155454710): Remove previous call after making sure all the tests don't depend on
+        // the timing here.
         resumeAppSwitches();
     }
 
