@@ -100,6 +100,10 @@
                   android:resizeableActivity="true"
                   android:taskAffinity="nobody.but.SideActivity"/>
 
+        <activity android:name="android.server.wm.ActivityManagerTestBase$ConfigChangeHandlingActivity"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen" />
+
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$FirstActivity" />
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondActivity"/>
