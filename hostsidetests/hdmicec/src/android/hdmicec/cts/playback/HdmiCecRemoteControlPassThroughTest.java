@@ -62,6 +62,16 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
             new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
 
     private void lookForLog(String expectedOut) throws Exception {
+        String testString = getKeyPressLog();
+        assertThat(testString).isEqualTo(expectedOut);
+    }
+
+    private void lookForLog(String expectedOut1, String expectedOut2) throws Exception {
+        String testString = getKeyPressLog();
+        assertThat(testString).isAnyOf(expectedOut1, expectedOut2);
+    }
+
+    private String getKeyPressLog() throws Exception {
         ITestDevice device = getDevice();
         TimeUnit.SECONDS.sleep(WAIT_TIME);
         String logs = device.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
@@ -76,7 +86,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
             }
         }
         device.executeAdbCommand("logcat", "-c");
-        assertThat(testString).isEqualTo(expectedOut);
+        return testString;
     }
 
     /**
@@ -107,7 +117,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
         lookForLog("Short press KEYCODE_DPAD_RIGHT");
         hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
                 HdmiCecConstants.CEC_CONTROL_SELECT, false);
-        lookForLog("Short press KEYCODE_DPAD_CENTER");
+        lookForLog("Short press KEYCODE_DPAD_CENTER", "Short press KEYCODE_ENTER");
         hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
                 HdmiCecConstants.CEC_CONTROL_BACK, false);
         lookForLog("Short press KEYCODE_BACK");
@@ -141,7 +151,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
         lookForLog("Long press KEYCODE_DPAD_RIGHT");
         hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
                 HdmiCecConstants.CEC_CONTROL_SELECT, true);
-        lookForLog("Long press KEYCODE_DPAD_CENTER");
+        lookForLog("Long press KEYCODE_DPAD_CENTER", "Long press KEYCODE_ENTER");
         hdmiCecClient.sendUserControlPressAndRelease(CecDevice.TV, CecDevice.PLAYBACK_1,
                 HdmiCecConstants.CEC_CONTROL_BACK, true);
         lookForLog("Long press KEYCODE_BACK");
