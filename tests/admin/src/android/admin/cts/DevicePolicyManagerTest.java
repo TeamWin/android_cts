@@ -684,6 +684,18 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testSetUninstallBlocked_succeedForNotInstalledApps() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetUninstallBlocked_succeedForNotInstalledApps");
+            return;
+        }
+        ComponentName profileOwner = DeviceAdminInfoTest.getProfileOwnerComponent();
+        mDevicePolicyManager.setUninstallBlocked(profileOwner,
+                "android.admin.not.installed", true);
+        assertFalse(mDevicePolicyManager.isUninstallBlocked(profileOwner,
+              "android.admin.not.installed"));
+    }
+
     public void testSetPermittedAccessibilityServices_failIfNotProfileOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testSetPermittedAccessibilityServices_failIfNotProfileOwner");
