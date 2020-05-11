@@ -33,6 +33,8 @@ import android.app.SyncNotedAppOp
 import android.app.WallpaperManager
 import android.app.WallpaperManager.FLAG_SYSTEM
 import android.bluetooth.BluetoothManager
+import android.bluetooth.cts.BTAdapterUtils.enableAdapter as enableBTAdapter
+import android.bluetooth.cts.BTAdapterUtils.disableAdapter as disableBTAdapter
 import android.bluetooth.le.ScanCallback
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -402,16 +404,22 @@ class AppOpsLoggingTest {
         assumeTrue("Device does not support bluetooth",
                 context.packageManager.hasSystemFeature(FEATURE_BLUETOOTH))
 
-        val btManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
-                .getSystemService(BluetoothManager::class.java)
+        val testContext = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
+        val btAdapter = testContext.getSystemService(BluetoothManager::class.java).adapter
 
-        btManager.adapter.startDiscovery()
+        val wasEnabled = enableBTAdapter(btAdapter, testContext)
+        assumeTrue("Need to be able enable BT", wasEnabled)
         try {
-            assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
-            assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
-            assertThat(noted[0].second.map { it.methodName }).contains("getBTScanResults")
+            btAdapter.startDiscovery()
+            try {
+                assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
+                assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+                assertThat(noted[0].second.map { it.methodName }).contains("getBTScanResults")
+            } finally {
+                btAdapter.cancelDiscovery()
+            }
         } finally {
-            btManager.adapter.cancelDiscovery()
+            disableBTAdapter(btAdapter, testContext)
         }
     }
 
@@ -423,22 +431,29 @@ class AppOpsLoggingTest {
         assumeTrue("Device does not support LE bluetooth",
                 context.packageManager.hasSystemFeature(FEATURE_BLUETOOTH_LE))
 
-        val btScanner = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
-                .getSystemService(BluetoothManager::class.java).adapter.bluetoothLeScanner
+        val testContext = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
+        val btAdapter = testContext.getSystemService(BluetoothManager::class.java).adapter
 
-        val scanCallback = object : ScanCallback() {}
-
-        btScanner.startScan(scanCallback)
+        val wasEnabled = enableBTAdapter(btAdapter, testContext)
+        assumeTrue("Need to be able enable BT", wasEnabled)
         try {
-            eventually {
-                assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
-                assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
-                // startScan calls into the system server which then calls back into the app to
-                // start the scan. I.e. the backtrace points back to a callback from the system
-                // server
+            val btScanner = btAdapter.bluetoothLeScanner
+            val scanCallback = object : ScanCallback() {}
+
+            btScanner.startScan(scanCallback)
+            try {
+                eventually {
+                    assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
+                    assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+                    // startScan calls into the system server which then calls back into the app to
+                    // start the scan. I.e. the backtrace points back to a callback from the system
+                    // server
+                }
+            } finally {
+                btScanner.stopScan(scanCallback)
             }
         } finally {
-            btScanner.stopScan(scanCallback)
+            disableBTAdapter(btAdapter, testContext)
         }
     }
 
