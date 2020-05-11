@@ -2618,6 +2618,21 @@ public class TelephonyManagerTest {
                 tm -> tm.setOpportunisticNetworkState(isEnabled));
     }
 
+    @Test
+    public void testGetSimApplicationState() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        int simApplicationState = mTelephonyManager.getSimApplicationState();
+        assertTrue(Arrays.asList(TelephonyManager.SIM_STATE_UNKNOWN,
+                TelephonyManager.SIM_STATE_PIN_REQUIRED,
+                TelephonyManager.SIM_STATE_PUK_REQUIRED,
+                TelephonyManager.SIM_STATE_NETWORK_LOCKED,
+                TelephonyManager.SIM_STATE_NOT_READY,
+                TelephonyManager.SIM_STATE_PERM_DISABLED,
+                TelephonyManager.SIM_STATE_LOADED).contains(simApplicationState));
+    }
+
 
     private boolean isDataEnabled() {
         return ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
