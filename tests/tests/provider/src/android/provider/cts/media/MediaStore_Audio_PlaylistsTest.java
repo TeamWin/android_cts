@@ -118,6 +118,7 @@ public class MediaStore_Audio_PlaylistsTest {
         values.put(Playlists.NAME, name1);
         final Uri playlist = mContentResolver
                 .insert(MediaStore.Audio.Playlists.getContentUri(mVolumeName), values);
+        MediaStore.waitForIdle(mContentResolver);
         try (Cursor c = mContentResolver.query(playlist,
                 new String[] { Playlists.NAME, MediaColumns.DISPLAY_NAME }, null, null)) {
             assertTrue(c.moveToFirst());
@@ -128,6 +129,7 @@ public class MediaStore_Audio_PlaylistsTest {
         values.clear();
         values.put(Playlists.NAME, name2);
         mContentResolver.update(playlist, values, null);
+        MediaStore.waitForIdle(mContentResolver);
         try (Cursor c = mContentResolver.query(playlist,
                 new String[] { Playlists.NAME, MediaColumns.DISPLAY_NAME }, null, null)) {
             assertTrue(c.moveToFirst());
