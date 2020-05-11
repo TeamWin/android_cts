@@ -80,7 +80,7 @@ public class HearingAidProfileTest extends AndroidTestCase {
                 Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
 
-        if (!TestUtils.enableAdapter(mBluetoothAdapter, mContext)) {
+        if (!BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext)) {
             Log.e(TAG, "Unable to enable Bluetooth Adapter!");
             assertTrue(mBluetoothAdapter.isEnabled());
         }
@@ -99,7 +99,7 @@ public class HearingAidProfileTest extends AndroidTestCase {
     public void tearDown() {
         if (!mIsBleSupported) return;
 
-        if (!TestUtils.disableAdapter(mBluetoothAdapter, mContext)) {
+        if (!BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext)) {
             Log.e(TAG, "Unable to disable Bluetooth Adapter!");
             assertTrue(mBluetoothAdapter.isEnabled());
         }
@@ -224,10 +224,10 @@ public class HearingAidProfileTest extends AndroidTestCase {
         mContext.registerReceiver(mIntentReceiver, filter);
 
         Log.d(TAG, "test_getConnectionStateChangedIntent: disable adapter and wait");
-        assertTrue(TestUtils.disableAdapter(mBluetoothAdapter, mContext));
+        assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
 
         Log.d(TAG, "test_getConnectionStateChangedIntent: enable adapter and wait");
-        assertTrue(TestUtils.enableAdapter(mBluetoothAdapter, mContext));
+        assertTrue(BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext));
 
         int sanityCount = WAIT_FOR_INTENT_TIMEOUT_MS;
         while ((numDevices != mIntentCallbackDeviceList.size()) && (sanityCount > 0)) {
