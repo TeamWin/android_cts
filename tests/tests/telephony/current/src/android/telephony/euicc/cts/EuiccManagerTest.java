@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.telephony.TelephonyManager;
 import android.telephony.euicc.DownloadableSubscription;
+import android.telephony.euicc.EuiccCardManager;
 import android.telephony.euicc.EuiccInfo;
 import android.telephony.euicc.EuiccManager;
 
@@ -51,6 +52,7 @@ public class EuiccManagerTest {
     private static final String ACTION_DOWNLOAD_SUBSCRIPTION = "cts_download_subscription";
     private static final String ACTION_DELETE_SUBSCRIPTION = "cts_delete_subscription";
     private static final String ACTION_SWITCH_TO_SUBSCRIPTION = "cts_switch_to_subscription";
+    private static final String ACTION_ERASE_SUBSCRIPTIONS = "cts_erase_subscriptions";
     private static final String ACTION_START_TEST_RESOLUTION_ACTIVITY =
             "cts_start_test_resolution_activity";
     private static final String ACTIVATION_CODE = "1$LOCALHOST$04386-AGYFT-A74Y8-3F815";
@@ -60,6 +62,7 @@ public class EuiccManagerTest {
                     ACTION_DOWNLOAD_SUBSCRIPTION,
                     ACTION_DELETE_SUBSCRIPTION,
                     ACTION_SWITCH_TO_SUBSCRIPTION,
+                    ACTION_ERASE_SUBSCRIPTIONS,
                     ACTION_START_TEST_RESOLUTION_ACTIVITY,
             };
 
@@ -191,6 +194,37 @@ public class EuiccManagerTest {
         // call deleteSubscription()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
         mEuiccManager.switchToSubscription(4, callbackIntent);
+
+        // wait for callback
+        try {
+            countDownLatch.await(CALLBACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+
+        // verify correct result code is received
+        assertEquals(
+                EuiccManager.EMBEDDED_SUBSCRIPTION_RESULT_ERROR, mCallbackReceiver.getResultCode());
+    }
+
+    @Test
+    public void testEraseSubscriptions() {
+        // test disabled state only for now
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        // set up CountDownLatch and receiver
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        mCallbackReceiver = new CallbackReceiver(countDownLatch);
+        getContext()
+                .registerReceiver(
+                        mCallbackReceiver, new IntentFilter(ACTION_ERASE_SUBSCRIPTIONS));
+
+        // call eraseSubscriptions()
+        PendingIntent callbackIntent = createCallbackIntent(ACTION_ERASE_SUBSCRIPTIONS);
+        mEuiccManager.eraseSubscriptions(EuiccCardManager.RESET_OPTION_DELETE_OPERATIONAL_PROFILES,
+                callbackIntent);
 
         // wait for callback
         try {
