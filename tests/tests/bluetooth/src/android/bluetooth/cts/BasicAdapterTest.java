@@ -141,8 +141,8 @@ public class BasicAdapterTest extends AndroidTestCase {
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
 
         for (int i=0; i<5; i++) {
-            assertTrue(TestUtils.disableAdapter(adapter, mContext));
-            assertTrue(TestUtils.enableAdapter(adapter, mContext));
+            assertTrue(BTAdapterUtils.disableAdapter(adapter, mContext));
+            assertTrue(BTAdapterUtils.enableAdapter(adapter, mContext));
         }
     }
 
@@ -152,7 +152,7 @@ public class BasicAdapterTest extends AndroidTestCase {
             return;
         }
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        assertTrue(TestUtils.enableAdapter(adapter, mContext));
+        assertTrue(BTAdapterUtils.enableAdapter(adapter, mContext));
 
         assertTrue(BluetoothAdapter.checkBluetoothAddress(adapter.getAddress()));
     }
@@ -163,7 +163,7 @@ public class BasicAdapterTest extends AndroidTestCase {
             return;
         }
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        assertTrue(TestUtils.enableAdapter(adapter, mContext));
+        assertTrue(BTAdapterUtils.enableAdapter(adapter, mContext));
 
         String name = adapter.getName();
         assertNotNull(name);
@@ -188,7 +188,7 @@ public class BasicAdapterTest extends AndroidTestCase {
             return;
         }
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        assertTrue(TestUtils.enableAdapter(adapter, mContext));
+        assertTrue(BTAdapterUtils.enableAdapter(adapter, mContext));
 
         Set<BluetoothDevice> devices = adapter.getBondedDevices();
         assertNotNull(devices);
@@ -204,7 +204,7 @@ public class BasicAdapterTest extends AndroidTestCase {
         }
         // getRemoteDevice() should work even with Bluetooth disabled
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        assertTrue(TestUtils.disableAdapter(adapter, mContext));
+        assertTrue(BTAdapterUtils.disableAdapter(adapter, mContext));
 
         // test bad addresses
         try {
@@ -240,7 +240,7 @@ public class BasicAdapterTest extends AndroidTestCase {
             return;
         }
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        assertTrue(TestUtils.enableAdapter(adapter, mContext));
+        assertTrue(BTAdapterUtils.enableAdapter(adapter, mContext));
 
         BluetoothServerSocket socket = adapter.listenUsingRfcommWithServiceRecord(
                 "test", UUID.randomUUID());
