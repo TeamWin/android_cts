@@ -505,11 +505,15 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         placeAndVerifyCall(null);
     }
 
+    void placeAndVerifyCallByRedirection(boolean wasCancelled) {
+        placeAndVerifyCallByRedirection(null, wasCancelled);
+    }
+
     /**
      *  Puts Telecom in a state where there is an active call provided by the
      *  {@link CtsConnectionService} which can be tested.
      */
-    void placeAndVerifyCallByRedirection(boolean wasCancelled) {
+    void placeAndVerifyCallByRedirection(Bundle extras, boolean wasCancelled) {
         int currentCallCount = (getInCallService() == null) ? 0 : getInCallService().getCallCount();
         int currentConnections = getNumberOfConnections();
         // We expect a new connection if it wasn't cancelled.
@@ -517,7 +521,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             currentConnections++;
             currentCallCount++;
         }
-        placeAndVerifyCall(null, VideoProfile.STATE_AUDIO_ONLY, currentConnections,
+        placeAndVerifyCall(extras, VideoProfile.STATE_AUDIO_ONLY, currentConnections,
                 currentCallCount);
         // Ensure the new outgoing call broadcast fired for the outgoing call.
         assertOutgoingCallBroadcastReceived(true);
