@@ -96,13 +96,20 @@ public class LockTaskHostDrivenTest {
     public void tearDown() {
         mContext.unregisterReceiver(mReceiver);
     }
-  
+
     @Test
     public void startLockTask() throws Exception {
         Log.d(TAG, "startLockTask on host-driven test (no cleanup)");
         setDefaultHomeIntentReceiver();
         launchLockTaskActivity();
         mUiDevice.waitForIdle();
+    }
+
+    @Test
+    public void testLockTaskIsActive() throws Exception {
+      Log.d(TAG, "testLockTaskIsActive on host-driven test");
+      waitAndCheckLockedActivityIsResumed();
+      checkLockedActivityIsRunning();
     }
 
     /**
@@ -144,6 +151,18 @@ public class LockTaskHostDrivenTest {
                 mContext.getPackageName());
         mDevicePolicyManager.setLockTaskPackages(BasicAdminReceiver.getComponentName(mContext),
                 new String[0]);
+    }
+
+    private void waitAndCheckLockedActivityIsResumed() throws Exception {
+        mUiDevice.waitForIdle();
+
+        // We need to wait until the LockTaskActivity is ready
+        // since com.android.cts.deviceowner can be killed by AMS for reason "start instr".
+        synchronized (mActivityResumedLock) {
+          if (!mIsActivityResumed) {
+            mActivityResumedLock.wait(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
+         }
+       }
     }
 
     private void checkLockedActivityIsRunning() throws Exception {
