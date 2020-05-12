@@ -25,7 +25,6 @@ import android.os.SystemClock;
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.Watermark;
 
 import java.util.concurrent.CountDownLatch;
@@ -88,7 +87,8 @@ public final class InputMethodVisibilityVerifier {
     /**
      * Asserts that {@link com.android.cts.mockime.MockIme} is visible to the user.
      *
-     * <p>This never succeeds when {@link ImeSettings.Builder#setWatermarkEnabled(boolean)} is
+     * <p>This never succeeds when
+     * {@link com.android.cts.mockime.ImeSettings.Builder#setWatermarkEnabled(boolean)} is
      * explicitly called with {@code false}.</p>
      *
      * @param timeout timeout in milliseconds.
@@ -100,7 +100,8 @@ public final class InputMethodVisibilityVerifier {
     /**
      * Asserts that {@link com.android.cts.mockime.MockIme} is not visible to the user.
      *
-     * <p>This always succeeds when {@link ImeSettings.Builder#setWatermarkEnabled(boolean)} is
+     * <p>This always succeeds when
+     * {@link com.android.cts.mockime.ImeSettings.Builder#setWatermarkEnabled(boolean)} is
      * explicitly called with {@code false}.</p>
      *
      * @param timeout timeout in milliseconds.
