@@ -77,8 +77,6 @@ import java.util.function.Consumer;
 @RunWith(AndroidJUnit4.class)
 public class RoleManagerTest {
 
-    private static final String LOG_TAG = "RoleManagerTest";
-
     private static final long TIMEOUT_MILLIS = 15 * 1000;
 
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 1000;
@@ -744,6 +742,26 @@ public class RoleManagerTest {
     }
 
     @Test
+    public void addInvalidRoleHolderThenFails() throws Exception {
+        addRoleHolder("invalid", APP_PACKAGE_NAME, false);
+    }
+
+    @Test
+    public void addUnqualifiedRoleHolderThenFails() throws Exception {
+        addRoleHolder(RoleManager.ROLE_HOME, APP_PACKAGE_NAME, false);
+    }
+
+    @Test
+    public void removeInvalidRoleHolderThenFails() throws Exception {
+        removeRoleHolder("invalid", APP_PACKAGE_NAME, false);
+    }
+
+    @Test
+    public void clearInvalidRoleHoldersThenFails() throws Exception {
+        clearRoleHolders("invalid", false);
+    }
+
+    @Test
     public void addOnRoleHoldersChangedListenerAndAddRoleHolderThenIsNotified() throws Exception {
         assertOnRoleHoldersChangedListenerIsNotified(() -> addRoleHolder(ROLE_NAME,
                 APP_PACKAGE_NAME));
@@ -919,27 +937,42 @@ public class RoleManagerTest {
         }
      }
 
-    private void addRoleHolder(@NonNull String roleName, @NonNull String packageName)
-            throws Exception {
+    private void addRoleHolder(@NonNull String roleName, @NonNull String packageName,
+            boolean expectSuccess) throws Exception {
         CallbackFuture future = new CallbackFuture();
         runWithShellPermissionIdentity(() -> sRoleManager.addRoleHolderAsUser(roleName,
                 packageName, 0, Process.myUserHandle(), sContext.getMainExecutor(), future));
-        future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        assertThat(future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)).isEqualTo(expectSuccess);
+    }
+
+    private void addRoleHolder(@NonNull String roleName, @NonNull String packageName)
+            throws Exception {
+        addRoleHolder(roleName, packageName, true);
+    }
+
+    private void removeRoleHolder(@NonNull String roleName, @NonNull String packageName,
+            boolean expectSuccess) throws Exception {
+        CallbackFuture future = new CallbackFuture();
+        runWithShellPermissionIdentity(() -> sRoleManager.removeRoleHolderAsUser(roleName,
+                packageName, 0, Process.myUserHandle(), sContext.getMainExecutor(), future));
+        assertThat(future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)).isEqualTo(expectSuccess);
     }
 
     private void removeRoleHolder(@NonNull String roleName, @NonNull String packageName)
             throws Exception {
-        CallbackFuture future = new CallbackFuture();
-        runWithShellPermissionIdentity(() -> sRoleManager.removeRoleHolderAsUser(roleName,
-                packageName, 0, Process.myUserHandle(), sContext.getMainExecutor(), future));
-        future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        removeRoleHolder(roleName, packageName, true);
     }
 
-    private void clearRoleHolders(@NonNull String roleName) throws Exception {
+    private void clearRoleHolders(@NonNull String roleName, boolean expectSuccess)
+            throws Exception {
         CallbackFuture future = new CallbackFuture();
         runWithShellPermissionIdentity(() -> sRoleManager.clearRoleHoldersAsUser(roleName, 0,
                 Process.myUserHandle(), sContext.getMainExecutor(), future));
-        future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        assertThat(future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)).isEqualTo(expectSuccess);
+    }
+
+    private void clearRoleHolders(@NonNull String roleName) throws Exception {
+        clearRoleHolders(roleName, true);
     }
 
     private static class ListenerFuture extends CompletableFuture<Pair<String, UserHandle>>
@@ -951,16 +984,12 @@ public class RoleManagerTest {
         }
     }
 
-    private static class CallbackFuture extends CompletableFuture<Void>
+    private static class CallbackFuture extends CompletableFuture<Boolean>
             implements Consumer<Boolean> {
 
         @Override
         public void accept(Boolean successful) {
-            if (successful) {
-                complete(null);
-            } else {
-                completeExceptionally(new RuntimeException());
-            }
+            complete(successful);
         }
     }
 }
