@@ -21,6 +21,7 @@ import android.util.Log;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.TestNameUtils;
 
@@ -66,6 +67,7 @@ public final class AutofillTestWatcher extends TestWatcher {
 
     @Override
     protected void finished(Description description) {
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
         final String testName = description.getDisplayName();
         cleanAllActivities();
         Log.i(TAG, "Finished " + testName);
