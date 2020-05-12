@@ -60,7 +60,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
-import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.DisplayContent;
@@ -440,8 +439,7 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 .setPublicDisplay(false)
                 .createDisplay();
         try {
-            final Display display = mContext.getSystemService(DisplayManager.class).getDisplay(
-                    newDisplay.mId);
+            final Display display = mDm.getDisplay(newDisplay.mId);
             final Context newDisplayContext = mContext.createDisplayContext(display);
             newDisplayContext.getSystemService(WindowManager.class).addView(new View(mContext),
                     new ViewGroup.LayoutParams(WRAP_CONTENT, WRAP_CONTENT));

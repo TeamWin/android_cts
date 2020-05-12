@@ -21,7 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Intent;
-import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.app.Components;
 import android.view.Display;
@@ -38,8 +37,7 @@ public class PresentationTest extends MultiDisplayTestBase {
 
     @Test
     public void testPresentationFollowsDisplayFlag() {
-        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
-        for (Display display : displayManager.getDisplays()) {
+        for (Display display : mDm.getDisplays()) {
             launchPresentationActivity(display.getDisplayId());
             if ((display.getFlags() & Display.FLAG_PRESENTATION) != Display.FLAG_PRESENTATION) {
                 assertNoPresentationDisplayed();
