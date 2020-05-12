@@ -49,6 +49,8 @@ public class HingeAngleVerification extends AbstractSensorVerification {
 
         boolean success = true;
         StringBuilder builder = new StringBuilder("Hinge Angle | failures:");
+        Assert.assertTrue("The hinge angle sensor must output at least two sensor events",
+                mEvents.size() >= 2);
         for (int i = 0; i < mEvents.size(); i++) {
             TestSensorEvent event = mEvents.get(i);
             if (lastEvent != null && lastEvent.values[0] == event.values[0]) {
