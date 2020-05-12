@@ -729,7 +729,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     public void testInstallV2MultipleSignersGetApkContentsSigners() throws Exception {
         // Similar to the above test, but verifies when an APK is signed with two V2 signers
         // getApkContentsSigners returns both of the V2 signers.
-        installApkFromBuild("v1v2-ec-p256-two-signers.apk");
+        installApkFromBuild("v1v2-ec-p256-two-signers-targetSdk-30.apk");
         Utils.runDeviceTests(
                 getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
                 "testGetApkContentsSignersShowsMultipleSigners");
@@ -785,16 +785,17 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1_P_and_2_Qplus.apk");
     }
 
-    public void testInstallTargetRWithV1Signer() throws Exception {
-        // An app targeting R must have at least a V2 signature; this test verifies that an app
-        // targeting R with only a V1 signature fails to install.
-        assertInstallFails("v1-only-target-r.apk");
+    public void testInstallTargetSdk30WithV1Signers() throws Exception {
+        // An app targeting SDK version >= 30 must have at least a V2 signature; this test verifies
+        // an app targeting SDK version 30 with only a V1 signature fails to install.
+        assertInstallFails("v1-ec-p256-two-signers-targetSdk-30.apk");
     }
 
-    public void testInstallTargetRWithV2V2Signers() throws Exception {
-        // An app targeting R must have at least a V2 signature; this test verifies that an app
-        // targeting R with both a V1 and V2 signature installs successfully.
-        assertInstallSucceeds("v1v2-target-r.apk");
+    public void testInstallTargetSdk30WithV1V2Signers() throws Exception {
+        // An app targeting SDK version >= 30 must have at least a V2 signature; this test verifies
+        // that an app targeting SDK version 30 with both a V1 and V2 signature installs
+        // successfully.
+        installApkFromBuild("v1v2-ec-p256-two-signers-targetSdk-30.apk");
     }
 
     public void testInstallV4WithV2Signer() throws Exception {
