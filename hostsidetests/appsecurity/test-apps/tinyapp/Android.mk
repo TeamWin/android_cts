@@ -24,9 +24,17 @@ LOCAL_PACKAGE_NAME := CtsPkgInstallTinyApp
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # This is the test package signed using the V1/V2 signature schemes with
-# two signers.
+# two signers targeting SDK version 30 with sandbox version 1. From this
+# package the v1-ec-p256-two-signers-targetSdk-30.apk is created with the
+# following command:
+# apksigner sign --in v1v2-ec-p256-two-signers-targetSdk-30.apk --out
+# v1-ec-p256-two-signers-targetSdk-30.apk --cert ec-p256.x509.pem --key
+# ec-p256.pk8 --next-signer --cert ec-p256_2.x509.pem --key ec-p256_2.pk8
+# --v2-signing-enabled false --v3-signing-enabled false --v4-signing-enabled false
 include $(LOCAL_PATH)/base.mk
-LOCAL_PACKAGE_NAME := v1v2-ec-p256-two-signers
+LOCAL_SDK_VERSION := 30
+LOCAL_MANIFEST_FILE := AndroidManifest-sandbox-v1.xml
+LOCAL_PACKAGE_NAME := v1v2-ec-p256-two-signers-targetSdk-30
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256_2
 include $(BUILD_CTS_SUPPORT_PACKAGE)
