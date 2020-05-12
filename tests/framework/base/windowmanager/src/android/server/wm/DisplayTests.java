@@ -178,15 +178,13 @@ public class DisplayTests extends MultiDisplayTestBase {
     private Configuration getDisplayResourcesConfiguration(int displayWidth, int displayHeight)
             throws Exception  {
         final Context context = getInstrumentation().getContext();
-        final DisplayManager displayManager =
-                (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final DisplayContent displayContent = virtualDisplaySession
                     .setSimulateDisplay(true)
                     .setSimulationDisplaySize(displayWidth, displayHeight)
                     .createDisplay();
-            final Display display = displayManager.getDisplay(displayContent.mId);
+            final Display display = mDm.getDisplay(displayContent.mId);
             Configuration config = context.createDisplayContext(display)
                     .getResources().getConfiguration();
             return config;
