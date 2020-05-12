@@ -128,6 +128,7 @@ public class SettingsPanelTest {
 
     @Test
     public void mediaOutputPanel_withPackageNameExtra_correctPackage() {
+        assumeTrue(mHasTouchScreen);
         launchMediaOutputPanel(TEST_PACKAGE_NAME);
 
         String currentPackage = mDevice.getCurrentPackageName();
@@ -137,6 +138,7 @@ public class SettingsPanelTest {
 
     @Test
     public void mediaOutputPanel_noPutPackageNameExtra_correctPackage() {
+        assumeTrue(mHasTouchScreen);
         launchMediaOutputPanel(null /* packageName */);
 
         String currentPackage = mDevice.getCurrentPackageName();
@@ -155,6 +157,7 @@ public class SettingsPanelTest {
 
     @Test
     public void mediaOutputPanel_correctTitle() {
+        assumeTrue(mHasTouchScreen);
         launchMediaOutputPanel(TEST_PACKAGE_NAME);
 
         final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_HEADER));
@@ -223,6 +226,7 @@ public class SettingsPanelTest {
 
     @Test
     public void mediaOutputPanel_doneClosesPanel() {
+        assumeTrue(mHasTouchScreen);
         // Launch panel
         launchMediaOutputPanel(TEST_PACKAGE_NAME);
         String currentPackage = mDevice.getCurrentPackageName();
@@ -312,6 +316,7 @@ public class SettingsPanelTest {
 
     @Test
     public void mediaOutputPanel_seeMoreButton_doNothing() {
+        assumeTrue(mHasTouchScreen);
         // Launch panel
         launchMediaOutputPanel(TEST_PACKAGE_NAME);
         String currentPackage = mDevice.getCurrentPackageName();
