@@ -33,10 +33,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.text.DateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Formatter;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -216,12 +218,25 @@ public class DateUtilsTest {
                 fixedTime, java.text.DateFormat.SHORT, java.text.DateFormat.FULL));
 
         final long HOUR_DURATION = 2 * 60 * 60 * 1000;
-        assertEquals("5:30:15 AM GMT+00:00", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
-                fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.FULL));
+        // The original answer was "GMT+00:00", devices with latest CLDR patches from
+        // the tzdb 2020a patch have "Greenwich Mean Time". http://b/155407785
+        List<String> gmtTimeFullAllowed = Arrays.asList("5:30:15 AM Greenwich Mean Time",
+                "5:30:15 AM GMT+00:00");
+        String gmtTimeFullActual = String.valueOf(DateUtils.formatSameDayTime(
+                fixedTime + HOUR_DURATION, fixedTime, java.text.DateFormat.FULL,
+                java.text.DateFormat.FULL));
+        assertTrue("Expected one of " + gmtTimeFullAllowed,
+                gmtTimeFullAllowed.contains(gmtTimeFullActual));
         assertEquals("5:30:15 AM", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
                 fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.DEFAULT));
-        assertEquals("5:30:15 AM GMT+00:00", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
-                fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.LONG));
+        // The original answer was "GMT+00:00", devices with latest CLDR patches from
+        // the tzdb 2020a patch have "GMT". http://b/155407785
+        List<String> gmtTimeLongAllowed = Arrays.asList("5:30:15 AM GMT", "5:30:15 AM GMT+00:00");
+        String gmtTimeLongActual = String.valueOf(DateUtils.formatSameDayTime(
+                fixedTime + HOUR_DURATION, fixedTime, java.text.DateFormat.FULL,
+                java.text.DateFormat.LONG));
+        assertTrue("Expected one of " + gmtTimeLongAllowed,
+                gmtTimeLongAllowed.contains(gmtTimeLongActual));
         assertEquals("5:30:15 AM", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
                 fixedTime, java.text.DateFormat.FULL, java.text.DateFormat.MEDIUM));
         assertEquals("5:30 AM", DateUtils.formatSameDayTime(fixedTime + HOUR_DURATION,
