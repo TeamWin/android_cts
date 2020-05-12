@@ -518,6 +518,42 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         }
     }
 
+    @AppModeFull(
+            reason = "getDeclaredSharedLibraries() requires ACCESS_SHARED_LIBRARIES permission")
+    public void testGetDeclaredSharedLibraries() throws Exception {
+        getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_CONSUMER2_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER2_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER4_PKG);
+        getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        try {
+            // Install library dependency
+            assertNull(install(STATIC_LIB_PROVIDER_RECURSIVE_APK));
+            // Install the first library
+            assertNull(install(STATIC_LIB_PROVIDER1_APK));
+            // Install the second library
+            assertNull(install(STATIC_LIB_PROVIDER2_APK));
+            // Install the third library
+            assertNull(install(STATIC_LIB_PROVIDER4_APK));
+            // Install the first client
+            assertNull(install(STATIC_LIB_CONSUMER1_APK));
+            // Install the second client
+            assertNull(install(STATIC_LIB_CONSUMER2_APK));
+            // Ensure declared libraries are properly reported
+            runDeviceTests(STATIC_LIB_CONSUMER1_PKG,
+                    "android.os.lib.consumer1.UseSharedLibraryTest",
+                    "testDeclaredSharedLibrariesProperlyReported");
+        } finally {
+            getDevice().uninstallPackage(STATIC_LIB_CONSUMER1_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_CONSUMER2_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER1_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER2_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER4_PKG);
+            getDevice().uninstallPackage(STATIC_LIB_PROVIDER_RECURSIVE_PKG);
+        }
+    }
+
     @AppModeInstant
     public void testAppCanSeeOnlyLibrariesItDependOnInstantMode() throws Exception {
         mInstantMode = true;
