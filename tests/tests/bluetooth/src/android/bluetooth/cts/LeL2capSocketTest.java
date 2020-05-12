@@ -39,7 +39,7 @@ public class LeL2capSocketTest extends AndroidTestCase {
         assertNotNull("BluetoothAdapter.getDefaultAdapter() returned null. "
                 + "Does this device have a Bluetooth adapter?", mAdapter);
         if (!mAdapter.isEnabled()) {
-            assertTrue(TestUtils.enableAdapter(mAdapter, mContext));
+            assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
         }
     }
 
@@ -48,7 +48,7 @@ public class LeL2capSocketTest extends AndroidTestCase {
         if (!TestUtils.isBleSupported(getContext())) {
             return;
         }
-        assertTrue(TestUtils.disableAdapter(mAdapter, mContext));
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
         mAdapter = null;
         super.tearDown();
     }

@@ -2564,8 +2564,19 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testAreBubblesAllowed() {
+    public void testAreBubblesAllowed_appNone() throws Exception {
+        setBubblesAppPref(0 /* none */);
         assertFalse(mNotificationManager.areBubblesAllowed());
+    }
+
+    public void testAreBubblesAllowed_appSelected() throws Exception {
+        setBubblesAppPref(2 /* selected */);
+        assertFalse(mNotificationManager.areBubblesAllowed());
+    }
+
+    public void testAreBubblesAllowed_appAll() throws Exception {
+        setBubblesAppPref(1 /* all */);
+        assertTrue(mNotificationManager.areBubblesAllowed());
     }
 
     public void testNotificationIcon() {
@@ -2872,6 +2883,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
             createDynamicShortcut();
 
             Notification.Builder nb = getConversationNotification();
@@ -2893,6 +2905,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
             setUpNotifListener();
 
@@ -2918,6 +2932,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
             setUpNotifListener();
 
@@ -2939,6 +2955,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
             setUpNotifListener();
 
@@ -2964,6 +2982,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
             setUpNotifListener();
 
@@ -3003,6 +3023,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
 
             Notification.Builder nb = getConversationNotification();
@@ -3026,6 +3048,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
 
             Notification.Builder nb = getConversationNotification();
@@ -3049,6 +3073,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
 
             Notification.BubbleMetadata data =
@@ -3070,6 +3096,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
             Notification.BubbleMetadata data =
                     new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
@@ -3091,6 +3119,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(false);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
             Notification.BubbleMetadata data =
                     new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
@@ -3112,6 +3142,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
             setBubblesChannelAllowed(false);
+
             createDynamicShortcut();
             Notification.BubbleMetadata data =
                     new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
@@ -3133,6 +3164,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesGlobal(true);
             setBubblesAppPref(2 /* selected */);
             setBubblesChannelAllowed(false);
+
             createDynamicShortcut();
             Notification.BubbleMetadata data =
                     new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
@@ -3154,6 +3186,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesGlobal(true);
             setBubblesAppPref(2 /* selected */);
             setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
             Notification.BubbleMetadata data =
                     new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
@@ -3176,6 +3209,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             setBubblesGlobal(true);
             setBubblesAppPref(0 /* none */);
             setBubblesChannelAllowed(false);
+
             createDynamicShortcut();
             Notification.BubbleMetadata data =
                     new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
@@ -3198,6 +3232,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
             createDynamicShortcut();
             Notification.BubbleMetadata data =
                     new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
@@ -3205,12 +3240,11 @@ public class NotificationManagerTest extends AndroidTestCase {
             Notification.Builder nb = getConversationNotification();
 
             boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            sendAndVerifyBubble(1, nb, data, shouldBeBubble);
+            sendAndVerifyBubble(42, nb, data, shouldBeBubble);
             mListener.resetData();
 
             deleteShortcuts();
-
-            verifyNotificationBubbleState(1, false /* should be bubble */);
+            verifyNotificationBubbleState(42, false /* should be bubble */);
         } finally {
             deleteShortcuts();
         }
@@ -3224,6 +3258,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             setBubblesGlobal(true);
             setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
             createDynamicShortcut();
             setUpNotifListener();
 

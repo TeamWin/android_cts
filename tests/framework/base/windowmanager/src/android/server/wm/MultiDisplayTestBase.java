@@ -83,6 +83,7 @@ import java.util.regex.Pattern;
  * @see DisplayTests
  * @see MultiDisplayKeyguardTests
  * @see MultiDisplayLockedKeyguardTests
+ * @see AppConfigurationTests
  */
 public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
