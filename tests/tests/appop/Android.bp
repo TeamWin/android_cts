@@ -40,6 +40,7 @@ android_test {
     srcs: ["src/**/*.kt"],
 
     static_libs: [
+        "bluetooth-test-util-lib",
         "appops-test-util-lib",
         "AppOpsUserServiceAidl",
         "AppOpsForegroundControlServiceAidl",
