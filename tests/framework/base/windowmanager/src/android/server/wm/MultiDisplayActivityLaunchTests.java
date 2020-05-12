@@ -26,7 +26,6 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.wm.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.wm.ActivityLauncher.KEY_NEW_TASK;
-import static android.server.wm.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -69,7 +68,6 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.WindowManagerState.ActivityTask;
 import android.server.wm.WindowManagerState.DisplayContent;
-import android.util.DisplayMetrics;
 import android.view.SurfaceView;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -772,9 +770,8 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     @Test
     public void testImmediateLaunchOnNewDisplay() {
         // Create new virtual display and immediately launch an activity on it.
-        final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
         SurfaceView surfaceView = new SurfaceView(mContext);
-        VirtualDisplay virtualDisplay = displayManager.createVirtualDisplay(
+        final VirtualDisplay virtualDisplay = mDm.createVirtualDisplay(
                 "testImmediateLaunchOnNewDisplay", /*width=*/ 400, /*height=*/ 400,
                 /*densityDpi=*/ 320, surfaceView.getHolder().getSurface(),
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
@@ -836,8 +833,6 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
     @Test
     public void testLaunchPendingIntentActivity() throws Exception {
-        final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
-
         final DisplayContent displayContent = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true)
                 .createDisplay();
@@ -850,7 +845,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         final int resultCode = 1;
         // Activity should be launched on target display according to the caller context.
         final Context displayContext =
-                mContext.createDisplayContext(displayManager.getDisplay(displayContent.mId));
+                mContext.createDisplayContext(mDm.getDisplay(displayContent.mId));
         getPendingIntentActivity(TOP_ACTIVITY).send(displayContext, resultCode, null /* intent */);
         waitAndAssertTopResumedActivity(TOP_ACTIVITY, displayContent.mId,
                 "Activity launched on secondary display and on top");
