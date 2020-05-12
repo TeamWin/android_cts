@@ -27,10 +27,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
-import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
-
-import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -55,14 +52,11 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
     }
 
     private boolean isMinimalPostProcessingSupported(int displayId) {
-        return mContext.getSystemService(DisplayManager.class)
-                .getDisplay(displayId)
-                .isMinimalPostProcessingSupported();
+        return mDm.getDisplay(displayId).isMinimalPostProcessingSupported();
     }
 
     private boolean isMinimalPostProcessingRequested(int displayId) {
-        return mContext.getSystemService(DisplayManager.class)
-                .isMinimalPostProcessingRequested(displayId);
+        return mDm.isMinimalPostProcessingRequested(displayId);
     }
 
     private int getDisplayId(ComponentName name) {
