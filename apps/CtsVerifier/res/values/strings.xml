@@ -4446,6 +4446,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="tv_yes">Yes</string>
     <string name="tv_no">No</string>
+    <string name="tv_none">None</string>
     <string name="tv_launch_tv_app">Launch TV app</string>
     <string name="tv_launch_epg">Launch EPG</string>
     <string name="tv_launch_setup">Launch setup</string>
@@ -4577,6 +4578,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="tv_hdr_disconnect_display">Press the "%1$s" button
         and disconnect the display within %2$d seconds. Wait at least %3$d seconds and then
         reconnect the display.
+    </string>
+    <string name="tv_panel_hdr_types_reported_are_supported">
+        The supported HDR types are: %s\nAre all of them supported by the hardware?
+    </string>
+    <string name="tv_panel_hdr_types_supported_are_reported">
+        Are there other HDR types which are supported by the hardware, but are not listed above?
     </string>
 
     <!-- Display Modes Test -->

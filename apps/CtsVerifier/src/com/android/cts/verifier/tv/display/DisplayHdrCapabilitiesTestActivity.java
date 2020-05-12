@@ -18,12 +18,14 @@ package com.android.cts.verifier.tv.display;
 
 import android.content.Context;
 import android.hardware.display.DisplayManager;
+import android.util.Log;
 import android.view.Display;
 
 import androidx.annotation.StringRes;
 
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
+import com.android.cts.verifier.tv.TvUtil;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Range;
@@ -32,6 +34,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Test to verify the HDR Capabilities API is correctly implemented.
@@ -44,6 +47,7 @@ import java.util.List;
  * no display is connected.
  */
 public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
+    private static final String LOG_TAG = "HdrCapabilitiesTest";
     private static final float MAX_EXPECTED_LUMINANCE = 10_000f;
     private static final int DISPLAY_DISCONNECT_WAIT_TIME_SECONDS = 5;
 
@@ -63,10 +67,16 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
     @Override
     protected void createTestItems() {
         List<TestStepBase> testSteps = new ArrayList<>();
-        testSteps.add(new NonHdrDisplayTestStep(this));
-        testSteps.add(new HdrDisplayTestStep(this));
-        testSteps.add(new NoDisplayTestStep(this));
-
+        if (TvUtil.isHdmiSourceDevice()) {
+            // The device is a set-top box or a TV dongle
+            testSteps.add(new NonHdrDisplayTestStep(this));
+            testSteps.add(new HdrDisplayTestStep(this));
+            testSteps.add(new NoDisplayTestStep(this));
+        } else {
+            // The device is a TV Panel
+            testSteps.add(new TvPanelReportedTypesAreSupportedTestStep(this));
+            testSteps.add(new TvPanelSupportedTypesAreReportedTestStep(this));
+        }
         mTestSequence = new TestSequence(this, testSteps);
         mTestSequence.init();
     }
@@ -205,6 +215,58 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
                 getAsserter().fail(Throwables.getStackTraceAsString(e));
             }
             done();
+        }
+    }
+
+    private static class TvPanelReportedTypesAreSupportedTestStep extends YesNoTestStep {
+        public TvPanelReportedTypesAreSupportedTestStep(TvAppVerifierActivity context) {
+            super(context, getInstructionText(context));
+        }
+
+        private static String getInstructionText(Context context) {
+            DisplayManager displayManager =
+                    (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
+            Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+
+            int[] hdrTypes = display.getHdrCapabilities().getSupportedHdrTypes();
+            String hdrTypesString;
+            if (hdrTypes.length == 0) {
+                hdrTypesString = context.getString(R.string.tv_none);
+            } else {
+                hdrTypesString =
+                        Arrays.stream(hdrTypes)
+                                .mapToObj(DisplayHdrCapabilitiesTestActivity::hdrTypeToString)
+                                .collect(Collectors.joining(", "));
+            }
+
+            return context.getString(
+                    R.string.tv_panel_hdr_types_reported_are_supported, hdrTypesString);
+        }
+    }
+
+    private static class TvPanelSupportedTypesAreReportedTestStep extends YesNoTestStep {
+        public TvPanelSupportedTypesAreReportedTestStep(TvAppVerifierActivity context) {
+            super(context, getInstructionText(context));
+        }
+
+        private static String getInstructionText(Context context) {
+            return context.getString(R.string.tv_panel_hdr_types_supported_are_reported);
+        }
+    }
+
+    private static String hdrTypeToString(@Display.HdrCapabilities.HdrType int type) {
+        switch (type) {
+            case Display.HdrCapabilities.HDR_TYPE_DOLBY_VISION:
+                return "DOLBY_VISION";
+            case Display.HdrCapabilities.HDR_TYPE_HDR10:
+                return "HDR10";
+            case Display.HdrCapabilities.HDR_TYPE_HLG:
+                return "HLG";
+            case Display.HdrCapabilities.HDR_TYPE_HDR10_PLUS:
+                return "HDR10_PLUS";
+            default:
+                Log.e(LOG_TAG, "Unknown HDR type " + type);
+                return "UNKNOWN";
         }
     }
 }

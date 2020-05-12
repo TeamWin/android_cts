@@ -15,7 +15,10 @@
 android_test {
     name: "CtsBluetoothTestCases",
     defaults: ["cts_defaults"],
-    static_libs: ["ctstestrunner-axt"],
+    static_libs: [
+        "ctstestrunner-axt",
+        "bluetooth-test-util-lib",
+    ],
     libs: [
         "android.test.runner.stubs",
         "android.test.base.stubs",
