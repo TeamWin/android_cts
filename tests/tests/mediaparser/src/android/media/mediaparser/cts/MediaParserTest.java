@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaParser;
 import android.os.Build;
@@ -29,8 +30,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.android.exoplayer2.testutil.FakeExtractorInput;
-import com.google.android.exoplayer2.testutil.FakeExtractorOutput;
 import com.google.android.exoplayer2.testutil.TestUtil;
+import com.google.android.exoplayer2.util.Util;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -38,11 +39,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaParserTest {
+
+    private static final String PARAMETER_IN_BAND_CRYPTO_INFO =
+            "android.media.mediaparser.inBandCryptoInfo";
 
     @Before
     public void setUp() {
@@ -203,8 +208,7 @@ public class MediaParserTest {
 
     @Test
     public void testLackOfSupportForUnsupportedParameter() {
-        MediaParser mediaParser =
-                MediaParser.create(new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
+        MediaParser mediaParser = MediaParser.create(new MockMediaParserOutputConsumer());
         assertThat(mediaParser.supportsParameter("android.media.mediaparser.UNSUPPORTED_PARAMETER"))
                 .isFalse();
         mediaParser.release();
@@ -515,6 +519,27 @@ public class MediaParserTest {
         testExtractAsset("mkv/subsample_encrypted_altref.webm");
     }
 
+    @Test
+    public void testMatroskaOutOfBandCrypto() throws IOException, InterruptedException {
+        MockMediaParserOutputConsumer outputConsumer = new MockMediaParserOutputConsumer();
+        MockMediaParserInputReader inputReader =
+                getInputReader("mkv/subsample_encrypted_noaltref.webm");
+        MediaParser mediaParser = MediaParser.create(outputConsumer);
+        // Initialization vectors are 16 bytes in size, as per CryptoInfo documentation.
+        MediaCodec.CryptoInfo expectedCryptoInfo = new MediaCodec.CryptoInfo();
+        expectedCryptoInfo.set(
+                /* newNumSubsamples=*/ 1,
+                /* newNumBytesOfClearData= */ new int[] {2},
+                /* newNumBytesOfEncryptedData= */ new int[] {5},
+                /* newKey= */ Arrays.copyOf(
+                        Util.getBytesFromHexString("01020304050607080910111213141516"), 16),
+                /* newIv= */ Arrays.copyOf(Util.getBytesFromHexString("0101010101010101"), 16),
+                MediaCodec.CRYPTO_MODE_AES_CTR);
+        advanceUntilSample(outputConsumer, inputReader, mediaParser, /* sampleNumber= */ 1);
+        assertEqual(outputConsumer.getLastOutputCryptoInfo(), expectedCryptoInfo);
+        mediaParser.release();
+    }
+
     // MP4.
 
     @Test
@@ -562,16 +587,40 @@ public class MediaParserTest {
         testExtractAsset("mp4/sample_fragmented.mp4");
     }
 
+    @Test
+    public void testMp4FragmentedOutOfBandCrypto() throws IOException, InterruptedException {
+        MockMediaParserOutputConsumer outputConsumer = new MockMediaParserOutputConsumer();
+        MockMediaParserInputReader inputReader = getInputReader("mp4/sample_ac4_protected.mp4");
+        MediaParser mediaParser = MediaParser.create(outputConsumer);
+        // Initialization vectors are 16 bytes in size, as per CryptoInfo documentation.
+        MediaCodec.CryptoInfo expectedCryptoInfo = new MediaCodec.CryptoInfo();
+        expectedCryptoInfo.set(
+                /* newNumSubsamples=*/ 1,
+                /* newNumBytesOfClearData= */ new int[] {7},
+                /* newNumBytesOfEncryptedData= */ new int[] {360},
+                /* newKey= */ Arrays.copyOf(
+                        Util.getBytesFromHexString("91341951696b5e1ba232439ecec1f12a"), 16),
+                /* newIv= */ Arrays.copyOf(Util.getBytesFromHexString("aab4ed0108dd5267"), 16),
+                MediaCodec.CRYPTO_MODE_AES_CTR);
+        advanceUntilSample(outputConsumer, inputReader, mediaParser, /* sampleNumber= */ 1);
+        assertEqual(outputConsumer.getLastOutputCryptoInfo(), expectedCryptoInfo);
+
+        expectedCryptoInfo.iv = Arrays.copyOf(Util.getBytesFromHexString("aab4ed0108dd5272"), 16);
+        expectedCryptoInfo.numBytesOfEncryptedData = new int[] {488};
+        advanceUntilSample(outputConsumer, inputReader, mediaParser, /* sampleNumber= */ 12);
+        assertEqual(outputConsumer.getLastOutputCryptoInfo(), expectedCryptoInfo);
+
+        mediaParser.release();
+    }
+
     // Internal methods.
 
     private static void testCreationByName(String name) {
-        MediaParser.createByName(name, new MockMediaParserOutputConsumer(new FakeExtractorOutput()))
-                .release();
+        MediaParser.createByName(name, new MockMediaParserOutputConsumer()).release();
     }
 
     private static void assertSupportFor(String parameterName) {
-        MediaParser mediaParser =
-                MediaParser.create(new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
+        MediaParser mediaParser = MediaParser.create(new MockMediaParserOutputConsumer());
         assertThat(mediaParser.supportsParameter(parameterName)).isTrue();
         mediaParser.release();
     }
@@ -583,8 +632,7 @@ public class MediaParserTest {
 
     private static void testParameterSetting(
             String parameterName, Object value, boolean valueIsIllegal) {
-        MediaParser mediaParser =
-                MediaParser.create(new MockMediaParserOutputConsumer(new FakeExtractorOutput()));
+        MediaParser mediaParser = MediaParser.create(new MockMediaParserOutputConsumer());
         boolean illegalArgument = false;
         try {
             mediaParser.setParameter(parameterName, value);
@@ -614,20 +662,17 @@ public class MediaParserTest {
     private static void extractAsset(
             String assetPath, Map<String, Object> parameters, String expectedParserName)
             throws IOException, InterruptedException {
-        byte[] assetBytes =
-                TestUtil.getByteArray(
-                        InstrumentationRegistry.getInstrumentation().getContext(), assetPath);
-        MockMediaParserInputReader mockInput =
-                new MockMediaParserInputReader(
-                        new FakeExtractorInput.Builder().setData(assetBytes).build());
+        MockMediaParserInputReader inputReader = getInputReader(assetPath);
+        boolean usingInBandCryptoInfo =
+                (boolean) parameters.getOrDefault(PARAMETER_IN_BAND_CRYPTO_INFO, false);
         MockMediaParserOutputConsumer outputConsumer =
-                new MockMediaParserOutputConsumer(new FakeExtractorOutput());
+                new MockMediaParserOutputConsumer(usingInBandCryptoInfo);
         MediaParser mediaParser = MediaParser.create(outputConsumer);
         for (Map.Entry<String, Object> entry : parameters.entrySet()) {
             mediaParser.setParameter(entry.getKey(), entry.getValue());
         }
 
-        mediaParser.advance(mockInput);
+        mediaParser.advance(inputReader);
         if (expectedParserName != null) {
             assertThat(expectedParserName).isEqualTo(mediaParser.getParserName());
             // We are only checking that the extractor is the right one.
@@ -635,7 +680,7 @@ public class MediaParserTest {
             return;
         }
 
-        while (mediaParser.advance(mockInput)) {
+        while (mediaParser.advance(inputReader)) {
             // Do nothing.
         }
 
@@ -651,10 +696,10 @@ public class MediaParserTest {
                                 ? 0
                                 : (durationUs * j) / 3;
                 MediaParser.SeekPoint seekPoint = seekMap.getSeekPoints(timeUs).first;
-                mockInput.reset();
-                mockInput.setPosition((int) seekPoint.position);
+                inputReader.reset();
+                inputReader.setPosition((int) seekPoint.position);
                 mediaParser.seek(seekPoint);
-                while (mediaParser.advance(mockInput)) {
+                while (mediaParser.advance(inputReader)) {
                     // Do nothing.
                 }
                 if (durationUs == MediaParser.SeekMap.UNKNOWN_DURATION) {
@@ -663,6 +708,39 @@ public class MediaParserTest {
             }
         }
         mediaParser.release();
+    }
+
+    private static MockMediaParserInputReader getInputReader(String assetPath) throws IOException {
+        byte[] assetBytes =
+                TestUtil.getByteArray(
+                        InstrumentationRegistry.getInstrumentation().getContext(), assetPath);
+        return new MockMediaParserInputReader(
+                new FakeExtractorInput.Builder().setData(assetBytes).build());
+    }
+
+    private static void advanceUntilSample(
+            MockMediaParserOutputConsumer outputConsumer,
+            MockMediaParserInputReader inputReader,
+            MediaParser mediaParser,
+            int sampleNumber)
+            throws IOException {
+        while (outputConsumer.getCompletedSampleCount() != sampleNumber) {
+            assertThat(mediaParser.advance(inputReader)).isTrue();
+        }
+    }
+
+    private static void assertEqual(
+            MediaCodec.CryptoInfo actualCryptoInfo, MediaCodec.CryptoInfo expectedCryptoInfo) {
+        assertThat(actualCryptoInfo.mode).isEqualTo(expectedCryptoInfo.mode);
+        assertThat(actualCryptoInfo.key).isEqualTo(expectedCryptoInfo.key);
+        assertThat(actualCryptoInfo.iv).isEqualTo(expectedCryptoInfo.iv);
+        assertThat(actualCryptoInfo.numSubSamples).isEqualTo(expectedCryptoInfo.numSubSamples);
+        for (int i = 0; i < actualCryptoInfo.numSubSamples; i++) {
+            assertThat(actualCryptoInfo.numBytesOfClearData[i])
+                    .isEqualTo(expectedCryptoInfo.numBytesOfClearData[i]);
+            assertThat(actualCryptoInfo.numBytesOfEncryptedData[i])
+                    .isEqualTo(expectedCryptoInfo.numBytesOfEncryptedData[i]);
+        }
     }
 
     // Internal classes.
