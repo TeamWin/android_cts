@@ -277,7 +277,8 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
                     Log.e(TAG, "executeTestSubscriber: did not get expected message from server.");
                     return false;
                 }
-
+                // Sleep 3 second for transmit and receive.
+                Thread.sleep(3000);
                 currentMethod = "close()";
                 os.close();
             } catch (IOException e) {
@@ -351,9 +352,11 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
                     OutputStream os = socket.getOutputStream();
                     currentMethod = "write()";
                     os.write(MSG_SERVER_TO_CLIENT, 0, MSG_SERVER_TO_CLIENT.length);
+                    // Sleep 3 second for transmit and receive.
+                    Thread.sleep(3000);
                     currentMethod = "close()";
                     os.close();
-                } catch (IOException e) {
+                } catch (IOException | InterruptedException e) {
                     setFailureReason(mContext.getString(R.string.aware_status_socket_failure));
                     Log.e(TAG, "executeTestPublisher: failure while executing " + currentMethod);
                     return;
