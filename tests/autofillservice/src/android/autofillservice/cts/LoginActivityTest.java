@@ -1533,10 +1533,10 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
                     .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                     .build());
             mActivity.forceAutofillOnUsername();
-            mUiBot.waitForIdle();
         } else {
-            mActivity.onUsername(View::requestFocus);
+            mUiBot.selectByRelativeId(ID_USERNAME);
         }
+        mUiBot.waitForIdle();
 
         // Sanity check.
         mUiBot.assertNoDatasetsEver();
