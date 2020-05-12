@@ -246,8 +246,17 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
 
         @Override
         protected void test() {
+            boolean touchSoundEnabled =
+                Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.SOUND_EFFECTS_ENABLED, 1) == 1;
             if (mUserVerified) {
-                status = PASS;
+                if (touchSoundEnabled) {
+                    status = PASS;
+                    return;
+                } else {
+                    setFailed();
+                    return;
+                }
             } else {
                 status = WAIT_FOR_USER;
             }
