@@ -52,6 +52,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String DUMMY_IME_APK = "DummyIme.apk";
     private static final String DUMMY_IME_PKG = "com.android.cts.dummyime";
     private static final String DUMMY_IME_COMPONENT = DUMMY_IME_PKG + "/.DummyIme";
+    private static final String SIMPLE_SMS_APP_PKG = "android.telephony.cts.sms.simplesmsapp";
+    private static final String SIMPLE_SMS_APP_APK = "SimpleSmsApp.apk";
     private static final String DUMMY_LAUNCHER_APK = "DummyLauncher.apk";
     private static final String DUMMY_LAUNCHER_COMPONENT =
             "com.android.cts.dummylauncher/android.app.Activity";
@@ -439,6 +441,35 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private void setPersonalAppsSuspended(boolean suspended) throws DeviceNotAvailableException {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                 suspended ? "testSuspendPersonalApps" : "testUnsuspendPersonalApps", mUserId);
+    }
+
+    @Test
+    public void testPersonalAppsSuspensionSms() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        // Install an SMS app and make it the default.
+        installAppAsUser(SIMPLE_SMS_APP_APK, mPrimaryUserId);
+        addSmsRole(SIMPLE_SMS_APP_PKG, mPrimaryUserId);
+        try {
+            setPersonalAppsSuspended(true);
+            // Default sms app should not be suspended.
+            assertCanStartPersonalApp(SIMPLE_SMS_APP_PKG, true);
+            setPersonalAppsSuspended(false);
+        } finally {
+            removeSmsRole(SIMPLE_SMS_APP_PKG, mPrimaryUserId);
+        }
+    }
+
+    private void addSmsRole(String app, int userId) throws Exception {
+        executeShellCommand(String.format(
+                "cmd role add-role-holder --user %d android.app.role.SMS %s", userId, app));
+    }
+
+    private void removeSmsRole(String app, int userId) throws Exception {
+        executeShellCommand(String.format(
+                "cmd role remove-role-holder --user %d android.app.role.SMS %s", userId, app));
     }
 
     @Test
