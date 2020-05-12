@@ -97,6 +97,8 @@ import android.server.wm.settings.SettingsSession;
 import android.util.Log;
 import android.util.Size;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -1039,6 +1041,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertEquals("onPause", 0, lifecycleCounts.getCount(ActivityCallback.ON_PAUSE));
     }
 
+    @FlakyTest(bugId = 156003518)
     @Test
     public void testPinnedStackWithDockedStack() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
