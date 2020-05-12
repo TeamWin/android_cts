@@ -23,7 +23,7 @@ import com.android.compatibility.common.util.Timeout;
  */
 final class AugmentedTimeouts {
 
-    private static final long ONE_TIMEOUT_TO_RULE_THEN_ALL_MS = 1_500;
+    private static final long ONE_TIMEOUT_TO_RULE_THEN_ALL_MS = 1_000;
     private static final long ONE_NAPTIME_TO_RULE_THEN_ALL_MS = 3_000;
 
     /**
