@@ -99,7 +99,11 @@ public class ImsMmTelManagerTest {
 
     @BeforeClass
     public static void beforeAllTests() {
-        assumeTrue(ImsUtils.shouldTestImsService());
+        // assumeTrue() in @BeforeClass is not supported by our test runner.
+        // Resort to the early exit.
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
 
         sTestSub = ImsUtils.getPreferredActiveSubId();
 
@@ -116,6 +120,12 @@ public class ImsMmTelManagerTest {
 
     @AfterClass
     public static void afterAllTests() {
+        // assumeTrue() in @AfterClass is not supported by our test runner.
+        // Resort to the early exit.
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
         if (sReceiver != null) {
             getContext().unregisterReceiver(sReceiver);
             sReceiver = null;
@@ -124,6 +134,8 @@ public class ImsMmTelManagerTest {
 
     @Before
     public void beforeTest() {
+        assumeTrue(ImsUtils.shouldTestImsService());
+
         if (!SubscriptionManager.isValidSubscriptionId(sTestSub)) {
             fail("This test requires that there is a SIM in the device!");
         }
