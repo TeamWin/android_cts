@@ -138,7 +138,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     /**
      * Whether the service should accept a data share session.
      */
-    private boolean mDataShareShouldAccept = false;
+    private boolean mDataSharingEnabled = false;
 
     /**
      * Bytes that were shared during the content capture
@@ -152,6 +152,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     boolean mDataShareSessionFinished = false;
     boolean mDataShareSessionSucceeded = false;
     int mDataShareSessionErrorCode = 0;
+    DataShareRequest mDataShareRequest;
 
     @NonNull
     public static ServiceWatcher setServiceWatcher() {
@@ -326,7 +327,8 @@ public class CtsContentCaptureService extends ContentCaptureService {
 
     @Override
     public void onDataShareRequest(DataShareRequest request, DataShareCallback callback) {
-        if (mDataShareShouldAccept) {
+        if (mDataSharingEnabled) {
+            mDataShareRequest = request;
             callback.onAccept(sExecutor, new DataShareReadAdapter() {
                 @Override
                 public void onStart(ParcelFileDescriptor fd) {
@@ -427,7 +429,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
     }
 
     public void setDataSharingEnabled(boolean enabled) {
-        this.mDataShareShouldAccept = enabled;
+        this.mDataSharingEnabled = enabled;
     }
 
     @Override
