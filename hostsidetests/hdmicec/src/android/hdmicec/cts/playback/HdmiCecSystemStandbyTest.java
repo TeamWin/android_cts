@@ -22,6 +22,8 @@ import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.RequiredPropertyRule;
+import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.TestDeviceState;
@@ -30,6 +32,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -43,9 +46,18 @@ public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
     private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =
             "hdmi_control_auto_device_off_enabled";
 
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1);
+
     @Rule
-    public HdmiCecClientWrapper hdmiCecClient =
-        new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
+    public RuleChain ruleChain =
+        RuleChain
+            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .around(RequiredPropertyRule.asCsvContainsValue(
+                this,
+                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
+                PLAYBACK_DEVICE.getDeviceType()))
+            .around(hdmiCecClient);
 
     private boolean setHdmiControlDeviceAutoOff(boolean turnOn) throws Exception {
         ITestDevice device = getDevice();
