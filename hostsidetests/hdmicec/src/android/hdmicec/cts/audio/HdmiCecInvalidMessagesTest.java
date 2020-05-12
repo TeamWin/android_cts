@@ -24,6 +24,8 @@ import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.RequiredPropertyRule;
+import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -31,6 +33,7 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.Scanner;
@@ -57,9 +60,18 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
 
     private static final int WAIT_TIME = 10;
 
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE);
+
     @Rule
-    public HdmiCecClientWrapper hdmiCecClient =
-            new HdmiCecClientWrapper(AUDIO_DEVICE, this);
+    public RuleChain ruleChain =
+        RuleChain
+            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .around(RequiredPropertyRule.asCsvContainsValue(
+                this,
+                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
+                AUDIO_DEVICE.getDeviceType()))
+            .around(hdmiCecClient);
 
     private String getSystemLocale() throws Exception {
         ITestDevice device = getDevice();
