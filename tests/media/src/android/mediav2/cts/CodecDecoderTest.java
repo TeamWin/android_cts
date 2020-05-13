@@ -16,14 +16,11 @@
 
 package android.mediav2.cts;
 
-import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.os.PersistableBundle;
 import android.util.Log;
-import android.util.Pair;
 import android.view.Surface;
 
 import androidx.test.filters.LargeTest;
@@ -48,7 +45,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -62,30 +58,19 @@ import static org.junit.Assert.fail;
  * of these tests are not to cover CDD requirements but to test components and their plugins
  */
 @RunWith(Parameterized.class)
-public class CodecDecoderTest extends CodecTestBase {
+public class CodecDecoderTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderTest.class.getSimpleName();
 
-    private final String mMime;
-    private final String mTestFile;
     private final String mRefFile;
     private final String mReconfigFile;
     private final float mRmsError;
 
-    private ArrayList<ByteBuffer> mCsdBuffers;
-    private int mCurrCsdIdx;
-
-    private MediaExtractor mExtractor;
-
     public CodecDecoderTest(String mime, String testFile, String refFile, String reconfigFile,
             float rmsError) {
-        mMime = mime;
-        mTestFile = testFile;
+        super(mime, testFile);
         mRefFile = refFile;
         mReconfigFile = reconfigFile;
         mRmsError = rmsError;
-        mAsyncHandle = new CodecAsyncHandler();
-        mCsdBuffers = new ArrayList<>();
-        mIsAudio = mMime.startsWith("audio/");
     }
 
     private short[] setUpAudioReference() throws IOException {
@@ -104,164 +89,6 @@ public class CodecDecoderTest extends CodecTestBase {
             }
         }
         return refData;
-    }
-
-    private MediaFormat setUpSource(String srcFile) throws IOException {
-        mExtractor = new MediaExtractor();
-        mExtractor.setDataSource(mInpPrefix + srcFile);
-        for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
-            MediaFormat format = mExtractor.getTrackFormat(trackID);
-            if (mMime.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
-                mExtractor.selectTrack(trackID);
-                if (!mIsAudio) {
-                    // COLOR_FormatYUV420Flexible by default should be supported by all components
-                    // This call shouldn't effect configure() call for any codec
-                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
-                }
-                return format;
-            }
-        }
-        fail("No track with mime: " + mMime + " found in file: " + srcFile);
-        return null;
-    }
-
-    private boolean hasCSD(MediaFormat format) {
-        return format.containsKey("csd-0");
-    }
-
-    private void enqueueCodecConfig(int bufferIndex) {
-        ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
-        ByteBuffer csdBuffer = mCsdBuffers.get(mCurrCsdIdx);
-        inputBuffer.put((ByteBuffer) csdBuffer.rewind());
-        mCodec.queueInputBuffer(bufferIndex, 0, csdBuffer.limit(), 0,
-                MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
-        if (ENABLE_LOGS) {
-            Log.v(LOG_TAG, "queued csd: id: " + bufferIndex + " size: " + csdBuffer.limit());
-        }
-    }
-
-    void enqueueInput(int bufferIndex) {
-        if (mExtractor.getSampleSize() < 0) {
-            enqueueEOS(bufferIndex);
-        } else {
-            ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
-            mExtractor.readSampleData(inputBuffer, 0);
-            int size = (int) mExtractor.getSampleSize();
-            long pts = mExtractor.getSampleTime();
-            int extractorFlags = mExtractor.getSampleFlags();
-            int codecFlags = 0;
-            if ((extractorFlags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
-                codecFlags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
-            }
-            if ((extractorFlags & MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0) {
-                codecFlags |= MediaCodec.BUFFER_FLAG_PARTIAL_FRAME;
-            }
-            if (!mExtractor.advance() && mSignalEOSWithLastFrame) {
-                codecFlags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
-                mSawInputEOS = true;
-            }
-            if (ENABLE_LOGS) {
-                Log.v(LOG_TAG, "input: id: " + bufferIndex + " size: " + size + " pts: " + pts +
-                        " flags: " + codecFlags);
-            }
-            mCodec.queueInputBuffer(bufferIndex, 0, size, pts, codecFlags);
-            if (size > 0 && (codecFlags & (MediaCodec.BUFFER_FLAG_CODEC_CONFIG |
-                    MediaCodec.BUFFER_FLAG_PARTIAL_FRAME)) == 0) {
-                mOutputBuff.saveInPTS(pts);
-                mInputCount++;
-            }
-        }
-    }
-
-    private void enqueueInput(int bufferIndex, ByteBuffer buffer, MediaCodec.BufferInfo info) {
-        ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
-        inputBuffer.put((ByteBuffer) buffer.rewind());
-        int flags = 0;
-        if ((info.flags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
-            flags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
-        }
-        if ((info.flags & MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0) {
-            flags |= MediaCodec.BUFFER_FLAG_PARTIAL_FRAME;
-        }
-        if (ENABLE_LOGS) {
-            Log.v(LOG_TAG, "input: id: " + bufferIndex + " flags: " + info.flags + " size: " +
-                    info.size + " timestamp: " + info.presentationTimeUs);
-        }
-        mCodec.queueInputBuffer(bufferIndex, info.offset, info.size, info.presentationTimeUs,
-                flags);
-        if (info.size > 0 && ((flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) &&
-                ((flags & MediaCodec.BUFFER_FLAG_PARTIAL_FRAME) == 0)) {
-            mOutputBuff.saveInPTS(info.presentationTimeUs);
-            mInputCount++;
-        }
-    }
-
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
-        if (info.size > 0 && mSaveToMem) {
-            if (mIsAudio) {
-                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-                mOutputBuff.saveToMemory(buf, info);
-            } else {
-                // tests both getOutputImage and getOutputBuffer. Can do time division
-                // multiplexing but lets allow it for now
-                Image img = mCodec.getOutputImage(bufferIndex);
-                assertTrue(img != null);
-                mOutputBuff.checksum(img);
-
-                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-                mOutputBuff.checksum(buf, info.size);
-            }
-        }
-        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-            mSawOutputEOS = true;
-        }
-        if (ENABLE_LOGS) {
-            Log.v(LOG_TAG, "output: id: " + bufferIndex + " flags: " + info.flags + " size: " +
-                    info.size + " timestamp: " + info.presentationTimeUs);
-        }
-        if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
-            mOutputBuff.saveOutPTS(info.presentationTimeUs);
-            mOutputCount++;
-        }
-        mCodec.releaseOutputBuffer(bufferIndex, false);
-    }
-
-    private void doWork(ByteBuffer buffer, ArrayList<MediaCodec.BufferInfo> list)
-            throws InterruptedException {
-        int frameCount = 0;
-        if (mIsCodecInAsyncMode) {
-            // output processing after queuing EOS is done in waitForAllOutputs()
-            while (!mAsyncHandle.hasSeenError() && !mSawInputEOS && frameCount < list.size()) {
-                Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getWork();
-                if (element != null) {
-                    int bufferID = element.first;
-                    MediaCodec.BufferInfo info = element.second;
-                    if (info != null) {
-                        dequeueOutput(bufferID, info);
-                    } else {
-                        enqueueInput(bufferID, buffer, list.get(frameCount));
-                        frameCount++;
-                    }
-                }
-            }
-        } else {
-            MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
-            // output processing after queuing EOS is done in waitForAllOutputs()
-            while (!mSawInputEOS && frameCount < list.size()) {
-                int outputBufferId = mCodec.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
-                if (outputBufferId >= 0) {
-                    dequeueOutput(outputBufferId, outInfo);
-                } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                    mOutFormat = mCodec.getOutputFormat();
-                    mSignalledOutFormatChanged = true;
-                }
-                int inputBufferId = mCodec.dequeueInputBuffer(Q_DEQ_TIMEOUT_US);
-                if (inputBufferId != -1) {
-                    enqueueInput(inputBufferId, buffer, list.get(frameCount));
-                    frameCount++;
-                }
-            }
-        }
     }
 
     private ArrayList<MediaCodec.BufferInfo> createSubFrames(ByteBuffer buffer, int sfCount) {
@@ -288,48 +115,6 @@ public class CodecDecoderTest extends CodecTestBase {
             offset += info.size;
         }
         return list;
-    }
-
-    private void queueCodecConfig() throws InterruptedException {
-        if (mIsCodecInAsyncMode) {
-            for (mCurrCsdIdx = 0; !mAsyncHandle.hasSeenError() && mCurrCsdIdx < mCsdBuffers.size();
-                 mCurrCsdIdx++) {
-                Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getInput();
-                if (element != null) {
-                    enqueueCodecConfig(element.first);
-                }
-            }
-        } else {
-            for (mCurrCsdIdx = 0; mCurrCsdIdx < mCsdBuffers.size(); mCurrCsdIdx++) {
-                enqueueCodecConfig(mCodec.dequeueInputBuffer(-1));
-            }
-        }
-    }
-
-    private void decodeToMemory(String file, String decoder, long pts, int mode, int frameLimit)
-            throws IOException, InterruptedException {
-        mSaveToMem = true;
-        mOutputBuff = new OutputManager();
-        mCodec = MediaCodec.createByCodecName(decoder);
-        MediaFormat format = setUpSource(file);
-        configureCodec(format, false, true, false);
-        mCodec.start();
-        mExtractor.seekTo(pts, mode);
-        doWork(frameLimit);
-        queueEOS();
-        waitForAllOutputs();
-        mCodec.stop();
-        mCodec.release();
-        mExtractor.release();
-        mSaveToMem = false;
-    }
-
-    @Override
-    PersistableBundle validateMetrics(String decoder, MediaFormat format) {
-        PersistableBundle metrics = super.validateMetrics(decoder, format);
-        assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
-        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 0);
-        return metrics;
     }
 
     @Parameterized.Parameters(name = "{index}({0})")
