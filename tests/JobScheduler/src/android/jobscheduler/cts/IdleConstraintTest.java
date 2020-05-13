@@ -45,12 +45,19 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
     private JobInfo.Builder mBuilder;
     private UiDevice mUiDevice;
 
+    private String mInitialDisplayTimeout;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
         mBuilder = new JobInfo.Builder(STATE_JOB_ID, kJobServiceComponent);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+
+        // Make sure the screen doesn't turn off when the test turns it on.
+        mInitialDisplayTimeout = mUiDevice.executeShellCommand(
+                "settings get system screen_off_timeout");
+        mUiDevice.executeShellCommand("settings put system screen_off_timeout 300000");
     }
 
     @Override
@@ -61,6 +68,9 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         if (isCarModeSupported()) {
             setCarMode(false);
         }
+
+        mUiDevice.executeShellCommand(
+                "settings put system screen_off_timeout " + mInitialDisplayTimeout);
 
         super.tearDown();
     }
