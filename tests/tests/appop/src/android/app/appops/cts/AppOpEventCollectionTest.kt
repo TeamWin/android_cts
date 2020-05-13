@@ -39,6 +39,8 @@ import org.junit.Rule
 import org.junit.Test
 import java.lang.Thread.sleep
 
+private const val BACKGROUND_PACKAGE = "android.app.appops.cts.appinbackground"
+
 class AppOpEventCollectionTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
@@ -105,30 +107,86 @@ class AppOpEventCollectionTest {
         val attributionOpEntry = opEntry.attributedOpEntries[TEST_ATTRIBUTION_TAG]!!
 
         assertThat(attributionOpEntry.getLastAccessForegroundTime(OP_FLAG_SELF)).isIn(before..after)
+        assertThat(opEntry.getLastAccessForegroundTime(OP_FLAG_SELF)).isIn(before..after)
 
         // Access should should also show up in the combined state for all op-flags
         assertThat(attributionOpEntry.getLastAccessForegroundTime(OP_FLAGS_ALL)).isIn(before..after)
-        assertThat(opEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(before..after)
+        assertThat(opEntry.getLastAccessForegroundTime(OP_FLAGS_ALL)).isIn(before..after)
 
         // Foreground access should should also show up in the combined state for fg and bg
         assertThat(attributionOpEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(before..after)
         assertThat(opEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(before..after)
+        assertThat(attributionOpEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(before..after)
+        assertThat(opEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(before..after)
 
         // The access was in foreground, hence there is no background access
-        assertThat(attributionOpEntry.getLastBackgroundDuration(OP_FLAG_SELF)).isLessThan(before)
-        assertThat(opEntry.getLastBackgroundDuration(OP_FLAG_SELF)).isLessThan(before)
+        assertThat(attributionOpEntry.getLastAccessBackgroundTime(OP_FLAG_SELF)).isLessThan(before)
+        assertThat(opEntry.getLastAccessBackgroundTime(OP_FLAG_SELF)).isLessThan(before)
+        assertThat(attributionOpEntry.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isLessThan(before)
+        assertThat(opEntry.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isLessThan(before)
 
         // The access was for a attribution, hence there is no access for the default attribution
         if (null in opEntry.attributedOpEntries) {
             assertThat(opEntry.attributedOpEntries[null]!!
-                    .getLastAccessForegroundTime(OP_FLAG_SELF)).isLessThan(before)
+                .getLastAccessForegroundTime(OP_FLAG_SELF)).isLessThan(before)
         }
 
         // The access does not show up for other op-flags
-        assertThat(attributionOpEntry.getLastAccessForegroundTime(
-                OP_FLAGS_ALL and OP_FLAG_SELF.inv())).isLessThan(before)
-        assertThat(opEntry.getLastAccessForegroundTime(
-                OP_FLAGS_ALL and OP_FLAG_SELF.inv())).isLessThan(before)
+        assertThat(
+            attributionOpEntry.getLastAccessForegroundTime(OP_FLAGS_ALL and OP_FLAG_SELF.inv())
+        ).isLessThan(before)
+        assertThat(opEntry.getLastAccessForegroundTime(OP_FLAGS_ALL and OP_FLAG_SELF.inv()))
+            .isLessThan(before)
+    }
+
+    @Test
+    fun noteInBackgroundWithAttributionAndCheckOpEntries() {
+        val uid = context.packageManager.getPackageUid(BACKGROUND_PACKAGE, 0)
+
+        val before = System.currentTimeMillis()
+        assertThat(
+            runWithShellPermissionIdentity {
+                appOpsManager.noteOp(
+                    OPSTR_WIFI_SCAN, uid, BACKGROUND_PACKAGE, TEST_ATTRIBUTION_TAG, null
+                )
+            }
+        ).isEqualTo(AppOpsManager.MODE_ALLOWED)
+        val after = System.currentTimeMillis()
+
+        val opEntry = getOpEntry(uid, BACKGROUND_PACKAGE, OPSTR_WIFI_SCAN)!!
+        val attributionOpEntry = opEntry.attributedOpEntries[TEST_ATTRIBUTION_TAG]!!
+
+        assertThat(attributionOpEntry.getLastAccessBackgroundTime(OP_FLAG_SELF)).isIn(before..after)
+        assertThat(opEntry.getLastAccessBackgroundTime(OP_FLAG_SELF)).isIn(before..after)
+
+        // Access should should also show up in the combined state for all op-flags
+        assertThat(attributionOpEntry.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isIn(before..after)
+        assertThat(opEntry.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isIn(before..after)
+
+        // Background access should should also show up in the combined state for fg and bg
+        assertThat(attributionOpEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(before..after)
+        assertThat(opEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(before..after)
+        assertThat(attributionOpEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(before..after)
+        assertThat(opEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(before..after)
+
+        // The access was in background, hence there is no foreground access
+        assertThat(attributionOpEntry.getLastAccessForegroundTime(OP_FLAG_SELF)).isLessThan(before)
+        assertThat(opEntry.getLastAccessForegroundTime(OP_FLAG_SELF)).isLessThan(before)
+        assertThat(attributionOpEntry.getLastAccessForegroundTime(OP_FLAGS_ALL)).isLessThan(before)
+        assertThat(opEntry.getLastAccessForegroundTime(OP_FLAGS_ALL)).isLessThan(before)
+
+        // The access was for a attribution, hence there is no access for the default attribution
+        if (null in opEntry.attributedOpEntries) {
+            assertThat(opEntry.attributedOpEntries[null]!!
+                .getLastAccessBackgroundTime(OP_FLAG_SELF)).isLessThan(before)
+        }
+
+        // The access does not show up for other op-flags
+        assertThat(
+            attributionOpEntry.getLastAccessBackgroundTime(OP_FLAGS_ALL and OP_FLAG_SELF.inv())
+        ).isLessThan(before)
+        assertThat(opEntry.getLastAccessBackgroundTime(OP_FLAGS_ALL and OP_FLAG_SELF.inv()))
+            .isLessThan(before)
     }
 
     @Test
