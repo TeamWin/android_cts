@@ -22,12 +22,15 @@ import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.RequiredPropertyRule;
+import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -37,9 +40,18 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
     private static final CecDevice PLAYBACK_DEVICE = CecDevice.PLAYBACK_1;
     private static final int INCORRECT_VENDOR_ID = 0x0;
 
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1);
+
     @Rule
-    public HdmiCecClientWrapper hdmiCecClient =
-        new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
+    public RuleChain ruleChain =
+        RuleChain
+            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .around(RequiredPropertyRule.asCsvContainsValue(
+                this,
+                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
+                PLAYBACK_DEVICE.getDeviceType()))
+            .around(hdmiCecClient);
 
     /**
      * Test 11.2.9-1
@@ -49,6 +61,10 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
     @Test
     public void cect_11_2_9_1_GiveDeviceVendorId() throws Exception {
         for (CecDevice cecDevice : CecDevice.values()) {
+            // Skip the logical address of this device
+            if (cecDevice == PLAYBACK_DEVICE) {
+                continue;
+            }
             hdmiCecClient.sendCecMessage(cecDevice, CecMessage.GIVE_DEVICE_VENDOR_ID);
             String message = hdmiCecClient.checkExpectedOutput(CecMessage.DEVICE_VENDOR_ID);
             assertThat(hdmiCecClient.getParamsFromMessage(message)).

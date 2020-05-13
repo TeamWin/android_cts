@@ -21,7 +21,7 @@ cc_test_library {
         "com_android_cts_verifier_camera_StatsImage.cpp",
     ],
     sdk_version: "current",
-    stl: "system",
+    stl: "libc++_static",
     header_libs: ["jni_headers"],
     shared_libs: ["liblog"],
     cflags: [

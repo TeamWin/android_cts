@@ -37,6 +37,8 @@ import static android.server.wm.app.Components.NIGHT_MODE_ACTIVITY;
 import static android.server.wm.app.Components.PORTRAIT_ORIENTATION_ACTIVITY;
 import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
+import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_CONFIG_INFO_IN_ON_CREATE;
+import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_DISPLAY_REAL_SIZE;
 import static android.server.wm.translucentapp26.Components.SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
@@ -56,11 +58,17 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
+import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.CommandSession.ConfigInfo;
 import android.server.wm.CommandSession.SizeInfo;
+import android.server.wm.TestJournalProvider.TestJournalContainer;
+import android.server.wm.settings.SettingsSession;
 import android.view.Display;
 
 import org.junit.Test;
@@ -437,6 +445,46 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         final SizeInfo finalReportedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
         assertEquals("Applied orientation must not be influenced by previously visible activity",
                 initialOrientation, finalReportedSizes.orientation);
+    }
+
+    @Test
+    public void testRotatedInfoWithFixedRotationTransform() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
+        // TODO(b/143053092): Remove the settings if it becomes stable.
+        mObjectTracker.manage(new SettingsSession<>(
+                Settings.Global.getUriFor("fixed_rotation_transform"),
+                Settings.Global::getInt, Settings.Global::putInt)).set(1);
+
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(LANDSCAPE_ORIENTATION_ACTIVITY)
+                // Request the info from onCreate because at that moment the real display hasn't
+                // rotated but the activity is rotated.
+                .setIntentExtra(bundle -> bundle.putBoolean(EXTRA_CONFIG_INFO_IN_ON_CREATE, true))
+                .execute();
+        mWmState.waitForLastOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+
+        final SizeInfo reportedSizes = getActivityDisplaySize(LANDSCAPE_ORIENTATION_ACTIVITY);
+        final Bundle extras = TestJournalContainer.get(LANDSCAPE_ORIENTATION_ACTIVITY).extras;
+        final Point onCreateRealDisplaySize = extras.getParcelable(EXTRA_DISPLAY_REAL_SIZE);
+        final ConfigInfo onCreateConfigInfo = extras.getParcelable(EXTRA_CONFIG_INFO_IN_ON_CREATE);
+        final SizeInfo onCreateSize = onCreateConfigInfo.sizeInfo;
+
+        assertEquals("The last reported size should be the same as the one from onCreate",
+                reportedSizes, onCreateConfigInfo.sizeInfo);
+
+        final Display display = mDm.getDisplay(Display.DEFAULT_DISPLAY);
+        final Point expectedRealDisplaySize = new Point();
+        display.getRealSize(expectedRealDisplaySize);
+
+        assertEquals("The activity should get the final display rotation in onCreate",
+                display.getRotation(), onCreateConfigInfo.rotation);
+        assertEquals("The activity should get the final display size in onCreate",
+                expectedRealDisplaySize, onCreateRealDisplaySize);
+        assertEquals("The app size of activity should have the same orientation",
+                expectedRealDisplaySize.x > expectedRealDisplaySize.y,
+                onCreateSize.displayWidth > onCreateSize.displayHeight);
     }
 
     @Test

@@ -27,8 +27,7 @@ cc_test_library {
     ],
     header_libs: ["jni_headers"],
     sdk_version: "current",
-    //stl: "c++_static"
-    stl: "system",
+    stl: "libc++_static",
     shared_libs: [
         "liblog",
         "libamidi",

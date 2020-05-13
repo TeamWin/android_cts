@@ -217,32 +217,32 @@ public class MediaParserTest {
     // OGG.
 
     @Test
-    public void testOggBearVorbis() throws IOException, InterruptedException {
-        testExtractAsset("ogg/bear_vorbis.ogg");
+    public void testOggBearVorbis() throws IOException {
+        testAssetExtraction("ogg/bear_vorbis.ogg");
     }
 
     @Test
-    public void testOggBear() throws IOException, InterruptedException {
-        testExtractAsset("ogg/bear.opus");
+    public void testOggBear() throws IOException {
+        testAssetExtraction("ogg/bear.opus");
     }
 
     @Test
-    public void testOggBearFlac() throws IOException, InterruptedException {
-        testExtractAsset("ogg/bear_flac.ogg");
+    public void testOggBearFlac() throws IOException {
+        testAssetExtraction("ogg/bear_flac.ogg");
     }
 
     @Test
-    public void testOggNoFlacSeekTable() throws IOException, InterruptedException {
-        testExtractAsset("ogg/bear_flac_noseektable.ogg");
+    public void testOggNoFlacSeekTable() throws IOException {
+        testAssetExtraction("ogg/bear_flac_noseektable.ogg");
     }
 
     @Test
-    public void testOggFlacHeaderSniff() throws IOException, InterruptedException {
+    public void testOggFlacHeaderSniff() throws IOException {
         testSniffAsset("ogg/flac_header", /* expectedExtractorName= */ MediaParser.PARSER_NAME_OGG);
     }
 
     @Test
-    public void testOggOpusHeaderSniff() throws IOException, InterruptedException {
+    public void testOggOpusHeaderSniff() throws IOException {
         try {
             testSniffAsset(
                     "ogg/opus_header", /* expectedExtractorName= */ MediaParser.PARSER_NAME_OGG);
@@ -253,7 +253,7 @@ public class MediaParserTest {
     }
 
     @Test
-    public void testOggInvalidHeaderSniff() throws IOException, InterruptedException {
+    public void testOggInvalidHeaderSniff() throws IOException {
         try {
             testSniffAsset(
                     "ogg/invalid_ogg_header",
@@ -274,118 +274,116 @@ public class MediaParserTest {
     // FLAC.
 
     @Test
-    public void testFlacUncommonSampleRateFlac() throws IOException, InterruptedException {
-        testExtractAsset("flac/bear_uncommon_sample_rate.flac");
+    public void testFlacUncommonSampleRateFlac() throws IOException {
+        testAssetExtraction("flac/bear_uncommon_sample_rate.flac");
     }
 
     @Test
-    public void testFlacNoSeekTableAndNoNumSamples() throws IOException, InterruptedException {
-        testExtractAsset("flac/bear_no_seek_table_no_num_samples.flac");
+    public void testFlacNoSeekTableAndNoNumSamples() throws IOException {
+        testAssetExtraction("flac/bear_no_seek_table_no_num_samples.flac");
     }
 
     @Test
-    public void testFlacWithPicture() throws IOException, InterruptedException {
-        testExtractAsset("flac/bear_with_picture.flac");
+    public void testFlacWithPicture() throws IOException {
+        testAssetExtraction("flac/bear_with_picture.flac");
     }
 
     @Test
-    public void testFlacWithVorbisComments() throws IOException, InterruptedException {
-        testExtractAsset("flac/bear_with_vorbis_comments.flac");
+    public void testFlacWithVorbisComments() throws IOException {
+        testAssetExtraction("flac/bear_with_vorbis_comments.flac");
     }
 
     @Test
-    public void testFlacOneMetadataBlock() throws IOException, InterruptedException {
-        testExtractAsset("flac/bear_one_metadata_block.flac");
+    public void testFlacOneMetadataBlock() throws IOException {
+        testAssetExtraction("flac/bear_one_metadata_block.flac");
     }
 
     @Test
-    public void testFlacNoMinMaxFrameSize() throws IOException, InterruptedException {
-        testExtractAsset("flac/bear_no_min_max_frame_size.flac");
+    public void testFlacNoMinMaxFrameSize() throws IOException {
+        testAssetExtraction("flac/bear_no_min_max_frame_size.flac");
     }
 
     @Test
-    public void testFlacNoNumSamples() throws IOException, InterruptedException {
-        testExtractAsset("flac/bear_no_num_samples.flac");
+    public void testFlacNoNumSamples() throws IOException {
+        testAssetExtraction("flac/bear_no_num_samples.flac");
     }
 
     @Test
-    public void testFlacWithId3() throws IOException, InterruptedException {
-        testExtractAsset("flac/bear_with_id3.flac");
+    public void testFlacWithId3() throws IOException {
+        testAssetExtraction("flac/bear_with_id3.flac");
     }
 
     @Test
-    public void testFlacSample() throws IOException, InterruptedException {
-        testExtractAsset("flac/bear.flac");
+    public void testFlacSample() throws IOException {
+        testAssetExtraction("flac/bear.flac");
     }
 
     // MP3.
 
     @Test
-    public void testMp3WithNoSeekTableVariableFrameSize() throws IOException, InterruptedException {
-        testExtractAsset("mp3/bear-cbr-variable-frame-size-no-seek-table.mp3");
+    public void testMp3WithNoSeekTableVariableFrameSize() throws IOException {
+        testAssetExtraction("mp3/bear-cbr-variable-frame-size-no-seek-table.mp3");
     }
 
     @Test
-    public void testMp3WithVariableBitrateAndXingHeader() throws IOException, InterruptedException {
-        testExtractAsset("mp3/bear-vbr-xing-header.mp3");
+    public void testMp3WithVariableBitrateAndXingHeader() throws IOException {
+        testAssetExtraction("mp3/bear-vbr-xing-header.mp3");
     }
 
     @Test
-    public void testMp3WithNoSeekTableVariableBitrate() throws IOException, InterruptedException {
-        testExtractAsset("mp3/bear-vbr-no-seek-table.mp3");
+    public void testMp3WithNoSeekTableVariableBitrate() throws IOException {
+        testAssetExtraction("mp3/bear-vbr-no-seek-table.mp3");
     }
 
     @Test
-    public void testMp3WithTrimmedSample() throws IOException, InterruptedException {
-        testExtractAsset("mp3/play-trimmed.mp3");
+    public void testMp3WithTrimmedSample() throws IOException {
+        testAssetExtraction("mp3/play-trimmed.mp3");
     }
 
     @Test
-    public void testMp3WithId3() throws IOException, InterruptedException {
-        testExtractAsset("mp3/bear-id3.mp3");
+    public void testMp3WithId3() throws IOException {
+        testAssetExtraction("mp3/bear-id3.mp3");
     }
 
     // WAV.
 
     @Test
-    public void testWavWithImaAdpcm() throws IOException, InterruptedException {
-        testExtractAsset("wav/sample_ima_adpcm.wav");
+    public void testWavWithImaAdpcm() throws IOException {
+        testAssetExtraction("wav/sample_ima_adpcm.wav");
     }
 
     @Test
-    public void testWav() throws IOException, InterruptedException {
-        testExtractAsset("wav/sample.wav");
+    public void testWav() throws IOException {
+        testAssetExtraction("wav/sample.wav");
     }
 
     // AMR.
 
     @Test
-    public void testAmrNarrowBandSamplesWithConstantBitrateSeeking()
-            throws IOException, InterruptedException {
-        testExtractAsset("amr/sample_nb_cbr.amr");
+    public void testAmrNarrowBandSamplesWithConstantBitrateSeeking() throws IOException {
+        testAssetExtraction("amr/sample_nb_cbr.amr");
     }
 
     @Test
-    public void testAmrNarrowBandSamples() throws IOException, InterruptedException {
-        testExtractAsset("amr/sample_nb.amr");
+    public void testAmrNarrowBandSamples() throws IOException {
+        testAssetExtraction("amr/sample_nb.amr");
     }
 
     @Test
-    public void testAmrWideBandSamples() throws IOException, InterruptedException {
-        testExtractAsset("amr/sample_wb.amr");
+    public void testAmrWideBandSamples() throws IOException {
+        testAssetExtraction("amr/sample_wb.amr");
     }
 
     @Test
-    public void testAmrWideBandSamplesWithConstantBitrateSeeking()
-            throws IOException, InterruptedException {
-        testExtractAsset("amr/sample_wb_cbr.amr");
+    public void testAmrWideBandSamplesWithConstantBitrateSeeking() throws IOException {
+        testAssetExtraction("amr/sample_wb_cbr.amr");
     }
 
     // FLV.
 
     @Test
-    public void testFlv() throws IOException, InterruptedException {
-        testExtractAsset("flv/sample.flv");
+    public void testFlv() throws IOException {
+        testAssetExtraction("flv/sample.flv");
     }
 
     // PS.
@@ -393,38 +391,37 @@ public class MediaParserTest {
     // TODO: Enable once the timeout is fixed.
     @Test
     @Ignore
-    public void testPsElphantsDream() throws IOException, InterruptedException {
-        testExtractAsset("ts/elephants_dream.mpg");
+    public void testPsElphantsDream() throws IOException {
+        testAssetExtraction("ts/elephants_dream.mpg");
     }
 
     @Test
-    public void testPsWithAc3() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_ac3.ps");
+    public void testPsWithAc3() throws IOException {
+        testAssetExtraction("ts/sample_ac3.ps");
     }
 
     @Test
-    public void testPsWithH262MpegAudio() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_h262_mpeg_audio.ps");
+    public void testPsWithH262MpegAudio() throws IOException {
+        testAssetExtraction("ts/sample_h262_mpeg_audio.ps");
     }
 
     // ADTS.
 
     @Test
-    public void testAdtsTruncatedWithConstantBitrateSeeking()
-            throws IOException, InterruptedException {
-        testExtractAsset(
+    public void testAdtsTruncatedWithConstantBitrateSeeking() throws IOException {
+        testAssetExtraction(
                 "ts/sample_cbs_truncated.adts",
                 Collections.singletonMap(MediaParser.PARAMETER_ADTS_ENABLE_CBR_SEEKING, true));
     }
 
     @Test
-    public void testAdts() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample.adts");
+    public void testAdts() throws IOException {
+        testAssetExtraction("ts/sample.adts");
     }
 
     @Test
-    public void testAdtsWithConstantBitrateSeeking() throws IOException, InterruptedException {
-        testExtractAsset(
+    public void testAdtsWithConstantBitrateSeeking() throws IOException {
+        testAssetExtraction(
                 "ts/sample_cbs.adts",
                 Collections.singletonMap(MediaParser.PARAMETER_ADTS_ENABLE_CBR_SEEKING, true));
     }
@@ -432,95 +429,95 @@ public class MediaParserTest {
     // AC-3.
 
     @Test
-    public void testAc3() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample.ac3");
+    public void testAc3() throws IOException {
+        testAssetExtraction("ts/sample.ac3");
     }
 
     // AC-4.
 
     @Test
-    public void testAc4() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample.ac4");
+    public void testAc4() throws IOException {
+        testAssetExtraction("ts/sample.ac4");
     }
 
     // EAC-3.
 
     @Test
-    public void testEac3() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample.eac3");
+    public void testEac3() throws IOException {
+        testAssetExtraction("ts/sample.eac3");
     }
 
     // TS.
 
     @Test
-    public void testTsBigBuckBunny() throws IOException, InterruptedException {
-        testExtractAsset("ts/bbb_2500ms.ts");
+    public void testTsBigBuckBunny() throws IOException {
+        testAssetExtraction("ts/bbb_2500ms.ts");
     }
 
     @Test
-    public void testTsWithH262MpegAudio() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_h262_mpeg_audio.ts");
+    public void testTsWithH262MpegAudio() throws IOException {
+        testAssetExtraction("ts/sample_h262_mpeg_audio.ts");
     }
 
     @Test
-    public void testTsWithH264MpegAudio() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_h264_mpeg_audio.ts");
+    public void testTsWithH264MpegAudio() throws IOException {
+        testAssetExtraction("ts/sample_h264_mpeg_audio.ts");
     }
 
     @Test
-    public void testTsWithH264DetectAccessUnits() throws IOException, InterruptedException {
-        testExtractAsset(
+    public void testTsWithH264DetectAccessUnits() throws IOException {
+        testAssetExtraction(
                 "ts/sample_h264_no_access_unit_delimiters.ts",
                 Collections.singletonMap(MediaParser.PARAMETER_TS_DETECT_ACCESS_UNITS, true));
     }
 
     @Test
-    public void testTsWithH264DtsAudio() throws IOException, InterruptedException {
-        testExtractAsset(
+    public void testTsWithH264DtsAudio() throws IOException {
+        testAssetExtraction(
                 "ts/sample_h264_dts_audio.ts",
                 Collections.singletonMap(
                         MediaParser.PARAMETER_TS_ENABLE_HDMV_DTS_AUDIO_STREAMS, true));
     }
 
     @Test
-    public void testTsWithLatm() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_latm.ts");
+    public void testTsWithLatm() throws IOException {
+        testAssetExtraction("ts/sample_latm.ts");
     }
 
     @Test
-    public void testTsWithSdt() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_with_sdt.ts");
+    public void testTsWithSdt() throws IOException {
+        testAssetExtraction("ts/sample_with_sdt.ts");
     }
 
     @Test
-    public void testTsWithH265() throws IOException, InterruptedException {
-        testExtractAsset("ts/sample_h265.ts");
+    public void testTsWithH265() throws IOException {
+        testAssetExtraction("ts/sample_h265.ts");
     }
 
     // MKV.
 
     @Test
-    public void testMatroskaSubsampleEncryptedNoAltref() throws IOException, InterruptedException {
-        testExtractAsset("mkv/subsample_encrypted_noaltref.webm");
+    public void testMatroskaSubsampleEncryptedNoAltref() throws IOException {
+        testAssetExtraction("mkv/subsample_encrypted_noaltref.webm");
     }
 
     @Test
-    public void testMatroskaFile() throws IOException, InterruptedException {
-        testExtractAsset("mkv/sample.mkv");
+    public void testMatroskaFile() throws IOException {
+        testAssetExtraction("mkv/sample.mkv");
     }
 
     @Test
-    public void testMatroskaFullBlocks() throws IOException, InterruptedException {
-        testExtractAsset("mkv/full_blocks.mkv");
+    public void testMatroskaFullBlocks() throws IOException {
+        testAssetExtraction("mkv/full_blocks.mkv");
     }
 
     @Test
-    public void testMatroskaSubsampleEncryptedAltref() throws IOException, InterruptedException {
-        testExtractAsset("mkv/subsample_encrypted_altref.webm");
+    public void testMatroskaSubsampleEncryptedAltref() throws IOException {
+        testAssetExtraction("mkv/subsample_encrypted_altref.webm");
     }
 
     @Test
-    public void testMatroskaOutOfBandCrypto() throws IOException, InterruptedException {
+    public void testMatroskaOutOfBandCrypto() throws IOException {
         MockMediaParserOutputConsumer outputConsumer = new MockMediaParserOutputConsumer();
         MockMediaParserInputReader inputReader =
                 getInputReader("mkv/subsample_encrypted_noaltref.webm");
@@ -543,52 +540,52 @@ public class MediaParserTest {
     // MP4.
 
     @Test
-    public void testMp4Ac4Fragmented() throws IOException, InterruptedException {
-        testExtractAsset("mp4/sample_ac4_fragmented.mp4");
+    public void testMp4Ac4Fragmented() throws IOException {
+        testAssetExtraction("mp4/sample_ac4_fragmented.mp4");
     }
 
     @Test
-    public void testMp4AndrdoidSlowMotion() throws IOException, InterruptedException {
-        testExtractAsset("mp4/sample_android_slow_motion.mp4");
+    public void testMp4AndrdoidSlowMotion() throws IOException {
+        testAssetExtraction("mp4/sample_android_slow_motion.mp4");
     }
 
     @Test
-    public void testMp4FragmentedSei() throws IOException, InterruptedException {
-        testExtractAsset("mp4/sample_fragmented_sei.mp4");
+    public void testMp4FragmentedSei() throws IOException {
+        testAssetExtraction("mp4/sample_fragmented_sei.mp4");
     }
 
     @Test
-    public void testMp4WithAc4() throws IOException, InterruptedException {
-        testExtractAsset("mp4/sample_ac4.mp4");
+    public void testMp4WithAc4() throws IOException {
+        testAssetExtraction("mp4/sample_ac4.mp4");
     }
 
     @Test
-    public void testMp4FragmentedSeekable() throws IOException, InterruptedException {
-        testExtractAsset("mp4/sample_fragmented_seekable.mp4");
+    public void testMp4FragmentedSeekable() throws IOException {
+        testAssetExtraction("mp4/sample_fragmented_seekable.mp4");
     }
 
     @Test
-    public void testMp4WithProtectedAc4() throws IOException, InterruptedException {
-        testExtractAsset("mp4/sample_ac4_protected.mp4");
+    public void testMp4WithProtectedAc4() throws IOException {
+        testAssetExtraction("mp4/sample_ac4_protected.mp4");
     }
 
     @Test
-    public void testMp4() throws IOException, InterruptedException {
-        testExtractAsset("mp4/sample.mp4");
+    public void testMp4() throws IOException {
+        testAssetExtraction("mp4/sample.mp4");
     }
 
     @Test
-    public void testMp4MdatTooLong() throws IOException, InterruptedException {
-        testExtractAsset("mp4/sample_mdat_too_long.mp4");
+    public void testMp4MdatTooLong() throws IOException {
+        testAssetExtraction("mp4/sample_mdat_too_long.mp4");
     }
 
     @Test
-    public void testMp4Fragmented() throws IOException, InterruptedException {
-        testExtractAsset("mp4/sample_fragmented.mp4");
+    public void testMp4Fragmented() throws IOException {
+        testAssetExtraction("mp4/sample_fragmented.mp4");
     }
 
     @Test
-    public void testMp4FragmentedOutOfBandCrypto() throws IOException, InterruptedException {
+    public void testMp4FragmentedOutOfBandCrypto() throws IOException {
         MockMediaParserOutputConsumer outputConsumer = new MockMediaParserOutputConsumer();
         MockMediaParserInputReader inputReader = getInputReader("mp4/sample_ac4_protected.mp4");
         MediaParser mediaParser = MediaParser.create(outputConsumer);
@@ -645,23 +642,22 @@ public class MediaParserTest {
     }
 
     private static void testSniffAsset(String assetPath, String expectedParserName)
-            throws IOException, InterruptedException {
-        extractAsset(assetPath, Collections.emptyMap(), expectedParserName);
+            throws IOException {
+        testAssetExtraction(assetPath, Collections.emptyMap(), expectedParserName);
     }
 
-    private static void testExtractAsset(String assetPath)
-            throws IOException, InterruptedException {
-        testExtractAsset(assetPath, Collections.emptyMap());
+    private static void testAssetExtraction(String assetPath) throws IOException {
+        testAssetExtraction(assetPath, Collections.emptyMap());
     }
 
-    private static void testExtractAsset(String assetPath, Map<String, Object> parameters)
-            throws IOException, InterruptedException {
-        extractAsset(assetPath, parameters, /* expectedParserName= */ null);
+    private static void testAssetExtraction(String assetPath, Map<String, Object> parameters)
+            throws IOException {
+        testAssetExtraction(assetPath, parameters, /* expectedParserName= */ null);
     }
 
-    private static void extractAsset(
+    private static void testAssetExtraction(
             String assetPath, Map<String, Object> parameters, String expectedParserName)
-            throws IOException, InterruptedException {
+            throws IOException {
         MockMediaParserInputReader inputReader = getInputReader(assetPath);
         boolean usingInBandCryptoInfo =
                 (boolean) parameters.getOrDefault(PARAMETER_IN_BAND_CRYPTO_INFO, false);

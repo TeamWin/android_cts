@@ -22,12 +22,15 @@ import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.RequiredPropertyRule;
+import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -36,8 +39,18 @@ import org.junit.Test;
 public final class HdmiCecLogicalAddressTest extends BaseHostJUnit4Test {
     private static final CecDevice AUDIO_DEVICE = CecDevice.AUDIO_SYSTEM;
 
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE);
+
     @Rule
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE, this);
+    public RuleChain ruleChain =
+        RuleChain
+            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .around(RequiredPropertyRule.asCsvContainsValue(
+                this,
+                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
+                AUDIO_DEVICE.getDeviceType()))
+            .around(hdmiCecClient);
 
     /**
      * Test 10.2.5-1

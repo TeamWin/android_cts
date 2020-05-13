@@ -19,19 +19,17 @@ package android.server.wm;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import android.content.Context;
-import android.hardware.display.DisplayManager;
 import android.view.Display;
 
 /**  Base class for window context tests */
 class WindowContextTestBase extends MultiDisplayTestBase {
-    private DisplayManager mDisplayManager = mContext.getSystemService(DisplayManager.class);
 
     Context createWindowContext(int displayId) {
         return createWindowContext(displayId, TYPE_APPLICATION_OVERLAY);
     }
 
     Context createWindowContext(int displayId, int type) {
-        final Display display = mDisplayManager.getDisplay(displayId);
+        final Display display = mDm.getDisplay(displayId);
         return mContext.createDisplayContext(display).createWindowContext(
                 type, null /* options */);
     }

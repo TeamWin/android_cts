@@ -31,7 +31,6 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.hardware.display.DisplayManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
@@ -93,8 +92,6 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     private static final String EXTRA_MODE = "mode";
     private static final String EXTRA_LOGTAG = "logtag";
 
-    protected DisplayManager mDm;
-
     private Map<String, String> mSourceResults;
     private Map<String, String> mTargetResults;
 
@@ -113,7 +110,6 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
         mSourceLogTag = SOURCE_LOG_TAG + mSessionId;
         mTargetLogTag = TARGET_LOG_TAG + mSessionId;
 
-        mDm = mContext.getSystemService(DisplayManager.class);
         cleanupState();
         mUseTaskOrganizer = false;
     }

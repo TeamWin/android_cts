@@ -16,10 +16,6 @@
 
 package android.hdmicec.cts;
 
-import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
-
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.RunUtil;
@@ -35,7 +31,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.Rule;
 import org.junit.rules.ExternalResource;
 
 /** Class that helps communicate with the cec-client */
@@ -44,7 +39,6 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     private static final String CEC_CONSOLE_READY = "waiting for input";
     private static final int MILLISECONDS_TO_READY = 10000;
     private static final int DEFAULT_TIMEOUT = 20000;
-    private static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
     private static final int HEXADECIMAL_RADIX = 16;
     private static final int BUFFER_SIZE = 1024;
 
@@ -54,28 +48,15 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     private boolean mCecClientInitialised = false;
 
     private CecDevice targetDevice;
-    private BaseHostJUnit4Test testObject;
     private String clientParams[];
 
-    public HdmiCecClientWrapper(CecDevice targetDevice, BaseHostJUnit4Test testObject,
-            String ...clientParams) {
+    public HdmiCecClientWrapper(CecDevice targetDevice, String ...clientParams) {
         this.targetDevice = targetDevice;
-        this.testObject = testObject;
         this.clientParams = clientParams;
     }
 
     @Override
     protected void before() throws Throwable {
-        ITestDevice testDevice;
-        testDevice = testObject.getDevice();
-        assertWithMessage("Device not set").that(testDevice).isNotNull();
-
-        assertThat(isHdmiCecFeatureSupported(testDevice)).isTrue();
-
-        String deviceTypeCsv = testDevice.executeShellCommand("getprop ro.hdmi.device_type").trim();
-        List<String> deviceType = Arrays.asList(deviceTypeCsv.replaceAll("\\s+", "").split(","));
-        assertThat(deviceType.contains(targetDevice.getDeviceType())).isTrue();
-
         this.init();
     };
 
@@ -83,15 +64,6 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     protected void after() {
         this.killCecProcess();
     };
-
-    /**
-     * Checks if the HDMI CEC feature is running on the device. Call this function before running
-     * any HDMI CEC tests.
-     * This could throw a DeviceNotAvailableException.
-     */
-    private static boolean isHdmiCecFeatureSupported(ITestDevice device) throws Exception {
-        return device.hasFeature(HDMI_CEC_FEATURE);
-    }
 
     /** Initialise the client */
     private void init() throws Exception {

@@ -27,6 +27,8 @@ import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.RequiredPropertyRule;
+import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -34,6 +36,7 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -75,9 +78,18 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
 
     private List<Integer> mSupportedAudioFormats = null;
 
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE, "-t", "t");
+
     @Rule
-    public HdmiCecClientWrapper hdmiCecClient =
-            new HdmiCecClientWrapper(AUDIO_DEVICE, this, "-t", "t");
+    public RuleChain ruleChain =
+        RuleChain
+            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .around(RequiredPropertyRule.asCsvContainsValue(
+                this,
+                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
+                AUDIO_DEVICE.getDeviceType()))
+            .around(hdmiCecClient);
 
     private void lookForLogFromHdmiCecAudioManager(String expectedOut) throws Exception {
         ITestDevice device = getDevice();

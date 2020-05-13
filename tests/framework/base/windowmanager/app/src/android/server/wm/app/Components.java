@@ -297,6 +297,12 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_CUTOUT_EXISTS = "cutoutExists";
     }
 
+    /** Extra key constants for {@link android.server.wm.app.LandscapeOrientationActivity}. */
+    public static class LandscapeOrientationActivity {
+        public static final String EXTRA_CONFIG_INFO_IN_ON_CREATE = "config_info_in_on_create";
+        public static final String EXTRA_DISPLAY_REAL_SIZE = "display_real_size";
+    }
+
     /** Extra key constants for {@link android.server.wm.app.FontScaleActivity}. */
     public static class FontScaleActivity {
         public static final String EXTRA_FONT_PIXEL_SIZE = "fontPixelSize";
