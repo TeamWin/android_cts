@@ -491,6 +491,23 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Test 11.2.15-14
+     * Tests that the device responds to a <Request Short Audio Descriptor> message with a
+     * <Feature Abort> [“Invalid Operand”] when a <Request Short Audio Descriptor> message is
+     * received with a single [Audio Format ID][Audio Format Code] pair that is not supported.
+     */
+    @Test
+    public void cect_11_2_15_14_InvalidShortAudioDescriptor() throws Exception {
+        hdmiCecClient.sendCecMessage(CecDevice.TV, AUDIO_DEVICE,
+                CecMessage.REQUEST_SHORT_AUDIO_DESCRIPTOR, getRequestSadFormatsParams(false));
+        String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.FEATURE_ABORT);
+        assertThat(CecMessage.getMessage(hdmiCecClient.getParamsFromMessage(message, 2)))
+                .isEqualTo(CecMessage.REQUEST_SHORT_AUDIO_DESCRIPTOR);
+        assertThat(hdmiCecClient.getParamsFromMessage(message, 2, 4))
+                .isEqualTo(HdmiCecConstants.ABORT_INVALID_OPERAND);
+    }
+
+    /**
      * Test 11.2.15-16
      * Tests that the device unmute its volume when it broadcasts a
      * <Set System Audio Mode> ["On"] message
