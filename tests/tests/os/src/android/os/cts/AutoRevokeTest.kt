@@ -200,6 +200,34 @@ class AutoRevokeTest : InstrumentationTestCase() {
         }
     }
 
+    @AppModeFull(reason = "Uses separate apps for testing")
+    fun testAutoRevoke_whitelistingApis() {
+        withDummyApp {
+            val pm = context.packageManager
+            runWithShellPermissionIdentity {
+                assertFalse(pm.isAutoRevokeWhitelisted(APK_PACKAGE_NAME))
+            }
+
+            runWithShellPermissionIdentity {
+                assertTrue(pm.setAutoRevokeWhitelisted(APK_PACKAGE_NAME, true))
+            }
+            eventually {
+                runWithShellPermissionIdentity {
+                    assertTrue(pm.isAutoRevokeWhitelisted(APK_PACKAGE_NAME))
+                }
+            }
+
+            runWithShellPermissionIdentity {
+                assertTrue(pm.setAutoRevokeWhitelisted(APK_PACKAGE_NAME, false))
+            }
+            eventually {
+                runWithShellPermissionIdentity {
+                    assertFalse(pm.isAutoRevokeWhitelisted(APK_PACKAGE_NAME))
+                }
+            }
+        }
+    }
+
     private fun wakeUpScreen() {
         runShellCommand("input keyevent KEYCODE_WAKEUP")
         runShellCommand("input keyevent 82")
