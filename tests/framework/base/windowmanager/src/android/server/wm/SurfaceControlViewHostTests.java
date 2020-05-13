@@ -54,6 +54,8 @@ import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.WidgetTestUtils;
+
 
 import android.platform.test.annotations.Presubmit;
 
@@ -78,7 +80,7 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
     private View mEmbeddedView;
     private WindowManager.LayoutParams mEmbeddedLayoutParams;
 
-    private boolean mClicked = false;
+    private volatile boolean mClicked = false;
 
     /*
      * Configurable state to control how the surfaceCreated callback
@@ -220,7 +222,8 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         mActivityRule.runOnUiThread(() -> {
                 mVr.relayout(bigEdgeLength, bigEdgeLength);
         });
-        mInstrumentation.waitForIdleSync();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
+            mEmbeddedView, null);
 
         // But after the click should hit.
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);

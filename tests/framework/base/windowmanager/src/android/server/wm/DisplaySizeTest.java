@@ -107,7 +107,7 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
         try {
             final int initialLength = 500;
             final int newLength = 1000;
-            final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+            final DisplayManager displayManager = mDm;
             virtualDisplay = displayManager.createVirtualDisplay("CtsDisplay", initialLength,
                     initialLength, 160 /* densityDpi */, null /* surface */, 0 /* flags */);
             final Display targetDisplay = virtualDisplay.getDisplay();
