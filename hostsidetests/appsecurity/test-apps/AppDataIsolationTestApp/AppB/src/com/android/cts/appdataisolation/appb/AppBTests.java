@@ -65,7 +65,7 @@ public class AppBTests {
     @Test
     public void testCanNotAccessAppAExternalDirs() {
         String appAExternalDir = replacePackageBWithPackageA(
-                mContext.getExternalFilesDir("").getAbsolutePath());
+                mContext.getExternalFilesDir("").getParentFile().getAbsolutePath());
         String appAObbDir = replacePackageBWithPackageA(mContext.getObbDir().getAbsolutePath());
         assertDirDoesNotExist(appAExternalDir);
         assertDirDoesNotExist(appAObbDir);
