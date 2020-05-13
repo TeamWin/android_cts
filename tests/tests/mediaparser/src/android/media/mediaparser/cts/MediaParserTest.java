@@ -51,10 +51,7 @@ public class MediaParserTest {
 
     @Before
     public void setUp() {
-        String version = Build.VERSION.CODENAME;
-        // Avoid running these tests before R, on which MediaParser was defined.
-        // These check is inlined from BuildCompat to avoid bringing in the entire dependency.
-        assumeTrue(version.length() == 1 && version.charAt(0) >= 'R' && version.charAt(0) <= 'Z');
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R);
     }
 
     @Test
