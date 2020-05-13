@@ -410,7 +410,7 @@
         <activity android:name="android.server.wm.StartActivityAsUserActivity"
                   android:directBootAware="true"/>
 
-        <activity android:name="android.server.wm.WindowInsetsAnimationTests$TestActivity"
+        <activity android:name="android.server.wm.WindowInsetsAnimationTestBase$TestActivity"
                   android:theme="@android:style/Theme.Material.NoActionBar" />
 
         <activity android:name="android.server.wm.ForceRelayoutTestBase$TestActivity"
