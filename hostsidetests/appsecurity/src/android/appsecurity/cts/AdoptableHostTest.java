@@ -58,6 +58,9 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         // Start all possible users to make sure their storage is unlocked
         Utils.prepareMultipleUsers(getDevice(), Integer.MAX_VALUE);
 
+        // Users are starting, wait for all volumes are ready
+        waitForVolumeReady();
+
         // Initial state of all volumes
         mListVolumesInitialState = getDevice().executeShellCommand("sm list-volumes");
 
@@ -136,7 +139,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         int attempt = 0;
         boolean noCheckingEjecting = false;
         String result = "";
-        while (!noCheckingEjecting && attempt++ < 20) {
+        while (!noCheckingEjecting && attempt++ < 60) {
             result = getDevice().executeShellCommand("sm list-volumes");
             noCheckingEjecting = !result.contains("ejecting") && !result.contains("checking");
             Thread.sleep(100);
@@ -245,6 +248,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
         getDevice().executeShellCommand("sm mount " + vol.volId);
         waitForInstrumentationReady();
+        waitForVolumeReady();
 
         runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
@@ -295,6 +299,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
         getDevice().executeShellCommand("sm mount " + vol.volId);
         waitForInstrumentationReady();
+        waitForVolumeReady();
 
         runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
@@ -365,6 +370,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             // Kick through a remount cycle, which should purge the adopted app
             getDevice().executeShellCommand("sm mount " + vol.volId);
             waitForInstrumentationReady();
+            waitForVolumeReady();
 
             runDeviceTests(PKG, CLASS, "testDataInternal");
             boolean didThrow = false;
