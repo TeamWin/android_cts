@@ -43,8 +43,8 @@ import java.util.concurrent.TimeUnit;
 // This is a partial copy of android.view.cts.surfacevalidator.CapturedActivity.
 // Common code should be move in a shared library
 /** Start this activity to retrieve a MediaProjection through waitForMediaProjection() */
-public class AudioPlaybackCaptureActivity extends Activity {
-    private static final String TAG = "AudioPlaybackCaptureActivity";
+public class MediaProjectionActivity extends Activity {
+    private static final String TAG = "MediaProjectionActivity";
     private static final int PERMISSION_CODE = 1;
     private static final int PERMISSION_DIALOG_WAIT_MS = 1000;
     private static final String ACCEPT_RESOURCE_ID = "android:id/button1";

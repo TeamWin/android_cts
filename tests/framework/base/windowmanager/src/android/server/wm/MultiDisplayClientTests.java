@@ -37,7 +37,6 @@ import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.DisplayContent;
@@ -199,8 +198,7 @@ public class MultiDisplayClientTests extends MultiDisplayTestBase {
                 .setSimulateDisplay(true)
                 .createDisplay();
 
-        final Display display = mContext.getSystemService(DisplayManager.class)
-                .getDisplay(newDisplay.mId);
+        final Display display = mDm.getDisplay(newDisplay.mId);
         final Context newDisplayContext = mContext.createDisplayContext(display);
         final InputMethodManager imm = newDisplayContext.getSystemService(InputMethodManager.class);
 

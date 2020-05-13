@@ -12,14 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "SimpleSmsApp",
-    sdk_version: "test_current",
-    srcs: ["src/**/*.java"],
-    static_libs: [
-        "cts-devicepolicy-suspensionchecker",
-    ],
+android_test_helper_app {
+    name: "AppInBackground",
+
     test_suites: [
         "cts",
-    ],
+        "vts10",
+        "general-tests",
+    ]
 }

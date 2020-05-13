@@ -66,8 +66,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String SIMPLE_APP_PKG = "com.android.cts.launcherapps.simpleapp";
     private static final String SIMPLE_APP_ACTIVITY = SIMPLE_APP_PKG + ".SimpleActivity";
 
-    protected static final String SIMPLE_SMS_APP_PKG = "android.telephony.cts.sms.simplesmsapp";
-    protected static final String SIMPLE_SMS_APP_APK = "SimpleSmsApp.apk";
+    private static final String SIMPLE_SMS_APP_PKG = "android.telephony.cts.sms.simplesmsapp";
+    private static final String SIMPLE_SMS_APP_APK = "SimpleSmsApp.apk";
 
     private static final String WIFI_CONFIG_CREATOR_PKG =
             "com.android.cts.deviceowner.wificonfigcreator";

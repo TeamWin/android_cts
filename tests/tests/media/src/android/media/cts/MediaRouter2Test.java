@@ -121,6 +121,15 @@ public class MediaRouter2Test {
         }
     }
 
+    @Test
+    public void testGetRoutesAfterCreation() {
+        List<MediaRoute2Info> initialRoutes = mRouter2.getRoutes();
+        assertFalse(initialRoutes.isEmpty());
+        for (MediaRoute2Info route : initialRoutes) {
+            assertTrue(route.isSystemRoute());
+        }
+    }
+
     /**
      * Tests if we get proper routes for application that has special route type.
      */
