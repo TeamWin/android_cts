@@ -2928,16 +2928,7 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
         assertTrue(mTextView.isFocused());
 
-        // Tab should not cause focus to leave the multiline textfield.
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_TAB);
-        mInstrumentation.waitForIdleSync();
-        assertTrue(mTextView.isFocused());
-
-        // Tab on the singleline TextView should.
-        mActivityRule.runOnUiThread(() -> {
-            mTextView.setSingleLine(true);
-        });
-        mInstrumentation.waitForIdleSync();
+        // Tab should
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mTextView, KeyEvent.KEYCODE_TAB);
         mInstrumentation.waitForIdleSync();
         assertFalse(mTextView.isFocused());
