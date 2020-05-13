@@ -47,4 +47,11 @@ public final class HdmiCecConstants {
     public static final int CEC_DEVICE_TYPE_PLAYBACK_DEVICE = 4;
     public static final int CEC_DEVICE_TYPE_AUDIO_SYSTEM = 5;
 
+    /** Feature Abort Reasons */
+    public static final int ABORT_UNRECOGNIZED_MODE = 0;
+    public static final int ABORT_NOT_IN_CORRECT_MODE = 1;
+    public static final int ABORT_CANNOT_PROVIDE_SOURCE = 2;
+    public static final int ABORT_INVALID_OPERAND = 3;
+    public static final int ABORT_REFUSED = 4;
+    public static final int ABORT_UNABLE_TO_DETERMINE = 5;
 }
