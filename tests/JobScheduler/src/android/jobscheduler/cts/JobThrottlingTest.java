@@ -73,6 +73,8 @@ public class JobThrottlingTest {
     private static final long POLL_INTERVAL = 500;
     private static final long DEFAULT_WAIT_TIMEOUT = 2000;
     private static final long SHELL_TIMEOUT = 3_000;
+    // TODO: mark Settings.System.SCREEN_OFF_TIMEOUT as @TestApi
+    private static final String SCREEN_OFF_TIMEOUT = "screen_off_timeout";
 
     enum Bucket {
         ACTIVE,
@@ -99,6 +101,7 @@ public class JobThrottlingTest {
     private boolean mInitialWiFiState;
     private boolean mInitialAirplaneModeState;
     private String mInitialJobSchedulerConstants;
+    private String mInitialDisplayTimeout;
 
     private TestAppInterface mTestAppInterface;
 
@@ -155,6 +158,10 @@ public class JobThrottlingTest {
         // Make sure test jobs can run regardless of bucket.
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS, "min_ready_non_active_jobs_count=0");
+        // Make sure the screen doesn't turn off when the test turns it on.
+        mInitialDisplayTimeout =
+                Settings.System.getString(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT);
+        Settings.System.putString(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT, "300000");
     }
 
     @Test
@@ -480,6 +487,9 @@ public class JobThrottlingTest {
         mUiDevice.executeShellCommand(
                 "cmd jobscheduler reset-execution-quota -u " + UserHandle.myUserId()
                         + " " + TEST_APP_PACKAGE);
+
+        Settings.System.putString(
+                mContext.getContentResolver(), SCREEN_OFF_TIMEOUT, mInitialDisplayTimeout);
     }
 
     private void setTestPackageRestricted(boolean restricted) throws Exception {
