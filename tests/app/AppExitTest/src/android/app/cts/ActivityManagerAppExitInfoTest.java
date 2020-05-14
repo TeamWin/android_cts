@@ -48,6 +48,7 @@ import android.system.Os;
 import android.system.OsConstants;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
+import android.util.ArraySet;
 import android.util.DebugUtils;
 import android.util.Log;
 
@@ -67,6 +68,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.DirectByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -522,7 +524,7 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Sleep for a while to make sure it's already blocking its main thread.
         sleep(WAITFOR_MSEC);
 
-        Monitor monitor = new Monitor(mInstrumentation);
+        Monitor monitor = new Monitor(mInstrumentation, new String[]{Monitor.WAIT_FOR_CRASHED});
 
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(STUB_PACKAGE_NAME, STUB_RECEIVER_NAMWE));
@@ -1157,12 +1159,13 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         final FileOutputStream mWriteStream;
         final PrintWriter mWritePrinter;
         final Thread mReaderThread;
+        final ArraySet<String> mNotExpected = new ArraySet<>();
 
         final ArrayList<String> mPendingLines = new ArrayList<>();
 
         boolean mStopping;
 
-        Monitor(Instrumentation instrumentation) {
+        Monitor(Instrumentation instrumentation, String[] notExpected) {
             mInstrumentation = instrumentation;
             ParcelFileDescriptor[] pfds = instrumentation.getUiAutomation()
                     .executeShellCommandRw("am monitor");
@@ -1172,6 +1175,9 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
             mWriteFd = pfds[1];
             mWriteStream = new ParcelFileDescriptor.AutoCloseOutputStream(mWriteFd);
             mWritePrinter = new PrintWriter(new BufferedOutputStream(mWriteStream));
+            if (notExpected != null) {
+                mNotExpected.addAll(Arrays.asList(notExpected));
+            }
             mReaderThread = new ReaderThread();
             mReaderThread.start();
         }
@@ -1223,8 +1229,10 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         }
 
         void sendCommand(String cmd) {
-            mWritePrinter.println(cmd);
-            mWritePrinter.flush();
+            synchronized (mPendingLines) {
+                mWritePrinter.println(cmd);
+                mWritePrinter.flush();
+            }
         }
 
         final class ReaderThread extends Thread {
@@ -1234,6 +1242,13 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
                     String line;
                     while ((line = mReadReader.readLine()) != null) {
                         // Log.i(TAG, "debug: " + line);
+                        if (mNotExpected.contains(line)) {
+                            // If we are getting any of the unexpected state,
+                            // for example, get a crash while waiting for an ANR,
+                            // it could be from another unrelated process, kill it directly.
+                            sendCommand(CMD_KILL);
+                            continue;
+                        }
                         synchronized (mPendingLines) {
                             mPendingLines.add(line);
                             mPendingLines.notifyAll();
