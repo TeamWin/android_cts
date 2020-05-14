@@ -44,7 +44,7 @@ import android.animation.ValueAnimator;
 import android.graphics.Insets;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.WindowInsetsAnimationTests.TestActivity;
+import android.server.wm.WindowInsetsAnimationTestBase.TestActivity;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
