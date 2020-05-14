@@ -45,12 +45,19 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
     private JobInfo.Builder mBuilder;
     private UiDevice mUiDevice;
 
+    private String mInitialDisplayTimeout;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
         mBuilder = new JobInfo.Builder(STATE_JOB_ID, kJobServiceComponent);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+
+        // Make sure the screen doesn't turn off when the test turns it on.
+        mInitialDisplayTimeout = mUiDevice.executeShellCommand(
+                "settings get system screen_off_timeout");
+        mUiDevice.executeShellCommand("settings put system screen_off_timeout 300000");
     }
 
     @Override
@@ -58,7 +65,12 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         mJobScheduler.cancel(STATE_JOB_ID);
         // Put device back in to normal operation.
         toggleScreenOn(true);
-        setCarMode(false);
+        if (isCarModeSupported()) {
+            setCarMode(false);
+        }
+
+        mUiDevice.executeShellCommand(
+                "settings put system screen_off_timeout " + mInitialDisplayTimeout);
 
         super.tearDown();
     }
@@ -153,6 +165,12 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         verifyActiveState();
     }
 
+    private boolean isCarModeSupported() {
+        // TVs don't support car mode.
+        return !getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_LEANBACK_ONLY);
+    }
+
     /**
      * Check if dock state is supported.
      */
@@ -227,6 +245,10 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
      * Ensure car mode is considered active.
      */
     public void testCarModePreventsIdle() throws Exception {
+        if (!isCarModeSupported()) {
+            return;
+        }
+
         toggleScreenOn(false);
 
         setCarMode(true);
@@ -239,6 +261,10 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
     }
 
     private void runIdleJobStartsOnlyWhenIdle() throws Exception {
+        if (!isCarModeSupported()) {
+            return;
+        }
+
         toggleScreenOn(true);
 
         kTestEnvironment.setExpectedExecutions(0);
@@ -276,6 +302,10 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
     }
 
     public void testIdleJobStartsOnlyWhenIdle_carEndsIdle() throws Exception {
+        if (!isCarModeSupported()) {
+            return;
+        }
+
         runIdleJobStartsOnlyWhenIdle();
 
         setCarMode(true);

@@ -23,6 +23,7 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsAppOpsTestCases.apk" />
         <option name="test-file-name" value="CtsAppThatUsesAppOps.apk" />
+        <option name="test-file-name" value="AppInBackground.apk" />
         <option name="test-file-name" value="AppThatCanBeForcedIntoForegroundStates.apk" />
     </target_preparer>
 

@@ -51,7 +51,6 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
     public static final String FEATURE_ADOPTABLE_STORAGE = "feature:android.software.adoptable_storage";
 
-    private boolean mHasAdoptableInitialState;
     private String mListVolumesInitialState;
 
     @Before
@@ -59,16 +58,12 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         // Start all possible users to make sure their storage is unlocked
         Utils.prepareMultipleUsers(getDevice(), Integer.MAX_VALUE);
 
+        // Users are starting, wait for all volumes are ready
+        waitForVolumeReady();
+
         // Initial state of all volumes
         mListVolumesInitialState = getDevice().executeShellCommand("sm list-volumes");
 
-        // TODO(b/146491109): Revert this change before shipping and find long-term solution.
-        // Caches the initial state of adoptable feature and sets it to true (if not already set)
-        mHasAdoptableInitialState = Boolean.parseBoolean(
-                getDevice().executeShellCommand("sm has-adoptable").trim());
-        if (!mHasAdoptableInitialState) {
-            setForceAdoptable();
-        }
         getDevice().uninstallPackage(PKG);
 
         // Enable a virtual disk to give us the best shot at being able to pass
@@ -123,9 +118,19 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
                 CLog.w("Volume state is not recovered: " + result);
             }
         }
-        // Restores the initial cache value (if it is different)
-        if (!mHasAdoptableInitialState) {
-            getDevice().executeShellCommand("sm set-force-adoptable false");
+    }
+
+    /**
+     * Ensure that we have consistency between the feature flag and what we
+     * sniffed from the underlying fstab.
+     */
+    @Test
+    public void testFeatureConsistent() throws Exception {
+        final boolean hasFeature = hasFeature();
+        final boolean hasFstab = hasFstab();
+        if (hasFeature != hasFstab) {
+            fail("Inconsistent adoptable storage status; feature claims " + hasFeature
+                    + " but fstab claims " + hasFstab);
         }
     }
 
@@ -134,7 +139,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         int attempt = 0;
         boolean noCheckingEjecting = false;
         String result = "";
-        while (!noCheckingEjecting && attempt++ < 20) {
+        while (!noCheckingEjecting && attempt++ < 60) {
             result = getDevice().executeShellCommand("sm list-volumes");
             noCheckingEjecting = !result.contains("ejecting") && !result.contains("checking");
             Thread.sleep(100);
@@ -216,18 +221,6 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    private void setForceAdoptable() throws Exception {
-        getDevice().executeShellCommand("sm set-force-adoptable true");
-        int attempt = 0;
-        boolean hasAdoptable = false;
-        while (!hasAdoptable && attempt++ < 5) {
-            Thread.sleep(1000);
-            hasAdoptable = Boolean.parseBoolean(getDevice()
-                    .executeShellCommand("sm has-adoptable").trim());
-        }
-        assertTrue(hasAdoptable);
-    }
-
     private void verifyPrimaryInternal(String diskId) throws Exception {
         // Write some data to shared storage
         new InstallMultiple().addFile(APK).run();
@@ -255,6 +248,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
         getDevice().executeShellCommand("sm mount " + vol.volId);
         waitForInstrumentationReady();
+        waitForVolumeReady();
 
         runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
@@ -305,6 +299,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
         runDeviceTests(PKG, CLASS, "testPrimaryUnmounted");
         getDevice().executeShellCommand("sm mount " + vol.volId);
         waitForInstrumentationReady();
+        waitForVolumeReady();
 
         runDeviceTests(PKG, CLASS, "testPrimaryAdopted");
         runDeviceTests(PKG, CLASS, "testPrimaryDataRead");
@@ -375,6 +370,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
             // Kick through a remount cycle, which should purge the adopted app
             getDevice().executeShellCommand("sm mount " + vol.volId);
             waitForInstrumentationReady();
+            waitForVolumeReady();
 
             runDeviceTests(PKG, CLASS, "testDataInternal");
             boolean didThrow = false;
