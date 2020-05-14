@@ -16,6 +16,7 @@
 
 package android.os.cts;
 
+import android.os.Environment;
 import android.os.FileObserver;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
@@ -58,6 +59,9 @@ public class FileObserverTest extends AndroidTestCase {
         if (!InstrumentationRegistry.getTargetContext().getPackageManager().isInstantApp()) {
             dir = getContext().getExternalFilesDir(null);
             helpSetUp(dir);
+
+            dir = Environment.getExternalStorageDirectory();
+            helpSetUp(dir);
         }
     }
 
@@ -90,6 +94,9 @@ public class FileObserverTest extends AndroidTestCase {
         helpTearDown(dir);
 
         dir = getContext().getExternalFilesDir(null);
+        helpTearDown(dir);
+
+        dir = Environment.getExternalStorageDirectory();
         helpTearDown(dir);
     }
 
@@ -247,11 +254,17 @@ public class FileObserverTest extends AndroidTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot access external storage")
+    public void testFileObserverExternalStorageDirectory() throws Exception {
+        helpTestFileObserver(Environment.getExternalStorageDirectory(), false);
+    }
+
+    @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testFileObserver_multipleFilesFull() throws Exception {
         verifyMultipleFiles(
                 Pair.create(getContext().getCacheDir(), false),
                 Pair.create(getContext().getFilesDir(), false),
-                Pair.create(getContext().getExternalFilesDir(null), true)
+                Pair.create(getContext().getExternalFilesDir(null), true),
+                Pair.create(Environment.getExternalStorageDirectory(), false)
         );
     }
 
