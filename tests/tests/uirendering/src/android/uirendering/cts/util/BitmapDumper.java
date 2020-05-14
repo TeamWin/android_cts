@@ -49,8 +49,10 @@ public final class BitmapDumper {
         // Cleanup old tests
         // These are removed on uninstall anyway but just in case...
         File[] toRemove = sDumpDirectory.listFiles();
-        for (File file : toRemove) {
-            deleteContentsAndDir(file);
+        if (toRemove != null && toRemove.length > 0) {
+            for (File file : toRemove) {
+                deleteContentsAndDir(file);
+            }
         }
     }
 
