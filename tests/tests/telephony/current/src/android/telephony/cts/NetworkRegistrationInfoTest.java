@@ -134,4 +134,13 @@ public class NetworkRegistrationInfoTest {
                 .build();
         assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, nri.getTransportType());
     }
+
+    @Test
+    public void testGetRegisteredPlmn() {
+        final String plmn = "12345";
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setRegisteredPlmn(plmn)
+                .build();
+        assertEquals(plmn, nri.getRegisteredPlmn());
+    }
 }
