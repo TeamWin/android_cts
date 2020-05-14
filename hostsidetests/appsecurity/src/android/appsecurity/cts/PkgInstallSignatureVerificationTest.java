@@ -241,7 +241,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceedsForEach(
                 "v2-only-with-rsa-pss-sha512-%s.apk",
                 RSA_KEY_NAMES_2048_AND_LARGER // 1024-bit key is too short for PSS with SHA-512
-                );
+        );
     }
 
     public void testInstallV1SignatureOnlyDoesNotVerify() throws Exception {
@@ -828,6 +828,54 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallV4Succeeds("v4-digest-v2v3.apk");
     }
 
+    public void testInstallV4WithV2SignerDoesNotVerify() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // APKs generated with:
+        // apksigner sign -v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled
+
+        // Malformed v4 signature - first byte of v4 signing_info.signature is flipped
+        assertInstallV4FailsWithError("v4-digest-v2-badv4signature.apk", "did not verify");
+        // Malformed digest - first byte of v4 signing_info.apk_digest is flipped
+        assertInstallV4FailsWithError("v4-digest-v2-badv2digest.apk", "did not verify");
+    }
+
+    public void testInstallV4WithV3SignerDoesNotVerify() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // APKs generated with:
+        // apksigner sign -v2-signing-enabled false --v3-signing-enabled true --v4-signing-enabled
+
+        // Malformed v4 signature - first byte of v4 signing_info.signature is flipped
+        assertInstallV4FailsWithError("v4-digest-v3-badv4signature.apk", "did not verify");
+
+        // Malformed digest - first byte of v4 signing_info.apk_digest is flipped
+        assertInstallV4FailsWithError("v4-digest-v3-badv3digest.apk", "did not verify");
+
+    }
+
+    public void testInstallV4WithV2V3SignerDoesNotVerify() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // APKs generated with:
+        // apksigner sign -v2-signing-enabled true --v3-signing-enabled true --v4-signing-enabled
+
+        // Malformed v4 signature - first byte of v4 signing_info.signature is flipped
+        assertInstallV4FailsWithError("v4-digest-v2v3-badv4signature.apk", "did not verify");
+
+        // Malformed digest - first byte of v4 signing_info.apk_digest is flipped
+        assertInstallV4FailsWithError("v4-digest-v2v3-badv2v3digest.apk", "did not verify");
+    }
+
     private boolean hasIncrementalFeature() throws DeviceNotAvailableException {
         return getDevice().hasFeature("android.software.incremental_delivery");
     }
@@ -869,6 +917,19 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         if (!installResult.equals("Success\n")) {
             fail("Failed to install " + apkFilenameInResources + ": " + installResult);
         }
+    }
+
+    private void assertInstallV4FailsWithError(String apkFilenameInResources, String errorSubstring)
+            throws Exception {
+        String installResult = installV4PackageFromResource(apkFilenameInResources);
+        if (installResult.equals("Success\n")) {
+            fail("Install of " + apkFilenameInResources + " succeeded but was expected to fail"
+                    + " with \"" + errorSubstring + "\"");
+        }
+        assertContains(
+                "Install failure message of " + apkFilenameInResources,
+                errorSubstring,
+                installResult);
     }
 
     private void assertInstallFailsWithError(
@@ -961,7 +1022,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         }
     }
 
-    private String pushFileToRemote(File localFile) throws DeviceNotAvailableException{
+    private String pushFileToRemote(File localFile) throws DeviceNotAvailableException {
         String remotePath = "/data/local/tmp/pkginstalltest-" + localFile.getName();
         getDevice().pushFile(localFile, remotePath);
         return remotePath;
