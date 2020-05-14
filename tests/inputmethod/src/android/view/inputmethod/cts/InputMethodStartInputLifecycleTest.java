@@ -34,6 +34,7 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.DisableScreenDozeRule;
+import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
@@ -60,7 +61,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class InputMethodStartInputLifecycleTest {
+public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
     @Rule
