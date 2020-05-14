@@ -41,6 +41,7 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputContentInfo;
+import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -70,7 +71,7 @@ import java.util.function.Function;
  */
 @LargeTest
 @RunWith(AndroidJUnit4.class)
-public class InputConnectionBlockingMethodTest {
+public class InputConnectionBlockingMethodTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long LONG_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     private static final long IMMEDIATE_TIMEOUT_NANO = TimeUnit.MILLISECONDS.toNanos(200);
