@@ -56,6 +56,7 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -210,6 +211,32 @@ public class AccessibilityShortcutTest {
                 mSpeakingA11yServiceName, mShortcutTargetActivityName);
         mShortcutSettingsRule.waitForAccessibilityButtonStateChange(sUiAutomation,
                 Arrays.asList(mSpeakingA11yServiceName, mShortcutTargetActivityName));
+    }
+
+    @Test
+    public void testAccessibilityButtonService_disableSelf_buttonRemoved() {
+        mA11yButtonServiceRule.enableService();
+        mShortcutSettingsRule.configureAccessibilityButton(
+                sUiAutomation, mA11yButtonServiceName);
+        mShortcutSettingsRule.waitForAccessibilityButtonStateChange(
+                sUiAutomation, Arrays.asList(mA11yButtonServiceName));
+
+        mA11yButtonServiceRule.getService().disableSelfAndRemove();
+        mShortcutSettingsRule.waitForAccessibilityButtonStateChange(sUiAutomation,
+                Collections.emptyList());
+    }
+
+    @Test
+    public void testAccessibilityButtonService_disableSelf_shortcutRemoved() {
+        mA11yButtonServiceRule.enableService();
+        mShortcutSettingsRule.configureAccessibilityShortcut(
+                sUiAutomation, mA11yButtonServiceName);
+        mShortcutSettingsRule.waitForAccessibilityShortcutStateChange(
+                sUiAutomation, Arrays.asList(mA11yButtonServiceName));
+
+        mA11yButtonServiceRule.getService().disableSelfAndRemove();
+        mShortcutSettingsRule.waitForAccessibilityShortcutStateChange(sUiAutomation,
+                Collections.emptyList());
     }
 
     /**
