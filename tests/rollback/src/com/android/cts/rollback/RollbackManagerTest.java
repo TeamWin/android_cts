@@ -106,4 +106,27 @@ public class RollbackManagerTest {
                 Rollback.from(TestApp.A2).to(TestApp.A1));
         assertThat(committed).causePackagesContainsExactly(TestApp.A2);
     }
+
+    @Test
+    public void testGetRollbackDataPolicy() throws Exception {
+        // TODO: To change to the following statement when
+        // PackageManager.RollbackDataPolicy.WIPE is available.
+        // final int rollBackDataPolicy = PackageManager.RollbackDataPolicy.WIPE;
+        final int rollBackDataPolicy = 1;
+
+        Install.single(TestApp.A1).commit();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+
+        // Enable rollback with rollBackDataPolicy
+        final int sessionId = Install.single(TestApp.A2).setEnableRollback(
+                rollBackDataPolicy).createSession();
+
+        try {
+            assertThat(InstallUtils.getPackageInstaller().getSessionInfo(
+                    sessionId).getRollbackDataPolicy()).isEqualTo(rollBackDataPolicy);
+        } finally {
+            // Abandon the session
+            InstallUtils.getPackageInstaller().abandonSession(sessionId);
+        }
+    }
 }
