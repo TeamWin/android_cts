@@ -71,6 +71,9 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
+import androidx.autofill.inline.UiVersions;
+import androidx.autofill.inline.UiVersions.StylesBuilder;
+import androidx.autofill.inline.v1.InlineSuggestionUi;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
@@ -724,12 +727,15 @@ public final class MockIme extends InputMethodService {
     @MainThread
     @Override
     public InlineSuggestionsRequest onCreateInlineSuggestionsRequest(Bundle uiExtras) {
+        StylesBuilder stylesBuilder = UiVersions.newStylesBuilder();
+        stylesBuilder.addStyle(InlineSuggestionUi.newStyleBuilder().build());
+        Bundle styles = stylesBuilder.build();
         return getTracer().onCreateInlineSuggestionsRequest(() -> {
             final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
             presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
-                    new Size(400, 100)).build());
+                    new Size(400, 100)).setStyle(styles).build());
             presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
-                    new Size(400, 100)).build());
+                    new Size(400, 100)).setStyle(styles).build());
 
             return new InlineSuggestionsRequest.Builder(presentationSpecs)
                     .setMaxSuggestionCount(6)
