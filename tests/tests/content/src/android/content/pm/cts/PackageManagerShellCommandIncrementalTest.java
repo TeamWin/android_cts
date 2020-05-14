@@ -42,6 +42,8 @@ import org.junit.runner.RunWith;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -49,6 +51,8 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
@@ -57,6 +61,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
     private static final String TEST_APK = "HelloWorld5.apk";
+    private static final String TEST_APK_SPLIT = "HelloWorld5_hdpi-v4.apk";
 
     private static UiAutomation getUiAutomation() {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -64,6 +69,33 @@ public class PackageManagerShellCommandIncrementalTest {
 
     private static String executeShellCommand(String command) throws IOException {
         final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(command);
+        try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
+            return readFullStream(inputStream);
+        }
+    }
+
+    private static String executeShellCommand(String command, File[] inputs)
+            throws IOException {
+        return executeShellCommand(command, inputs, Stream.of(inputs).mapToLong(
+                File::length).toArray());
+    }
+
+    private static String executeShellCommand(String command, File[] inputs, long[] expected)
+            throws IOException {
+        assertEquals(inputs.length, expected.length);
+        final ParcelFileDescriptor[] pfds =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                        .executeShellCommandRw(command);
+        ParcelFileDescriptor stdout = pfds[0];
+        ParcelFileDescriptor stdin = pfds[1];
+        try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
+                stdin)) {
+            for (int i = 0; i < inputs.length; i++) {
+                try (FileInputStream inputStream = new FileInputStream(inputs[i])) {
+                    writeFullStream(inputStream, outputStream, expected[i]);
+                }
+            }
+        }
         try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
             return readFullStream(inputStream);
         }
@@ -86,7 +118,7 @@ public class PackageManagerShellCommandIncrementalTest {
         byte[] buffer = new byte[1024];
         long total = 0;
         int length;
-        while ((length = inputStream.read(buffer)) != -1) {
+        while ((length = inputStream.read(buffer)) != -1 && (expected < 0 || total < expected)) {
             outputStream.write(buffer, 0, length);
             total += length;
         }
@@ -129,7 +161,64 @@ public class PackageManagerShellCommandIncrementalTest {
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
 
-    static class TestDataLoaderService extends DataLoaderService {}
+    @Test
+    public void testInstallWithIdSigAndSplit() throws Exception {
+        File apkfile = new File(createApkPath(TEST_APK));
+        File splitfile = new File(createApkPath(TEST_APK_SPLIT));
+        File[] files = new File[]{apkfile, splitfile};
+        String param = Arrays.stream(files).map(
+                file -> file.getName() + ":" + file.length()).collect(Collectors.joining(" "));
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-incremental -t -g -S %s %s",
+                        (apkfile.length() + splitfile.length()), param),
+                files));
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals("base, config.hdpi", getSplits(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testInstallWithIdSigInvalidLength() throws Exception {
+        File file = new File(createApkPath(TEST_APK));
+        assertTrue(
+                executeShellCommand("pm install-incremental -t -g -S " + (file.length() - 1),
+                        new File[]{file}).contains(
+                        "Failure"));
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testInstallWithIdSigStreamIncompleteData() throws Exception {
+        File file = new File(createApkPath(TEST_APK));
+        long length = file.length();
+        // Streaming happens in blocks of 1024 bytes, new length will not stream the last block.
+        long newLength = length - (length % 1024 == 0 ? 1024 : length % 1024);
+        assertTrue(
+                executeShellCommand("pm install-incremental -t -g -S " + length,
+                        new File[]{file}, new long[]{newLength}).contains(
+                        "Failure"));
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testInstallWithIdSigStreamIncompleteDataForSplit() throws Exception {
+        File apkfile = new File(createApkPath(TEST_APK));
+        File splitfile = new File(createApkPath(TEST_APK_SPLIT));
+        long splitLength = splitfile.length();
+        // Don't fully stream the split.
+        long newSplitLength = splitLength - (splitLength % 1024 == 0 ? 1024 : splitLength % 1024);
+        File[] files = new File[]{apkfile, splitfile};
+        String param = Arrays.stream(files).map(
+                file -> file.getName() + ":" + file.length()).collect(Collectors.joining(" "));
+        assertTrue(executeShellCommand(
+                String.format("pm install-incremental -t -g -S %s %s",
+                        (apkfile.length() + splitfile.length()), param),
+                files, new long[]{apkfile.length(), newSplitLength}).contains(
+                "Failure"));
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    static class TestDataLoaderService extends DataLoaderService {
+    }
 
     @Test
     public void testDataLoaderServiceDefaultImplementation() {
