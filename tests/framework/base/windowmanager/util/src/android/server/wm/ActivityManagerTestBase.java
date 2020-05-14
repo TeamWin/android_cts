@@ -1863,6 +1863,7 @@ public abstract class ActivityManagerTestBase {
 
     static class ActivityLifecycleCounts {
         private final int[] mCounts = new int[ActivityCallback.SIZE];
+        private final int[] mFirstIndexes = new int[ActivityCallback.SIZE];
         private final int[] mLastIndexes = new int[ActivityCallback.SIZE];
         private ComponentName mActivityName;
 
@@ -1879,17 +1880,25 @@ public abstract class ActivityManagerTestBase {
             // The callback list could be from the reference of TestJournal. If we are counting for
             // retrying, there may be new data added to the list from other threads.
             TestJournalContainer.withThreadSafeAccess(() -> {
+                Arrays.fill(mFirstIndexes, -1);
                 for (int i = 0; i < callbacks.size(); i++) {
                     final ActivityCallback callback = callbacks.get(i);
                     final int ordinal = callback.ordinal();
                     mCounts[ordinal]++;
                     mLastIndexes[ordinal] = i;
+                    if (mFirstIndexes[ordinal] == -1) {
+                        mFirstIndexes[ordinal] = i;
+                    }
                 }
             });
         }
 
         int getCount(ActivityCallback callback) {
             return mCounts[callback.ordinal()];
+        }
+
+        int getFirstIndex(ActivityCallback callback) {
+            return mFirstIndexes[callback.ordinal()];
         }
 
         int getLastIndex(ActivityCallback callback) {

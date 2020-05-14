@@ -26,6 +26,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.UiDeviceUtils.pressWindowButton;
+import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
@@ -209,6 +210,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPinnedStackInBoundsAfterRotation() {
+        // Launch an activity that is not fixed-orientation so that the display can rotate
+        launchActivity(TEST_ACTIVITY);
         // Launch an activity into the pinned stack
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP, "true",
@@ -423,26 +426,25 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // Go home and ensure that there is a pinned stack
         separateTestJournal();
         launchHomeActivity();
-        waitForEnterPip(PIP_ACTIVITY);
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY);
-        // Check that onPictureInPictureRequested was called to try to enter pip from there
-        assertEquals("onPictureInPictureRequested", 1,
-                lifecycleCounts.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED));
-        // Check that onPause + onUserLeaveHint were called only once. These assertions verify that
-        // onPictureInPictureRequested doesn't attempt to trigger these callbacks because going
-        // home is already causing them to be called
-        assertEquals("onPause", 1, lifecycleCounts.getCount(ActivityCallback.ON_PAUSE));
-        assertEquals("onUserLeaveHint", 1,
-                lifecycleCounts.getCount(ActivityCallback.ON_USER_LEAVE_HINT));
-
-        final int lastUserLeaveHintIndex =
-                lifecycleCounts.getLastIndex(ActivityCallback.ON_USER_LEAVE_HINT);
-        final int lastPipRequestedIndex =
-                lifecycleCounts.getLastIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED);
-        // Check that onPictureInPictureRequested was called first and onUserLeaveHint after
-        assertThat(lastPipRequestedIndex, lessThan(lastUserLeaveHintIndex));
+        // Check the order of the callbacks accounting for a task overlay activity that might show.
+        // The PIP request (with a user leave hint) should come before the pip mode change.
+        final int firstUserLeaveIndex =
+                lifecycleCounts.getFirstIndex(ActivityCallback.ON_USER_LEAVE_HINT);
+        final int firstPipRequestedIndex =
+                lifecycleCounts.getFirstIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED);
+        final int firstPipModeChangedIndex =
+                lifecycleCounts.getFirstIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED);
+        assertTrue("missing request", firstPipRequestedIndex != -1);
+        assertTrue("missing user leave", firstUserLeaveIndex != -1);
+        assertTrue("missing pip mode changed", firstPipModeChangedIndex != -1);
+        assertTrue("pip requested not before pause",
+                firstPipRequestedIndex < firstUserLeaveIndex);
+        assertTrue("unexpected user leave hint",
+                firstUserLeaveIndex < firstPipModeChangedIndex);
     }
 
     @Test
@@ -457,26 +459,24 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // Call onPictureInPictureRequested and verify activity enters pip
         separateTestJournal();
         mBroadcastActionTrigger.doAction(ACTION_ON_PIP_REQUESTED);
-        waitForEnterPip(PIP_ACTIVITY);
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(PIP_ACTIVITY);
-        // Check that onPictureInPictureRequested was called
-        assertEquals("onPictureInPictureRequested", 1,
-                lifecycleCounts.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED));
-        // Verify that cycling through userLeaveHint was not necessary since the activity overrode
-        // onPictureInPictureRequested and entered PIP mode from there
-        assertEquals("onUserLeaveHint", 0,
-                lifecycleCounts.getCount(ActivityCallback.ON_USER_LEAVE_HINT));
-        // Verify onPause does get called when the activity eventually enters PIP mode
-        assertEquals("onPause", 1, lifecycleCounts.getCount(ActivityCallback.ON_PAUSE));
-
-        final int lastOnPauseIndex =
-                lifecycleCounts.getLastIndex(ActivityCallback.ON_PAUSE);
-        final int lastPipRequestedIndex =
-                lifecycleCounts.getLastIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED);
-        // Check that onPictureInPictureRequested was called first and onPause after
-        assertThat(lastPipRequestedIndex, lessThan(lastOnPauseIndex));
+        // Check the order of the callbacks accounting for a task overlay activity that might show.
+        // The PIP request (without a user leave hint) should come before the pip mode change.
+        final int firstUserLeaveIndex =
+                lifecycleCounts.getFirstIndex(ActivityCallback.ON_USER_LEAVE_HINT);
+        final int firstPipRequestedIndex =
+                lifecycleCounts.getFirstIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_REQUESTED);
+        final int firstPipModeChangedIndex =
+                lifecycleCounts.getFirstIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED);
+        assertTrue("missing request", firstPipRequestedIndex != -1);
+        assertTrue("missing pip mode changed", firstPipModeChangedIndex != -1);
+        assertTrue("pip requested not before pause",
+                firstPipRequestedIndex < firstPipModeChangedIndex);
+        assertTrue("unexpected user leave hint",
+                firstUserLeaveIndex == -1 || firstUserLeaveIndex > firstPipModeChangedIndex);
     }
 
     @Test
@@ -933,6 +933,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         separateTestJournal();
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
+        waitForValidPictureInPictureCallbacks(PIP_ACTIVITY);
 
         // Confirm that we get stop before the multi-window and picture-in-picture mode change
         // callbacks
@@ -1137,7 +1138,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_ENTER_PIP, "true",
                 EXTRA_START_ACTIVITY, getActivityName(PIP_ACTIVITY),
                 EXTRA_FINISH_SELF_ON_RESUME, "true");
-        waitForEnterPip(TEST_ACTIVITY_WITH_SAME_AFFINITY);
+        waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Launch the root activity again, of the matching task and ensure that we expand to
@@ -1145,7 +1146,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         int activityTaskId = mWmState.getTaskByActivity(PIP_ACTIVITY).mTaskId;
         launchHomeActivity();
         launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
-        waitForExitPipToFullscreen(TEST_ACTIVITY_WITH_SAME_AFFINITY);
+        waitForExitPipToFullscreen(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
         assertEquals(activityTaskId, mWmState.getTaskByActivity(
                 PIP_ACTIVITY).mTaskId);
@@ -1280,32 +1281,26 @@ public class PinnedStackTests extends ActivityManagerTestBase {
      * subsequent animation to start).
      */
     private void waitForEnterPip(ComponentName activityName) {
-        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
-                .setWindowingMode(WINDOWING_MODE_PINNED)
-                .setActivityType(ACTIVITY_TYPE_STANDARD)
-                .build());
+        mWmState.waitForWithAmState(wmState -> {
+            ActivityTask task = wmState.getTaskByActivity(activityName);
+            return task != null && task.getWindowingMode() == WINDOWING_MODE_PINNED;
+        }, "checking task windowing mode");
     }
 
     /**
      * Waits until the picture-in-picture animation has finished.
-     * TODO(b/149947030): use the transition completed signal from TaskOrganizer
      */
     private void waitForEnterPipAnimationComplete(ComponentName activityName) {
         waitForEnterPip(activityName);
-        final Rect pinnedStackBounds = new Rect();
         mWmState.waitForWithAmState(wmState -> {
-            final Rect displayStableBounds = wmState.getStableBounds();
-            Rect newBounds = wmState.getStandardStackByWindowingMode(WINDOWING_MODE_PINNED)
-                    .getBounds();
-            if (pinnedStackBounds.equals(newBounds)
-                    && (displayStableBounds.width() / 2) > newBounds.width()
-                    && (displayStableBounds.height() / 2) > newBounds.height()) {
-                return true;
-            } else if (newBounds != null) {
-                pinnedStackBounds.set(newBounds);
+            ActivityTask task = wmState.getTaskByActivity(activityName);
+            if (task == null) {
+                return false;
             }
-            return false;
-        }, "stack bounds stabilized, consider in pinned mode");
+            WindowManagerState.Activity activity = task.getActivity(activityName);
+            return activity.getWindowingMode() == WINDOWING_MODE_PINNED
+                    && activity.getState().equals(STATE_PAUSED);
+        }, "checking activity windowing mode");
     }
 
     /**
@@ -1319,28 +1314,20 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
     /**
      * Waits until the picture-in-picture animation to fullscreen has finished.
-     * TODO(b/149947030): use the transition completed signal from TaskOrganizer
      */
     private void waitForExitPipToFullscreen(ComponentName activityName) {
-        mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
-                .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
-                .setActivityType(ACTIVITY_TYPE_STANDARD)
-                .build());
-        final Rect stackBounds = new Rect();
         mWmState.waitForWithAmState(wmState -> {
-            final Rect displayStableBounds = wmState.getStableBounds();
             final ActivityTask task = wmState.getTaskByActivity(activityName);
-            if (task == null) return false;
-            Rect newBounds = task.getBounds();
-            if (stackBounds.equals(newBounds)
-                    && (displayStableBounds.width() / 2) < newBounds.width()
-                    && (displayStableBounds.height() / 2) < newBounds.height()) {
-                return true;
-            } else if (newBounds != null) {
-                stackBounds.set(newBounds);
+            if (task == null) {
+                return false;
             }
-            return false;
-        }, "stack bounds stabilized, consider in fullscreen mode");
+            final WindowManagerState.Activity activity = task.getActivity(activityName);
+            return activity.getWindowingMode() != WINDOWING_MODE_PINNED;
+        }, "checking activity windowing mode");
+        mWmState.waitForWithAmState(wmState -> {
+            final ActivityTask task = wmState.getTaskByActivity(activityName);
+            return task != null && task.getWindowingMode() != WINDOWING_MODE_PINNED;
+        }, "checking task windowing mode");
     }
 
     /**
