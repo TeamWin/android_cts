@@ -23,6 +23,8 @@ import static android.Manifest.permission.ACCESS_MEDIA_LOCATION;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.READ_PHONE_STATE;
+import static android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE;
 import static android.Manifest.permission.WRITE_CALL_LOG;
 import static android.Manifest.permission.WRITE_CONTACTS;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -108,10 +110,13 @@ public class SplitPermissionsSystemTest {
                 case READ_EXTERNAL_STORAGE:
                     assertSplit(split, ACCESS_MEDIA_LOCATION, Build.VERSION_CODES.Q);
                     break;
+                case READ_PRIVILEGED_PHONE_STATE:
+                    assertSplit(split, READ_PHONE_STATE, NO_TARGET);
+                    break;
             }
         }
 
-        assertEquals(7, seenSplits.size());
+        assertEquals(8, seenSplits.size());
     }
 
     private void assertSplit(SplitPermissionInfo split, String permission, int targetSdk) {
