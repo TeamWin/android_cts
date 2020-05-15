@@ -177,8 +177,14 @@ public class AppEnumerationTests {
     public void startExplicitly_cannotStartNonVisible() throws Exception {
         assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
         try {
-            startExplicitIntent(QUERIES_NOTHING, TARGET_FILTERS);
-            fail("Package cannot start a package it cannot see");
+            startExplicitIntentViaComponent(QUERIES_NOTHING, TARGET_FILTERS);
+            fail("Package cannot start a package it cannot see via component name");
+        } catch (ActivityNotFoundException e) {
+            // hooray!
+        }
+        try {
+            startExplicitIntentViaPackageName(QUERIES_NOTHING, TARGET_FILTERS);
+            fail("Package cannot start a package it cannot see via package name");
         } catch (ActivityNotFoundException e) {
             // hooray!
         }
@@ -187,7 +193,8 @@ public class AppEnumerationTests {
     @Test
     public void startExplicitly_canStartVisible() throws Exception {
         assertVisible(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS);
-        startExplicitIntent(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS);
+        startExplicitIntentViaComponent(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS);
+        startExplicitIntentViaPackageName(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS);
     }
 
     @Test
@@ -550,10 +557,17 @@ public class AppEnumerationTests {
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
-    private void startExplicitIntent(String sourcePackage, String targetPackage) throws Exception {
+    private void startExplicitIntentViaComponent(String sourcePackage, String targetPackage)
+            throws Exception {
         sendCommandBlocking(sourcePackage, targetPackage,
                 new Intent().setComponent(new ComponentName(targetPackage,
                         ACTIVITY_CLASS_DUMMY_ACTIVITY)),
+                ACTION_START_DIRECTLY);
+    }
+    private void startExplicitIntentViaPackageName(String sourcePackage, String targetPackage)
+            throws Exception {
+        sendCommandBlocking(sourcePackage, targetPackage,
+                new Intent().setPackage(targetPackage),
                 ACTION_START_DIRECTLY);
     }
 
