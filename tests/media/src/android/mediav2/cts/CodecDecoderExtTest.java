@@ -29,6 +29,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -46,7 +49,7 @@ public class CodecDecoderExtTest extends CodecDecoderTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        return Arrays.asList(new Object[][]{
+        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_VIDEO_VP9,
                         //show and no-show frames are sent as separate inputs
                         "bbb_340x280_768kbps_30fps_split_non_display_frame_vp9.webm",
@@ -57,7 +60,25 @@ public class CodecDecoderExtTest extends CodecDecoderTestBase {
                         "bbb_520x390_1mbps_30fps_split_non_display_frame_vp9.webm",
                         //show and no-show frames are sent as one input
                         "bbb_520x390_1mbps_30fps_vp9.webm"},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2,
+                        //show and no-show frames are sent as separate inputs
+                        "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_1field.ts",
+                        //show and no-show frames are sent as one input
+                        "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_2fields.mp4"},
         });
+
+        Set<String> list = new HashSet<>();
+        if (isHandheld() || isTv() || isAutomotive()) {
+            // sec 2.2.2, 2.3.2, 2.5.2
+            list.add(MediaFormat.MIMETYPE_VIDEO_VP9);
+        }
+        if (isTv()) {
+            // sec 2.3.2
+            list.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
+        }
+        ArrayList<String> cddRequiredMimeList = new ArrayList<>(list);
+
+        return prepareParamList(cddRequiredMimeList, exhaustiveArgsList, false);
     }
 
     /**
