@@ -100,9 +100,12 @@ public class PackageDeviceInfo extends DeviceInfo {
 
             store.addResult(IS_ACTIVE_ADMIN, deviceAdminPackages.contains(pkg.packageName));
 
-            final boolean isDefaultAccessibilityComponent = pkg.packageName.equals(
-                    defaultAccessibilityComponent.getPackageName()
-            );
+            boolean isDefaultAccessibilityComponent = false;
+            if (defaultAccessibilityComponent != null) {
+              isDefaultAccessibilityComponent = pkg.packageName.equals(
+                      defaultAccessibilityComponent.getPackageName()
+              );
+            }
             store.addResult(DEFAULT_ACCESSIBILITY_SERVICE, isDefaultAccessibilityComponent);
 
             String sha256_cert = PackageUtil.computePackageSignatureDigest(pkg.packageName);
