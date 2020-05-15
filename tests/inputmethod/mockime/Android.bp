@@ -24,6 +24,7 @@ java_test_helper_library {
     libs: ["junit"],
     static_libs: [
         "androidx.annotation_annotation",
+        "androidx.autofill_autofill",
         "compatibility-device-util-axt",
     ],
 }
