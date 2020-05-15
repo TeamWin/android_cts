@@ -26,6 +26,8 @@ import static android.stats.devicepolicy.EventId.SET_INTERACT_ACROSS_PROFILES_AP
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
@@ -42,7 +44,12 @@ import com.google.common.collect.Sets;
 
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
@@ -55,6 +62,16 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     /** From {@code android.app.AppOpsManager#MODE_DEFAULT}. */
     private static final int MODE_DEFAULT = 3;
+
+    // The apps whose app-ops are maintained and unset are defined by the device-side test.
+    private static final Set<String> UNSET_CROSS_PROFILE_PACKAGES =
+            Sets.newHashSet(
+                    DUMMY_APP_3_PKG,
+                    DUMMY_APP_4_PKG);
+    private static final Set<String> MAINTAINED_CROSS_PROFILE_PACKAGES =
+            Sets.newHashSet(
+                    DUMMY_APP_1_PKG,
+                    DUMMY_APP_2_PKG);
 
     @LargeTest
     @Test
@@ -500,19 +517,10 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 "testSetCrossProfilePackages_sendsBroadcastWhenResettingAppOps_noAsserts");
         waitForBroadcastIdle();
 
-        // The apps whose app-ops are maintained and unset are defined by the device-side test.
-        final Set<String> unsetCrossProfilePackages =
-                Sets.newHashSet(
-                        DUMMY_APP_3_PKG,
-                       DUMMY_APP_4_PKG);
-        final Set<String> maintainedCrossProfilePackages =
-                Sets.newHashSet(
-                        DUMMY_APP_1_PKG,
-                        DUMMY_APP_2_PKG);
         assertDummyAppsReceivedCanInteractAcrossProfilesChangedBroadcast(
-                unsetCrossProfilePackages);
+                UNSET_CROSS_PROFILE_PACKAGES);
         assertDummyAppsDidNotReceiveCanInteractAcrossProfilesChangedBroadcast(
-                maintainedCrossProfilePackages);
+                MAINTAINED_CROSS_PROFILE_PACKAGES);
     }
 
     /** Assumes that logcat is clear before running the test. */
@@ -570,6 +578,68 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                         .setInt(MODE_DEFAULT)
                         .setBoolean(true) // cross-profile manifest attribute
                         .build());
+    }
+
+    @Test
+    public void testSetCrossProfilePackages_killsApps() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAllDummyApps();
+        launchAllDummyAppsInBothProfiles();
+        Map<String, List<String>> maintainedPackagesPids = getPackagesPids(
+                MAINTAINED_CROSS_PROFILE_PACKAGES);
+        Map<String, List<String>> unsetPackagesPids = getPackagesPids(UNSET_CROSS_PROFILE_PACKAGES);
+
+        runWorkProfileDeviceTest(
+                ".CrossProfileTest",
+                "testSetCrossProfilePackages_resetsAppOps_noAsserts");
+
+        for (String packageName : MAINTAINED_CROSS_PROFILE_PACKAGES) {
+            assertAppRunningInBothProfiles(packageName, maintainedPackagesPids.get(packageName));
+        }
+        for (String packageName : UNSET_CROSS_PROFILE_PACKAGES) {
+            assertAppKilledInBothProfiles(packageName, unsetPackagesPids.get(packageName));
+        }
+    }
+
+    private Map<String, List<String>> getPackagesPids(Set<String> packages) throws Exception {
+        Map<String, List<String>> pids = new HashMap<>();
+        for (String packageName : packages) {
+            pids.put(packageName, Arrays.asList(getAppPid(packageName).split(" ")));
+        }
+        return pids;
+    }
+
+    private void launchAllDummyAppsInBothProfiles() throws Exception {
+        launchAllDummyAppsForUser(mParentUserId);
+        launchAllDummyAppsForUser(mProfileUserId);
+    }
+
+    private void launchAllDummyAppsForUser(int userId) throws Exception {
+        final String dummyActivity = "android.app.Activity";
+        startActivityAsUser(userId, DUMMY_APP_1_PKG, dummyActivity);
+        startActivityAsUser(userId, DUMMY_APP_2_PKG, dummyActivity);
+        startActivityAsUser(userId, DUMMY_APP_3_PKG, dummyActivity);
+        startActivityAsUser(userId, DUMMY_APP_4_PKG, dummyActivity);
+    }
+
+    private void assertAppRunningInBothProfiles(String packageName, List<String> pids)
+            throws Exception {
+        Set<String> currentPids = new HashSet<>(
+                Arrays.asList(getAppPid(packageName).split(" ")));
+        assertThat(currentPids).containsAllIn(pids);
+    }
+
+    private void assertAppKilledInBothProfiles(String packageName,  List<String> pids)
+            throws Exception {
+        Set<String> currentPids = new HashSet<>(
+                Arrays.asList(getAppPid(packageName).split(" ")));
+        assertThat(currentPids).containsNoneIn(pids);
+    }
+
+    private String getAppPid(String packageName) throws Exception {
+        return getDevice().executeShellCommand(String.format("pidof %s", packageName)).trim();
     }
 
     private void runCrossProfileCalendarTestsWhenWhitelistedAndEnabled() throws Exception {
