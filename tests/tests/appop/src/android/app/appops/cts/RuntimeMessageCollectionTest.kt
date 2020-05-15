@@ -65,13 +65,13 @@ class RuntimeMessageCollectionTest {
 
                 runWithShellPermissionIdentity {
                     val message = appOpsManager.collectRuntimeAppOpAccessMessage()
-                    if (message != null && message.packageName.equals(APP_PKG)) {
+                    if (message != null && message.packageName.equals(APP_PKG) &&
+                            message.samplingStrategy !=
+                            RUNTIME_APP_OP_ACCESS__SAMPLING_STRATEGY__UNIFORM) {
                         assertThat(message.op).isEqualTo(AppOpsManager.OPSTR_READ_CONTACTS)
                         assertThat(message.uid).isEqualTo(appUid)
                         assertThat(message.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
                         assertThat(message.message).isEqualTo(MESSAGE)
-                        assertThat(message.samplingStrategy)
-                                .isNotEqualTo(RUNTIME_APP_OP_ACCESS__SAMPLING_STRATEGY__UNIFORM)
                         return
                     }
                 }
