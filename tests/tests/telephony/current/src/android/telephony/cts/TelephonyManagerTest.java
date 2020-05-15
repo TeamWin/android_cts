@@ -1990,7 +1990,7 @@ public class TelephonyManagerTest {
             return;
         }
         if (mTelephonyManager.getPhoneCount() == 2 && activeSubscriptionInfoCount != 2) {
-            fail("This test requires two SIM cards.");
+            return;
         }
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 (tm) -> tm.setPreferredOpportunisticDataSubscription(
@@ -2126,7 +2126,7 @@ public class TelephonyManagerTest {
             return;
         }
         if (mTelephonyManager.getPhoneCount() == 2 && activeSubscriptionInfoCount != 2) {
-            fail("This test requires two SIM cards.");
+            return;
         }
 
         List<SubscriptionInfo> subscriptionInfoList =
