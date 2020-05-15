@@ -39,7 +39,6 @@ import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Display.HdrCapabilities;
@@ -98,16 +97,18 @@ public class DisplayTest {
 
     @Rule
     public ActivityTestRule<DisplayTestActivity> mDisplayTestActivity =
-            new ActivityTestRule<>(DisplayTestActivity.class,
-                    false /* initialTouchMode */, false /* launchActivity */);
+            new ActivityTestRule<>(
+                    DisplayTestActivity.class,
+                    false /* initialTouchMode */,
+                    false /* launchActivity */);
 
     @Before
     public void setUp() throws Exception {
         mScreenOnActivity = launchScreenOnActivity();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mDisplayManager = (DisplayManager)mContext.getSystemService(Context.DISPLAY_SERVICE);
-        mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
-        mUiModeManager = (UiModeManager)mContext.getSystemService(Context.UI_MODE_SERVICE);
+        mDisplayManager = (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+        mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        mUiModeManager = (UiModeManager) mContext.getSystemService(Context.UI_MODE_SERVICE);
         mDefaultDisplay = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
         mSupportedWideGamuts = mDefaultDisplay.getSupportedWideColorGamut();
     }
@@ -208,6 +209,8 @@ public class DisplayTest {
         assertFalse(cap.getDesiredMaxLuminance() < -1.0f);
         assertFalse(cap.getDesiredMinLuminance() < -1.0f);
         assertFalse(cap.getDesiredMaxAverageLuminance() < -1.0f);
+        assertTrue(cap.getDesiredMinLuminance() <= cap.getDesiredMaxAverageLuminance());
+        assertTrue(cap.getDesiredMaxAverageLuminance() <= cap.getDesiredMaxLuminance());
         if (hdrTypes.length > 0) {
             assertTrue(display.isHdr());
         } else {
