@@ -32,11 +32,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -65,7 +67,7 @@ import android.widget.inline.InlinePresentationSpec;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.autofill.InlinePresentationBuilder;
+import androidx.autofill.inline.v1.InlineSuggestionUi;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BitmapUtils;
@@ -1518,13 +1520,25 @@ public final class Helper {
     }
 
     public static InlinePresentation createInlinePresentation(String message) {
-        return new InlinePresentation(new InlinePresentationBuilder(message).build(),
+        // TODO(b/156392213): this is a dummy pending intent, we should make it a real one when
+        // testing long press.
+        final PendingIntent attribution = PendingIntent.getActivity(getContext(), 0, new Intent(),
+                0);
+        return new InlinePresentation(
+                InlineSuggestionUi.newContentBuilder().setAttribution(attribution)
+                        .setTitle(message).build().getSlice(),
                 new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
                         .build(), /* pinned= */ false);
     }
 
     public static InlinePresentation createPinnedInlinePresentation(String message) {
-        return new InlinePresentation(new InlinePresentationBuilder(message).build(),
+        // TODO(b/156392213): this is a dummy pending intent, we should make it a real one when
+        // testing long press.
+        final PendingIntent attribution = PendingIntent.getActivity(getContext(), 0, new Intent(),
+                0);
+        return new InlinePresentation(
+                InlineSuggestionUi.newContentBuilder().setAttribution(attribution)
+                        .setTitle(message).build().getSlice(),
                 new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
                         .build(), /* pinned= */ true);
     }
