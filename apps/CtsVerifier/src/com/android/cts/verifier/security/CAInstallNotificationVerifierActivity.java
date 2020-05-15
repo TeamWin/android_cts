@@ -27,11 +27,6 @@ import android.widget.Button;
 
 import com.android.cts.verifier.R;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.DialogTestListActivity;
 import com.android.cts.verifier.TestListActivity;
@@ -40,8 +35,6 @@ import com.android.cts.verifier.TestResult;
 
 public class CAInstallNotificationVerifierActivity extends DialogTestListActivity {
     static final String TAG = CAInstallNotificationVerifierActivity.class.getSimpleName();
-
-    private static final String CERT_ASSET_NAME = "myCA.cer";
 
     // From @hidden field in android.provider.Settings
     private static final String ACTION_TRUSTED_CREDENTIALS_USER
@@ -93,25 +86,7 @@ public class CAInstallNotificationVerifierActivity extends DialogTestListActivit
 
         @Override
         public void performTest(DialogTestListActivity activity) {
-            final File certStagingFile = new File("/sdcard/", CERT_ASSET_NAME);
-            InputStream is = null;
-            FileOutputStream os = null;
-            try {
-                try {
-                    is = getAssets().open(CERT_ASSET_NAME);
-                    os = new FileOutputStream(certStagingFile);
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    while ((length = is.read(buffer)) > 0) {
-                        os.write(buffer, 0, length);
-                    }
-                } finally {
-                    if (is != null) is.close();
-                    if (os != null) os.close();
-                    certStagingFile.setReadable(true, false);
-                }
-            } catch (IOException ioe) {
-                Log.w(TAG, "Problem moving cert file to /sdcard/", ioe);
+            if (!CACertWriter.extractCertToDownloads(getApplicationContext(), getAssets())) {
                 return;
             }
             super.performTest(activity);
