@@ -1240,7 +1240,7 @@ public class UsageStatsTest {
         // Usage should be attributed to the test app package
         assertAppOrTokenUsed(TaskRootActivity.TEST_APP_PKG, true);
 
-        mUiDevice.pressHome();
+        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
 
         setUsageSourceSetting(Integer.toString(UsageStatsManager.USAGE_SOURCE_TASK_ROOT_ACTIVITY));
         launchSubActivity(TaskRootActivity.class);
