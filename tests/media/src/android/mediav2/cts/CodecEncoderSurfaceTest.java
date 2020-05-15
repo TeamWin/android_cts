@@ -124,7 +124,7 @@ public class CodecEncoderSurfaceTest {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
                 String[] types = codecInfo.getSupportedTypes();
                 for (String type : types) {
-                    if (!mimes.contains(type)) {
+                    if (!mimes.contains(type) && type.startsWith("video/")) {
                         mimes.add(type);
                     }
                 }
@@ -496,7 +496,6 @@ public class CodecEncoderSurfaceTest {
                 configureCodec(decoderFormat, encoderFormat, isAsync, false);
                 mEncoder.start();
                 mDecoder.start();
-                MediaFormat inputFormat = mDecoder.getInputFormat();
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllEncoderOutputs();

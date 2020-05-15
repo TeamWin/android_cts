@@ -104,7 +104,13 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             info.offset = offset;
             info.presentationTimeUs = pts;
-            info.flags = flags;
+            info.flags = 0;
+            if ((flags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
+                info.flags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
+            }
+            if ((flags & MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0) {
+                info.flags |= MediaCodec.BUFFER_FLAG_PARTIAL_FRAME;
+            }
             if (i != sfCount - 1) {
                 info.size = size / sfCount;
                 info.flags |= MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME;

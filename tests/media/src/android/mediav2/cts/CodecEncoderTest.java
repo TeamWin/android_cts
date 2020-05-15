@@ -16,29 +16,22 @@
 
 package android.mediav2.cts;
 
-import android.graphics.ImageFormat;
-import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.util.Log;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -94,9 +87,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
 
     void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
-                mNumSyncFramesReceived += 1;
-                mSyncFramesPos.add(mOutputCount);
-            }
+            mNumSyncFramesReceived += 1;
+            mSyncFramesPos.add(mOutputCount);
+        }
         super.dequeueOutput(bufferIndex, info);
     }
 
