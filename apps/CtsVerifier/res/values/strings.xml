@@ -61,6 +61,10 @@
     <string name="runtime_permissions_error">Please grant runtime permissions, otherwise, tests might fail.</string>
     <string name="export">Export</string>
     <string name="no_storage">Cannot save report to external storage, see log for details.</string>
+    <string name="no_storage_io_parser_exception">Cannot save report to external
+        storage, see log for details. Or try running the following command if
+        you haven\'t yet.\n\"adb shell appops set com.android.cts.verifier
+        MANAGE_EXTERNAL_STORAGE 0\"</string>
     <string name="report_saved">Report saved to: %s</string>
 
     <!-- Strings for IntentDrivenTestActivity -->
