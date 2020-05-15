@@ -80,7 +80,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
                 Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
         if (!mBluetoothAdapter.isEnabled()) {
-            assertTrue(TestUtils.enableAdapter(mBluetoothAdapter, mContext));
+            assertTrue(BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext));
         }
         mScanner = mBluetoothAdapter.getBluetoothLeScanner();
         mLocationOn = TestUtils.isLocationOn(getContext());
@@ -101,7 +101,7 @@ public class BluetoothLeScanTest extends AndroidTestCase {
         if (!mLocationOn) {
             TestUtils.disableLocation(getContext());
         }
-        assertTrue(TestUtils.disableAdapter(mBluetoothAdapter, mContext));
+        assertTrue(BTAdapterUtils.disableAdapter(mBluetoothAdapter, mContext));
     }
 
     /**
