@@ -34,6 +34,7 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.DisableScreenDozeRule;
+import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
@@ -46,6 +47,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.cts.mockime.ImeCommand;
+import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -57,10 +59,11 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class InputMethodStartInputLifecycleTest {
+public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
     @Rule
@@ -115,8 +118,7 @@ public class InputMethodStartInputLifecycleTest {
             TestUtils.turnScreenOff();
             TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_OFF
                             && editText.getWindowVisibility() != VISIBLE, TIMEOUT);
-            assertTrue(TestUtils.getOnMainSync(
-                    () -> !imManager.isActive(editText) && !imManager.isAcceptingText()));
+            expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
             final ImeCommand commit = imeSession.callCommitText("Hi!", 1);
             expectCommand(stream, commit, TIMEOUT);
             TestUtils.waitOnMainUntil(() -> !TextUtils.equals(editText.getText(), "Hi!"), TIMEOUT,
@@ -136,5 +138,9 @@ public class InputMethodStartInputLifecycleTest {
             TestUtils.waitOnMainUntil(() -> TextUtils.equals(editText.getText(), "Hello!"), TIMEOUT,
                     "InputMethodService#commitText should work after screen on");
         }
+    }
+
+    private static Predicate<ImeEvent> onFinishInputMatcher() {
+        return event -> TextUtils.equals("onFinishInput", event.getEventName());
     }
 }
