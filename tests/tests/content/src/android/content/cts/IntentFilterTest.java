@@ -683,6 +683,20 @@ public class IntentFilterTest extends AndroidTestCase {
         }
     }
 
+    public void testAppEnumerationMatchesMimeGroups() {
+        IntentFilter filter = new Match(new String[]{ACTION}, null, null, new String[]{"scheme1"},
+                new String[]{"authority1"}, null).addMimeGroups(new String[]{"test"});
+
+        // assume any mime type or no mime type matches a filter with a mimegroup defined.
+        checkMatches(filter,
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE,
+                        ACTION, null, "img/jpeg", "scheme1://authority1", true),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE,
+                        ACTION, null, null, "scheme1://authority1", true),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE,
+                        ACTION, null, "*/*", "scheme1://authority1", true));
+    }
+
     public void testMatchData() throws MalformedMimeTypeException {
         int expected = IntentFilter.MATCH_CATEGORY_EMPTY + IntentFilter.MATCH_ADJUSTMENT_NORMAL;
         assertEquals(expected, mIntentFilter.matchData(null, null, null));
@@ -1314,6 +1328,13 @@ public class IntentFilterTest extends AndroidTestCase {
                 } catch (IntentFilter.MalformedMimeTypeException e) {
                     throw new RuntimeException("Bad mime type", e);
                 }
+            }
+            return this;
+        }
+
+        Match addMimeGroups(String[] mimeGroups) {
+            for (int i = 0; i < mimeGroups.length; i++) {
+                addMimeGroup(mimeGroups[i]);
             }
             return this;
         }
