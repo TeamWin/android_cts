@@ -235,33 +235,31 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
 
     private void installCrossProfileApps()
             throws FileNotFoundException, DeviceNotAvailableException {
-        installCrossProfileApp(ENABLED_TEST_APK);
-        installCrossProfileApp(USER_ENABLED_TEST_APK);
-        installCrossProfileApp(NOT_ENABLED_TEST_APK);
-        installCrossProfileApp(ENABLED_NO_PERMS_TEST_APK);
+        installCrossProfileApp(ENABLED_TEST_APK, /* grantPermissions= */ true);
+        installCrossProfileApp(USER_ENABLED_TEST_APK, /* grantPermissions= */ true);
+        installCrossProfileApp(NOT_ENABLED_TEST_APK, /* grantPermissions= */ true);
+        installCrossProfileApp(ENABLED_NO_PERMS_TEST_APK, /* grantPermissions= */  false);
     }
 
     private void enableCrossProfileAppsOp() throws DeviceNotAvailableException {
         enableCrossProfileAppsOp(ENABLED_TEST_PACKAGE, mPrimaryUserId);
-        enableCrossProfileAppsOp(USER_ENABLED_TEST_PACKAGE, mPrimaryUserId);
-        enableCrossProfileAppsOp(NOT_ENABLED_TEST_PACKAGE, mPrimaryUserId);
         enableCrossProfileAppsOp(ENABLED_NO_PERMS_TEST_PACKAGE, mPrimaryUserId);
     }
 
-    private void installCrossProfileApp(String apkName)
+    private void installCrossProfileApp(String apkName, boolean grantPermissions)
             throws FileNotFoundException, DeviceNotAvailableException {
-        installAppAsUser(apkName, mPrimaryUserId);
-        installAppAsUser(apkName, mProfileId);
+        installAppAsUser(apkName, grantPermissions, mPrimaryUserId);
+        installAppAsUser(apkName, grantPermissions, mProfileId);
     }
 
     private void enableCrossProfileAppsOp(String packageName, int userId)
             throws DeviceNotAvailableException {
         getDevice().executeShellCommand(
                 String.format("appops set --user %s %s android:interact_across_profiles 0",
-                userId, packageName));
+                        userId, packageName));
         assertThat(getDevice().executeShellCommand(
                 String.format("appops get --user %s %s android:interact_across_profiles",
-                userId, packageName))).contains("INTERACT_ACROSS_PROFILES: allow");
+                        userId, packageName))).contains("INTERACT_ACROSS_PROFILES: allow");
     }
 
     private Map<String, String> createParams(int targetUserId) throws Exception {
