@@ -673,6 +673,40 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
+    @Test
+    public void testCanGetProfiles() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        // getAllProfiles should contain both the primary and profile
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
+                "testGetAllProfiles", mPrimaryUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
+                "testGetAllProfiles", mProfileUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
+                "testIsProfileReturnsFalse_runAsPrimary", mPrimaryUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
+                "testIsProfileReturnsTrue_runAsProfile", mProfileUserId);
+    }
+
+    @Test
+    public void testCanCreateProfile() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        // remove pre-created profile
+        removeUser(mProfileUserId);
+
+        // create profile from installed app
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
+                "testCreateProfile_managedProfile", mPrimaryUserId);
+    }
+
     private void changeUserRestrictionOrFail(String key, boolean value, int userId)
             throws DeviceNotAvailableException {
         changeUserRestrictionOrFail(key, value, userId, MANAGED_PROFILE_PKG);
