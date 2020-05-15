@@ -1059,7 +1059,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetMeteredDataDisabledPackages() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
             return;
         }
         installAppAsUser(METERED_DATA_APP_APK, mUserId);
