@@ -1983,7 +1983,8 @@
             <meta-data android:name="android.nfc.cardemulation.host_nfcf_service" android:resource="@xml/felicaservice"/>
         </service>
         <!-- Service used for Camera ITS tests -->
-        <service android:name=".camera.its.ItsService" >
+        <service android:name=".camera.its.ItsService"
+            android:foregroundServiceType="camera">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.camera.its.START"/>
                 <category android:name="android.intent.category.DEFAULT" />
