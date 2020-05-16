@@ -34,6 +34,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import androidx.test.uiautomator.UiDevice
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assume.assumeNotNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -249,9 +250,12 @@ class AppOpEventCollectionTest {
     fun noteFromTwoProxiesAndVerifyProxyInfo() {
         // Find another app to blame
         val otherAppInfo = context.packageManager
-                .resolveActivity(Intent(ACTION_APPLICATION_PREFERENCES), 0)!!
-                .activityInfo.applicationInfo
-        val otherPkg = otherAppInfo.packageName
+                .resolveActivity(Intent(ACTION_APPLICATION_PREFERENCES), 0)
+                ?.activityInfo?.applicationInfo
+
+        assumeNotNull(otherAppInfo)
+
+        val otherPkg = otherAppInfo!!.packageName
         val otherUid = otherAppInfo.uid
 
         // Using the shell identity causes a trusted proxy note
