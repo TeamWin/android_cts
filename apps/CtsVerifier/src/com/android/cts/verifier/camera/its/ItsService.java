@@ -22,6 +22,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCaptureSession;
@@ -332,7 +333,8 @@ public class ItsService extends Service implements SensorEventListener {
                     .setContentText("CameraITS Service is running")
                     .setSmallIcon(R.drawable.icon)
                     .setOngoing(true).build();
-            startForeground(SERVICE_NOTIFICATION_ID, notification);
+            startForeground(SERVICE_NOTIFICATION_ID, notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA);
         } catch (java.lang.InterruptedException e) {
             Logt.e(TAG, "Error starting ItsService (interrupted)", e);
         }
