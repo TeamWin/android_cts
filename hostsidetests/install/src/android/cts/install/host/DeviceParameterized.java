@@ -101,7 +101,8 @@ public final class DeviceParameterized extends Parameterized implements ITestInf
         public Description getDescription() {
             // Make sure it includes test class name when generating parameterized test suites.
             Description desc = Description.createSuiteDescription(getTestClass().getJavaClass());
-            getChildren().forEach(method -> desc.addChild(describeChild(method)));
+            // Invoke super getDescription to apply filtered children
+            super.getDescription().getChildren().forEach(child -> desc.addChild(child));
             return desc;
         }
     }

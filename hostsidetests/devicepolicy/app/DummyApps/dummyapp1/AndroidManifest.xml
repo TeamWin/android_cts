@@ -30,5 +30,8 @@
                 <action android:name="android.content.pm.action.CAN_INTERACT_ACROSS_PROFILES_CHANGED" />
             </intent-filter>
         </receiver>
+        <activity
+            android:name="android.app.Activity">
+        </activity>
     </application>
 </manifest>

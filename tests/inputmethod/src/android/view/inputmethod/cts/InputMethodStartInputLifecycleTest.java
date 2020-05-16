@@ -47,6 +47,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.cts.mockime.ImeCommand;
+import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -58,6 +59,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -116,8 +118,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             TestUtils.turnScreenOff();
             TestUtils.waitOnMainUntil(() -> screenStateCallbackRef.get() == SCREEN_STATE_OFF
                             && editText.getWindowVisibility() != VISIBLE, TIMEOUT);
-            assertTrue(TestUtils.getOnMainSync(
-                    () -> !imManager.isActive(editText) && !imManager.isAcceptingText()));
+            expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
             final ImeCommand commit = imeSession.callCommitText("Hi!", 1);
             expectCommand(stream, commit, TIMEOUT);
             TestUtils.waitOnMainUntil(() -> !TextUtils.equals(editText.getText(), "Hi!"), TIMEOUT,
@@ -137,5 +138,9 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             TestUtils.waitOnMainUntil(() -> TextUtils.equals(editText.getText(), "Hello!"), TIMEOUT,
                     "InputMethodService#commitText should work after screen on");
         }
+    }
+
+    private static Predicate<ImeEvent> onFinishInputMatcher() {
+        return event -> TextUtils.equals("onFinishInput", event.getEventName());
     }
 }

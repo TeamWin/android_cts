@@ -409,6 +409,17 @@ public class CellInfoTest {
             assertTrue("BSID is required for registered cells",
                     basestationId != CellInfo.UNAVAILABLE);
         }
+
+        verifyCellIdentityCdmaLocationSanitation(cdma);
+    }
+
+    private void verifyCellIdentityCdmaLocationSanitation(CellIdentityCdma cdma) {
+        CellIdentityCdma sanitized = cdma.sanitizeLocationInfo();
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getNetworkId());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getSystemId());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getBasestationId());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getLongitude());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getLatitude());
     }
 
     private void verifyCellIdentityCdmaParcel(CellIdentityCdma cdma) {
@@ -566,6 +577,15 @@ public class CellInfoTest {
             assertTrue("MCC is required for registered cells", nr.getMccString() != null);
             assertTrue("MNC is required for registered cells", nr.getMncString() != null);
         }
+
+        verifyCellIdentityNrLocationSanitation(nr);
+    }
+
+    private void verifyCellIdentityNrLocationSanitation(CellIdentityNr nr) {
+        CellIdentityNr sanitized = nr.sanitizeLocationInfo();
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getPci());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getTac());
+        assertEquals(CellInfo.UNAVAILABLE_LONG, sanitized.getNci());
     }
 
     private void verifyCellSignalStrengthNr(CellSignalStrengthNr nr) {
@@ -821,6 +841,16 @@ public class CellInfoTest {
             assertTrue("MNC is required for registered cells",
                     wcdma.getMncString() != null || wcdma.getMnc() != CellInfo.UNAVAILABLE);
         }
+
+        verifyCellIdentityWcdmaLocationSanitation(wcdma);
+    }
+
+    private void verifyCellIdentityWcdmaLocationSanitation(CellIdentityWcdma wcdma) {
+        CellIdentityWcdma sanitized = wcdma.sanitizeLocationInfo();
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getLac());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getCid());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getPsc());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getUarfcn());
     }
 
     private void verifyCellIdentityWcdmaParcel(CellIdentityWcdma wcdma) {
@@ -931,6 +961,16 @@ public class CellInfoTest {
             assertTrue("MNC is required for registered cells",
                     gsm.getMncString() != null || gsm.getMnc() != CellInfo.UNAVAILABLE);
         }
+
+        verifyCellIdentityGsmLocationSanitation(gsm);
+    }
+
+    private void verifyCellIdentityGsmLocationSanitation(CellIdentityGsm gms) {
+        CellIdentityGsm sanitized = gms.sanitizeLocationInfo();
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getLac());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getCid());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getArfcn());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getBsic());
     }
 
     private void verifyCellIdentityGsmParcel(CellIdentityGsm gsm) {
@@ -1045,6 +1085,16 @@ public class CellInfoTest {
             assertTrue("MCC is required for registered cells", tdscdma.getMccString() != null);
             assertTrue("MNC is required for registered cells", tdscdma.getMncString() != null);
         }
+
+        verifyCellIdentityTdscdmaLocationSanitation(tdscdma);
+    }
+
+    private void verifyCellIdentityTdscdmaLocationSanitation(CellIdentityTdscdma tdscdma) {
+        CellIdentityTdscdma sanitized = tdscdma.sanitizeLocationInfo();
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getLac());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getCid());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getCpid());
+        assertEquals(CellInfo.UNAVAILABLE, sanitized.getUarfcn());
     }
 
     private void verifyCellIdentityTdscdmaParcel(CellIdentityTdscdma tdscdma) {

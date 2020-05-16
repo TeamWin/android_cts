@@ -437,7 +437,12 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
     @AppModeFull
     public void testAppSummary() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
-            if (!shouldTestThisNetworkType(i, MINUTE/2)) {
+            // Use tolerance value that large enough to make sure stats of at
+            // least one bucket is included. However, this is possible that
+            // the test will see data of different app but with the same UID
+            // that created before testing.
+            // TODO: Consider query stats before testing and use the difference to verify.
+            if (!shouldTestThisNetworkType(i, MINUTE * 120)) {
                 continue;
             }
             setAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS, "allow");
