@@ -108,7 +108,7 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
             ZipUtil.createZip(tempDir, reportZipFile);
         } catch (IOException | XmlPullParserException e) {
             LOG.log(Level.WARNING, "I/O exception writing report to storage.", e);
-            return mContext.getString(R.string.no_storage);
+            return mContext.getString(R.string.no_storage_io_parser_exception);
         } finally {
             // delete the temporary directory and its files made for the report
             FileUtil.recursiveDelete(tempDir);

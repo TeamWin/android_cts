@@ -572,18 +572,18 @@ public class IntentFilterTest extends AndroidTestCase {
                 new String[]{"authority1"}, new String[]{"100"});
         checkMatches(filter,
                 MatchCondition.data(IntentFilter.NO_MATCH_DATA, null, true),
-                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1:*", true),
-                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://*/", true),
-                MatchCondition.data(IntentFilter.MATCH_CATEGORY_PORT, "scheme1://*:100/", true),
-                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://*:200/", true),
-                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*:foo", true),
-                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://authority1/", true),
-                MatchCondition.data(IntentFilter.MATCH_CATEGORY_PORT, "*://authority1:100/", true),
-                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://authority1:200/", true),
-                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*:*", true),
-                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://*/", true),
-                MatchCondition.data(IntentFilter.MATCH_CATEGORY_PORT, "*://*:100/", true),
-                MatchCondition.data(IntentFilter.NO_MATCH_DATA, "*://*:200/", true));
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA,       "scheme1:*", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://*/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://*:100/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "scheme1://*:200/", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA,       "*:foo", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "*://authority1/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "*://authority1:100/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "*://authority1:200/", true),
+                MatchCondition.data(IntentFilter.NO_MATCH_DATA,       "*:*", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "*://*/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "*://*:100/", true),
+                MatchCondition.data(IntentFilter.MATCH_CATEGORY_HOST, "*://*:200/", true));
 
         checkMatches(filter,
                 MatchCondition.data(IntentFilter.NO_MATCH_DATA, "scheme1://*/", false),
@@ -681,6 +681,20 @@ public class IntentFilterTest extends AndroidTestCase {
             assertFalse(mIntentFilter.hasMimeGroup(MIME_GROUP + i + 10));
             i++;
         }
+    }
+
+    public void testAppEnumerationMatchesMimeGroups() {
+        IntentFilter filter = new Match(new String[]{ACTION}, null, null, new String[]{"scheme1"},
+                new String[]{"authority1"}, null).addMimeGroups(new String[]{"test"});
+
+        // assume any mime type or no mime type matches a filter with a mimegroup defined.
+        checkMatches(filter,
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE,
+                        ACTION, null, "img/jpeg", "scheme1://authority1", true),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE,
+                        ACTION, null, null, "scheme1://authority1", true),
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_TYPE,
+                        ACTION, null, "*/*", "scheme1://authority1", true));
     }
 
     public void testMatchData() throws MalformedMimeTypeException {
@@ -878,6 +892,48 @@ public class IntentFilterTest extends AndroidTestCase {
                         null /*categories*/,
                         "image/jpeg",
                         "content:",
+                        true));
+    }
+
+    public void testAppEnumerationNoHostMatchesWildcardHost() throws Exception {
+        IntentFilter filter = new Match(
+                new String[]{Intent.ACTION_VIEW},
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                new String[]{"http", "https"},
+                new String[]{"*"},
+                null /*ports*/);
+        checkMatches(filter,
+                new MatchCondition(MATCH_CATEGORY_HOST,
+                        Intent.ACTION_VIEW,
+                        new String[]{Intent.CATEGORY_BROWSABLE},
+                        null,
+                        "https://*",
+                        true));
+
+        checkMatches(filter,
+                new MatchCondition(MATCH_CATEGORY_HOST,
+                        Intent.ACTION_VIEW,
+                        new String[]{Intent.CATEGORY_BROWSABLE},
+                        null,
+                        "https://",
+                        true));
+    }
+
+    public void testAppEnumerationNoPortMatchesPortFilter() throws Exception {
+        IntentFilter filter = new Match(
+                new String[]{Intent.ACTION_VIEW},
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                new String[]{"http", "https"},
+                new String[]{"*"},
+                new String[]{"81"});
+        checkMatches(filter,
+                new MatchCondition(MATCH_CATEGORY_HOST,
+                        Intent.ACTION_VIEW,
+                        new String[]{Intent.CATEGORY_BROWSABLE},
+                        null,
+                        "https://something",
                         true));
     }
 
@@ -1272,6 +1328,13 @@ public class IntentFilterTest extends AndroidTestCase {
                 } catch (IntentFilter.MalformedMimeTypeException e) {
                     throw new RuntimeException("Bad mime type", e);
                 }
+            }
+            return this;
+        }
+
+        Match addMimeGroups(String[] mimeGroups) {
+            for (int i = 0; i < mimeGroups.length; i++) {
+                addMimeGroup(mimeGroups[i]);
             }
             return this;
         }
