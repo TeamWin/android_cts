@@ -193,7 +193,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         int height = uiDevice.getDisplayHeight();
         return uiDevice.swipe(
             width / 2 /* startX */,
-            height - 1 /* startY */,
+            height / 2 /* startY */,
             width / 2 /* endX */,
             1 /* endY */,
             50 /* numberOfSteps */);
