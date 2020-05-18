@@ -138,6 +138,8 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
             case CameraAccessException.CAMERA_DISABLED:
             case CameraAccessException.CAMERA_DISCONNECTED:
             case CameraAccessException.CAMERA_ERROR:
+            case CameraAccessException.CAMERA_IN_USE:
+            case CameraAccessException.MAX_CAMERAS_IN_USE:
                 return reason;
         }
 
@@ -374,11 +376,13 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
                         mCameraManager.openCamera(cameraId, mCameraListener, mHandler);
                     }
                 } catch (CameraAccessException e) {
-                    if (checkCameraAccessExceptionReason(e) == CameraAccessException.CAMERA_ERROR) {
-                        expectingError = true;
-                    } else {
+                    int reason = checkCameraAccessExceptionReason(e);
+                    if (reason == CameraAccessException.CAMERA_DISCONNECTED ||
+                            reason == CameraAccessException.CAMERA_DISABLED) {
                         // TODO: We should handle a Disabled camera by passing here and elsewhere
                         fail("Camera must not be disconnected or disabled for this test" + ids[i]);
+                    } else {
+                        expectingError = true;
                     }
                 }
 
@@ -421,7 +425,8 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
                     verify(mockListener)
                             .onError(
                                     argument.capture(),
-                                    eq(CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE));
+                                    eq(CameraDevice.StateCallback.ERROR_MAX_CAMERAS_IN_USE)
+                            );
                     verifyNoMoreInteractions(mockListener);
 
                     camera = argument.getValue();
