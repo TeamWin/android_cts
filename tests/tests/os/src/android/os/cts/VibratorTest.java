@@ -19,6 +19,8 @@ package android.os.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -35,6 +37,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import java.util.concurrent.Executors;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -234,8 +238,8 @@ public class VibratorTest {
     public void testVibratorStateCallback() throws Exception {
         final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
-        // Add listener1
-        mVibrator.addVibratorStateListener(mListener1);
+        // Add listener1 on executor
+        mVibrator.addVibratorStateListener(Executors.newSingleThreadExecutor(), mListener1);
         // Add listener2 on main thread.
         mVibrator.addVibratorStateListener(mListener2);
         verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS)
@@ -251,14 +255,26 @@ public class VibratorTest {
         verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS)
                 .times(1)).onVibratorStateChanged(true);
 
-        reset(mListener1);
-        reset(mListener2);
-        // Remove listener1
-        mVibrator.removeVibratorStateListener(mListener1);
-        mVibrator.removeVibratorStateListener(mListener2);
+        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS)
+                .times(1)).onVibratorStateChanged(false);
+        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS)
+                .times(1)).onVibratorStateChanged(false);
 
         mVibrator.cancel();
         assertIsVibrating(false);
+
+        reset(mListener1);
+        reset(mListener2);
+        // Remove listener1 & listener2
+        mVibrator.removeVibratorStateListener(mListener1);
+        mVibrator.removeVibratorStateListener(mListener2);
+
+        mVibrator.vibrate(1000);
+        assertIsVibrating(true);
+        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
+                .onVibratorStateChanged(anyBoolean());
+        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
+                .onVibratorStateChanged(anyBoolean());
     }
 
     private static void sleep(long millis) {
