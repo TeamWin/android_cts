@@ -272,6 +272,10 @@
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
         </activity>
 
+        <!-- Support service to ensure HID Device Test succeeds on
+            devices with full screen pairing dialogs (ex. Android TV -->
+        <service android:name=".bluetooth.FocusLossPreventionService" />
+
         <!--
              CTS Verifier Bluetooth Hid Host Test Screen
                  test category : bt_device_communication
