@@ -542,7 +542,10 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         call.exitBackgroundAudioProcessing(true);
         assertCallState(call, Call.STATE_SIMULATED_RINGING);
         waitOnAllHandlers(getInstrumentation());
-        assertEquals(AudioManager.MODE_RINGTONE, audioManager.getMode());
+        // We expect the audio mode to stay in CALL_SCREENING when going into simulated ringing.
+        if (doesAudioManagerSupportCallScreening) {
+            assertEquals(MODE_CALL_SCREENING, audioManager.getMode());
+        }
         assertConnectionState(connection, Connection.STATE_ACTIVE);
 
         call.answer(VideoProfile.STATE_AUDIO_ONLY);
