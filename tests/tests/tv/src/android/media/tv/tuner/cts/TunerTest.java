@@ -53,6 +53,7 @@ import android.media.tv.tuner.frontend.DvbtFrontendSettings;
 import android.media.tv.tuner.frontend.FrontendCapabilities;
 import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
+import android.media.tv.tuner.frontend.FrontendStatus.Atsc3PlpTuningInfo;
 import android.media.tv.tuner.frontend.FrontendStatus;
 import android.media.tv.tuner.frontend.Isdbs3FrontendCapabilities;
 import android.media.tv.tuner.frontend.Isdbs3FrontendSettings;
@@ -202,7 +203,14 @@ public class TunerTest {
         status.getFreqOffset();
         status.getHierarchy();
         status.isRfLocked();
-        status.getAtsc3PlpTuningInfo();
+        Atsc3PlpTuningInfo[] tuningInfos = status.getAtsc3PlpTuningInfo();
+        if (tuningInfos != null) {
+            for (Atsc3PlpTuningInfo tuningInfo : tuningInfos) {
+                tuningInfo.getPlpId();
+                tuningInfo.isLocked();
+                tuningInfo.getUec();
+            }
+        }
     }
 
     @Test
@@ -496,7 +504,14 @@ public class TunerTest {
             public void onAnalogSifStandardReported(int sif) {}
 
             @Override
-            public void onAtsc3PlpInfosReported(Atsc3PlpInfo[] atsc3PlpInfos) {}
+            public void onAtsc3PlpInfosReported(Atsc3PlpInfo[] atsc3PlpInfos) {
+                for (Atsc3PlpInfo info : atsc3PlpInfos) {
+                    if (info != null) {
+                        info.getPlpId();
+                        info.getLlsFlag();
+                    }
+                }
+            }
 
             @Override
             public void onHierarchyReported(int hierarchy) {}
