@@ -24,9 +24,12 @@ import android.media.MediaCodec.BufferInfo;
 import android.media.MediaCodec.CodecException;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import android.media.MediaCrypto;
+import android.media.MediaDrm;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.R;
+import android.net.Uri;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
@@ -40,9 +43,11 @@ import com.android.compatibility.common.util.MediaUtils;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;;
+import java.util.UUID;;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,9 +57,6 @@ import java.util.function.BooleanSupplier;
 /**
  * MediaCodec tests with CONFIGURE_FLAG_USE_BLOCK_MODEL.
  */
-@Presubmit
-@SmallTest
-@RequiresDevice
 public class MediaCodecBlockModelTest extends AndroidTestCase {
     private static final String TAG = "MediaCodecBlockModelTest";
     private static final boolean VERBOSE = false;           // lots of logging
@@ -72,12 +74,15 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
 
     // The test should fail if the codec never produces output frames for the truncated input.
     // Time out processing, as we have no way to query whether the decoder will produce output.
-    private static final int TIMEOUT_MS = 2000;
+    private static final int TIMEOUT_MS = 60000;  // 1 minute
 
     /**
      * Tests whether decoding a short group-of-pictures succeeds. The test queues a few video frames
      * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
      */
+    @Presubmit
+    @SmallTest
+    @RequiresDevice
     public void testDecodeShortVideo() throws InterruptedException {
         runThread(() -> runDecodeShortVideo(
                 INPUT_RESOURCE_ID,
@@ -90,9 +95,24 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     }
 
     /**
+     * Tests whether decoding a short encrypted group-of-pictures succeeds.
+     * The test queues a few encrypted video frames
+     * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
+     */
+    public void testDecodeShortEncryptedVideo() throws InterruptedException {
+        runThread(() -> runDecodeShortEncryptedVideo(
+                true /* obtainBlockForEachBuffer */));
+        runThread(() -> runDecodeShortEncryptedVideo(
+                false /* obtainBlockForEachBuffer */));
+    }
+
+    /**
      * Tests whether decoding a short audio succeeds. The test queues a few audio frames
      * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
      */
+    @Presubmit
+    @SmallTest
+    @RequiresDevice
     public void testDecodeShortAudio() throws InterruptedException {
         runThread(() -> runDecodeShortAudio(
                 INPUT_RESOURCE_ID,
@@ -108,6 +128,9 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
      * Tests whether encoding a short audio succeeds. The test queues a few audio frames
      * then signals end-of-stream. The test fails if the encoder doesn't output the queued frames.
      */
+    @Presubmit
+    @SmallTest
+    @RequiresDevice
     public void testEncodeShortAudio() throws InterruptedException {
         runThread(() -> runEncodeShortAudio());
     }
@@ -116,18 +139,28 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
      * Tests whether encoding a short video succeeds. The test queues a few video frames
      * then signals end-of-stream. The test fails if the encoder doesn't output the queued frames.
      */
+    @Presubmit
+    @SmallTest
+    @RequiresDevice
     public void testEncodeShortVideo() throws InterruptedException {
         runThread(() -> runEncodeShortVideo());
     }
 
+    /**
+     * Test whether format change happens as expected in block model mode.
+     */
+    @Presubmit
+    @SmallTest
+    @RequiresDevice
     public void testFormatChange() throws InterruptedException {
         List<FormatChangeEvent> events = new ArrayList<>();
         runThread(() -> runDecodeShortVideo(
-                INPUT_RESOURCE_ID,
+                getMediaExtractorForMimeType(INPUT_RESOURCE_ID, "video/"),
                 LAST_BUFFER_TIMESTAMP_US,
                 true /* obtainBlockForEachBuffer */,
                 MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 320, 240),
-                events));
+                events,
+                null /* sessionId */));
         int width = 320;
         int height = 240;
         for (FormatChangeEvent event : events) {
@@ -173,15 +206,60 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     }
 
     private static class ExtractorInputSlotListener implements InputSlotListener {
-        public ExtractorInputSlotListener(
+        public static class Builder {
+            public Builder setExtractor(MediaExtractor extractor) {
+                mExtractor = extractor;
+                return this;
+            }
+
+            public Builder setLastBufferTimestampUs(Long timestampUs) {
+                mLastBufferTimestampUs = timestampUs;
+                return this;
+            }
+
+            public Builder setObtainBlockForEachBuffer(boolean enabled) {
+                mObtainBlockForEachBuffer = enabled;
+                return this;
+            }
+
+            public Builder setTimestampQueue(List<Long> list) {
+                mTimestampList = list;
+                return this;
+            }
+
+            public Builder setContentEncrypted(boolean encrypted) {
+                mContentEncrypted = encrypted;
+                return this;
+            }
+
+            public ExtractorInputSlotListener build() {
+                if (mExtractor == null) {
+                    throw new IllegalStateException("Extractor must be set");
+                }
+                return new ExtractorInputSlotListener(
+                        mExtractor, mLastBufferTimestampUs,
+                        mObtainBlockForEachBuffer, mTimestampList,
+                        mContentEncrypted);
+            }
+
+            private MediaExtractor mExtractor = null;
+            private Long mLastBufferTimestampUs = null;
+            private boolean mObtainBlockForEachBuffer = false;
+            private List<Long> mTimestampList = null;
+            private boolean mContentEncrypted = false;
+        }
+
+        private ExtractorInputSlotListener(
                 MediaExtractor extractor,
-                long lastBufferTimestampUs,
+                Long lastBufferTimestampUs,
                 boolean obtainBlockForEachBuffer,
-                LinkedBlockingQueue<Long> timestampQueue) {
+                List<Long> timestampList,
+                boolean contentEncrypted) {
             mExtractor = extractor;
             mLastBufferTimestampUs = lastBufferTimestampUs;
             mObtainBlockForEachBuffer = obtainBlockForEachBuffer;
-            mTimestampQueue = timestampQueue;
+            mTimestampList = timestampList;
+            mContentEncrypted = contentEncrypted;
         }
 
         @Override
@@ -192,6 +270,9 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             long size = mExtractor.getSampleSize();
             String[] codecNames = new String[]{ codec.getName() };
+            if (mContentEncrypted) {
+                codecNames[0] = codecNames[0] + ".secure";
+            }
             if (mObtainBlockForEachBuffer) {
                 input.block.recycle();
                 input.block = MediaCodec.LinearBlock.obtain(Math.toIntExact(size), codecNames);
@@ -220,11 +301,21 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             long timestampUs = mExtractor.getSampleTime();
             int written = mExtractor.readSampleData(input.buffer, input.offset);
+            boolean encrypted =
+                    (mExtractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_ENCRYPTED) != 0;
+            if (encrypted) {
+                mExtractor.getSampleCryptoInfo(mCryptoInfo);
+            }
             mExtractor.advance();
             mSignaledEos = mExtractor.getSampleTrackIndex() == -1
-                    || timestampUs >= mLastBufferTimestampUs;
+                    || (mLastBufferTimestampUs != null && timestampUs >= mLastBufferTimestampUs);
             MediaCodec.QueueRequest request = codec.getQueueRequest(index);
-            request.setLinearBlock(input.block, input.offset, written);
+            if (encrypted) {
+                request.setEncryptedLinearBlock(
+                        input.block, input.offset, written, mCryptoInfo);
+            } else {
+                request.setLinearBlock(input.block, input.offset, written);
+            }
             request.setPresentationTimeUs(timestampUs);
             request.setFlags(mSignaledEos ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
             if (mSetParams) {
@@ -237,17 +328,19 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             request.queue();
             input.offset += written;
-            if (mTimestampQueue != null) {
-                mTimestampQueue.offer(timestampUs);
+            if (mTimestampList != null) {
+                mTimestampList.add(timestampUs);
             }
         }
 
         private final MediaExtractor mExtractor;
-        private final long mLastBufferTimestampUs;
+        private final Long mLastBufferTimestampUs;
         private final boolean mObtainBlockForEachBuffer;
-        private final LinkedBlockingQueue<Long> mTimestampQueue;
+        private final List<Long> mTimestampList;
         private boolean mSignaledEos = false;
         private boolean mSetParams = true;
+        private final MediaCodec.CryptoInfo mCryptoInfo = new MediaCodec.CryptoInfo();
+        private final boolean mContentEncrypted;
     }
 
     private static interface OutputSlotListener {
@@ -256,9 +349,9 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     }
 
     private static class DummyOutputSlotListener implements OutputSlotListener {
-        public DummyOutputSlotListener(boolean graphic, LinkedBlockingQueue<Long> timestampQueue) {
+        public DummyOutputSlotListener(boolean graphic, List<Long> timestampList) {
             mGraphic = graphic;
-            mTimestampQueue = timestampQueue;
+            mTimestampList = timestampList;
         }
 
         @Override
@@ -273,10 +366,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 frame.getLinearBlock().recycle();
             }
 
-            Long ts = mTimestampQueue.peek();
-            if (ts != null && ts == frame.getPresentationTimeUs()) {
-                mTimestampQueue.poll();
-            }
+            mTimestampList.remove(frame.getPresentationTimeUs());
 
             codec.releaseOutputBuffer(index, false);
 
@@ -284,16 +374,16 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
 
         private final boolean mGraphic;
-        private final LinkedBlockingQueue<Long> mTimestampQueue;
+        private final List<Long> mTimestampList;
     }
 
     private static class SurfaceOutputSlotListener implements OutputSlotListener {
         public SurfaceOutputSlotListener(
                 OutputSurface surface,
-                LinkedBlockingQueue<Long> timestampQueue,
+                List<Long> timestampList,
                 List<FormatChangeEvent> events) {
             mOutputSurface = surface;
-            mTimestampQueue = timestampQueue;
+            mTimestampList = timestampList;
             mEvents = (events != null) ? events : new ArrayList<>();
         }
 
@@ -308,13 +398,11 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 render = true;
             }
 
-            Long ts = mTimestampQueue.peek();
-            if (ts != null && ts == frame.getPresentationTimeUs()) {
-                mTimestampQueue.poll();
-            }
+            mTimestampList.remove(frame.getPresentationTimeUs());
 
             if (!frame.getChangedKeys().isEmpty()) {
-                mEvents.add(new FormatChangeEvent(ts, frame.getChangedKeys(), frame.getFormat()));
+                mEvents.add(new FormatChangeEvent(
+                        frame.getPresentationTimeUs(), frame.getChangedKeys(), frame.getFormat()));
             }
 
             codec.releaseOutputBuffer(index, render);
@@ -326,7 +414,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
 
         private final OutputSurface mOutputSurface;
-        private final LinkedBlockingQueue<Long> mTimestampQueue;
+        private final List<Long> mTimestampList;
         private final List<FormatChangeEvent> mEvents;
     }
 
@@ -344,7 +432,74 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             long lastBufferTimestampUs,
             boolean obtainBlockForEachBuffer) {
         return runDecodeShortVideo(
-                inputResourceId, lastBufferTimestampUs, obtainBlockForEachBuffer, null, null);
+                getMediaExtractorForMimeType(inputResourceId, "video/"),
+                lastBufferTimestampUs, obtainBlockForEachBuffer, null, null, null);
+    }
+
+    private static final UUID CLEARKEY_SCHEME_UUID =
+            new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
+
+    private static final byte[] CLEAR_KEY_CENC = convert(new int[] {
+            0x3f, 0x0a, 0x33, 0xf3, 0x40, 0x98, 0xb9, 0xe2,
+            0x2b, 0xc0, 0x78, 0xe0, 0xa1, 0xb5, 0xe8, 0x54 });
+
+    private static final byte[] DRM_INIT_DATA = convert(new int[] {
+            // BMFF box header (4 bytes size + 'pssh')
+            0x00, 0x00, 0x00, 0x34, 0x70, 0x73, 0x73, 0x68,
+            // Full box header (version = 1 flags = 0)
+            0x01, 0x00, 0x00, 0x00,
+            // SystemID
+            0x10, 0x77, 0xef, 0xec, 0xc0, 0xb2, 0x4d, 0x02, 0xac, 0xe3, 0x3c,
+            0x1e, 0x52, 0xe2, 0xfb, 0x4b,
+            // Number of key ids
+            0x00, 0x00, 0x00, 0x01,
+            // Key id
+            0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+            0x30, 0x30, 0x30, 0x30, 0x30,
+            // size of data, must be zero
+            0x00, 0x00, 0x00, 0x00 });
+
+    private static final long ENCRYPTED_CONTENT_FIRST_BUFFER_TIMESTAMP_US = 12083333;
+    private static final long ENCRYPTED_CONTENT_LAST_BUFFER_TIMESTAMP_US = 15041666;
+
+    private static byte[] convert(int[] intArray) {
+        byte[] byteArray = new byte[intArray.length];
+        for (int i = 0; i < intArray.length; ++i) {
+            byteArray[i] = (byte)intArray[i];
+        }
+        return byteArray;
+    }
+
+    private boolean runDecodeShortEncryptedVideo(boolean obtainBlockForEachBuffer) {
+        MediaExtractor extractor = new MediaExtractor();
+
+        try (final MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID)) {
+            Uri uri = Uri.parse(Utils.getMediaPath() + "/clearkey/llama_h264_main_720p_8000.mp4");
+            extractor.setDataSource(uri.toString(), null);
+            extractor.selectTrack(0);
+            extractor.seekTo(12083333, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            drm.setOnEventListener(
+                    (MediaDrm mediaDrm, byte[] sessionId, int event, int extra, byte[] data) -> {
+                        if (event == MediaDrm.EVENT_KEY_REQUIRED
+                                || event == MediaDrm.EVENT_KEY_EXPIRED) {
+                            MediaDrmClearkeyTest.retrieveKeys(
+                                    mediaDrm, "cenc", sessionId, DRM_INIT_DATA,
+                                    MediaDrm.KEY_TYPE_STREAMING,
+                                    new byte[][] { CLEAR_KEY_CENC });
+                        }
+                    });
+            byte[] sessionId = drm.openSession();
+            MediaDrmClearkeyTest.retrieveKeys(
+                    drm, "cenc", sessionId, DRM_INIT_DATA, MediaDrm.KEY_TYPE_STREAMING,
+                    new byte[][] { CLEAR_KEY_CENC });
+            boolean result = runDecodeShortVideo(
+                    extractor, ENCRYPTED_CONTENT_LAST_BUFFER_TIMESTAMP_US,
+                    obtainBlockForEachBuffer, null /* format */, null /* events */, sessionId);
+            drm.closeSession(sessionId);
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static class FormatChangeEvent {
@@ -366,18 +521,19 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     }
 
     private boolean runDecodeShortVideo(
-            int inputResourceId,
-            long lastBufferTimestampUs,
+            MediaExtractor mediaExtractor,
+            Long lastBufferTimestampUs,
             boolean obtainBlockForEachBuffer,
             MediaFormat format,
-            List<FormatChangeEvent> events) {
+            List<FormatChangeEvent> events,
+            byte[] sessionId) {
         OutputSurface outputSurface = null;
-        MediaExtractor mediaExtractor = null;
         MediaCodec mediaCodec = null;
+        MediaCrypto crypto = null;
         try {
             outputSurface = new OutputSurface(1, 1);
-            mediaExtractor = getMediaExtractorForMimeType(inputResourceId, "video/");
-            MediaFormat mediaFormat = mediaExtractor.getTrackFormat(mediaExtractor.getSampleTrackIndex());
+            MediaFormat mediaFormat = mediaExtractor.getTrackFormat(
+                    mediaExtractor.getSampleTrackIndex());
             if (format != null) {
                 // copy CSD
                 for (int i = 0; i < 3; ++i) {
@@ -396,21 +552,28 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
-            LinkedBlockingQueue<Long> timestampQueue = new LinkedBlockingQueue<>();
+            if (sessionId != null) {
+                crypto = new MediaCrypto(CLEARKEY_SCHEME_UUID, new byte[0] /* initData */);
+                crypto.setMediaDrmSession(sessionId);
+            }
+            List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
             boolean result = runComponentWithLinearInput(
                     mediaCodec,
+                    crypto,
                     mediaFormat,
                     outputSurface.getSurface(),
                     false,  // encoder
-                    new ExtractorInputSlotListener(
-                            mediaExtractor,
-                            lastBufferTimestampUs,
-                            obtainBlockForEachBuffer,
-                            timestampQueue),
-                    new SurfaceOutputSlotListener(outputSurface, timestampQueue, events));
+                    new ExtractorInputSlotListener.Builder()
+                            .setExtractor(mediaExtractor)
+                            .setLastBufferTimestampUs(lastBufferTimestampUs)
+                            .setObtainBlockForEachBuffer(obtainBlockForEachBuffer)
+                            .setTimestampQueue(timestampList)
+                            .setContentEncrypted(sessionId != null)
+                            .build(),
+                    new SurfaceOutputSlotListener(outputSurface, timestampList, events));
             if (result) {
-                assertTrue("Timestamp should match between input / output",
-                        timestampQueue.isEmpty());
+                assertTrue("Timestamp should match between input / output: " + timestampList,
+                        timestampList.isEmpty());
             }
             return result;
         } catch (IOException e) {
@@ -427,6 +590,9 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             if (outputSurface != null) {
                 outputSurface.release();
+            }
+            if (crypto != null) {
+                crypto.release();
             }
         }
     }
@@ -449,21 +615,23 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
-            LinkedBlockingQueue<Long> timestampQueue = new LinkedBlockingQueue<>();
+            List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
             boolean result = runComponentWithLinearInput(
                     mediaCodec,
+                    null,  // crypto
                     mediaFormat,
                     null,  // surface
                     false,  // encoder
-                    new ExtractorInputSlotListener(
-                            mediaExtractor,
-                            lastBufferTimestampUs,
-                            obtainBlockForEachBuffer,
-                            timestampQueue),
-                    new DummyOutputSlotListener(false /* graphic */, timestampQueue));
+                    new ExtractorInputSlotListener.Builder()
+                            .setExtractor(mediaExtractor)
+                            .setLastBufferTimestampUs(lastBufferTimestampUs)
+                            .setObtainBlockForEachBuffer(obtainBlockForEachBuffer)
+                            .setTimestampQueue(timestampList)
+                            .build(),
+                    new DummyOutputSlotListener(false /* graphic */, timestampList));
             if (result) {
-                assertTrue("Timestamp should match between input / output",
-                        timestampQueue.isEmpty());
+                assertTrue("Timestamp should match between input / output: " + timestampList,
+                        timestampList.isEmpty());
             }
             return result;
         } catch (IOException e) {
@@ -499,21 +667,22 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
-            LinkedBlockingQueue<Long> timestampQueue = new LinkedBlockingQueue<>();
+            List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
             boolean result = runComponentWithLinearInput(
                     mediaCodec,
+                    null,  // crypto
                     mediaFormat,
                     null,  // surface
                     true,  // encoder
-                    new ExtractorInputSlotListener(
-                            mediaExtractor,
-                            LAST_BUFFER_TIMESTAMP_US,
-                            false,
-                            timestampQueue),
-                    new DummyOutputSlotListener(false /* graphic */, timestampQueue));
+                    new ExtractorInputSlotListener.Builder()
+                            .setExtractor(mediaExtractor)
+                            .setLastBufferTimestampUs(LAST_BUFFER_TIMESTAMP_US)
+                            .setTimestampQueue(timestampList)
+                            .build(),
+                    new DummyOutputSlotListener(false /* graphic */, timestampList));
             if (result) {
-                assertTrue("Timestamp should match between input / output",
-                        timestampQueue.isEmpty());
+                assertTrue("Timestamp should match between input / output: " + timestampList,
+                        timestampList.isEmpty());
             }
             return result;
         } catch (IOException e) {
@@ -563,7 +732,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 return true;
             }
 
-            LinkedBlockingQueue<Long> timestampQueue = new LinkedBlockingQueue<>();
+            List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
 
             final LinkedBlockingQueue<SlotEvent> queue = new LinkedBlockingQueue<>();
             mediaCodec.setCallback(new MediaCodec.Callback() {
@@ -642,7 +811,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                         if (frameIndex >= 32) {
                             signaledEos = true;
                         }
-                        timestampQueue.offer(timestampUs);
+                        timestampList.add(timestampUs);
                         mediaCodec.getQueueRequest(event.index)
                                 .setHardwareBuffer(buffer)
                                 .setPresentationTimeUs(timestampUs)
@@ -658,18 +827,15 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                         frame.getLinearBlock().recycle();
                     }
 
-                    Long ts = timestampQueue.peek();
-                    if (ts != null && ts == frame.getPresentationTimeUs()) {
-                        timestampQueue.poll();
-                    }
+                    timestampList.remove(frame.getPresentationTimeUs());
 
                     mediaCodec.releaseOutputBuffer(event.index, false);
                 }
             }
 
-            if (!timestampQueue.isEmpty()) {
-                assertTrue("Timestamp should match between input / output",
-                        timestampQueue.isEmpty());
+            if (!timestampList.isEmpty()) {
+                assertTrue("Timestamp should match between input / output: " + timestampList,
+                        timestampList.isEmpty());
             }
             return eos;
         } catch (IOException e) {
@@ -691,6 +857,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
 
     private boolean runComponentWithLinearInput(
             MediaCodec mediaCodec,
+            MediaCrypto crypto,
             MediaFormat mediaFormat,
             Surface surface,
             boolean encoder,
@@ -723,6 +890,9 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             assertTrue("Google default c2.* codecs are copy-free compatible with LinearBlocks",
                     MediaCodec.LinearBlock.isCodecCopyFreeCompatible(codecNames));
         }
+        if (crypto != null) {
+            codecNames[0] = codecNames[0] + ".secure";
+        }
         input.block = MediaCodec.LinearBlock.obtain(
                 APP_BUFFER_SIZE, codecNames);
         assertTrue("Blocks obtained through LinearBlock.obtain must be mappable",
@@ -734,7 +904,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         if (encoder) {
             flags |= MediaCodec.CONFIGURE_FLAG_ENCODE;
         }
-        mediaCodec.configure(mediaFormat, surface, null, flags);
+        mediaCodec.configure(mediaFormat, surface, crypto, flags);
         mediaCodec.start();
         boolean eos = false;
         boolean signaledEos = false;
@@ -757,15 +927,13 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         return eos;
     }
 
-    private MediaExtractor getMediaExtractorForMimeType(int resourceId, String mimeTypePrefix)
-            throws IOException {
+    private MediaExtractor getMediaExtractorForMimeType(int resourceId, String mimeTypePrefix) {
         MediaExtractor mediaExtractor = new MediaExtractor();
-        AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(resourceId);
-        try {
+        try (AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(resourceId)) {
             mediaExtractor.setDataSource(
                     afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-        } finally {
-            afd.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         int trackIndex;
         for (trackIndex = 0; trackIndex < mediaExtractor.getTrackCount(); trackIndex++) {
