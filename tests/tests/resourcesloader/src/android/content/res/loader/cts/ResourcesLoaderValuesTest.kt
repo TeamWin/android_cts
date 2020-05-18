@@ -44,7 +44,7 @@ import java.util.Collections
  * Currently tests strings and dimens since String and any Number seemed most relevant to verify.
  */
 @RunWith(Parameterized::class)
-class ResourceLoaderValuesTest : ResourceLoaderTestBase() {
+class ResourcesLoaderValuesTest : ResourcesLoaderTestBase() {
 
     @get:Rule
     private val mTestActivityRule = ActivityTestRule<TestActivity>(TestActivity::class.java)
@@ -98,7 +98,8 @@ class ResourceLoaderValuesTest : ResourceLoaderTestBase() {
                             "getAdditional" to "Four",
                             "getIdentifier" to "Four",
                             "getIdentifierAdditional" to "Four"),
-                    listOf(DataType.APK_DISK_FD, DataType.APK_DISK_FD_OFFSETS, DataType.APK_RAM_FD,
+                    listOf(DataType.APK_DISK_FD_NO_ASSETS_PROVIDER, DataType.APK_DISK_FD,
+                            DataType.APK_DISK_FD_OFFSETS, DataType.APK_RAM_FD,
                             DataType.APK_RAM_OFFSETS, DataType.ARSC_DISK_FD,
                             DataType.ARSC_DISK_FD_OFFSETS, DataType.ARSC_RAM_MEMORY,
                             DataType.ARSC_RAM_MEMORY_OFFSETS, DataType.SPLIT, DataType.DIRECTORY)
@@ -142,7 +143,8 @@ class ResourceLoaderValuesTest : ResourceLoaderTestBase() {
                     mapOf("drawableXml" to Color.parseColor("#000004").toString(),
                             "layout" to "TableLayout",
                             "drawablePng" to Color.WHITE.toString()),
-                    listOf(DataType.APK_DISK_FD, DataType.APK_DISK_FD_OFFSETS, DataType.APK_RAM_FD,
+                    listOf(DataType.APK_DISK_FD_NO_ASSETS_PROVIDER, DataType.APK_DISK_FD,
+                            DataType.APK_DISK_FD_OFFSETS, DataType.APK_RAM_FD,
                             DataType.APK_RAM_OFFSETS, DataType.SPLIT, DataType.DIRECTORY)
             )
 
@@ -223,9 +225,6 @@ class ResourceLoaderValuesTest : ResourceLoaderTestBase() {
                             DataType.APK_RAM_OFFSETS, DataType.DIRECTORY)
 
             )
-
-            // TODO(151949807): Increase testing for cookie based APIs and for what happens when
-            // some providers do not overlay base resources
 
             return parameters.flatMap { parameter ->
                 parameter.dataTypes.map { dataType ->
@@ -471,6 +470,22 @@ class ResourceLoaderValuesTest : ResourceLoaderTestBase() {
         assertEquals(2, loader.providers.size)
         assertEquals(loader.providers[0], testOne)
         assertEquals(loader.providers[1], testTwo)
+    }
+
+    @Test
+    fun clearProviders() {
+        val testOne = openOne()
+        val testTwo = openTwo()
+        val loader = ResourcesLoader()
+
+        resources.addLoaders(loader)
+        loader.providers = listOf(testOne, testTwo)
+        assertEquals(2, loader.providers.size)
+        assertEquals(valueTwo, getValue())
+
+        loader.clearProviders()
+        assertEquals(0, loader.providers.size)
+        assertEquals(valueOriginal, getValue())
     }
 
     @Test
