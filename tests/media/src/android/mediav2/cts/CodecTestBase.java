@@ -689,15 +689,21 @@ abstract class CodecTestBase {
     }
 
     void queueEOS() throws InterruptedException {
-        if (!mSawInputEOS) {
-            if (mIsCodecInAsyncMode) {
-                Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getInput();
+        if (mIsCodecInAsyncMode) {
+            while (!mAsyncHandle.hasSeenError() && !mSawInputEOS) {
+                Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getWork();
                 if (element != null) {
-                    enqueueEOS(element.first);
+                    int bufferID = element.first;
+                    MediaCodec.BufferInfo info = element.second;
+                    if (info != null) {
+                        dequeueOutput(bufferID, info);
+                    } else {
+                        enqueueEOS(element.first);
+                    }
                 }
-            } else {
-                enqueueEOS(mCodec.dequeueInputBuffer(-1));
             }
+        } else if (!mSawInputEOS) {
+            enqueueEOS(mCodec.dequeueInputBuffer(-1));
         }
     }
 
