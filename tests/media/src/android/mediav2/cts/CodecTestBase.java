@@ -22,6 +22,7 @@ import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Build;
 import android.os.PersistableBundle;
@@ -32,6 +33,10 @@ import android.view.Surface;
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assert;
+
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -47,6 +52,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.CRC32;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -813,3 +819,454 @@ abstract class CodecTestBase {
         return metrics;
     }
 }
+
+class CodecDecoderTestBase extends CodecTestBase {
+    private static final String LOG_TAG = CodecDecoderTestBase.class.getSimpleName();
+
+    String mMime;
+    String mTestFile;
+
+    ArrayList<ByteBuffer> mCsdBuffers;
+    private int mCurrCsdIdx;
+
+    MediaExtractor mExtractor;
+
+    CodecDecoderTestBase(String mime, String testFile) {
+        mMime = mime;
+        mTestFile = testFile;
+        mAsyncHandle = new CodecAsyncHandler();
+        mCsdBuffers = new ArrayList<>();
+        mIsAudio = mMime.startsWith("audio/");
+    }
+
+    MediaFormat setUpSource(String srcFile) throws IOException {
+        mExtractor = new MediaExtractor();
+        mExtractor.setDataSource(mInpPrefix + srcFile);
+        for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
+            MediaFormat format = mExtractor.getTrackFormat(trackID);
+            if (mMime.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
+                mExtractor.selectTrack(trackID);
+                if (!mIsAudio) {
+                    // COLOR_FormatYUV420Flexible by default should be supported by all components
+                    // This call shouldn't effect configure() call for any codec
+                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
+                }
+                return format;
+            }
+        }
+        fail("No track with mime: " + mMime + " found in file: " + srcFile);
+        return null;
+    }
+
+    boolean hasCSD(MediaFormat format) {
+        return format.containsKey("csd-0");
+    }
+
+    void enqueueCodecConfig(int bufferIndex) {
+        ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
+        ByteBuffer csdBuffer = mCsdBuffers.get(mCurrCsdIdx);
+        inputBuffer.put((ByteBuffer) csdBuffer.rewind());
+        mCodec.queueInputBuffer(bufferIndex, 0, csdBuffer.limit(), 0,
+                MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
+        if (ENABLE_LOGS) {
+            Log.v(LOG_TAG, "queued csd: id: " + bufferIndex + " size: " + csdBuffer.limit());
+        }
+    }
+
+    void enqueueInput(int bufferIndex) {
+        if (mExtractor.getSampleSize() < 0) {
+            enqueueEOS(bufferIndex);
+        } else {
+            ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
+            mExtractor.readSampleData(inputBuffer, 0);
+            int size = (int) mExtractor.getSampleSize();
+            long pts = mExtractor.getSampleTime();
+            int extractorFlags = mExtractor.getSampleFlags();
+            int codecFlags = 0;
+            if ((extractorFlags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
+                codecFlags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
+            }
+            if ((extractorFlags & MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0) {
+                codecFlags |= MediaCodec.BUFFER_FLAG_PARTIAL_FRAME;
+            }
+            if (!mExtractor.advance() && mSignalEOSWithLastFrame) {
+                codecFlags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                mSawInputEOS = true;
+            }
+            if (ENABLE_LOGS) {
+                Log.v(LOG_TAG, "input: id: " + bufferIndex + " size: " + size + " pts: " + pts +
+                        " flags: " + codecFlags);
+            }
+            mCodec.queueInputBuffer(bufferIndex, 0, size, pts, codecFlags);
+            if (size > 0 && (codecFlags & (MediaCodec.BUFFER_FLAG_CODEC_CONFIG |
+                    MediaCodec.BUFFER_FLAG_PARTIAL_FRAME)) == 0) {
+                mOutputBuff.saveInPTS(pts);
+                mInputCount++;
+            }
+        }
+    }
+
+    void enqueueInput(int bufferIndex, ByteBuffer buffer, MediaCodec.BufferInfo info) {
+        ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
+        inputBuffer.put((ByteBuffer) buffer.rewind());
+        int flags = 0;
+        if ((info.flags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
+            flags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
+        }
+        if ((info.flags & MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0) {
+            flags |= MediaCodec.BUFFER_FLAG_PARTIAL_FRAME;
+        }
+        if (ENABLE_LOGS) {
+            Log.v(LOG_TAG, "input: id: " + bufferIndex + " flags: " + info.flags + " size: " +
+                    info.size + " timestamp: " + info.presentationTimeUs);
+        }
+        mCodec.queueInputBuffer(bufferIndex, info.offset, info.size, info.presentationTimeUs,
+                flags);
+        if (info.size > 0 && ((flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) &&
+                ((flags & MediaCodec.BUFFER_FLAG_PARTIAL_FRAME) == 0)) {
+            mOutputBuff.saveInPTS(info.presentationTimeUs);
+            mInputCount++;
+        }
+    }
+
+    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+        if (info.size > 0 && mSaveToMem) {
+            if (mIsAudio) {
+                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
+                mOutputBuff.saveToMemory(buf, info);
+            } else {
+                // tests both getOutputImage and getOutputBuffer. Can do time division
+                // multiplexing but lets allow it for now
+                Image img = mCodec.getOutputImage(bufferIndex);
+                assertTrue(img != null);
+                mOutputBuff.checksum(img);
+
+                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
+                mOutputBuff.checksum(buf, info.size);
+            }
+        }
+        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+            mSawOutputEOS = true;
+        }
+        if (ENABLE_LOGS) {
+            Log.v(LOG_TAG, "output: id: " + bufferIndex + " flags: " + info.flags + " size: " +
+                    info.size + " timestamp: " + info.presentationTimeUs);
+        }
+        if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+            mOutputBuff.saveOutPTS(info.presentationTimeUs);
+            mOutputCount++;
+        }
+        mCodec.releaseOutputBuffer(bufferIndex, false);
+    }
+
+    void doWork(ByteBuffer buffer, ArrayList<MediaCodec.BufferInfo> list)
+            throws InterruptedException {
+        int frameCount = 0;
+        if (mIsCodecInAsyncMode) {
+            // output processing after queuing EOS is done in waitForAllOutputs()
+            while (!mAsyncHandle.hasSeenError() && !mSawInputEOS && frameCount < list.size()) {
+                Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getWork();
+                if (element != null) {
+                    int bufferID = element.first;
+                    MediaCodec.BufferInfo info = element.second;
+                    if (info != null) {
+                        dequeueOutput(bufferID, info);
+                    } else {
+                        enqueueInput(bufferID, buffer, list.get(frameCount));
+                        frameCount++;
+                    }
+                }
+            }
+        } else {
+            MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
+            // output processing after queuing EOS is done in waitForAllOutputs()
+            while (!mSawInputEOS && frameCount < list.size()) {
+                int outputBufferId = mCodec.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
+                if (outputBufferId >= 0) {
+                    dequeueOutput(outputBufferId, outInfo);
+                } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    mOutFormat = mCodec.getOutputFormat();
+                    mSignalledOutFormatChanged = true;
+                }
+                int inputBufferId = mCodec.dequeueInputBuffer(Q_DEQ_TIMEOUT_US);
+                if (inputBufferId != -1) {
+                    enqueueInput(inputBufferId, buffer, list.get(frameCount));
+                    frameCount++;
+                }
+            }
+        }
+    }
+
+    void queueCodecConfig() throws InterruptedException {
+        if (mIsCodecInAsyncMode) {
+            for (mCurrCsdIdx = 0; !mAsyncHandle.hasSeenError() && mCurrCsdIdx < mCsdBuffers.size();
+                 mCurrCsdIdx++) {
+                Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandle.getInput();
+                if (element != null) {
+                    enqueueCodecConfig(element.first);
+                }
+            }
+        } else {
+            for (mCurrCsdIdx = 0; mCurrCsdIdx < mCsdBuffers.size(); mCurrCsdIdx++) {
+                enqueueCodecConfig(mCodec.dequeueInputBuffer(-1));
+            }
+        }
+    }
+
+    void decodeToMemory(String file, String decoder, long pts, int mode, int frameLimit)
+            throws IOException, InterruptedException {
+        mSaveToMem = true;
+        mOutputBuff = new OutputManager();
+        mCodec = MediaCodec.createByCodecName(decoder);
+        MediaFormat format = setUpSource(file);
+        configureCodec(format, false, true, false);
+        mCodec.start();
+        mExtractor.seekTo(pts, mode);
+        doWork(frameLimit);
+        queueEOS();
+        waitForAllOutputs();
+        mCodec.stop();
+        mCodec.release();
+        mExtractor.release();
+        mSaveToMem = false;
+    }
+
+    @Override
+    PersistableBundle validateMetrics(String decoder, MediaFormat format) {
+        PersistableBundle metrics = super.validateMetrics(decoder, format);
+        assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
+        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 0);
+        return metrics;
+    }
+}
+
+class CodecEncoderTestBase extends CodecTestBase {
+    private static final String LOG_TAG = CodecEncoderTestBase.class.getSimpleName();
+
+    // files are in WorkDir.getMediaDirString();
+    private static final String mInputAudioFile = "bbb_2ch_44kHz_s16le.raw";
+    private static final String mInputVideoFile = "bbb_cif_yuv420p_30fps.yuv";
+    private final int INP_FRM_WIDTH = 352;
+    private final int INP_FRM_HEIGHT = 288;
+
+    final String mMime;
+    final String mInputFile;
+    byte[] mInputData;
+    int mNumBytesSubmitted;
+    long mInputOffsetPts;
+
+    int mWidth, mHeight;
+    int mFrameRate;
+    int mMaxBFrames;
+    int mChannels;
+    int mSampleRate;
+
+    CodecEncoderTestBase(String mime) {
+        mMime = mime;
+        mWidth = INP_FRM_WIDTH;
+        mHeight = INP_FRM_HEIGHT;
+        mChannels = 1;
+        mSampleRate = 8000;
+        mFrameRate = 30;
+        mMaxBFrames = 0;
+        if (mime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) mFrameRate = 12;
+        else if (mime.equals(MediaFormat.MIMETYPE_VIDEO_H263)) mFrameRate = 12;
+        mAsyncHandle = new CodecAsyncHandler();
+        mIsAudio = mMime.startsWith("audio/");
+        mInputFile = mIsAudio ? mInputAudioFile : mInputVideoFile;
+    }
+
+    @Override
+    void resetContext(boolean isAsync, boolean signalEOSWithLastFrame) {
+        super.resetContext(isAsync, signalEOSWithLastFrame);
+        mNumBytesSubmitted = 0;
+        mInputOffsetPts = 0;
+    }
+
+    @Override
+    void flushCodec() {
+        super.flushCodec();
+        if (mIsAudio) {
+            mInputOffsetPts =
+                    (mNumBytesSubmitted + 1024) * 1000000L / (2 * mChannels * mSampleRate);
+        } else {
+            mInputOffsetPts = (mInputCount + 5) * 1000000L / mFrameRate;
+        }
+        mPrevOutputPts = mInputOffsetPts - 1;
+        mNumBytesSubmitted = 0;
+    }
+
+    void setUpSource(String srcFile) throws IOException {
+        String inpPath = mInpPrefix + srcFile;
+        try (FileInputStream fInp = new FileInputStream(inpPath)) {
+            int size = (int) new File(inpPath).length();
+            mInputData = new byte[size];
+            fInp.read(mInputData, 0, size);
+        }
+    }
+
+    void fillImage(Image image) {
+        Assert.assertTrue(image.getFormat() == ImageFormat.YUV_420_888);
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+        Image.Plane[] planes = image.getPlanes();
+        int offset = mNumBytesSubmitted;
+        for (int i = 0; i < planes.length; ++i) {
+            ByteBuffer buf = planes[i].getBuffer();
+            int width = imageWidth;
+            int height = imageHeight;
+            int tileWidth = INP_FRM_WIDTH;
+            int tileHeight = INP_FRM_HEIGHT;
+            int rowStride = planes[i].getRowStride();
+            int pixelStride = planes[i].getPixelStride();
+            if (i != 0) {
+                width = imageWidth / 2;
+                height = imageHeight / 2;
+                tileWidth = INP_FRM_WIDTH / 2;
+                tileHeight = INP_FRM_HEIGHT / 2;
+            }
+            if (pixelStride == 1) {
+                if (width == rowStride && width == tileWidth && height == tileHeight) {
+                    buf.put(mInputData, offset, width * height);
+                } else {
+                    for (int z = 0; z < height; z += tileHeight) {
+                        int rowsToCopy = Math.min(height - z, tileHeight);
+                        for (int y = 0; y < rowsToCopy; y++) {
+                            for (int x = 0; x < width; x += tileWidth) {
+                                int colsToCopy = Math.min(width - x, tileWidth);
+                                buf.position((z + y) * rowStride + x);
+                                buf.put(mInputData, offset + y * tileWidth, colsToCopy);
+                            }
+                        }
+                    }
+                }
+            } else {
+                // do it pixel-by-pixel
+                for (int z = 0; z < height; z += tileHeight) {
+                    int rowsToCopy = Math.min(height - z, tileHeight);
+                    for (int y = 0; y < rowsToCopy; y++) {
+                        int lineOffset = (z + y) * rowStride;
+                        for (int x = 0; x < width; x += tileWidth) {
+                            int colsToCopy = Math.min(width - x, tileWidth);
+                            for (int w = 0; w < colsToCopy; w++) {
+                                buf.position(lineOffset + (x + w) * pixelStride);
+                                buf.put(mInputData[offset + y * tileWidth + w]);
+                            }
+                        }
+                    }
+                }
+            }
+            offset += tileWidth * tileHeight;
+        }
+    }
+
+    void fillByteBuffer(ByteBuffer inputBuffer) {
+        int offset = 0, frmOffset = mNumBytesSubmitted;
+        for (int plane = 0; plane < 3; plane++) {
+            int width = mWidth;
+            int height = mHeight;
+            int tileWidth = INP_FRM_WIDTH;
+            int tileHeight = INP_FRM_HEIGHT;
+            if (plane != 0) {
+                width = mWidth / 2;
+                height = mHeight / 2;
+                tileWidth = INP_FRM_WIDTH / 2;
+                tileHeight = INP_FRM_HEIGHT / 2;
+            }
+            for (int k = 0; k < height; k += tileHeight) {
+                int rowsToCopy = Math.min(height - k, tileHeight);
+                for (int j = 0; j < rowsToCopy; j++) {
+                    for (int i = 0; i < width; i += tileWidth) {
+                        int colsToCopy = Math.min(width - i, tileWidth);
+                        inputBuffer.position(offset + (k + j) * width + i);
+                        inputBuffer.put(mInputData, frmOffset + j * tileWidth, colsToCopy);
+                    }
+                }
+            }
+            offset += width * height;
+            frmOffset += tileWidth * tileHeight;
+        }
+    }
+
+    void enqueueInput(int bufferIndex) {
+        ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
+        if (mNumBytesSubmitted >= mInputData.length) {
+            enqueueEOS(bufferIndex);
+        } else {
+            int size;
+            int flags = 0;
+            long pts = mInputOffsetPts;
+            if (mIsAudio) {
+                pts += mNumBytesSubmitted * 1000000L / (2 * mChannels * mSampleRate);
+                size = Math.min(inputBuffer.capacity(), mInputData.length - mNumBytesSubmitted);
+                inputBuffer.put(mInputData, mNumBytesSubmitted, size);
+                if (mNumBytesSubmitted + size >= mInputData.length && mSignalEOSWithLastFrame) {
+                    flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                    mSawInputEOS = true;
+                }
+                mNumBytesSubmitted += size;
+            } else {
+                pts += mInputCount * 1000000L / mFrameRate;
+                size = mWidth * mHeight * 3 / 2;
+                int frmSize = INP_FRM_WIDTH * INP_FRM_HEIGHT * 3 / 2;
+                if (mNumBytesSubmitted + frmSize > mInputData.length) {
+                    fail("received partial frame to encode");
+                } else {
+                    Image img = mCodec.getInputImage(bufferIndex);
+                    if (img != null) {
+                        fillImage(img);
+                    } else {
+                        if (mWidth == INP_FRM_WIDTH && mHeight == INP_FRM_HEIGHT) {
+                            inputBuffer.put(mInputData, mNumBytesSubmitted, size);
+                        } else {
+                            fillByteBuffer(inputBuffer);
+                        }
+                    }
+                }
+                if (mNumBytesSubmitted + frmSize >= mInputData.length && mSignalEOSWithLastFrame) {
+                    flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                    mSawInputEOS = true;
+                }
+                mNumBytesSubmitted += frmSize;
+            }
+            if (ENABLE_LOGS) {
+                Log.v(LOG_TAG, "input: id: " + bufferIndex + " size: " + size + " pts: " + pts +
+                        " flags: " + flags);
+            }
+            mCodec.queueInputBuffer(bufferIndex, 0, size, pts, flags);
+            mOutputBuff.saveInPTS(pts);
+            mInputCount++;
+        }
+    }
+
+    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+        if (ENABLE_LOGS) {
+            Log.v(LOG_TAG, "output: id: " + bufferIndex + " flags: " + info.flags + " size: " +
+                    info.size + " timestamp: " + info.presentationTimeUs);
+        }
+        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+            mSawOutputEOS = true;
+        }
+        if (info.size > 0) {
+            if (mSaveToMem) {
+                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
+                mOutputBuff.saveToMemory(buf, info);
+            }
+            if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+                mOutputBuff.saveOutPTS(info.presentationTimeUs);
+                mOutputCount++;
+            }
+        }
+        mCodec.releaseOutputBuffer(bufferIndex, false);
+    }
+
+    @Override
+    PersistableBundle validateMetrics(String codec, MediaFormat format) {
+        PersistableBundle metrics = super.validateMetrics(codec, format);
+        assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
+        assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 1);
+        return metrics;
+    }
+}
+
+
