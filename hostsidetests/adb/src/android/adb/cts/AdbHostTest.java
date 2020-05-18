@@ -47,8 +47,8 @@ public class AdbHostTest extends DeviceTestCase implements IDeviceTest {
         File check_ms_os_desc = copyResourceToTempFile("/check_ms_os_desc");
         check_ms_os_desc.setExecutable(true);
 
-        // ANDROID_SERIAL is already set correctly in our environment.
         ProcessBuilder pb = new ProcessBuilder(check_ms_os_desc.getAbsolutePath());
+        pb.environment().put("ANDROID_SERIAL", getDevice().getSerialNumber());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
