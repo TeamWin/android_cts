@@ -93,6 +93,7 @@ public class TunerFrontendTest {
                         .setSifStandard(AnalogFrontendSettings.SIF_BG_NICAM)
                         .build();
 
+        assertEquals(FrontendSettings.TYPE_ANALOG, settings.getType());
         assertEquals(1, settings.getFrequency());
         assertEquals(AnalogFrontendSettings.SIGNAL_TYPE_NTSC, settings.getSignalType());
         assertEquals(AnalogFrontendSettings.SIF_BG_NICAM, settings.getSifStandard());
@@ -131,6 +132,7 @@ public class TunerFrontendTest {
                         .setPlpSettings(new Atsc3PlpSettings[] {plp1, plp2})
                         .build();
 
+        assertEquals(FrontendSettings.TYPE_ATSC3, settings.getType());
         assertEquals(2, settings.getFrequency());
         assertEquals(Atsc3FrontendSettings.BANDWIDTH_BANDWIDTH_6MHZ, settings.getBandwidth());
         assertEquals(Atsc3FrontendSettings.MODULATION_MOD_QPSK, settings.getDemodOutputFormat());
@@ -161,6 +163,7 @@ public class TunerFrontendTest {
                         .setModulation(AtscFrontendSettings.MODULATION_MOD_8VSB)
                         .build();
 
+        assertEquals(FrontendSettings.TYPE_ATSC, settings.getType());
         assertEquals(3, settings.getFrequency());
         assertEquals(AtscFrontendSettings.MODULATION_MOD_8VSB, settings.getModulation());
     }
@@ -180,6 +183,7 @@ public class TunerFrontendTest {
                         .setSpectralInversion(DvbcFrontendSettings.SPECTRAL_INVERSION_NORMAL)
                         .build();
 
+        assertEquals(FrontendSettings.TYPE_DVBC, settings.getType());
         assertEquals(4, settings.getFrequency());
         assertEquals(DvbcFrontendSettings.MODULATION_MOD_32QAM, settings.getModulation());
         assertEquals(FrontendSettings.FEC_8_15, settings.getInnerFec());
@@ -217,6 +221,7 @@ public class TunerFrontendTest {
                         .setVcmMode(DvbsFrontendSettings.VCM_MODE_MANUAL)
                         .build();
 
+        assertEquals(FrontendSettings.TYPE_DVBS, settings.getType());
         assertEquals(5, settings.getFrequency());
         assertEquals(DvbsFrontendSettings.MODULATION_MOD_ACM, settings.getModulation());
         assertEquals(3, settings.getSymbolRate());
@@ -256,6 +261,7 @@ public class TunerFrontendTest {
                         .setPlpGroupId(777)
                         .build();
 
+        assertEquals(FrontendSettings.TYPE_DVBT, settings.getType());
         assertEquals(6, settings.getFrequency());
         assertEquals(DvbtFrontendSettings.TRANSMISSION_MODE_8K, settings.getTransmissionMode());
         assertEquals(DvbtFrontendSettings.BANDWIDTH_1_7MHZ, settings.getBandwidth());
@@ -287,6 +293,7 @@ public class TunerFrontendTest {
                         .setRolloff(Isdbs3FrontendSettings.ROLLOFF_0_03)
                         .build();
 
+        assertEquals(FrontendSettings.TYPE_ISDBS3, settings.getType());
         assertEquals(7, settings.getFrequency());
         assertEquals(2, settings.getStreamId());
         assertEquals(IsdbsFrontendSettings.STREAM_ID_TYPE_ID, settings.getStreamIdType());
@@ -311,6 +318,7 @@ public class TunerFrontendTest {
                         .setRolloff(IsdbsFrontendSettings.ROLLOFF_0_35)
                         .build();
 
+        assertEquals(FrontendSettings.TYPE_ISDBS, settings.getType());
         assertEquals(8, settings.getFrequency());
         assertEquals(3, settings.getStreamId());
         assertEquals(
@@ -336,6 +344,7 @@ public class TunerFrontendTest {
                         .setServiceAreaId(10)
                         .build();
 
+        assertEquals(FrontendSettings.TYPE_ISDBT, settings.getType());
         assertEquals(9, settings.getFrequency());
         assertEquals(IsdbtFrontendSettings.MODULATION_MOD_64QAM, settings.getModulation());
         assertEquals(IsdbtFrontendSettings.BANDWIDTH_8MHZ, settings.getBandwidth());
@@ -357,6 +366,7 @@ public class TunerFrontendTest {
             assertTrue(info.getSymbolRateRange().getLower() >= 0);
             assertTrue(info.getAcquireRange() > 0);
             info.getExclusiveGroupId();
+            info.getStatusCapabilities();
 
             FrontendCapabilities caps = info.getFrontendCapabilities();
             assertNotNull(caps);
