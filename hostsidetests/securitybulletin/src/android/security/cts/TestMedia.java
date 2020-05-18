@@ -18,6 +18,7 @@ package android.security.cts;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.compatibility.common.util.CrashUtils;
 
 import android.platform.test.annotations.SecurityTest;
 import org.junit.Test;
@@ -27,6 +28,8 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Assert;
 import static org.junit.Assert.*;
 import java.util.regex.Pattern;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class TestMedia extends SecurityTestCase {
