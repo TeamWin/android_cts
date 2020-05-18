@@ -421,6 +421,17 @@ public class SmsMessageTest {
         assertArrayEquals(expectedCdmaMsg, cdmaMsg);
     }
 
+    @Test
+    public void testCreateFromNativeSmsSubmitPdu() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // Short message with status RECEIVED_READ and size 0. See 3GPP2 C.S0023 3.4.27
+        byte[] submitPdu = {1, 0};
+        SmsMessage sms = SmsMessage.createFromNativeSmsSubmitPdu(submitPdu, true);
+        assertNull(sms);
+    }
+
     private final static char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F' };
 
