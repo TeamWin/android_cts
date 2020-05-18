@@ -338,15 +338,21 @@ public class CodecEncoderSurfaceTest {
     }
 
     private void queueEOS() throws InterruptedException {
-        if (!mSawDecInputEOS) {
-            if (mIsCodecInAsyncMode) {
-                Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandleDecoder.getInput();
+        if (mIsCodecInAsyncMode) {
+            while (!mAsyncHandleDecoder.hasSeenError() && !mSawDecInputEOS) {
+                Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandleDecoder.getWork();
                 if (element != null) {
-                    enqueueDecoderEOS(element.first);
+                    int bufferID = element.first;
+                    MediaCodec.BufferInfo info = element.second;
+                    if (info != null) {
+                        dequeueDecoderOutput(bufferID, info);
+                    } else {
+                        enqueueDecoderEOS(element.first);
+                    }
                 }
-            } else {
-                enqueueDecoderEOS(mDecoder.dequeueInputBuffer(-1));
             }
+        } else if (!mSawDecInputEOS) {
+            enqueueDecoderEOS(mDecoder.dequeueInputBuffer(-1));
         }
         if (mIsCodecInAsyncMode) {
             while (!hasSeenError() && !mSawDecOutputEOS) {
