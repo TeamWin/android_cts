@@ -140,6 +140,7 @@ class AppOpEventCollectionTest {
             .isLessThan(before)
     }
 
+    @AppModeFull(reason = "instant apps cannot see other packages")
     @Test
     fun noteInBackgroundWithAttributionAndCheckOpEntries() {
         val uid = context.packageManager.getPackageUid(BACKGROUND_PACKAGE, 0)
