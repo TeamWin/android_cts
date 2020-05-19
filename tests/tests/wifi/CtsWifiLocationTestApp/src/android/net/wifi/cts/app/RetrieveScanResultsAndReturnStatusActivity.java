@@ -16,42 +16,36 @@
 
 package android.net.wifi.cts.app;
 
-import android.app.job.JobParameters;
-import android.app.job.JobService;
+import android.app.Activity;
+import android.content.Intent;
 import android.net.wifi.WifiManager;
-import android.os.ResultReceiver;
+import android.os.Bundle;
 import android.util.Log;
 
 /**
- * A service that triggers a wifi scan and returns status.
+ * An activity that retrieves scan results and returns status.
  */
-public class TriggerScanAndReturnStatusService extends JobService {
-    private static final String TAG = "TriggerScanAndReturnStatusService";
-    private static final String RESULT_RECEIVER_EXTRA =
-            "android.net.wifi.cts.app.extra.RESULT_RECEIVER";
+public class RetrieveScanResultsAndReturnStatusActivity extends Activity {
+    private static final String TAG = "RetrieveScanResultsAndReturnStatusActivity";
+    private static final String SCAN_STATUS_EXTRA = "android.net.wifi.cts.app.extra.STATUS";
 
     @Override
-    public boolean onStartJob(JobParameters jobParameters) {
-        ResultReceiver resultReceiver =
-                jobParameters.getTransientExtras().getParcelable(RESULT_RECEIVER_EXTRA);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
         WifiManager wifiManager = getSystemService(WifiManager.class);
         boolean succeeded;
         try {
-            succeeded = wifiManager.startScan();
+            succeeded = !wifiManager.getScanResults().isEmpty();
         } catch (SecurityException e) {
             succeeded = false;
         }
         if (succeeded) {
-            Log.v(TAG, "Scan trigger succeeded");
+            Log.v(TAG, "Scan results retrieval succeeded");
         } else {
-            Log.v(TAG, "Failed to trigger scan");
+            Log.v(TAG, "Failed to retrieve scan results");
         }
-        resultReceiver.send(succeeded ? 1 : 0, null);
-        return false;
-    }
-
-    @Override
-    public boolean onStopJob(JobParameters jobParameters) {
-        return false;
+        setResult(RESULT_OK, new Intent().putExtra(SCAN_STATUS_EXTRA, succeeded));
+        finish();
     }
 }
