@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -71,6 +72,7 @@ class MuxerTestHelper {
     private int mFrameLimit;
     // combineMedias() uses local version of this variable
     private HashMap<Integer, Integer> mOutIndexMap = new HashMap<>();
+    private boolean mRemoveCSD;
 
     private void splitMediaToMuxerParameters() throws IOException {
         // Set up MediaExtractor to read from the source.
@@ -82,6 +84,16 @@ class MuxerTestHelper {
         for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
             extractor.selectTrack(trackID);
             MediaFormat format = extractor.getTrackFormat(trackID);
+            if (mRemoveCSD) {
+                for (int i = 0; ; ++i) {
+                    String csdKey = "csd-" + i;
+                    if (format.containsKey(csdKey)) {
+                        format.removeKey(csdKey);
+                    } else {
+                        break;
+                    }
+                }
+            }
             if (mMime == null) {
                 mTrackCount++;
                 mFormat.add(format);
@@ -221,24 +233,29 @@ class MuxerTestHelper {
         muxer.stop();
     }
 
-    MuxerTestHelper(String srcPath, String mime, int frameLimit) throws IOException {
+    MuxerTestHelper(String srcPath, String mime, int frameLimit, boolean aRemoveCSD) throws IOException {
         mSrcPath = srcPath;
         mMime = mime;
         if (frameLimit < 0) frameLimit = Integer.MAX_VALUE;
         mFrameLimit = frameLimit;
+        mRemoveCSD = aRemoveCSD;
         splitMediaToMuxerParameters();
     }
 
     MuxerTestHelper(String srcPath, String mime) throws IOException {
-        this(srcPath, mime, -1);
+        this(srcPath, mime, -1, false);
     }
 
     MuxerTestHelper(String srcPath, int frameLimit) throws IOException {
-        this(srcPath, null, frameLimit);
+        this(srcPath, null, frameLimit, false);
+    }
+
+    MuxerTestHelper(String srcPath, boolean aRemoveCSD) throws IOException {
+        this(srcPath, null, -1, aRemoveCSD);
     }
 
     MuxerTestHelper(String srcPath) throws IOException {
-        this(srcPath, null, -1);
+        this(srcPath, null, -1, false);
     }
 
     int getTrackCount() {
@@ -949,6 +966,14 @@ public class MuxerTest {
             return result;
         }
 
+        private boolean doesCodecRequireCSD(String aMime) {
+            return (aMime == MediaFormat.MIMETYPE_VIDEO_AVC ||
+                    aMime == MediaFormat.MIMETYPE_VIDEO_HEVC ||
+                    aMime == MediaFormat.MIMETYPE_VIDEO_MPEG4 ||
+                    aMime == MediaFormat.MIMETYPE_AUDIO_AAC);
+
+        }
+
         private native boolean nativeTestSimpleMux(String srcPath, String outPath, String mime,
                 String selector);
 
@@ -1013,6 +1038,39 @@ public class MuxerTest {
                         fail(msg + "error! incompatible mime and output format");
                     }
                 } finally {
+                    muxer.release();
+                }
+            }
+        }
+
+        /* Does MediaMuxer throw IllegalStateException on missing codec specific data when required.
+         * Check if relevant exception is thrown for AAC, AVC, HEVC, and MPEG4
+         * codecs that require CSD in MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4.
+         * TODO(b/156767190): Need to evaluate what all codecs need CSD and also what all formats
+         * can contain these codecs, and add test cases accordingly.
+         * TODO(b/156767190): Add similar tests in the native side/NDK as well.
+         * TODO(b/156767190): Make a separate class, like TestNoCSDMux, instead of being part of
+         * TestSimpleMux?
+         */
+        @Test
+        public void testNoCSDMux() throws IOException {
+            Assume.assumeTrue(doesCodecRequireCSD(mMime));
+            MuxerTestHelper mediaInfo = new MuxerTestHelper(mInpPath, true);
+            for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; format++) {
+                // TODO(b/156767190)
+                if(format != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4) continue;
+                MediaMuxer muxer = new MediaMuxer(mOutPath, format);
+                Exception expected = null;
+                String msg = String.format("testNoCSDMux: inp: %s, mime %s, fmt: %s", mSrcFile,
+                                            mMime, formatStringPair.get(format));
+                try {
+                    mediaInfo.muxMedia(muxer);
+                } catch (IllegalStateException e) {
+                    expected = e;
+                } catch (Exception e) {
+                    fail(msg + ", unexpected exception:" + e.getMessage());
+                } finally {
+                    assertNotNull(msg, expected);
                     muxer.release();
                 }
             }

@@ -778,6 +778,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
+        /**
+         * @deprecated untrusted virtual display won't have system decorations even it has the flag.
+         * Only use this method to verify that. To test secondary display with system decorations,
+         * please use simulated display.
+         */
+        @Deprecated
         ExternalDisplaySession setShowSystemDecorations(boolean showSystemDecorations) {
             mShowSystemDecorations = showSystemDecorations;
             return this;

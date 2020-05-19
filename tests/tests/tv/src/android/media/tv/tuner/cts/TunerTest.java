@@ -17,11 +17,13 @@
 package android.media.tv.tuner.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+
 import android.media.tv.tuner.Descrambler;
 import android.media.tv.tuner.LnbCallback;
 import android.media.tv.tuner.Lnb;
@@ -30,10 +32,20 @@ import android.media.tv.tuner.dvr.DvrPlayback;
 import android.media.tv.tuner.dvr.DvrRecorder;
 import android.media.tv.tuner.dvr.OnPlaybackStatusChangedListener;
 import android.media.tv.tuner.dvr.OnRecordStatusChangedListener;
+
+import android.media.tv.tuner.filter.AudioDescriptor;
+import android.media.tv.tuner.filter.DownloadEvent;
 import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.Filter;
+import android.media.tv.tuner.filter.IpPayloadEvent;
+import android.media.tv.tuner.filter.MediaEvent;
+import android.media.tv.tuner.filter.MmtpRecordEvent;
+import android.media.tv.tuner.filter.PesEvent;
+import android.media.tv.tuner.filter.SectionEvent;
+import android.media.tv.tuner.filter.TemiEvent;
 import android.media.tv.tuner.filter.TimeFilter;
+import android.media.tv.tuner.filter.TsRecordEvent;
 
 import android.media.tv.tuner.frontend.AnalogFrontendCapabilities;
 import android.media.tv.tuner.frontend.AnalogFrontendSettings;
@@ -53,6 +65,7 @@ import android.media.tv.tuner.frontend.DvbtFrontendSettings;
 import android.media.tv.tuner.frontend.FrontendCapabilities;
 import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
+import android.media.tv.tuner.frontend.FrontendStatus.Atsc3PlpTuningInfo;
 import android.media.tv.tuner.frontend.FrontendStatus;
 import android.media.tv.tuner.frontend.Isdbs3FrontendCapabilities;
 import android.media.tv.tuner.frontend.Isdbs3FrontendSettings;
@@ -202,7 +215,14 @@ public class TunerTest {
         status.getFreqOffset();
         status.getHierarchy();
         status.isRfLocked();
-        status.getAtsc3PlpTuningInfo();
+        Atsc3PlpTuningInfo[] tuningInfos = status.getAtsc3PlpTuningInfo();
+        if (tuningInfos != null) {
+            for (Atsc3PlpTuningInfo tuningInfo : tuningInfos) {
+                tuningInfo.getPlpId();
+                tuningInfo.isLocked();
+                tuningInfo.getUec();
+            }
+        }
     }
 
     @Test
@@ -291,10 +311,112 @@ public class TunerTest {
     private FilterCallback getFilterCallback() {
         return new FilterCallback() {
             @Override
-            public void onFilterEvent(Filter filter, FilterEvent[] events) {}
+            public void onFilterEvent(Filter filter, FilterEvent[] events) {
+                for (FilterEvent e : events) {
+                    if (e instanceof DownloadEvent) {
+                        testDownloadEvent(filter, (DownloadEvent) e);
+                    } else if (e instanceof IpPayloadEvent) {
+                        testIpPayloadEvent(filter, (IpPayloadEvent) e);
+                    } else if (e instanceof MediaEvent) {
+                        testMediaEvent(filter, (MediaEvent) e);
+                    } else if (e instanceof MmtpRecordEvent) {
+                        testMmtpRecordEvent(filter, (MmtpRecordEvent) e);
+                    } else if (e instanceof PesEvent) {
+                        testPesEvent(filter, (PesEvent) e);
+                    } else if (e instanceof SectionEvent) {
+                        testSectionEvent(filter, (SectionEvent) e);
+                    } else if (e instanceof TemiEvent) {
+                        testTemiEvent(filter, (TemiEvent) e);
+                    } else if (e instanceof TsRecordEvent) {
+                        testTsRecordEvent(filter, (TsRecordEvent) e);
+                    }
+                }
+            }
             @Override
             public void onFilterStatusChanged(Filter filter, int status) {}
         };
+    }
+
+    private void testDownloadEvent(Filter filter, DownloadEvent e) {
+        e.getItemId();
+        e.getMpuSequenceNumber();
+        e.getItemFragmentIndex();
+        e.getLastItemFragmentIndex();
+        long length = e.getDataLength();
+        if (length > 0) {
+            byte[] buffer = new byte[(int) length];
+            assertNotEquals(0, filter.read(buffer, 0, length));
+        }
+    }
+
+    private void testIpPayloadEvent(Filter filter, IpPayloadEvent e) {
+        long length = e.getDataLength();
+        if (length > 0) {
+            byte[] buffer = new byte[(int) length];
+            assertNotEquals(0, filter.read(buffer, 0, length));
+        }
+    }
+
+    private void testMediaEvent(Filter filter, MediaEvent e) {
+        e.getStreamId();
+        e.isPtsPresent();
+        e.getPts();
+        e.getDataLength();
+        e.getOffset();
+        e.getLinearBlock();
+        e.isSecureMemory();
+        e.getAvDataId();
+        e.getAudioHandle();
+        e.getMpuSequenceNumber();
+        e.isPrivateData();
+        AudioDescriptor ad = e.getExtraMetaData();
+        if (ad != null) {
+            ad.getAdFade();
+            ad.getAdPan();
+            ad.getAdVersionTextTag();
+            ad.getAdGainCenter();
+            ad.getAdGainFront();
+            ad.getAdGainSurround();
+        }
+    }
+
+    private void testMmtpRecordEvent(Filter filter, MmtpRecordEvent e) {
+        e.getScHevcIndexMask();
+        e.getDataLength();
+    }
+
+    private void testPesEvent(Filter filter, PesEvent e) {
+        e.getStreamId();
+        e.getMpuSequenceNumber();
+        long length = e.getDataLength();
+        if (length > 0) {
+            byte[] buffer = new byte[(int) length];
+            assertNotEquals(0, filter.read(buffer, 0, length));
+        }
+    }
+
+    private void testSectionEvent(Filter filter, SectionEvent e) {
+        e.getTableId();
+        e.getVersion();
+        e.getSectionNumber();
+        long length = e.getDataLength();
+        if (length > 0) {
+            byte[] buffer = new byte[(int) length];
+            assertNotEquals(0, filter.read(buffer, 0, length));
+        }
+    }
+
+    private void testTemiEvent(Filter filter, TemiEvent e) {
+        e.getPts();
+        e.getDescriptorTag();
+        e.getDescriptorData();
+    }
+
+    private void testTsRecordEvent(Filter filter, TsRecordEvent e) {
+        e.getPacketId();
+        e.getTsIndexMask();
+        e.getScIndexMask();
+        e.getDataLength();
     }
 
     private OnRecordStatusChangedListener getRecordListener() {
@@ -496,7 +618,14 @@ public class TunerTest {
             public void onAnalogSifStandardReported(int sif) {}
 
             @Override
-            public void onAtsc3PlpInfosReported(Atsc3PlpInfo[] atsc3PlpInfos) {}
+            public void onAtsc3PlpInfosReported(Atsc3PlpInfo[] atsc3PlpInfos) {
+                for (Atsc3PlpInfo info : atsc3PlpInfos) {
+                    if (info != null) {
+                        info.getPlpId();
+                        info.getLlsFlag();
+                    }
+                }
+            }
 
             @Override
             public void onHierarchyReported(int hierarchy) {}
