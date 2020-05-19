@@ -100,14 +100,16 @@ def main():
         pylab.ylabel('RGB avg [0, 1]')
         matplotlib.pyplot.savefig('%s_plot_means.png' % (NAME))
 
-        # Check that each plot is actually linear.
+        # Check that each plot is linear with positive slope
         for means in [r_means, g_means, b_means]:
             line, residuals, _, _, _ = numpy.polyfit(range(len(sensitivities)),
                                                      means, 1, full=True)
             print 'Line: m=%f, b=%f, resid=%f'%(line[0], line[1], residuals[0])
-            msg = 'residual: %.5f, THRESH: %.4f' % (
+            e_msg = 'residual: %.5f, THRESH: %.4f' % (
                     residuals[0], RESIDUAL_THRESHOLD)
-            assert residuals[0] < RESIDUAL_THRESHOLD, msg
+            assert residuals[0] < RESIDUAL_THRESHOLD, e_msg
+            e_msg = 'slope %.6f less than 0!' % line[0]
+            assert line[0] > 0, e_msg
 
 if __name__ == '__main__':
     main()
