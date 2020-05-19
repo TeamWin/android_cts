@@ -17,6 +17,7 @@
 package android.autofillservice.cts.inline;
 
 import static android.autofillservice.cts.Timeouts.DATASET_PICKER_NOT_SHOWN_NAPTIME_MS;
+import static android.autofillservice.cts.Timeouts.LONG_PRESS_MS;
 import static android.autofillservice.cts.Timeouts.UI_TIMEOUT;
 
 import android.autofillservice.cts.UiBot;
@@ -71,6 +72,16 @@ public final class InlineUiBot extends UiBot {
     @Override
     public void selectDataset(String name) throws Exception {
         selectSuggestion(name);
+    }
+
+    @Override
+    public void longPressSuggestion(String name) throws Exception {
+        final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
+        final UiObject2 dataset = strip.findObject(By.text(name));
+        if (dataset == null) {
+            throw new AssertionError("no dataset " + name + " in " + getChildrenAsText(strip));
+        }
+        dataset.click(LONG_PRESS_MS);
     }
 
     @Override
