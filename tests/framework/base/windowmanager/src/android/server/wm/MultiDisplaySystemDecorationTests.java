@@ -203,8 +203,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     @Test
     public void testNavBarShowingOnDisplayWithDecor() {
         assumeHasBars();
-        final DisplayContent newDisplay = createManagedExternalDisplaySession()
-                .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
 
         mWmState.waitAndAssertNavBarShownOnDisplay(newDisplay.mId);
     }
@@ -219,8 +219,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         mWmState.waitForHomeActivityVisible();
         final List<WindowState> expected = mWmState.getAllNavigationBarStates();
 
-        createManagedExternalDisplaySession().setPublicDisplay(true)
-                .setShowSystemDecorations(false).createVirtualDisplay();
+        createManagedVirtualDisplaySession().setSimulateDisplay(true)
+                .setShowSystemDecorations(false).createDisplay();
 
         waitAndAssertNavBarStatesAreTheSame(expected);
     }
@@ -251,9 +251,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // display, go back to verify whether the nav bar states are unchanged to verify that no nav
         // bars were added to a display that was added before executing this method that shouldn't
         // have nav bars (i.e. private or without system ui decor).
-        try (final ExternalDisplaySession secondDisplaySession = new ExternalDisplaySession()) {
+        try (final VirtualDisplaySession secondDisplaySession = new VirtualDisplaySession()) {
             final DisplayContent supportsSysDecorDisplay = secondDisplaySession
-                    .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
+                    .setSimulateDisplay(true).setShowSystemDecorations(true).createDisplay();
             mWmState.waitAndAssertNavBarShownOnDisplay(supportsSysDecorDisplay.mId);
             // This display has finished his task. Just close it.
         }
@@ -285,6 +285,19 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // Secondary home activity can't be launched on the display without system decoration
         // support.
         assertEquals("No stacks on newly launched virtual display", 0, newDisplay.mRootTasks.size());
+    }
+
+    /** Tests launching a home activity on untrusted virtual display. */
+    @Test
+    public void testLaunchHomeActivityOnUntrustedVirtualSecondaryDisplay() {
+        createManagedHomeActivitySession(SECONDARY_HOME_ACTIVITY);
+
+        // Create new virtual display with system decoration support flag.
+        final DisplayContent newDisplay = createManagedExternalDisplaySession()
+                .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
+
+        // Secondary home activity can't be launched on the untrusted virtual display.
+        assertEquals("No stacks on untrusted virtual display", 0, newDisplay.mRootTasks.size());
     }
 
     /**
@@ -339,10 +352,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     }
 
     private void assertSecondaryHomeResumedOnNewDisplay(ComponentName homeComponentName) {
-        // Create new virtual display with system decoration support.
-        final DisplayContent newDisplay = createManagedExternalDisplaySession()
+        // Create new simulated display with system decoration support.
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
                 .setShowSystemDecorations(true)
-                .createVirtualDisplay();
+                .createDisplay();
 
         waitAndAssertActivityStateOnDisplay(homeComponentName, STATE_RESUMED,
                 newDisplay.mId, "Activity launched on secondary display must be resumed");
