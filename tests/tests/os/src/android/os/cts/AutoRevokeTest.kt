@@ -371,9 +371,9 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     private fun waitForIdle() {
-        instrumentation.uiAutomation.waitForIdle(2000, 5000)
+        instrumentation.uiAutomation.waitForIdle(1000, 10000)
         Thread.sleep(500)
-        instrumentation.uiAutomation.waitForIdle(2000, 5000)
+        instrumentation.uiAutomation.waitForIdle(1000, 10000)
     }
 
     private inline fun <T> eventually(crossinline action: () -> T): T {
