@@ -19,18 +19,15 @@ package android.net.wifi.cts;
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
-import android.annotation.NonNull;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
-import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SmallTest;
@@ -47,6 +44,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.List;
 
 /**
  * Tests location sensitive APIs exposed by Wi-Fi.
@@ -66,6 +65,14 @@ public class WifiLocationInfoTest {
             WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".TriggerScanAndReturnStatusActivity";
     private static final String WIFI_LOCATION_TEST_APP_TRIGGER_SCAN_SERVICE =
             WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".TriggerScanAndReturnStatusService";
+    private static final String WIFI_LOCATION_TEST_APP_RETRIEVE_SCAN_RESULTS_ACTIVITY =
+            WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".RetrieveScanResultsAndReturnStatusActivity";
+    private static final String WIFI_LOCATION_TEST_APP_RETRIEVE_SCAN_RESULTS_SERVICE =
+            WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".RetrieveScanResultsAndReturnStatusService";
+    private static final String WIFI_LOCATION_TEST_APP_RETRIEVE_CONNECTION_INFO_ACTIVITY =
+            WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".RetrieveConnectionInfoAndReturnStatusActivity";
+    private static final String WIFI_LOCATION_TEST_APP_RETRIEVE_CONNECTION_INFO_SERVICE =
+            WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".RetrieveConnectionInfoAndReturnStatusService";
 
     private static final int DURATION_MS = 10_000;
 
@@ -102,6 +109,14 @@ public class WifiLocationInfoTest {
 
         if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
         PollingCheck.check("Wifi not enabled", DURATION_MS, () -> mWifiManager.isWifiEnabled());
+        List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.getConfiguredNetworks());
+        assertWithMessage("Need at least one saved network").that(savedNetworks).isNotEmpty();
+        // Wait for wifi is to be connected
+        PollingCheck.check(
+                "Wifi not connected",
+                DURATION_MS,
+                () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
     }
 
     @After
@@ -179,6 +194,27 @@ public class WifiLocationInfoTest {
                 WIFI_LOCATION_TEST_APP_TRIGGER_SCAN_SERVICE), status);
     }
 
+    private void retrieveScanResultsFgActivityAndAssertStatusIs(boolean status) throws Exception {
+        startFgActivityAndAssertStatusIs(new ComponentName(WIFI_LOCATION_TEST_APP_PACKAGE_NAME,
+                WIFI_LOCATION_TEST_APP_RETRIEVE_SCAN_RESULTS_ACTIVITY), status);
+    }
+
+    private void retrieveScanResultsBgServiceAndAssertStatusIs(boolean status) throws Exception {
+        startBgServiceAndAssertStatusIs(new ComponentName(WIFI_LOCATION_TEST_APP_PACKAGE_NAME,
+                WIFI_LOCATION_TEST_APP_RETRIEVE_SCAN_RESULTS_SERVICE), status);
+    }
+
+    private void retrieveConnectionInfoFgActivityAndAssertStatusIs(boolean status)
+            throws Exception {
+        startFgActivityAndAssertStatusIs(new ComponentName(WIFI_LOCATION_TEST_APP_PACKAGE_NAME,
+                WIFI_LOCATION_TEST_APP_RETRIEVE_CONNECTION_INFO_ACTIVITY), status);
+    }
+
+    private void retrieveConnectionInfoBgServiceAndAssertStatusIs(boolean status) throws Exception {
+        startBgServiceAndAssertStatusIs(new ComponentName(WIFI_LOCATION_TEST_APP_PACKAGE_NAME,
+                WIFI_LOCATION_TEST_APP_RETRIEVE_CONNECTION_INFO_SERVICE), status);
+    }
+
     @Test
     public void testScanTriggerNotAllowedForForegroundActivityWithNoLocationPermission()
             throws Exception {
@@ -190,7 +226,6 @@ public class WifiLocationInfoTest {
             throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
                 WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
-        Thread.sleep(100);
         triggerScanFgActivityAndAssertStatusIs(true);
     }
 
@@ -201,7 +236,6 @@ public class WifiLocationInfoTest {
                 WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
         InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
                 WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_BACKGROUND_LOCATION);
-        Thread.sleep(100);
         triggerScanBgServiceAndAssertStatusIs(true);
     }
 
@@ -210,7 +244,72 @@ public class WifiLocationInfoTest {
             throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
                 WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
-        Thread.sleep(100);
         triggerScanBgServiceAndAssertStatusIs(false);
+    }
+
+    @Test
+    public void testScanResultsRetrievalNotAllowedForForegroundActivityWithNoLocationPermission()
+            throws Exception {
+        retrieveScanResultsFgActivityAndAssertStatusIs(false);
+    }
+
+    @Test
+    public void testScanResultsRetrievalAllowedForForegroundActivityWithFineLocationPermission()
+            throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
+        retrieveScanResultsFgActivityAndAssertStatusIs(true);
+    }
+
+    @Test
+    public void testScanResultsRetrievalAllowedForBackgroundServiceWithBackgroundLocationPermission()
+            throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_BACKGROUND_LOCATION);
+        retrieveScanResultsBgServiceAndAssertStatusIs(true);
+    }
+
+    @Test
+    public void testScanResultsRetrievalNotAllowedForBackgroundServiceWithFineLocationPermission()
+            throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
+        retrieveScanResultsBgServiceAndAssertStatusIs(false);
+    }
+
+    @Test
+    public void testConnectionInfoRetrievalNotAllowedForForegroundActivityWithNoLocationPermission()
+            throws Exception {
+        retrieveConnectionInfoFgActivityAndAssertStatusIs(false);
+    }
+
+    @Test
+    public void testConnectionInfoRetrievalAllowedForForegroundActivityWithFineLocationPermission()
+            throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
+        retrieveConnectionInfoFgActivityAndAssertStatusIs(true);
+    }
+
+    @Test
+    public void
+        testConnectionInfoRetrievalAllowedForBackgroundServiceWithBackgroundLocationPermission()
+            throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_BACKGROUND_LOCATION);
+        retrieveConnectionInfoBgServiceAndAssertStatusIs(true);
+    }
+
+    @Test
+    public void
+        testConnectionInfoRetrievalNotAllowedForBackgroundServiceWithFineLocationPermission()
+            throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
+        retrieveConnectionInfoBgServiceAndAssertStatusIs(false);
     }
 }
