@@ -16,6 +16,8 @@
 
 package com.android.cts.rollback.host;
 
+import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.hamcrest.CoreMatchers.endsWith;
@@ -41,8 +43,6 @@ import org.junit.runner.RunWith;
 public class RollbackManagerHostTest extends BaseHostJUnit4Test {
 
     private static final String TAG = "RollbackManagerHostTest";
-
-    private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
     /**
      * Runs the helper app test method on device.
