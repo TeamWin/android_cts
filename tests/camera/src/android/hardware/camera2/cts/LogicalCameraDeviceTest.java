@@ -88,11 +88,12 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
     private static final double NS_PER_MS = 1000000.0;
     private static final int MAX_IMAGE_COUNT = 3;
-    private static final int NUM_FRAMES_CHECKED = 30;
+    private static final int NUM_FRAMES_CHECKED = 300;
 
     private static final double FRAME_DURATION_THRESHOLD = 0.03;
     private static final double FOV_THRESHOLD = 0.03;
     private static final double ASPECT_RATIO_THRESHOLD = 0.03;
+    private static final long MAX_TIMESTAMP_DIFFERENCE_THRESHOLD = 10000000; // 10ms
 
     private StateWaiter mSessionWaiter;
 
@@ -1221,15 +1222,43 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 }
             }
         }
+
         double logicalAvgDurationMs2 = (logicalTimestamps2[NUM_FRAMES_CHECKED-1] -
                 logicalTimestamps2[0])/(NS_PER_MS*(NUM_FRAMES_CHECKED-1));
-
-        // Check framerate slow down with physical streams, but do not enforce.
+        // Check CALIBRATED synchronization between physical cameras
+        Integer syncType = mStaticInfo.getCharacteristics().get(
+                CameraCharacteristics.LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE);
         double fpsRatio = (logicalAvgDurationMs2 - logicalAvgDurationMs)/logicalAvgDurationMs;
-        if (fpsRatio > FRAME_DURATION_THRESHOLD) {
-            Log.w(TAG, "The average frame duration with concurrent physical streams is" +
-                logicalAvgDurationMs2 + " ms vs " + logicalAvgDurationMs +
-                " ms for logical streams only");
+        if (syncType == CameraCharacteristics.LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED) {
+            // Check framerate doesn't slow down with physical streams
+            mCollector.expectTrue(
+                    "The average frame duration with concurrent physical streams is" +
+                    logicalAvgDurationMs2 + " ms vs " + logicalAvgDurationMs +
+                    " ms for logical streams only", fpsRatio <= FRAME_DURATION_THRESHOLD);
+
+            long maxTimestampDelta = 0;
+            for (int i = 0; i < NUM_FRAMES_CHECKED; i++) {
+                long delta = Math.abs(physicalTimestamps[0][i] - physicalTimestamps[1][i]);
+                if (delta > maxTimestampDelta) {
+                    maxTimestampDelta = delta;
+                }
+            }
+
+            Log.i(TAG, "Maximum difference between physical camera timestamps: "
+                    + maxTimestampDelta);
+
+            // The maximum timestamp difference should not be larger than the threshold.
+            mCollector.expectTrue(
+                    "The maximum timestamp deltas between the physical cameras "
+                    + maxTimestampDelta + " is larger than " + MAX_TIMESTAMP_DIFFERENCE_THRESHOLD,
+                    maxTimestampDelta <= MAX_TIMESTAMP_DIFFERENCE_THRESHOLD);
+        } else {
+            // Do not enforce fps check for APPROXIMATE synced device.
+            if (fpsRatio > FRAME_DURATION_THRESHOLD) {
+                Log.w(TAG, "The average frame duration with concurrent physical streams is" +
+                        logicalAvgDurationMs2 + " ms vs " + logicalAvgDurationMs +
+                        " ms for logical streams only");
+            }
         }
 
         if (VERBOSE) {
