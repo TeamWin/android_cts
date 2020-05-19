@@ -23,10 +23,10 @@ import android.os.ResultReceiver;
 import android.util.Log;
 
 /**
- * A service that triggers a wifi scan and returns status.
+ * A service that retrieves scan results and returns status.
  */
-public class TriggerScanAndReturnStatusService extends JobService {
-    private static final String TAG = "TriggerScanAndReturnStatusService";
+public class RetrieveConnectionInfoAndReturnStatusService extends JobService {
+    private static final String TAG = "RetrieveConnectionInfoAndReturnStatusService";
     private static final String RESULT_RECEIVER_EXTRA =
             "android.net.wifi.cts.app.extra.RESULT_RECEIVER";
 
@@ -37,14 +37,14 @@ public class TriggerScanAndReturnStatusService extends JobService {
         WifiManager wifiManager = getSystemService(WifiManager.class);
         boolean succeeded;
         try {
-            succeeded = wifiManager.startScan();
+            succeeded = !wifiManager.getConnectionInfo().getSSID().equals(WifiManager.UNKNOWN_SSID);
         } catch (SecurityException e) {
             succeeded = false;
         }
         if (succeeded) {
-            Log.v(TAG, "Scan trigger succeeded");
+            Log.v(TAG, "SSID from connection info retrieval succeeded");
         } else {
-            Log.v(TAG, "Failed to trigger scan");
+            Log.v(TAG, "Failed to retrieve SSID from connection info");
         }
         resultReceiver.send(succeeded ? 1 : 0, null);
         return false;
