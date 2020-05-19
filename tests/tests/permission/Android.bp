@@ -41,7 +41,7 @@ android_test {
     srcs: ["src/**/*.java"],
     sdk_version: "test_current",
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
 }

@@ -18,8 +18,10 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "junit",
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+    ],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
     ],
     srcs: ["src/**/*.java"],
     // Need access to ServiceManager - see b/13307221

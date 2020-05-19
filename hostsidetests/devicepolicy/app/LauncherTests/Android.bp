@@ -18,7 +18,7 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     libs: [
         "junit",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "androidx.legacy_legacy-support-v4",

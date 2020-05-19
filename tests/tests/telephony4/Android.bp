@@ -17,8 +17,8 @@ android_test {
     defaults: ["cts_defaults"],
     libs: [
         "telephony-common",
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     static_libs: [
         "ctstestrunner-axt",

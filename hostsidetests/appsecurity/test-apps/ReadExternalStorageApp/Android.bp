@@ -21,8 +21,8 @@ android_test_helper_app {
         "CtsExternalStorageTestLib",
     ],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     srcs: [
         "src/**/*.java",

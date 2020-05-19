@@ -18,7 +18,7 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     compile_multilib: "both",
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "junit",
     ],
     // Includes the jni code as a shared library

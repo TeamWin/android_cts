@@ -21,7 +21,9 @@ android_test {
         "truth-prebuilt",
         "ctstestrunner-axt",
         "android.car",
-        "android.test.base.stubs",
+    ],
+    libs: [
+        "android.test.base",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
