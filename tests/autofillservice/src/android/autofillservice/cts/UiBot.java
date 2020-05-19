@@ -17,6 +17,7 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Timeouts.DATASET_PICKER_NOT_SHOWN_NAPTIME_MS;
+import static android.autofillservice.cts.Timeouts.LONG_PRESS_MS;
 import static android.autofillservice.cts.Timeouts.SAVE_NOT_SHOWN_NAPTIME_MS;
 import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_DATASET_PICKER_TIMEOUT;
@@ -369,6 +370,14 @@ public class UiBot {
             throw new AssertionError("no dataset " + name + " in " + getChildrenAsText(picker));
         }
         dataset.click();
+    }
+
+    /**
+     * Finds the suggestion by name and perform long click on suggestion to trigger attribution
+     * intent.
+     */
+    public void longPressSuggestion(String name) throws Exception {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -826,7 +835,7 @@ public class UiBot {
     public UiObject2 getAutofillMenuOption(String id) throws Exception {
         final UiObject2 field = waitForObject(By.res(mPackageName, id));
         // TODO: figure out why obj.longClick() doesn't always work
-        field.click(3000);
+        field.click(LONG_PRESS_MS);
 
         List<UiObject2> menuItems = waitForObjects(
                 By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), mDefaultTimeout);

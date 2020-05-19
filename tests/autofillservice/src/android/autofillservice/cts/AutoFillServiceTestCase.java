@@ -24,6 +24,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
+import android.app.PendingIntent;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.inline.InlineUiBot;
 import android.content.ClipboardManager;
@@ -439,6 +440,11 @@ public final class AutoFillServiceTestCase {
 
         protected InlinePresentation createInlinePresentation(String message) {
             return Helper.createInlinePresentation(message);
+        }
+
+        protected InlinePresentation createInlinePresentation(String message,
+                                                              PendingIntent attribution) {
+            return Helper.createInlinePresentation(message, attribution);
         }
 
         @NonNull
