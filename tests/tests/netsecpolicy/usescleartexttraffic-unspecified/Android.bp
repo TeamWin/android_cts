@@ -21,7 +21,7 @@ android_test {
     ],
     libs: [
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     srcs: [
         "src/**/*.java",

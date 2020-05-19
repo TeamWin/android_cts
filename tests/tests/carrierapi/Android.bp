@@ -29,8 +29,8 @@ android_test {
         "general-tests",
     ],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     // This  APK must be signed to match the test SIM's cert whitelist.
     // While "testkey" is the default, there are different per-device testkeys, so

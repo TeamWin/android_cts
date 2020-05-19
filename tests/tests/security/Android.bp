@@ -29,9 +29,9 @@ android_test {
         "platform-test-annotations",
     ],
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     java_resources: [
         ":PackageInstallerTestApp",

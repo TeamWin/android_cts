@@ -18,7 +18,7 @@ android_test_helper_app {
     srcs: ["common/src/**/*.java", "AppA/src/**/*.java", "AppA/aidl/**/*.aidl"],
     sdk_version: "current",
     static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "ub-uiautomator"],
-    libs: ["android.test.base.stubs"],
+    libs: ["android.test.base"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
@@ -38,7 +38,7 @@ android_test_helper_app {
     srcs: ["common/src/**/*.java", "AppA/src/**/*.java", "AppA/aidl/**/*.aidl"],
     sdk_version: "current",
     static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "ub-uiautomator"],
-    libs: ["android.test.base.stubs"],
+    libs: ["android.test.base"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
@@ -58,7 +58,7 @@ android_test_helper_app {
     srcs: ["common/src/**/*.java", "AppA/src/**/*.java", "AppA/aidl/**/*.aidl"],
     sdk_version: "current",
     static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "ub-uiautomator"],
-    libs: ["android.test.base.stubs"],
+    libs: ["android.test.base"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
@@ -78,7 +78,7 @@ android_test_helper_app {
     srcs: ["common/src/**/*.java", "AppB/src/**/*.java"],
     sdk_version: "current",
     static_libs: ["androidx.test.rules", "truth-prebuilt", "testng"],
-    libs: ["android.test.base.stubs"],
+    libs: ["android.test.base"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
@@ -98,7 +98,7 @@ android_test_helper_app {
     srcs: ["common/src/**/*.java", "AppB/src/**/*.java"],
     sdk_version: "current",
     static_libs: ["androidx.test.rules", "truth-prebuilt", "testng"],
-    libs: ["android.test.base.stubs"],
+    libs: ["android.test.base"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
