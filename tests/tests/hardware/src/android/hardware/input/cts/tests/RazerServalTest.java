@@ -17,6 +17,7 @@
 package android.hardware.input.cts.tests;
 
 import android.hardware.cts.R;
+import android.server.wm.WindowManagerStateHelper;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
@@ -42,5 +43,19 @@ public class RazerServalTest extends InputTestCase {
     @Test
     public void testAllMotions() {
         testInputEvents(R.raw.razer_serval_motioneventtests);
+    }
+
+    /**
+     * We cannot test the home key using "testAllKeys" because the home key does not go to the
+     * apps, and therefore cannot be received in InputCtsActivity.
+     * Instead, we rely on the home button behaviour check using the wm utils.
+     */
+    @Test
+    public void testHomeKey() {
+        testInputEvents(R.raw.razer_serval_homekey);
+        WindowManagerStateHelper wmStateHelper = new WindowManagerStateHelper();
+
+        wmStateHelper.waitForHomeActivityVisible();
+        wmStateHelper.assertHomeActivityVisible(true);
     }
 }
