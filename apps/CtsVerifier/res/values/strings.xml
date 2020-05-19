@@ -4948,7 +4948,24 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="vr_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test.
         Position speakers 40 cms from device under test. Press [PLAY] to play broadband white noise. Press [TEST]</string>
 
-
+    <!-- Analog Headset Test -->
+    <string name="audio_headset_audio_test">Analog Headset Audio Test</string>
+    <string name="analog_headset_query">Does this Android device have an analog headset jack?</string>
+    <string name="analog_headset_play">Play</string>
+    <string name="analog_headset_stop">Stop</string>
+    <string name="analog_headset_success_question">Was the audio correctly played through the headset/headphones?</string>
+    <string name="analog_headset_keycodes_label">Headset Keycodes</string>
+    <string name="analog_headset_headsethook">HEADSETHOOK</string>
+    <string name="analog_headset_volup">VOLUME_UP</string>
+    <string name="analog_headset_voldown">VOLUME_DOWN</string>
+    <string name="analog_headset_test">Analog Headset Test</string>
+    <string name="analog_headset_test_info">
+        This test tests the following functionality with respect to wired analog headset/headphones.\n
+        1. Correct audio playback.\n
+        2. Plug intents.\n
+        3. Headset keycodes.\n
+        To run this test it is necessary to have an Android device with a 3.5mm analog headset jack and a compatible analog headset with Hook, Volume Up and Volume Down buttons.
+    </string>
     <!-- Audio AEC Test -->
     <string name="audio_aec_test">Audio Acoustic Echo Cancellation (AEC) Test</string>
     <string name="audio_aec_info">

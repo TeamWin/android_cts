@@ -28,8 +28,6 @@ import com.android.cts.verifier.audio.peripheralprofile.USBDeviceInfoHelper;
 public abstract class USBAudioPeripheralPlayerActivity extends USBAudioPeripheralActivity {
     private static final String TAG = "USBAudioPeripheralPlayerActivity";
 
-    protected  int mSystemBufferSize;
-
     // Player
     protected boolean mIsPlaying = false;
     protected StreamPlayer mPlayer = null;
@@ -46,8 +44,6 @@ public abstract class USBAudioPeripheralPlayerActivity extends USBAudioPeriphera
     }
 
     protected void setupPlayer() {
-        mSystemBufferSize =
-            StreamPlayer.calcNumBurstFrames((AudioManager)getSystemService(Context.AUDIO_SERVICE));
 
         // the +1 is so we can repeat the 0th sample and simplify the interpolation calculation.
         mWavBuffer = new float[WAVBUFF_SIZE_IN_SAMPLES + 1];
@@ -55,13 +51,13 @@ public abstract class USBAudioPeripheralPlayerActivity extends USBAudioPeriphera
         SignalGenerator.fillFloatSine(mWavBuffer);
         mFiller = new WaveTableFloatFiller(mWavBuffer);
 
-        mPlayer = new StreamPlayer();
+        mPlayer = new StreamPlayer(this);
     }
 
     protected void startPlay() {
         if (mOutputDevInfo != null && !mIsPlaying) {
             int numChans = USBDeviceInfoHelper.calcMaxChannelCount(mOutputDevInfo);
-            mPlayer.open(numChans, mSystemSampleRate, mSystemBufferSize, mFiller);
+            mPlayer.open(numChans, mFiller);
             mPlayer.start();
             mIsPlaying = true;
         }
