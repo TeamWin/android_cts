@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,38 +13,14 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsWifiTestCases",
-    defaults: ["cts_defaults"],
+    name: "CtsWifiLocationTestApp",
 
     // Include both the 32 and 64 bit versions
     compile_multilib: "both",
 
-    libs: [
-        "android.test.base.stubs",
+    sdk_version: "test_current",
+
+    srcs: [
+        "src/**/*.java"
     ],
-
-    srcs: [ "src/**/*.java" ],
-
-    static_libs: [
-        "androidx.test.rules",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "junit",
-        "junit-params",
-        "truth-prebuilt",
-    ],
-
-    test_suites: [
-        "cts",
-        "vts10",
-        "general-tests",
-        "mts",
-    ],
-
-
-    data: [
-        ":CtsWifiLocationTestApp",
-    ],
-
-    platform_apis: true,
 }
