@@ -91,6 +91,42 @@ public class InlineAugmentedLoginActivityTest
     }
 
     @Test
+    public void testAugmentedAutoFill_noFiltering() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final EditText username = mActivity.getUsername();
+        final EditText password = mActivity.getPassword();
+        final AutofillId usernameId = username.getAutofillId();
+        final AutofillId passwordId = password.getAutofillId();
+        final AutofillValue usernameValue = username.getAutofillValue();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude", createInlinePresentation("dude"))
+                        .setField(passwordId, "sweet", createInlinePresentation("sweet"))
+                        .build())
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req1")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+        sReplier.getNextFillRequest();
+        sAugmentedReplier.getNextFillRequest();
+
+        // Assert suggestion
+        mUiBot.assertDatasets("dude");
+
+        // Suggestion was not shown.
+        mActivity.onUsername((v) -> v.setText("d"));
+        mUiBot.assertNoDatasetsEver();
+    }
+
+    @Test
     public void testAugmentedAutoFill_twoDatasetThenFilledSecond() throws Exception {
         // Set services
         enableService();
