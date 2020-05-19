@@ -297,7 +297,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         }
 
         int index = configPath.indexOf('=');
-        String path = configPath.substring(index+1);
+        String path = configPath.substring(index+1).replace("\"", "");
 
         assertTrue("Linux kernel must specify an absolute path for static usermodehelper path",
             configPath.contains("..") == false);
