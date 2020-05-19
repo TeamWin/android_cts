@@ -37,6 +37,7 @@ import org.junit.Test;
 /** HDMI CEC test to test audio return channel control (Section 11.2.17) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Test {
+
     private static final LogicalAddress AUDIO_DEVICE = LogicalAddress.AUDIO_SYSTEM;
 
     public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE);

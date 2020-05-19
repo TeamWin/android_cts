@@ -38,6 +38,7 @@ import org.junit.Test;
 /** HDMI CEC test to verify system audio control commands (Section 11.2.15) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
+
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
     public HdmiCecClientWrapper hdmiCecClient =

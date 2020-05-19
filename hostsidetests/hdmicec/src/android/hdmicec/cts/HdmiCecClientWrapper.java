@@ -65,9 +65,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
 
     /** Initialise the client */
     private void init() throws Exception {
-        boolean gotExpectedOut = false;
         List<String> commands = new ArrayList();
-        int seconds = 0;
 
         commands.add("cec-client");
         /* "-p 2" starts the client as if it is connected to HDMI port 2, taking the physical

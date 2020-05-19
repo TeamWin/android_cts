@@ -59,8 +59,10 @@ public class CecMessage {
         return params.toString();
     }
 
-    /** Formats the rawParam into CEC message parameters. The parameters will be at least
-     * minimumNibbles long. */
+    /**
+     * Formats the rawParam into CEC message parameters. The parameters will be at least
+     * minimumNibbles long.
+     */
     public static String formatParams(long rawParam, int minimumNibbles) {
         StringBuilder params = new StringBuilder("");
 
@@ -88,16 +90,12 @@ public class CecMessage {
         return builder.toString();
     }
 
-    /**
-     * Gets the params from a CEC message.
-     */
+    /** Gets the params from a CEC message. */
     public static int getParams(String message) {
         return hexStringToInt(getNibbles(message).substring(4));
     }
 
-    /**
-     * Gets the first 'numNibbles' number of param nibbles from a CEC message.
-     */
+    /** Gets the first 'numNibbles' number of param nibbles from a CEC message. */
     public static int getParams(String message, int numNibbles) {
         int paramStart = 4;
         int end = numNibbles + paramStart;
@@ -122,17 +120,13 @@ public class CecMessage {
         return LogicalAddress.getLogicalAddress(hexStringToInt(param));
     }
 
-    /**
-     * Gets the destination logical address from a CEC message.
-     */
+    /** Gets the destination logical address from a CEC message. */
     public static LogicalAddress getDestination(String message) {
         String param = getNibbles(message).substring(1, 2);
         return LogicalAddress.getLogicalAddress(hexStringToInt(param));
     }
 
-    /**
-     * Gets the operand from a CEC message.
-     */
+    /** Gets the operand from a CEC message. */
     public static CecOperand getOperand(String message) {
         String param = getNibbles(message).substring(2, 4);
         return CecOperand.getOperand(hexStringToInt(param));

@@ -38,6 +38,7 @@ import org.junit.Test;
 /** HDMI CEC test to verify physical address after device reboot (Section 10.2.3) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecLogicalAddressTest extends BaseHostJUnit4Test {
+
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
     public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);

@@ -38,6 +38,7 @@ import org.junit.Test;
 /** HDMI CEC test to verify device vendor specific commands (Section 11.2.9) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
+
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
     private static final int INCORRECT_VENDOR_ID = 0x0;
 

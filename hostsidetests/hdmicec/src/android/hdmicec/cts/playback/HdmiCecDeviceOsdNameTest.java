@@ -37,6 +37,7 @@ import org.junit.Test;
 /** HDMI CEC tests related to the device reporting the device OSD name (Section 11.2.11) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecDeviceOsdNameTest extends BaseHostJUnit4Test {
+
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
     public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);

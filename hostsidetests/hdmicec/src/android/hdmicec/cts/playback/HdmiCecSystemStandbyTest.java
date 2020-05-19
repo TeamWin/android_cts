@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 /** HDMI CEC test to verify the device handles standby correctly (Section 11.2.3) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemStandbyTest extends BaseHostJUnit4Test {
+
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
     private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =

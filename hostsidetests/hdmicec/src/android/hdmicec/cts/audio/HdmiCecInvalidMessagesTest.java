@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 /** HDMI CEC test to verify that device ignores invalid messages (Section 12) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
+
     private static final LogicalAddress AUDIO_DEVICE = LogicalAddress.AUDIO_SYSTEM;
     private static final String PROPERTY_LOCALE = "persist.sys.locale";
 
