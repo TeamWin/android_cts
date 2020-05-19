@@ -29,6 +29,8 @@ public final class Timeouts {
     public static final long MOCK_IME_TIMEOUT_MS = 5_000;
     public static final long DRAWABLE_TIMEOUT_MS = 5_000;
 
+    public static final long LONG_PRESS_MS = 3000;
+
     /**
      * Timeout until framework binds / unbinds from service.
      */
