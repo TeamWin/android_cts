@@ -138,7 +138,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
      *
      * @return size of keyIds vector that contains the key ids, 0 for error
      */
-    private int getKeyIds(byte[] keyRequestBlob, Vector<String> keyIds) {
+    private static int getKeyIds(byte[] keyRequestBlob, Vector<String> keyIds) {
         if (0 == keyRequestBlob.length || keyIds == null)
             return 0;
 
@@ -163,7 +163,8 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
      *
      * @return JSON Web Key string.
      */
-    private String createJsonWebKeySet(Vector<String> keyIds, Vector<String> keys, int keyType) {
+    private static String createJsonWebKeySet(
+            Vector<String> keyIds, Vector<String> keys, int keyType) {
         String jwkSet = "{\"keys\":[";
         for (int i = 0; i < keyIds.size(); ++i) {
             String id = new String(keyIds.get(i).getBytes(Charset.forName("UTF-8")));
@@ -184,8 +185,10 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
     /**
      * Retrieves clear key ids from getKeyRequest(), create JSON Web Key
      * set and send it to the CDM via provideKeyResponse().
+     *
+     * @return key set ID
      */
-    private void getKeys(MediaDrm drm, String initDataType,
+    static byte[] retrieveKeys(MediaDrm drm, String initDataType,
             byte[] sessionId, byte[] drmInitData, int keyType, byte[][] clearKeyIds) {
         MediaDrm.KeyRequest drmRequest = null;
         try {
@@ -197,19 +200,19 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
         if (drmRequest == null) {
             Log.e(TAG, "Failed getKeyRequest");
-            return;
+            return null;
         }
 
         Vector<String> keyIds = new Vector<String>();
         if (0 == getKeyIds(drmRequest.getData(), keyIds)) {
             Log.e(TAG, "No key ids found in initData");
-            return;
+            return null;
         }
 
         if (clearKeyIds.length != keyIds.size()) {
             Log.e(TAG, "Mismatch number of key ids and keys: ids=" +
                     keyIds.size() + ", keys=" + clearKeyIds.length);
-            return;
+            return null;
         }
 
         // Base64 encodes clearkeys. Keys are known to the application.
@@ -225,7 +228,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
 
         try {
             try {
-                mKeySetId = drm.provideKeyResponse(sessionId, jsonResponse);
+                return drm.provideKeyResponse(sessionId, jsonResponse);
             } catch (IllegalStateException e) {
                 Log.e(TAG, "Failed to provide key response: " + e.toString());
             }
@@ -233,6 +236,16 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             e.printStackTrace();
             Log.e(TAG, "Failed to provide key response: " + e.toString());
         }
+        return null;
+    }
+
+    /**
+     * Retrieves clear key ids from getKeyRequest(), create JSON Web Key
+     * set and send it to the CDM via provideKeyResponse().
+     */
+    private void getKeys(MediaDrm drm, String initDataType,
+            byte[] sessionId, byte[] drmInitData, int keyType, byte[][] clearKeyIds) {
+        mKeySetId = retrieveKeys(drm, initDataType, sessionId, drmInitData, keyType, clearKeyIds);
     }
 
     private @NonNull MediaDrm startDrm(final byte[][] clearKeyIds, final String initDataType,
