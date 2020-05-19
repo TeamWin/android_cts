@@ -270,6 +270,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Wait for write of the first page.
         waitForWriteAdapterCallback(1);
 
+        runOnMainThread(() -> {
+            addPrinter(FIRST_PRINTER_LOCAL_ID, false);
+            addPrinter(SECOND_PRINTER_LOCAL_ID, false);
+        });
+
         runOnMainThread(() -> assertFalse(sSession.isDestroyed()));
         runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
 
@@ -378,6 +383,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         // Wait for write of the first page.
         waitForWriteAdapterCallback(1);
 
+        runOnMainThread(() -> {
+            addPrinter(FIRST_PRINTER_LOCAL_ID, false);
+            addPrinter(SECOND_PRINTER_LOCAL_ID, false);
+        });
+
         runOnMainThread(() -> assertFalse(sSession.isDestroyed()));
         runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
 
@@ -467,6 +477,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for write of the first page.
         waitForWriteAdapterCallback(1);
+
+        runOnMainThread(() -> {
+            addPrinter(FIRST_PRINTER_LOCAL_ID, false);
+            addPrinter(SECOND_PRINTER_LOCAL_ID, false);
+        });
 
         runOnMainThread(() -> assertFalse(sSession.isDestroyed()));
         runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
@@ -668,9 +683,6 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
                     invocation.getMock()).getSession();
 
             assertTrue(sSession.isPrinterDiscoveryStarted());
-
-            addPrinter(FIRST_PRINTER_LOCAL_ID, false);
-            addPrinter(SECOND_PRINTER_LOCAL_ID, false);
 
             return null;
         }, invocation -> {

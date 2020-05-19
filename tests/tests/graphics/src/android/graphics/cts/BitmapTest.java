@@ -2544,10 +2544,10 @@ public class BitmapTest {
 
     private Object[] parametersForTestNdkInfo() {
         return new Object[] {
-            new Object[] { Config.ALPHA_8,   8 /* ANDROID_BITMAP_FORMAT_A_8 */ },
-            new Object[] { Config.ARGB_8888, 1 /* ANDROID_BITMAP_FORMAT_RGBA_8888 */ },
-            new Object[] { Config.RGB_565,   4 /* ANDROID_BITMAP_FORMAT_RGB_565 */ },
-            new Object[] { Config.RGBA_F16,  9 /* ANDROID_BITMAP_FORMAT_RGBA_F16*/ },
+            new Object[] { Config.ALPHA_8,   ANDROID_BITMAP_FORMAT_A_8  },
+            new Object[] { Config.ARGB_8888, ANDROID_BITMAP_FORMAT_RGBA_8888 },
+            new Object[] { Config.RGB_565,   ANDROID_BITMAP_FORMAT_RGB_565 },
+            new Object[] { Config.RGBA_F16,  ANDROID_BITMAP_FORMAT_RGBA_F16 },
         };
     }
 
@@ -2564,15 +2564,23 @@ public class BitmapTest {
                 bm.setPremultiplied(premultiplied);
                 nTestInfo(bm, androidBitmapFormat, width, height, bm.hasAlpha(),
                         bm.isPremultiplied(), false);
-                bm = bm.copy(Bitmap.Config.HARDWARE, false);
+                Bitmap hwBitmap = bm.copy(Bitmap.Config.HARDWARE, false);
                 if (config == Bitmap.Config.ALPHA_8) {
                     // ALPHA_8 is not supported in HARDWARE. b/141480329
-                    assertNull(bm);
+                    assertNull(hwBitmap);
                 } else {
-                    assertNotNull(bm);
-                    nTestInfo(bm, androidBitmapFormat, width, height, bm.hasAlpha(),
-                            bm.isPremultiplied(), true);
+                    assertNotNull(hwBitmap);
+                    // Some devices do not support F16 + HARDWARE. These fall back to 8888, and can
+                    // be identified by their use of SRGB instead of EXTENDED_SRGB.
+                    if (config == Config.RGBA_F16 && hwBitmap.getColorSpace() == ColorSpace.get(
+                            ColorSpace.Named.SRGB)) {
+                        androidBitmapFormat = ANDROID_BITMAP_FORMAT_RGBA_8888;
+                    }
+                    nTestInfo(hwBitmap, androidBitmapFormat, width, height, hwBitmap.hasAlpha(),
+                            hwBitmap.isPremultiplied(), true);
+                    hwBitmap.recycle();
                 }
+                bm.recycle();
             }
         }
     }
