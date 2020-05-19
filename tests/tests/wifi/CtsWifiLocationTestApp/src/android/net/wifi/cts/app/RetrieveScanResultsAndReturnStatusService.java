@@ -25,8 +25,8 @@ import android.util.Log;
 /**
  * A service that triggers a wifi scan and returns status.
  */
-public class TriggerScanAndReturnStatusService extends JobService {
-    private static final String TAG = "TriggerScanAndReturnStatusService";
+public class RetrieveScanResultsAndReturnStatusService extends JobService {
+    private static final String TAG = "RetrieveScanResultsAndReturnStatusService";
     private static final String RESULT_RECEIVER_EXTRA =
             "android.net.wifi.cts.app.extra.RESULT_RECEIVER";
 
@@ -37,14 +37,14 @@ public class TriggerScanAndReturnStatusService extends JobService {
         WifiManager wifiManager = getSystemService(WifiManager.class);
         boolean succeeded;
         try {
-            succeeded = wifiManager.startScan();
+            succeeded = !wifiManager.getScanResults().isEmpty();
         } catch (SecurityException e) {
             succeeded = false;
         }
         if (succeeded) {
-            Log.v(TAG, "Scan trigger succeeded");
+            Log.v(TAG, "Scan results retrieval succeeded");
         } else {
-            Log.v(TAG, "Failed to trigger scan");
+            Log.v(TAG, "Failed to retrieve scan results");
         }
         resultReceiver.send(succeeded ? 1 : 0, null);
         return false;
