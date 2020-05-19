@@ -76,9 +76,6 @@ import java.util.HashSet;
 public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";
 
-    private static final File EXTERNAL_STORAGE_DIR = Environment.getExternalStorageDirectory();
-    private static final File DCIM_DIR = new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_DCIM);
-
     private Context mContext;
     private ContentResolver mContentResolver;
 
@@ -303,16 +300,21 @@ public class MediaStore_Images_MediaTest {
      */
     @Test
     public void testUpdateAndReplace() throws Exception {
+        Assume.assumeFalse(mVolumeName.equals(MediaStore.VOLUME_EXTERNAL));
+
+        File dir = mContext.getSystemService(StorageManager.class)
+                .getStorageVolume(mExternalImages).getDirectory();
+        File dcimDir = new File(dir, Environment.DIRECTORY_DCIM);
         File file = null;
         try {
             // Create file
-            file = copyResourceToFile(R.raw.scenery, DCIM_DIR, "cts" + System.nanoTime() + ".jpg");
+            file = copyResourceToFile(R.raw.scenery, dcimDir, "cts" + System.nanoTime() + ".jpg");
             final String externalPath = file.getAbsolutePath();
             assertNotNull(MediaStore.scanFile(mContentResolver, file));
 
             // Insert another file, insertedFile doesn't exist in lower file system.
             ContentValues values = new ContentValues();
-            final File insertedFile = new File(DCIM_DIR, "cts" + System.nanoTime() + ".jpg");
+            final File insertedFile = new File(dcimDir, "cts" + System.nanoTime() + ".jpg");
             values.put(Media.DATA, insertedFile.getAbsolutePath());
 
             final Uri uri = mContentResolver.insert(mExternalImages, values);
@@ -337,10 +339,15 @@ public class MediaStore_Images_MediaTest {
 
     @Test
     public void testUpsert() throws Exception {
+        Assume.assumeFalse(mVolumeName.equals(MediaStore.VOLUME_EXTERNAL));
+
+        File dir = mContext.getSystemService(StorageManager.class)
+                .getStorageVolume(mExternalImages).getDirectory();
+        File dcimDir = new File(dir, Environment.DIRECTORY_DCIM);
         File file = null;
         try {
             // Create file
-            file = copyResourceToFile(R.raw.scenery, DCIM_DIR, "cts" + System.nanoTime() + ".jpg");
+            file = copyResourceToFile(R.raw.scenery, dcimDir, "cts" + System.nanoTime() + ".jpg");
             final String externalPath = file.getAbsolutePath();
 
             // Verify a record exists in MediaProvider.
