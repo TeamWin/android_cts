@@ -27,10 +27,13 @@ import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInli
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.PendingIntent;
 import android.autofillservice.cts.CannedFillResponse;
+import android.autofillservice.cts.DummyActivity;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService;
 import android.autofillservice.cts.LoginActivityCommonTestCase;
+import android.content.Intent;
 import android.service.autofill.FillContext;
 
 import org.junit.Test;
@@ -155,5 +158,44 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
                 findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
         assertWithMessage("Password node is focused").that(
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+    }
+
+    @Test
+    public void testLongClickAttribution() throws Exception {
+        // Set service.
+        enableService();
+
+        Intent intent = new Intent(mContext, DummyActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation(createPresentation("The Username"))
+                        .setInlinePresentation(
+                                createInlinePresentation("The Username", pendingIntent))
+                        .build());
+
+        sReplier.addResponse(builder.build());
+        mActivity.expectAutoFill("dude");
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertDatasets("The Username");
+
+        // Long click on suggestion
+        mUiBot.longPressSuggestion("The Username");
+        mUiBot.waitForIdleSync();
+
+        // Make sure the attribution showed worked
+        mUiBot.selectByText("foo");
+
+        // Go back to the filled app.
+        mUiBot.pressBack();
+
+        sReplier.getNextFillRequest();
+        mUiBot.waitForIdleSync();
     }
 }
