@@ -16,6 +16,8 @@
 
 package android.cts.install;
 
+import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.Manifest;
@@ -104,11 +106,11 @@ final class InstallRule extends ExternalResource {
             case SINGLE_APK:
                 return Arrays.asList(TestApp.A);
             case SINGLE_APEX:
-                return Arrays.asList(TestApp.Apex);
+                return Arrays.asList(SHIM_APEX_PACKAGE_NAME);
             case MULTIPLE_APKS:
                 return Arrays.asList(TestApp.A, TestApp.B);
             case MULTIPLE_MIX:
-                return Arrays.asList(TestApp.A, TestApp.Apex);
+                return Arrays.asList(TestApp.A, SHIM_APEX_PACKAGE_NAME);
             default:
                 throw new AssertionError("Unknown install type");
         }
@@ -129,9 +131,9 @@ final class InstallRule extends ExternalResource {
         testAppMap.put(TestApp.B, 1, TestApp.B1);
         testAppMap.put(TestApp.B, 2, TestApp.B2);
         testAppMap.put(TestApp.B, 3, TestApp.B3);
-        testAppMap.put(TestApp.Apex, 1, TestApp.Apex1);
-        testAppMap.put(TestApp.Apex, 2, TestApp.Apex2);
-        testAppMap.put(TestApp.Apex, 3, TestApp.Apex3);
+        testAppMap.put(SHIM_APEX_PACKAGE_NAME, 1, TestApp.Apex1);
+        testAppMap.put(SHIM_APEX_PACKAGE_NAME, 2, TestApp.Apex2);
+        testAppMap.put(SHIM_APEX_PACKAGE_NAME, 3, TestApp.Apex3);
         return testAppMap;
     }
 }

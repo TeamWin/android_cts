@@ -16,6 +16,8 @@
 
 package android.cts.install.host;
 
+import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import com.android.ddmlib.Log;
@@ -31,7 +33,6 @@ import org.junit.rules.ExternalResource;
  */
 final class TestAppRule extends ExternalResource {
     private static final String TAG = TestAppRule.class.getSimpleName();
-    private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
     private final BaseHostJUnit4Test mHostTest;
 
     TestAppRule(BaseHostJUnit4Test hostTest) {

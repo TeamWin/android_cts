@@ -18,6 +18,7 @@ java_test_host {
     srcs:  ["src/**/*.java"],
     libs: [
         "cts-tradefed",
+        "cts-shim-host-lib",
         "tradefed",
         "truth-prebuilt",
         "hamcrest",
