@@ -21,7 +21,7 @@ android_test_helper_app {
         "androidx.test.rules",
         "compatibility-device-util-axt",
     ],
-    libs: ["android.test.base.stubs"],
+    libs: ["android.test.base"],
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",

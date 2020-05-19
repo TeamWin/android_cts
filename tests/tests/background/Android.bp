@@ -23,7 +23,7 @@ android_test {
         "ctstestrunner-axt",
         "ub-uiautomator",
     ],
-    libs: ["android.test.runner.stubs"],
+    libs: ["android.test.runner"],
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",

@@ -22,8 +22,8 @@ android_test_helper_app {
         "compatibility-device-util-axt",
     ],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     sdk_version: "test_current",
     min_sdk_version: "23",
@@ -46,8 +46,8 @@ android_test_helper_app {
         "compatibility-device-util-axt",
     ],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     sdk_version: "test_current",
     // TODO: should it be "24":
@@ -72,8 +72,8 @@ android_test_helper_app {
         "compatibility-device-util-axt",
     ],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     sdk_version: "test_current",
     // tag this module as a cts test artifact
