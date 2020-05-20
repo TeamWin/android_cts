@@ -1903,6 +1903,79 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                 });
     }
 
+    public void testGetShortcuts() {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            enableManifestActivity("Launcher_manifest_2", true);
+            retryUntil(() -> getManager().getManifestShortcuts().size() == 2,
+                    "Manifest shortcuts didn't show up");
+
+            assertTrue(getManager().setDynamicShortcuts(list(
+                    makeShortcut("s1"), makeShortcut("s2"), makeShortcut("s3"))));
+        });
+
+        setDefaultLauncher(getInstrumentation(), mLauncherContext1);
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
+            getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
+                    list("ms21", "s1", "s2"), getUserHandle());
+            // TODO: Cache a few shortcuts
+        });
+
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            getManager().removeDynamicShortcuts((list("s2")));
+        });
+
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            assertWith(getManager().getShortcuts(ShortcutManager.FLAG_MATCH_MANIFEST))
+                    .haveIds("ms21", "ms22")
+                    .areAllManifest();
+            assertWith(getManager().getShortcuts(ShortcutManager.FLAG_MATCH_DYNAMIC))
+                    .haveIds("s1", "s3")
+                    .areAllDynamic();
+            assertWith(getManager().getShortcuts(ShortcutManager.FLAG_MATCH_PINNED))
+                    .haveIds("ms21", "s1", "s2")
+                    .areAllPinned();
+            assertWith(getManager().getShortcuts(ShortcutManager.FLAG_MATCH_CACHED))
+                    .isEmpty();
+
+            assertWith(getManager().getShortcuts(
+                    ShortcutManager.FLAG_MATCH_MANIFEST | ShortcutManager.FLAG_MATCH_DYNAMIC))
+                    .haveIds("ms21", "ms22", "s1", "s3");
+            assertWith(getManager().getShortcuts(
+                    ShortcutManager.FLAG_MATCH_MANIFEST | ShortcutManager.FLAG_MATCH_PINNED))
+                    .haveIds("ms21", "ms22", "s1", "s2");
+            assertWith(getManager().getShortcuts(
+                    ShortcutManager.FLAG_MATCH_MANIFEST | ShortcutManager.FLAG_MATCH_CACHED))
+                    .haveIds("ms21", "ms22");
+            assertWith(getManager().getShortcuts(
+                    ShortcutManager.FLAG_MATCH_DYNAMIC | ShortcutManager.FLAG_MATCH_PINNED))
+                    .haveIds("ms21", "s1", "s2", "s3");
+            assertWith(getManager().getShortcuts(
+                    ShortcutManager.FLAG_MATCH_DYNAMIC | ShortcutManager.FLAG_MATCH_CACHED))
+                    .haveIds("s1", "s3");
+            assertWith(getManager().getShortcuts(
+                    ShortcutManager.FLAG_MATCH_PINNED | ShortcutManager.FLAG_MATCH_CACHED))
+                    .haveIds("ms21", "s1", "s2");
+
+            assertWith(getManager().getShortcuts(ShortcutManager.FLAG_MATCH_MANIFEST
+                    | ShortcutManager.FLAG_MATCH_DYNAMIC | ShortcutManager.FLAG_MATCH_PINNED))
+                    .haveIds("ms21", "ms22", "s1", "s2", "s3");
+            assertWith(getManager().getShortcuts(ShortcutManager.FLAG_MATCH_MANIFEST
+                    | ShortcutManager.FLAG_MATCH_DYNAMIC | ShortcutManager.FLAG_MATCH_CACHED))
+                    .haveIds("ms21", "ms22", "s1", "s3");
+            assertWith(getManager().getShortcuts(ShortcutManager.FLAG_MATCH_MANIFEST
+                    | ShortcutManager.FLAG_MATCH_CACHED | ShortcutManager.FLAG_MATCH_PINNED))
+                    .haveIds("ms21", "ms22", "s1", "s2");
+            assertWith(getManager().getShortcuts(ShortcutManager.FLAG_MATCH_DYNAMIC
+                    | ShortcutManager.FLAG_MATCH_CACHED | ShortcutManager.FLAG_MATCH_PINNED))
+                    .haveIds("ms21", "s1", "s2", "s3");
+
+            assertWith(getManager().getShortcuts(
+                    ShortcutManager.FLAG_MATCH_MANIFEST | ShortcutManager.FLAG_MATCH_DYNAMIC
+                    | ShortcutManager.FLAG_MATCH_PINNED | ShortcutManager.FLAG_MATCH_CACHED))
+                    .haveIds("ms21", "ms22", "s1", "s2", "s3");
+        });
+    }
+
     // TODO Test auto rank adjustment.
     // TODO Test save & load.
 }
