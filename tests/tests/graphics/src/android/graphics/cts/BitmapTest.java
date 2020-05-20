@@ -2353,7 +2353,7 @@ public class BitmapTest {
 
     @Test
     @Parameters(method = "parametersForTestNdkInfo")
-    public void testNdkInfo(Config config, int androidBitmapFormat) {
+    public void testNdkInfo(Config config, final int expectedFormat) {
         // Arbitrary width and height.
         final int width = 13;
         final int height = 7;
@@ -2362,7 +2362,7 @@ public class BitmapTest {
             for (boolean premultiplied : trueFalse) {
                 Bitmap bm = Bitmap.createBitmap(width, height, config, hasAlpha);
                 bm.setPremultiplied(premultiplied);
-                nTestInfo(bm, androidBitmapFormat, width, height, bm.hasAlpha(),
+                nTestInfo(bm, expectedFormat, width, height, bm.hasAlpha(),
                         bm.isPremultiplied(), false);
                 Bitmap hwBitmap = bm.copy(Bitmap.Config.HARDWARE, false);
                 if (config == Bitmap.Config.ALPHA_8) {
@@ -2370,13 +2370,15 @@ public class BitmapTest {
                     assertNull(hwBitmap);
                 } else {
                     assertNotNull(hwBitmap);
+
                     // Some devices do not support F16 + HARDWARE. These fall back to 8888, and can
                     // be identified by their use of SRGB instead of EXTENDED_SRGB.
+                    int tempExpectedFormat = expectedFormat;
                     if (config == Config.RGBA_F16 && hwBitmap.getColorSpace() == ColorSpace.get(
                             ColorSpace.Named.SRGB)) {
-                        androidBitmapFormat = ANDROID_BITMAP_FORMAT_RGBA_8888;
+                        tempExpectedFormat = ANDROID_BITMAP_FORMAT_RGBA_8888;
                     }
-                    nTestInfo(hwBitmap, androidBitmapFormat, width, height, hwBitmap.hasAlpha(),
+                    nTestInfo(hwBitmap, tempExpectedFormat, width, height, hwBitmap.hasAlpha(),
                             hwBitmap.isPremultiplied(), true);
                     hwBitmap.recycle();
                 }
