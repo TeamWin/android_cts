@@ -140,10 +140,9 @@ public class WifiManagerTest extends AndroidTestCase {
     // A full single scan duration is about 6-7 seconds if country code is set
     // to US. If country code is set to world mode (00), we would expect a scan
     // duration of roughly 8 seconds. So we set scan timeout as 9 seconds here.
-    private static final int SCAN_TIMEOUT_MSEC = 9000;
-    private static final int TIMEOUT_MSEC = 6000;
-    private static final int WAIT_MSEC = 60;
+    private static final int SCAN_TEST_WAIT_DURATION_MS = 9000;
     private static final int TEST_WAIT_DURATION_MS = 10_000;
+    private static final int WAIT_MSEC = 60;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
     private static final int DURATION_SETTINGS_TOGGLE = 1_000;
     private static final int WIFI_SCAN_TEST_INTERVAL_MILLIS = 60 * 1000;
@@ -351,7 +350,7 @@ public class WifiManagerTest extends AndroidTestCase {
 
     private void waitForExpectedWifiState(boolean enabled) throws InterruptedException {
         synchronized (mMySync) {
-            long timeout = System.currentTimeMillis() + TIMEOUT_MSEC;
+            long timeout = System.currentTimeMillis() + TEST_WAIT_DURATION_MS;
             int expected = (enabled ? STATE_WIFI_ENABLED : STATE_WIFI_DISABLED);
             while (System.currentTimeMillis() < timeout
                     && mMySync.expectedState != expected) {
@@ -377,7 +376,7 @@ public class WifiManagerTest extends AndroidTestCase {
             mMySync.expectedState = STATE_SCANNING;
             mScanResults = null;
             assertTrue(mWifiManager.startScan());
-            long timeout = System.currentTimeMillis() + SCAN_TIMEOUT_MSEC;
+            long timeout = System.currentTimeMillis() + SCAN_TEST_WAIT_DURATION_MS;
             while (System.currentTimeMillis() < timeout && mMySync.expectedState == STATE_SCANNING)
                 mMySync.wait(WAIT_MSEC);
         }
@@ -386,7 +385,7 @@ public class WifiManagerTest extends AndroidTestCase {
     private void waitForNetworkInfoState(NetworkInfo.State state) throws Exception {
         synchronized (mMySync) {
             if (mNetworkInfo.getState() == state) return;
-            long timeout = System.currentTimeMillis() + TIMEOUT_MSEC;
+            long timeout = System.currentTimeMillis() + TEST_WAIT_DURATION_MS;
             while (System.currentTimeMillis() < timeout
                     && mNetworkInfo.getState() != state)
                 mMySync.wait(WAIT_MSEC);
@@ -404,7 +403,7 @@ public class WifiManagerTest extends AndroidTestCase {
 
     private void ensureNotNetworkInfoState(NetworkInfo.State state) throws Exception {
         synchronized (mMySync) {
-            long timeout = System.currentTimeMillis() + TIMEOUT_MSEC + WAIT_MSEC;
+            long timeout = System.currentTimeMillis() + TEST_WAIT_DURATION_MS + WAIT_MSEC;
             while (System.currentTimeMillis() < timeout) {
                 assertNotEquals(mNetworkInfo.getState(), state);
                 mMySync.wait(WAIT_MSEC);
@@ -2077,8 +2076,8 @@ public class WifiManagerTest extends AndroidTestCase {
                 URL url = new URL("http://www.google.com/");
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setInstanceFollowRedirects(false);
-                connection.setConnectTimeout(TIMEOUT_MSEC);
-                connection.setReadTimeout(TIMEOUT_MSEC);
+                connection.setConnectTimeout(TEST_WAIT_DURATION_MS);
+                connection.setReadTimeout(TEST_WAIT_DURATION_MS);
                 connection.setUseCaches(false);
                 InputStream stream = connection.getInputStream();
                 byte[] bytes = new byte[100];
