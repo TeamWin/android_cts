@@ -16,7 +16,9 @@
 
 package com.android.cts.verifier.audio;
 
+import android.content.Context;
 import android.graphics.Color;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Looper;
 import android.os.Message;
@@ -24,6 +26,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.android.cts.verifier.audio.audiolib.StreamPlayer;
 import com.android.cts.verifier.audio.audiolib.StreamRecorder;
 import com.android.cts.verifier.audio.audiolib.StreamRecorderListener;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
@@ -72,7 +75,7 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
         }
 
         if (mRecorder == null) {
-            mRecorder = new StreamRecorder();
+            mRecorder = new StreamRecorder(this);
         } else if (mRecorder.isRecording()) {
             mRecorder.stop();
         }
@@ -84,7 +87,7 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
         }
         Log.i(TAG, "  numChans:" + numChans);
 
-        if (mRecorder.open(numChans, mSystemSampleRate, mSystemBufferSize)) {
+        if (mRecorder.open(numChans)) {
             connectWaveView();  // Setup the WaveView
 
             mIsRecording = mRecorder.start();
@@ -130,7 +133,7 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
 
         setupPlayer();
 
-        mRecorder = new StreamRecorder();
+        mRecorder = new StreamRecorder(this);
         mRecordListener = new RecordListener();
 
         mWaveView = (WaveScopeView)findViewById(R.id.uap_recordWaveView);
