@@ -4045,20 +4045,22 @@ You should be prompted to select credentials; choose the ones you just installed
         Please do the following:\n
         1) You should have received NotificationBot.apk together with the CTS verifier. If you built the CTS verifier yourself, build the NotificationBot.apk by issuing the following command on the host:\n
             make NotificationBot\n
-        2) Upload the NotificationBot.apk to your device by issuing the following command on the host:\n
+        2) Grant MANAGE_EXTERNAL_STORAGE by issuing the following command on the host:\n
+            adb shell appops set com.android.cts.verifier MANAGE_EXTERNAL_STORAGE 0\n
+        3) Upload the NotificationBot.apk to your device by issuing the following command on the host:\n
             adb push /path/to/NotificationBot.apk /sdcard\n
-        3) Press the Uninstall button.\n
-        4) Press the Open Settings button.\n
-        5) In the screen that opens, verify that you are not told that your administrator installed any apps.\n
-        6) Use the Back button to return to this page.\n
-        7) Press the Install button.\n
-        8) Press the Open Settings button.\n
-        9) In the screen that opens, verify that you are told now that your administrator installed at least one app.\n
-        10) Tap on that information. Verify that a list of apps installed shows.\n
-        11) Verify that the list contains the CTS Robot app.\n
-        12) Use the Back button to return to this page.\n
-        13) Press the Uninstall button.\n
-        14) Issue the following command on the host:\n
+        4) Press the Uninstall button.\n
+        5) Press the Open Settings button.\n
+        6) In the screen that opens, verify that you are not told that your administrator installed any apps.\n
+        7) Use the Back button to return to this page.\n
+        8) Press the Install button.\n
+        9) Press the Open Settings button.\n
+        10) In the screen that opens, verify that you are told now that your administrator installed at least one app.\n
+        11) Tap on that information. Verify that a list of apps installed shows.\n
+        12) Verify that the list contains the CTS Robot app.\n
+        13) Use the Back button to return to this page.\n
+        14) Press the Uninstall button.\n
+        15) Issue the following command on the host:\n
             adb shell rm /sdcard/NotificationBot.apk
     </string>
     <string name="enterprise_privacy_install">Install</string>
