@@ -44,7 +44,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
-import com.android.compatibility.common.util.AnrMonitor;
+import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
@@ -766,7 +766,8 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      */
     public void testAppNotResponding() throws Exception {
         // Setup the ANR monitor
-        AnrMonitor monitor = new AnrMonitor(mInstrumentation);
+        AmMonitor monitor = new AmMonitor(mInstrumentation,
+                new String[]{AmMonitor.WAIT_FOR_CRASHED});
 
         // Now tell it goto ANR
         CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_SELF_INDUCED_ANR,
@@ -775,10 +776,10 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         try {
 
             // Verify we got the ANR
-            assertTrue(monitor.waitFor(WAITFOR_MSEC));
+            assertTrue(monitor.waitFor(AmMonitor.WAIT_FOR_EARLY_ANR, WAITFOR_MSEC));
 
             // Just kill the test app
-            monitor.sendCommand(AnrMonitor.CMD_KILL);
+            monitor.sendCommand(AmMonitor.CMD_KILL);
         } finally {
             // clean up
             monitor.finish();
