@@ -3695,7 +3695,19 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+        </activity>
+
+        <activity android:name=".audio.USBAudioPeripheralNotificationsTest"
+                  android:label="@string/audio_uap_notifications_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralPlayActivity"
@@ -3707,7 +3719,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralRecordActivity"
@@ -3719,7 +3731,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralButtonsActivity"
@@ -3731,7 +3743,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".audio.USBRestrictRecordAActivity"
@@ -3743,7 +3755,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".audio.ProAudioActivity"
