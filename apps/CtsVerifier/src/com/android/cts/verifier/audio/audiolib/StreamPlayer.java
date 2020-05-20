@@ -31,6 +31,10 @@ public class StreamPlayer {
     @SuppressWarnings("unused")
     private static String TAG = "StreamPlayer";
 
+    // System
+    private AudioSystemParams mSystemAudioParams = new AudioSystemParams();
+
+    // Player
     private int mSampleRate;
     private int mNumChans;
 
@@ -50,7 +54,9 @@ public class StreamPlayer {
 
     private AudioDeviceInfo mRoutingDevice;
 
-    public StreamPlayer() {}
+    public StreamPlayer(Context context) {
+        mSystemAudioParams.init(context);
+    }
 
     public int getSampleRate() { return mSampleRate; }
     public int getNumBurstFrames() { return mNumBurstFrames; }
@@ -98,21 +104,16 @@ public class StreamPlayer {
                 / AudioUtils.calcFrameSizeInBytes(encoding, numChannels);
     }
 
-    public static int calcNumBurstFrames(AudioManager am) {
-        String framesPerBuffer = am.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
-        return Integer.parseInt(framesPerBuffer, 10);
-    }
-
-    public boolean open(int numChans, int sampleRate, int numBurstFrames, AudioFiller filler) {
+    public boolean open(int numChans, AudioFiller filler) {
 //        Log.i(TAG, "StreamPlayer.open(chans:" + numChans + ", rate:" + sampleRate +
 //                ", frames:" + numBurstFrames);
 
         mNumChans = numChans;
-        mSampleRate = sampleRate;
-        mNumBurstFrames = numBurstFrames;
+        mSampleRate = mSystemAudioParams.getSystemSampleRate();
+        mNumBurstFrames = mSystemAudioParams.getSystemBurstFrames();
 
         mNumAudioTrackFrames =
-                calcNumBufferFrames(sampleRate, numChans, AudioFormat.ENCODING_PCM_FLOAT);
+                calcNumBufferFrames(mSampleRate, numChans, AudioFormat.ENCODING_PCM_FLOAT);
 
         mFiller = filler;
 

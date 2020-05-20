@@ -16,8 +16,11 @@
 
 package com.android.cts.verifier.audio.audiolib;
 
+import android.content.Context;
+
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 
 import android.util.Log;
@@ -31,9 +34,11 @@ public class StreamRecorder {
     @SuppressWarnings("unused")
     private static final String TAG = "StreamRecorder";
 
+    // System
+    private AudioSystemParams mSystemAudioParams = new AudioSystemParams();
+
     // Sample Buffer
     private float[] mBurstBuffer;
-    private int mNumBurstFrames;
     private int mNumChannels;
 
     // Recording attributes
@@ -48,9 +53,12 @@ public class StreamRecorder {
 
     private AudioDeviceInfo mRoutingDevice = null;
 
-    public StreamRecorder() {}
+    public StreamRecorder(Context context) {
+        mSystemAudioParams.init(context);
 
-    public int getNumBurstFrames() { return mNumBurstFrames; }
+    }
+
+//    public int getNumBmNumBurstFramesurstFrames() { return ; }
     public int getSampleRate() { return mSampleRate; }
 
     /*
@@ -116,9 +124,9 @@ public class StreamRecorder {
         }
     }
 
-    private boolean open_internal(int numChans, int sampleRate) {
+    private boolean open_internal(int numChans) {
         mNumChannels = numChans;
-        mSampleRate = sampleRate;
+        mSampleRate = mSystemAudioParams.getSystemSampleRate();
 
         final int frameSize =
                 AudioUtils.calcFrameSizeInBytes(AudioFormat.ENCODING_PCM_FLOAT, mNumChannels);
@@ -152,11 +160,10 @@ public class StreamRecorder {
         }
     }
 
-    public boolean open(int numChans, int sampleRate, int numBurstFrames) {
-        boolean sucess = open_internal(numChans, sampleRate);
-        if (sucess) {
-            mNumBurstFrames = numBurstFrames;
-            mBurstBuffer = new float[mNumBurstFrames * mNumChannels];
+    public boolean open(int numChans) {
+        boolean success = open_internal(numChans);
+        if (success) {
+            mBurstBuffer = new float[mSystemAudioParams.getSystemBurstFrames() * mNumChannels];
             // put some non-zero data in the burst buffer.
             // this is to verify that the record is putting SOMETHING into each channel.
             for(int index = 0; index < mBurstBuffer.length; index++) {
@@ -164,7 +171,7 @@ public class StreamRecorder {
             }
         }
 
-        return sucess;
+        return success;
     }
 
     public void close() {
@@ -210,7 +217,7 @@ public class StreamRecorder {
     private class StreamRecorderRunnable implements Runnable {
         @Override
         public void run() {
-            final int numBurstSamples = mNumBurstFrames * mNumChannels;
+            final int numBurstSamples = mSystemAudioParams.getSystemBurstFrames() * mNumChannels;
             while (mRecording) {
                 int numReadSamples = mAudioRecord.read(
                         mBurstBuffer, 0, numBurstSamples, AudioRecord.READ_BLOCKING);
