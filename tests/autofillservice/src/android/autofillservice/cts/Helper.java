@@ -1520,27 +1520,29 @@ public final class Helper {
     }
 
     public static InlinePresentation createInlinePresentation(String message) {
-        // TODO(b/156392213): this is a dummy pending intent, we should make it a real one when
-        // testing long press.
-        final PendingIntent attribution = PendingIntent.getActivity(getContext(), 0, new Intent(),
-                0);
-        return new InlinePresentation(
-                InlineSuggestionUi.newContentBuilder().setAttribution(attribution)
-                        .setTitle(message).build().getSlice(),
-                new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
-                        .build(), /* pinned= */ false);
+        final PendingIntent dummyIntent =
+                PendingIntent.getActivity(getContext(), 0, new Intent(), 0);
+        return createInlinePresentation(message, dummyIntent, false);
+    }
+
+    public static InlinePresentation createInlinePresentation(String message,
+            PendingIntent attribution) {
+        return createInlinePresentation(message, attribution, false);
     }
 
     public static InlinePresentation createPinnedInlinePresentation(String message) {
-        // TODO(b/156392213): this is a dummy pending intent, we should make it a real one when
-        // testing long press.
-        final PendingIntent attribution = PendingIntent.getActivity(getContext(), 0, new Intent(),
-                0);
+        final PendingIntent dummyIntent =
+                PendingIntent.getActivity(getContext(), 0, new Intent(), 0);
+        return createInlinePresentation(message, dummyIntent, true);
+    }
+
+    private static InlinePresentation createInlinePresentation(@NonNull String message,
+            @NonNull PendingIntent attribution, boolean pinned) {
         return new InlinePresentation(
                 InlineSuggestionUi.newContentBuilder().setAttribution(attribution)
                         .setTitle(message).build().getSlice(),
                 new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
-                        .build(), /* pinned= */ true);
+                        .build(), /* pinned= */ pinned);
     }
 
     private Helper() {
