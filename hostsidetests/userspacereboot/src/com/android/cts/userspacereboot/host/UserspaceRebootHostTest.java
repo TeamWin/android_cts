@@ -40,6 +40,7 @@ import java.time.Duration;
 /**
  * Host side CTS tests verifying userspace reboot functionality.
  */
+@RequiresDevice
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
 
