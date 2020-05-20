@@ -18,10 +18,11 @@ package android.hdmicec.cts.playback;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
 
@@ -42,17 +43,17 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
 
     private static final int PHYSICAL_ADDRESS = 0x1000;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
             .around(RequiredPropertyRule.asCsvContainsValue(
                 this,
-                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
-                CecDevice.PLAYBACK_1.getDeviceType()))
+                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
+                LogicalAddress.PLAYBACK_1.getDeviceType()))
             .around(hdmiCecClient);
 
     /**
@@ -64,14 +65,14 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
     public void cect_11_2_2_1_SetStreamPathToDut() throws Exception {
         final long hdmi2Address = 0x2000;
         /* Switch to HDMI2. Setup assumes DUT is connected to HDMI1. */
-        hdmiCecClient.sendCecMessage(CecDevice.PLAYBACK_2, CecDevice.BROADCAST,
-                CecMessage.ACTIVE_SOURCE, hdmiCecClient.formatParams(hdmi2Address));
+        hdmiCecClient.sendCecMessage(LogicalAddress.PLAYBACK_2, LogicalAddress.BROADCAST,
+                CecOperand.ACTIVE_SOURCE, CecMessage.formatParams(hdmi2Address));
         TimeUnit.SECONDS.sleep(3);
-        hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
-                CecMessage.SET_STREAM_PATH,
-                hdmiCecClient.formatParams(HdmiCecConstants.PHYSICAL_ADDRESS));
-        String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
+                CecOperand.SET_STREAM_PATH,
+                CecMessage.formatParams(HdmiCecConstants.PHYSICAL_ADDRESS));
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
+        assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
     }
 
     /**
@@ -83,10 +84,10 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
     public void cect_11_2_2_2_RequestActiveSource() throws Exception {
         ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_HOME");
-        hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
-            CecMessage.REQUEST_ACTIVE_SOURCE);
-        String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
+            CecOperand.REQUEST_ACTIVE_SOURCE);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
+        assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
     }
 
     /**
@@ -100,9 +101,9 @@ public final class HdmiCecRoutingControlTest extends BaseHostJUnit4Test {
         try {
             device.executeShellCommand("input keyevent KEYCODE_HOME");
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
-            String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
-                    CecMessage.INACTIVE_SOURCE);
-            assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
+            String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
+                    CecOperand.INACTIVE_SOURCE);
+            assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
