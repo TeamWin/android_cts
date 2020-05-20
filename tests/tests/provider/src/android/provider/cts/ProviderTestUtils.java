@@ -17,12 +17,19 @@
 package android.provider.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -327,6 +334,44 @@ public class ProviderTestUtils {
             FileUtils.copy(digestIn, out);
             return digestIn.getMessageDigest().digest();
         }
+    }
+
+    /**
+     * Extract the average overall color of the given bitmap.
+     * <p>
+     * Internally takes advantage of gaussian blurring that is naturally applied
+     * when downscaling an image.
+     */
+    public static int extractAverageColor(Bitmap bitmap) {
+        final Bitmap res = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        final Canvas canvas = new Canvas(res);
+        final Rect src = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final Rect dst = new Rect(0, 0, 1, 1);
+        canvas.drawBitmap(bitmap, src, dst, null);
+        return res.getPixel(0, 0);
+    }
+
+    public static void assertColorMostlyEquals(int expected, int actual) {
+        assertTrue("Expected " + Integer.toHexString(expected) + " but was "
+                + Integer.toHexString(actual), isColorMostlyEquals(expected, actual));
+    }
+
+    public static void assertColorMostlyNotEquals(int expected, int actual) {
+        assertFalse("Expected " + Integer.toHexString(expected) + " but was "
+                + Integer.toHexString(actual), isColorMostlyEquals(expected, actual));
+    }
+
+    private static boolean isColorMostlyEquals(int expected, int actual) {
+        final float[] expectedHSV = new float[3];
+        final float[] actualHSV = new float[3];
+        Color.colorToHSV(expected, expectedHSV);
+        Color.colorToHSV(actual, actualHSV);
+
+        // Fail if more than a 10% difference in any component
+        if (Math.abs(expectedHSV[0] - actualHSV[0]) > 36) return false;
+        if (Math.abs(expectedHSV[1] - actualHSV[1]) > 0.1f) return false;
+        if (Math.abs(expectedHSV[2] - actualHSV[2]) > 0.1f) return false;
+        return true;
     }
 
     public static void assertExists(String path) throws IOException {

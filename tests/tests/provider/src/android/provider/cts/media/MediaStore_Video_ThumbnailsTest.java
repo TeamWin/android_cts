@@ -18,10 +18,11 @@ package android.provider.cts.media;
 
 import static android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT;
 import static android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH;
+import static android.provider.cts.ProviderTestUtils.assertColorMostlyNotEquals;
+import static android.provider.cts.ProviderTestUtils.extractAverageColor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -228,7 +229,7 @@ public class MediaStore_Video_ThumbnailsTest {
         final Bitmap beforeThumb = mResolver.loadThumbnail(finalUri, new Size(64, 64), null);
         assertTrue(beforeThumb.getWidth() < full.getWidth());
         assertTrue(beforeThumb.getHeight() < full.getHeight());
-        final int beforeColor = beforeThumb.getPixel(32, 32);
+        final int beforeColor = extractAverageColor(beforeThumb);
 
         // Verify legacy APIs still work
         if (MediaStore.VOLUME_EXTERNAL.equals(mVolumeName)) {
@@ -244,7 +245,7 @@ public class MediaStore_Video_ThumbnailsTest {
         }
 
         // Edit video contents
-        try (InputStream from = mContext.getResources().openRawResource(R.raw.testthumbvideo);
+        try (InputStream from = mContext.getResources().openRawResource(R.raw.testvideo2);
                 OutputStream to = mResolver.openOutputStream(finalUri)) {
             FileUtils.copy(from, to);
         }
@@ -252,8 +253,8 @@ public class MediaStore_Video_ThumbnailsTest {
         // Thumbnail should match updated contents
         ProviderTestUtils.waitForIdle();
         final Bitmap afterThumb = mResolver.loadThumbnail(finalUri, new Size(64, 64), null);
-        final int afterColor = afterThumb.getPixel(32, 32);
-        assertNotColorMostlyEquals(beforeColor, afterColor);
+        final int afterColor = extractAverageColor(afterThumb);
+        assertColorMostlyNotEquals(beforeColor, afterColor);
 
         // Delete video contents
         mResolver.delete(finalUri, null, null);
@@ -265,14 +266,5 @@ public class MediaStore_Video_ThumbnailsTest {
             fail("Funky; we somehow made a thumbnail out of nothing?");
         } catch (FileNotFoundException expected) {
         }
-    }
-
-    /**
-     * Since thumbnails might be bounced through a compression pass, we're okay
-     * if they're mostly equal.
-     */
-    private static void assertNotColorMostlyEquals(int expected, int actual) {
-        assertNotEquals(Integer.toHexString(expected & 0xF0F0F0F0),
-                Integer.toHexString(actual & 0xF0F0F0F0));
     }
 }
