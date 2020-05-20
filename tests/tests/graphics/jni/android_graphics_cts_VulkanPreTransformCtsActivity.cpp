@@ -29,14 +29,16 @@
 
 namespace {
 
-jboolean validatePixelValues(JNIEnv* env, jboolean setPreTransform, jint preTransformHint) {
+jboolean validatePixelValues(JNIEnv* env, jint width, jint height, jboolean setPreTransform,
+                             jint preTransformHint) {
     jclass clazz = env->FindClass("android/graphics/cts/VulkanPreTransformTest");
-    jmethodID mid = env->GetStaticMethodID(clazz, "validatePixelValuesAfterRotation", "(ZI)Z");
+    jmethodID mid = env->GetStaticMethodID(clazz, "validatePixelValuesAfterRotation", "(IIZI)Z");
     if (mid == 0) {
         ALOGE("Failed to find method ID");
         return false;
     }
-    return env->CallStaticBooleanMethod(clazz, mid, setPreTransform, preTransformHint);
+    return env->CallStaticBooleanMethod(clazz, mid, width, height, setPreTransform,
+                                        preTransformHint);
 }
 
 void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobject jSurface,
@@ -71,7 +73,10 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
         }
     }
 
-    ASSERT(validatePixelValues(env, setPreTransform, preTransformHint), "Not properly rotated");
+    const VkExtent2D surfaceSize = swapchainInfo.surfaceSize();
+    ASSERT(validatePixelValues(env, surfaceSize.width, surfaceSize.height, setPreTransform,
+                               preTransformHint),
+           "Not properly rotated");
 }
 
 const std::array<JNINativeMethod, 1> JNI_METHODS = {{
