@@ -29,8 +29,10 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.service.dataloader.DataLoaderService;
+import android.text.TextUtils;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -140,15 +142,38 @@ public class PackageManagerShellCommandIncrementalTest {
         assertEquals(binder, service.onBind(new Intent()));
     }
 
+    @LargeTest
     @Test
     public void testInstallSysTrace() throws Exception {
+        // Async atrace dump uses less resources but requires periodic pulls.
+        // Overall timeout of 30secs in 100ms intervals should be enough.
+        final int atraceDumpIterations = 300;
+        final int atraceDumpDelayMs = 100;
+
         final String expected = "|page_read:";
         final ByteArrayOutputStream result = new ByteArrayOutputStream();
-        final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand("atrace adb");
         final Thread readFromProcess = new Thread(() -> {
-            try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
-                final String found = waitForSubstring(inputStream, expected);
-                result.write(found.getBytes());
+            try {
+                executeShellCommand("atrace --async_start -b 1024 -c adb");
+                try {
+                    for (int i = 0; i < atraceDumpIterations; ++i) {
+                        final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(
+                                "atrace --async_dump");
+                        try (InputStream inputStream =
+                                     new ParcelFileDescriptor.AutoCloseInputStream(
+                                stdout)) {
+                            final String found = waitForSubstring(inputStream, expected);
+                            if (!TextUtils.isEmpty(found)) {
+                                result.write(found.getBytes());
+                                return;
+                            }
+                            Thread.currentThread().sleep(atraceDumpDelayMs);
+                        } catch (InterruptedException ignored) {
+                        }
+                    }
+                } finally {
+                    executeShellCommand("atrace --async_stop");
+                }
             } catch (IOException ignored) {
             }
         });
@@ -158,7 +183,7 @@ public class PackageManagerShellCommandIncrementalTest {
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
 
         readFromProcess.join();
-        assertNotEquals("", result.toString());
+        assertNotEquals(0, result.size());
     }
 
     private boolean isAppInstalled(String packageName) throws IOException {
