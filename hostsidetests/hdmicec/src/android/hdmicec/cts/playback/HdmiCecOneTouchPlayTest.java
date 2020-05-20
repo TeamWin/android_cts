@@ -18,9 +18,10 @@ package android.hdmicec.cts.playback;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
+import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
 
@@ -53,17 +54,17 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
     /** The command to stop an app. */
     private static final String FORCE_STOP_COMMAND = "am force-stop ";
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(CecDevice.PLAYBACK_1);
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, CecDevice.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, CecDevice.LEANBACK_FEATURE))
+            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
             .around(RequiredPropertyRule.asCsvContainsValue(
                 this,
-                CecDevice.HDMI_DEVICE_TYPE_PROPERTY,
-                CecDevice.PLAYBACK_1.getDeviceType()))
+                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
+                LogicalAddress.PLAYBACK_1.getDeviceType()))
             .around(hdmiCecClient);
 
     /**
@@ -76,9 +77,9 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.reboot();
         device.executeShellCommand("input keyevent KEYCODE_HOME");
-        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
-        String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.TEXT_VIEW_ON);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
+        assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
     }
 
     /**
@@ -90,9 +91,9 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.reboot();
         device.executeShellCommand(START_COMMAND + ACTION_CONNECT_INPUT_NORMAL);
-        hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.TEXT_VIEW_ON);
-        String message = hdmiCecClient.checkExpectedOutput(CecMessage.ACTIVE_SOURCE);
-        assertThat(hdmiCecClient.getParamsFromMessage(message)).isEqualTo(PHYSICAL_ADDRESS);
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.TEXT_VIEW_ON);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
+        assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
         device.executeShellCommand(FORCE_STOP_COMMAND + SETTINGS_PACKAGE);
     }
 }
