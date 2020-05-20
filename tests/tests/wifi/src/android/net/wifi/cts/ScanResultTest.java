@@ -299,9 +299,10 @@ public class ScanResultTest extends AndroidTestCase {
             return;
         }
 
-        // This test case should run while connected to Wifi
         final WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         assertThat(wifiInfo).isNotNull();
+        assertWithMessage("Wifi should be connected!")
+                .that(wifiInfo.getBSSID()).isNotNull();
 
         ScanResult currentNetwork = null;
         for (int i = 0; i < SCAN_FIND_BSSID_MAX_RETRY_COUNT; i++) {
