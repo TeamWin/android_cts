@@ -291,7 +291,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    @FlakyTest
     @PermissionsTest
     @Test
     public void testPermissionGrant() throws Exception {
@@ -299,7 +298,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    @FlakyTest
     @PermissionsTest
     @Test
     public void testPermissionMixedPolicies() throws Exception {
@@ -315,7 +313,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @PermissionsTest
-    @FlakyTest(bugId = 145350538)
     @Test
     public void testPermissionPolicy() throws Exception {
         super.testPermissionPolicy();
@@ -330,7 +327,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @PermissionsTest
-    @FlakyTest(bugId = 145350538)
     @Test
     public void testPermissionAppUpdate() throws Exception {
         super.testPermissionAppUpdate();
@@ -338,7 +334,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @PermissionsTest
-    @FlakyTest(bugId = 145350538)
     @Test
     public void testPermissionGrantPreMApp() throws Exception {
         super.testPermissionGrantPreMApp();
@@ -346,7 +341,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @PermissionsTest
-    @FlakyTest(bugId = 145350538)
     @Test
     public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted()
             throws Exception {
