@@ -106,9 +106,9 @@ public class NotificationManager29Test {
     private StatusBarNotification findPostedNotification(int id) {
         // notification is a bit asynchronous so it may take a few ms to appear in
         // getActiveNotifications()
-        // we will check for it for up to 300ms before giving up
+        // we will check for it for up to 500ms before giving up
         StatusBarNotification n = null;
-        for (int tries = 3; tries--> 0;) {
+        for (int tries = 5; tries--> 0;) {
             final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
             for (StatusBarNotification sbn : sbns) {
                 Log.d(TAG, "Found " + sbn.getKey());
