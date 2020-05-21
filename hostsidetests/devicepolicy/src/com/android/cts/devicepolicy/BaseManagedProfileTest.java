@@ -38,6 +38,8 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     protected static final String DUMMY_APP_2_APK = "DummyApp2.apk";
     protected static final String DUMMY_APP_3_APK = "DummyApp3.apk";
     protected static final String DUMMY_APP_4_APK = "DummyApp4.apk";
+    protected static final String SHARING_APP_1_APK = "SharingApp1.apk";
+    protected static final String SHARING_APP_2_APK = "SharingApp2.apk";
     private static final String MANAGED_PROFILE_APK = "CtsManagedProfileApp.apk";
     private static final String NOTIFICATION_PKG =
             "com.android.cts.managedprofiletests.notificationsender";
@@ -83,6 +85,8 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(DUMMY_APP_2_APK);
             getDevice().uninstallPackage(DUMMY_APP_3_APK);
             getDevice().uninstallPackage(DUMMY_APP_4_APK);
+            getDevice().uninstallPackage(SHARING_APP_1_APK);
+            getDevice().uninstallPackage(SHARING_APP_2_APK);
         }
         super.tearDown();
     }
