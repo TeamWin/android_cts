@@ -70,6 +70,7 @@ public class KeyGenParameterSpecTest extends TestCase {
         MoreAsserts.assertEmpty(Arrays.asList(spec.getSignaturePaddings()));
         assertFalse(spec.isUserAuthenticationRequired());
         assertEquals(0, spec.getUserAuthenticationValidityDurationSeconds());
+        assertEquals(KeyProperties.AUTH_BIOMETRIC_STRONG, spec.getUserAuthenticationType());
         assertFalse(spec.isUnlockedDeviceRequired());
     }
 
@@ -102,7 +103,8 @@ public class KeyGenParameterSpecTest extends TestCase {
                 .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS,
                         KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
                 .setUserAuthenticationRequired(true)
-                .setUserAuthenticationValidityDurationSeconds(12345)
+                .setUserAuthenticationParameters(12345,
+                        KeyProperties.AUTH_DEVICE_CREDENTIAL | KeyProperties.AUTH_BIOMETRIC_STRONG)
                 .setUnlockedDeviceRequired(true)
                 .build();
 
@@ -130,6 +132,8 @@ public class KeyGenParameterSpecTest extends TestCase {
                 KeyProperties.SIGNATURE_PADDING_RSA_PSS, KeyProperties.SIGNATURE_PADDING_RSA_PKCS1);
         assertTrue(spec.isUserAuthenticationRequired());
         assertEquals(12345, spec.getUserAuthenticationValidityDurationSeconds());
+        assertEquals(KeyProperties.AUTH_DEVICE_CREDENTIAL | KeyProperties.AUTH_BIOMETRIC_STRONG,
+                spec.getUserAuthenticationType());
         assertTrue(spec.isUnlockedDeviceRequired());
     }
 
