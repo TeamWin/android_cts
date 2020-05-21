@@ -346,7 +346,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
                 if (pattern.matcher(line).matches()) {
                     CLog.v("Found " + incorrectMessage.name() + " in " + line);
                     throw new Exception("Found " + incorrectMessage.name() + " to " + toDevice +
-                            " with params " + CecMessage.getParams(line));
+                            " with params " + CecMessage.getParamsAsString(line));
                 }
             }
             endTime = System.currentTimeMillis();
