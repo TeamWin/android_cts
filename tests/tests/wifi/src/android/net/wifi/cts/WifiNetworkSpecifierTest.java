@@ -78,6 +78,7 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
     private static final int DURATION_UI_INTERACTION = 25_000;
     private static final int DURATION_NETWORK_CONNECTION = 60_000;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
+    private static final int SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID = 3;
 
     @Override
     protected void setUp() throws Exception {
@@ -450,25 +451,27 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
      * this matching may pick the wrong one.
      */
     private ScanResult findScanResultMatchingSavedNetwork() {
-        // Trigger a scan to get fresh scan results.
-        TestScanResultsCallback scanResultsCallback = new TestScanResultsCallback(mLock);
-        synchronized (mLock) {
-            try {
-                mWifiManager.registerScanResultsCallback(
-                        Executors.newSingleThreadExecutor(), scanResultsCallback);
-                mWifiManager.startScan(new WorkSource(myUid()));
-                // now wait for callback
-                mLock.wait(DURATION_NETWORK_CONNECTION);
-            } catch (InterruptedException e) {
-            } finally {
-                mWifiManager.unregisterScanResultsCallback(scanResultsCallback);
+        for (int i = 0; i < SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID; i++) {
+            // Trigger a scan to get fresh scan results.
+            TestScanResultsCallback scanResultsCallback = new TestScanResultsCallback(mLock);
+            synchronized (mLock) {
+                try {
+                    mWifiManager.registerScanResultsCallback(
+                            Executors.newSingleThreadExecutor(), scanResultsCallback);
+                    mWifiManager.startScan(new WorkSource(myUid()));
+                    // now wait for callback
+                    mLock.wait(DURATION_NETWORK_CONNECTION);
+                } catch (InterruptedException e) {
+                } finally {
+                    mWifiManager.unregisterScanResultsCallback(scanResultsCallback);
+                }
             }
-        }
-        List<ScanResult> scanResults = mWifiManager.getScanResults();
-        if (scanResults == null || scanResults.isEmpty()) fail("No scan results available");
-        for (ScanResult scanResult : scanResults) {
-            if (TextUtils.equals(scanResult.SSID, removeDoubleQuotes(mTestNetwork.SSID))) {
-                return scanResult;
+            List<ScanResult> scanResults = mWifiManager.getScanResults();
+            if (scanResults == null || scanResults.isEmpty()) fail("No scan results available");
+            for (ScanResult scanResult : scanResults) {
+                if (TextUtils.equals(scanResult.SSID, removeDoubleQuotes(mTestNetwork.SSID))) {
+                    return scanResult;
+                }
             }
         }
         fail("No matching scan results found");
