@@ -1864,6 +1864,10 @@ TEST_P(ColorTest, GpuColorOutputIsRenderable) {
     desc.width = 100;
     desc.height = 100;
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT;
+    if (FormatIsYuv(desc.format)) {
+        // YUV formats are only supported for textures, so add texture usage.
+        desc.usage |= AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+    }
     // This test does not make sense for layered buffers - don't bother testing them.
     if (desc.layers > 1) return;
     if (!SetUpBuffer(desc)) return;
@@ -1905,6 +1909,10 @@ TEST_P(ColorTest, GpuColorOutputCpuRead) {
     desc.width = 16;
     desc.height = 16;
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
+    if (FormatIsYuv(desc.format)) {
+        // YUV formats are only supported for textures, so add texture usage.
+        desc.usage |= AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+    }
     // This test does not make sense for GL formats. Layered buffers do not support CPU access.
     if ((desc.stride & kGlFormat) || desc.layers > 1) {
         ALOGI("Test skipped: Test is for single-layer HardwareBuffer formats only.");
