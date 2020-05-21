@@ -21,10 +21,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import android.app.AppOpsManager;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.CrossProfileApps;
 import android.os.Binder;
+import android.os.Bundle;
 import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
@@ -33,6 +36,8 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Collections;
 
 @RunWith(AndroidJUnit4.class)
 public class CrossProfileAppsPermissionToInteractTest {
@@ -44,6 +49,11 @@ public class CrossProfileAppsPermissionToInteractTest {
             "android.permission.INTERACT_ACROSS_USERS";
     public static final String INTERACT_ACROSS_USERS_FULL_PERMISSION =
             "android.permission.INTERACT_ACROSS_USERS_FULL";
+
+    private static final ComponentName ADMIN_RECEIVER_COMPONENT =
+            new ComponentName(
+                    AdminReceiver.class.getPackage().getName(), AdminReceiver.class.getName());
+    private static final String PARAM_CROSS_PROFILE_PACKAGE = "crossProfilePackage";
 
     private final Context mContext = InstrumentationRegistry.getContext();
     private final CrossProfileApps mCrossProfileApps =
@@ -147,5 +157,25 @@ public class CrossProfileAppsPermissionToInteractTest {
     @Test
     public void testCreateRequestInteractAcrossProfilesIntent_noAsserts() {
         mCrossProfileApps.createRequestInteractAcrossProfilesIntent();
+    }
+
+    @Test
+    public void testSetCrossProfilePackages_noAsserts() {
+        final DevicePolicyManager devicePolicyManager =
+                (DevicePolicyManager) mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        devicePolicyManager.setCrossProfilePackages(
+                ADMIN_RECEIVER_COMPONENT, Collections.singleton(getCrossProfilePackage()));
+    }
+
+    private String getCrossProfilePackage() {
+        final Bundle testArguments = InstrumentationRegistry.getArguments();
+        if (testArguments.containsKey(PARAM_CROSS_PROFILE_PACKAGE)) {
+            try {
+                return testArguments.getString(PARAM_CROSS_PROFILE_PACKAGE);
+            } catch (NumberFormatException ignore) {
+            }
+        }
+        fail("cross profile package param not found.");
+        return null;
     }
 }
