@@ -20,6 +20,7 @@ import android.app.Instrumentation;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.text.TextUtils;
+import android.util.ArraySet;
 import android.util.Log;
 
 import java.io.BufferedOutputStream;
@@ -30,19 +31,26 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * A utility class interact with "am monitor"
  */
-public final class AnrMonitor {
-    private static final String TAG = "AnrMonitor";
-    private static final String WAIT_FOR_ANR = "Waiting after early ANR...  available commands:";
-    private static final String MONITOR_READY = "Monitoring activity manager...  available commands:";
+public final class AmMonitor {
+    private static final String TAG = "AmMonitor";
+    public static final String WAIT_FOR_EARLY_ANR =
+            "Waiting after early ANR...  available commands:";
+    public static final String WAIT_FOR_ANR =
+            "Waiting after ANR...  available commands:";
+    public static final String WAIT_FOR_CRASHED =
+            "Waiting after crash...  available commands:";
+    public static final String MONITOR_READY =
+            "Monitoring activity manager...  available commands:";
 
     /**
      * Command for the {@link #sendCommand}: continue the process
      */
-    public static final String CMD_CONTINUE = "k";
+    public static final String CMD_CONTINUE = "c";
 
     /**
      * Command for the {@link #sendCommand}: kill the process
@@ -63,12 +71,13 @@ public final class AnrMonitor {
     private final PrintWriter mWritePrinter;
     private final Thread mReaderThread;
 
+    private final ArraySet<String> mNotExpected = new ArraySet<>();
     private final ArrayList<String> mPendingLines = new ArrayList<>();
 
     /**
      * Construct an instance of this class.
      */
-    public AnrMonitor(final Instrumentation instrumentation) {
+    public AmMonitor(final Instrumentation instrumentation, final String[] notExpected) {
         mInstrumentation = instrumentation;
         ParcelFileDescriptor[] pfds = instrumentation.getUiAutomation()
                 .executeShellCommandRw("am monitor");
@@ -78,18 +87,12 @@ public final class AnrMonitor {
         mWriteFd = pfds[1];
         mWriteStream = new ParcelFileDescriptor.AutoCloseOutputStream(mWriteFd);
         mWritePrinter = new PrintWriter(new BufferedOutputStream(mWriteStream));
+        if (notExpected != null) {
+            mNotExpected.addAll(Arrays.asList(notExpected));
+        }
         mReaderThread = new ReaderThread();
         mReaderThread.start();
-        waitFor(3600000L, MONITOR_READY);
-    }
-
-    /**
-     * Wait for the ANR.
-     *
-     * @return true if it was successful, false if it got a timeout.
-     */
-    public boolean waitFor(final long timeout) {
-        return waitFor(timeout, WAIT_FOR_ANR);
+        waitFor(MONITOR_READY, 3600000L);
     }
 
     /**
@@ -97,15 +100,16 @@ public final class AnrMonitor {
      *
      * @return true if it was successful, false if it got a timeout.
      */
-    private boolean waitFor(final long timeout, final String expected) {
+    public boolean waitFor(final String expected, final long timeout) {
         final long waitUntil = SystemClock.uptimeMillis() + timeout;
         synchronized (mPendingLines) {
             while (true) {
                 while (mPendingLines.size() == 0) {
                     final long now = SystemClock.uptimeMillis();
                     if (now >= waitUntil) {
-                        Log.d(TAG, "Timed out waiting for next line: expected=" + expected);
-                        return false;
+                        String msg = "Timed out waiting for next line: expected=" + expected;
+                        Log.d(TAG, msg);
+                        throw new IllegalStateException(msg);
                     }
                     try {
                         mPendingLines.wait(waitUntil - now);
@@ -115,6 +119,13 @@ public final class AnrMonitor {
                 final String line = mPendingLines.remove(0);
                 if (TextUtils.equals(line, expected)) {
                     return true;
+                } else if (TextUtils.equals(line, WAIT_FOR_EARLY_ANR)
+                        || TextUtils.equals(line, WAIT_FOR_ANR)
+                        || TextUtils.equals(line, WAIT_FOR_CRASHED)) {
+                    // If we are getting any of the unexpected state,
+                    // for example, get a crash while waiting for an ANR,
+                    // it could be from another unrelated process, kill it directly.
+                    sendCommand(CMD_KILL);
                 }
             }
         }
@@ -141,8 +152,10 @@ public final class AnrMonitor {
      * @param cmd could be {@link #CMD_KILL}, {@link #CMD_QUIT} or {@link #CMD_CONTINUE}.
      */
     public void sendCommand(final String cmd) {
-        mWritePrinter.println(cmd);
-        mWritePrinter.flush();
+        synchronized (mPendingLines) {
+            mWritePrinter.println(cmd);
+            mWritePrinter.flush();
+        }
     }
 
     private final class ReaderThread extends Thread {
@@ -152,6 +165,13 @@ public final class AnrMonitor {
                 String line;
                 while ((line = mReadReader.readLine()) != null) {
                     Log.i(TAG, "debug: " + line);
+                    if (mNotExpected.contains(line)) {
+                        // If we are getting any of the unexpected state,
+                        // for example, get a crash while waiting for an ANR,
+                        // it could be from another unrelated process, kill it directly.
+                        sendCommand(CMD_KILL);
+                        continue;
+                    }
                     synchronized (mPendingLines) {
                         mPendingLines.add(line);
                         mPendingLines.notifyAll();

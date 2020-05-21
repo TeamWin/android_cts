@@ -16,8 +16,10 @@
 
 package android.provider.cts.media;
 
+import static android.provider.cts.ProviderTestUtils.assertColorMostlyEquals;
 import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
+import static android.provider.cts.ProviderTestUtils.extractAverageColor;
 import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
@@ -445,7 +447,7 @@ public class MediaStore_Images_ThumbnailsTest {
             assertTrue(thumb.getHeight() < full.getHeight());
 
             // Thumbnail should match contents
-            assertColorMostlyEquals(Color.RED, thumb.getPixel(16, 16));
+            assertColorMostlyEquals(Color.RED, extractAverageColor(thumb));
         }
 
         // Verify legacy APIs still work
@@ -463,7 +465,7 @@ public class MediaStore_Images_ThumbnailsTest {
                 assertTrue(thumb.getHeight() < full.getHeight());
 
                 // Thumbnail should match contents
-                assertColorMostlyEquals(Color.RED, thumb.getPixel(16, 16));
+                assertColorMostlyEquals(Color.RED, extractAverageColor(thumb));
             }
         }
 
@@ -479,7 +481,7 @@ public class MediaStore_Images_ThumbnailsTest {
             // Thumbnail should match updated contents
             ProviderTestUtils.waitForIdle();
             final Bitmap thumb = mContentResolver.loadThumbnail(finalUri, new Size(32, 32), null);
-            assertColorMostlyEquals(Color.BLUE, thumb.getPixel(16, 16));
+            assertColorMostlyEquals(Color.BLUE, extractAverageColor(thumb));
         }
 
         // Delete image contents
@@ -501,12 +503,4 @@ public class MediaStore_Images_ThumbnailsTest {
         bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
     }
 
-    /**
-     * Since thumbnails might be bounced through a compression pass, we're okay
-     * if they're mostly equal.
-     */
-    private static void assertColorMostlyEquals(int expected, int actual) {
-        assertEquals(Integer.toHexString(expected & 0xF0F0F0F0),
-                Integer.toHexString(actual & 0xF0F0F0F0));
-    }
 }

@@ -142,10 +142,6 @@ public class MediaStore_Video_MediaTest {
         values.put(Media.MIME_TYPE, "video/3gpp");
         values.put(Media.SIZE, numBytes);
         values.put(Media.TITLE, "testvideo");
-        long dateAdded = System.currentTimeMillis() / 1000;
-        values.put(Media.DATE_ADDED, dateAdded);
-        long dateModified = videoFile.lastModified() / 1000;
-        values.put(Media.DATE_MODIFIED, dateModified);
 
         // insert
         Uri uri = mContentResolver.insert(mExternalVideo, values);
@@ -175,9 +171,6 @@ public class MediaStore_Video_MediaTest {
             assertEquals("video/3gpp", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
             assertEquals("testvideo", c.getString(c.getColumnIndex(Media.TITLE)));
             assertEquals(numBytes, c.getInt(c.getColumnIndex(Media.SIZE)));
-            long realDateAdded = c.getLong(c.getColumnIndex(Media.DATE_ADDED));
-            assertTrue(realDateAdded >= dateAdded);
-            assertEquals(dateModified, c.getLong(c.getColumnIndex(Media.DATE_MODIFIED)));
             assertTrue(c.isNull(c.getColumnIndex(Media.COLOR_STANDARD)));
             assertTrue(c.isNull(c.getColumnIndex(Media.COLOR_TRANSFER)));
             assertTrue(c.isNull(c.getColumnIndex(Media.COLOR_RANGE)));

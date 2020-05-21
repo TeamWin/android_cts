@@ -43,6 +43,11 @@ public class CompatChangesSystemApiTest extends CompatChangeGatingTestCase {
         installPackage(TEST_APK, true);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        uninstallPackage(TEST_PKG, true);
+    }
+
     public void testIsChangeEnabled() throws Exception {
         runDeviceCompatTest(TEST_PKG, ".CompatChangesTest", "isChangeEnabled_changeEnabled",
                 /*enabledChanges*/ImmutableSet.of(CTS_SYSTEM_API_CHANGEID),

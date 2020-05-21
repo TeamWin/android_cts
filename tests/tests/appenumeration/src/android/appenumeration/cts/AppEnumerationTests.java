@@ -28,7 +28,6 @@ import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
-import static android.appenumeration.cts.Constants.ALL_QUERIES_TARGETING_R_PACKAGES;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
@@ -95,7 +94,6 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.hamcrest.core.IsNull;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -136,12 +134,6 @@ public class AppEnumerationTests {
         sResponseThread = new HandlerThread("response");
         sResponseThread.start();
         sResponseHandler = new Handler(sResponseThread.getLooper());
-    }
-
-    @Before
-    public void setupTest() {
-        if (!sGlobalFeatureEnabled) return;
-        setFeatureEnabledForAll(true);
     }
 
     @AfterClass
@@ -207,13 +199,6 @@ public class AppEnumerationTests {
     public void queriesNothing_cannotSeeNonForceQueryable() throws Exception {
         assertNotVisible(QUERIES_NOTHING, TARGET_NO_API);
         assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
-    }
-
-    @Test
-    public void queriesNothing_featureOff_canSeeAll() throws Exception {
-        setFeatureEnabledForAll(QUERIES_NOTHING, false);
-        assertVisible(QUERIES_NOTHING, TARGET_NO_API);
-        assertVisible(QUERIES_NOTHING, TARGET_FILTERS);
     }
 
     @Test
@@ -443,19 +428,6 @@ public class AppEnumerationTests {
         } catch (MissingBroadcastException e) {
             fail();
         }
-    }
-
-    private void setFeatureEnabledForAll(Boolean enabled) {
-        for (String pkgName : ALL_QUERIES_TARGETING_R_PACKAGES) {
-            setFeatureEnabledForAll(pkgName, enabled);
-        }
-        setFeatureEnabledForAll(QUERIES_NOTHING_Q, enabled == null ? null : false);
-    }
-
-    private void setFeatureEnabledForAll(String packageName, Boolean enabled) {
-        SystemUtil.runShellCommand(
-                "am compat " + (enabled == null ? "reset" : enabled ? "enable" : "disable")
-                        + " 135549675 " + packageName);
     }
 
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
