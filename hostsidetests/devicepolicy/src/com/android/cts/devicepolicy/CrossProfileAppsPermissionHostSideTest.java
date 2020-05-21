@@ -40,6 +40,8 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
     private static final String TEST_WITH_REQUESTED_PERMISSION_CLASS =
             ".CrossProfileAppsPermissionToInteractTest";
     private static final String TEST_WITH_REQUESTED_PERMISSION_APK = "CtsCrossProfileAppsTests.apk";
+    private static final String TEST_WITH_REQUESTED_PERMISSION_RECEIVER_TEST_CLASS =
+            TEST_WITH_REQUESTED_PERMISSION_PACKAGE + ".AdminReceiver";
 
     private static final String TEST_WITH_NO_REQUESTED_PERMISSION_PACKAGE =
             "com.android.cts.crossprofilenopermissionappstest";
@@ -150,6 +152,32 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
                 TEST_WITH_NO_REQUESTED_PERMISSION_PACKAGE,
                 TEST_WITH_NO_REQUESTED_PERMISSION_CLASS,
                 "testCanRequestInteractAcrossProfiles_permissionNotRequested_returnsFalse",
+                mPrimaryUserId,
+                Collections.EMPTY_MAP);
+    }
+
+    @Test
+    public void testCanRequestInteractAcrossProfiles_profileOwner_returnsFalse()
+            throws Exception {
+        installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
+        mProfileId = createManagedProfile(mPrimaryUserId);
+        getDevice().startUser(mProfileId, /* waitFlag= */ true);
+        installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mProfileId);
+        final String receiverComponentName =
+                TEST_WITH_REQUESTED_PERMISSION_PACKAGE + "/"
+                        + TEST_WITH_REQUESTED_PERMISSION_RECEIVER_TEST_CLASS;
+        setProfileOwnerOrFail(receiverComponentName, mProfileId);
+        runDeviceTestsAsUser(
+                TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
+                TEST_WITH_REQUESTED_PERMISSION_CLASS,
+                "testSetCrossProfilePackages_noAsserts",
+                mProfileId,
+                createCrossProfilePackageParam(TEST_WITH_REQUESTED_PERMISSION_PACKAGE));
+
+        runDeviceTestsAsUser(
+                TEST_WITH_REQUESTED_PERMISSION_PACKAGE,
+                TEST_WITH_REQUESTED_PERMISSION_CLASS,
+                "testCanRequestInteractAcrossProfiles_returnsFalse",
                 mPrimaryUserId,
                 Collections.EMPTY_MAP);
     }
