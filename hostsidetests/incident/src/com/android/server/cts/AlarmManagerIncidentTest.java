@@ -16,18 +16,18 @@
 
 package com.android.server.cts;
 
-import com.android.server.AlarmClockMetadataProto;
-import com.android.server.AlarmManagerServiceDumpProto;
-import com.android.server.AlarmProto;
-import com.android.server.BatchProto;
-import com.android.server.BroadcastStatsProto;
-import com.android.server.ConstantsProto;
-import com.android.server.FilterStatsProto;
+import com.android.server.alarm.AlarmClockMetadataProto;
+import com.android.server.alarm.AlarmManagerServiceDumpProto;
+import com.android.server.alarm.AlarmProto;
+import com.android.server.alarm.BatchProto;
+import com.android.server.alarm.BroadcastStatsProto;
+import com.android.server.alarm.ConstantsProto;
+import com.android.server.alarm.FilterStatsProto;
 import com.android.server.AppStateTrackerProto;
 import com.android.server.AppStateTrackerProto.RunAnyInBackgroundRestrictedPackages;
-import com.android.server.IdleDispatchEntryProto;
-import com.android.server.InFlightProto;
-import com.android.server.WakeupEventProto;
+import com.android.server.alarm.IdleDispatchEntryProto;
+import com.android.server.alarm.InFlightProto;
+import com.android.server.alarm.WakeupEventProto;
 import java.util.List;
 
 /**
