@@ -16,6 +16,8 @@
 
 package android.appsecurity.cts;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.platform.test.annotations.SecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -803,6 +805,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         if (!hasIncrementalFeature()) {
             return;
         }
+
         // APK generated with:
         // apksigner sign --v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled
         assertInstallV4Succeeds("v4-digest-v2.apk");
@@ -813,6 +816,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         if (!hasIncrementalFeature()) {
             return;
         }
+
         // APK generated with:
         // apksigner sign --v2-signing-enabled false --v3-signing-enabled true --v4-signing-enabled
         assertInstallV4Succeeds("v4-digest-v3.apk");
@@ -823,9 +827,72 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         if (!hasIncrementalFeature()) {
             return;
         }
+
         // APK generated with:
         // apksigner sign --v2-signing-enabled true --v3-signing-enabled true --v4-signing-enabled
         assertInstallV4Succeeds("v4-digest-v2v3.apk");
+    }
+
+    public void testInstallV4WithV2NoVeritySigner() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // APK generated with:
+        // --v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled
+        // Full commands in generate-apks.sh
+        assertInstallV4Succeeds("v4-digest-v2-Sha256withDSA.apk");
+        assertInstallV4Succeeds("v4-digest-v2-Sha256withEC.apk");
+        assertInstallV4Succeeds("v4-digest-v2-Sha256withRSA.apk");
+        assertInstallV4Succeeds("v4-digest-v2-Sha512withEC.apk");
+        assertInstallV4Succeeds("v4-digest-v2-Sha512withRSA.apk");
+    }
+
+    public void testInstallV4WithV2VeritySigner() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // APK generated with:
+        // --v2-signing-enabled true --v3-signing-enabled false
+        // --v4-signing-enabled --verity-enabled
+        // Full commands in generate-apks.sh
+        assertInstallV4Succeeds("v4-digest-v2-Sha256withDSA-Verity.apk");
+        assertInstallV4Succeeds("v4-digest-v2-Sha256withEC-Verity.apk");
+        assertInstallV4Succeeds("v4-digest-v2-Sha256withRSA-Verity.apk");
+    }
+
+    public void testInstallV4WithV3NoVeritySigner() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // APK generated with:
+        // --v2-signing-enabled false --v3-signing-enabled true --v4-signing-enabled
+        // Full commands in generate-apks.sh
+        assertInstallV4Succeeds("v4-digest-v3-Sha256withDSA.apk");
+        assertInstallV4Succeeds("v4-digest-v3-Sha256withEC.apk");
+        assertInstallV4Succeeds("v4-digest-v3-Sha256withRSA.apk");
+        assertInstallV4Succeeds("v4-digest-v3-Sha512withEC.apk");
+        assertInstallV4Succeeds("v4-digest-v3-Sha512withRSA.apk");
+    }
+
+    public void testInstallV4WithV3VeritySigner() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // APK generated with:
+        // --v2-signing-enabled false --v3-signing-enabled true
+        // --v4-signing-enabled --verity-enabled
+        // Full commands in generate-apks.sh
+        assertInstallV4Succeeds("v4-digest-v3-Sha256withDSA-Verity.apk");
+        assertInstallV4Succeeds("v4-digest-v3-Sha256withEC-Verity.apk");
+        assertInstallV4Succeeds("v4-digest-v3-Sha256withRSA-Verity.apk");
     }
 
     public void testInstallV4WithV2SignerDoesNotVerify() throws Exception {
@@ -916,6 +983,12 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         String installResult = installV4PackageFromResource(apkFilenameInResources);
         if (!installResult.equals("Success\n")) {
             fail("Failed to install " + apkFilenameInResources + ": " + installResult);
+        }
+        try {
+            uninstallPackage();
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to uninstall after installing " + apkFilenameInResources, e);
         }
     }
 
