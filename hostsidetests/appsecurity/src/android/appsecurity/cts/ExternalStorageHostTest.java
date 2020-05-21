@@ -39,7 +39,6 @@ import com.google.protobuf.Parser;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -215,7 +214,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * Verify that app without REQUEST_INSTALL_PACKAGES can't access obb
      * directories belonging to other apps.
      */
-    @Ignore("Re-enable as part of b/148918640")
     @Test
     public void testCantAccessOtherObbDirs() throws Exception {
         try {
