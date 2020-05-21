@@ -70,13 +70,15 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
     private final Object mLock = new Object();
     private final Object mUiLock = new Object();
     private WifiConfiguration mTestNetwork;
+    private TestNetworkCallback mNetworkCallback;
     private boolean mWasVerboseLoggingEnabled;
     private boolean mWasScanThrottleEnabled;
 
     private static final int DURATION = 10_000;
-    private static final int DURATION_UI_INTERACTION = 15_000;
-    private static final int DURATION_NETWORK_CONNECTION = 30_000;
+    private static final int DURATION_UI_INTERACTION = 25_000;
+    private static final int DURATION_NETWORK_CONNECTION = 60_000;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
+    private static final int SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID = 3;
 
     @Override
     protected void setUp() throws Exception {
@@ -130,6 +132,10 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
         }
         if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
         turnScreenOff();
+        // If there is failure, ensure we unregister the previous request.
+        if (mNetworkCallback != null) {
+            mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+        }
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.enableNetwork(mTestNetwork.networkId, false));
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -260,7 +266,6 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
                 try {
                     mWifiManager.registerNetworkRequestMatchCallback(
                             Executors.newSingleThreadExecutor(), networkRequestMatchCallback);
-                    // now wait for the registration callback first.
                     mUiLock.wait(DURATION_UI_INTERACTION);
                 } catch (InterruptedException e) {
                 }
@@ -271,7 +276,6 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
             // 2. Wait for matching scan results
             synchronized (mUiLock) {
                 try {
-                    // now wait for the registration callback first.
                     mUiLock.wait(DURATION_UI_INTERACTION);
                 } catch (InterruptedException e) {
                 }
@@ -290,7 +294,6 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
             // 4. Wait for connection success or abort.
             synchronized (mUiLock) {
                 try {
-                    // now wait for the registration callback first.
                     mUiLock.wait(DURATION_UI_INTERACTION);
                 } catch (InterruptedException e) {
                 }
@@ -318,7 +321,7 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
         Thread uiThread = new Thread(() -> handleUiInteractions(shouldUserReject));
 
         // File the network request & wait for the callback.
-        TestNetworkCallback networkCallbackListener = new TestNetworkCallback(mLock);
+        mNetworkCallback = new TestNetworkCallback(mLock);
         synchronized (mLock) {
             try {
                 // File a request for wifi network.
@@ -327,7 +330,7 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
                                 .addTransportType(TRANSPORT_WIFI)
                                 .setNetworkSpecifier(specifier)
                                 .build(),
-                        networkCallbackListener);
+                        mNetworkCallback);
                 // Wait for the request to reach the wifi stack before kick-starting the UI
                 // interactions.
                 Thread.sleep(100);
@@ -339,9 +342,9 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
             }
         }
         if (shouldUserReject) {
-            assertTrue(networkCallbackListener.onUnavailableCalled);
+            assertTrue(mNetworkCallback.onUnavailableCalled);
         } else {
-            assertTrue(networkCallbackListener.onAvailableCalled);
+            assertTrue(mNetworkCallback.onAvailableCalled);
         }
 
         try {
@@ -352,7 +355,8 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
         }
 
         // Release the request after the test.
-        mConnectivityManager.unregisterNetworkCallback(networkCallbackListener);
+        mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+        mNetworkCallback = null;
     }
 
     private void testSuccessfulConnectionWithSpecifier(WifiNetworkSpecifier specifier) {
@@ -447,25 +451,27 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
      * this matching may pick the wrong one.
      */
     private ScanResult findScanResultMatchingSavedNetwork() {
-        // Trigger a scan to get fresh scan results.
-        TestScanResultsCallback scanResultsCallback = new TestScanResultsCallback(mLock);
-        synchronized (mLock) {
-            try {
-                mWifiManager.registerScanResultsCallback(
-                        Executors.newSingleThreadExecutor(), scanResultsCallback);
-                mWifiManager.startScan(new WorkSource(myUid()));
-                // now wait for callback
-                mLock.wait(DURATION_NETWORK_CONNECTION);
-            } catch (InterruptedException e) {
-            } finally {
-                mWifiManager.unregisterScanResultsCallback(scanResultsCallback);
+        for (int i = 0; i < SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID; i++) {
+            // Trigger a scan to get fresh scan results.
+            TestScanResultsCallback scanResultsCallback = new TestScanResultsCallback(mLock);
+            synchronized (mLock) {
+                try {
+                    mWifiManager.registerScanResultsCallback(
+                            Executors.newSingleThreadExecutor(), scanResultsCallback);
+                    mWifiManager.startScan(new WorkSource(myUid()));
+                    // now wait for callback
+                    mLock.wait(DURATION_NETWORK_CONNECTION);
+                } catch (InterruptedException e) {
+                } finally {
+                    mWifiManager.unregisterScanResultsCallback(scanResultsCallback);
+                }
             }
-        }
-        List<ScanResult> scanResults = mWifiManager.getScanResults();
-        if (scanResults == null || scanResults.isEmpty()) fail("No scan results available");
-        for (ScanResult scanResult : scanResults) {
-            if (TextUtils.equals(scanResult.SSID, removeDoubleQuotes(mTestNetwork.SSID))) {
-                return scanResult;
+            List<ScanResult> scanResults = mWifiManager.getScanResults();
+            if (scanResults == null || scanResults.isEmpty()) fail("No scan results available");
+            for (ScanResult scanResult : scanResults) {
+                if (TextUtils.equals(scanResult.SSID, removeDoubleQuotes(mTestNetwork.SSID))) {
+                    return scanResult;
+                }
             }
         }
         fail("No matching scan results found");
