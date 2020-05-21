@@ -1320,16 +1320,25 @@ public class WifiManagerTest extends AndroidTestCase {
                 android.Manifest.permission.WIFI_UPDATE_USABILITY_STATS_SCORE
         }, PackageManager.MATCH_UNINSTALLED_PACKAGES);
 
-        List<String> uniquePackageNames = holding
-                .stream()
-                .map(pi -> pi.packageName)
-                .distinct()
-                .collect(Collectors.toList());
+        Set<String> uniqueNonSystemPackageNames = new HashSet<>();
+        for (PackageInfo pi : holding) {
+            String packageName = pi.packageName;
+            // Shell is allowed to hold this permission for testing.
+            int uid = -1;
+            try {
+                uid = pm.getPackageUidAsUser(packageName, UserHandle.USER_SYSTEM);
+            } catch (PackageManager.NameNotFoundException e) {
+                continue;
+            }
+            if (uid == Process.SHELL_UID) continue;
 
-        if (uniquePackageNames.size() > 1) {
+            uniqueNonSystemPackageNames.add(packageName);
+        }
+
+        if (uniqueNonSystemPackageNames.size() > 1) {
             fail("The WIFI_UPDATE_USABILITY_STATS_SCORE permission must not be held by more than "
-                + "one application, but is held by " + uniquePackageNames.size() + " applications: "
-                + String.join(", ", uniquePackageNames));
+                + "one application, but is held by " + uniqueNonSystemPackageNames.size()
+                + " applications: " + String.join(", ", uniqueNonSystemPackageNames));
         }
     }
 
