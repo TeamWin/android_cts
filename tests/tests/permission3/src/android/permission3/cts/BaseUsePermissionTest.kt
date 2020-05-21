@@ -174,6 +174,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
     }
 
+    protected fun clearTargetSdkWarning() =
+        click(By.res("android:id/button1"))
+
     protected fun clickPermissionReviewContinue() =
         click(By.res("com.android.permissioncontroller:id/continue_button"))
 
