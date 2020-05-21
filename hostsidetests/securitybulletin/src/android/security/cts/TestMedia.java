@@ -222,30 +222,6 @@ public class TestMedia extends SecurityTestCase {
     }
 
     /**
-     * b/24346430
-     * Vulnerability Behaviour: SIGSEGV in self
-     **/
-    @Test
-    @SecurityTest(minPatchLevel = "2015-12")
-    public void testPocCVE_2015_6632() throws Exception {
-        String inputFiles[] = {"cve_2015_6632.mp4"};
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2015-6632",
-                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
-    }
-
-    /**
-     * b/62133227
-     * Vulnerability Behaviour: SIGSEGV in self
-     **/
-    @Test
-    @SecurityTest(minPatchLevel = "2017-09")
-    public void testPocCVE_2017_0778() throws Exception {
-        String inputFiles[] = {"cve_2017_0778.mp4"};
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0778",
-                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
-    }
-
-    /**
      * b/36576151
      * Vulnerability Behaviour: SIGSEGV in self
      **/
