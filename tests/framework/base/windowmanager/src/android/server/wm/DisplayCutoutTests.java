@@ -46,9 +46,11 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -232,6 +234,7 @@ public class DisplayCutoutTests {
     }
 
     private void runTest(int cutoutMode, TestDef test, int orientation) {
+        assumeTrue("Skipping test: orientation not supported", supportsOrientation(orientation));
         final TestActivity activity = launchAndWait(mDisplayCutoutActivity,
                 cutoutMode, orientation);
 
@@ -506,6 +509,25 @@ public class DisplayCutoutTests {
             return (appBounds.width() > appBounds.height()) == (displaySize.x > displaySize.y);
         });
         return activity;
+    }
+
+    private boolean supportsOrientation(int orientation) {
+        String systemFeature = "";
+        switch(orientation) {
+            case SCREEN_ORIENTATION_PORTRAIT:
+            case SCREEN_ORIENTATION_REVERSE_PORTRAIT:
+                systemFeature = PackageManager.FEATURE_SCREEN_PORTRAIT;
+                break;
+            case SCREEN_ORIENTATION_LANDSCAPE:
+            case SCREEN_ORIENTATION_REVERSE_LANDSCAPE:
+                systemFeature = PackageManager.FEATURE_SCREEN_LANDSCAPE;
+                break;
+            default:
+                throw new UnsupportedOperationException("Orientation not supported");
+        }
+
+        return getInstrumentation().getTargetContext().getPackageManager()
+                .hasSystemFeature(systemFeature);
     }
 
     public static class TestActivity extends Activity {

@@ -53,7 +53,6 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItems;
 
-import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.os.SystemProperties;
@@ -169,10 +168,6 @@ public class KeyAttestationTest extends AndroidTestCase {
         boolean[] devicePropertiesAttestationValues = {true, false};
         boolean[] includeValidityDatesValues = {true, false};
 
-        // Skip the test if there is no secure lock screen
-        if (!hasSecureLockScreen()) {
-            return;
-        }
         for (int curveIndex = 0; curveIndex < curves.length; ++curveIndex) {
             for (int challengeIndex = 0; challengeIndex < challenges.length; ++challengeIndex) {
                 for (int purposeIndex = 0; purposeIndex < purposes.length; ++purposeIndex) {
@@ -347,10 +342,6 @@ public class KeyAttestationTest extends AndroidTestCase {
         };
         boolean[] devicePropertiesAttestationValues = {true, false};
 
-        // Skip the test if there is no secure lock screen
-        if (!hasSecureLockScreen()) {
-            return;
-        }
         for (boolean devicePropertiesAttestation : devicePropertiesAttestationValues) {
             for (int keySize : keySizes) {
                 for (byte[] challenge : challenges) {
@@ -1247,16 +1238,5 @@ public class KeyAttestationTest extends AndroidTestCase {
                 throw e;
             }
         }
-    }
-    /*
-     * Device that don't report android.software.device_admin doesn't have secure lock screen
-     * because device with secure lock screen MUST report android.software.device_admin .
-     *
-     * https://source.android.com/compatibility/7.0/android-7.0-cdd.html#3_9_device_administration
-     *
-     */
-    private boolean hasSecureLockScreen() {
-        PackageManager pm = getContext().getPackageManager();
-        return pm.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
     }
 }

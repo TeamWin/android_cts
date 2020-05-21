@@ -52,9 +52,6 @@ public abstract class USBAudioPeripheralActivity extends PassFailButtons.Activit
 
     protected final boolean mIsMandatedRequired;
 
-    // This will be overriden...
-    protected  int mSystemSampleRate = 48000;
-
     // Widgets
     private TextView mProfileNameTx;
     private TextView mProfileDescriptionTx;
@@ -138,9 +135,6 @@ public abstract class USBAudioPeripheralActivity extends PassFailButtons.Activit
 
         mAudioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
         mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
-
-        mSystemSampleRate = Integer.parseInt(
-            mAudioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE));
     }
 
     protected void connectPeripheralStatusWidgets() {

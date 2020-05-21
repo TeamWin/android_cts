@@ -3744,8 +3744,14 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host:android.hardware.audio.pro" />
         </activity>
 
-        <!-- ProAudio test invokes the "Loopback" App -->
-        <activity android:name="org.drrickorang.loopback"/>
+        <activity android:name=".audio.AnalogHeadsetAudioActivity"
+            android:label="@string/audio_headset_audio_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+        </activity>
 
         <activity android:name=".audio.AudioLoopbackLatencyActivity"
                   android:label="@string/audio_loopback_latency_test">

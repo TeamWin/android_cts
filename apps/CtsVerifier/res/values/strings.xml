@@ -4045,20 +4045,22 @@ You should be prompted to select credentials; choose the ones you just installed
         Please do the following:\n
         1) You should have received NotificationBot.apk together with the CTS verifier. If you built the CTS verifier yourself, build the NotificationBot.apk by issuing the following command on the host:\n
             make NotificationBot\n
-        2) Upload the NotificationBot.apk to your device by issuing the following command on the host:\n
+        2) Grant MANAGE_EXTERNAL_STORAGE by issuing the following command on the host:\n
+            adb shell appops set com.android.cts.verifier MANAGE_EXTERNAL_STORAGE 0\n
+        3) Upload the NotificationBot.apk to your device by issuing the following command on the host:\n
             adb push /path/to/NotificationBot.apk /sdcard\n
-        3) Press the Uninstall button.\n
-        4) Press the Open Settings button.\n
-        5) In the screen that opens, verify that you are not told that your administrator installed any apps.\n
-        6) Use the Back button to return to this page.\n
-        7) Press the Install button.\n
-        8) Press the Open Settings button.\n
-        9) In the screen that opens, verify that you are told now that your administrator installed at least one app.\n
-        10) Tap on that information. Verify that a list of apps installed shows.\n
-        11) Verify that the list contains the CTS Robot app.\n
-        12) Use the Back button to return to this page.\n
-        13) Press the Uninstall button.\n
-        14) Issue the following command on the host:\n
+        4) Press the Uninstall button.\n
+        5) Press the Open Settings button.\n
+        6) In the screen that opens, verify that you are not told that your administrator installed any apps.\n
+        7) Use the Back button to return to this page.\n
+        8) Press the Install button.\n
+        9) Press the Open Settings button.\n
+        10) In the screen that opens, verify that you are told now that your administrator installed at least one app.\n
+        11) Tap on that information. Verify that a list of apps installed shows.\n
+        12) Verify that the list contains the CTS Robot app.\n
+        13) Use the Back button to return to this page.\n
+        14) Press the Uninstall button.\n
+        15) Issue the following command on the host:\n
             adb shell rm /sdcard/NotificationBot.apk
     </string>
     <string name="enterprise_privacy_install">Install</string>
@@ -4959,7 +4961,24 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="vr_test_usb_noise_instructions">TEST USB NOISE: Connect USB microphone and position it right next to microphone under test.
         Position speakers 40 cms from device under test. Press [PLAY] to play broadband white noise. Press [TEST]</string>
 
-
+    <!-- Analog Headset Test -->
+    <string name="audio_headset_audio_test">Analog Headset Audio Test</string>
+    <string name="analog_headset_query">Does this Android device have an analog headset jack?</string>
+    <string name="analog_headset_play">Play</string>
+    <string name="analog_headset_stop">Stop</string>
+    <string name="analog_headset_success_question">Was the audio correctly played through the headset/headphones?</string>
+    <string name="analog_headset_keycodes_label">Headset Keycodes</string>
+    <string name="analog_headset_headsethook">HEADSETHOOK</string>
+    <string name="analog_headset_volup">VOLUME_UP</string>
+    <string name="analog_headset_voldown">VOLUME_DOWN</string>
+    <string name="analog_headset_test">Analog Headset Test</string>
+    <string name="analog_headset_test_info">
+        This test tests the following functionality with respect to wired analog headset/headphones.\n
+        1. Correct audio playback.\n
+        2. Plug intents.\n
+        3. Headset keycodes.\n
+        To run this test it is necessary to have an Android device with a 3.5mm analog headset jack and a compatible analog headset with Hook, Volume Up and Volume Down buttons.
+    </string>
     <!-- Audio AEC Test -->
     <string name="audio_aec_test">Audio Acoustic Echo Cancellation (AEC) Test</string>
     <string name="audio_aec_info">
