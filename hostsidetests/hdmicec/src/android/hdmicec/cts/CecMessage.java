@@ -90,6 +90,10 @@ public class CecMessage {
         return builder.toString();
     }
 
+    public static String getParamsAsString(String message) {
+        return getNibbles(message).substring(4);
+    }
+
     /** Gets the params from a CEC message. */
     public static int getParams(String message) {
         return hexStringToInt(getNibbles(message).substring(4));
