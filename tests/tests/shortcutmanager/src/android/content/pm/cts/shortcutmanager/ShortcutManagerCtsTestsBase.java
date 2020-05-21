@@ -449,6 +449,19 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         return ret;
     }
 
+    /**
+     * Makes and array of shortcut IDs.
+     * For example, makeIds("sX", 4, 9) will return {"sX4", "sX5", "sX6", "sX7", "sX8", "sX9"}.
+     */
+    protected String[] makeIds(String prefix, int first, int last) {
+        final int len = last - first + 1;
+        final String[] ret = new String[len];
+        for (int i = 0; i < len; i++) {
+            ret[i] = prefix + (first + i);
+        }
+        return ret;
+    }
+
     protected ShortcutInfo.Builder makeShortcutBuilder(String id) {
         return new ShortcutInfo.Builder(getCurrentCallerContext(), id);
     }
