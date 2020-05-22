@@ -275,6 +275,8 @@ class MuxerTestHelper {
                     if (!ExtractorTest.isCSDIdentical(thisFormat, thatFormat)) continue;
                     if (mBufferInfo.get(i).size() == that.mBufferInfo.get(j).size()) {
                         long tolerance = thisMime.startsWith("video/") ? STTS_TOLERANCE_US : 0;
+                        // TODO(b/157008437) - muxed file pts is +1us of target pts
+                        tolerance += 1; // rounding error
                         int k = 0;
                         for (; k < mBufferInfo.get(i).size(); k++) {
                             MediaCodec.BufferInfo thisInfo = mBufferInfo.get(i).get(k);
@@ -843,10 +845,6 @@ public class MuxerTest {
         public void testOffsetPresentationTime() throws IOException {
             final int OFFSET_TS = 111000;
             Assume.assumeTrue(shouldRunTest(mOutFormat));
-            Assume.assumeTrue("TODO(b/148978457)",
-                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            Assume.assumeTrue("TODO(b/148978457)",
-                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP);
             Assume.assumeTrue("TODO(b/146423022)",
                     mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
             Assume.assumeTrue("TODO(b/146421018)",
@@ -876,10 +874,6 @@ public class MuxerTest {
         @Test
         public void testOffsetPresentationTimeNative() {
             Assume.assumeTrue(shouldRunTest(mOutFormat));
-            Assume.assumeTrue("TODO(b/148978457)",
-                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-            Assume.assumeTrue("TODO(b/148978457)",
-                    mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP);
             Assume.assumeTrue("TODO(b/146423022)",
                     mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
             Assume.assumeTrue("TODO(b/146421018)",
@@ -991,8 +985,6 @@ public class MuxerTest {
         public void testSimpleMux() throws IOException {
             Assume.assumeTrue("TODO(b/146421018)",
                     !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
-            Assume.assumeTrue("TODO(b/146923287)",
-                    !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
             MuxerTestHelper mediaInfo = new MuxerTestHelper(mInpPath, mMime);
             assertEquals("error! unexpected track count", 1, mediaInfo.getTrackCount());
             for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; format++) {
@@ -1022,8 +1014,6 @@ public class MuxerTest {
         public void testSimpleMuxNative() {
             Assume.assumeTrue("TODO(b/146421018)",
                     !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
-            Assume.assumeTrue("TODO(b/146923287)",
-                    !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
             assertTrue(nativeTestSimpleMux(mInpPath, mOutPath, mMime, selector));
         }
     }
