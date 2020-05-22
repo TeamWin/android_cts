@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.graphics.PixelFormat.TRANSLUCENT;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE;
@@ -26,6 +27,7 @@ import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
+import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
@@ -73,6 +75,7 @@ import java.util.List;
 public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds
+    private final static long TIME_SLICE = 50; // milliseconds
     private final static AnimationCallback ANIMATION_CALLBACK = new AnimationCallback();
 
     @Rule
@@ -116,6 +119,58 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             });
             PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
         }
+    }
+
+    private void testTopAppHidesStatusBarInternal(Activity activity, View rootView,
+            Runnable hidingStatusBar) {
+        if (rootView.getRootWindowInsets().isVisible(statusBars())) {
+
+            // The top-fullscreen-app window hides status bar.
+            getInstrumentation().runOnMainSync(hidingStatusBar);
+            PollingCheck.waitFor(TIMEOUT,
+                    () -> !rootView.getRootWindowInsets().isVisible(statusBars()));
+
+            // Add a non-fullscreen window on top of the fullscreen window.
+            // The new focused window doesn't hide status bar.
+            getInstrumentation().runOnMainSync(
+                    () -> activity.getWindowManager().addView(
+                            new View(activity),
+                            new WindowManager.LayoutParams(1 /* w */, 1 /* h */, TYPE_APPLICATION,
+                                    0 /* flags */, TRANSLUCENT)));
+
+            // Check if status bar stays invisible.
+            for (long time = TIMEOUT; time >= 0; time -= TIME_SLICE) {
+                assertFalse(rootView.getRootWindowInsets().isVisible(statusBars()));
+                SystemClock.sleep(TIME_SLICE);
+            }
+        }
+    }
+
+    @Test
+    public void testTopAppHidesStatusBarByMethod() {
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+
+        testTopAppHidesStatusBarInternal(activity, rootView,
+                () -> rootView.getWindowInsetsController().hide(statusBars()));
+    }
+
+    @Test
+    public void testTopAppHidesStatusBarByWindowFlag() {
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+
+        testTopAppHidesStatusBarInternal(activity, rootView,
+                () -> activity.getWindow().addFlags(FLAG_FULLSCREEN));
+    }
+
+    @Test
+    public void testTopAppHidesStatusBarBySystemUiFlag() {
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+
+        testTopAppHidesStatusBarInternal(activity, rootView,
+                () -> rootView.setSystemUiVisibility(SYSTEM_UI_FLAG_FULLSCREEN));
     }
 
     @Test
