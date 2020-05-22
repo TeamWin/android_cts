@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import static org.junit.Assert.*;
+import junit.framework.Assert;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class TestMedia extends SecurityTestCase {
@@ -39,6 +40,50 @@ public class TestMedia extends SecurityTestCase {
      * To prevent merge conflicts, add tests for O below this comment, before any
      * existing test methods
      ******************************************************************************/
+
+    /**
+     * b/66969193
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2018-01")
+    @Test
+    public void testPocCVE_2017_13179() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13179", null, getDevice());
+    }
+
+    /**
+     * b/127702368
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2019-08")
+    @Test
+    public void testPocCVE_2019_2126() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2126", null, getDevice());
+    }
+
+    /**
+     * b/36389123
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2017-08")
+    @Test
+    public void testPocCVE_2017_0726() throws Exception {
+        String inputFiles[] = {"cve_2017_0726.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0726",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/37239013
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2017-07")
+    @Test
+    public void testPocCVE_2017_0697() throws Exception {
+        String inputFiles[] = {"cve_2017_0697.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0697",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
 
     /**
      * b/111603051
@@ -117,15 +162,8 @@ public class TestMedia extends SecurityTestCase {
         if (cmdOut.length() > 0) {
             String[] segment = cmdOut.split("\\s+");
             if (segment.length > 1) {
-                int gid = -1;
-                if ((segment[1]).length() < Integer.toString(Integer.MAX_VALUE).length()) {
-                    try {
-                        gid = Integer.parseInt(segment[1]);
-                    } catch (NumberFormatException e) {
-                    }
-                }
-                if (gid == 0) {
-                    fail("mediametrics has root group id");
+                if (segment[1].trim().equals("0")) {
+                    Assert.fail("mediametrics has root group id");
                 }
             }
         }
