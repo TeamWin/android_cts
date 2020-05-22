@@ -389,7 +389,7 @@ public class WifiManagerTest extends AndroidTestCase {
             while (System.currentTimeMillis() < timeout
                     && mNetworkInfo.getState() != state)
                 mMySync.wait(WAIT_MSEC);
-            assertEquals(mNetworkInfo.getState(), state);
+            assertEquals(state, mNetworkInfo.getState());
         }
     }
 
@@ -405,7 +405,7 @@ public class WifiManagerTest extends AndroidTestCase {
         synchronized (mMySync) {
             long timeout = System.currentTimeMillis() + TEST_WAIT_DURATION_MS + WAIT_MSEC;
             while (System.currentTimeMillis() < timeout) {
-                assertNotEquals(mNetworkInfo.getState(), state);
+                assertNotEquals(state, mNetworkInfo.getState());
                 mMySync.wait(WAIT_MSEC);
             }
         }
