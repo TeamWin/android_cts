@@ -31,6 +31,7 @@ import android.support.test.uiautomator.UiSelector
 import android.text.Spanned
 import android.text.style.ClickableSpan
 import android.view.View
+import com.android.compatibility.common.util.SystemUtil.eventually
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -173,6 +174,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     fun uninstallApp() {
         uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
     }
+
+    protected fun clearTargetSdkWarning() =
+        click(By.res("android:id/button1"))
 
     protected fun clickPermissionReviewContinue() =
         click(By.res("com.android.permissioncontroller:id/continue_button"))
@@ -345,16 +349,26 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         if (isTv) {
             pressHome()
         }
-        // Open the app details settings
-        context.startActivity(
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", APP_PACKAGE_NAME, null)
-                addCategory(Intent.CATEGORY_DEFAULT)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        // Try multiple times as the AppInfo page might have read stale data
+        eventually({
+            try {
+                // Open the app details settings
+                context.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", APP_PACKAGE_NAME, null)
+                            addCategory(Intent.CATEGORY_DEFAULT)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                )
+                // Open the permissions UI
+                click(byTextRes(R.string.permissions).enabled(true))
+            } catch (e: Exception) {
+                pressBack()
+                throw e
             }
-        )
-        // Open the permissions UI
-        click(byTextRes(R.string.permissions).enabled(true))
+        }, TIMEOUT_MILLIS)
+
         for (permission in permissions) {
             // Find the permission screen
             val permissionLabel = getPermissionLabel(permission)
