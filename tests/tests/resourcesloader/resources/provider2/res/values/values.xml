@@ -21,4 +21,7 @@
 
     <string name="additional">Two</string>
     <public type="string" name="additional" id="0x7f0400fe" />
+
+    <string name="two_and_four_only">Two</string>
+    <public type="string" name="two_and_four_only" id="0x7f0400ff" />
 </resources>
