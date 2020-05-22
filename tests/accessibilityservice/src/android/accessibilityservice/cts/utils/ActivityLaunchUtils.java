@@ -14,12 +14,12 @@
 
 package android.accessibilityservice.cts.utils;
 
+import static android.accessibility.cts.common.ShellCommandBuilder.execShellCommand;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -58,6 +58,8 @@ import java.util.stream.Collectors;
  */
 public class ActivityLaunchUtils {
     private static final String LOG_TAG = "ActivityLaunchUtils";
+    private static final String AM_START_HOME_ACTIVITY_COMMAND =
+            "am start -a android.intent.action.MAIN -c android.intent.category.HOME";
 
     // Using a static variable so it can be used in lambdas. Not preserving state in it.
     private static Activity mTempActivity;
@@ -131,7 +133,7 @@ public class ActivityLaunchUtils {
         try {
             executeAndWaitOn(
                     uiAutomation,
-                    () -> uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME),
+                    () -> execShellCommand(uiAutomation, AM_START_HOME_ACTIVITY_COMMAND),
                     () -> isHomeScreenShowing(context, uiAutomation),
                     DEFAULT_TIMEOUT_MS,
                     "home screen");

@@ -25,7 +25,8 @@ where some fields may not be present, but have the following meaning:
 Generation of these apks was performed using the `apksigner` command-line tool,
 which lives at `tools/apksig/src/apksigner/java/com/android/apksigner/` in the
 android source tree.  Please refer to the usage instructions there for how to
-sign APKs using different keystores, providers, etc.  
+sign APKs using different keystores, providers, etc.  The generation commands
+for some of the APKs are in `generate-apks.sh`.
 
 ## Invalid cases
 

@@ -52,6 +52,7 @@ class PermissionReviewTest : BaseUsePermissionTest() {
             clickPermissionReviewContinue()
         }
 
+        clearTargetSdkWarning()
         assertAppHasCalendarAccess(false)
     }
 
@@ -69,6 +70,7 @@ class PermissionReviewTest : BaseUsePermissionTest() {
             clickPermissionReviewContinue()
         }
 
+        clearTargetSdkWarning()
         assertAppHasCalendarAccess(true)
     }
 
@@ -89,6 +91,7 @@ class PermissionReviewTest : BaseUsePermissionTest() {
             clickPermissionReviewContinue()
         }
 
+        clearTargetSdkWarning()
         assertAppHasCalendarAccess(false)
     }
 
