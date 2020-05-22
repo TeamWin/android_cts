@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Copyright (C) 2020 The Android Open Source Project
   ~
@@ -15,6 +14,14 @@
   ~ limitations under the License.
   -->
 
-<resources>
-    <public type="string" name="additional" id="0x7f0400fe" />
-</resources>
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android" android:visible="false">
+    <uses-policies>
+        <wipe-data />
+        <disable-camera />
+        <limit-password />
+        <disable-keyguard-features/>
+        <force-lock />
+        <expire-password />
+        <watch-login />
+    </uses-policies>
+</device-admin>

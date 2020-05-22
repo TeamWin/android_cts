@@ -31,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.location.Criteria;
@@ -38,6 +39,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
+import android.location.cts.common.ProximityPendingIntentCapture;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -223,6 +225,18 @@ public class LocationManagerCoarseTest {
     @AppModeFull(reason = "Instant apps can't hold ACCESS_LOCATION_EXTRA_COMMANDS")
     public void testSendExtraCommand() {
         mManager.sendExtraCommand(TEST_PROVIDER, "command", null);
+    }
+
+    @Test
+    public void testAddProximityAlert() {
+        try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
+            try {
+                mManager.addProximityAlert(0, 0, 100, -1, capture.getPendingIntent());
+                fail("addProximityAlert() should fail with only ACCESS_COARSE_LOCATION");
+            } catch (SecurityException e) {
+                // pass
+            }
+        }
     }
 
     // TODO: this test should probably not be in the location module
