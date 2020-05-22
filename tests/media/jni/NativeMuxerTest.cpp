@@ -280,7 +280,8 @@ bool MuxerNativeTestHelper::isSubsetOf(MuxerNativeTestHelper* that) {
                 if (!isCSDIdentical(thisFormat, thatFormat)) continue;
                 if (mBufferInfo[i].size() == that->mBufferInfo[j].size()) {
                     int tolerance =
-                            strncmp(thisMime, "video/", strlen("video/")) ? 0 : STTS_TOLERANCE_US;
+                            !strncmp(thisMime, "video/", strlen("video/")) ? STTS_TOLERANCE_US : 0;
+                    tolerance += 1; // rounding error
                     int k = 0;
                     for (; k < mBufferInfo[i].size(); k++) {
                         AMediaCodecBufferInfo* thisInfo = mBufferInfo[i][k];
