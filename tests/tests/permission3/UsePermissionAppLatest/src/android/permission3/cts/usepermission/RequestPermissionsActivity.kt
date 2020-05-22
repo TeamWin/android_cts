@@ -24,8 +24,10 @@ class RequestPermissionsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val permissions = intent.getStringArrayExtra("$packageName.PERMISSIONS")!!
-        requestPermissions(permissions, 1)
+        if (savedInstanceState == null) {
+            val permissions = intent.getStringArrayExtra("$packageName.PERMISSIONS")!!
+            requestPermissions(permissions, 1)
+        }
     }
 
     override fun onRequestPermissionsResult(
