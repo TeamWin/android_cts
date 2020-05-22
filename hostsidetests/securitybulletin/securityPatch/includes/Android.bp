@@ -13,15 +13,22 @@
 // limitations under the License.
 
 filegroup {
-    name: "cts_securitybulletin_memutils",
+    name: "cts_hostsidetests_securitybulletin_memutils",
     srcs: [
         "memutils.c",
     ],
 }
 
 filegroup {
-    name: "cts_securitybulletin_omxutils",
+    name: "cts_hostsidetests_securitybulletin_omxutils",
     srcs: [
         "omxUtils.cpp",
+    ],
+}
+
+filegroup {
+    name: "cts_hostsidetests_securitybulletin_memutils_track",
+    srcs: [
+        "memutils_track.c",
     ],
 }
