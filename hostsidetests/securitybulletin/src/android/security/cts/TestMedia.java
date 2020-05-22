@@ -41,6 +41,30 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/36389123
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2017-08")
+    @Test
+    public void testPocCVE_2017_0726() throws Exception {
+        String inputFiles[] = {"cve_2017_0726.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0726",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/37239013
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2017-07")
+    @Test
+    public void testPocCVE_2017_0697() throws Exception {
+        String inputFiles[] = {"cve_2017_0697.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0697",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/112159345
      * Vulnerability Behaviour: SIGSEGV in self
      **/
@@ -60,4 +84,5 @@ public class TestMedia extends SecurityTestCase {
      * To prevent merge conflicts, add tests for Q below this comment, before any
      * existing test methods
      ******************************************************************************/
+
 }
