@@ -44,7 +44,7 @@ abstract class BasePermissionTest {
 
         const val IDLE_TIMEOUT_MILLIS: Long = 1000
         const val UNEXPECTED_TIMEOUT_MILLIS = 1000
-        const val TIMEOUT_MILLIS: Long = 10000
+        const val TIMEOUT_MILLIS: Long = 20000
     }
 
     protected val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
