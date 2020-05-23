@@ -33,4 +33,7 @@
         <option name="runtime-hint" value="2m" />
         <option name="isolated-storage" value="false" />
     </test>
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.MainlineTestModuleController">
+        <option name="mainline-module-package-name" value="android.jobscheduler.cts" />
+    </object>
 </configuration>
