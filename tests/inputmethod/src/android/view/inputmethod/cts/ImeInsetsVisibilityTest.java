@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts;
 
+import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
+import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
@@ -27,9 +29,13 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
+import static org.junit.Assert.assertTrue;
+
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.os.SystemClock;
 import android.util.Pair;
 import android.view.Gravity;
@@ -37,12 +43,14 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
@@ -60,6 +68,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -67,6 +76,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @RunWith(AndroidJUnit4.class)
 public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final int NEW_KEYBOARD_HEIGHT = 400;
+
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.ImeInsetsVisibilityTest";
 
@@ -87,7 +98,7 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
 
             final String marker = getTestMarker();
             final Pair<EditText, TestActivity> editTextTestActivityPair =
-                    launchTestActivity(marker);
+                    launchTestActivity(false, marker);
             final EditText editText = editTextTestActivityPair.first;
             final TestActivity activity = editTextTestActivityPair.second;
 
@@ -123,7 +134,86 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
         }
     }
 
-    private Pair<EditText, TestActivity> launchTestActivity(@NonNull String focusedMarker) {
+    @Test
+    public void testEditTextPositionAndPersistWhenAboveImeWindowShown() throws Exception {
+        final InputMethodManager imm = InstrumentationRegistry.getInstrumentation().getContext()
+                .getSystemService(InputMethodManager.class);
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder().setInputViewHeight(NEW_KEYBOARD_HEIGHT))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final Pair<EditText, TestActivity> editTextTestActivityPair =
+                    launchTestActivity(true, marker);
+            final EditText editText = editTextTestActivityPair.first;
+            final TestActivity activity = editTextTestActivityPair.second;
+            final WindowInsets[] insetsFromActivity = new WindowInsets[1];
+            Point curEditPos = getLocationOnScreenForView(editText);
+
+            TestUtils.runOnMainSync(() -> {
+                activity.getWindow().getDecorView().setOnApplyWindowInsetsListener(
+                        (v, insets) -> insetsFromActivity[0] = insets);
+            });
+
+            notExpectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            // Emulate tap event to show soft-keyboard
+            CtsTouchUtils.emulateTapOnViewCenter(
+                    InstrumentationRegistry.getInstrumentation(), null, editText);
+            TestUtils.waitOnMainUntil(() -> editText.hasFocus(), TIMEOUT);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.VISIBLE, TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            Point lastEditTextPos = new Point(curEditPos);
+            curEditPos = getLocationOnScreenForView(editText);
+            assertTrue("Insets should visible and EditText position should be adjusted",
+                    isInsetsVisible(insetsFromActivity[0], WindowInsets.Type.ime())
+                            && curEditPos.y < lastEditTextPos.y);
+
+            imm.showInputMethodPicker();
+            TestUtils.waitOnMainUntil(() -> imm.isInputMethodPickerShown() && editText.isLaidOut(),
+                    TIMEOUT, "InputMethod picker should be shown");
+            lastEditTextPos = new Point(curEditPos);
+            curEditPos = getLocationOnScreenForView(editText);
+
+            assertTrue("Insets visibility & EditText position should persist when " +
+                            "the above IME window shown",
+                    isInsetsVisible(insetsFromActivity[0], WindowInsets.Type.ime())
+                            && curEditPos.equals(lastEditTextPos));
+
+            InstrumentationRegistry.getInstrumentation().getContext().sendBroadcast(
+                    new Intent(ACTION_CLOSE_SYSTEM_DIALOGS).setFlags(FLAG_RECEIVER_FOREGROUND));
+            TestUtils.waitOnMainUntil(() -> !imm.isInputMethodPickerShown(), TIMEOUT,
+                    "InputMethod picker should be closed");
+        }
+    }
+
+    private boolean isInsetsVisible(WindowInsets winInsets, int type) {
+        if (winInsets == null) {
+            return false;
+        }
+        return winInsets.isVisible(type);
+    }
+
+    private Point getLocationOnScreenForView(View view) {
+        return TestUtils.getOnMainSync(() -> {
+            final int[] tmpPos = new int[2];
+            view.getLocationOnScreen(tmpPos);
+            return new Point(tmpPos[0], tmpPos[1]);
+        });
+    }
+
+    private Pair<EditText, TestActivity> launchTestActivity(boolean useDialogTheme,
+            @NonNull String focusedMarker) {
         final AtomicReference<EditText> focusedEditTextRef = new AtomicReference<>();
         final AtomicReference<TestActivity> testActivityRef = new AtomicReference<>();
 
@@ -131,6 +221,15 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
             layout.setGravity(Gravity.BOTTOM);
+            if (useDialogTheme) {
+                // Create a floating Dialog
+                activity.setTheme(android.R.style.Theme_Material_Dialog);
+                TextView textView = new TextView(activity);
+                textView.setText("I'm a TextView");
+                textView.setHeight(activity.getWindowManager().getMaximumWindowMetrics()
+                        .getBounds().height() / 2);
+                layout.addView(textView);
+            }
 
             final EditText focusedEditText = new EditText(activity);
             focusedEditText.setHint("focused editText");
