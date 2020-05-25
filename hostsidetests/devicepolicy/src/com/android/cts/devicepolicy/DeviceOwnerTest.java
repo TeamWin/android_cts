@@ -700,6 +700,17 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("DeviceOwnerProvisioningTest");
     }
 
+    /**
+     *  Only allow provisioning flow to be disabled if Android TV device
+     */
+    @Test
+    public void testAllowProvisioningProperty() throws Exception {
+        boolean isProvisioningAllowedForNormalUsers =
+                getBooleanSystemProperty("ro.config.allowuserprovisioning", true);
+        boolean isTv = hasDeviceFeature("android.software.leanback");
+        assertTrue(isProvisioningAllowedForNormalUsers || isTv);
+    }
+
     @Test
     public void testDisallowFactoryReset() throws Exception {
         if (!mHasFeature) {
