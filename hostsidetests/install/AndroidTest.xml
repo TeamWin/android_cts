@@ -34,5 +34,6 @@
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="class" value="android.cts.install.host.InstallTest" />
         <option name="class" value="android.cts.install.host.DowngradeTest" />
+        <option name="class" value="android.cts.install.host.SamegradeTest" />
     </test>
 </configuration>
