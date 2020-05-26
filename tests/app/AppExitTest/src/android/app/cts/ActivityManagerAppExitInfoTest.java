@@ -43,6 +43,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
 import android.system.Os;
 import android.system.OsConstants;
 import android.test.InstrumentationTestCase;
@@ -129,6 +130,7 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     private int mOtherUserId;
     private UserHandle mOtherUserHandle;
     private DropBoxManager.Entry mAnrEntry;
+    private SettingsSession<String> mDataAnrSettings;
 
     @Override
     protected void setUp() throws Exception {
@@ -147,6 +149,11 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         mHandler = new H(mHandlerThread.getLooper());
         mMessenger = new Messenger(mHandler);
         executeShellCmd("cmd deviceidle whitelist +" + STUB_PACKAGE_NAME);
+        mDataAnrSettings = new SettingsSession<>(
+                Settings.Global.getUriFor(
+                        Settings.Global.DROPBOX_TAG_PREFIX + "data_app_anr"),
+                Settings.Global::getString, Settings.Global::putString);
+        mDataAnrSettings.set("enabled");
     }
 
     private void handleMessagePid(Message msg) {
@@ -207,6 +214,9 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         executeShellCmd("cmd deviceidle whitelist -" + STUB_PACKAGE_NAME);
         removeTestUserIfNecessary();
         mHandlerThread.quitSafely();
+        if (mDataAnrSettings != null) {
+            mDataAnrSettings.close();
+        }
     }
 
     private int createUser(String name, boolean guest) throws Exception {
