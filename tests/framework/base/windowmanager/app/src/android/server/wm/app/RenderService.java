@@ -73,10 +73,7 @@ public class RenderService extends Service {
         embeddedView.setOnTouchListener(this::onTouch);
         DisplayMetrics metrics = new DisplayMetrics();
         displayContext.getDisplay().getMetrics(metrics);
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(metrics.widthPixels,
-                metrics.heightPixels, TYPE_APPLICATION, 0,
-                PixelFormat.OPAQUE);
-        surfaceControlViewHost.setView(embeddedView, lp);
+        surfaceControlViewHost.setView(embeddedView, metrics.widthPixels, metrics.heightPixels);
         return surfaceControlViewHost;
     }
 
