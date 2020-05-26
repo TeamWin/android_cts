@@ -357,6 +357,21 @@ public class TestMedia extends SecurityTestCase {
      * existing test methods
      ******************************************************************************/
 
+    /**
+     * b/112891564
+     * Vulnerability Behaviour: SIGSEGV in self (Android P),
+     *                          SIGABRT in self (Android Q onward)
+     */
+    @SecurityTest(minPatchLevel = "2018-11")
+    @Test
+    public void testPocCVE_2018_9537() throws Exception {
+        String binaryName = "CVE-2018-9537";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
 
     /******************************************************************************
      * To prevent merge conflicts, add tests for Q below this comment, before any
