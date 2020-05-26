@@ -1001,4 +1001,9 @@ public class MockImeSession implements AutoCloseable {
         params.putInt("height", height);
         return callCommandInternal("setHeight", params);
     }
+
+    @NonNull
+    public ImeCommand callSetInlineSuggestionsExtras(@NonNull Bundle bundle) {
+        return callCommandInternal("setInlineSuggestionsExtras", bundle);
+    }
 }
