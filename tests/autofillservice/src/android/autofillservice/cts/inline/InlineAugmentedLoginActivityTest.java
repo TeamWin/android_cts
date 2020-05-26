@@ -37,7 +37,6 @@ import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
-import android.view.inputmethod.InlineSuggestionsRequest;
 import android.widget.EditText;
 
 import org.junit.Test;
@@ -160,13 +159,6 @@ public class InlineAugmentedLoginActivityTest
 
         // Assert request
         assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
-        // TODO: Use helper function instead of assert here. There are some cases augment aufill
-        // will ask IME for inline suggestion request, we will have inline suggestion request in
-        // augment aufill cts, we need to re-visit all augment aufill tests. It is not suitable to
-        // use helper function to assert InlineSuggestionsRequest currently.
-        final InlineSuggestionsRequest inlineRequest =
-                request1.request.getInlineSuggestionsRequest();
-        assertThat(inlineRequest).isNotNull();
 
         // Confirm one suggestion
         mUiBot.assertDatasets("dude", "DUDE");
@@ -205,13 +197,6 @@ public class InlineAugmentedLoginActivityTest
 
         // Assert request
         assertBasicRequestInfo(request1, mActivity, usernameId, usernameValue);
-        // TODO: Use helper function instead of assert here. There are some cases augment aufill
-        // will ask IME for inline suggestion request, we will have inline suggestion request in
-        // augment aufill cts, we need to re-visit all augment aufill tests. It is not suitable to
-        // use helper function to assert InlineSuggestionsRequest currently.
-        final InlineSuggestionsRequest inlineRequest =
-                request1.request.getInlineSuggestionsRequest();
-        assertThat(inlineRequest).isNotNull();
 
         // Confirm two suggestion
         mUiBot.assertDatasets("dude");
