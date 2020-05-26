@@ -325,9 +325,20 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @LargeTest
     public void testInstallStagedApex_SameGrade() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        installV3Apex();
+        installV3Apex();
+    }
 
-        installV3Apex();
-        installV3Apex();
+    @Test
+    @LargeTest
+    public void testInstallStagedApex_SameGrade_NewOneWins() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        installV2Apex();
+
+        runPhase("testInstallStagedApex_SameGrade_NewOneWins_Commit");
+        getDevice().reboot();
+        runPhase("testInstallStagedApex_SameGrade_NewOneWins_VerifyPostReboot");
     }
 
     @Test
