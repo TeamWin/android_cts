@@ -209,6 +209,7 @@
         <!--__________________-->
         <!-- Bulletin 2018-11 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2018-9537->/data/local/tmp/CVE-2018-9537" />
         <option name="push" value="CVE-2018-9539->/data/local/tmp/CVE-2018-9539" />
 
         <!--__________________-->
