@@ -48,11 +48,6 @@ const char* TBD_AMEDIAFORMAT_KEY_BIT_RATE_MODE = "bitrate-mode";
 bool isCSDIdentical(AMediaFormat* refFormat, AMediaFormat* testFormat) {
     const char* mime;
     AMediaFormat_getString(refFormat, AMEDIAFORMAT_KEY_MIME, &mime);
-    /* TODO(b/154177490) */
-    if ((strcmp(mime, AMEDIA_MIMETYPE_VIDEO_VP9) == 0) ||
-        (strcmp(mime, AMEDIA_MIMETYPE_VIDEO_AV1) == 0)) {
-        return true;
-    }
     for (int i = 0;; i++) {
         std::pair<void*, size_t> refCsd;
         std::pair<void*, size_t> testCsd;
