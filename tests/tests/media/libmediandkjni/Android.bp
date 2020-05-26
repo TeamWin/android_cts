@@ -27,7 +27,7 @@ cc_test_library {
         "libnativehelper_compat_libc++",
         "liblog",
     ],
-    sdk_version: "current",
+    sdk_version: "29",
     cflags: [
         "-Werror",
         "-Wall",
