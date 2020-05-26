@@ -105,6 +105,7 @@ public class StagedInstallTest {
     private static final Duration SLEEP_DURATION = Duration.ofMillis(200);
 
     private static final String SHIM_PACKAGE_NAME = "com.android.apex.cts.shim";
+    private static final String APK_SHIM_PACKAGE_NAME = "com.android.cts.ctsshim";
     private static final String NOT_PREINSTALL_APEX_PACKAGE_NAME =
             "com.android.apex.cts.shim_not_pre_installed";
     private static final String DIFFERENT_APEX_PACKAGE_NAME = "com.android.apex.cts.shim.different";
@@ -133,6 +134,9 @@ public class StagedInstallTest {
     private static final TestApp ApexWrongSha2 = new TestApp(
             "ApexWrongSha2", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
             "com.android.apex.cts.shim.v2_wrong_sha.apex");
+    private static final TestApp Apex2WithoutApkInApex = new TestApp(
+            "Apex2WithoutApkInApex", SHIM_PACKAGE_NAME, 2, /*isApex*/true,
+            "com.android.apex.cts.shim.v2_without_apk_in_apex.apex");
     private static final TestApp Apex3SignedBob = new TestApp(
             "Apex3SignedBob", SHIM_PACKAGE_NAME, 3, /*isApex*/true,
             "com.android.apex.cts.shim.v3_signed_bob.apex");
@@ -558,6 +562,7 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionApplied(sessionId);
         assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(getInstalledVersion(APK_SHIM_PACKAGE_NAME)).isNotEqualTo(-1);
     }
 
     @Test
@@ -1043,6 +1048,23 @@ public class StagedInstallTest {
                         throw exc;
                     }
                 });
+    }
+
+    @Test
+    public void testInstallStagedApex_SameGrade_NewOneWins_Commit() throws Exception {
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(getInstalledVersion(APK_SHIM_PACKAGE_NAME)).isNotEqualTo(-1);
+        int sessionId = Install.single(Apex2WithoutApkInApex).setStaged().commit();
+        assertSessionReady(sessionId);
+        storeSessionId(sessionId);
+    }
+
+    @Test
+    public void testInstallStagedApex_SameGrade_NewOneWins_VerifyPostReboot() throws Exception {
+        int sessionId = retrieveLastSessionId();
+        assertSessionApplied(sessionId);
+        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(2);
+        assertThat(getInstalledVersion(APK_SHIM_PACKAGE_NAME)).isEqualTo(-1);
     }
 
     /**
