@@ -42,6 +42,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.util.concurrent.Executor;
 
 import org.junit.After;
@@ -124,9 +125,35 @@ public class TunerDvrTest {
         d.stop();
         d.close();
         if (filter != null) {
+            d.detachFilter(filter);
             filter.stop();
             filter.close();
         }
+
+        tmpFile.delete();
+    }
+
+    @Test
+    public void testDvrPlayback() throws Exception {
+        if (!hasTuner()) return;
+        DvrPlayback d = mTuner.openDvrPlayback(1000, getExecutor(), getPlaybackListener());
+        assertNotNull(d);
+        d.configure(getDvrSettings());
+
+        File tmpFile = File.createTempFile("cts_tuner", "dvr_test");
+        try (RandomAccessFile raf = new RandomAccessFile(tmpFile, "rw")) {
+            byte[] bytes = new byte[] {3, 5, 10, 22, 73, 33, 19};
+            raf.write(bytes);
+        }
+        d.setFileDescriptor(
+                ParcelFileDescriptor.open(tmpFile, ParcelFileDescriptor.MODE_READ_WRITE));
+
+        d.start();
+        d.flush();
+        assertEquals(3, d.read(3));
+        assertEquals(3, d.read(new byte[3], 0, 3));
+        d.stop();
+        d.close();
 
         tmpFile.delete();
     }
@@ -135,6 +162,13 @@ public class TunerDvrTest {
         return new OnRecordStatusChangedListener() {
             @Override
             public void onRecordStatusChanged(int status) {}
+        };
+    }
+
+    private OnPlaybackStatusChangedListener getPlaybackListener() {
+        return new OnPlaybackStatusChangedListener() {
+            @Override
+            public void onPlaybackStatusChanged(int status) {}
         };
     }
 
