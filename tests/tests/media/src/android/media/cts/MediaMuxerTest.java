@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import android.media.cts.R;
+
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
@@ -24,12 +26,13 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import android.media.cts.R;
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +55,7 @@ public class MediaMuxerTest extends AndroidTestCase {
     private static final float TOLERANCE = 0.0002f;
     private static final long OFFSET_TIME_US = 29 * 60 * 1000000L; // 29 minutes
     private Resources mResources;
+    private boolean mAndroid11 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
 
     @Override
     public void setContext(Context context) {
@@ -77,6 +81,8 @@ public class MediaMuxerTest extends AndroidTestCase {
     }
 
     public void testDualAudioTrack() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         int source = R.raw.audio_aac_mono_70kbs_44100hz_aac_mono_70kbs_44100hz;
         String outputFilePath = File.createTempFile("MediaMuxerTest_testDualAudio", ".mp4")
                 .getAbsolutePath();
@@ -84,6 +90,8 @@ public class MediaMuxerTest extends AndroidTestCase {
     }
 
     public void testDualVideoAndAudioTrack() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         int source = R.raw.video_h264_30fps_video_h264_30fps_aac_44100hz_aac_44100hz;
         String outputFilePath = File.createTempFile("MediaMuxerTest_testDualVideoAudio", ".mp4")
                 .getAbsolutePath();
@@ -444,6 +452,8 @@ public class MediaMuxerTest extends AndroidTestCase {
      * when video and audio samples start after zero, audio later than video.
      */
     public void testTimestampsAudioBVideoStartOffsetAudioVideo() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         Vector<Integer> startOffsetUsVect = new Vector<Integer>();
         // Video starts at 200000us.
         startOffsetUsVect.add(200000);
@@ -457,6 +467,8 @@ public class MediaMuxerTest extends AndroidTestCase {
      * when video starts after zero and audio starts before zero.
      */
     public void testTimestampsAudioBVideoStartOffsetNegativeAudioVideo() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         Vector<Integer> startOffsetUsVect = new Vector<Integer>();
         // Video starts at 200000us.
         startOffsetUsVect.add(200000);
@@ -470,6 +482,8 @@ public class MediaMuxerTest extends AndroidTestCase {
      * samples start later than video.
      */
     public void testTimestampsAudioBVideoStartOffsetAudio() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         Vector<Integer> startOffsetUsVect = new Vector<Integer>();
         // Video starts at 0us.
         startOffsetUsVect.add(0);
@@ -483,6 +497,8 @@ public class MediaMuxerTest extends AndroidTestCase {
      * audio and video, audio later than video at 0us.
      */
     public void testTimestampsStartOffsetAudio() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         Vector<Integer> startOffsetUsVect = new Vector<Integer>();
         // Video starts at 0us.
         startOffsetUsVect.add(0);
@@ -496,6 +512,8 @@ public class MediaMuxerTest extends AndroidTestCase {
      * audio and video, video later than audio at 0us.
      */
     public void testTimestampsStartOffsetVideo() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         Vector<Integer> startOffsetUsVect = new Vector<Integer>();
         // Video starts at 500000us.
         startOffsetUsVect.add(500000);
@@ -509,6 +527,8 @@ public class MediaMuxerTest extends AndroidTestCase {
      * audio and video, audio later than video, positive offsets for both.
      */
     public void testTimestampsStartOffsetVideoAudio() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         Vector<Integer> startOffsetUsVect = new Vector<Integer>();
         // Video starts at 250000us.
         startOffsetUsVect.add(250000);
@@ -522,6 +542,8 @@ public class MediaMuxerTest extends AndroidTestCase {
      * audio and video, video later than audio, positive offets for both.
      */
     public void testTimestampsStartOffsetAudioVideo() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         Vector<Integer> startOffsetUsVect = new Vector<Integer>();
         // Video starts at 500000us.
         startOffsetUsVect.add(500000);
@@ -535,6 +557,8 @@ public class MediaMuxerTest extends AndroidTestCase {
      * audio and video, video later than audio, audio before zero.
      */
     public void testTimestampsStartOffsetNegativeAudioVideo() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         Vector<Integer> startOffsetUsVect = new Vector<Integer>();
         // Video starts at 50000us.
         startOffsetUsVect.add(50000);
