@@ -65,6 +65,7 @@ import com.android.compatibility.common.util.AppOpsUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -268,6 +269,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     @Test
     @FlakyTest(bugId = 130800326)
+    @Ignore  // TODO(b/145981637): Make this test work
     public void testActivityBlockedWhenForegroundActivityRestartsItself() throws Exception {
         // Start AppA foreground activity
         Intent intent = new Intent();
