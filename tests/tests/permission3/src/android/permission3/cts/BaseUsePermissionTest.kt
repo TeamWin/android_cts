@@ -271,8 +271,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         click(By.res("com.android.permissioncontroller:id/permission_allow_button"))
 
     protected fun clickPermissionRequestSettingsLinkAndAllowAlways() {
-        clickPermissionRequestSettingsLink()
-        clickAllowAlwaysInSettings()
+        eventually({
+            clickPermissionRequestSettingsLink()
+            clickAllowAlwaysInSettings()
+        }, TIMEOUT_MILLIS * 2)
         pressBack()
     }
 
@@ -294,15 +296,17 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected fun clickPermissionRequestSettingsLink() {
         waitForIdle()
-        // UiObject2 doesn't expose CharSequence.
-        val node = uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByViewId(
-            "com.android.permissioncontroller:id/detail_message"
-        )[0]
-        assertTrue(node.isVisibleToUser)
-        val text = node.text as Spanned
-        val clickableSpan = text.getSpans(0, text.length, ClickableSpan::class.java)[0]
-        // We could pass in null here in Java, but we need an instance in Kotlin.
-        clickableSpan.onClick(View(context))
+        eventually {
+            // UiObject2 doesn't expose CharSequence.
+            val node = uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByViewId(
+                    "com.android.permissioncontroller:id/detail_message"
+            )[0]
+            assertTrue(node.isVisibleToUser)
+            val text = node.text as Spanned
+            val clickableSpan = text.getSpans(0, text.length, ClickableSpan::class.java)[0]
+            // We could pass in null here in Java, but we need an instance in Kotlin.
+            clickableSpan.onClick(View(context))
+        }
         waitForIdle()
     }
 
