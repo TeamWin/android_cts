@@ -56,6 +56,7 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
+import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -306,6 +307,31 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         mListener.awaitAndAssert(CANCELLED);
         mListener.assertWasNotCalled(FINISHED);
+    }
+
+    @Test
+    public void testImeControl_isntInterruptedByStartingInput() throws Throwable {
+        if (mType != ime()) {
+            return;
+        }
+
+        setVisibilityAndWait(mType, false);
+
+        runOnUiThread(() -> {
+            setupAnimationListener();
+            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                    null, null, mListener);
+        });
+
+        mListener.awaitAndAssert(READY);
+
+        runTransition(true);
+        runOnUiThread(() -> {
+            mActivity.getSystemService(InputMethodManager.class).restartInput(mActivity.mEditor);
+        });
+
+        mListener.awaitAndAssert(FINISHED);
+        mListener.assertWasNotCalled(CANCELLED);
     }
 
     private void setupAnimationListener() {
