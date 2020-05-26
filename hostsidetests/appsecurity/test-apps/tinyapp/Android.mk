@@ -23,6 +23,12 @@ include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := CtsPkgInstallTinyApp
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
+# This is the test package v2 signed with the default key.
+include $(LOCAL_PATH)/base.mk
+LOCAL_MANIFEST_FILE := AndroidManifest-v2.xml
+LOCAL_PACKAGE_NAME := CtsPkgInstallTinyAppV2
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
 # This is the test package signed using the V1/V2 signature schemes with
 # two signers targeting SDK version 30 with sandbox version 1. From this
 # package the v1-ec-p256-two-signers-targetSdk-30.apk is created with the
