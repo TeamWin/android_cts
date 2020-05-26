@@ -2111,6 +2111,28 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
     }
 
+    public void testRemoveLongLivedShortcuts() {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            getManager().addDynamicShortcuts(list(makeLongLivedShortcut("s1"),
+                    makeLongLivedShortcut("s2"), makeLongLivedShortcut("s3")));
+
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds("s1", "s2", "s3");
+
+            // TODO: cache some shortcuts to verify the difference between removeDynamicShortcuts()
+            //  and removeLongLivedShortcuts
+
+            getManager().removeLongLivedShortcuts(list("s1", "s3"));
+
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds("s2");
+        });
+    }
+
     // TODO Test auto rank adjustment.
     // TODO Test save & load.
 }
