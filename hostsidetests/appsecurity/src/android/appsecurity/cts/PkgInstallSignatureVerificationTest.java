@@ -42,6 +42,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private static final String TEST_PKG = "android.appsecurity.cts.tinyapp";
     private static final String COMPANION_TEST_PKG = "android.appsecurity.cts.tinyapp_companion";
+    private static final String COMPANION2_TEST_PKG = "android.appsecurity.cts.tinyapp_companion2";
     private static final String DEVICE_TESTS_APK = "CtsV3SigningSchemeRotationTest.apk";
     private static final String DEVICE_TESTS_PKG = "android.appsecurity.cts.v3rotationtests";
     private static final String DEVICE_TESTS_CLASS = DEVICE_TESTS_PKG + ".V3RotationTest";
@@ -68,7 +69,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         Utils.prepareSingleUser(getDevice());
         assertNotNull(mCtsBuild);
         uninstallPackage();
-        uninstallCompanionPackage();
+        uninstallCompanionPackages();
         installDeviceTestPkg();
     }
 
@@ -612,6 +613,59 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-sharedUid.apk");
     }
 
+    public void testInstallV3MultipleAppsOneDeniesOldKeySharedUid() throws Exception {
+        // If two apps are installed as part of a sharedUid, one granting access to the sharedUid
+        // to the previous key and the other revoking access to the sharedUid, then when an app
+        // signed with the old key attempts to join the sharedUid the installation should be blocked
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+        assertInstallFromBuildFails("v3-ec-p256-1-sharedUid-companion2.apk");
+    }
+
+    public void testInstallV3MultipleAppsOneUpdatedToDenyOldKeySharedUid() throws Exception {
+        // Similar to the test above if two apps are installed as part of a sharedUid with both
+        // granting access to the sharedUid to the previous key then an app signed with the previous
+        // key should be allowed to install and join the sharedUid. If one of the first two apps
+        // is then updated with a lineage that denies access to the sharedUid for the old key the
+        // installation of this updated app should be blocked.
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps-sharedUid.apk");
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid-companion2.apk");
+        assertInstallFromBuildFails("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+    }
+
+    public void testInstallV3FirstAppOnlySignedByNewKeyLastAppOldKey() throws Exception {
+        // This test verifies the following scenario:
+        // - First installed app in sharedUid only signed with new key without lineage.
+        // - Second installed app in sharedUid signed with new key and includes lineage granting
+        //   access to the old key to join the sharedUid.
+        // - Last installed app in sharedUid signed with old key.
+        // The lineage should be updated when the second app is installed to allow the installation
+        // of the app signed with the old key.
+        assertInstallFromBuildSucceeds("v3-ec-p256-2-sharedUid-companion.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps-sharedUid.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid-companion2.apk");
+    }
+
+    public void testInstallV3AppSignedWithOldKeyUpdatedLineageDeniesShUidCap() throws Exception {
+        // If an app is installed as part of a sharedUid, and then that app is signed with a new key
+        // that rejects the previous key in the lineage the update should be allowed to proceed
+        // as the app is being updated to the newly rotated key.
+        assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+    }
+
+    public void testInstallV3TwoSharedUidAppsWithDivergedLineages() throws Exception {
+        // Apps that are installed as part of the sharedUserId with a lineage must have common
+        // ancestors; the platform will allow the installation if the lineage of an app being
+        // installed as part of the sharedUserId is the same, a subset, or a superset of the
+        // existing lineage, but if the lineage diverges then the installation should be blocked.
+        assertInstallFromBuildSucceeds("v3-por_Y_1_2-default-caps-sharedUid.apk");
+        assertInstallFromBuildFails("v3-por_Z_1_2-default-caps-sharedUid-companion.apk");
+    }
+
     public void testInstallV3KeyRotationSigPerm() throws Exception {
         // tests that a v3 signed APK can still get a signature permission from an app with its
         // older signing certificate.
@@ -722,7 +776,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // the current signer(s) via getApkContentsSigners. This test verifies when a V3 signed
         // package with a rotated key is queried getApkContentsSigners only returns the current
         // signer.
-        installApkFromBuild("v3-ec-p256-with-por_1_2-default-caps.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps.apk");
         Utils.runDeviceTests(
                 getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
                 "testGetApkContentsSignersShowsCurrent");
@@ -731,7 +785,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     public void testInstallV2MultipleSignersGetApkContentsSigners() throws Exception {
         // Similar to the above test, but verifies when an APK is signed with two V2 signers
         // getApkContentsSigners returns both of the V2 signers.
-        installApkFromBuild("v1v2-ec-p256-two-signers-targetSdk-30.apk");
+        assertInstallFromBuildSucceeds("v1v2-ec-p256-two-signers-targetSdk-30.apk");
         Utils.runDeviceTests(
                 getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
                 "testGetApkContentsSignersShowsMultipleSigners");
@@ -1050,14 +1104,23 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     private void installDeviceTestPkg() throws Exception {
-        installApkFromBuild(DEVICE_TESTS_APK);
+        assertInstallFromBuildSucceeds(DEVICE_TESTS_APK);
     }
 
-    private void installApkFromBuild(String apkName) throws Exception {
+    private void assertInstallFromBuildSucceeds(String apkName) throws Exception {
+        String result = installApkFromBuild(apkName);
+        assertNull("failed to install " + apkName + ", Reason: " + result, result);
+    }
+
+    private void assertInstallFromBuildFails(String apkName) throws Exception {
+        String result = installApkFromBuild(apkName);
+        assertNotNull("Successfully installed " + apkName + " when failure was expected", result);
+    }
+
+    private String installApkFromBuild(String apkName) throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File apk = buildHelper.getTestFile(apkName);
-        String result = getDevice().installPackage(apk, true, INSTALL_ARG_FORCE_QUERYABLE);
-        assertNull("failed to install " + apkName + ", Reason: " + result, result);
+        return getDevice().installPackage(apk, true, INSTALL_ARG_FORCE_QUERYABLE);
     }
 
     private String installPackageFromResource(String apkFilenameInResources, boolean ephemeral)
@@ -1146,8 +1209,10 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         return getDevice().uninstallPackage(TEST_PKG);
     }
 
-    private String uninstallCompanionPackage() throws DeviceNotAvailableException {
-        return getDevice().uninstallPackage(COMPANION_TEST_PKG);
+    private String uninstallCompanionPackages() throws DeviceNotAvailableException {
+        String result1 = getDevice().uninstallPackage(COMPANION_TEST_PKG);
+        String result2 = getDevice().uninstallPackage(COMPANION2_TEST_PKG);
+        return result1 != null ? result1 : result2;
     }
 
     private String uninstallDeviceTestPackage() throws DeviceNotAvailableException {
@@ -1156,7 +1221,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private void uninstallPackages() throws DeviceNotAvailableException {
         uninstallPackage();
-        uninstallCompanionPackage();
+        uninstallCompanionPackages();
         uninstallDeviceTestPackage();
     }
 }
