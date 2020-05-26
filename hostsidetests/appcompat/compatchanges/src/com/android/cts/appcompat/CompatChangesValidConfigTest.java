@@ -16,27 +16,27 @@
 
 package com.android.cts.appcompat;
 
- import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertThat;
 
 
- import java.util.ArrayList;
- import java.util.Arrays;
- import java.util.List;
- import java.util.Objects;
- import java.util.regex.Matcher;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
- import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 
- import android.compat.cts.CompatChangeGatingTestCase;
+import android.compat.cts.CompatChangeGatingTestCase;
 
- import org.w3c.dom.Document;
- import org.w3c.dom.Element;
- import org.w3c.dom.NamedNodeMap;
- import org.w3c.dom.Node;
- import org.w3c.dom.NodeList;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
- import javax.xml.parsers.DocumentBuilder;
- import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCase {
 
@@ -185,7 +185,11 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
         NodeList changeNodes = root.getElementsByTagName("compat-change");
         List<Change> changes = new ArrayList<>();
         for (int nodeIdx = 0; nodeIdx < changeNodes.getLength(); ++nodeIdx) {
-            changes.add(Change.fromNode(changeNodes.item(nodeIdx)));
+            Change change = Change.fromNode(changeNodes.item(nodeIdx));
+            // Exclude logging only changes from the expected config. See b/155264388.
+            if (!change.loggingOnly) {
+                changes.add(change);
+            }
         }
         return changes;
     }
