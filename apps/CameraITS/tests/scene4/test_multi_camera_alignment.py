@@ -281,11 +281,13 @@ def main():
         physical_raw_ids = []
         for i in ids:
             # Find YUV capable physical cameras
-            prop = cam.get_camera_properties_by_id(i)
-            physical_ids.append(i)
             props_physical[i] = cam.get_camera_properties_by_id(i)
+            if its.caps.backward_compatible(props_physical[i]) :
+                physical_ids.append(i)
             # Find first 2 RAW+RGB capable physical cameras
-            if (its.caps.raw16(prop) and not its.caps.mono_camera(props)
+            if (its.caps.raw16(props_physical[i])
+                        and not its.caps.mono_camera(props_physical[i])
+                        and its.caps.backward_compatible(props_physical[i])
                         and len(physical_raw_ids) < 2):
                 physical_raw_ids.append(i)
 
