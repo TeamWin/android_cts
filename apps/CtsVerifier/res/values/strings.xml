@@ -2283,6 +2283,11 @@ You should be prompted to select credentials; choose the ones you just installed
  1. Open Encryption and credentials.\n
  2. Tap Clear credentials.</string>
 
+    <!-- Strings for CA cert installation via intent test -->
+    <string name="cacert_install_via_intent">CA Cert install via intent</string>
+    <string name="cacert_install_via_intent_title">This test attempts to install a CA certificate via an intent.</string>
+    <string name="cacert_install_via_intent_info">Attempt installing a CA certificate via an intent, which should fail. If you see a dialog redirecting the user to Settings for installing the certificate, the test passed. If a any other dialog comes up, the test failed.</string>
+
     <!-- Strings for Widget -->
     <string name="widget_framework_test">Widget Framework Test</string>
     <string name="widget_framework_test_info">This test checks some basic features of the widget
