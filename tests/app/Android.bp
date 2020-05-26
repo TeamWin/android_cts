@@ -128,6 +128,7 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "CtsExternalServiceCommon",
+        "cts-wm-util",
     ],
     srcs: [
         "AppExitTest/src/**/*.java",
