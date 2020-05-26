@@ -28,6 +28,7 @@ import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.
 import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
+import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
 import android.autofillservice.cts.augmented.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
@@ -280,5 +281,101 @@ public class InlineAugmentedLoginActivityTest
 
         // Expect the inline suggestion to disappear.
         mUiBot.assertNoDatasets();
+    }
+
+    @Test
+    public void testSwitchInputMethod() throws Exception {
+        // Set services
+        enableService();
+        enableAugmentedService();
+
+        // Set expectations
+        final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+        sReplier.addResponse(NO_RESPONSE);
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude", createInlinePresentation("dude"))
+                        .build())
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req1")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        sAugmentedReplier.getNextFillRequest();
+
+        // Confirm suggestion
+        mUiBot.assertDatasets("dude");
+
+        // Trigger IME switch event
+        Helper.mockSwitchInputMethod(sContext);
+        mUiBot.waitForIdleSync();
+
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me 2")
+                        .setField(usernameId, "dude2", createInlinePresentation("dude2"))
+                        .build())
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req2")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+
+        // Confirm new fill request
+        sAugmentedReplier.getNextFillRequest();
+
+        // Confirm new suggestion
+        mUiBot.assertDatasets("dude2");
+    }
+
+    @Test
+    public void testSwitchInputMethod_mainServiceDisabled() throws Exception {
+        // Set services
+        Helper.disableAutofillService(sContext);
+        enableAugmentedService();
+
+        // Set expectations
+        final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me")
+                        .setField(usernameId, "dude", createInlinePresentation("dude"))
+                        .build())
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req1")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+        sAugmentedReplier.getNextFillRequest();
+
+        // Confirm suggestion
+        mUiBot.assertDatasets("dude");
+
+        // Trigger IME switch event
+        Helper.mockSwitchInputMethod(sContext);
+        mUiBot.waitForIdleSync();
+
+        sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
+                .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me 2")
+                        .setField(usernameId, "dude2", createInlinePresentation("dude2"))
+                        .build())
+                .setDataset(new CannedAugmentedFillResponse.Dataset.Builder("req2")
+                        .build(), usernameId)
+                .build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+
+        // Confirm new fill request
+        sAugmentedReplier.getNextFillRequest();
+
+        // Confirm new suggestion
+        mUiBot.assertDatasets("dude2");
     }
 }
