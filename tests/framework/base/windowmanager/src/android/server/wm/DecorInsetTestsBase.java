@@ -16,8 +16,12 @@
 
 package android.server.wm;
 
+import static org.junit.Assert.assertEquals;
+
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Insets;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -89,5 +93,40 @@ public class DecorInsetTestsBase {
                     ? View.SYSTEM_UI_FLAG_LAYOUT_STABLE : 0;
             return vis;
         }
+    }
+
+    public void assertContentViewLocationMatchesInsets() {
+        TestActivity activity = mDecorActivity.getActivity();
+
+        Insets insetsConsumedByDecor = Insets.subtract(
+                systemWindowInsetsOrZero(activity.mLastDecorInsets),
+                systemWindowInsetsOrZero(activity.mLastContentInsets));
+        Rect expectedContentRect = rectInWindow(activity.getWindow().getDecorView());
+        insetRect(expectedContentRect, insetsConsumedByDecor);
+
+        Rect actualContentRect = rectInWindow(activity.findViewById(android.R.id.content));
+
+        assertEquals("Decor consumed " + insetsConsumedByDecor + ", content rect:",
+                expectedContentRect, actualContentRect);
+    }
+
+    public Insets systemWindowInsetsOrZero(WindowInsets wi) {
+        if (wi == null) {
+            return Insets.NONE;
+        }
+        return wi.getSystemWindowInsets();
+    }
+
+    private Rect rectInWindow(View view) {
+        int[] loc = new int[2];
+        view.getLocationInWindow(loc);
+        return new Rect(loc[0], loc[1], loc[0] + view.getWidth(), loc[1] + view.getHeight());
+    }
+
+    private static void insetRect(Rect rect, Insets insets) {
+        rect.left += insets.left;
+        rect.top += insets.top;
+        rect.right -= insets.right;
+        rect.bottom -= insets.bottom;
     }
 }
