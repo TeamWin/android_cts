@@ -22,7 +22,7 @@ import its.objects
 import numpy as np
 
 FMT_ATOL = 0.01  # Absolute tolerance on format ratio
-AR_CHECKED = ["4:3", "16:9", "18:9"]  # Aspect ratios checked
+AR_CHECKED = ["4:3", "16:9", "18:9", "16:11"]  # Aspect ratios checked
 FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected
 LARGE_SIZE = 2000   # Define the size of a large image
 NAME = os.path.basename(__file__).split(".")[0]
