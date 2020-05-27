@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
+import android.media.tv.tuner.DemuxCapabilities;
 import android.media.tv.tuner.Descrambler;
 import android.media.tv.tuner.LnbCallback;
 import android.media.tv.tuner.Lnb;
@@ -36,6 +37,7 @@ import android.media.tv.tuner.dvr.OnRecordStatusChangedListener;
 import android.media.tv.tuner.filter.AudioDescriptor;
 import android.media.tv.tuner.filter.DownloadEvent;
 import android.media.tv.tuner.filter.FilterCallback;
+import android.media.tv.tuner.filter.FilterConfiguration;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.IpPayloadEvent;
@@ -43,6 +45,9 @@ import android.media.tv.tuner.filter.MediaEvent;
 import android.media.tv.tuner.filter.MmtpRecordEvent;
 import android.media.tv.tuner.filter.PesEvent;
 import android.media.tv.tuner.filter.SectionEvent;
+import android.media.tv.tuner.filter.SectionSettingsWithTableInfo;
+import android.media.tv.tuner.filter.Settings;
+import android.media.tv.tuner.filter.TsFilterConfiguration;
 import android.media.tv.tuner.filter.TemiEvent;
 import android.media.tv.tuner.filter.TimeFilter;
 import android.media.tv.tuner.filter.TsRecordEvent;
@@ -73,6 +78,7 @@ import android.media.tv.tuner.frontend.IsdbsFrontendCapabilities;
 import android.media.tv.tuner.frontend.IsdbsFrontendSettings;
 import android.media.tv.tuner.frontend.IsdbtFrontendCapabilities;
 import android.media.tv.tuner.frontend.IsdbtFrontendSettings;
+import android.media.tv.tuner.frontend.OnTuneEventListener;
 import android.media.tv.tuner.frontend.ScanCallback;
 
 import androidx.test.InstrumentationRegistry;
@@ -132,6 +138,7 @@ public class TunerTest {
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
         int res = mTuner.tune(createFrontendSettings(info));
         assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertEquals(Tuner.RESULT_SUCCESS, mTuner.setLnaEnabled(false));
         res = mTuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
     }
@@ -226,55 +233,104 @@ public class TunerTest {
     }
 
     @Test
-    public void testOpenLnb() throws Exception {
+    public void testLnb() throws Exception {
         if (!hasTuner()) return;
         Lnb lnb = mTuner.openLnb(getExecutor(), getLnbCallback());
-        assertNotNull(lnb);
-    }
-
-    @Test
-    public void testLnbSetVoltage() throws Exception {
-        // TODO: move lnb-related tests to a separate file.
-        if (!hasTuner()) return;
-        Lnb lnb = mTuner.openLnb(getExecutor(), getLnbCallback());
+        if (lnb == null) return;
         assertEquals(lnb.setVoltage(Lnb.VOLTAGE_5V), Tuner.RESULT_SUCCESS);
-    }
-
-    @Test
-    public void testLnbSetTone() throws Exception {
-        if (!hasTuner()) return;
-        Lnb lnb = mTuner.openLnb(getExecutor(), getLnbCallback());
         assertEquals(lnb.setTone(Lnb.TONE_NONE), Tuner.RESULT_SUCCESS);
-    }
-
-    @Test
-    public void testLnbSetPosistion() throws Exception {
-        if (!hasTuner()) return;
-        Lnb lnb = mTuner.openLnb(getExecutor(), getLnbCallback());
         assertEquals(
                 lnb.setSatellitePosition(Lnb.POSITION_A), Tuner.RESULT_SUCCESS);
+        lnb.sendDiseqcMessage(new byte[] {1, 2});
+        lnb.close();
     }
 
     @Test
-    public void testOpenFilter() throws Exception {
+    public void testOpenLnbByname() throws Exception {
+        if (!hasTuner()) return;
+        Lnb lnb = mTuner.openLnbByName("default", getExecutor(), getLnbCallback());
+        if (lnb != null) {
+            lnb.close();
+        }
+    }
+
+    @Test
+    public void testCiCam() throws Exception {
+        if (!hasTuner()) return;
+        // open filter to get demux resource
+        mTuner.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
+
+        mTuner.connectCiCam(1);
+        mTuner.disconnectCiCam();
+    }
+
+    @Test
+    public void testAvSyncId() throws Exception {
+        if (!hasTuner()) return;
+        // open filter to get demux resource
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_AUDIO, 1000, getExecutor(), getFilterCallback());
+        int id = mTuner.getAvSyncHwId(f);
+        if (id != Tuner.INVALID_AV_SYNC_ID) {
+            assertNotEquals(Tuner.INVALID_TIMESTAMP, mTuner.getAvSyncTime(id));
+        }
+    }
+
+    @Test
+    public void testReadFilter() throws Exception {
         if (!hasTuner()) return;
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        Settings settings = SectionSettingsWithTableInfo
+                .builder(Filter.TYPE_TS)
+                .setTableId(2)
+                .setVersion(1)
+                .setCrcEnabled(true)
+                .setRaw(false)
+                .setRepeat(false)
+                .build();
+        FilterConfiguration config = TsFilterConfiguration
+                .builder()
+                .setTpid(10)
+                .setSettings(settings)
+                .build();
+        f.configure(config);
+        f.start();
+        f.flush();
+        f.read(new byte[3], 0, 3);
+        f.stop();
+        f.close();
     }
 
     @Test
-    public void testOpenTimeFilter() throws Exception {
+    public void testTimeFilter() throws Exception {
         if (!hasTuner()) return;
+        if (!mTuner.getDemuxCapabilities().isTimeFilterSupported()) return;
         TimeFilter f = mTuner.openTimeFilter();
         assertNotNull(f);
+        f.setCurrentTimestamp(0);
+        assertNotEquals(Tuner.INVALID_TIMESTAMP, f.getTimeStamp());
+        assertNotEquals(Tuner.INVALID_TIMESTAMP, f.getSourceTime());
+        f.clearTimestamp();
+        f.close();
     }
 
     @Test
-    public void testOpenDescrambler() throws Exception {
+    public void testDescrambler() throws Exception {
         if (!hasTuner()) return;
         Descrambler d = mTuner.openDescrambler();
         assertNotNull(d);
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
+        d.setKeyToken(new byte[] {1, 3, 2});
+        d.addPid(Descrambler.PID_TYPE_T, 1, f);
+        d.removePid(Descrambler.PID_TYPE_T, 1, f);
+        f.close();
+        d.close();
     }
 
     @Test
@@ -289,6 +345,69 @@ public class TunerTest {
         if (!hasTuner()) return;
         DvrPlayback d = mTuner.openDvrPlayback(100, getExecutor(), getPlaybackListener());
         assertNotNull(d);
+    }
+
+    @Test
+    public void testDemuxCapabilities() throws Exception {
+        if (!hasTuner()) return;
+        DemuxCapabilities d = mTuner.getDemuxCapabilities();
+        assertNotNull(d);
+
+        d.getDemuxCount();
+        d.getRecordCount();
+        d.getPlaybackCount();
+        d.getTsFilterCount();
+        d.getSectionFilterCount();
+        d.getAudioFilterCount();
+        d.getVideoFilterCount();
+        d.getPesFilterCount();
+        d.getPcrFilterCount();
+        d.getSectionFilterLength();
+        d.getFilterCapabilities();
+        d.getLinkCapabilities();
+        d.isTimeFilterSupported();
+    }
+
+    @Test
+    public void testResourceLostListener() throws Exception {
+        if (!hasTuner()) return;
+        mTuner.setResourceLostListener(getExecutor(), new Tuner.OnResourceLostListener() {
+            @Override
+            public void onResourceLost(Tuner tuner) {}
+        });
+        mTuner.clearResourceLostListener();
+    }
+
+    @Test
+    public void testOnTuneEventListener() throws Exception {
+        if (!hasTuner()) return;
+        mTuner.setOnTuneEventListener(getExecutor(), new OnTuneEventListener() {
+            @Override
+            public void onTuneEvent(int tuneEvent) {}
+        });
+        mTuner.clearOnTuneEventListener();
+    }
+
+    @Test
+    public void testUpdateResourcePriority() throws Exception {
+        if (!hasTuner()) return;
+        mTuner.updateResourcePriority(100, 20);
+    }
+
+    @Test
+    public void testShareFrontendFromTuner() throws Exception {
+        if (!hasTuner()) return;
+        Tuner other = new Tuner(mContext, null, 100);
+        List<Integer> ids = other.getFrontendIds();
+        assertFalse(ids.isEmpty());
+        FrontendInfo info = other.getFrontendInfoById(ids.get(0));
+
+	// call tune() to open frontend resource
+        int res = other.tune(createFrontendSettings(info));
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+        assertNotNull(other.getFrontendInfo());
+        mTuner.shareFrontendFromTuner(other);
+        other.close();
     }
 
     private boolean hasTuner() {

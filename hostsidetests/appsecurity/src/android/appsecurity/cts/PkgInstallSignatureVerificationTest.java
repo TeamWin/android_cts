@@ -16,8 +16,6 @@
 
 package android.appsecurity.cts;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.platform.test.annotations.SecurityTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -42,6 +40,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private static final String TEST_PKG = "android.appsecurity.cts.tinyapp";
     private static final String COMPANION_TEST_PKG = "android.appsecurity.cts.tinyapp_companion";
+    private static final String COMPANION2_TEST_PKG = "android.appsecurity.cts.tinyapp_companion2";
     private static final String DEVICE_TESTS_APK = "CtsV3SigningSchemeRotationTest.apk";
     private static final String DEVICE_TESTS_PKG = "android.appsecurity.cts.v3rotationtests";
     private static final String DEVICE_TESTS_CLASS = DEVICE_TESTS_PKG + ".V3RotationTest";
@@ -68,7 +67,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         Utils.prepareSingleUser(getDevice());
         assertNotNull(mCtsBuild);
         uninstallPackage();
-        uninstallCompanionPackage();
+        uninstallCompanionPackages();
         installDeviceTestPkg();
     }
 
@@ -612,6 +611,59 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-sharedUid.apk");
     }
 
+    public void testInstallV3MultipleAppsOneDeniesOldKeySharedUid() throws Exception {
+        // If two apps are installed as part of a sharedUid, one granting access to the sharedUid
+        // to the previous key and the other revoking access to the sharedUid, then when an app
+        // signed with the old key attempts to join the sharedUid the installation should be blocked
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+        assertInstallFromBuildFails("v3-ec-p256-1-sharedUid-companion2.apk");
+    }
+
+    public void testInstallV3MultipleAppsOneUpdatedToDenyOldKeySharedUid() throws Exception {
+        // Similar to the test above if two apps are installed as part of a sharedUid with both
+        // granting access to the sharedUid to the previous key then an app signed with the previous
+        // key should be allowed to install and join the sharedUid. If one of the first two apps
+        // is then updated with a lineage that denies access to the sharedUid for the old key the
+        // installation of this updated app should be blocked.
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps-sharedUid.apk");
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid-companion2.apk");
+        assertInstallFromBuildFails("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+    }
+
+    public void testInstallV3FirstAppOnlySignedByNewKeyLastAppOldKey() throws Exception {
+        // This test verifies the following scenario:
+        // - First installed app in sharedUid only signed with new key without lineage.
+        // - Second installed app in sharedUid signed with new key and includes lineage granting
+        //   access to the old key to join the sharedUid.
+        // - Last installed app in sharedUid signed with old key.
+        // The lineage should be updated when the second app is installed to allow the installation
+        // of the app signed with the old key.
+        assertInstallFromBuildSucceeds("v3-ec-p256-2-sharedUid-companion.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps-sharedUid.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid-companion2.apk");
+    }
+
+    public void testInstallV3AppSignedWithOldKeyUpdatedLineageDeniesShUidCap() throws Exception {
+        // If an app is installed as part of a sharedUid, and then that app is signed with a new key
+        // that rejects the previous key in the lineage the update should be allowed to proceed
+        // as the app is being updated to the newly rotated key.
+        assertInstallFromBuildSucceeds("v3-ec-p256-1-sharedUid.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid.apk");
+    }
+
+    public void testInstallV3TwoSharedUidAppsWithDivergedLineages() throws Exception {
+        // Apps that are installed as part of the sharedUserId with a lineage must have common
+        // ancestors; the platform will allow the installation if the lineage of an app being
+        // installed as part of the sharedUserId is the same, a subset, or a superset of the
+        // existing lineage, but if the lineage diverges then the installation should be blocked.
+        assertInstallFromBuildSucceeds("v3-por_Y_1_2-default-caps-sharedUid.apk");
+        assertInstallFromBuildFails("v3-por_Z_1_2-default-caps-sharedUid-companion.apk");
+    }
+
     public void testInstallV3KeyRotationSigPerm() throws Exception {
         // tests that a v3 signed APK can still get a signature permission from an app with its
         // older signing certificate.
@@ -722,7 +774,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // the current signer(s) via getApkContentsSigners. This test verifies when a V3 signed
         // package with a rotated key is queried getApkContentsSigners only returns the current
         // signer.
-        installApkFromBuild("v3-ec-p256-with-por_1_2-default-caps.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-default-caps.apk");
         Utils.runDeviceTests(
                 getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
                 "testGetApkContentsSignersShowsCurrent");
@@ -731,7 +783,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     public void testInstallV2MultipleSignersGetApkContentsSigners() throws Exception {
         // Similar to the above test, but verifies when an APK is signed with two V2 signers
         // getApkContentsSigners returns both of the V2 signers.
-        installApkFromBuild("v1v2-ec-p256-two-signers-targetSdk-30.apk");
+        assertInstallFromBuildSucceeds("v1v2-ec-p256-two-signers-targetSdk-30.apk");
         Utils.runDeviceTests(
                 getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS,
                 "testGetApkContentsSignersShowsMultipleSigners");
@@ -842,11 +894,11 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // APK generated with:
         // --v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled
         // Full commands in generate-apks.sh
-        assertInstallV4Succeeds("v4-digest-v2-Sha256withDSA.apk");
-        assertInstallV4Succeeds("v4-digest-v2-Sha256withEC.apk");
-        assertInstallV4Succeeds("v4-digest-v2-Sha256withRSA.apk");
-        assertInstallV4Succeeds("v4-digest-v2-Sha512withEC.apk");
-        assertInstallV4Succeeds("v4-digest-v2-Sha512withRSA.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v2-Sha256withDSA.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v2-Sha256withEC.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v2-Sha256withRSA.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v2-Sha512withEC.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v2-Sha512withRSA.apk");
     }
 
     public void testInstallV4WithV2VeritySigner() throws Exception {
@@ -859,9 +911,9 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // --v2-signing-enabled true --v3-signing-enabled false
         // --v4-signing-enabled --verity-enabled
         // Full commands in generate-apks.sh
-        assertInstallV4Succeeds("v4-digest-v2-Sha256withDSA-Verity.apk");
-        assertInstallV4Succeeds("v4-digest-v2-Sha256withEC-Verity.apk");
-        assertInstallV4Succeeds("v4-digest-v2-Sha256withRSA-Verity.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v2-Sha256withDSA-Verity.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v2-Sha256withEC-Verity.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v2-Sha256withRSA-Verity.apk");
     }
 
     public void testInstallV4WithV3NoVeritySigner() throws Exception {
@@ -873,11 +925,11 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // APK generated with:
         // --v2-signing-enabled false --v3-signing-enabled true --v4-signing-enabled
         // Full commands in generate-apks.sh
-        assertInstallV4Succeeds("v4-digest-v3-Sha256withDSA.apk");
-        assertInstallV4Succeeds("v4-digest-v3-Sha256withEC.apk");
-        assertInstallV4Succeeds("v4-digest-v3-Sha256withRSA.apk");
-        assertInstallV4Succeeds("v4-digest-v3-Sha512withEC.apk");
-        assertInstallV4Succeeds("v4-digest-v3-Sha512withRSA.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v3-Sha256withDSA.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v3-Sha256withEC.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v3-Sha256withRSA.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v3-Sha512withEC.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v3-Sha512withRSA.apk");
     }
 
     public void testInstallV4WithV3VeritySigner() throws Exception {
@@ -890,9 +942,9 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         // --v2-signing-enabled false --v3-signing-enabled true
         // --v4-signing-enabled --verity-enabled
         // Full commands in generate-apks.sh
-        assertInstallV4Succeeds("v4-digest-v3-Sha256withDSA-Verity.apk");
-        assertInstallV4Succeeds("v4-digest-v3-Sha256withEC-Verity.apk");
-        assertInstallV4Succeeds("v4-digest-v3-Sha256withRSA-Verity.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v3-Sha256withDSA-Verity.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v3-Sha256withEC-Verity.apk");
+        assertInstallV4SucceedsAndUninstall("v4-digest-v3-Sha256withRSA-Verity.apk");
     }
 
     public void testInstallV4WithV2SignerDoesNotVerify() throws Exception {
@@ -943,6 +995,191 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallV4FailsWithError("v4-digest-v2v3-badv2v3digest.apk", "did not verify");
     }
 
+    public void testInstallV4With128BytesAdditionalDataSucceeds() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner to fill additional data of size 128 bytes.
+        assertInstallV4Succeeds("v4-digest-v3-128bytes-additional-data.apk");
+    }
+
+    public void testInstallV4With10MBytesAdditionalDataFails() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner to fill additional data of size 10 * 1024 * 1024 bytes..
+        assertInstallV4FailsWithError("v4-digest-v3-10mbytes-additional-data.apk",
+                "additionalData has to be at most 128 bytes");
+    }
+
+    public void testInstallV4WithWrongBlockSize() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner with the wrong block size in the v4 signature.
+        assertInstallV4FailsWithError("v4-digest-v3-wrong-block-size.apk",
+                "did not verify");
+    }
+
+    public void testInstallV4WithDifferentBlockSize() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner with the different block size (2048 instead of 4096).
+        assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-different-block-size.apk",
+                "Unsupported log2BlockSize: 11");
+    }
+
+    public void testInstallV4WithWrongRawRootHash() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner with the wrong raw root hash in the v4 signature.
+        assertInstallV4FailsWithError("v4-digest-v3-wrong-raw-root-hash.apk", "Failure");
+    }
+
+    public void testInstallV4WithWrongSignatureBytes() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner with the wrong signature bytes in the v4 signature.
+        assertInstallV4FailsWithError("v4-digest-v3-wrong-sig-bytes.apk",
+                "did not verify");
+    }
+
+    public void testInstallV4WithWrongSignatureBytesSize() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner with the wrong signature byte size in the v4 signature.
+        assertInstallV4FailsWithError("v4-digest-v3-wrong-sig-bytes-size.apk",
+                "Failure");
+    }
+
+    public void testInstallV4WithNoMerkleTree() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner to not include the Merkle tree.
+        assertInstallV4FailsWithError("v4-digest-v3-no-merkle-tree.apk",
+                "Failure");
+    }
+
+    public void testInstallV4WithWithTrailingDataInMerkleTree() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner to add trailing data after the Merkle tree
+        assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-10mb-trailing-data.apk",
+                "Failure");
+    }
+
+    public void testV4IncToV3NonIncSameKeyUpgradeSucceeds() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
+        // to generate the apks
+        assertInstallV4Succeeds("v4-inc-to-v3-noninc-ec-p256-appv1.apk");
+
+        // non-incremental upgrade with the same key.
+        assertInstallSucceeds("v4-inc-to-v3-noninc-ec-p256-appv2.apk");
+    }
+
+    public void testV4IncToV3NonIncMismatchingKeyUpgradeFails() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
+        // to generate the apks
+        assertInstallV4Succeeds("v4-inc-to-v3-noninc-ec-p256-appv1.apk");
+
+        // non-incremental upgrade with a mismatching key.
+        assertInstallFailsWithError("v4-inc-to-v3-noninc-ec-p384-appv2.apk",
+                "signatures do not match previously installed version");
+    }
+
+    public void testV4IncToV3NonIncRotatedKeyUpgradeSucceeds() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
+        // to generate the apks
+        assertInstallV4Succeeds("v4-inc-to-v3-noninc-ec-p256-appv1.apk");
+
+        // non-incremental upgrade with key rotation.
+        assertInstallSucceeds("v4-inc-to-v3-noninc-ec-p384-rotated-ec-p256-appv2.apk");
+    }
+
+    public void testV4IncToV3NonIncMismatchedRotatedKeyUpgradeFails() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
+        // to generate the apks
+        assertInstallV4Succeeds("v4-inc-to-v3-noninc-dsa-3072-appv1.apk");
+
+        // non-incremental upgrade with key rotation mismatch with key used in app v1.
+        assertInstallFailsWithError("v4-inc-to-v3-noninc-ec-p384-rotated-ec-p256-appv2.apk",
+                "signatures do not match previously installed version");
+    }
+
+
+    public void testV4IncToV2NonIncSameKeyUpgradeSucceeds() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
+        // to generate the apks
+        assertInstallV4Succeeds("v4-inc-to-v2-noninc-ec-p256-appv1.apk");
+
+        // non-incremental upgrade with the same key.
+        assertInstallSucceeds("v4-inc-to-v2-noninc-ec-p256-appv2.apk");
+    }
+
+    public void testV4IncToV2NonIncMismatchingKeyUpgradeFails() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
+        // to generate the apks
+        assertInstallV4Succeeds("v4-inc-to-v2-noninc-ec-p256-appv1.apk");
+
+        // non-incremental upgrade with a mismatching key.
+        assertInstallFailsWithError("v4-inc-to-v2-noninc-ec-p384-appv2.apk",
+                "signatures do not match previously installed version");
+    }
+
     private boolean hasIncrementalFeature() throws DeviceNotAvailableException {
         return getDevice().hasFeature("android.software.incremental_delivery");
     }
@@ -984,6 +1221,11 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         if (!installResult.equals("Success\n")) {
             fail("Failed to install " + apkFilenameInResources + ": " + installResult);
         }
+    }
+
+    private void assertInstallV4SucceedsAndUninstall(String apkFilenameInResources)
+            throws Exception {
+        assertInstallV4Succeeds(apkFilenameInResources);
         try {
             uninstallPackage();
         } catch (Exception e) {
@@ -1050,14 +1292,23 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     }
 
     private void installDeviceTestPkg() throws Exception {
-        installApkFromBuild(DEVICE_TESTS_APK);
+        assertInstallFromBuildSucceeds(DEVICE_TESTS_APK);
     }
 
-    private void installApkFromBuild(String apkName) throws Exception {
+    private void assertInstallFromBuildSucceeds(String apkName) throws Exception {
+        String result = installApkFromBuild(apkName);
+        assertNull("failed to install " + apkName + ", Reason: " + result, result);
+    }
+
+    private void assertInstallFromBuildFails(String apkName) throws Exception {
+        String result = installApkFromBuild(apkName);
+        assertNotNull("Successfully installed " + apkName + " when failure was expected", result);
+    }
+
+    private String installApkFromBuild(String apkName) throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File apk = buildHelper.getTestFile(apkName);
-        String result = getDevice().installPackage(apk, true, INSTALL_ARG_FORCE_QUERYABLE);
-        assertNull("failed to install " + apkName + ", Reason: " + result, result);
+        return getDevice().installPackage(apk, true, INSTALL_ARG_FORCE_QUERYABLE);
     }
 
     private String installPackageFromResource(String apkFilenameInResources, boolean ephemeral)
@@ -1146,8 +1397,10 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         return getDevice().uninstallPackage(TEST_PKG);
     }
 
-    private String uninstallCompanionPackage() throws DeviceNotAvailableException {
-        return getDevice().uninstallPackage(COMPANION_TEST_PKG);
+    private String uninstallCompanionPackages() throws DeviceNotAvailableException {
+        String result1 = getDevice().uninstallPackage(COMPANION_TEST_PKG);
+        String result2 = getDevice().uninstallPackage(COMPANION2_TEST_PKG);
+        return result1 != null ? result1 : result2;
     }
 
     private String uninstallDeviceTestPackage() throws DeviceNotAvailableException {
@@ -1156,7 +1409,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
 
     private void uninstallPackages() throws DeviceNotAvailableException {
         uninstallPackage();
-        uninstallCompanionPackage();
+        uninstallCompanionPackages();
         uninstallDeviceTestPackage();
     }
 }
