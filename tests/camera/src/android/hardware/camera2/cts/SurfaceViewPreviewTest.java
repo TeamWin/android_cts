@@ -51,6 +51,7 @@ import static org.mockito.Mockito.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.HashMap;
 
 import org.junit.Test;
 
@@ -224,6 +225,9 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         updatePreviewSurface(maxPreviewSize);
 
         createImageReader(maxYuvSize, ImageFormat.YUV_420_888, MAX_IMAGES_TO_PREPARE, imageListener);
+        HashMap<Size, Long> yuvMinFrameDurations =
+                mStaticInfo.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.YUV_420_888);
+        Long readerMinFrameDuration = yuvMinFrameDurations.get(maxYuvSize);
 
         List<Surface> outputSurfaces = new ArrayList<Surface>();
         outputSurfaces.add(mPreviewSurface);
@@ -327,14 +331,16 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
                         cameraId,
                         frameDurationStats.first / 1e6, preparedFrameDurationStats.second / 1e6),
                 (preparedFrameDurationStats.second <=
-                        frameDurationStats.first * (1 + PREPARE_PEAK_RATE_BOUNDS)));
+                        Math.max(frameDurationStats.first, readerMinFrameDuration) *
+                        (1 + PREPARE_PEAK_RATE_BOUNDS)));
             mCollector.expectTrue(
                 String.format("Camera %s: Preview average frame interval affected by use of new " +
                         "stream: preview avg frame duration: %f ms, with new stream: %f ms",
                         cameraId,
                         frameDurationStats.first / 1e6, preparedFrameDurationStats.first / 1e6),
                 (preparedFrameDurationStats.first <=
-                        frameDurationStats.first * (1 + PREPARE_FRAME_RATE_BOUNDS)));
+                        Math.max(frameDurationStats.first, readerMinFrameDuration) *
+                        (1 + PREPARE_FRAME_RATE_BOUNDS)));
         }
     }
 
