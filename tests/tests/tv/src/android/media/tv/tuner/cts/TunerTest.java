@@ -36,6 +36,7 @@ import android.media.tv.tuner.dvr.OnRecordStatusChangedListener;
 import android.media.tv.tuner.filter.AudioDescriptor;
 import android.media.tv.tuner.filter.DownloadEvent;
 import android.media.tv.tuner.filter.FilterCallback;
+import android.media.tv.tuner.filter.FilterConfiguration;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.IpPayloadEvent;
@@ -43,6 +44,9 @@ import android.media.tv.tuner.filter.MediaEvent;
 import android.media.tv.tuner.filter.MmtpRecordEvent;
 import android.media.tv.tuner.filter.PesEvent;
 import android.media.tv.tuner.filter.SectionEvent;
+import android.media.tv.tuner.filter.SectionSettingsWithTableInfo;
+import android.media.tv.tuner.filter.Settings;
+import android.media.tv.tuner.filter.TsFilterConfiguration;
 import android.media.tv.tuner.filter.TemiEvent;
 import android.media.tv.tuner.filter.TimeFilter;
 import android.media.tv.tuner.filter.TsRecordEvent;
@@ -256,18 +260,45 @@ public class TunerTest {
     }
 
     @Test
-    public void testOpenFilter() throws Exception {
+    public void testReadFilter() throws Exception {
         if (!hasTuner()) return;
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        Settings settings = SectionSettingsWithTableInfo
+                .builder(Filter.TYPE_TS)
+                .setTableId(2)
+                .setVersion(1)
+                .setCrcEnabled(true)
+                .setRaw(false)
+                .setRepeat(false)
+                .build();
+        FilterConfiguration config = TsFilterConfiguration
+                .builder()
+                .setTpid(10)
+                .setSettings(settings)
+                .build();
+        f.configure(config);
+        f.start();
+        f.flush();
+        f.read(new byte[3], 0, 3);
+        f.stop();
+        f.close();
     }
 
     @Test
-    public void testOpenTimeFilter() throws Exception {
+    public void testTimeFilter() throws Exception {
         if (!hasTuner()) return;
+        if (!mTuner.getDemuxCapabilities().isTimeFilterSupported()) return;
         TimeFilter f = mTuner.openTimeFilter();
         assertNotNull(f);
+        f.setCurrentTimestamp(0);
+        assertNotEquals(Tuner.INVALID_TIMESTAMP, f.getTimeStamp());
+        assertNotEquals(Tuner.INVALID_TIMESTAMP, f.getSourceTime());
+        f.clearTimestamp();
+        f.close();
     }
 
     @Test
