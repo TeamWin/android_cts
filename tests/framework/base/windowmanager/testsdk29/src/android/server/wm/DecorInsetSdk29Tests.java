@@ -46,6 +46,8 @@ public class DecorInsetSdk29Tests extends DecorInsetTestsBase {
 
         assertNotNull("test setup failed", activity.mLastDecorInsets);
         assertNull("unexpected content insets", activity.mLastContentInsets);
+
+        assertContentViewLocationMatchesInsets();
     }
 
     @Test
@@ -60,6 +62,8 @@ public class DecorInsetSdk29Tests extends DecorInsetTestsBase {
         assertNotNull("test setup failed", activity.mLastDecorInsets);
         assertEquals("unexpected bottom inset: ", 0, activity.mLastContentInsets.getInsets(
                 WindowInsets.Type.systemBars()).bottom);
+
+        assertContentViewLocationMatchesInsets();
     }
 
     @Test
@@ -75,20 +79,26 @@ public class DecorInsetSdk29Tests extends DecorInsetTestsBase {
         assertEquals("insets were unexpectedly consumed: ",
                 activity.mLastDecorInsets.getSystemWindowInsets(),
                 activity.mLastContentInsets.getSystemWindowInsets());
+
+        assertContentViewLocationMatchesInsets();
     }
 
     @Test
     public void testDecorView_doesntConsumeNavBar_ifDecorDoesntFitSystemWindows() throws Throwable {
         TestActivity activity = mDecorActivity.launchActivity(new Intent()
-                .putExtra(ARG_LAYOUT_STABLE, true)
+                .putExtra(ARG_LAYOUT_STABLE, false)
                 .putExtra(ARG_LAYOUT_FULLSCREEN, false)
                 .putExtra(ARG_LAYOUT_HIDE_NAV, false)
                 .putExtra(ARG_DECOR_FITS_SYSTEM_WINDOWS, false));
         activity.mLaidOut.await(4, TimeUnit.SECONDS);
 
+        assertEquals(0, activity.getWindow().getDecorView().getWindowSystemUiVisibility());
+
         assertNotNull("test setup failed", activity.mLastDecorInsets);
         assertEquals("insets were unexpectedly consumed: ",
                 activity.mLastDecorInsets.getSystemWindowInsets(),
                 activity.mLastContentInsets.getSystemWindowInsets());
+
+        assertContentViewLocationMatchesInsets();
     }
 }
