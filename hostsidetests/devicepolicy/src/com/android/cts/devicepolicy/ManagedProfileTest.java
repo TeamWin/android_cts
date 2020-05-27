@@ -80,8 +80,14 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
         if (newUserId > 0) {
             removeUser(newUserId);
-            fail(mHasFeature ? "Device must allow creating only one managed profile"
-                    : "Device must not allow creating a managed profile");
+            if (mHasFeature) {
+                // Exception is Android TV which can create multiple managed profiles
+                if (!hasDeviceFeature("android.software.leanback")) {
+                    fail("Device must allow creating only one managed profile");
+                }
+            } else {
+                fail("Device must not allow creating a managed profile");
+            }
         }
     }
 
