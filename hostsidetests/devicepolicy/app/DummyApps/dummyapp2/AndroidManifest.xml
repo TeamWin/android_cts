@@ -31,7 +31,8 @@
             </intent-filter>
         </receiver>
         <activity
-            android:name="android.app.Activity">
+            android:name="android.app.Activity"
+            android:exported="true">
         </activity>
     </application>
 </manifest>
