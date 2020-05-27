@@ -192,11 +192,12 @@ public abstract class ActivityManagerTestBase {
     private static final List<String> TEST_PACKAGES;
 
     static {
-        final List<String> testPackages = new ArrayList<>(3);
+        final List<String> testPackages = new ArrayList<>();
         testPackages.add(TEST_PACKAGE);
         testPackages.add(SECOND_TEST_PACKAGE);
         testPackages.add(THIRD_TEST_PACKAGE);
         testPackages.add("android.server.wm.cts");
+        testPackages.add("android.server.wm.jetpack");
         TEST_PACKAGES = Collections.unmodifiableList(testPackages);
     }
 
