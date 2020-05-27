@@ -169,6 +169,12 @@
           </intent-filter>
         </receiver>
 
+        <receiver android:name=".LockProfileReceiver">
+          <intent-filter>
+            <action android:name="com.android.cts.managedprofile.LOCK_PROFILE" />
+          </intent-filter>
+        </receiver>
+
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
