@@ -1976,6 +1976,141 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
     }
 
+    public void testPushDynamicShortcut() {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            // Push as first shortcut
+            getManager().pushDynamicShortcut(makeShortcut("s1", "title1"));
+            assertTrue(getManager().addDynamicShortcuts(list(
+                    makeShortcut("s2", "title2"),
+                    makeShortcut("s3", "title3"))));
+
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds("s1", "s2", "s3")
+                    .forShortcutWithId("s1", si -> assertEquals("title1", si.getShortLabel()))
+                    .forShortcutWithId("s2", si -> assertEquals("title2", si.getShortLabel()))
+                    .forShortcutWithId("s3", si -> assertEquals("title3", si.getShortLabel()));
+        });
+
+        // A different package.
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
+            assertTrue(getManager().addDynamicShortcuts(list(
+                    makeShortcut("s1x", "title1x"))));
+            // Push when other shortcuts exist
+            getManager().pushDynamicShortcut(makeShortcut("s2x", "title2x"));
+
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds("s1x", "s2x")
+                    .forShortcutWithId("s1x", si -> assertEquals("title1x", si.getShortLabel()))
+                    .forShortcutWithId("s2x", si -> assertEquals("title2x", si.getShortLabel()));
+        });
+
+        // Push existing shortcut to update.
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            getManager().pushDynamicShortcut(makeShortcut("s3", "title3-updated"));
+
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds("s1", "s2", "s3")
+                    .forShortcutWithId("s1", si -> {
+                        assertEquals("title1", si.getShortLabel());
+                        assertEquals(2, si.getRank());
+                    })
+                    .forShortcutWithId("s2", si -> {
+                        assertEquals("title2", si.getShortLabel());
+                        assertEquals(1, si.getRank());
+                    })
+                    .forShortcutWithId("s3", si -> {
+                        assertEquals("title3-updated", si.getShortLabel());
+                        assertEquals(0, si.getRank());
+                    });
+        });
+
+        // Push with rank.
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
+            getManager().pushDynamicShortcut(makeShortcut("s3x"));
+            getManager().pushDynamicShortcut(makeShortcutWithRank("s4x", 2));
+
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds("s1x", "s2x", "s3x", "s4x")
+                    .forShortcutWithId("s1x", si -> assertEquals(3, si.getRank()))
+                    .forShortcutWithId("s2x", si -> assertEquals(1, si.getRank()))
+                    .forShortcutWithId("s3x", si -> assertEquals(0, si.getRank()))
+                    .forShortcutWithId("s4x", si -> assertEquals(2, si.getRank()));
+        });
+
+        // Push when limit is reached.
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            assertTrue(getManager().setDynamicShortcuts(makeShortcuts(makeIds("s", 1, 15))));
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds(makeIds("s", 1, 15))
+                    .forShortcutWithId("s1", si -> assertEquals(0, si.getRank()))
+                    .forShortcutWithId("s2", si -> assertEquals(1, si.getRank()))
+                    .forShortcutWithId("s15", si -> assertEquals(14, si.getRank()));
+
+            getManager().pushDynamicShortcut(makeShortcutWithRank("s1", 15));
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds(makeIds("s", 1, 15))
+                    .forShortcutWithId("s1", si -> assertEquals(14, si.getRank()))
+                    .forShortcutWithId("s2", si -> assertEquals(0, si.getRank()))
+                    .forShortcutWithId("s15", si -> assertEquals(13, si.getRank()));
+
+            getManager().pushDynamicShortcut(makeShortcut("s16"));
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds(makeIds("s", 2, 16))
+                    .forShortcutWithId("s2", si -> assertEquals(1, si.getRank()))
+                    .forShortcutWithId("s15", si -> assertEquals(14, si.getRank()))
+                    .forShortcutWithId("s16", si -> assertEquals(0, si.getRank()));
+
+            getManager().pushDynamicShortcut(makeShortcutWithRank("s2", 15));
+            getManager().pushDynamicShortcut(makeShortcutWithRank("s17", 100));
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds(makeIds("s", 3, 17))
+                    .forShortcutWithId("s3", si -> assertEquals(1, si.getRank()))
+                    .forShortcutWithId("s16", si -> assertEquals(0, si.getRank()))
+                    .forShortcutWithId("s17", si -> assertEquals(14, si.getRank()));
+        });
+
+        setDefaultLauncher(getInstrumentation(), mLauncherContext1);
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
+            getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
+                    list("s3", "s4"), getUserHandle());
+        });
+
+        // Push when the removed shortcut is pinned.
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            getManager().pushDynamicShortcut(makeShortcutWithRank("s3", 15));
+            getManager().pushDynamicShortcut(makeShortcut("s18"));
+            assertWith(getManager().getDynamicShortcuts())
+                    .areAllEnabled()
+                    .areAllDynamic()
+                    .haveIds(makeIds("s", 4, 18))
+                    .forShortcutWithId("s4", si -> assertEquals(2, si.getRank()))
+                    .forShortcutWithId("s16", si -> assertEquals(1, si.getRank()))
+                    .forShortcutWithId("s17", si -> assertEquals(14, si.getRank()))
+                    .forShortcutWithId("s18", si -> assertEquals(0, si.getRank()));
+
+            assertWith(getManager().getPinnedShortcuts())
+                    .areAllEnabled()
+                    .areAllPinned()
+                    .haveIds("s3", "s4");
+        });
+    }
+
     // TODO Test auto rank adjustment.
     // TODO Test save & load.
 }
