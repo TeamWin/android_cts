@@ -24,14 +24,11 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
-import android.hardware.camera2.CameraManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.UserManager;
 import android.test.InstrumentationTestCase;
 
-import org.mockito.internal.util.collections.Sets;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
 
@@ -39,70 +36,40 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
 
     protected Context mContext;
     private DevicePolicyManager mParentDevicePolicyManager;
-    private DevicePolicyManager mDevicePolicyManager;
-
-    private CameraManager mCameraManager;
-
-    private HandlerThread mBackgroundThread;
-
-    /**
-     * A {@link Handler} for running tasks in the background.
-     */
-    private Handler mBackgroundHandler;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mContext = getInstrumentation().getContext();
 
-        mDevicePolicyManager = (DevicePolicyManager)
+        DevicePolicyManager devicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        assertNotNull(devicePolicyManager);
         mParentDevicePolicyManager =
-                mDevicePolicyManager.getParentProfileInstance(ADMIN_RECEIVER_COMPONENT);
-        mCameraManager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
-
-        assertNotNull(mDevicePolicyManager);
+                devicePolicyManager.getParentProfileInstance(ADMIN_RECEIVER_COMPONENT);
         assertNotNull(mParentDevicePolicyManager);
-        assertNotNull(mCameraManager);
 
-        assertTrue(mDevicePolicyManager.isAdminActive(ADMIN_RECEIVER_COMPONENT));
+        assertTrue(devicePolicyManager.isAdminActive(ADMIN_RECEIVER_COMPONENT));
         assertTrue(
-                mDevicePolicyManager.isProfileOwnerApp(ADMIN_RECEIVER_COMPONENT.getPackageName()));
-        assertTrue(mDevicePolicyManager.isManagedProfile(ADMIN_RECEIVER_COMPONENT));
-        startBackgroundThread();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        stopBackgroundThread();
-        super.tearDown();
-    }
-
-    public void testSetAndGetCameraDisabled_onParent() throws Exception {
-        mParentDevicePolicyManager.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, true);
-        boolean actualDisabled =
-                mParentDevicePolicyManager.getCameraDisabled(ADMIN_RECEIVER_COMPONENT);
-
-        assertThat(actualDisabled).isTrue();
-        checkCanOpenCamera(false);
-
-        mParentDevicePolicyManager.setCameraDisabled(ADMIN_RECEIVER_COMPONENT, false);
-        actualDisabled = mParentDevicePolicyManager.getCameraDisabled(ADMIN_RECEIVER_COMPONENT);
-
-        assertThat(actualDisabled).isFalse();
-        checkCanOpenCamera(true);
+                devicePolicyManager.isProfileOwnerApp(ADMIN_RECEIVER_COMPONENT.getPackageName()));
+        assertTrue(devicePolicyManager.isManagedProfile(ADMIN_RECEIVER_COMPONENT));
     }
 
     private static final Set<String> PROFILE_OWNER_ORGANIZATION_OWNED_GLOBAL_RESTRICTIONS =
-            Sets.newSet(
+            ImmutableSet.of(
+                    UserManager.DISALLOW_CONFIG_PRIVATE_DNS,
                     UserManager.DISALLOW_CONFIG_DATE_TIME,
+                    UserManager.DISALLOW_AIRPLANE_MODE
+            );
+
+    private static final Set<String> PROFILE_OWNER_ORGANIZATION_OWNED_LOCAL_RESTRICTIONS =
+            ImmutableSet.of(
                     UserManager.DISALLOW_BLUETOOTH,
                     UserManager.DISALLOW_BLUETOOTH_SHARING,
                     UserManager.DISALLOW_CONFIG_BLUETOOTH,
                     UserManager.DISALLOW_CONFIG_CELL_BROADCASTS,
                     UserManager.DISALLOW_CONFIG_LOCATION,
                     UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS,
-                    UserManager.DISALLOW_CONFIG_PRIVATE_DNS,
                     UserManager.DISALLOW_CONFIG_TETHERING,
                     UserManager.DISALLOW_CONFIG_WIFI,
                     UserManager.DISALLOW_CONTENT_CAPTURE,
@@ -112,7 +79,6 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
                     UserManager.DISALLOW_SHARE_LOCATION,
                     UserManager.DISALLOW_SMS,
                     UserManager.DISALLOW_USB_FILE_TRANSFER,
-                    UserManager.DISALLOW_AIRPLANE_MODE,
                     UserManager.DISALLOW_MOUNT_PHYSICAL_MEDIA,
                     UserManager.DISALLOW_OUTGOING_CALLS,
                     UserManager.DISALLOW_UNMUTE_MICROPHONE
@@ -122,6 +88,9 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
 
     public void testAddGetAndClearUserRestriction_onParent() {
         for (String restriction : PROFILE_OWNER_ORGANIZATION_OWNED_GLOBAL_RESTRICTIONS) {
+            testAddGetAndClearUserRestriction_onParent(restriction);
+        }
+        for (String restriction : PROFILE_OWNER_ORGANIZATION_OWNED_LOCAL_RESTRICTIONS) {
             testAddGetAndClearUserRestriction_onParent(restriction);
         }
     }
@@ -147,56 +116,15 @@ public class OrgOwnedProfileOwnerParentTest extends InstrumentationTestCase {
     }
 
     private void testUnableToAddBaseUserRestriction(String restriction) {
-        assertThrows(UnsupportedOperationException.class,
+        assertThrows(SecurityException.class,
                 () -> mParentDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
                         restriction));
     }
 
     private void testUnableToClearBaseUserRestriction(String restriction) {
-        assertThrows(UnsupportedOperationException.class,
+        assertThrows(SecurityException.class,
                 () -> mParentDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
                         restriction));
-    }
-
-    private void checkCanOpenCamera(boolean canOpen) throws Exception {
-        // If the device does not support a camera it will return an empty camera ID list.
-        if (mCameraManager.getCameraIdList() == null
-                || mCameraManager.getCameraIdList().length == 0) {
-            return;
-        }
-        int retries = 10;
-        boolean successToOpen = !canOpen;
-        while (successToOpen != canOpen && retries > 0) {
-            retries--;
-            Thread.sleep(500);
-            successToOpen = CameraUtils
-                    .blockUntilOpenCamera(mCameraManager, mBackgroundHandler);
-        }
-        assertEquals(String.format("Timed out waiting the value to change to %b (actual=%b)",
-                canOpen, successToOpen), canOpen, successToOpen);
-    }
-
-    /**
-     * Starts a background thread and its {@link Handler}.
-     */
-    private void startBackgroundThread() {
-        mBackgroundThread = new HandlerThread("CameraBackground");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
-    }
-
-    /**
-     * Stops the background thread and its {@link Handler}.
-     */
-    private void stopBackgroundThread() {
-        mBackgroundThread.quitSafely();
-        try {
-            mBackgroundThread.join();
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
 }
