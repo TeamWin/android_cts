@@ -314,7 +314,7 @@ class CaptureResultListener {
     ~CaptureResultListener() {
         std::unique_lock<std::mutex> l(mMutex);
         clearSavedRequestsLocked();
-        clearFailedFrameNumbersLocked();
+        clearFailedLostFrameNumbersLocked();
     }
 
     static void onCaptureStart(void* /*obj*/, ACameraCaptureSession* /*session*/,
@@ -496,7 +496,7 @@ class CaptureResultListener {
         }
         CaptureResultListener* thiz = reinterpret_cast<CaptureResultListener*>(obj);
         std::lock_guard<std::mutex> lock(thiz->mMutex);
-        thiz->mLastLostFrameNumber = frameNumber;
+        thiz->mBufferLostFrameNumbers.insert(frameNumber);
         thiz->mResultCondition.notify_one();
     }
 
@@ -524,7 +524,7 @@ class CaptureResultListener {
         std::unique_lock<std::mutex> l(mMutex);
 
         while ((mLastCompletedFrameNumber != frameNumber) &&
-                (mLastLostFrameNumber != frameNumber) && !checkForFailureLocked(frameNumber)) {
+                !checkForFailureOrLossLocked(frameNumber)) {
             auto timeout = std::chrono::system_clock::now() +
                            std::chrono::seconds(timeoutSec);
             if (std::cv_status::timeout == mResultCondition.wait_until(l, timeout)) {
@@ -533,7 +533,7 @@ class CaptureResultListener {
         }
 
         if ((mLastCompletedFrameNumber == frameNumber) ||
-                (mLastLostFrameNumber == frameNumber) || checkForFailureLocked(frameNumber)) {
+                checkForFailureOrLossLocked(frameNumber)) {
             ret = true;
         }
 
@@ -562,9 +562,9 @@ class CaptureResultListener {
         }
     }
 
-    bool checkForFailure(int64_t frameNumber) {
+    bool checkForFailureOrLoss(int64_t frameNumber) {
         std::lock_guard<std::mutex> lock(mMutex);
-        return checkForFailureLocked(frameNumber);
+        return checkForFailureOrLossLocked(frameNumber);
     }
 
     void reset() {
@@ -572,10 +572,9 @@ class CaptureResultListener {
         mLastSequenceIdCompleted = -1;
         mLastSequenceFrameNumber = -1;
         mLastCompletedFrameNumber = -1;
-        mLastLostFrameNumber = -1;
         mSaveCompletedRequests = false;
         clearSavedRequestsLocked();
-        clearFailedFrameNumbersLocked();
+        clearFailedLostFrameNumbersLocked();
     }
 
   private:
@@ -584,8 +583,7 @@ class CaptureResultListener {
     int mLastSequenceIdCompleted = -1;
     int64_t mLastSequenceFrameNumber = -1;
     int64_t mLastCompletedFrameNumber = -1;
-    int64_t mLastLostFrameNumber = -1;
-    std::set<int64_t> mFailedFrameNumbers;
+    std::set<int64_t> mFailedFrameNumbers, mBufferLostFrameNumbers;
     bool    mSaveCompletedRequests = false;
     std::vector<ACaptureRequest*> mCompletedRequests;
     // Registered physical camera Ids that are being requested upon.
@@ -598,17 +596,23 @@ class CaptureResultListener {
         mCompletedRequests.clear();
     }
 
-    void clearFailedFrameNumbersLocked() {
+    void clearFailedLostFrameNumbersLocked() {
         mFailedFrameNumbers.clear();
+        mBufferLostFrameNumbers.clear();
     }
 
-    bool checkForFailureLocked(int64_t frameNumber) {
-        return mFailedFrameNumbers.find(frameNumber) != mFailedFrameNumbers.end();
+    bool checkForFailureOrLossLocked(int64_t frameNumber) {
+        return (mFailedFrameNumbers.find(frameNumber) != mFailedFrameNumbers.end()) ||
+                (mBufferLostFrameNumbers.find(frameNumber) != mBufferLostFrameNumbers.end());
     }
 };
 
 class ImageReaderListener {
   public:
+    ImageReaderListener() {
+        mBufferTs.insert(mLastBufferTs);
+    }
+
     // count, acquire, validate, and delete AImage when a new image is available
     static void validateImageCb(void* obj, AImageReader* reader) {
         ALOGV("%s", __FUNCTION__);
@@ -721,11 +725,73 @@ class ImageReaderListener {
         mDumpFilePathBase = path;
     }
 
+    // acquire image, query the corresponding timestamp but not delete the image
+    static void signalImageCb(void* obj, AImageReader* reader) {
+        ALOGV("%s", __FUNCTION__);
+        if (obj == nullptr) {
+            return;
+        }
+        ImageReaderListener* thiz = reinterpret_cast<ImageReaderListener*>(obj);
+        std::lock_guard<std::mutex> lock(thiz->mMutex);
+
+        AImage* img = nullptr;
+        media_status_t ret = AImageReader_acquireNextImage(reader, &img);
+        if (ret != AMEDIA_OK || img == nullptr) {
+            ALOGE("%s: acquire image from reader %p failed! ret: %d, img %p",
+                    __FUNCTION__, reader, ret, img);
+            thiz->mBufferCondition.notify_one();
+            return;
+        }
+
+        int64_t currentTs = -1;
+        ret = AImage_getTimestamp(img, &currentTs);
+        if (ret != AMEDIA_OK || currentTs == -1) {
+            ALOGE("%s: acquire image from reader %p failed! ret: %d", __FUNCTION__, reader, ret);
+            AImage_delete(img);
+            thiz->mBufferCondition.notify_one();
+            return;
+        }
+
+        thiz->mBufferTs.insert(currentTs);
+        thiz->mBufferCondition.notify_one();
+        return;
+    }
+
+    bool waitForNextBuffer(uint32_t timeoutSec) {
+        bool ret = false;
+        std::unique_lock<std::mutex> l(mMutex);
+
+        auto it = mBufferTs.find(mLastBufferTs);
+        if (it == mBufferTs.end()) {
+            ALOGE("%s: Last buffer timestamp: %" PRId64 " not found!", __FUNCTION__, mLastBufferTs);
+            return false;
+        }
+        it++;
+
+        if (it == mBufferTs.end()) {
+            auto timeout = std::chrono::system_clock::now() + std::chrono::seconds(timeoutSec);
+            if (std::cv_status::no_timeout == mBufferCondition.wait_until(l, timeout)) {
+                it = mBufferTs.find(mLastBufferTs);
+                it++;
+            }
+        }
+
+        if (it != mBufferTs.end()) {
+            mLastBufferTs = *it;
+            ret = true;
+        }
+
+        return ret;
+    }
+
   private:
     // TODO: add mReader to make sure each listener is associated to one reader?
     std::mutex mMutex;
     int mOnImageAvailableCount = 0;
     const char* mDumpFilePathBase = nullptr;
+    std::condition_variable mBufferCondition;
+    int64_t mLastBufferTs = -1;
+    std::set<int64_t> mBufferTs;
 };
 
 class StaticInfo {
@@ -3573,9 +3639,10 @@ cleanup:
     return pass;
 }
 
-// Test the camera NDK capture failure path by acquiring the maximum amount of ImageReader
-// buffers available. Since there is no circulation of camera images, the registered output
-// surface will eventually run out of free buffers and start reporting capture errors.
+// Test the camera NDK capture failure path by acquiring the maximum amount of
+// ImageReader buffers available. Since there is no circulation of camera
+// images, the registered output surface will eventually run out of free buffers
+// and start reporting capture errors or lost buffers.
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeCameraDeviceTest_\
 testCameraDeviceCaptureFailureNative(JNIEnv* env, jclass /*clazz*/, jstring jOverrideCameraId) {
@@ -3588,6 +3655,7 @@ testCameraDeviceCaptureFailureNative(JNIEnv* env, jclass /*clazz*/, jstring jOve
     int numCameras = 0;
     bool pass = false;
     PreviewTestCase testCase;
+    uint32_t bufferTimeoutSec = 1;
     uint32_t timeoutSec = 10; // It is important to keep this timeout bigger than the framework
                               // timeout
 
@@ -3636,7 +3704,7 @@ testCameraDeviceCaptureFailureNative(JNIEnv* env, jclass /*clazz*/, jstring jOve
 
         ImageReaderListener readerListener;
         AImageReader_ImageListener readerCb =
-                { &readerListener, ImageReaderListener::acquireImageCb };
+                { &readerListener, ImageReaderListener::signalImageCb };
         mediaRet = testCase.initImageReaderWithErrorLog(TEST_WIDTH, TEST_HEIGHT,
                 AIMAGE_FORMAT_YUV_420_888, NUM_TEST_IMAGES, &readerCb);
         if (mediaRet != AMEDIA_OK) {
@@ -3692,7 +3760,8 @@ testCameraDeviceCaptureFailureNative(JNIEnv* env, jclass /*clazz*/, jstring jOve
                         cameraId);
                 goto exit;
             }
-            auto failedFrameNumber = resultListener.checkForFailure(lastFrameNumber) ?
+            readerListener.waitForNextBuffer(bufferTimeoutSec);
+            auto failedFrameNumber = resultListener.checkForFailureOrLoss(lastFrameNumber) ?
                     lastFrameNumber : -1;
             if (lastFailedRequestNumber != failedFrameNumber) {
                 if ((lastFailedRequestNumber + 1) == failedFrameNumber) {
