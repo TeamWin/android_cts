@@ -4683,6 +4683,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="profileLabel">Profile</string>
     <string name="connectedPeripheral">Connected Peripheral</string>
     <string name="audio_uap_attribs_test">USB Audio Peripheral Attributes Test</string>
+    <string name="audio_uap_notifications_test">USB Audio Peripheral Notifications Test</string>
     <string name="uapPeripheralProfileStatus">Peripheral Profile Status</string>
     <string name="audio_uap_play_test">USB Audio Peripheral Play Test</string>
     <string name="uapPlayTestInstructions">Connect the USB Audio Interface Peripheral and press the
@@ -4700,6 +4701,15 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_uap_buttons_test">USB Audio Peripheral Buttons Test</string>
     <string name="uapButtonTestInstructions">Connect the USB Audio headset with buttons
         and press each transport/media button in turn.</string>
+
+     <string name="uapNotificationsTestInfo">
+         This test verifies that the correct notifications and Intents are sent when a USB audio
+         peripheral is connected to the Android device. First USB headset peripheral should be
+         connected and the test will acknowledge the USB headset device notifications and plug intent.
+         Next a non-headset / headphones USB peripheral should be connected and the test will
+         acknowlege the USB device notifications. If all notifications and Intents are received
+         the test passes.
+     </string>
 
     <string name="audio_usb_restrict_record_test">USB Audio Restrict Record Access Test</string>
     <string name="audio_usb_restrict_record_entry">
