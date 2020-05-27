@@ -238,6 +238,7 @@ public class NotificationAssistantServiceTest {
             mNotificationListenerService.mRankingMap.getRanking(sbn1.getKey(), out1);
             mNotificationListenerService.mRankingMap.getRanking(sbn2.getKey(), out2);
 
+            // verify the relative ordering changed
             int newRank1 = out1.getRank();
             int newRank2 = out2.getRank();
             if (currentRank1 > currentRank2) {
@@ -415,8 +416,14 @@ public class NotificationAssistantServiceTest {
         mNotificationListenerService.mRankingMap.getRanking(sbn1.getKey(), out1);
         mNotificationListenerService.mRankingMap.getRanking(sbn2.getKey(), out2);
 
-        assertEquals(currentRank1, out1.getRank());
-        assertEquals(currentRank2, out2.getRank());
+        // verify the relative ordering remains the same
+        int newRank1 = out1.getRank();
+        int newRank2 = out2.getRank();
+        if (currentRank1 > currentRank2) {
+            assertTrue(newRank1 > newRank2);
+        } else {
+            assertTrue(newRank1 < newRank2);
+        }
     }
 
     @Test
