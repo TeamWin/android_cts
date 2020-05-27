@@ -30,6 +30,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -59,6 +60,7 @@ import android.view.animation.LinearInterpolator;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -68,6 +70,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -93,6 +96,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     Interpolator mInterpolator;
     boolean mOnProgressCalled;
     private ValueAnimator mAnimator;
+    List<VerifyingCallback> mCallbacks = new ArrayList<>();
+    private boolean mLossOfControlExpected;
 
     @Rule
     public LimitedErrorCollector mErrorCollector = new LimitedErrorCollector();
@@ -119,6 +124,12 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mRootView = mActivity.getWindow().getDecorView();
         mListener = new ControlListener(mErrorCollector);
         assumeTestCompatibility();
+    }
+
+    @After
+    public void tearDown() throws Throwable {
+        runOnUiThread(() -> {});  // Fence to make sure we dispatched everything.
+        mCallbacks.forEach(VerifyingCallback::assertNoRunningAnimations);
     }
 
     private void assumeTestCompatibility() {
@@ -274,9 +285,32 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mListener.assertWasNotCalled(CANCELLED);
     }
 
+    @Test
+    public void testControl_andLoseControl() throws Throwable {
+        mInterpolator = new AccelerateInterpolator();
+        setVisibilityAndWait(mType, true);
+
+        runOnUiThread(() -> {
+            setupAnimationListener();
+            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                    mInterpolator, null, mListener);
+        });
+
+        mListener.awaitAndAssert(READY);
+
+        runTransition(false, TimeUnit.MINUTES.toMillis(5));
+        runOnUiThread(() -> {
+            mLossOfControlExpected = true;
+        });
+        launchHomeActivityNoWait();
+
+        mListener.awaitAndAssert(CANCELLED);
+        mListener.assertWasNotCalled(FINISHED);
+    }
+
     private void setupAnimationListener() {
         WindowInsets initialInsets = mActivity.mLastWindowInsets;
-        mRootView.setWindowInsetsAnimationCallback(new VerifyingCallback(
+        VerifyingCallback callback = new VerifyingCallback(
                 new Callback(Callback.DISPATCH_MODE_STOP) {
             @Override
             public void onPrepare(@NonNull WindowInsetsAnimation animation) {
@@ -311,7 +345,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
                             fraction, equalTo(mAnimator.getAnimatedFraction()));
 
                     Interpolator interpolator =
-                            mInterpolator != null ? mInterpolator : new LinearInterpolator();
+                            mInterpolator != null ? mInterpolator
+                                    : new LinearInterpolator();
                     mErrorCollector.checkThat("onProgress",
                             runningAnimations.get(0).getInterpolatedFraction(),
                             equalTo(interpolator.getInterpolation(
@@ -322,12 +357,18 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
             @Override
             public void onEnd(@NonNull WindowInsetsAnimation animation) {
-                mRootView.setOnApplyWindowInsetsListener(null);
+                mRootView.setWindowInsetsAnimationCallback(null);
             }
-        }));
+        });
+        mCallbacks.add(callback);
+        mRootView.setWindowInsetsAnimationCallback(callback);
     }
 
     private void runTransition(boolean show) throws Throwable {
+        runTransition(show, 1000);
+    }
+
+    private void runTransition(boolean show, long durationMillis) throws Throwable {
         runOnUiThread(() -> {
             mAnimator = ValueAnimator.ofObject(
                     INSETS_EVALUATOR,
@@ -336,11 +377,13 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
                     show ? mListener.mController.getShownStateInsets()
                             : mListener.mController.getHiddenStateInsets()
             );
-            mAnimator.setDuration(1000);
+            mAnimator.setDuration(durationMillis);
             mAnimator.addUpdateListener((animator1) -> {
                 if (!mListener.mController.isReady()) {
                     // Lost control - Don't crash the instrumentation below.
-                    mErrorCollector.addError(new AssertionError("Unexpectedly lost control."));
+                    if (!mLossOfControlExpected) {
+                        mErrorCollector.addError(new AssertionError("Unexpectedly lost control."));
+                    }
                     mAnimator.cancel();
                     return;
                 }
@@ -510,6 +553,10 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             mPreparedAnimations.remove(animation);
             mInner.onEnd(animation);
         }
+
+        public void assertNoRunningAnimations() {
+            mErrorCollector.checkThat(mRunningAnimations, hasSize(0));
+        }
     }
 
     public static final class LimitedErrorCollector extends ErrorCollector {
@@ -525,8 +572,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         @Override
         protected void verify() throws Throwable {
-            if (mCount >= LIMIT) {
-                super.addError(new AssertionError(mCount + " errors skipped."));
+            if (mCount > LIMIT) {
+                super.addError(new AssertionError((mCount - LIMIT) + " errors skipped."));
             }
             super.verify();
         }
