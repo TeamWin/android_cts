@@ -248,7 +248,8 @@ public class AudioAEC extends AudioFrequencyActivity implements View.OnClickList
                 startTest();
                 break;
             case R.id.audio_aec_mandatory_no:
-                enableUILayout(mLinearLayout,true);
+                enableUILayout(mLinearLayout,false);
+                getPassButton().setEnabled(true);
                 mButtonMandatoryNo.setEnabled(false);
                 mButtonMandatoryYes.setEnabled(false);
                 mMandatory = false;
