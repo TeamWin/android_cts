@@ -21,6 +21,8 @@ import static com.android.utils.blob.Utils.acquireLease;
 import static com.android.utils.blob.Utils.assertLeasedBlobs;
 import static com.android.utils.blob.Utils.assertNoLeasedBlobs;
 import static com.android.utils.blob.Utils.releaseLease;
+import static com.android.utils.blob.Utils.TAG;
+import static com.android.utils.blob.Utils.triggerIdleMaintenance;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -73,7 +75,6 @@ import com.google.common.io.BaseEncoding;
 
 @RunWith(AndroidJUnit4.class)
 public class BlobStoreManagerTest {
-    private static final String TAG = "BlobStoreTest";
 
     private static final long TIMEOUT_COMMIT_CALLBACK_SEC = 5;
 
@@ -82,6 +83,7 @@ public class BlobStoreManagerTest {
     // TODO: Make it a @TestApi or move the test using this to a different location.
     // Copy of DeviceConfig.NAMESPACE_BLOBSTORE constant
     private static final String NAMESPACE_BLOBSTORE = "blobstore";
+    private static final String KEY_SESSION_EXPIRY_TIMEOUT_MS = "session_expiry_timeout_ms";
     private static final String KEY_LEASE_ACQUISITION_WAIT_DURATION_MS =
             "lease_acquisition_wait_time_ms";
     private static final String KEY_TOTAL_BYTES_PER_APP_LIMIT_FLOOR =
@@ -988,6 +990,56 @@ public class BlobStoreManagerTest {
 
         assertThat(mBlobStoreManager.getRemainingLeaseQuotaBytes())
                 .isEqualTo(initialRemainingQuota);
+    }
+
+    @Test
+    public void testCommitBlobAfterIdleMaintenance() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+        final long waitDurationMs = TimeUnit.SECONDS.toMillis(2);
+        final long partialFileSize = 100L;
+        final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+        assertThat(sessionId).isGreaterThan(0L);
+
+        try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+            blobData.writeToSession(session, 0, partialFileSize);
+        }
+
+        SystemClock.sleep(waitDurationMs);
+
+        // Trigger idle maintenance which takes of deleting expired sessions.
+        triggerIdleMaintenance(InstrumentationRegistry.getInstrumentation());
+
+        try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+            blobData.writeToSession(session, partialFileSize,
+                    blobData.getFileSize() - partialFileSize);
+            final CompletableFuture<Integer> callback = new CompletableFuture<>();
+            session.commit(mContext.getMainExecutor(), callback::complete);
+            assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                    .isEqualTo(0);
+        }
+    }
+
+    @Test
+    public void testExpiredSessionsDeleted() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+        final long waitDurationMs = TimeUnit.SECONDS.toMillis(2);
+        runWithKeyValues(() -> {
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+            assertThat(sessionId).isGreaterThan(0L);
+
+            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+                blobData.writeToSession(session, 0, 100);
+            }
+
+            SystemClock.sleep(waitDurationMs);
+
+            // Trigger idle maintenance which takes of deleting expired sessions.
+            triggerIdleMaintenance(InstrumentationRegistry.getInstrumentation());
+
+            assertThrows(SecurityException.class, () -> mBlobStoreManager.openSession(sessionId));
+        }, Pair.create(KEY_SESSION_EXPIRY_TIMEOUT_MS, String.valueOf(waitDurationMs)));
     }
 
     private static void runWithKeyValues(ThrowingRunnable runnable,
