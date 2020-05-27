@@ -22,6 +22,7 @@ import static com.android.utils.blob.Utils.assertLeasedBlobs;
 import static com.android.utils.blob.Utils.assertNoLeasedBlobs;
 import static com.android.utils.blob.Utils.releaseLease;
 import static com.android.utils.blob.Utils.TAG;
+import static com.android.utils.blob.Utils.runShellCmd;
 import static com.android.utils.blob.Utils.triggerIdleMaintenance;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -993,6 +994,57 @@ public class BlobStoreManagerTest {
     }
 
     @Test
+    public void testAccessExpiredBlob() throws Exception {
+        final long expiryDurationMs = TimeUnit.SECONDS.toMillis(6);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                .setExpiryDurationMs(expiryDurationMs)
+                .build();
+        blobData.prepare();
+
+        final long startTimeMs = System.currentTimeMillis();
+        final long blobId = commitBlob(blobData);
+        assertThat(runShellCmd("cmd blob_store query-blob-existence -b " + blobId)).isEqualTo("1");
+        final long commitDurationMs = System.currentTimeMillis() - startTimeMs;
+
+        SystemClock.sleep(Math.abs(expiryDurationMs - commitDurationMs));
+
+        assertThrows(SecurityException.class,
+                () -> mBlobStoreManager.openBlob(blobData.getBlobHandle()));
+        assertThrows(SecurityException.class,
+                () -> mBlobStoreManager.acquireLease(blobData.getBlobHandle(),
+                        R.string.test_desc));
+
+        triggerIdleMaintenance();
+        assertThat(runShellCmd("cmd blob_store query-blob-existence -b " + blobId)).isEqualTo("0");
+    }
+
+    @Test
+    public void testAccessExpiredBlob_withLeaseAcquired() throws Exception {
+        final long expiryDurationMs = TimeUnit.SECONDS.toMillis(6);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                .setExpiryDurationMs(expiryDurationMs)
+                .build();
+        blobData.prepare();
+
+        final long startTimeMs = System.currentTimeMillis();
+        final long blobId = commitBlob(blobData);
+        assertThat(runShellCmd("cmd blob_store query-blob-existence -b " + blobId)).isEqualTo("1");
+        final long commitDurationMs = System.currentTimeMillis() - startTimeMs;
+        acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc);
+
+        SystemClock.sleep(Math.abs(expiryDurationMs - commitDurationMs));
+
+        assertThrows(SecurityException.class,
+                () -> mBlobStoreManager.openBlob(blobData.getBlobHandle()));
+        assertThrows(SecurityException.class,
+                () -> mBlobStoreManager.acquireLease(blobData.getBlobHandle(),
+                        R.string.test_desc));
+
+        triggerIdleMaintenance();
+        assertThat(runShellCmd("cmd blob_store query-blob-existence -b " + blobId)).isEqualTo("0");
+    }
+
+    @Test
     public void testCommitBlobAfterIdleMaintenance() throws Exception {
         final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
@@ -1008,7 +1060,7 @@ public class BlobStoreManagerTest {
         SystemClock.sleep(waitDurationMs);
 
         // Trigger idle maintenance which takes of deleting expired sessions.
-        triggerIdleMaintenance(InstrumentationRegistry.getInstrumentation());
+        triggerIdleMaintenance();
 
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
             blobData.writeToSession(session, partialFileSize,
@@ -1036,7 +1088,7 @@ public class BlobStoreManagerTest {
             SystemClock.sleep(waitDurationMs);
 
             // Trigger idle maintenance which takes of deleting expired sessions.
-            triggerIdleMaintenance(InstrumentationRegistry.getInstrumentation());
+            triggerIdleMaintenance();
 
             assertThrows(SecurityException.class, () -> mBlobStoreManager.openSession(sessionId));
         }, Pair.create(KEY_SESSION_EXPIRY_TIMEOUT_MS, String.valueOf(waitDurationMs)));
@@ -1076,11 +1128,11 @@ public class BlobStoreManagerTest {
         }
     }
 
-    private void commitBlob(DummyBlobData blobData) throws Exception {
-        commitBlob(blobData, null);
+    private long commitBlob(DummyBlobData blobData) throws Exception {
+        return commitBlob(blobData, null);
     }
 
-    private void commitBlob(DummyBlobData blobData,
+    private long commitBlob(DummyBlobData blobData,
             AccessModifier accessModifier) throws Exception {
         final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
         assertThat(sessionId).isGreaterThan(0L);
@@ -1095,6 +1147,7 @@ public class BlobStoreManagerTest {
             assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
                     .isEqualTo(0);
         }
+        return sessionId;
     }
 
     private interface AccessModifier {
