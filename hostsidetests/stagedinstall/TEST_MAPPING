@@ -10,9 +10,8 @@
     }
   ],
   "postsubmit": [
-    // TODO(b/157377638): Re-enable the test after the bug is fixed.
-    // {
-    //   "name": "CtsStagedInstallHostTestCases"
-    // }
+    {
+      "name": "CtsStagedInstallHostTestCases"
+    }
   ]
 }

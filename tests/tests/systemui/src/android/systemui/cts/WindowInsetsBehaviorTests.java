@@ -93,6 +93,8 @@ public class WindowInsetsBehaviorTests {
     // greater than that, so that we can test if the limit can be changed by DeviceConfig or not.
     private static final int EXCLUSION_LIMIT_DP = 210;
 
+    private static final int NAV_BAR_INTERACTION_MODE_GESTURAL = 2;
+
     private final boolean mForceEnableGestureNavigation;
     private final Map<String, Boolean> mSystemGestureOptionsMap;
     private float mPixelsPerDp;
@@ -787,7 +789,7 @@ public class WindowInsetsBehaviorTests {
         Resources res = mTargetContext.getResources();
         int naviMode = res.getIdentifier(NAV_BAR_INTERACTION_MODE_RES_NAME, "integer", "android");
 
-        assumeTrue("Gesture navigation required", naviMode == 2);
+        assumeTrue("Gesture navigation required", naviMode == NAV_BAR_INTERACTION_MODE_GESTURAL);
     }
 
     /**
