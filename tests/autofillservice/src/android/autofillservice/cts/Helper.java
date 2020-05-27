@@ -1539,7 +1539,7 @@ public final class Helper {
     private static InlinePresentation createInlinePresentation(@NonNull String message,
             @NonNull PendingIntent attribution, boolean pinned) {
         return new InlinePresentation(
-                InlineSuggestionUi.newContentBuilder().setAttribution(attribution)
+                InlineSuggestionUi.newContentBuilder(attribution)
                         .setTitle(message).build().getSlice(),
                 new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
                         .build(), /* pinned= */ pinned);
