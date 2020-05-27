@@ -90,8 +90,8 @@ public class SensorSupportTest extends SensorTestCase {
         checkSupportsSensor(Sensor.TYPE_PRESSURE);
     }
 
-    public void testSupportsRotationVector() {
-        checkSupportsSensor(Sensor.TYPE_ROTATION_VECTOR);
+    public void testSupportsGameRotationVector() {
+        checkSupportsSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
     }
 
     public void testSupportsSignificantMotion() {
