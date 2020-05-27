@@ -309,6 +309,7 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
             mChild = new TextView(this);
             mEditor = new EditText(this);
             mView.addView(mChild);
+            mView.addView(mEditor);
 
             getWindow().setDecorFitsSystemWindows(false);
             getWindow().getAttributes().layoutInDisplayCutoutMode =
