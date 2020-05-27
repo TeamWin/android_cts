@@ -41,6 +41,7 @@ android_test_helper_app {
     static_libs: ["androidx.test.rules"],
     use_embedded_native_libs: true,
     compile_multilib: "both",
+    v4_signature: true,
 }
 
 android_test_helper_app {
@@ -60,5 +61,6 @@ android_test_helper_app {
     static_libs: ["androidx.test.rules"],
     use_embedded_native_libs: false,
     compile_multilib: "both",
+    v4_signature: true,
 }
 
