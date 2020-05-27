@@ -1086,7 +1086,9 @@ extern "C" jboolean Java_android_media_cts_NdkMediaCodec_AMediaCodecConfigure(
             AMEDIAFORMAT_KEY_BIT_RATE,
             AMEDIAFORMAT_KEY_FRAME_RATE,
             AMEDIAFORMAT_KEY_I_FRAME_INTERVAL,
-            AMEDIAFORMAT_KEY_LOW_LATENCY
+            // need to specify the actual string, since this test needs
+            // to run on API 29, where the symbol doesn't exist
+            "low-latency", // AMEDIAFORMAT_KEY_LOW_LATENCY
     };
 
     jint values[] = {width, height, colorFormat, bitRate, frameRate, iFrameInterval, lowLatency};
