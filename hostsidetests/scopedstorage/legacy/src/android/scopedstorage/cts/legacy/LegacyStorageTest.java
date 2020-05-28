@@ -18,9 +18,6 @@ package android.scopedstorage.cts.legacy;
 
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA2;
-import static android.scopedstorage.cts.lib.TestUtils.DCIM_DIR;
-import static android.scopedstorage.cts.lib.TestUtils.EXTERNAL_STORAGE_DIR;
-import static android.scopedstorage.cts.lib.TestUtils.MOVIES_DIR;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA2;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameDirectory;
@@ -92,9 +89,9 @@ public class LegacyStorageTest {
     private static final String TAG = "LegacyFileAccessTest";
     static final String THIS_PACKAGE_NAME = InstrumentationRegistry.getContext().getPackageName();
 
-    static final String IMAGE_FILE_NAME = "FilePathAccessTest_file.jpg";
-    static final String VIDEO_FILE_NAME = "LegacyAccessTest_file.mp4";
-    static final String NONMEDIA_FILE_NAME = "LegacyAccessTest_file.pdf";
+    static final String IMAGE_FILE_NAME = "LegacyStorageTest_file.jpg";
+    static final String VIDEO_FILE_NAME = "LegacyStorageTest_file.mp4";
+    static final String NONMEDIA_FILE_NAME = "LegacyStorageTest_file.pdf";
 
     private static final TestApp TEST_APP_A = new TestApp("TestAppA",
             "android.scopedstorage.cts.testapp.A", 1, false, "CtsScopedStorageTestAppA.apk");
@@ -121,17 +118,17 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ false);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
         // Can create file under root dir
-        assertCanCreateFile(new File(EXTERNAL_STORAGE_DIR, "LegacyFileAccessTest.txt"));
+        assertCanCreateFile(new File(TestUtils.getExternalStorageDir(), "LegacyFileAccessTest.txt"));
 
         // Can create music file under DCIM
-        assertCanCreateFile(new File(TestUtils.DCIM_DIR, "LegacyFileAccessTest.mp3"));
+        assertCanCreateFile(new File(TestUtils.getDcimDir(), "LegacyFileAccessTest.mp3"));
 
         // Can create random file under external files dir
-        assertCanCreateFile(new File(InstrumentationRegistry.getContext().getExternalFilesDir(null),
+        assertCanCreateFile(new File(TestUtils.getExternalFilesDir(),
                 "LegacyFileAccessTest"));
 
         // However, even legacy apps can't create files under other app's directories
-        final File otherAppDir = new File(TestUtils.ANDROID_DATA_DIR, "com.android.shell");
+        final File otherAppDir = new File(TestUtils.getAndroidDataDir(), "com.android.shell");
         final File file = new File(otherAppDir, "LegacyFileAccessTest.txt");
 
         // otherAppDir was already created by the host test
@@ -151,10 +148,10 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ false);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
         // Can create a top-level direcotry
-        final File topLevelDir = new File(EXTERNAL_STORAGE_DIR, "LegacyFileAccessTest");
+        final File topLevelDir = new File(TestUtils.getExternalStorageDir(), "LegacyFileAccessTest");
         assertCanCreateDir(topLevelDir);
 
-        final File otherAppDir = new File(TestUtils.ANDROID_DATA_DIR, "com.android.shell");
+        final File otherAppDir = new File(TestUtils.getAndroidDataDir(), "com.android.shell");
 
         // However, even legacy apps can't create dirs under other app's directories
         final File subDir = new File(otherAppDir, "LegacyFileAccessTest");
@@ -162,7 +159,7 @@ public class LegacyStorageTest {
         assertThat(subDir.mkdir()).isFalse();
 
         // Try to list a directory and fail because it requires READ permission
-        assertThat(TestUtils.MUSIC_DIR.list()).isNull();
+        assertThat(TestUtils.getMusicDir().list()).isNull();
     }
 
     /**
@@ -173,7 +170,8 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ false);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ false);
         // Can't create file under root dir
-        final File newTxtFile = new File(EXTERNAL_STORAGE_DIR, "LegacyFileAccessTest.txt");
+        final File newTxtFile = new File(TestUtils.getExternalStorageDir(),
+                "LegacyFileAccessTest.txt");
         try {
             newTxtFile.createNewFile();
             fail("File creation expected to fail: " + newTxtFile);
@@ -181,7 +179,7 @@ public class LegacyStorageTest {
         }
 
         // Can't create music file under /MUSIC
-        final File newMusicFile = new File(TestUtils.MUSIC_DIR, "LegacyFileAccessTest.mp3");
+        final File newMusicFile = new File(TestUtils.getMusicDir(), "LegacyFileAccessTest.mp3");
         try {
             newMusicFile.createNewFile();
             fail("File creation expected to fail: " + newMusicFile);
@@ -189,11 +187,12 @@ public class LegacyStorageTest {
         }
 
         // Can't create a top-level direcotry
-        final File topLevelDir = new File(EXTERNAL_STORAGE_DIR, "LegacyFileAccessTest");
+        final File topLevelDir = new File(TestUtils.getExternalStorageDir(), "LegacyFileAccessTest");
         assertThat(topLevelDir.mkdir()).isFalse();
 
         // Can't read existing file
-        final File existingFile = new File(EXTERNAL_STORAGE_DIR, "LegacyAccessHostTest_shell");
+        final File existingFile = new File(TestUtils.getExternalStorageDir(),
+                "LegacyAccessHostTest_shell");
         try {
             Os.open(existingFile.getPath(), OsConstants.O_RDONLY, /*mode*/ 0);
             fail("Opening file for read expected to fail: " + existingFile);
@@ -204,29 +203,29 @@ public class LegacyStorageTest {
         assertThat(existingFile.delete()).isFalse();
 
         // try to list a directory and fail
-        assertThat(TestUtils.MUSIC_DIR.list()).isNull();
-        assertThat(EXTERNAL_STORAGE_DIR.list()).isNull();
+        assertThat(TestUtils.getMusicDir().list()).isNull();
+        assertThat(TestUtils.getExternalStorageDir().list()).isNull();
 
         // However, even without permissions, we can access our own external dir
         final File fileInDataDir =
-                new File(InstrumentationRegistry.getContext().getExternalFilesDir(null),
+                new File(TestUtils.getExternalFilesDir(),
                         "LegacyFileAccessTest");
         try {
             assertThat(fileInDataDir.createNewFile()).isTrue();
             assertThat(Arrays.asList(fileInDataDir.getParentFile().list()))
-                    .containsExactly("LegacyFileAccessTest");
+                    .contains("LegacyFileAccessTest");
         } finally {
             fileInDataDir.delete();
         }
 
         // we can access our own external media directory without permissions.
         final File fileInMediaDir =
-                new File(InstrumentationRegistry.getContext().getExternalMediaDirs()[0],
+                new File(TestUtils.getExternalMediaDir(),
                         "LegacyFileAccessTest");
         try {
             assertThat(fileInMediaDir.createNewFile()).isTrue();
             assertThat(Arrays.asList(fileInMediaDir.getParentFile().list()))
-                    .containsExactly("LegacyFileAccessTest");
+                    .contains("LegacyFileAccessTest");
         } finally {
             fileInMediaDir.delete();
         }
@@ -238,10 +237,11 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ false);
         // can list directory content
-        assertThat(TestUtils.MUSIC_DIR.list()).isNotNull();
+        assertThat(TestUtils.getMusicDir().list()).isNotNull();
 
         // try to write a file and fail
-        final File existingFile = new File(EXTERNAL_STORAGE_DIR, "LegacyAccessHostTest_shell");
+        final File existingFile = new File(TestUtils.getExternalStorageDir(),
+                "LegacyAccessHostTest_shell");
 
         // can open file for read
         FileDescriptor fd = null;
@@ -261,7 +261,7 @@ public class LegacyStorageTest {
         }
 
         // try to create file and fail, because it requires WRITE
-        final File newFile = new File(TestUtils.MUSIC_DIR, "LegacyFileAccessTest.mp3");
+        final File newFile = new File(TestUtils.getMusicDir(), "LegacyFileAccessTest.mp3");
         try {
             newFile.createNewFile();
             fail("Creating file expected to fail: " + newFile);
@@ -269,7 +269,7 @@ public class LegacyStorageTest {
         }
 
         // try to mkdir and fail, because it requires WRITE
-        final File newDir = new File(EXTERNAL_STORAGE_DIR, "LegacyFileAccessTest");
+        final File newDir = new File(TestUtils.getExternalStorageDir(), "LegacyFileAccessTest");
         try {
             assertThat(newDir.mkdir()).isFalse();
         } finally {
@@ -286,7 +286,7 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ false);
 
         // can list a non-media file created by other package.
-        assertThat(Arrays.asList(EXTERNAL_STORAGE_DIR.list()))
+        assertThat(Arrays.asList(TestUtils.getExternalStorageDir().list()))
                 .contains("LegacyAccessHostTest_shell");
     }
 
@@ -299,11 +299,13 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
 
-        final File musicFile1 = new File(TestUtils.DCIM_DIR, "LegacyFileAccessTest.mp3");
-        final File musicFile2 = new File(EXTERNAL_STORAGE_DIR, "LegacyFileAccessTest.mp3");
-        final File musicFile3 = new File(TestUtils.MOVIES_DIR, "LegacyFileAccessTest.mp3");
-        final File nonMediaDir1 = new File(TestUtils.DCIM_DIR, "LegacyFileAccessTest");
-        final File nonMediaDir2 = new File(EXTERNAL_STORAGE_DIR, "LegacyFileAccessTest");
+        final File musicFile1 = new File(TestUtils.getDcimDir(), "LegacyFileAccessTest.mp3");
+        final File musicFile2 = new File(TestUtils.getExternalStorageDir(),
+                "LegacyFileAccessTest.mp3");
+        final File musicFile3 = new File(TestUtils.getMoviesDir(), "LegacyFileAccessTest.mp3");
+        final File nonMediaDir1 = new File(TestUtils.getDcimDir(), "LegacyFileAccessTest");
+        final File nonMediaDir2 = new File(TestUtils.getExternalStorageDir(),
+                "LegacyFileAccessTest");
         final File pdfFile1 = new File(nonMediaDir1, "LegacyFileAccessTest.pdf");
         final File pdfFile2 = new File(nonMediaDir2, "LegacyFileAccessTest.pdf");
         try {
@@ -340,13 +342,14 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ false);
 
-        final File shellFile1 = new File(EXTERNAL_STORAGE_DIR, "LegacyAccessHostTest_shell");
-        final File shellFile2 = new File(TestUtils.DOWNLOAD_DIR, "LegacyFileAccessTest_shell");
+        final File shellFile1 = new File(TestUtils.getExternalStorageDir(),
+                "LegacyAccessHostTest_shell");
+        final File shellFile2 = new File(TestUtils.getDownloadDir(), "LegacyFileAccessTest_shell");
         final File mediaFile1 =
-                new File(InstrumentationRegistry.getContext().getExternalMediaDirs()[0],
+                new File(TestUtils.getExternalMediaDir(),
                         "LegacyFileAccessTest1");
         final File mediaFile2 =
-                new File(InstrumentationRegistry.getContext().getExternalMediaDirs()[0],
+                new File(TestUtils.getExternalMediaDir(),
                         "LegacyFileAccessTest2");
         try {
             // app can't rename shell file.
@@ -373,13 +376,14 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ false);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ false);
 
-        final File shellFile1 = new File(EXTERNAL_STORAGE_DIR, "LegacyAccessHostTest_shell");
-        final File shellFile2 = new File(TestUtils.DOWNLOAD_DIR, "LegacyFileAccessTest_shell");
+        final File shellFile1 = new File(TestUtils.getExternalStorageDir(),
+                "LegacyAccessHostTest_shell");
+        final File shellFile2 = new File(TestUtils.getDownloadDir(), "LegacyFileAccessTest_shell");
         final File mediaFile1 =
-                new File(InstrumentationRegistry.getContext().getExternalMediaDirs()[0],
+                new File(TestUtils.getExternalMediaDir(),
                         "LegacyFileAccessTest1");
         final File mediaFile2 =
-                new File(InstrumentationRegistry.getContext().getExternalMediaDirs()[0],
+                new File(TestUtils.getExternalMediaDir(),
                         "LegacyFileAccessTest2");
         try {
             // app can't rename shell file.
@@ -404,8 +408,8 @@ public class LegacyStorageTest {
     @Test
     public void testRenameDirectoryAndUpdateDB_hasW() throws Exception {
         final String testDirectoryName = "LegacyFileAccessTestDirectory";
-        File directoryOldPath = new File(DCIM_DIR, testDirectoryName);
-        File directoryNewPath = new File(MOVIES_DIR, testDirectoryName);
+        File directoryOldPath = new File(TestUtils.getDcimDir(), testDirectoryName);
+        File directoryNewPath = new File(TestUtils.getMoviesDir(), testDirectoryName);
         try {
             if (directoryOldPath.exists()) {
                 executeShellCommand("rm -r " + directoryOldPath.getPath());
@@ -435,8 +439,8 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
 
-        final File videoFile = new File(EXTERNAL_STORAGE_DIR, VIDEO_FILE_NAME);
-        final File otherAppPdfFile = new File(TestUtils.DOWNLOAD_DIR, NONMEDIA_FILE_NAME);
+        final File videoFile = new File(TestUtils.getExternalStorageDir(), VIDEO_FILE_NAME);
+        final File otherAppPdfFile = new File(TestUtils.getDownloadDir(), NONMEDIA_FILE_NAME);
 
         try {
             assertThat(videoFile.createNewFile()).isTrue();
@@ -471,13 +475,13 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
 
-        final File videoFile = new File(EXTERNAL_STORAGE_DIR, VIDEO_FILE_NAME);
+        final File videoFile = new File(TestUtils.getExternalStorageDir(), VIDEO_FILE_NAME);
         try {
             assertThat(videoFile.createNewFile()).isTrue();
 
             installApp(TEST_APP_A, true);
             // videoFile is inserted to database, non-legacy app can see this videoFile on 'ls'.
-            assertThat(listAs(TEST_APP_A, EXTERNAL_STORAGE_DIR.getAbsolutePath()))
+            assertThat(listAs(TEST_APP_A, TestUtils.getExternalStorageDir().getAbsolutePath()))
                     .contains(VIDEO_FILE_NAME);
 
             // videoFile is in database, row ID for videoFile can not be -1.
@@ -498,8 +502,8 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
 
-        final File videoFile = new File(TestUtils.DCIM_DIR, VIDEO_FILE_NAME);
-        final File renamedVideoFile = new File(TestUtils.DCIM_DIR, "Renamed_" + VIDEO_FILE_NAME);
+        final File videoFile = new File(TestUtils.getDcimDir(), VIDEO_FILE_NAME);
+        final File renamedVideoFile = new File(TestUtils.getDcimDir(), "Renamed_" + VIDEO_FILE_NAME);
         final ContentResolver cr = getContentResolver();
 
         try {
@@ -531,8 +535,8 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
 
-        final File imageFile = new File(TestUtils.DCIM_DIR, IMAGE_FILE_NAME);
-        final File temporaryImageFile = new File(TestUtils.DCIM_DIR, IMAGE_FILE_NAME + "_.tmp");
+        final File imageFile = new File(TestUtils.getDcimDir(), IMAGE_FILE_NAME);
+        final File temporaryImageFile = new File(TestUtils.getDcimDir(), IMAGE_FILE_NAME + "_.tmp");
         final ContentResolver cr = getContentResolver();
 
         try {
@@ -574,9 +578,9 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
 
-        final File directoryNoMedia = new File(TestUtils.DCIM_DIR, ".directoryNoMedia");
+        final File directoryNoMedia = new File(TestUtils.getDcimDir(), ".directoryNoMedia");
         final File imageInNoMediaDir = new File(directoryNoMedia, IMAGE_FILE_NAME);
-        final File renamedImageInDCIM = new File(TestUtils.DCIM_DIR, IMAGE_FILE_NAME);
+        final File renamedImageInDCIM = new File(TestUtils.getDcimDir(), IMAGE_FILE_NAME);
         final File noMediaFile = new File(directoryNoMedia, ".nomedia");
         final ContentResolver cr = getContentResolver();
 
