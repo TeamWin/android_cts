@@ -293,12 +293,14 @@ public class WifiManagerTest extends AndroidTestCase {
 
         mWifiLock = mWifiManager.createWifiLock(TAG);
         mWifiLock.acquire();
-        if (!mWifiManager.isWifiEnabled())
-            setWifiEnabled(true);
+        // enable Wifi
+        if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
+        PollingCheck.check("Wifi not enabled", TEST_WAIT_DURATION_MS,
+                () -> mWifiManager.isWifiEnabled());
+
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         turnScreenOnNoDelay();
-        Thread.sleep(TEST_WAIT_DURATION_MS);
-        assertTrue(mWifiManager.isWifiEnabled());
+
         synchronized (mMySync) {
             mMySync.expectedState = STATE_NULL;
         }
@@ -1459,17 +1461,18 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     private void verifyRegisterSoftApCallback(TestExecutor executor, TestSoftApCallback callback)
-            throws Exception{
+            throws Exception {
         // Register callback to get SoftApCapability
         mWifiManager.registerSoftApCallback(executor, callback);
         PollingCheck.check(
                 "SoftAp register failed!", 1_000,
-                () -> { executor.runAll();
-                // Verify callback is run on the supplied executor and called
-                return callback.getOnStateChangedCalled() &&
-                callback.getOnSoftapInfoChangedCalled() &&
-                callback.getOnSoftApCapabilityChangedCalled() &&
-                callback.getOnConnectedClientCalled();
+                () -> {
+                    executor.runAll();
+                    // Verify callback is run on the supplied executor and called
+                    return callback.getOnStateChangedCalled() &&
+                            callback.getOnSoftapInfoChangedCalled() &&
+                            callback.getOnSoftApCapabilityChangedCalled() &&
+                            callback.getOnConnectedClientCalled();
                 });
     }
 
@@ -1626,9 +1629,10 @@ public class WifiManagerTest extends AndroidTestCase {
             // Verify state and info callback value as expected
             PollingCheck.check(
                     "SoftAp channel and state mismatch!!!", 5_000,
-                    () -> { executor.runAll();
-                    return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState() &&
-                    2462 == callback.getCurrentSoftApInfo().getFrequency();
+                    () -> {
+                        executor.runAll();
+                        return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState() &&
+                                2462 == callback.getCurrentSoftApInfo().getFrequency();
                     });
 
             // stop tethering which used to verify stopSoftAp
@@ -1637,10 +1641,11 @@ public class WifiManagerTest extends AndroidTestCase {
             // Verify clean up
             PollingCheck.check(
                     "Stop Softap failed", 2_000,
-                    () -> { executor.runAll();
-                    return WifiManager.WIFI_AP_STATE_DISABLED == callback.getCurrentState() &&
-                    0 == callback.getCurrentSoftApInfo().getBandwidth() &&
-                    0 == callback.getCurrentSoftApInfo().getFrequency();
+                    () -> {
+                        executor.runAll();
+                        return WifiManager.WIFI_AP_STATE_DISABLED == callback.getCurrentState() &&
+                                0 == callback.getCurrentSoftApInfo().getBandwidth() &&
+                                0 == callback.getCurrentSoftApInfo().getFrequency();
                     });
         } finally {
             mWifiManager.unregisterSoftApCallback(callback);
@@ -1724,7 +1729,7 @@ public class WifiManagerTest extends AndroidTestCase {
             // Re-enable all saved networks before exiting.
             if (savedNetworks != null) {
                 for (WifiConfiguration network : savedNetworks) {
-                    mWifiManager.enableNetwork(network.networkId, false);
+                    mWifiManager.enableNetwork(network.networkId, true);
                 }
             }
             uiAutomation.dropShellPermissionIdentity();
@@ -2015,7 +2020,7 @@ public class WifiManagerTest extends AndroidTestCase {
             // re-enable disabled networks
             for (int disabledNetworkId : disabledNetworkIds) {
                 ShellIdentityUtils.invokeWithShellPermissions(
-                        () -> mWifiManager.enableNetwork(disabledNetworkId, false));
+                        () -> mWifiManager.enableNetwork(disabledNetworkId, true));
             }
         }
     }
@@ -2320,7 +2325,8 @@ public class WifiManagerTest extends AndroidTestCase {
             return;
         }
 
-        // wait for Wifi to be connected
+        // ensure Wifi is connected
+        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected - Please ensure there is a saved network in range of this "
                         + "device",
