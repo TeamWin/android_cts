@@ -102,14 +102,19 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setScanThrottleEnabled(false));
 
+        // enable Wifi
         if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        turnScreenOn();
         PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
 
+        // turn screen on
+        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        turnScreenOn();
+
+        // check we have >= 1 saved network
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
         assertFalse("Need at least one saved network", savedNetworks.isEmpty());
+
         // Pick any one of the saved networks on the device (assumes that it is in range)
         mTestNetwork = savedNetworks.get(0);
         // Disconnect & disable auto-join on the saved network to prevent auto-connect from

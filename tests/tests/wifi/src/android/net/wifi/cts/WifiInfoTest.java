@@ -31,6 +31,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.nio.charset.StandardCharsets;
@@ -90,10 +91,11 @@ public class WifiInfoTest extends AndroidTestCase {
         assertThat(mWifiManager).isNotNull();
         mWifiLock = mWifiManager.createWifiLock(TAG);
         mWifiLock.acquire();
-        if (!mWifiManager.isWifiEnabled())
-            setWifiEnabled(true);
-        Thread.sleep(DURATION);
-        assertThat(mWifiManager.isWifiEnabled()).isTrue();
+
+        // enable Wifi
+        if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
+        PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
+
         mMySync.expectedState = STATE_NULL;
     }
 
@@ -133,7 +135,8 @@ public class WifiInfoTest extends AndroidTestCase {
             return;
         }
 
-        // wait for Wifi to be connected
+        // ensure Wifi is connected
+        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected - Please ensure there is a saved network in range of this "
                         + "device",
@@ -147,20 +150,11 @@ public class WifiInfoTest extends AndroidTestCase {
 
         setWifiEnabled(false);
 
-        PollingCheck.check("getNetworkId not -1", 20000, new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
-                return wifiInfo.getNetworkId() == -1;
-            }
-        });
+        PollingCheck.check("getNetworkId not -1", 20000,
+                () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
 
-        PollingCheck.check("getWifiState not disabled", 20000, new Callable<Boolean>() {
-           @Override
-            public Boolean call() throws Exception {
-               return mWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLED;
-            }
-        });
+        PollingCheck.check("getWifiState not disabled", 20000,
+                () -> mWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLED);
     }
 
     private void testWifiInfoPropertiesWhileConnected(WifiInfo wifiInfo) {
