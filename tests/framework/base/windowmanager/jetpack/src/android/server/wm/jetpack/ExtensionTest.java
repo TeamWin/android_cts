@@ -58,7 +58,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class ExtensionTest extends JetpackExtensionTestBase {
     private ActivityTestRule<TestActivity> mActivityTestRule = new ActivityTestRule<>(
-            TestActivity.class, false /* initialTouchMode */, true /* launchActivity */);
+            TestActivity.class, false /* initialTouchMode */, false /* launchActivity */);
     private ActivityTestRule<TestConfigChangeHandlingActivity> mConfigHandlingActivityTestRule =
             new ActivityTestRule<>(TestConfigChangeHandlingActivity.class,
                     false /* initialTouchMode */, false /* launchActivity */);
@@ -80,8 +80,12 @@ public class ExtensionTest extends JetpackExtensionTestBase {
     private IBinder mWindowToken;
 
     @Before
-    public void setUp() {
-        mActivity = mActivityTestRule.getActivity();
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+
+        // Launch activity after the ActivityManagerTestBase clean all package states.
+        mActivity = mActivityTestRule.launchActivity(new Intent());
         ExtensionUtils.assumeSupportedDevice(mActivity);
 
         mExtension = ExtensionUtils.getInterfaceCompat(mActivity);
