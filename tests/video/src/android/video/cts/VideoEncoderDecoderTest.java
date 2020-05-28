@@ -145,11 +145,15 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
 
     // Performance numbers only make sense on real devices, so skip on non-real devices
     public static boolean frankenDevice() throws IOException {
-        String systemBrand = getProperty("ro.product.system_ext.brand");
-        String systemModel = getProperty("ro.product.system_ext.model");
-        String systemProduct = getProperty("ro.product.system_ext.name");
-        if (("Android".equals(systemBrand) || "generic".equals(systemBrand)) &&
-            (systemModel.startsWith("AOSP on ") || systemProduct.startsWith("aosp_"))) {
+        String systemBrand = getProperty("ro.product.system.brand");
+        String systemModel = getProperty("ro.product.system.model");
+        String systemProduct = getProperty("ro.product.system.name");
+        // not all devices may have system_ext partition
+        String systemExtProduct = getProperty("ro.product.system_ext.name");
+        if (("Android".equals(systemBrand) || "generic".equals(systemBrand) ||
+                "mainline".equals(systemBrand)) &&
+            (systemModel.startsWith("AOSP on ") || systemProduct.startsWith("aosp_") ||
+                systemExtProduct.startsWith("aosp_"))) {
             return true;
         }
         return false;
