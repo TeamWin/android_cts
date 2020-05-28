@@ -34,6 +34,7 @@ import android.net.wifi.WifiManager.WifiLock;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -130,10 +131,12 @@ public class ScanResultTest extends AndroidTestCase {
 
         mWifiLock = mWifiManager.createWifiLock(TAG);
         mWifiLock.acquire();
-        if (!mWifiManager.isWifiEnabled())
-            setWifiEnabled(true);
-        Thread.sleep(ENABLE_WAIT_MSEC);
-        assertThat(mWifiManager.isWifiEnabled()).isTrue();
+
+        // enable Wifi
+        if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
+        PollingCheck.check("Wifi not enabled", ENABLE_WAIT_MSEC,
+                () -> mWifiManager.isWifiEnabled());
+
         mMySync.expectedState = STATE_NULL;
     }
 
@@ -299,10 +302,15 @@ public class ScanResultTest extends AndroidTestCase {
             return;
         }
 
+        // ensure Wifi is connected
+        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
+        PollingCheck.check(
+                "Wifi not connected",
+                ENABLE_WAIT_MSEC,
+                () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+
         final WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
         assertThat(wifiInfo).isNotNull();
-        assertWithMessage("Wifi should be connected!")
-                .that(wifiInfo.getBSSID()).isNotNull();
 
         ScanResult currentNetwork = null;
         for (int i = 0; i < SCAN_FIND_BSSID_MAX_RETRY_COUNT; i++) {
