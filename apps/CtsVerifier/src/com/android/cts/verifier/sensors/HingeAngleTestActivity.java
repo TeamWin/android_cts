@@ -52,7 +52,7 @@ public class HingeAngleTestActivity extends SensorCtsVerifierTestActivity {
      *  - Duplicate values are not seen back-to-back.
      */
     private String verifyMeasurements(int instructionsResId) throws Throwable {
-        Sensor wakeUpSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HINGE_ANGLE, true);
+        Sensor wakeUpSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HINGE_ANGLE);
         TestSensorEnvironment environment = new TestSensorEnvironment(
                 getApplicationContext(),
                 wakeUpSensor,
