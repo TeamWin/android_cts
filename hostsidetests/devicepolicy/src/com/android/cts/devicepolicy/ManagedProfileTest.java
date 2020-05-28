@@ -37,7 +37,6 @@ import com.android.tradefed.log.LogUtil.CLog;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -713,7 +712,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testResolverActivityLaunchedFromPersonalProfileWithSelectedWorkTab()
-            throws FileNotFoundException, DeviceNotAvailableException {
+            throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -728,6 +727,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                     "startSwitchToOtherProfileIntent", mPrimaryUserId);
             assertResolverActivityInForeground(mPrimaryUserId);
         } finally {
+            pressHome();
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
                     "clearCrossProfileIntents", mProfileUserId);
         }
@@ -735,7 +735,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testResolverActivityLaunchedFromWorkProfileWithSelectedPersonalTab()
-            throws FileNotFoundException, DeviceNotAvailableException {
+            throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -750,17 +750,77 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                     "startSwitchToOtherProfileIntent", mProfileUserId);
             assertResolverActivityInForeground(mProfileUserId);
         } finally {
+            pressHome();
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
                     "clearCrossProfileIntents", mProfileUserId);
         }
     }
 
+    @Test
+    public void testChooserActivityLaunchedFromPersonalProfileWithSelectedWorkTab()
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(SHARING_APP_1_APK, mPrimaryUserId);
+        installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
+        installAppAsUser(SHARING_APP_1_APK, mProfileUserId);
+        installAppAsUser(SHARING_APP_2_APK, mProfileUserId);
+        try {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "addCrossProfileIntents", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "startSwitchToOtherProfileIntent_chooser", mPrimaryUserId);
+            assertChooserActivityInForeground(mPrimaryUserId);
+        } finally {
+            pressHome();
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "clearCrossProfileIntents", mProfileUserId);
+        }
+    }
+
+    @Test
+    public void testChooserActivityLaunchedFromWorkProfileWithSelectedPersonalTab()
+            throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(SHARING_APP_1_APK, mPrimaryUserId);
+        installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
+        installAppAsUser(SHARING_APP_1_APK, mProfileUserId);
+        installAppAsUser(SHARING_APP_2_APK, mProfileUserId);
+        try {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "addCrossProfileIntents", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "startSwitchToOtherProfileIntent_chooser", mProfileUserId);
+            assertChooserActivityInForeground(mProfileUserId);
+        } finally {
+            pressHome();
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "clearCrossProfileIntents", mProfileUserId);
+        }
+    }
+
+    private void pressHome() throws Exception {
+        executeShellCommand("input keyevent KEYCODE_HOME");
+    }
+
+    private void assertChooserActivityInForeground(int userId)
+            throws DeviceNotAvailableException {
+        assertActivityInForeground("android/com.android.internal.app.ChooserActivity", userId);
+    }
+
     private void assertResolverActivityInForeground(int userId)
             throws DeviceNotAvailableException {
+        assertActivityInForeground("android/com.android.internal.app.ResolverActivity", userId);
+    }
+
+    private void assertActivityInForeground(String fullActivityName, int userId)
+            throws DeviceNotAvailableException {
         String commandOutput =
-                getDevice().executeShellCommand("dumpsys activity | grep Recent #0");
-        assertThat(commandOutput).contains(
-                "android/com.android.internal.app.ResolverActivity U=" + userId);
+                getDevice().executeShellCommand("dumpsys activity activities | grep Resumed:");
+        assertThat(commandOutput).contains("u" + userId + " " + fullActivityName);
     }
 
     private void changeUserRestrictionOrFail(String key, boolean value, int userId)
