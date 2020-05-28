@@ -27,6 +27,8 @@ import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInli
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.PendingIntent;
 import android.autofillservice.cts.CannedFillResponse;
 import android.autofillservice.cts.DummyActivity;
@@ -34,7 +36,11 @@ import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService;
 import android.autofillservice.cts.LoginActivityCommonTestCase;
 import android.content.Intent;
+import android.os.Binder;
+import android.os.Bundle;
 import android.service.autofill.FillContext;
+
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Test;
 
@@ -197,5 +203,50 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
 
         sReplier.getNextFillRequest();
         mUiBot.waitForIdleSync();
+    }
+
+    @Test
+    public void testAutofill_noInvalid() throws Exception {
+        final String keyInvalid = "invalid";
+        final String keyValid = "valid";
+        final String message = "Passes valid message to the remote service";
+        final Bundle bundle = new Bundle();
+        bundle.putBinder(keyInvalid, new Binder());
+        bundle.putString(keyValid, message);
+
+        // Set service.
+        enableService();
+        final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
+        assumeTrue("MockIME not available", mockImeSession != null);
+
+        mockImeSession.callSetInlineSuggestionsExtras(bundle);
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation(createPresentation("The Username"))
+                        .setInlinePresentation(createInlinePresentation("The Username"))
+                        .build());
+
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertDatasets("The Username");
+
+        final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
+        final Bundle extras = request.inlineRequest.getExtras();
+        assertThat(extras.get(keyInvalid)).isNull();
+        assertThat(extras.getString(keyValid)).isEqualTo(message);
+
+        final Bundle style = request.inlineRequest.getInlinePresentationSpecs().get(0).getStyle();
+        assertThat(style.get(keyInvalid)).isNull();
+        assertThat(style.getString(keyValid)).isEqualTo(message);
+
+        final Bundle style2 = request.inlineRequest.getInlinePresentationSpecs().get(1).getStyle();
+        assertThat(style2.get(keyInvalid)).isNull();
+        assertThat(style2.getString(keyValid)).isEqualTo(message);
     }
 }
