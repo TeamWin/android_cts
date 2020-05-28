@@ -179,12 +179,14 @@ public class TunerFilterTest {
                         .builder()
                         .setPacketType(AlpFilterConfiguration.PACKET_TYPE_COMPRESSED)
                         .setLengthType(AlpFilterConfiguration.LENGTH_TYPE_WITH_ADDITIONAL_HEADER)
+                        .setSettings(null)
                         .build();
 
         assertEquals(Filter.TYPE_ALP, config.getType());
         assertEquals(AlpFilterConfiguration.PACKET_TYPE_COMPRESSED, config.getPacketType());
         assertEquals(
                 AlpFilterConfiguration.LENGTH_TYPE_WITH_ADDITIONAL_HEADER, config.getLengthType());
+        assertEquals(null, config.getSettings());
     }
 
     @Test
@@ -198,6 +200,7 @@ public class TunerFilterTest {
                         .setSrcPort(33)
                         .setDstPort(23)
                         .setPassthrough(false)
+                        .setSettings(null)
                         .build();
 
         assertEquals(Filter.TYPE_IP, config.getType());
@@ -208,6 +211,7 @@ public class TunerFilterTest {
         assertEquals(33, config.getSrcPort());
         assertEquals(23, config.getDstPort());
         assertFalse(config.isPassthrough());
+        assertEquals(null, config.getSettings());
     }
 
     @Test
@@ -217,10 +221,12 @@ public class TunerFilterTest {
                 MmtpFilterConfiguration
                         .builder()
                         .setMmtpPacketId(3)
+                        .setSettings(null)
                         .build();
 
         assertEquals(Filter.TYPE_MMTP, config.getType());
         assertEquals(3, config.getMmtpPacketId());
+        assertEquals(null, config.getSettings());
     }
 
     @Test
@@ -232,12 +238,14 @@ public class TunerFilterTest {
                         .setPacketType(TlvFilterConfiguration.PACKET_TYPE_IPV4)
                         .setCompressedIpPacket(true)
                         .setPassthrough(false)
+                        .setSettings(null)
                         .build();
 
         assertEquals(Filter.TYPE_TLV, config.getType());
         assertEquals(TlvFilterConfiguration.PACKET_TYPE_IPV4, config.getPacketType());
         assertTrue(config.isCompressedIpPacket());
         assertFalse(config.isPassthrough());
+        assertEquals(null, config.getSettings());
     }
 
     @Test

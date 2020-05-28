@@ -301,7 +301,7 @@ public class SystemUtil {
                         throw new RuntimeException(e);
                     }
                 } else {
-                    throw e;
+                    throw new RuntimeException(e);
                 }
             }
         }
@@ -344,19 +344,6 @@ public class SystemUtil {
                 } else {
                     throw e;
                 }
-            }
-        }
-    }
-
-    public interface ThrowingRunnable extends Runnable {
-        void runOrThrow() throws Exception;
-
-        @Override
-        default void run() {
-            try {
-                runOrThrow();
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
             }
         }
     }

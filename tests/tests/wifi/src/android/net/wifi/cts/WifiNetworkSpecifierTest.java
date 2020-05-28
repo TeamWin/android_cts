@@ -137,7 +137,7 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
         }
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.enableNetwork(mTestNetwork.networkId, false));
+                () -> mWifiManager.enableNetwork(mTestNetwork.networkId, true));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setScanThrottleEnabled(mWasScanThrottleEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(

@@ -18,6 +18,8 @@ package com.android.cts.devicepolicy;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -31,9 +33,11 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
+
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -705,6 +709,58 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         // create profile from installed app
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
                 "testCreateProfile_managedProfile", mPrimaryUserId);
+    }
+
+    @Test
+    public void testResolverActivityLaunchedFromPersonalProfileWithSelectedWorkTab()
+            throws FileNotFoundException, DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(SHARING_APP_1_APK, mPrimaryUserId);
+        installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
+        installAppAsUser(SHARING_APP_1_APK, mProfileUserId);
+        installAppAsUser(SHARING_APP_2_APK, mProfileUserId);
+        try {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "addCrossProfileIntents", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "startSwitchToOtherProfileIntent", mPrimaryUserId);
+            assertResolverActivityInForeground(mPrimaryUserId);
+        } finally {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "clearCrossProfileIntents", mProfileUserId);
+        }
+    }
+
+    @Test
+    public void testResolverActivityLaunchedFromWorkProfileWithSelectedPersonalTab()
+            throws FileNotFoundException, DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(SHARING_APP_1_APK, mPrimaryUserId);
+        installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
+        installAppAsUser(SHARING_APP_1_APK, mProfileUserId);
+        installAppAsUser(SHARING_APP_2_APK, mProfileUserId);
+        try {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "addCrossProfileIntents", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "startSwitchToOtherProfileIntent", mProfileUserId);
+            assertResolverActivityInForeground(mProfileUserId);
+        } finally {
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
+                    "clearCrossProfileIntents", mProfileUserId);
+        }
+    }
+
+    private void assertResolverActivityInForeground(int userId)
+            throws DeviceNotAvailableException {
+        String commandOutput =
+                getDevice().executeShellCommand("dumpsys activity | grep Recent #0");
+        assertThat(commandOutput).contains(
+                "android/com.android.internal.app.ResolverActivity U=" + userId);
     }
 
     private void changeUserRestrictionOrFail(String key, boolean value, int userId)
