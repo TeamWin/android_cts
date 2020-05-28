@@ -12,6 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// A rule to collect apps for debugging purpose. See ApkVerityTestAppPrebuilt/README.md.
+genrule {
+    name: "CtsApkVerityTestDebugFiles",
+    srcs: [
+        ":CtsApkVerityTestApp",
+        ":CtsApkVerityTestAppFsvSig",
+        ":CtsApkVerityTestAppDm",
+        ":CtsApkVerityTestAppDmFsvSig",
+        ":CtsApkVerityTestAppSplit",
+        ":CtsApkVerityTestAppSplitFsvSig",
+        ":CtsApkVerityTestAppSplitDm",
+        ":CtsApkVerityTestAppSplitDmFsvSig",
+    ],
+    cmd: "echo $(in) > $(out)",
+    out: ["CtsApkVerityTestDebugFiles.txt"],
+}
+
 filegroup {
     name: "CtsApkVerityTestAppDm",
     srcs: ["CtsApkVerityTestApp.dm"],
@@ -71,19 +88,4 @@ genrule {
     defaults: ["cts_apk_verity_sig_gen_default"],
     srcs: [":CtsApkVerityTestAppSplitDm"],
     out: ["CtsApkVerityTestAppSplit.dm.fsv_sig"],
-}
-
-// Create another app with mismatched .fsv_sig
-genrule {
-    name: "CtsApkVerityTestApp2",
-    srcs: [":CtsApkVerityTestApp"],
-    out: ["CtsApkVerityTestApp2.apk"],
-    cmd: "cp -f $(in) $(out)"
-}
-
-genrule {
-    name: "CtsApkVerityTestApp2FsvSig",
-    srcs: [":CtsApkVerityTestAppSplitFsvSig"],
-    out: ["CtsApkVerityTestApp2.apk.fsv_sig"],
-    cmd: "cp -f $(in) $(out)"
 }
