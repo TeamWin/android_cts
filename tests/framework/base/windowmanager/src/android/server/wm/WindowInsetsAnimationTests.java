@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.withSettings;
 
 import android.platform.test.annotations.Presubmit;
+import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
 import android.view.WindowInsetsAnimation.Bounds;
@@ -225,5 +226,27 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
                 insets -> NONE.equals(insets.getInsets(navigationBars()))), any());
     }
 
+    @Test
+    public void testAnimationCallbacks_withLegacyFlags() {
+        getInstrumentation().runOnMainSync(() -> {
+            mActivity.getWindow().setDecorFitsSystemWindows(true);
+            mRootView.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            mRootView.post(() -> {
+                mRootView.getWindowInsetsController().hide(systemBars());
+            });
+        });
+
+        getWmState().waitFor(state -> !state.isWindowVisible("StatusBar"),
+                "Waiting for status bar to be hidden");
+        assertFalse(getWmState().isWindowVisible("StatusBar"));
+
+        verify(mActivity.mCallback).onPrepare(any());
+        verify(mActivity.mCallback).onStart(any(), any());
+        verify(mActivity.mCallback, atLeastOnce()).onProgress(any(), any());
+        verify(mActivity.mCallback).onEnd(any());
+    }
 
 }
