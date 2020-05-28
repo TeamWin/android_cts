@@ -22,8 +22,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.cts.sharingapps.sharingapp1">
     <uses-permission android:name="android.permission.INTERACT_ACROSS_PROFILES"/>
-    <application android:testOnly="true"
-            android:crossProfile="true">
+    <application android:testOnly="true">
         <uses-library android:name="android.test.runner" />
         <activity android:name=".SimpleActivity" >
             <intent-filter>

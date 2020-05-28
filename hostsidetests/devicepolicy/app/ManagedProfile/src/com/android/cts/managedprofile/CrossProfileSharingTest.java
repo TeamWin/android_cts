@@ -32,8 +32,6 @@ import android.content.pm.ResolveInfo;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.google.common.truth.Truth;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -47,7 +45,7 @@ public class CrossProfileSharingTest {
 
     @Test
     public void startSwitchToOtherProfileIntent() {
-        Intent intent = getBrowserIntent();
+        Intent intent = getSendIntent();
         Context context = InstrumentationRegistry.getContext();
         List<ResolveInfo> resolveInfos =
                 context.getPackageManager().queryIntentActivities(intent,
@@ -61,6 +59,28 @@ public class CrossProfileSharingTest {
         ComponentName componentName =
                 new ComponentName(activityInfo.packageName, activityInfo.name);
         Intent switchToOtherProfileIntent = new Intent(intent);
+        switchToOtherProfileIntent.setComponent(componentName);
+        switchToOtherProfileIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(switchToOtherProfileIntent);
+    }
+
+    @Test
+    public void startSwitchToOtherProfileIntent_chooser() {
+        Intent intent = getSendIntent();
+        Context context = InstrumentationRegistry.getContext();
+        List<ResolveInfo> resolveInfos =
+                context.getPackageManager().queryIntentActivities(intent,
+                        PackageManager.MATCH_DEFAULT_ONLY);
+        ResolveInfo switchToOtherProfileResolveInfo =
+                getSwitchToOtherProfileResolveInfo(resolveInfos);
+        assertWithMessage("Could not retrieve the switch to other profile resolve info.")
+                .that(switchToOtherProfileResolveInfo)
+                .isNotNull();
+        ActivityInfo activityInfo = switchToOtherProfileResolveInfo.activityInfo;
+        ComponentName componentName =
+                new ComponentName(activityInfo.packageName, activityInfo.name);
+        Intent chooserIntent = Intent.createChooser(intent, /* title */ null);
+        Intent switchToOtherProfileIntent = new Intent(chooserIntent);
         switchToOtherProfileIntent.setComponent(componentName);
         switchToOtherProfileIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(switchToOtherProfileIntent);
@@ -89,7 +109,7 @@ public class CrossProfileSharingTest {
         devicePolicyManager.clearCrossProfileIntentFilters(ADMIN_RECEIVER_COMPONENT);
     }
 
-    private Intent getBrowserIntent() {
+    private Intent getSendIntent() {
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.putExtra(Intent.EXTRA_TEXT, "test example");
