@@ -2858,4 +2858,38 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         // Verify auto-fill has been triggered.
         mUiBot.assertDatasetsContains("The Dude");
     }
+
+    @Test
+    public void testSwitchInputMethod_noNewFillRequest() throws Exception {
+        // Set service
+        enableService();
+
+        // Set expectations
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill
+        mActivity.onUsername(View::requestFocus);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertDatasetsContains("The Dude");
+
+        // Trigger IME switch event
+        Helper.mockSwitchInputMethod(sContext);
+        mUiBot.waitForIdleSync();
+
+        // Tap password field
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertDatasetsContains("The Dude");
+
+        // No new fill request
+        sReplier.assertNoUnhandledFillRequests();
+    }
 }
