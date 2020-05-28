@@ -39,12 +39,12 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
 
     private static final String PACKAGE_NAME = "android.appsecurity.cts.apkveritytestapp";
 
-    private static final String BASE_APK = "CtsApkVerityTestApp.apk";
-    private static final String BASE_APK_DM = "CtsApkVerityTestApp.dm";
-    private static final String SPLIT_APK = "CtsApkVerityTestAppSplit.apk";
-    private static final String SPLIT_APK_DM = "CtsApkVerityTestAppSplit.dm";
-    private static final String BAD_BASE_APK = "CtsApkVerityTestApp2.apk";
-    private static final String BAD_BASE_APK_DM = "CtsApkVerityTestApp2.dm";
+    private static final String BASE_APK = "CtsApkVerityTestAppPrebuilt.apk";
+    private static final String BASE_APK_DM = "CtsApkVerityTestAppPrebuilt.dm";
+    private static final String SPLIT_APK = "CtsApkVerityTestAppSplitPrebuilt.apk";
+    private static final String SPLIT_APK_DM = "CtsApkVerityTestAppSplitPrebuilt.dm";
+    private static final String BAD_BASE_APK = "CtsApkVerityTestApp2Prebuilt.apk";
+    private static final String BAD_BASE_APK_DM = "CtsApkVerityTestApp2Prebuilt.dm";
     private static final String FSV_SIG_SUFFIX = ".fsv_sig";
     private static final String APK_VERITY_STANDARD_MODE = "2";
 
