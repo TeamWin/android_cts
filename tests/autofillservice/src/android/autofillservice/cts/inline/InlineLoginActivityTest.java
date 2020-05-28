@@ -249,4 +249,50 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         assertThat(style2.get(keyInvalid)).isNull();
         assertThat(style2.getString(keyValid)).isEqualTo(message);
     }
+
+    @Test
+    public void testSwitchInputMethod() throws Exception {
+        // Set service
+        enableService();
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation(createPresentation("The Username"))
+                        .setInlinePresentation(createInlinePresentation("The Username"))
+                        .build());
+
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertDatasets("The Username");
+
+        sReplier.getNextFillRequest();
+
+        // Trigger IME switch event
+        Helper.mockSwitchInputMethod(sContext);
+        mUiBot.waitForIdleSync();
+
+        final CannedFillResponse.Builder builder2 = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude2")
+                        .setPresentation(createPresentation("The Username 2"))
+                        .setInlinePresentation(createInlinePresentation("The Username 2"))
+                        .build());
+
+        sReplier.addResponse(builder2.build());
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        // Confirm new suggestion
+        mUiBot.assertDatasets("The Username 2");
+
+        // Confirm new fill request
+        sReplier.getNextFillRequest();
+    }
 }
