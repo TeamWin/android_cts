@@ -18,9 +18,10 @@ package android.server.wm.jetpack;
 
 import android.app.Activity;
 import android.os.IBinder;
+import android.server.wm.ActivityManagerTestBase;
 
 /** Base class for all tests in the module. Copied from androidx.window.WindowTestBase. */
-class JetpackExtensionTestBase {
+class JetpackExtensionTestBase extends ActivityManagerTestBase {
     static IBinder getActivityWindowToken(Activity activity) {
         return activity.getWindow().getAttributes().token;
     }
