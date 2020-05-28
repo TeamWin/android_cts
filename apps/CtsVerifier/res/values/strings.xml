@@ -1027,6 +1027,39 @@
     <string name="accessService">AccessService</string>
     <string name="offhostService">OffhostService</string>
     <string name="felicaservice">Felica Service</string>
+    <string name="UiccTransactionEventService">Uicc Transaction Event Service</string>
+
+    <string name="nfc_offhost_uicc">Offhost UICC-based card emulation</string>
+    <string name="nfc_offhost_uicc_emulator_tests">Offhost card emulation emulator tests</string>
+    <string name="nfc_offhost_uicc_reader_tests">Offhost card emulation reader tests</string>
+    <string name="nfc_offhost_uicc_transaction_event1_emulator">Offhost transaction event-field off (Emulator)</string>
+    <string name="nfc_offhost_uicc_transaction_event1_reader">Offhost transaction event-field off (Reader)</string>
+    <string name="nfc_offhost_uicc_transaction_event2_emulator">Offhost transaction event-deselect (Emulator)</string>
+    <string name="nfc_offhost_uicc_transaction_event2_reader">Offhost transaction event-deselect (Reader)</string>
+    <string name="nfc_offhost_uicc_transaction_event3_emulator">Offhost transaction event-HCI CMD (Emulator)</string>
+    <string name="nfc_offhost_uicc_transaction_event3_reader">Offhost transaction event-HCI CMD (Reader)</string>
+
+    <string name="nfc_offhost_uicc_emulator_test_info">The offhost-based card emulation
+        tests require two devices to be completed. The emulator tests are used
+        to actually test the off-based card emulation feature of the device-under-test. So the
+        device running the emulator tests must be the candidate device running the software
+        to be tested. \n\nFor each emulator test, there is a corresponding "reader test"
+        in the "Offhost reader tests" section. The "reader test" acts as a NFC terminal/POS
+        and makes sure the device-under-test implements card emulation correctly
+    </string>
+    <string name="nfc_offhost_uicc_reader_test_info">The offhost-based card emulation
+        tests require two devices to be completed. The emulator tests are used
+        to actually test the off-based card emulation feature of the device-under-test. So the
+        device running the emulator tests must be the candidate device running the software
+        to be tested. \n\nFor each emulator test, there is a corresponding "reader test"
+        in the "Offhost card emulation reader tests" section. The "reader test" acts as a NFC terminal/POS
+        and makes sure the device-under-test implements card emulation correctly.
+    </string>
+    <string name="nfc_offhost_uicc_type_selection">By default Offhost card emulation applications run on type A.
+      If your device supports type B (for example, because of a type B only UICC), select "Type B" from the drop-down box above. Note that all tests must be completed in the same mode (either "Type A" or "Type B").</string>
+    <string name="nfc_offhost_please_wait">Please wait</string>
+    <string name="nfc_offhost_setting_up">Setting up card emulation services...</string>
+    <string name="nfc_offhost_uicc_transaction_event_emulator_help">Switch application to background before starting tests. Successful transaction event will switch application to foreground with transaction event data.</string>
 
     <!-- Strings for Sensor Test Activities -->
     <string name="snsr_device_admin_receiver">Sensor Tests Device Admin Receiver</string>
