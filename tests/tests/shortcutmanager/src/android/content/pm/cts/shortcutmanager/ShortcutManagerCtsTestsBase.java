@@ -398,7 +398,8 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     protected ShortcutInfo makeShortcutWithRank(String id, int rank) {
         return makeShortcut(
                 id, "Title-" + id, /* activity =*/ null, /* icon =*/ null,
-                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), rank, /* locusId =*/ null);
+                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), rank, /* locusId =*/ null,
+                /* longLived =*/ false);
     }
 
     /**
@@ -408,7 +409,7 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         return makeShortcut(
                 id, "Title-" + id, /* activity =*/ null, /* icon =*/ null,
                 makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0,
-                new LocusId(locusId));
+                new LocusId(locusId), /* longLived =*/ false);
     }
 
     /**
@@ -418,14 +419,14 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         return makeShortcut(
                 id, shortLabel, /* activity =*/ null, /* icon =*/ null,
                 makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0,
-                /* locusId =*/ null);
+                /* locusId =*/ null, /* longLived =*/ false);
     }
 
     protected ShortcutInfo makeShortcut(String id, ComponentName activity) {
         return makeShortcut(
                 id, "Title-" + id, activity, /* icon =*/ null,
                 makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0,
-                /* locusId =*/ null);
+                /* locusId =*/ null, /* longLived =*/ false);
     }
 
     /**
@@ -435,7 +436,17 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
         return makeShortcut(
                 id, "Title-" + id, /* activity =*/ null, icon,
                 makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0,
-                /* locusId =*/ null);
+                /* locusId =*/ null, /* longLived =*/ false);
+    }
+
+    /**
+     * Make a long-lived shortcut with an ID.
+     */
+    protected ShortcutInfo makeLongLivedShortcut(String id) {
+        return makeShortcut(
+                id, "Title-" + id, /* activity =*/ null, /* icon =*/ null,
+                makeIntent(Intent.ACTION_VIEW, ShortcutActivity.class), /* rank =*/ 0,
+                /* locusId =*/ null, /* longLived =*/ true);
     }
 
     /**
@@ -450,7 +461,7 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
     }
 
     /**
-     * Makes and array of shortcut IDs.
+     * Makes an array of shortcut IDs.
      * For example, makeIds("sX", 4, 9) will return {"sX4", "sX5", "sX6", "sX7", "sX8", "sX9"}.
      */
     protected String[] makeIds(String prefix, int first, int last) {
@@ -470,11 +481,12 @@ public abstract class ShortcutManagerCtsTestsBase extends InstrumentationTestCas
      * Make a shortcut with details.
      */
     protected ShortcutInfo makeShortcut(String id, String shortLabel, ComponentName activity,
-            Icon icon, Intent intent, int rank, LocusId locusId) {
+            Icon icon, Intent intent, int rank, LocusId locusId, boolean longLived) {
         final ShortcutInfo.Builder b = makeShortcutBuilder(id)
                 .setShortLabel(shortLabel)
                 .setRank(rank)
-                .setIntent(intent);
+                .setIntent(intent)
+                .setLongLived(longLived);
         if (activity != null) {
             b.setActivity(activity);
         } else if (mTargetActivityOverride != null) {

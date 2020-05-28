@@ -2071,6 +2071,15 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 "testCallingIsOrganizationOwnedWithManagedProfileExpectingFalse");
     }
 
+    @LockSettingsTest
+    @Test
+    public void testSecondaryLockscreen() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".SecondaryLockscreenTest");
+    }
+
     private String getLaunchableSystemPackage() throws DeviceNotAvailableException {
         final List<String> enabledSystemPackageNames = getEnabledSystemPackageNames();
         for (String enabledSystemPackage : enabledSystemPackageNames) {

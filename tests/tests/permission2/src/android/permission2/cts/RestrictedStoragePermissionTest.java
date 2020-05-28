@@ -39,7 +39,7 @@ import android.util.ArraySet;
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SystemUtil.ThrowingRunnable;
+import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.After;
 import org.junit.Test;
@@ -668,7 +668,7 @@ public class RestrictedStoragePermissionTest {
                 .getUiAutomation()
                 .adoptShellPermissionIdentity();
         try {
-            command.runOrThrow();
+            command.run();
         } finally {
             InstrumentationRegistry.getInstrumentation()
                     .getUiAutomation()

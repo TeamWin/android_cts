@@ -302,6 +302,10 @@ public class ConnectedNetworkScorerTest {
                 new TestUsabilityStatsListener(countDownLatchUsabilityStats);
         try {
             uiAutomation.adoptShellPermissionIdentity();
+            // Clear any external scorer already active on the device.
+            mWifiManager.clearWifiConnectedNetworkScorer();
+            Thread.sleep(500);
+
             mWifiManager.setWifiConnectedNetworkScorer(
                     Executors.newSingleThreadExecutor(), connectedNetworkScorer);
             // Since we're already connected, wait for onStart to be invoked.

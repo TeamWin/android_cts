@@ -3602,6 +3602,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 true /* useNdk */);
     }
 
+    @NonMediaMainlineTest
     public void testLowLatencyAVCAt1280x720() throws Exception {
         testLowLatencyVideo(
                 R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, 300,
@@ -3611,6 +3612,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 true /* useNdk */);
     }
 
+    @NonMediaMainlineTest
     public void testLowLatencyHEVCAt480x360() throws Exception {
         testLowLatencyVideo(
                 R.raw.video_480x360_mp4_hevc_650kbps_30fps_aac_stereo_128kbps_48000hz, 300,
