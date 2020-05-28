@@ -507,10 +507,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
             return;
         }
         installAllDummyApps();
-        getDevice().clearLogcat();
-        // Increase logcat size because the test is reading from it.
-        String command = "logcat -G 16M";
-        getDevice().executeShellCommand(command);
+        setupLogcatForTest();
 
         runWorkProfileDeviceTest(
                 ".CrossProfileTest",
@@ -521,6 +518,14 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 UNSET_CROSS_PROFILE_PACKAGES);
         assertDummyAppsDidNotReceiveCanInteractAcrossProfilesChangedBroadcast(
                 MAINTAINED_CROSS_PROFILE_PACKAGES);
+    }
+
+    private void setupLogcatForTest() throws Exception {
+        // Clear and increase logcat buffer size because the test is reading from it.
+        final String clearLogcatCommand = "logcat -c";
+        getDevice().executeShellCommand(clearLogcatCommand);
+        final String increaseLogcatBufferCommand = "logcat -G 16M";
+        getDevice().executeShellCommand(increaseLogcatBufferCommand);
     }
 
     /** Assumes that logcat is clear before running the test. */
