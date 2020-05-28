@@ -20,10 +20,9 @@
   ~ and UID. For example, you could use it to set permissions or app-ops.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.cts.sharingapps.sharingapp2">
+        package="com.android.cts.sharingapps.sharingapp2">
     <uses-permission android:name="android.permission.INTERACT_ACROSS_PROFILES"/>
-    <application android:testOnly="true"
-                 android:crossProfile="true">
+    <application android:testOnly="true">
         <uses-library android:name="android.test.runner" />
         <activity android:name=".SimpleActivity" >
             <intent-filter>
