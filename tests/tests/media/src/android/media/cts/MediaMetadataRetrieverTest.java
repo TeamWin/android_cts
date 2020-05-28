@@ -35,6 +35,7 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.media.cts.R;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
@@ -44,7 +45,9 @@ import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -84,6 +87,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             Color.valueOf(0.64f, 0.0f, 0.64f),
             Color.valueOf(0.64f, 0.64f, 0.0f),
     };
+    private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     @Override
     protected void setUp() throws Exception {
@@ -419,6 +423,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testGenreParsing() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         Object [][] genres = {
             { R.raw.id3test0, null },
             { R.raw.id3test1, "Country" },
@@ -708,48 +713,56 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testGetFrameAtTimePreviousSyncEditList() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         int[][] testCases = {
                 { 2000000, 60 }, { 2433334, 60 }, { 2533334, 60 }, { 2933334, 60 }, { 3133334, 90}};
         testGetFrameAtTimeEditList(OPTION_PREVIOUS_SYNC, testCases);
     }
 
     public void testGetFrameAtTimeNextSyncEditList() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         int[][] testCases = {
                 { 2000000, 60 }, { 2433334, 90 }, { 2533334, 90 }, { 2933334, 90 }, { 3133334, 120}};
         testGetFrameAtTimeEditList(OPTION_NEXT_SYNC, testCases);
     }
 
     public void testGetFrameAtTimeClosestSyncEditList() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         int[][] testCases = {
                 { 2000000, 60 }, { 2433334, 60 }, { 2533334, 90 }, { 2933334, 90 }, { 3133334, 90}};
         testGetFrameAtTimeEditList(OPTION_CLOSEST_SYNC, testCases);
     }
 
     public void testGetFrameAtTimeClosestEditList() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         int[][] testCases = {
                 { 2000000, 60 }, { 2433335, 73 }, { 2533333, 76 }, { 2949334, 88 }, { 3117334, 94}};
         testGetFrameAtTimeEditList(OPTION_CLOSEST, testCases);
     }
 
     public void testGetFrameAtTimePreviousSyncEmptyNormalEditList() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         int[][] testCases = {
                 { 2133000, 60 }, { 2566334, 60 }, { 2666334, 60 }, { 3100000, 60 }, { 3266000, 90}};
         testGetFrameAtTimeEmptyNormalEditList(OPTION_PREVIOUS_SYNC, testCases);
     }
 
     public void testGetFrameAtTimeNextSyncEmptyNormalEditList() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         int[][] testCases = {{ 2000000, 60 }, { 2133000, 60 }, { 2566334, 90 }, { 3100000, 90 },
                 { 3200000, 120}};
         testGetFrameAtTimeEmptyNormalEditList(OPTION_NEXT_SYNC, testCases);
     }
 
     public void testGetFrameAtTimeClosestSyncEmptyNormalEditList() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         int[][] testCases = {
                 { 2133000, 60 }, { 2566334, 60 }, { 2666000, 90 }, { 3133000, 90 }, { 3200000, 90}};
         testGetFrameAtTimeEmptyNormalEditList(OPTION_CLOSEST_SYNC, testCases);
     }
 
     public void testGetFrameAtTimeClosestEmptyNormalEditList() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         int[][] testCases = {
                 { 2133000, 60 }, { 2566000, 73 }, { 2666000, 76 }, { 3066001, 88 }, { 3255000, 94}};
         testGetFrameAtTimeEmptyNormalEditList(OPTION_CLOSEST, testCases);
@@ -948,6 +961,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
 
     private void testGetScaledFrameAtTime(int scaleToWidth, int scaleToHeight,
             int expectedWidth, int expectedHeight, Bitmap.Config config) {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         MediaMetadataRetriever.BitmapParams params = null;
         Bitmap bitmap = null;
         if (config != null) {
