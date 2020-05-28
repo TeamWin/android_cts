@@ -84,19 +84,25 @@ public class ConnectedNetworkScorerTest {
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(true));
 
+        // enable Wifi
         if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
+        PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
+
+        // turn screen on
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         turnScreenOn();
-        PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
+
+        // check we have >= 1 saved network
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getConfiguredNetworks());
         assertWithMessage("Need at least one saved network").that(savedNetworks).isNotEmpty();
-        // Wait for wifi is to be connected
+
+        // ensure Wifi is connected
+        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected",
                 DURATION,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
-        assertThat(mWifiManager.getConnectionInfo().getNetworkId()).isNotEqualTo(-1);
     }
 
     @After
@@ -341,7 +347,6 @@ public class ConnectedNetworkScorerTest {
                     "Wifi not disconnected",
                     DURATION,
                     () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
-            assertThat(mWifiManager.getConnectionInfo().getNetworkId()).isEqualTo(-1);
             disconnected = true;
 
             // Wait for stop to be invoked and ensure that the session id matches.
