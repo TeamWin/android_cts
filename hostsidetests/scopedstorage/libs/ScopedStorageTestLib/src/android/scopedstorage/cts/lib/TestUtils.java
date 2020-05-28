@@ -38,6 +38,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
@@ -67,7 +68,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -231,6 +231,16 @@ public class TestUtils {
     }
 
     /**
+     * Makes the given {@code testApp} open {@code file} for read or write.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean openFileAs(TestApp testApp, File file, boolean forWrite)
+            throws Exception {
+        return openFileAs(testApp, file.getAbsolutePath(), forWrite);
+    }
+
+    /**
      * Makes the given {@code testApp} open a file for read or write.
      *
      * <p>This method drops shell permission identity.
@@ -350,7 +360,16 @@ public class TestUtils {
     }
 
     /**
-     * Queries {@link ContentResolver} for a file and returns a {@link Cursor} with the given
+     * Queries {@link ContentResolver} for a video file and returns a {@link Cursor} with the given
+     * columns.
+     */
+    @NonNull
+    public static Cursor queryVideoFile(File file, String... projection) {
+        return queryFile(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, file, projection);
+    }
+
+    /**
+     * Queries {@link ContentResolver} for an image file and returns a {@link Cursor} with the given
      * columns.
      */
     @NonNull
@@ -401,6 +420,21 @@ public class TestUtils {
                            /*where*/ MediaStore.MediaColumns.DATA + " = ?",
                            /*selectionArgs*/ new String[] {file.getPath()}))
                 .isEqualTo(1);
+    }
+
+    /**
+     * Deletes db rows and files corresponding to uri through {@link ContentResolver} and
+     * {@link MediaStore} APIs.
+     */
+    public static void deleteWithMediaProviderNoThrow(Uri... uris) {
+        for (Uri uri : uris) {
+            if (uri == null) continue;
+
+            try {
+                getContentResolver().delete(uri, Bundle.EMPTY);
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     /**
@@ -610,14 +644,20 @@ public class TestUtils {
     }
 
     /**
+     * Asserts that {@code dir} is a directory and that it doesn't contain any of
+     * {@code unexpectedContent}
+     */
+    public static void assertDirectoryDoesNotContain(@NonNull File dir, File... unexpectedContent) {
+        assertThat(dir.isDirectory()).isTrue();
+        assertThat(Arrays.asList(dir.listFiles())).containsNoneIn(unexpectedContent);
+    }
+
+    /**
      * Asserts that {@code dir} is a directory and that it contains all of {@code expectedContent}
      */
     public static void assertDirectoryContains(@NonNull File dir, File... expectedContent) {
         assertThat(dir.isDirectory()).isTrue();
-        final List<File> actualContent = Arrays.asList(dir.listFiles());
-        for (File f : expectedContent) {
-            assertThat(actualContent).contains(f);
-        }
+        assertThat(Arrays.asList(dir.listFiles())).containsAllIn(expectedContent);
     }
 
     public static File getExternalStorageDir() {
@@ -918,10 +958,15 @@ public class TestUtils {
 
     @NonNull
     private static Cursor queryFile(@NonNull Uri uri, @NonNull File file, String... projection) {
-        final Cursor c = getContentResolver().query(uri, projection,
-                /*selection*/ MediaStore.MediaColumns.DATA + " = ?",
-                /*selectionArgs*/ new String[] {file.getAbsolutePath()},
-                /*sortOrder*/ null);
+        Bundle queryArgs = new Bundle();
+        queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION,
+                MediaStore.MediaColumns.DATA + " = ?");
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+                new String[] { file.getAbsolutePath() });
+        queryArgs.putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_INCLUDE);
+        queryArgs.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_INCLUDE);
+
+        final Cursor c = getContentResolver().query(uri, projection, queryArgs, null);
         assertThat(c).isNotNull();
         return c;
     }
