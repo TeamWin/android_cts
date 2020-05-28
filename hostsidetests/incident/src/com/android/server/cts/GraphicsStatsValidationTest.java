@@ -101,7 +101,7 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         // Although our current stats don't distinguish between ANIMATION, LAYOUT, and RECORD_DRAW
         // so this will just be slowUi +30
         int slowUiDelta = summaryAfter.getSlowUiThreadCount() - summaryBefore.getSlowUiThreadCount();
-        assertThat(slowUiDelta).isAtLeast(28);
+        assertThat(slowUiDelta).isAtLeast(20);
         int missedVsyncDelta = summaryAfter.getMissedVsyncCount()
                 - summaryBefore.getMissedVsyncCount();
         assertThat(missedVsyncDelta).isIn(Range.closed(10, 11));
