@@ -35,6 +35,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.opengl.GLES20;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -53,6 +54,7 @@ import androidx.annotation.Nullable;
 import androidx.heifwriter.HeifWriter;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -78,6 +80,7 @@ public class HeifWriterTest extends AndroidTestCase {
     private static final boolean DUMP_YUV_INPUT = false;
     private static final int GRID_WIDTH = 512;
     private static final int GRID_HEIGHT = 512;
+    private static final boolean IS_BEFORE_R = ApiLevelUtil.isBefore(Build.VERSION_CODES.R);
 
     private static byte[][] TEST_YUV_COLORS = {
             {(byte) 255, (byte) 0, (byte) 0},
@@ -364,7 +367,7 @@ public class HeifWriterTest extends AndroidTestCase {
                 mRotation = 0;
                 mQuality = 100;
                 // use memfd by default
-                if (DUMP_OUTPUT) {
+                if (DUMP_OUTPUT || IS_BEFORE_R) {
                     mOutputPath = new File(Environment.getExternalStorageDirectory(),
                             OUTPUT_FILENAME).getAbsolutePath();
                 } else {
