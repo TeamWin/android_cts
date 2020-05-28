@@ -84,9 +84,6 @@ public class BatchingTestActivity extends SensorCtsVerifierTestActivity {
 
     @SuppressWarnings("unused")
     public String testProximity_batching() throws Throwable {
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_PROXIMITY)) {
-            return null;
-        }
         return runBatchTest(
                 Sensor.TYPE_PROXIMITY,
                 REPORT_LATENCY_10_SEC,
@@ -95,9 +92,6 @@ public class BatchingTestActivity extends SensorCtsVerifierTestActivity {
 
     @SuppressWarnings("unused")
     public String testProximity_flush() throws Throwable {
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_PROXIMITY)) {
-            return null;
-        }
         return runFlushTest(
                 Sensor.TYPE_PROXIMITY,
                 REPORT_LATENCY_10_SEC,
