@@ -31,25 +31,26 @@ import org.junit.runner.RunWith;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class ScopedStorageHostTest extends BaseHostJUnit4Test {
-    private boolean isExternalStorageSetup = false;
+    private boolean mIsExternalStorageSetup = false;
 
     /**
-     * Runs the given phase of FilePathAccessTest by calling into the device.
+     * Runs the given phase of ScopedStorageTest by calling into the device.
      * Throws an exception if the test phase fails.
      */
-    private void runDeviceTest(String phase) throws Exception {
+    void runDeviceTest(String phase) throws Exception {
         assertTrue(runDeviceTests("android.scopedstorage.cts",
                 "android.scopedstorage.cts.ScopedStorageTest", phase));
+
     }
 
-    private String executeShellCommand(String cmd) throws Exception {
+    String executeShellCommand(String cmd) throws Exception {
         return getDevice().executeShellCommand(cmd);
     }
 
     private void setupExternalStorage() throws Exception {
-        if (!isExternalStorageSetup) {
+        if (!mIsExternalStorageSetup) {
             runDeviceTest("setupExternalStorage");
-            isExternalStorageSetup = true;
+            mIsExternalStorageSetup = true;
         }
     }
 
