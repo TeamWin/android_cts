@@ -126,7 +126,7 @@ public class ParcelTest extends AndroidTestCase {
         int dC1 = p.dataCapacity();
         p.writeDouble(2.19);
         int dC2 = p.dataCapacity();
-        assertTrue(dC2 > dC1);
+        assertTrue(dC2 >= dC1);
         p.recycle();
     }
 
