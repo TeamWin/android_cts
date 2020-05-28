@@ -296,11 +296,17 @@ public final class MockIme extends InputMethodService {
                         final int height = command.getExtras().getInt("height");
                         mView.setHeight(height);
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    case "setInlineSuggestionsExtras":
+                        mInlineSuggestionsExtras = command.getExtras();
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                 }
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;
         });
     }
+
+    @Nullable
+    private Bundle mInlineSuggestionsExtras;
 
     @Nullable
     private CommandReceiver mCommandReceiver;
@@ -730,6 +736,10 @@ public final class MockIme extends InputMethodService {
         StylesBuilder stylesBuilder = UiVersions.newStylesBuilder();
         stylesBuilder.addStyle(InlineSuggestionUi.newStyleBuilder().build());
         Bundle styles = stylesBuilder.build();
+        if (mInlineSuggestionsExtras != null) {
+            styles.putAll(mInlineSuggestionsExtras);
+        }
+
         return getTracer().onCreateInlineSuggestionsRequest(() -> {
             final ArrayList<InlinePresentationSpec> presentationSpecs = new ArrayList<>();
             presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
@@ -737,12 +747,15 @@ public final class MockIme extends InputMethodService {
             presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
                     new Size(400, 100)).setStyle(styles).build());
 
-            return new InlineSuggestionsRequest.Builder(presentationSpecs)
-                    .setMaxSuggestionCount(6)
-                    .build();
+            final InlineSuggestionsRequest.Builder builder =
+                    new InlineSuggestionsRequest.Builder(presentationSpecs)
+                            .setMaxSuggestionCount(6);
+            if (mInlineSuggestionsExtras != null) {
+                builder.setExtras(mInlineSuggestionsExtras.deepCopy());
+            }
+            return builder.build();
         });
     }
-
 
     @MainThread
     @Override
