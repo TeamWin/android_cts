@@ -318,6 +318,11 @@ public class EuiccManagerTest {
 
     @Test
     public void testSetSupportedCountries() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
         // Get country list for restoring later.
         List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
 
@@ -334,6 +339,11 @@ public class EuiccManagerTest {
 
     @Test
     public void testSetUnsupportedCountries() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
         // Get country list for restoring later.
         List<String> originalUnsupportedCountry = mEuiccManager.getUnsupportedCountries();
 
@@ -350,6 +360,11 @@ public class EuiccManagerTest {
 
     @Test
     public void testIsSupportedCountry_returnsTrue_ifCountryIsOnSupportedList() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
         // Get country list for restoring later.
         List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
 
@@ -365,6 +380,11 @@ public class EuiccManagerTest {
 
     @Test
     public void testIsSupportedCountry_returnsTrue_ifCountryIsNotOnUnsupportedList() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
         // Get country list for restoring later.
         List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
         List<String> originalUnsupportedCountry = mEuiccManager.getUnsupportedCountries();
@@ -384,6 +404,11 @@ public class EuiccManagerTest {
 
     @Test
     public void testIsSupportedCountry_returnsFalse_ifCountryIsNotOnSupportedList() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
         // Get country list for restoring later.
         List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
 
@@ -399,6 +424,11 @@ public class EuiccManagerTest {
 
     @Test
     public void testIsSupportedCountry_returnsFalse_ifCountryIsOnUnsupportedList() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
         // Get country list for restoring later.
         List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
         List<String> originalUnsupportedCountry = mEuiccManager.getUnsupportedCountries();
@@ -418,6 +448,11 @@ public class EuiccManagerTest {
 
     @Test
     public void testIsSupportedCountry_returnsFalse_ifBothListsAreEmpty() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
         // Get country list for restoring later.
         List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
         List<String> originalUnsupportedCountry = mEuiccManager.getUnsupportedCountries();
