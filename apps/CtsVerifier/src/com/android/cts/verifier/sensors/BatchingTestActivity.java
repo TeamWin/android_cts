@@ -24,6 +24,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.hardware.cts.helpers.TestSensorEnvironment;
 import android.hardware.cts.helpers.sensoroperations.TestSensorOperation;
+import android.hardware.cts.helpers.sensorverification.EventBasicVerification;
 
 import java.util.concurrent.TimeUnit;
 
@@ -134,6 +135,13 @@ public class BatchingTestActivity extends SensorCtsVerifierTestActivity {
         int testDurationSec = maxBatchReportLatencySec + BATCHING_PADDING_TIME_S;
         TestSensorOperation operation =
                 TestSensorOperation.createOperation(environment, testDurationSec,TimeUnit.SECONDS);
+
+        // Expect at least 2 events (for on-change: initial value + changed value; for step sensors
+        // multiple values for walking).
+        EventBasicVerification verification =
+                new EventBasicVerification(2 /* expectedMinNumEvent */, environment.getSensor());
+        operation.addVerification(verification);
+
         return executeTest(operation);
     }
 
