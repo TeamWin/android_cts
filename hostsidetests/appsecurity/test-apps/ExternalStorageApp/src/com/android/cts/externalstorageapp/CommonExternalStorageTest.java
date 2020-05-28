@@ -253,6 +253,12 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         }
     }
 
+    public static void assertDirReadWriteAccess(File[] paths) {
+        for (File path : paths) {
+            assertDirReadWriteAccess(path);
+        }
+    }
+
     public static void assertDirReadWriteAccess(File path) {
         Log.d(TAG, "Asserting read/write access to " + path);
 
