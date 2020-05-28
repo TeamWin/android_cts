@@ -1088,8 +1088,19 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         }
 
         // Editing apksigner to add trailing data after the Merkle tree
-        assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-10mb-trailing-data.apk",
+        assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-1mb-trailing-data.apk",
                 "Failure");
+    }
+
+    public void testInstallV4WithMerkleTreeBitsFlipped() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner to flip few bits in the only node of the Merkle tree of a small app.
+        assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-bit-flipped.apk",
+                "Failed to parse");
     }
 
     public void testV4IncToV3NonIncSameKeyUpgradeSucceeds() throws Exception {
