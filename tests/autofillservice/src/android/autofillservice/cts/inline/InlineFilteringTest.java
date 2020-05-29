@@ -27,6 +27,7 @@ import android.autofillservice.cts.Helper;
 
 import org.junit.Test;
 
+// TODO: Move any tests needed from here into DatasetFilteringInlineTest.
 /**
  * Tests for inline suggestion filtering. Tests for filtering datasets that need authentication are
  * in {@link InlineAuthenticationTest}.
@@ -100,6 +101,11 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
                         .setField(ID_USERNAME, "sergey")
                         .setPresentation(createPresentation("sergey"))
                         .setInlinePresentation(createInlinePresentation("sergey"))
+                        .build())
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "page")
+                        .setPresentation(createPresentation("page"))
+                        .setInlinePresentation(createInlinePresentation("page"))
                         .build());
         sReplier.addResponse(builder.build());
 
@@ -124,9 +130,11 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername((v) -> v.setText("se"));
         mUiBot.waitForIdleSync();
         mUiBot.assertNoDatasets();
+
+        // Clear the text, then check that all suggestions are shown.
         mActivity.onUsername((v) -> v.setText(""));
         mUiBot.waitForIdleSync();
-        mUiBot.assertNoDatasetsEver();
+        mUiBot.assertDatasets("sergey", "page");
     }
 
     /**
@@ -160,7 +168,7 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertNoDatasets();
         mActivity.onUsername((v) -> v.setText(""));
         mUiBot.waitForIdleSync();
-        mUiBot.assertNoDatasetsEver();
+        mUiBot.assertDatasets("sergey");
     }
 
     @Test
