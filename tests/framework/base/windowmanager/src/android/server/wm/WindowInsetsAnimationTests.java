@@ -26,6 +26,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.withSettings;
 
+import android.graphics.Insets;
 import android.platform.test.annotations.Presubmit;
 import android.view.View;
 import android.view.WindowInsets;
@@ -66,6 +68,11 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
         super.setUp();
         mActivity = startActivity(TestActivity.class);
         mRootView = mActivity.getWindow().getDecorView();
+        assumeTrue(hasWindowInsets(systemBars()));
+    }
+
+    private boolean hasWindowInsets(int types) {
+        return Insets.NONE != mRootView.getRootWindowInsets().getInsetsIgnoringVisibility(types);
     }
 
     @Test
@@ -220,10 +227,14 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
 
         waitForOrFail("Waiting until animation done", () -> done[0]);
 
-        verify(childCallback).onStart(any(), argThat(
-                bounds -> bounds.getUpperBound().equals(before.getInsets(statusBars()))));
-        verify(childCallback, atLeastOnce()).onProgress(argThat(
-                insets -> NONE.equals(insets.getInsets(navigationBars()))), any());
+        if (hasWindowInsets(statusBars())) {
+            verify(childCallback).onStart(any(), argThat(
+                    bounds -> bounds.getUpperBound().equals(before.getInsets(statusBars()))));
+        }
+        if (hasWindowInsets(navigationBars())) {
+            verify(childCallback, atLeastOnce()).onProgress(argThat(
+                    insets -> NONE.equals(insets.getInsets(navigationBars()))), any());
+        }
     }
 
     @Test
@@ -248,5 +259,4 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
         verify(mActivity.mCallback, atLeastOnce()).onProgress(any(), any());
         verify(mActivity.mCallback).onEnd(any());
     }
-
 }
