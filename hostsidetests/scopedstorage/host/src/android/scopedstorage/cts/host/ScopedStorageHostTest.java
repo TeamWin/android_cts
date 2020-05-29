@@ -249,6 +249,11 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testManageExternalStorageCantReadWriteOtherAppExternalDir() throws Exception {
+        runDeviceTest("testManageExternalStorageCantReadWriteOtherAppExternalDir");
+    }
+
+    @Test
     public void testCantAccessOtherAppsContents() throws Exception {
         runDeviceTest("testCantAccessOtherAppsContents");
     }
