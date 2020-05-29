@@ -37,6 +37,11 @@ import com.android.compatibility.common.util.CddTest;
 
 import junit.framework.AssertionFailedError;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * Tests for {@link ShortcutManager} and {@link ShortcutInfo}.
  *
@@ -2131,6 +2136,40 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     .areAllDynamic()
                     .haveIds("s2");
         });
+    }
+
+    public void testShortcutsWithUriIcons() throws Exception {
+        File file = new File(getTestContext().getFilesDir(), "testimage.jpg");
+        try {
+            // Write file to disk
+            try (InputStream source = getTestContext().getResources().openRawResource(
+                    R.drawable.black_32x32);
+                 OutputStream target = new FileOutputStream(file)) {
+                byte[] buffer = new byte[1024];
+                for (int len = source.read(buffer); len >= 0; len = source.read(buffer)) {
+                    target.write(buffer, 0, len);
+                }
+            }
+            assertTrue(file.exists());
+
+            final Uri fileUri = Uri.fromFile(file);
+            final Icon icon1 = Icon.createWithContentUri(fileUri);
+            final Icon icon2 = Icon.createWithAdaptiveBitmapContentUri(fileUri);
+
+            runWithCallerWithStrictMode(mPackageContext1, () -> {
+                assertTrue(getManager().setDynamicShortcuts(list(
+                        makeShortcutWithIcon("s1", icon1), makeShortcutWithIcon("s2", icon2))));
+
+                assertWith(getManager().getDynamicShortcuts()).haveIds("s1", "s2");
+
+                assertIconDimensions(mLauncherContext1, mPackageContext1.getPackageName(), "s1",
+                        icon1);
+                assertIconDimensions(mLauncherContext1, mPackageContext1.getPackageName(), "s2",
+                        icon2);
+            });
+        } finally {
+            file.delete();
+        }
     }
 
     // TODO Test auto rank adjustment.
