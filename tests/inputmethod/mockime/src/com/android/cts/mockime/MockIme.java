@@ -61,7 +61,7 @@ import android.view.inputmethod.InputMethod;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import android.widget.inline.InlinePresentationSpec;
 
@@ -454,7 +454,7 @@ public final class MockIme extends InputMethodService {
             mLayout.setOrientation(LinearLayout.VERTICAL);
 
             if (mSettings.getInlineSuggestionsEnabled()) {
-                final ScrollView scrollView = new ScrollView(getContext());
+                final HorizontalScrollView scrollView = new HorizontalScrollView(getContext());
                 final LayoutParams scrollViewParams = new LayoutParams(MATCH_PARENT, 100);
                 scrollView.setLayoutParams(scrollViewParams);
 
