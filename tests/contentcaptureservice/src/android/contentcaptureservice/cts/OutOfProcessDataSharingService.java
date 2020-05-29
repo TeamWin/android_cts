@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.contentcaptureservice.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.Service;
+import android.content.Intent;
 import android.content.LocusId;
-import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
+import android.os.Binder;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.view.contentcapture.ContentCaptureManager;
 import android.view.contentcapture.DataShareRequest;
 import android.view.contentcapture.DataShareWriteAdapter;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,23 +37,33 @@ import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class DataSharingActivity extends AbstractContentCaptureActivity {
-
+public class OutOfProcessDataSharingService extends Service {
     private static final Executor sExecutor = Executors.newCachedThreadPool();
     private static final Random sRandom = new Random();
-    private static final String sLocusId = "DataShare_CTSTest";
-    private static final String sMimeType = "application/octet-stream";
 
     boolean mSessionFinished = false;
     boolean mSessionSucceeded = false;
     int mSessionErrorCode = 0;
     boolean mSessionRejected = false;
     byte[] mDataWritten = new byte[10_000];
+    String mLocusId = "DataShare_CTSTest";
+    String mMimeType = "application/octet-stream";
+
+    private final IBinder mBinder = new LocalBinder();
 
     @Override
-    public void onStart() {
-        super.onStart();
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        shareData();
+        return START_NOT_STICKY;
+    }
 
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
+    }
+
+    private void shareData() {
         ContentCaptureManager manager =
                 getApplicationContext().getSystemService(ContentCaptureManager.class);
 
@@ -56,20 +71,28 @@ public class DataSharingActivity extends AbstractContentCaptureActivity {
         assertThat(manager.isContentCaptureEnabled()).isTrue();
 
         manager.shareData(
-                new DataShareRequest(new LocusId(sLocusId), sMimeType),
+                new DataShareRequest(new LocusId(mLocusId), mMimeType),
                 sExecutor, new DataShareWriteAdapter() {
                     @Override
                     public void onWrite(ParcelFileDescriptor destination) {
-                        sRandom.nextBytes(mDataWritten);
-
                         try (OutputStream outputStream =
                                      new ParcelFileDescriptor.AutoCloseOutputStream(destination)) {
+                            if (DataSharingServiceTest.sKillingStage
+                                    == DataSharingServiceTest.KillingStage.BEFORE_WRITE) {
+                                Process.killProcess(Process.myPid());
+                                return;
+                            }
+                            sRandom.nextBytes(mDataWritten);
                             outputStream.write(mDataWritten);
+                            if (DataSharingServiceTest.sKillingStage
+                                    == DataSharingServiceTest.KillingStage.DURING_WRITE) {
+                                Process.killProcess(Process.myPid());
+                                return;
+                            }
+                            mSessionSucceeded = true;
                         } catch (IOException e) {
-                            // fall through, sessionSucceeded will stay false.
                         }
 
-                        mSessionSucceeded = true;
                         mSessionFinished = true;
                     }
 
@@ -89,8 +112,10 @@ public class DataSharingActivity extends AbstractContentCaptureActivity {
                 });
     }
 
-    @Override
-    public void assertDefaultEvents(@NonNull Session session) {
-        // Do nothing - this test operates with file sharing.
+    public class LocalBinder extends Binder {
+        OutOfProcessDataSharingService getService() {
+            return OutOfProcessDataSharingService.this;
+        }
     }
+
 }

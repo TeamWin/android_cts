@@ -127,6 +127,14 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".DataSharingService"
+            android:label="DataSharingService" />
+        <service
+            android:name=".OutOfProcessDataSharingService"
+            android:label="OutOfProcessDataSharingService"
+            android:process=":android.contentcapture.cts.outside" />
+
     </application>
 
     <instrumentation
