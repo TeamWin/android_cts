@@ -51,6 +51,7 @@ import static android.security.keystore.KeyProperties.SIGNATURE_PADDING_RSA_PSS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeTrue;
 import static org.junit.matchers.JUnitMatchers.either;
 import static org.junit.matchers.JUnitMatchers.hasItems;
 
@@ -163,10 +164,8 @@ public class KeyAttestationTest extends AndroidTestCase {
                 KM_PURPOSE_SIGN, KM_PURPOSE_VERIFY, KM_PURPOSE_SIGN | KM_PURPOSE_VERIFY
         };
 
-        // Skip the test if there is no secure lock screen
-        if (!hasSecureLockScreen()) {
-            return;
-        }
+        assumeKeyAttestationEligible();
+
         for (int curveIndex = 0; curveIndex < curves.length; ++curveIndex) {
             for (int challengeIndex = 0; challengeIndex < challenges.length; ++challengeIndex) {
                 for (int purposeIndex = 0; purposeIndex < purposes.length; ++purposeIndex) {
@@ -329,10 +328,8 @@ public class KeyAttestationTest extends AndroidTestCase {
                 },
         };
 
-        // Skip the test if there is no secure lock screen
-        if (!hasSecureLockScreen()) {
-            return;
-        }
+        assumeKeyAttestationEligible();
+
         for (int keySize : keySizes) {
             for (byte[] challenge : challenges) {
                 for (int purpose : purposes) {
@@ -1063,6 +1060,7 @@ public class KeyAttestationTest extends AndroidTestCase {
             }
         }
     }
+
     /*
      * Device that don't report android.software.device_admin doesn't have secure lock screen
      * because device with secure lock screen MUST report android.software.device_admin .
@@ -1073,5 +1071,15 @@ public class KeyAttestationTest extends AndroidTestCase {
     private boolean hasSecureLockScreen() {
         PackageManager pm = getContext().getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
+    }
+
+    private boolean isTVDevice() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    // TVs must support key attestation even without lock screen or device administration
+    // https://source.android.com/compatibility/10/android-10-cdd#2_3_5_security_model
+    private void assumeKeyAttestationEligible() {
+        assumeTrue(hasSecureLockScreen() || isTVDevice());
     }
 }
