@@ -30,6 +30,7 @@ public final class Timeouts {
     public static final long DRAWABLE_TIMEOUT_MS = 5_000;
 
     public static final long LONG_PRESS_MS = 3000;
+    public static final long RESPONSE_DELAY_MS = 1000;
 
     /**
      * Timeout until framework binds / unbinds from service.
