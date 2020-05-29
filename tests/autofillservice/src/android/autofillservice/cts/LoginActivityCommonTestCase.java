@@ -23,6 +23,7 @@ import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -159,5 +160,141 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
                 findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
         assertWithMessage("Password node is focused").that(
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+    }
+
+    @Test
+    public void testClearFocusBeforeRespond() throws Exception {
+        // Set service
+        enableService();
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        waitUntilConnected();
+
+        // Clear focus before responded
+        mActivity.onUsername(View::clearFocus);
+        mUiBot.waitForIdleSync();
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation("The Dude", isInlineMode())
+                        .build());
+        sReplier.addResponse(builder.build());
+        sReplier.getNextFillRequest();
+
+        // Confirm no datasets shown
+        mUiBot.assertNoDatasetsEver();
+    }
+
+    @Test
+    public void testSwitchFocusBeforeResponse() throws Exception {
+        // Set service
+        enableService();
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        waitUntilConnected();
+
+        // Trigger second fill request
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        // Respond for username
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation("The Dude", isInlineMode())
+                        .build())
+                .build());
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasetsEver();
+
+        // Set expectations and respond for password
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation("The Password", isInlineMode())
+                        .build())
+                .build());
+        sReplier.getNextFillRequest();
+
+        // confirm second response shown
+        mUiBot.assertDatasets("The Password");
+    }
+
+    @Test
+    public void testManualRequestWhileFirstResponseDelayed() throws Exception {
+        // Set service
+        enableService();
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        waitUntilConnected();
+
+        // Trigger second fill request
+        mActivity.forceAutofillOnUsername();
+        mUiBot.waitForIdleSync();
+
+        // Respond for first request
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation("The Dude", isInlineMode())
+                        .build())
+                .build());
+        sReplier.getNextFillRequest();
+
+        // Set expectations and respond for second request
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude2")
+                        .setPresentation("The Dude 2", isInlineMode())
+                        .build()).build());
+        sReplier.getNextFillRequest();
+
+        // confirm second response shown
+        mUiBot.assertDatasets("The Dude 2");
+    }
+
+    @Test
+    public void testResponseFirstAfterResponseSecond() throws Exception {
+        // Set service
+        enableService();
+
+        // Trigger auto-fill
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        waitUntilConnected();
+
+        // Trigger second fill request
+        mActivity.forceAutofillOnUsername();
+        mUiBot.waitForIdleSync();
+
+        // Respond for first request
+        sReplier.addResponse(new CannedFillResponse.Builder(CannedFillResponse.ResponseType.DELAY)
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation("The Dude", isInlineMode())
+                        .build())
+                .build());
+        sReplier.getNextFillRequest();
+
+        // Set expectations and respond for second request
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude2")
+                        .setPresentation("The Dude 2", isInlineMode())
+                        .build()).build());
+        sReplier.getNextFillRequest();
+
+        // confirm second response shown
+        mUiBot.assertDatasets("The Dude 2");
+
+        // Wait first response was sent
+        sReplier.getNextFillRequest();
+
+        // confirm second response still shown
+        mUiBot.assertDatasets("The Dude 2");
     }
 }
