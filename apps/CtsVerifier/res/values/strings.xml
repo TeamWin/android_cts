@@ -2513,9 +2513,12 @@ You should be prompted to select credentials; choose the ones you just installed
 
         3. Tap \"Prepare VPN\" button below and consent to the VPN connection.\n
 
-        4. Finish all three test cases listed below.\n
+        4. Once connected, verify that the system shows disclosure (on some devices this is shown in
+           the notification area) that network traffic is being routed through the VPN app.\n
 
-        5. Repeat step 1 to remove CtsVpnFirewallApp.
+        5. Finish all three test cases listed below.\n
+
+        6. Repeat step 1 to remove CtsVpnFirewallApp.
     </string>
     <string name="provisioning_byod_always_on_vpn_prepare_button">Prepare VPN</string>
     <string name="provisioning_byod_always_on_vpn_vpn_not_found_note">
