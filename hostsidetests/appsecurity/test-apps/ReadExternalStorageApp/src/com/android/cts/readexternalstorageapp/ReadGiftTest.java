@@ -17,8 +17,12 @@
 package com.android.cts.readexternalstorageapp;
 
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_NONE;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_READ;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileNoAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificObbGiftPaths;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileReadWriteAccess;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificNoGiftPaths;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.readInt;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.writeInt;
 
 import android.test.AndroidTestCase;
 
@@ -26,13 +30,28 @@ import java.io.File;
 import java.util.List;
 
 public class ReadGiftTest extends AndroidTestCase {
+    public void testStageNonGifts() throws Exception {
+        final List<File> readList = getAllPackageSpecificNoGiftPaths(getContext(), PACKAGE_READ);
+        for (File read : readList) {
+            read.getParentFile().mkdirs();
+            assertTrue(read.createNewFile());
+            writeInt(read, 101);
+        }
+    }
+
     /**
-     * Verify we can't read other obb dirs.
+     * Verify we can read & write only our gifts.
      */
-    public void testCantAccessOtherObbDirs() throws Exception {
-        final List<File> noneList = getAllPackageSpecificObbGiftPaths(getContext(), PACKAGE_NONE);
+    public void testNoGifts() throws Exception {
+        final List<File> noneList = getAllPackageSpecificNoGiftPaths(getContext(), PACKAGE_NONE);
         for (File none : noneList) {
             assertFileNoAccess(none);
+        }
+
+        final List<File> readList = getAllPackageSpecificNoGiftPaths(getContext(), PACKAGE_READ);
+        for (File read : readList) {
+            assertFileReadWriteAccess(read);
+            assertEquals(101, readInt(read));
         }
     }
 }
