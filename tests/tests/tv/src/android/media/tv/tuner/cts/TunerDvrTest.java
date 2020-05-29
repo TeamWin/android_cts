@@ -145,6 +145,12 @@ public class TunerDvrTest {
             byte[] bytes = new byte[] {3, 5, 10, 22, 73, 33, 19};
             raf.write(bytes);
         }
+
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
+        d.attachFilter(f);
+        d.detachFilter(f);
+
         d.setFileDescriptor(
                 ParcelFileDescriptor.open(tmpFile, ParcelFileDescriptor.MODE_READ_WRITE));
 
