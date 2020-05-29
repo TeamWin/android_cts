@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.UiBot.PORTRAIT;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
+import static android.provider.Settings.Secure.SELECTED_INPUT_METHOD_SUBTYPE;
 import static android.provider.Settings.Secure.USER_SETUP_COMPLETE;
 import static android.service.autofill.FillEventHistory.Event.TYPE_AUTHENTICATION_SELECTED;
 import static android.service.autofill.FillEventHistory.Event.TYPE_CONTEXT_COMMITTED;
@@ -37,6 +38,7 @@ import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -45,6 +47,7 @@ import android.graphics.Bitmap;
 import android.icu.util.Calendar;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.service.autofill.FieldClassification;
 import android.service.autofill.FieldClassification.Match;
 import android.service.autofill.FillContext;
@@ -1539,10 +1542,16 @@ public final class Helper {
     private static InlinePresentation createInlinePresentation(@NonNull String message,
             @NonNull PendingIntent attribution, boolean pinned) {
         return new InlinePresentation(
-                InlineSuggestionUi.newContentBuilder().setAttribution(attribution)
+                InlineSuggestionUi.newContentBuilder(attribution)
                         .setTitle(message).build().getSlice(),
                 new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
                         .build(), /* pinned= */ pinned);
+    }
+
+    public static void mockSwitchInputMethod(@NonNull Context context) throws Exception {
+        final ContentResolver cr = context.getContentResolver();
+        final int subtype = Settings.Secure.getInt(cr, SELECTED_INPUT_METHOD_SUBTYPE);
+        Settings.Secure.putInt(cr, SELECTED_INPUT_METHOD_SUBTYPE, subtype);
     }
 
     private Helper() {

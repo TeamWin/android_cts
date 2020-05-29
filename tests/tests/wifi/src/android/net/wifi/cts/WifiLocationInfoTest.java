@@ -107,12 +107,17 @@ public class WifiLocationInfoTest {
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setScanThrottleEnabled(false));
 
+        // enable Wifi
         if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
         PollingCheck.check("Wifi not enabled", DURATION_MS, () -> mWifiManager.isWifiEnabled());
+
+        // check we have >= 1 saved network
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getConfiguredNetworks());
         assertWithMessage("Need at least one saved network").that(savedNetworks).isNotEmpty();
-        // Wait for wifi is to be connected
+
+        // ensure Wifi is connected
+        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected",
                 DURATION_MS,

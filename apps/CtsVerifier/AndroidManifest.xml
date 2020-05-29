@@ -40,6 +40,7 @@
     <uses-permission android:name="android.permission.FULLSCREEN" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.NFC_TRANSACTION_EVENT" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.REQUEST_PASSWORD_COMPLEXITY" />
@@ -1732,6 +1733,16 @@
                 android:configChanges="keyboardHidden|orientation|screenSize">
         </activity>
 
+        <activity android:name="com.android.cts.verifier.nfc.offhost.OffhostUiccReaderTestActivity"
+                android:label="@string/nfc_offhost_uicc_reader_tests"
+                android:configChanges="keyboardHidden|orientation|screenSize">
+        </activity>
+
+        <activity android:name="com.android.cts.verifier.nfc.offhost.OffhostUiccEmulatorTestActivity"
+                android:label="@string/nfc_offhost_uicc_emulator_tests"
+                android:configChanges="keyboardHidden|orientation|screenSize">
+        </activity>
+
         <activity android:name=".nfc.NdefPushSenderActivity"
                 android:label="@string/nfc_ndef_push_sender"
                 android:configChanges="keyboardHidden|orientation|screenSize" />
@@ -1842,6 +1853,22 @@
 
         <activity android:name=".nfc.hcef.HceFReaderActivity"
                 android:label="@string/nfc_hce_f_reader"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".nfc.offhost.UiccTransactionEvent1EmulatorActivity"
+                android:label="@string/nfc_offhost_uicc_transaction_event1_emulator"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".nfc.offhost.UiccTransactionEvent2EmulatorActivity"
+                android:label="@string/nfc_offhost_uicc_transaction_event2_emulator"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".nfc.offhost.UiccTransactionEvent3EmulatorActivity"
+                android:label="@string/nfc_offhost_uicc_transaction_event3_emulator"
+                android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".nfc.offhost.SimpleOffhostReaderActivity"
+                android:label="@string/nfc_offhost_uicc_transaction_event1_reader"
                 android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <!-- services used for testing NFC host-based card emulation -->
@@ -1982,6 +2009,34 @@
             </intent-filter>
             <meta-data android:name="android.nfc.cardemulation.host_nfcf_service" android:resource="@xml/felicaservice"/>
         </service>
+
+        <service
+            android:name=".nfc.offhost.UiccTransactionEventService"
+            android:enabled="true"
+            android:exported="true" android:permission="android.permission.BIND_NFC_SERVICE">
+          <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.OFF_HOST_APDU_SERVICE"/>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data android:name="android.nfc.cardemulation.off_host_apdu_service" android:resource="@xml/uicc_transaction_event_aid_list"/>
+        </service>
+
+        <receiver android:name=".nfc.offhost.UiccTransactionEventReceiver">
+            <intent-filter>
+                <action android:name="android.nfc.action.TRANSACTION_DETECTED" >
+                </action>
+
+                <category android:name="android.intent.category.DEFAULT" >
+                </category>
+
+                <data
+                    android:host="secure"
+                    android:pathPattern="/SIM.*/A000000476416E64726F696443545341"
+                    android:port="0"
+                    android:scheme="nfc" />
+            </intent-filter>
+        </receiver>
+
         <!-- Service used for Camera ITS tests -->
         <service android:name=".camera.its.ItsService"
             android:foregroundServiceType="camera">
@@ -2443,6 +2498,18 @@
 
             <meta-data android:name="android.app.shortcuts"
                        android:resource="@xml/shortcuts" />
+        </activity>
+
+        <activity android:name=".notifications.MediaPlayerVerifierActivity"
+                  android:label="@string/qs_media_player_title">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category"
+                       android:value="@string/test_category_notifications" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
         </activity>
 
         <service android:name=".notifications.MockListener"
