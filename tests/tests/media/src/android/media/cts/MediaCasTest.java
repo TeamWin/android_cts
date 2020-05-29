@@ -24,6 +24,8 @@ import android.media.MediaCasException.UnsupportedCasException;
 import android.media.MediaCasStateException;
 import android.media.MediaCodec;
 import android.media.MediaDescrambler;
+import android.media.cts.R;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.platform.test.annotations.Presubmit;
@@ -32,6 +34,8 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import java.lang.ArrayIndexOutOfBoundsException;
@@ -52,6 +56,7 @@ public class MediaCasTest extends AndroidTestCase {
     private static final int sInvalidSystemId = 0;
     private static final int sClearKeySystemId = 0xF6D8;
     private static final int API_LEVEL_BEFORE_CAS_SESSION = 28;
+    private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     // ClearKey CAS/Descrambler test vectors
     private static final String sProvisionStr =
@@ -252,8 +257,12 @@ public class MediaCasTest extends AndroidTestCase {
         MediaDescrambler descrambler = null;
 
         try {
-            mediaCas = new MediaCas(getContext(), sClearKeySystemId, "TIS_Session_1",
-                android.media.tv.TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
+            if (mIsAtLeastR) {
+                mediaCas = new MediaCas(getContext(), sClearKeySystemId, "TIS_Session_1",
+                    android.media.tv.TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
+            } else {
+                mediaCas = new MediaCas(sClearKeySystemId);
+            }
             descrambler = new MediaDescrambler(sClearKeySystemId);
 
             mediaCas.provision(sProvisionStr);
@@ -266,7 +275,9 @@ public class MediaCasTest extends AndroidTestCase {
                 fail("Can't open session for program");
             }
 
-            Log.d(TAG, "Session Id = " + Arrays.toString(session.getSessionId()));
+            if (mIsAtLeastR) {
+                Log.d(TAG, "Session Id = " + Arrays.toString(session.getSessionId()));
+            }
 
             session.setPrivateData(pvtData);
 
@@ -295,7 +306,9 @@ public class MediaCasTest extends AndroidTestCase {
             Handler handler = new Handler(thread.getLooper());
             testEventEcho(mediaCas, 1, 2, null /* data */, handler);
             testSessionEventEcho(mediaCas, session, 1, 2, null /* data */, handler);
-            testOpenSessionEcho(mediaCas, 0, 2, handler);
+            if (mIsAtLeastR) {
+                testOpenSessionEcho(mediaCas, 0, 2, handler);
+            }
             thread.interrupt();
 
             String eventDataString = "event data string";
@@ -504,6 +517,7 @@ public class MediaCasTest extends AndroidTestCase {
      */
     public void testResourceLostEvent() throws Exception {
         MediaCas mediaCas = null;
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
 
         try {
             mediaCas = new MediaCas(getContext(), sClearKeySystemId, "TIS_Session_1",
