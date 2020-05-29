@@ -384,6 +384,56 @@ public class DecoderTestXheAac {
     }
 
     /**
+     * verify the correct decoding of USAC bitstreams when different kinds of loudness values
+     * are present
+     */
+    @Test
+    public void testDecodeUsacDrcLoudnessPreferenceM4a() throws Exception {
+        Log.v(TAG, "START testDecodeUsacDrcLoudnessPreferenceM4a");
+
+        assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
+
+        for (String aacDecName : sAacDecoderNames) {
+            try {
+                runDecodeUsacDrcLoudnessPreferenceM4a(aacDecName);
+            } catch (Error err) {
+                throw new Error(err.getMessage() + " [dec=" + aacDecName + "]" , err);
+            }
+        }
+    }
+
+    private void runDecodeUsacDrcLoudnessPreferenceM4a(String aacDecName) throws Exception {
+        Log.v(TAG, "testDecodeUsacDrcLoudnessPreferenceM4a running for dec=" + aacDecName);
+        // test drc loudness preference
+        // anchor loudness (-17 LUFS) and program loudness (-19 LUFS) are present in one stream
+        // -> anchor loudness should be selected
+        // the bitstream is decoded with targetLoudnessLevel = -16 LUFS and
+        // checked against the energy of the decoded signal without loudness normalization
+        // normfactor = loudness of waveform - targetLoudnessLevel = -1dB = 0.7943
+        try {
+            checkUsacDrcLoudnessPreference(
+                    R.raw.noise_2ch_48khz_tlou_19lufs_anchor_17lufs_mp4, 0.7943f, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcLoudnessPreferenceM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+
+        // test drc loudness preference
+        // expert loudness (-23 LUFS) and program loudness (-19 LUFS) are present in one stream
+        // -> expert loudness should be selected
+        // the bitstream is decoded with targetLoudnessLevel = -16 LUFS and
+        // checked against the energy of the decoded signal without loudness normalization
+        // normfactor = loudness of waveform - targetLoudnessLevel = -7dB = 0.1995
+        try {
+            checkUsacDrcLoudnessPreference(
+                    R.raw.noise_2ch_48khz_tlou_19lufs_expert_23lufs_mp4, 0.1995f, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcLoudnessPreferenceM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Verify that the correct output loudness values are returned when decoding USAC bitstreams
      */
     @Test
@@ -623,6 +673,31 @@ public class DecoderTestXheAac {
             }
         }
     }
+
+    /**
+    * USAC test Loudness Preference
+    */
+    private void checkUsacDrcLoudnessPreference(int testInput, float normFactor, String decoderName) throws Exception {
+
+        AudioParameter decParams = new AudioParameter();
+        DrcParams drcParams_def = new DrcParams(127, 127, -1, 0, 6);
+        DrcParams drcParams_test = new DrcParams(127, 127, 64, 0, 6);
+
+        // Check drc loudness preference
+        short[] decSamples_def = decodeToMemory(decParams, testInput, -1, null, drcParams_def, decoderName);
+        short[] decSamples_test = decodeToMemory(decParams, testInput, -1, null, drcParams_test, decoderName);
+
+        float[] nrg_def  = checkEnergyUSAC(decSamples_def, decParams, 2, 1);
+        float[] nrg_test = checkEnergyUSAC(decSamples_test, decParams, 2, 1);
+
+        float nrgRatio = (nrg_test[0]/nrg_def[0]);
+        nrgRatio = nrgRatio * normFactor;
+
+        if (nrgRatio > 1.05f || nrgRatio < 0.95f ){
+            throw new Exception("DRC Loudness preference not as expected");
+        }
+    }
+
     /**
     * USAC test Output Loudness
     */
