@@ -20,6 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
+
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -32,6 +34,7 @@ import org.junit.runner.RunWith;
  * Runs the legacy file path access tests.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@AppModeFull
 public class LegacyStorageHostTest extends BaseHostJUnit4Test {
     private boolean isExternalStorageSetup = false;
 
