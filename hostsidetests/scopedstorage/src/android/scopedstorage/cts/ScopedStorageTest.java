@@ -1575,6 +1575,39 @@ public class ScopedStorageTest {
         }
     }
 
+    @Test
+    public void testManageExternalStorageCantReadWriteOtherAppExternalDir() throws Exception {
+        try {
+            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
+
+            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
+            installAppWithStoragePermissions(TEST_APP_A);
+
+            // Let app A create a file in its data dir
+            final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
+                    THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
+            final File otherAppExternalDataFile = new File(otherAppExternalDataDir,
+                    NONMEDIA_FILE_NAME);
+            assertThat(createFileAs(TEST_APP_A, otherAppExternalDataFile.getAbsolutePath()))
+                    .isTrue();
+
+            // File Manager app gets global access with MANAGE_EXTERNAL_STORAGE permission, however,
+            // file manager app doesn't have access to other app's external files directory
+            assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ false)).isFalse();
+            assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ true)).isFalse();
+            assertThat(otherAppExternalDataFile.delete()).isFalse();
+
+            assertThat(deleteFileAs(TEST_APP_A, otherAppExternalDataFile.getPath())).isTrue();
+
+            assertThrows(IOException.class, "Permission denied",
+                    () -> { otherAppExternalDataFile.createNewFile(); });
+
+        } finally {
+            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
+            uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
+        }
+    }
+
     /**
      * Test that apps can create and delete hidden file.
      */
