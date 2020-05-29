@@ -53,6 +53,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.CRC32;
 
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -376,6 +377,10 @@ class OutputManager {
     void position(int index) {
         if (index < 0 || index >= memory.length) index = 0;
         memIndex = index;
+    }
+
+    ByteBuffer getBuffer() {
+        return ByteBuffer.wrap(memory);
     }
 
     void reset() {
@@ -824,6 +829,15 @@ abstract class CodecTestBase {
         assertTrue(metrics.getInt(MediaCodec.MetricsConstants.SECURE) == 0);
         return metrics;
     }
+
+    void validateColorAspects(MediaFormat fmt, int range, int standard, int transfer) {
+        int colorRange = fmt.getInteger(MediaFormat.KEY_COLOR_RANGE, 0);
+        int colorStandard = fmt.getInteger(MediaFormat.KEY_COLOR_STANDARD, 0);
+        int colorTransfer = fmt.getInteger(MediaFormat.KEY_COLOR_TRANSFER, 0);
+        assertEquals("range mismatch ", range, colorRange);
+        assertEquals("color mismatch ", standard, colorStandard);
+        assertEquals("transfer mismatch ", transfer, colorTransfer);
+    }
 }
 
 class CodecDecoderTestBase extends CodecTestBase {
@@ -846,8 +860,12 @@ class CodecDecoderTestBase extends CodecTestBase {
     }
 
     MediaFormat setUpSource(String srcFile) throws IOException {
+        return setUpSource(mInpPrefix, srcFile);
+    }
+
+    MediaFormat setUpSource(String prefix, String srcFile) throws IOException {
         mExtractor = new MediaExtractor();
-        mExtractor.setDataSource(mInpPrefix + srcFile);
+        mExtractor.setDataSource(prefix + srcFile);
         for (int trackID = 0; trackID < mExtractor.getTrackCount(); trackID++) {
             MediaFormat format = mExtractor.getTrackFormat(trackID);
             if (mMime.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
@@ -914,22 +932,18 @@ class CodecDecoderTestBase extends CodecTestBase {
 
     void enqueueInput(int bufferIndex, ByteBuffer buffer, MediaCodec.BufferInfo info) {
         ByteBuffer inputBuffer = mCodec.getInputBuffer(bufferIndex);
-        inputBuffer.put((ByteBuffer) buffer.rewind());
-        int flags = 0;
-        if ((info.flags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
-            flags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
-        }
-        if ((info.flags & MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0) {
-            flags |= MediaCodec.BUFFER_FLAG_PARTIAL_FRAME;
+        buffer.position(info.offset);
+        for (int i = 0; i < info.size; i++) {
+            inputBuffer.put(buffer.get());
         }
         if (ENABLE_LOGS) {
             Log.v(LOG_TAG, "input: id: " + bufferIndex + " flags: " + info.flags + " size: " +
                     info.size + " timestamp: " + info.presentationTimeUs);
         }
-        mCodec.queueInputBuffer(bufferIndex, info.offset, info.size, info.presentationTimeUs,
-                flags);
-        if (info.size > 0 && ((flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) &&
-                ((flags & MediaCodec.BUFFER_FLAG_PARTIAL_FRAME) == 0)) {
+        mCodec.queueInputBuffer(bufferIndex, 0, info.size, info.presentationTimeUs,
+                info.flags);
+        if (info.size > 0 && ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) &&
+                ((info.flags & MediaCodec.BUFFER_FLAG_PARTIAL_FRAME) == 0)) {
             mOutputBuff.saveInPTS(info.presentationTimeUs);
             mInputCount++;
         }
@@ -1043,6 +1057,45 @@ class CodecDecoderTestBase extends CodecTestBase {
         assertTrue(metrics.getString(MediaCodec.MetricsConstants.MIME_TYPE).equals(mMime));
         assertTrue(metrics.getInt(MediaCodec.MetricsConstants.ENCODER) == 0);
         return metrics;
+    }
+
+    void validateColorAspects(String decoder, String parent, String name, int range, int standard,
+            int transfer) throws IOException, InterruptedException {
+        mOutputBuff = new OutputManager();
+        MediaFormat format = setUpSource(parent, name);
+        if (decoder == null) {
+            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+            decoder = codecList.findDecoderForFormat(format);
+        }
+        mCodec = MediaCodec.createByCodecName(decoder);
+        configureCodec(format, true, true, false);
+        mCodec.start();
+        doWork(1);
+        queueEOS();
+        waitForAllOutputs();
+        validateColorAspects(mCodec.getOutputFormat(), range, standard, transfer);
+        mCodec.stop();
+        mCodec.release();
+        mExtractor.release();
+    }
+
+    void validateColorAspects(String decoder, MediaFormat format, ByteBuffer buffer,
+            ArrayList<MediaCodec.BufferInfo> infos, int range, int standard, int transfer)
+            throws IOException, InterruptedException {
+        mOutputBuff = new OutputManager();
+        if (decoder == null) {
+            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+            decoder = codecList.findDecoderForFormat(format);
+        }
+        mCodec = MediaCodec.createByCodecName(decoder);
+        configureCodec(format, true, true, false);
+        mCodec.start();
+        doWork(buffer, infos);
+        queueEOS();
+        waitForAllOutputs();
+        validateColorAspects(mCodec.getOutputFormat(), range, standard, transfer);
+        mCodec.stop();
+        mCodec.release();
     }
 }
 
@@ -1274,5 +1327,3 @@ class CodecEncoderTestBase extends CodecTestBase {
         return metrics;
     }
 }
-
-
