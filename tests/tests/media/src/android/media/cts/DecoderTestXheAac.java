@@ -221,6 +221,39 @@ public class DecoderTestXheAac {
     }
 
     /**
+     * Verify the correct decoding of USAC bitstreams with album mode.
+     */
+    @Test
+    public void testDecodeUsacDrcAlbumModeM4a() throws Exception {
+        Log.v(TAG, "START testDecodeUsacDrcAlbumModeM4a");
+
+        assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
+
+        for (String aacDecName : sAacDecoderNames) {
+            try {
+                runDecodeUsacDrcAlbumModeM4a(aacDecName);
+            } catch (Error err) {
+                throw new Error(err.getMessage() + " [dec=" + aacDecName + "]" , err);
+            }
+        }
+    }
+
+    private void runDecodeUsacDrcAlbumModeM4a(String aacDecName) throws Exception {
+        // test DRC Album Mode
+        // Track loudness = -19dB
+        // Album Loudness = -21 dB
+        // Fading Gains = -6 dB
+        // Album Mode ON : Gains = -24 - (-21) = -3dB
+        // Album Mode OFF : Gains = (-24 -(-19)) + (-6) = -11 dB
+        try {
+            checkUsacDrcAlbumMode(R.raw.noise_2ch_48khz_tlou_19lufs_alou_21lufs_mp4, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcAlbumModeM4a for decoder" + aacDecName);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Verify the correct decoding of USAC bitstreams with config changes.
      */
     @Test
@@ -628,6 +661,40 @@ public class DecoderTestXheAac {
         // Check whether behavior is as expected
         if (nrgRatio > 1.05f || nrgRatio < 0.95f ){
             throw new Exception("Sampling rate not supported");
+        }
+    }
+
+    /**
+     * USAC test DRC Album Mode
+     */
+    private void checkUsacDrcAlbumMode(int testinput, String decoderName) throws Exception {
+        for (int i = 0; i <= 1 ; i++) {
+            boolean runtimeChange = false;
+            if (i == 1) { /* first run: configure decoder before starting decoding,
+                             second_run: configure decoder at runtime */
+                runtimeChange = true;
+            }
+            AudioParameter decParams = new AudioParameter();
+            DrcParams drcParams_album_off = new DrcParams(127, 127, 64, 0, 0, 0);
+            DrcParams drcParams_album_on  = new DrcParams(127, 127, 64, 0, 0, 1);
+
+            short[] decSamples_album_off = decodeToMemory(
+                    decParams, testinput, -1, null, drcParams_album_off, decoderName);
+            short[] decSamples_album_on = decodeToMemory(
+                    decParams, testinput, -1, null, drcParams_album_on, decoderName, runtimeChange);
+
+            float[] nrg_album_off  = checkEnergyUSAC(decSamples_album_off, decParams, 2, 1);
+            float[] nrg_album_on = checkEnergyUSAC(decSamples_album_on, decParams, 2, 1);
+
+            float normFactor = 6.3095f;
+
+            float nrgRatio = (nrg_album_on[0]/nrg_album_off[0])/normFactor;
+            float nrgRatio_L = (nrg_album_on[1]/nrg_album_off[1])/normFactor;
+            float nrgRatio_R = (nrg_album_on[2]/nrg_album_off[2])/normFactor;
+
+            if (nrgRatio > 1.05f || nrgRatio < 0.95f ){
+                throw new Exception("DRC Album Mode not supported, energy ratio " + nrgRatio);
+            }
         }
     }
 
@@ -1146,6 +1213,10 @@ public class DecoderTestXheAac {
                     configFormat.setInteger(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE,
                             drcParams.mEffectType);
                 }
+                if (drcParams.mAlbumMode != 0) {
+                    configFormat.setInteger(MediaFormat.KEY_AAC_DRC_ALBUM_MODE,
+                            drcParams.mAlbumMode);
+                }
             }
         }
 
@@ -1154,6 +1225,13 @@ public class DecoderTestXheAac {
 
         if (drcParams != null) {
             if(!runtimeChange) {
+                if (drcParams.mAlbumMode != 0) {
+                    int albumModeFromCodec = codec.getOutputFormat()
+                            .getInteger(MediaFormat.KEY_AAC_DRC_ALBUM_MODE);
+                    if (albumModeFromCodec != drcParams.mAlbumMode) {
+                        fail("Drc AlbumMode received from MediaCodec is not the Album Mode set");
+                    }
+                }
                 if (drcParams.mEffectType != 0) {
                     final int effectTypeFromCodec = codec.getOutputFormat()
                             .getInteger(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE);
@@ -1186,6 +1264,9 @@ public class DecoderTestXheAac {
                 if (drcParams.mDecoderTargetLevel != 0) {
                     b.putInt(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL,
                             drcParams.mDecoderTargetLevel);
+                }
+                if (drcParams.mAlbumMode != 0) {
+                    b.putInt(MediaFormat.KEY_AAC_DRC_ALBUM_MODE, drcParams.mAlbumMode);
                 }
                 codec.setParameters(b);
             }
@@ -1294,6 +1375,15 @@ public class DecoderTestXheAac {
 
         // check if MediaCodec gives back correct drc parameters
         if (drcParams != null) {
+            if (drcParams.mAlbumMode != 0) {
+                final int albumModeFromCodec = codec.getOutputFormat()
+                        .getInteger(MediaFormat.KEY_AAC_DRC_ALBUM_MODE);
+                if (false) { // TODO disabled until b/157773721 fixed
+                    if (albumModeFromCodec != drcParams.mAlbumMode) {
+                        fail("Drc AlbumMode received from MediaCodec is not the Album Mode set");
+                    }
+                }
+            }
             if (drcParams.mEffectType != 0) {
                 final int effectTypeFromCodec = codec.getOutputFormat()
                         .getInteger(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE);

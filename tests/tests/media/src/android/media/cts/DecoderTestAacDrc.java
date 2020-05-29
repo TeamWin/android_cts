@@ -462,7 +462,8 @@ public class DecoderTestAacDrc {
 
 
     /**
-     *  Class handling all MPEG-4 and MPEG-D Dynamic Range Control (DRC) parameter relevant for testing
+     *  Class handling all MPEG-4 and MPEG-D Dynamic Range Control (DRC) parameter relevant
+     *  for testing
      */
     protected static class DrcParams {
         int mBoost;                          // scaling of boosting gains
@@ -470,6 +471,7 @@ public class DecoderTestAacDrc {
         int mDecoderTargetLevel;             // desired target output level (for normalization)
         int mHeavy;                          // en-/disable heavy compression
         int mEffectType;                     // MPEG-D DRC Effect Type
+        int mAlbumMode;                      // MPEG-D DRC Album Mode
 
         public DrcParams() {
             mBoost = 127;               // no scaling
@@ -485,11 +487,14 @@ public class DecoderTestAacDrc {
         }
 
         public DrcParams(int boost, int cut, int decoderTargetLevel, int heavy, int effectType) {
-            mBoost = boost;
-            mCut = cut;
-            mDecoderTargetLevel = decoderTargetLevel;
-            mHeavy = heavy;
+            this(boost, cut, decoderTargetLevel, heavy);
             mEffectType = effectType;
+        }
+
+        public DrcParams(int boost, int cut, int decoderTargetLevel, int heavy, int effectType,
+                int albumMode) {
+            this(boost, cut, decoderTargetLevel, heavy, effectType);
+            mAlbumMode = albumMode;
         }
     }
 
