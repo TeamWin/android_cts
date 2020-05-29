@@ -87,6 +87,11 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testReadWriteFilesInOtherAppExternalDir() throws Exception {
+        runDeviceTest("testReadWriteFilesInOtherAppExternalDir");
+    }
+
+    @Test
     public void testContributeMediaFile() throws Exception {
         runDeviceTest("testContributeMediaFile");
     }
