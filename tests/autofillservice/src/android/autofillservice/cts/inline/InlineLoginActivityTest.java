@@ -34,6 +34,7 @@ import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService;
 import android.autofillservice.cts.LoginActivityCommonTestCase;
 import android.autofillservice.cts.NonAutofillableActivity;
+import android.autofillservice.cts.UsernameOnlyActivity;
 import android.content.Intent;
 import android.service.autofill.FillContext;
 
@@ -121,7 +122,16 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
     }
 
     @Test
+    public void testAutofill_SwitchToAutofillableActivity() throws Exception {
+        assertAutofill_SwitchActivity(UsernameOnlyActivity.class);
+    }
+
+    @Test
     public void testAutofill_SwitchToNonAutofillableActivity() throws Exception {
+        assertAutofill_SwitchActivity(NonAutofillableActivity.class);
+    }
+
+    private void assertAutofill_SwitchActivity(Class<?> clazz) throws Exception {
         // Set service.
         enableService();
 
@@ -145,8 +155,8 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.pressHome();
         mUiBot.waitForIdle();
 
-        // Switch to non-autofillable Activity
-        startActivity(NonAutofillableActivity.class);
+        // Switch to another Activity
+        startActivity(clazz);
         mUiBot.waitForIdle();
 
         // Trigger input method show.
