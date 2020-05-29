@@ -23,6 +23,7 @@ import static android.autofillservice.cts.Timeouts.UI_TIMEOUT;
 import android.autofillservice.cts.UiBot;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
+import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.Timeout;
@@ -88,6 +89,30 @@ public final class InlineUiBot extends UiBot {
     public UiObject2 assertDatasets(String...names) throws Exception {
         final UiObject2 picker = findSuggestionStrip(UI_TIMEOUT);
         return assertDatasets(picker, names);
+    }
+
+    @Override
+    public void assertSuggestion(String name) throws Exception {
+        final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
+        final UiObject2 dataset = strip.findObject(By.text(name));
+        if (dataset == null) {
+            throw new AssertionError("no dataset " + name + " in " + getChildrenAsText(strip));
+        }
+    }
+
+    @Override
+    public void assertNoSuggestion(String name) throws Exception {
+        final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
+        final UiObject2 dataset = strip.findObject(By.text(name));
+        if (dataset != null) {
+            throw new AssertionError("has dataset " + name + " in " + getChildrenAsText(strip));
+        }
+    }
+
+    @Override
+    public void scrollSuggestionView(Direction direction, int speed) throws Exception {
+        final UiObject2 strip = findSuggestionStrip(UI_TIMEOUT);
+        strip.fling(direction, speed);
     }
 
     private UiObject2 findSuggestionStrip(Timeout timeout) throws Exception {
