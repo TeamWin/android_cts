@@ -16,10 +16,6 @@
 
 package com.android.cts.readexternalstorageapp;
 
-import static android.test.MoreAsserts.assertNotEqual;
-
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_WRITE;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileReadOnlyAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileReadWriteAccess;
 
 import android.system.Os;
@@ -27,7 +23,6 @@ import android.system.Os;
 import android.test.AndroidTestCase;
 
 import java.io.File;
-import java.util.List;
 
 public class ReadMultiViewTest extends AndroidTestCase {
     /**
