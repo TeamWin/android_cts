@@ -305,7 +305,8 @@ public final class CannedFillResponse {
         NULL,
         NO_MORE,
         TIMEOUT,
-        FAILURE
+        FAILURE,
+        DELAY
     }
 
     public static final class Builder {
