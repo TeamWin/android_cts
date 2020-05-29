@@ -36,11 +36,12 @@ public class TaggingDefaultTest extends TaggingBaseTest {
         supportsMemoryTagging = !runCommand("grep 'Features.* mte' /proc/cpuinfo").isEmpty();
     }
 
-    public void testHeapTaggingCompatFeatureEnabled() throws Exception {
-        if (supportsMemoryTagging) {
-            return;
-        }
+    @Override
+    protected void tearDown() throws Exception {
+        uninstallPackage(TEST_PKG, true);
+    }
 
+    public void testHeapTaggingCompatFeatureEnabled() throws Exception {
         if (supportsTaggedPointers) {
             runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapTaggingEnabled",
                 /*enabledChanges*/ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),

@@ -31,6 +31,11 @@ public class TaggingDisabledTest extends TaggingBaseTest {
         installPackage(TEST_APK, true);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        uninstallPackage(TEST_PKG, true);
+    }
+
     public void testCompatFeatureEnabled() throws Exception {
         // Checking for supportsTaggedPointers is unnecessary here, as we don't
         // validate against reportDisabledChanges.
