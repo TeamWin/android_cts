@@ -31,12 +31,15 @@ import static android.scopedstorage.cts.lib.TestUtils.canOpen;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
+
+import androidx.annotation.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Helper app for ScopedStorageTest.
@@ -46,8 +49,13 @@ import java.util.Collections;
  */
 public class ScopedStorageTestHelper extends Activity {
     private static final String TAG = "ScopedStorageTestHelper";
-    private static final File ANDROID_DIR =
-            new File(Environment.getExternalStorageDirectory(), "Android");
+    /**
+     * Regex that matches paths in all well-known package-specific directories,
+     * and which captures the directory type as the first group (data|media|obb) and the
+     * package name as the 2nd group.
+     */
+    private static final Pattern PATTERN_OWNED_PATH = Pattern.compile(
+            "(?i)^/storage/[^/]+/(?:[0-9]+/)?Android/(data|media|obb)/([^/]+)(/?.*)?");
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -143,17 +151,14 @@ public class ScopedStorageTestHelper extends Activity {
     }
 
     private void maybeCreateParentDirInAndroid(File file) {
-        if (!file.getAbsolutePath().startsWith(ANDROID_DIR.getAbsolutePath())) {
+        final String ownedPathType = getOwnedDirectoryType(file);
+        if (ownedPathType == null) {
             return;
         }
-        String[] segments = file.getAbsolutePath().split("/");
-        int index = ANDROID_DIR.getAbsolutePath().split("/").length;
-        if (index < segments.length) {
-            // Create the external app dir first.
-            if (createExternalAppDir(segments[index])) {
-                // Then create everything along the path.
-                file.getParentFile().mkdirs();
-            }
+        // Create the external app dir first.
+        if (createExternalAppDir(ownedPathType)) {
+            // Then create everything along the path.
+            file.getParentFile().mkdirs();
         }
     }
 
@@ -162,13 +167,11 @@ public class ScopedStorageTestHelper extends Activity {
         // expected to call one of the following methods.
         switch (name) {
             case "data":
-                getApplicationContext().getExternalFilesDir(null);
-                return true;
-            case "cache":
-                getApplicationContext().getExternalCacheDir();
+                getApplicationContext().getExternalFilesDirs(null);
+                getApplicationContext().getExternalCacheDirs();
                 return true;
             case "obb":
-                getApplicationContext().getObbDir();
+                getApplicationContext().getObbDirs();
                 return true;
             case "media":
                 getApplicationContext().getExternalMediaDirs();
@@ -176,5 +179,17 @@ public class ScopedStorageTestHelper extends Activity {
             default:
                 return false;
         }
+    }
+
+    /**
+     * Returns null if given path is not an owned path.
+     */
+    @Nullable
+    private static String getOwnedDirectoryType(File path) {
+        final Matcher m = PATTERN_OWNED_PATH.matcher(path.getAbsolutePath());
+        if (m.matches()) {
+            return m.group(1);
+        }
+        return null;
     }
 }
