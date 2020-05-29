@@ -206,6 +206,75 @@ public class DecoderTestAacDrc {
     }
 
     /**
+     * Verify that the correct output loudness values are returned by the MPEG-4 AAC decoder
+     */
+    @Test
+    public void testDecodeAacDrcOutputLoudnessM4a() throws Exception {
+        Log.v(TAG, "START testDecodeAacDrcOutputLoudnessM4a");
+
+        ArrayList<String> aacDecoderNames = DecoderTestXheAac.initAacDecoderNames();
+        assertTrue("No AAC decoder found", aacDecoderNames.size() > 0);
+
+        for (String aacDecName : aacDecoderNames) {
+            // test drc output loudness
+            // testfile without loudness metadata and loudness normalization off
+            // -> expected value: -1
+            try {
+                checkAacDrcOutputLoudness(
+                        R.raw.noise_1ch_24khz_aot5_dr_sbr_sig1_mp4, -1, -1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacLoudnessM4a for default loudness failed for " +
+                        aacDecName);
+                throw new RuntimeException(e);
+            }
+            // test drc output loudness
+            // testfile without loudness metadata and loudness normalization on
+            // -> expected value: -1
+            try {
+                checkAacDrcOutputLoudness(
+                        R.raw.noise_1ch_24khz_aot5_dr_sbr_sig1_mp4, 70, -1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacLoudnessM4a for default loudness failed for " +
+                        aacDecName);
+                throw new RuntimeException(e);
+            }
+            // test drc output loudness
+            // testfile with MPEG-4 DRC loudness metadata and loudness normalization off
+            // -> expected value: loudness metadata in bitstream (-16*-4 = 64)
+            try {
+                checkAacDrcOutputLoudness(
+                        R.raw.sine_2ch_48khz_aot2_drchalf_mp4, -1, 64, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacLoudnessM4a for default loudness failed for " +
+                        aacDecName);
+                throw new RuntimeException(e);
+            }
+            // test drc output loudness
+            // testfile with MPEG-4 DRC loudness metadata and loudness normalization off
+            // -> expected value: loudness metadata in bitstream (-31*-4 = 124)
+            try {
+                checkAacDrcOutputLoudness(
+                        R.raw.sine_2ch_48khz_aot5_drcclip_mp4, -1, 124, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacLoudnessM4a for default loudness failed for " +
+                        aacDecName);
+                throw new RuntimeException(e);
+            }
+            // test drc output loudness
+            // testfile with MPEG-4 DRC loudness metadata and loudness normalization on
+            // -> expected value: target loudness value (85)
+            try {
+                checkAacDrcOutputLoudness(
+                        R.raw.sine_2ch_48khz_aot5_drcclip_mp4, 85, 85, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacLoudnessM4a for default loudness failed for " +
+                        aacDecName);
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
      *  Internal utilities
      */
 
@@ -378,6 +447,21 @@ public class DecoderTestAacDrc {
     }
 
     /**
+    * AAC test Output Loudness
+    */
+    private void checkAacDrcOutputLoudness(int testInput, int decoderTargetLevel, int expectedOutputLoudness, String decoderName) throws Exception {
+        for (boolean runtimeChange : new boolean[] {false, true}) {
+            AudioParameter decParams = new AudioParameter();
+            DrcParams drcParams_test = new DrcParams(127, 127, decoderTargetLevel, 0, 6);
+
+            // Check drc loudness preference
+            short[] decSamples_test = decodeToMemory(decParams, testInput, -1, null,
+                    drcParams_test, decoderName, runtimeChange, expectedOutputLoudness);
+        }
+    }
+
+
+    /**
      *  Class handling all MPEG-4 and MPEG-D Dynamic Range Control (DRC) parameter relevant for testing
      */
     protected static class DrcParams {
@@ -414,8 +498,10 @@ public class DecoderTestAacDrc {
     //          - addition of application of DRC parameters
     //          - no need/use of resetMode, configMode
     //       Split method so code can be shared
+
     private short[] decodeToMemory(AudioParameter audioParams, int testinput, int eossample,
-            List<Long> timestamps, DrcParams drcParams, String decoderName, boolean runtimeChange)
+            List<Long> timestamps, DrcParams drcParams, String decoderName, boolean runtimeChange,
+            int expectedOutputLoudness)
             throws IOException
     {
         String localTag = TAG + "#decodeToMemory";
@@ -600,6 +686,15 @@ public class DecoderTestAacDrc {
             }
         }
 
+        // expectedOutputLoudness == -2 indicates that output loudness is not tested
+        if (expectedOutputLoudness != -2) {
+            final int outputLoudnessFromCodec = codec.getOutputFormat()
+                    .getInteger(MediaFormat.KEY_AAC_DRC_OUTPUT_LOUDNESS);
+            if (outputLoudnessFromCodec != expectedOutputLoudness) {
+                fail("Received decoder output loudness is not the expected value");
+            }
+        }
+
         codec.stop();
         codec.release();
         return decoded;
@@ -610,7 +705,17 @@ public class DecoderTestAacDrc {
             throws IOException
     {
         final short[] decoded = decodeToMemory(audioParams, testinput, eossample, timestamps,
-                drcParams, decoderName, false);
+                drcParams, decoderName, false, -2);
+        return decoded;
+    }
+
+    private short[] decodeToMemory(AudioParameter audioParams, int testinput,
+            int eossample, List<Long> timestamps, DrcParams drcParams, String decoderName,
+            boolean runtimeChange)
+            throws IOException
+    {
+        final short[] decoded = decodeToMemory(audioParams, testinput, eossample, timestamps,
+                drcParams, decoderName, runtimeChange, -2);
         return decoded;
     }
 

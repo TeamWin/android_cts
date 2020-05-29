@@ -384,6 +384,82 @@ public class DecoderTestXheAac {
     }
 
     /**
+     * Verify that the correct output loudness values are returned when decoding USAC bitstreams
+     */
+    @Test
+    public void testDecodeUsacDrcOutputLoudnessM4a() throws Exception {
+        Log.v(TAG, "START testDecodeUsacDrcOutputLoudnessM4a");
+
+        assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
+
+        for (String aacDecName : sAacDecoderNames) {
+            try {
+                runDecodeUsacDrcOutputLoudnessM4a(aacDecName);
+            } catch (Error err) {
+                throw new Error(err.getMessage() + " [dec=" + aacDecName + "]" , err);
+            }
+        }
+    }
+
+    private void runDecodeUsacDrcOutputLoudnessM4a(String aacDecName) throws Exception {
+        Log.v(TAG, "testDecodeUsacDrcOutputLoudnessM4a running for dec=" + aacDecName);
+        // test drc output loudness
+        // testfile without loudness metadata and loudness normalization off -> expected value: -1
+        try {
+            checkUsacDrcOutputLoudness(
+                    R.raw.noise_2ch_19_2khz_aot42_no_ludt_mp4, -1, -1, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcOutputLoudnessM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+
+        Log.v(TAG, "testDecodeUsacDrcOutputLoudnessM4a running for dec=" + aacDecName);
+        // test drc output loudness
+        // testfile without loudness metadata and loudness normalization on
+        // -> expected value: -1
+        try {
+            checkUsacDrcOutputLoudness(
+                    R.raw.noise_2ch_19_2khz_aot42_no_ludt_mp4, 64, -1, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcOutputLoudnessM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+
+        // test drc output loudness
+        // testfile with MPEG-D DRC loudness metadata and loudness normalization off
+        // -> expected value: loudness metadata in bitstream (-19*-4 = 76)
+        try {
+            checkUsacDrcOutputLoudness(
+                    R.raw.noise_2ch_08khz_aot42_19_lufs_mp4, -1, 76, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcOutputLoudnessM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+
+        // test drc output loudness
+        // testfile with MPEG-D DRC loudness metadata and loudness normalization off
+        // -> expected value: loudness metadata in bitstream (-22*-4 = 88)
+        try {
+            checkUsacDrcOutputLoudness(
+                    R.raw.noise_1ch_38_4khz_aot42_19_lufs_config_change_mp4, -1, 88, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcOutputLoudnessM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+
+        // test drc output loudness
+        // testfile with MPEG-D DRC loudness metadata and loudness normalization on
+        // -> expected value: target loudness value (92)
+        try {
+            checkUsacDrcOutputLoudness(
+                    R.raw.noise_2ch_08khz_aot42_19_lufs_mp4, 92, 92, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcOutputLoudnessM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      *  Internal utilities
      */
 
@@ -547,6 +623,27 @@ public class DecoderTestXheAac {
             }
         }
     }
+    /**
+    * USAC test Output Loudness
+    */
+    private void checkUsacDrcOutputLoudness(int testInput, int decoderTargetLevel,
+            int expectedOutputLoudness, String decoderName) throws Exception {
+        for (int i = 0; i <= 1 ; i++) {
+            boolean runtimeChange = false;
+            if (i == 1) { /* first run: configure decoder before starting decoding,
+                             second_run: configure decoder at runtime */
+                runtimeChange = true;
+            }
+            AudioParameter decParams = new AudioParameter();
+            DrcParams drcParams_test = new DrcParams(127, 127, decoderTargetLevel, 0, 6);
+
+            // Check drc loudness preference
+            short[] decSamples_test = decodeToMemory(
+                    decParams, testInput, -1, null, drcParams_test,
+                    decoderName, runtimeChange, expectedOutputLoudness);
+        }
+    }
+
     /**
      * Perform a segmented energy analysis on given audio signal samples and run several tests on
      * the energy values.
@@ -920,12 +1017,13 @@ public class DecoderTestXheAac {
      * @param decoderName if non null, the name of the decoder to use for the decoding, otherwise
      *     the default decoder for the format will be used
      * @param runtimeChange defines whether the decoder is configured at runtime or not
+     * @param expectedOutputLoudness value to check if the correct output loudness is returned
+     *     by the decoder
      * @throws RuntimeException
      */
     public short[] decodeToMemory(AudioParameter audioParams, int testinput, int eossample,
-            List<Long> timestamps, DrcParams drcParams, String decoderName, boolean runtimeChange)
-            throws IOException
-    {
+            List<Long> timestamps, DrcParams drcParams, String decoderName, boolean runtimeChange,
+            int expectedOutputLoudness) throws IOException {
         // TODO: code is the same as in DecoderTest, differences are:
         //          - addition of application of DRC parameters
         //          - no need/use of resetMode, configMode
@@ -1140,6 +1238,16 @@ public class DecoderTestXheAac {
                 }
             }
         }
+
+        // expectedOutputLoudness == -2 indicates that output loudness is not tested
+        if (expectedOutputLoudness != -2) {
+            final int outputLoudnessFromCodec = codec.getOutputFormat()
+                    .getInteger(MediaFormat.KEY_AAC_DRC_OUTPUT_LOUDNESS);
+            if (outputLoudnessFromCodec != expectedOutputLoudness) {
+                fail("Received decoder output loudness is not the expected value");
+            }
+        }
+
         codec.stop();
         codec.release();
         return decoded;
@@ -1150,8 +1258,19 @@ public class DecoderTestXheAac {
             throws IOException
     {
         final short[] decoded = decodeToMemory(audioParams, testinput, eossample, timestamps,
-                drcParams, decoderName, false);
+                drcParams, decoderName, false, -2);
         return decoded;
     }
+
+    private short[] decodeToMemory(AudioParameter audioParams, int testinput,
+            int eossample, List<Long> timestamps, DrcParams drcParams, String decoderName,
+            boolean runtimeChange)
+        throws IOException
+    {
+        final short[] decoded = decodeToMemory(audioParams, testinput, eossample, timestamps,
+                drcParams, decoderName, runtimeChange, -2);
+        return decoded;
+    }
+
 }
 
