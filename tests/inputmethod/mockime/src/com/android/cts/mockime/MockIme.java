@@ -619,7 +619,13 @@ public final class MockIme extends InputMethodService {
     @Override
     public void onStartInputView(EditorInfo editorInfo, boolean restarting) {
         getTracer().onStartInputView(editorInfo, restarting,
-                () -> super.onStartInputView(editorInfo, restarting));
+                () -> {
+                    super.onStartInputView(editorInfo, restarting);
+                    final PendingInlineSuggestions pendingInlineSuggestions =
+                            new PendingInlineSuggestions();
+                    pendingInlineSuggestions.mValid.set(true);
+                    mView.updateInlineSuggestions(pendingInlineSuggestions);
+                });
     }
 
     @Override
@@ -721,6 +727,13 @@ public final class MockIme extends InputMethodService {
         final View[] mViews;
         final AtomicInteger mInflatedViewCount;
         final AtomicBoolean mValid = new AtomicBoolean(true);
+
+        PendingInlineSuggestions() {
+            mResponse = null;
+            mTotalCount = 0;
+            mViews = null;
+            mInflatedViewCount = null;
+        }
 
         PendingInlineSuggestions(InlineSuggestionsResponse response) {
             mResponse = response;
