@@ -41,6 +41,7 @@ import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
 import android.media.cts.AudioRecordingConfigurationTest.MyAudioRecordingCallback;
 import android.opengl.GLES20;
+import android.os.Build;
 import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -54,6 +55,7 @@ import android.view.Surface;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -131,6 +133,8 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     private static final int TEST_B1 = 186;
 
     private final static String AVC = MediaFormat.MIMETYPE_VIDEO_AVC;
+
+    private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     public MediaRecorderTest() {
         super("android.media.cts", MediaStubActivity.class);
@@ -1784,6 +1788,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     public void testPrivacySensitive() throws Exception {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
             return;
@@ -1797,6 +1802,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
     }
 
     public void testPrivacySensitiveDefaults() throws Exception {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         if (!hasMicrophone() || !hasAac()) {
             MediaUtils.skipTest("no audio codecs or microphone");
             return;
