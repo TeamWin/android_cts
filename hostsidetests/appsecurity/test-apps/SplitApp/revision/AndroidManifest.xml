@@ -15,33 +15,36 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.splitapp"
-        android:targetSandboxVersion="2"
-        android:revisionCode="12">
+     package="com.android.cts.splitapp"
+     android:targetSandboxVersion="2"
+     android:revisionCode="12">
 
-    <uses-sdk android:targetSdkVersion="27" />
+    <uses-sdk android:targetSdkVersion="27"/>
 
-    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.CAMERA"/>
 
     <application android:label="SplitApp">
-        <activity android:name=".MyActivity">
+        <activity android:name=".MyActivity"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <meta-data android:name="android.service.wallpaper" android:resource="@xml/my_activity_meta" />
+            <meta-data android:name="android.service.wallpaper"
+                 android:resource="@xml/my_activity_meta"/>
         </activity>
         <receiver android:name=".MyReceiver"
-                android:enabled="@bool/my_receiver_enabled">
+             android:enabled="@bool/my_receiver_enabled"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED"/>
             </intent-filter>
         </receiver>
 
-        <uses-library android:name="android.test.runner" />
+        <uses-library android:name="android.test.runner"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="com.android.cts.splitapp" />
+         android:targetPackage="com.android.cts.splitapp"/>
 
 </manifest>

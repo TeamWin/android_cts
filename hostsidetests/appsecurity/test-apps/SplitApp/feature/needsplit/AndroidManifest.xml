@@ -15,35 +15,41 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.splitapp"
-        split="feature"
-        android:isSplitRequired="true">
+     package="com.android.cts.splitapp"
+     split="feature"
+     android:isSplitRequired="true">
 
-    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="27" />
+    <uses-sdk android:minSdkVersion="4"
+         android:targetSdkVersion="27"/>
 
     <!-- New permission should be ignored -->
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <!-- New application flag should be ignored -->
     <application android:largeHeap="true">
-        <activity android:name=".FeatureActivity">
+        <activity android:name=".FeatureActivity"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <meta-data android:name="android.service.wallpaper" android:resource="@xml/my_activity_meta" />
+            <meta-data android:name="android.service.wallpaper"
+                 android:resource="@xml/my_activity_meta"/>
         </activity>
         <receiver android:name=".FeatureReceiver"
-                android:enabled="@bool/feature_receiver_enabled">
+             android:enabled="@bool/feature_receiver_enabled"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED"/>
             </intent-filter>
         </receiver>
-        <service android:name=".FeatureService">
+        <service android:name=".FeatureService"
+             android:exported="true">
             <intent-filter>
-                <action android:name="com.android.cts.splitapp.service" />
+                <action android:name="com.android.cts.splitapp.service"/>
             </intent-filter>
         </service>
-        <provider android:name=".FeatureProvider" android:authorities="com.android.cts.splitapp.provider" />
+        <provider android:name=".FeatureProvider"
+             android:authorities="com.android.cts.splitapp.provider"/>
     </application>
 </manifest>
