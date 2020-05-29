@@ -40,6 +40,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
 import android.service.autofill.FillContext;
+import android.support.test.uiautomator.Direction;
 
 import com.android.cts.mockime.MockImeSession;
 
@@ -337,5 +338,41 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
 
         // Confirm new fill request
         sReplier.getNextFillRequest();
+    }
+
+    @Test
+    public void testScrollSuggestionView() throws Exception {
+        // Set service.
+        enableService();
+
+        final int firstDataset = 1;
+        final int lastDataset = 6;
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder();
+        for (int i = firstDataset; i <= lastDataset; i++) {
+            builder.addDataset(new CannedFillResponse.CannedDataset.Builder()
+                    .setField(ID_USERNAME, "dude" + i)
+                    .setPresentation(createPresentation("Username" + i))
+                    .setInlinePresentation(createInlinePresentation("Username" + i))
+                    .build());
+        }
+
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertSuggestion("Username" + firstDataset);
+        mUiBot.assertNoSuggestion("Username" + lastDataset);
+
+        // Scroll the suggestion view
+        mUiBot.scrollSuggestionView(Direction.RIGHT, /* speed */ 5000);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertNoSuggestion("Username" + firstDataset);
+        mUiBot.assertSuggestion("Username" + lastDataset);
+
+        sReplier.getNextFillRequest();
+        mUiBot.waitForIdleSync();
     }
 }
