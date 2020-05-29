@@ -136,6 +136,7 @@
         </activity>
         <activity android:name=".SimpleAfterLoginActivity" />
         <activity android:name=".SimpleBeforeLoginActivity" />
+        <activity android:name=".NonAutofillableActivity" />
 
         <receiver android:name=".SelfDestructReceiver"
             android:exported="true"
