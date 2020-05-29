@@ -38,7 +38,6 @@ import android.os.OperationCanceledException;
 import android.os.RemoteException;
 import android.test.AndroidTestCase;
 import android.test.mock.MockContentResolver;
-import android.test.mock.MockIContentProvider;
 
 import org.mockito.stubbing.Answer;
 
@@ -83,7 +82,9 @@ public class ContentProviderClientTest extends AndroidTestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        mIContentProvider = mock(MockIContentProvider.class);
+        mIContentProvider = mock(IContentProvider.class, invocation -> {
+            throw new UnsupportedOperationException("unimplemented mock method");
+        });
         mICancellationSignal = mock(ICancellationSignal.class);
 
         when(mIContentProvider.createCancellationSignal()).thenReturn(mICancellationSignal);
