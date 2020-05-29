@@ -311,6 +311,41 @@ public class ScopedStorageTest {
     }
 
     /**
+     * Test that apps can't read/write files in another app's external files directory,
+     * and can do so in their own app's external file directory.
+     */
+    @Test
+    public void testReadWriteFilesInOtherAppExternalDir() throws Exception {
+        final File videoFile = new File(getExternalFilesDir(), VIDEO_FILE_NAME);
+
+        try {
+            // Create a file in app's external files directory
+            if (!videoFile.exists()) {
+                assertThat(videoFile.createNewFile()).isTrue();
+            }
+
+            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
+            installAppWithStoragePermissions(TEST_APP_A);
+
+            // TEST_APP_A should not be able to read/write to other app's external files directory.
+            assertThat(openFileAs(TEST_APP_A, videoFile.getPath(), false /* forWrite */)).isFalse();
+            assertThat(openFileAs(TEST_APP_A, videoFile.getPath(), true /* forWrite */)).isFalse();
+            // TEST_APP_A should not be able to delete files in other app's external files
+            // directory.
+            assertThat(deleteFileAs(TEST_APP_A, videoFile.getPath())).isFalse();
+
+            // Apps should have read/write access in their own app's external files directory.
+            assertThat(canOpen(videoFile, false /* forWrite */)).isTrue();
+            assertThat(canOpen(videoFile, true /* forWrite */)).isTrue();
+            // Apps should be able to delete files in their own app's external files directory.
+            assertThat(videoFile.delete()).isTrue();
+        } finally {
+            videoFile.delete();
+            uninstallAppNoThrow(TEST_APP_A);
+        }
+    }
+
+    /**
      * Test that we can contribute media without any permissions.
      */
     @Test
