@@ -79,3 +79,12 @@ java_test_host {
     test_suites: ["general-tests", "mts"],
     test_config: "AndroidTest.xml",
 }
+
+java_test_host {
+    name: "CtsScopedStoragePublicVolumeHostTest",
+    srcs: ["host/src/**/*.java"],
+    libs: ["tradefed"],
+    static_libs: ["testng"],
+    test_suites: ["general-tests", "mts"],
+    test_config: "PublicVolumeTest.xml",
+}
