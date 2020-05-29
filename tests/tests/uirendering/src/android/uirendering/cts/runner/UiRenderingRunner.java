@@ -18,6 +18,8 @@ package android.uirendering.cts.runner;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.UiDevice;
 import android.uirendering.cts.util.BitmapDumper;
 
@@ -28,6 +30,16 @@ import androidx.test.runner.AndroidJUnitRunner;
  */
 public class UiRenderingRunner extends AndroidJUnitRunner {
 
+    private static class ImmersiveConfirmationSetting extends SettingsSession<String> {
+        ImmersiveConfirmationSetting() {
+            super(Settings.Secure.getUriFor(
+                    Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS),
+                    Settings.Secure::getString, Settings.Secure::putString);
+        }
+    }
+
+    private ImmersiveConfirmationSetting mSettingsSession;
+
     @Override
     protected void waitForActivitiesToComplete() {
         // No.
@@ -36,6 +48,10 @@ public class UiRenderingRunner extends AndroidJUnitRunner {
     @Override
     public void onCreate(Bundle arguments) {
         super.onCreate(arguments);
+
+        // Disable immersive clings
+        mSettingsSession = new ImmersiveConfirmationSetting();
+        mSettingsSession.set("confirmed");
 
         final UiDevice device = UiDevice.getInstance(this);
         try {
@@ -52,6 +68,8 @@ public class UiRenderingRunner extends AndroidJUnitRunner {
     public void onDestroy() {
         // Ok now wait if necessary
         super.waitForActivitiesToComplete();
+
+        mSettingsSession.close();
 
         super.onDestroy();
     }
