@@ -613,19 +613,18 @@ public final class MockIme extends InputMethodService {
     @Override
     public void onStartInput(EditorInfo editorInfo, boolean restarting) {
         getTracer().onStartInput(editorInfo, restarting,
-                () -> super.onStartInput(editorInfo, restarting));
+                () -> {
+                    super.onStartInput(editorInfo, restarting);
+                    if (mSettings.getInlineSuggestionsEnabled()) {
+                        maybeClearExistingInlineSuggestions();
+                    }
+                });
     }
 
     @Override
     public void onStartInputView(EditorInfo editorInfo, boolean restarting) {
         getTracer().onStartInputView(editorInfo, restarting,
-                () -> {
-                    super.onStartInputView(editorInfo, restarting);
-                    final PendingInlineSuggestions pendingInlineSuggestions =
-                            new PendingInlineSuggestions();
-                    pendingInlineSuggestions.mValid.set(true);
-                    mView.updateInlineSuggestions(pendingInlineSuggestions);
-                });
+                () -> super.onStartInputView(editorInfo, restarting));
     }
 
     @Override
@@ -810,6 +809,15 @@ public final class MockIme extends InputMethodService {
             }
             return true;
         });
+    }
+
+    @MainThread
+    private void maybeClearExistingInlineSuggestions() {
+        if (mPendingInlineSuggestions != null
+                && mPendingInlineSuggestions.mTotalCount > 0) {
+            mView.updateInlineSuggestions(new PendingInlineSuggestions());
+            mPendingInlineSuggestions = null;
+        }
     }
 
     /**
