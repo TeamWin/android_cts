@@ -28,6 +28,7 @@ import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.stats.devicepolicy.EventId;
 
+import com.android.compatibility.common.util.LocationModeSetter;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
@@ -2045,17 +2046,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .setBoolean(false)
                 .setStrings(PERMISSIONS_APP_PKG)
                 .build());
-    }
-
-    @Test
-    public void testRandomizedWifiMacAddress() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
-            return;
-        }
-        try (LocationModeSetter locationModeSetter = new LocationModeSetter(getDevice())) {
-            locationModeSetter.setLocationEnabled(true);
-            executeDeviceTestClass(".RandomizedWifiMacAddressTest");
-        }
     }
 
     @Test
