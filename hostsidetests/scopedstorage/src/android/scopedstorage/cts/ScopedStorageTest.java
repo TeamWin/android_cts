@@ -36,6 +36,7 @@ import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
 import static android.scopedstorage.cts.lib.TestUtils.assertThrows;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
+import static android.scopedstorage.cts.lib.TestUtils.canReadAndWriteAs;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
@@ -1934,26 +1935,25 @@ public class ScopedStorageTest {
             assertThat(createFileAs(TEST_APP_A, otherAppExternalDataFile.getAbsolutePath()))
                     .isTrue();
 
-            // TODO(152645823): Readd app data dir testss
-            //            // We cannot read or write the file, but app A can.
-            //            assertThat(canReadAndWriteAs(TEST_APP_A,
-            //                    otherAppExternalDataFile.getAbsolutePath())).isTrue();
-            //            assertAccess(otherAppExternalDataFile, true, false, false);
-            //
-            //            // We cannot read or write the dir, but app A can.
-            //            assertThat(canReadAndWriteAs(TEST_APP_A,
-            //                    otherAppExternalDataDir.getAbsolutePath())).isTrue();
-            //            assertAccess(otherAppExternalDataDir, true, false, false);
-            //
-            //            // We cannot read or write the sub dir, but app A can.
-            //            assertThat(canReadAndWriteAs(TEST_APP_A,
-            //                    otherAppExternalDataSubDir.getAbsolutePath())).isTrue();
-            //            assertAccess(otherAppExternalDataSubDir, true, false, false);
-            //
-            //            // We can read and write our own app dir, but app A cannot.
-            //            assertThat(canReadAndWriteAs(TEST_APP_A,
-            //                    getExternalFilesDir().getAbsolutePath())).isFalse();
-            assertAccess(getExternalFilesDir(), true, true, true);
+            // We cannot read or write the file, but app A can.
+            assertThat(canReadAndWriteAs(TEST_APP_A,
+                    otherAppExternalDataFile.getAbsolutePath())).isTrue();
+            assertCannotAccessOtherAppFile(otherAppExternalDataFile);
+
+            // We cannot read or write the dir, but app A can.
+            assertThat(canReadAndWriteAs(TEST_APP_A,
+                    otherAppExternalDataDir.getAbsolutePath())).isTrue();
+            assertCannotAccessOtherAppFile(otherAppExternalDataDir);
+
+            // We cannot read or write the sub dir, but app A can.
+            assertThat(canReadAndWriteAs(TEST_APP_A,
+                    otherAppExternalDataSubDir.getAbsolutePath())).isTrue();
+            assertCannotAccessOtherAppFile(otherAppExternalDataSubDir);
+
+            // We can read and write our own app dir, but app A cannot.
+            assertThat(canReadAndWriteAs(TEST_APP_A,
+                    getExternalFilesDir().getAbsolutePath())).isFalse();
+            assertCanAccessMyAppFile(getExternalFilesDir());
 
             assertDirectoryAccess(getDcimDir(), /* exists */ true);
             assertDirectoryAccess(getExternalStorageDir(), true);
@@ -2562,11 +2562,35 @@ public class ScopedStorageTest {
 
     private static void assertAccess(File file, boolean exists, boolean canRead, boolean canWrite)
             throws Exception {
-        assertThat(file.exists()).isEqualTo(exists);
+        assertAccess(file, exists, canRead, canWrite, true /* checkExists */);
+    }
+
+    private static void assertCannotAccessOtherAppFile(File file)
+            throws Exception {
+        // App data directories have different 'x' bits on upgrading vs new devices. Let's not
+        // check 'exists', by passing checkExists=false. But assert this app cannot read or write
+        // the other app's file.
+        assertAccess(file, false /* value is moot */, false /* canRead */,
+                false /* canWrite */, false /* checkExists */);
+    }
+
+    private static void assertCanAccessMyAppFile(File file)
+            throws Exception {
+        assertAccess(file, true, true /* canRead */,
+                true /*canWrite */, true /* checkExists */);
+    }
+
+    private static void assertAccess(File file, boolean exists, boolean canRead, boolean canWrite,
+            boolean checkExists) throws Exception {
+        if (checkExists) {
+            assertThat(file.exists()).isEqualTo(exists);
+        }
         assertThat(file.canRead()).isEqualTo(canRead);
         assertThat(file.canWrite()).isEqualTo(canWrite);
         if (file.isDirectory()) {
-            assertThat(file.canExecute()).isEqualTo(exists);
+            if (checkExists) {
+                assertThat(file.canExecute()).isEqualTo(exists);
+            }
         } else {
             assertThat(file.canExecute()).isFalse(); // Filesytem is mounted with MS_NOEXEC
         }
@@ -2576,7 +2600,10 @@ public class ScopedStorageTest {
         assertAccess(file, W_OK, canWrite);
         assertAccess(file, R_OK | W_OK, canRead && canWrite);
         assertAccess(file, W_OK | F_OK, canWrite);
-        assertAccess(file, F_OK, exists);
+
+        if (checkExists) {
+            assertAccess(file, F_OK, exists);
+        }
     }
 
     private static void assertAccess(File file, int mask, boolean expected) throws Exception {
