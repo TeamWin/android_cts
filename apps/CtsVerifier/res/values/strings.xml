@@ -1191,6 +1191,7 @@
     <string name="snsr_test_play_sound">A sound will be played once the verification is complete...</string>
     <string name="snsr_no_interaction">Leave the device on top of a flat surface.</string>
     <string name="snsr_interaction_needed">Once the test begins, you will have to wave your hand over the front of the device.</string>
+    <string name="snsr_interaction_needed_prox">Once the test begins, if possible, flip the device so it is face down on a surface, then flip back to face up after a second or two. Otherwise, wave your hand over the front of the device.</string>
     <string name="snsr_device_steady">Keep the device steady.</string>
     <string name="snsr_keep_device_rotating_clockwise">Once the test begins, you will have to keep rotating the device clockwise.</string>
     <string name="snsr_wait_for_user">Press \'Next\' to continue.</string>
