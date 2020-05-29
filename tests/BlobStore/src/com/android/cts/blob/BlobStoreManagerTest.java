@@ -1081,6 +1081,24 @@ public class BlobStoreManagerTest {
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
+            SystemClock.sleep(waitDurationMs);
+
+            // Trigger idle maintenance which takes of deleting expired sessions.
+            triggerIdleMaintenance();
+
+            assertThrows(SecurityException.class, () -> mBlobStoreManager.openSession(sessionId));
+        }, Pair.create(KEY_SESSION_EXPIRY_TIMEOUT_MS, String.valueOf(waitDurationMs)));
+    }
+
+    @Test
+    public void testExpiredSessionsDeleted_withPartialData() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+        final long waitDurationMs = TimeUnit.SECONDS.toMillis(2);
+        runWithKeyValues(() -> {
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+            assertThat(sessionId).isGreaterThan(0L);
+
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
                 blobData.writeToSession(session, 0, 100);
             }

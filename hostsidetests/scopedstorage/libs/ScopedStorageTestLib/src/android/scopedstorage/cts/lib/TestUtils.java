@@ -38,6 +38,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
@@ -67,9 +68,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 /**
  * General helper functions for ScopedStorageTest tests.
@@ -96,37 +98,7 @@ public class TestUtils {
     public static final byte[] BYTES_DATA2 = STR_DATA2.getBytes();
 
     // Root of external storage
-    public static final File EXTERNAL_STORAGE_DIR = Environment.getExternalStorageDirectory();
-    // Default top-level directories
-    public static final File ALARMS_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_ALARMS);
-    public static final File ANDROID_DIR = new File(EXTERNAL_STORAGE_DIR, "Android");
-    public static final File AUDIOBOOKS_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_AUDIOBOOKS);
-    public static final File DCIM_DIR = new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_DCIM);
-    public static final File DOCUMENTS_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_DOCUMENTS);
-    public static final File DOWNLOAD_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_DOWNLOADS);
-    public static final File MUSIC_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_MUSIC);
-    public static final File MOVIES_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_MOVIES);
-    public static final File NOTIFICATIONS_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_NOTIFICATIONS);
-    public static final File PICTURES_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_PICTURES);
-    public static final File PODCASTS_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_PODCASTS);
-    public static final File RINGTONES_DIR =
-            new File(EXTERNAL_STORAGE_DIR, Environment.DIRECTORY_RINGTONES);
-
-    public static final File[] DEFAULT_TOP_LEVEL_DIRS = new File[] {ALARMS_DIR, ANDROID_DIR,
-            AUDIOBOOKS_DIR, DCIM_DIR, DOCUMENTS_DIR, DOWNLOAD_DIR, MUSIC_DIR, MOVIES_DIR,
-            NOTIFICATIONS_DIR, PICTURES_DIR, PODCASTS_DIR, RINGTONES_DIR};
-
-    public static final File ANDROID_DATA_DIR = new File(ANDROID_DIR, "data");
-    public static final File ANDROID_MEDIA_DIR = new File(ANDROID_DIR, "media");
+    private static File sExternalStorageDirectory = Environment.getExternalStorageDirectory();
 
     private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
     private static final long POLLING_SLEEP_MILLIS = 100;
@@ -135,11 +107,11 @@ public class TestUtils {
      * Creates the top level default directories.
      *
      * <p>Those are usually created by MediaProvider, but some naughty tests might delete them
-     * and not restore them afterwards. so we make sure we create them before we make any
+     * and not restore them afterwards, so we make sure we create them before we make any
      * assumptions about their existence.
      */
     public static void setupDefaultDirectories() {
-        for (File dir : DEFAULT_TOP_LEVEL_DIRS) {
+        for (File dir : getDefaultTopLevelDirs()) {
             dir.mkdir();
         }
     }
@@ -256,6 +228,16 @@ public class TestUtils {
                     e);
             return false;
         }
+    }
+
+    /**
+     * Makes the given {@code testApp} open {@code file} for read or write.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean openFileAs(TestApp testApp, File file, boolean forWrite)
+            throws Exception {
+        return openFileAs(testApp, file.getAbsolutePath(), forWrite);
     }
 
     /**
@@ -378,7 +360,16 @@ public class TestUtils {
     }
 
     /**
-     * Queries {@link ContentResolver} for a file and returns a {@link Cursor} with the given
+     * Queries {@link ContentResolver} for a video file and returns a {@link Cursor} with the given
+     * columns.
+     */
+    @NonNull
+    public static Cursor queryVideoFile(File file, String... projection) {
+        return queryFile(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, file, projection);
+    }
+
+    /**
+     * Queries {@link ContentResolver} for an image file and returns a {@link Cursor} with the given
      * columns.
      */
     @NonNull
@@ -429,6 +420,21 @@ public class TestUtils {
                            /*where*/ MediaStore.MediaColumns.DATA + " = ?",
                            /*selectionArgs*/ new String[] {file.getPath()}))
                 .isEqualTo(1);
+    }
+
+    /**
+     * Deletes db rows and files corresponding to uri through {@link ContentResolver} and
+     * {@link MediaStore} APIs.
+     */
+    public static void deleteWithMediaProviderNoThrow(Uri... uris) {
+        for (Uri uri : uris) {
+            if (uri == null) continue;
+
+            try {
+                getContentResolver().delete(uri, Bundle.EMPTY);
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     /**
@@ -601,28 +607,19 @@ public class TestUtils {
      * Polls for external storage to be mounted.
      */
     public static void pollForExternalStorageState() throws Exception {
-        for (int i = 0; i < POLLING_TIMEOUT_MILLIS / POLLING_SLEEP_MILLIS; i++) {
-            if (Environment.getExternalStorageState(Environment.getExternalStorageDirectory())
-                            .equals(Environment.MEDIA_MOUNTED)) {
-                return;
-            }
-            Thread.sleep(POLLING_SLEEP_MILLIS);
-        }
-        fail("Timed out while waiting for ExternalStorageState to be MEDIA_MOUNTED");
+        pollForCondition(
+                () -> Environment.getExternalStorageState(getExternalStorageDir())
+                        .equals(Environment.MEDIA_MOUNTED),
+                "Timed out while waiting for ExternalStorageState to be MEDIA_MOUNTED");
     }
 
     /**
      * Polls until we're granted or denied a given permission.
      */
     public static void pollForPermission(String perm, boolean granted) throws Exception {
-        for (int i = 0; i < POLLING_TIMEOUT_MILLIS / POLLING_SLEEP_MILLIS; i++) {
-            if (granted == checkPermissionAndAppOp(perm)) {
-                return;
-            }
-            Thread.sleep(POLLING_SLEEP_MILLIS);
-        }
-        fail("Timed out while waiting for permission " + perm + " to be "
-                + (granted ? "granted" : "revoked"));
+        pollForCondition(() -> granted == checkPermissionAndAppOp(perm),
+                "Timed out while waiting for permission " + perm + " to be "
+                        + (granted ? "granted" : "revoked"));
     }
 
     /**
@@ -644,6 +641,137 @@ public class TestUtils {
         try (FileInputStream fis = new FileInputStream(fd)) {
             assertInputStreamContent(fis, expectedContent);
         }
+    }
+
+    /**
+     * Asserts that {@code dir} is a directory and that it doesn't contain any of
+     * {@code unexpectedContent}
+     */
+    public static void assertDirectoryDoesNotContain(@NonNull File dir, File... unexpectedContent) {
+        assertThat(dir.isDirectory()).isTrue();
+        assertThat(Arrays.asList(dir.listFiles())).containsNoneIn(unexpectedContent);
+    }
+
+    /**
+     * Asserts that {@code dir} is a directory and that it contains all of {@code expectedContent}
+     */
+    public static void assertDirectoryContains(@NonNull File dir, File... expectedContent) {
+        assertThat(dir.isDirectory()).isTrue();
+        assertThat(Arrays.asList(dir.listFiles())).containsAllIn(expectedContent);
+    }
+
+    public static File getExternalStorageDir() {
+        return sExternalStorageDirectory;
+    }
+
+    public static void setExternalStorageVolume(@NonNull String volName) {
+        sExternalStorageDirectory = new File("/storage/" + volName);
+    }
+
+    /**
+     * Resets the root directory of external storage to the default.
+     *
+     * @see Environment#getExternalStorageDirectory()
+     */
+    public static void resetDefaultExternalStorageVolume() {
+        sExternalStorageDirectory = Environment.getExternalStorageDirectory();
+    }
+
+    /**
+     * Creates and returns the Android data sub-directory belonging to the calling package.
+     */
+    public static File getExternalFilesDir() {
+        final String packageName = getContext().getPackageName();
+        final File res = new File(getAndroidDataDir(), packageName + "/files");
+        if (!res.equals(getContext().getExternalFilesDir(null))) {
+            res.mkdirs();
+        }
+        return res;
+    }
+
+    /**
+     * Creates and returns the Android media sub-directory belonging to the calling package.
+     */
+    public static File getExternalMediaDir() {
+        final String packageName = getContext().getPackageName();
+        final File res = new File(getAndroidMediaDir(), packageName);
+        if (!res.equals(getContext().getExternalMediaDirs()[0])) {
+            res.mkdirs();
+        }
+        return res;
+    }
+
+    public static File getAlarmsDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_ALARMS);
+    }
+
+    public static File getAndroidDir() {
+        return new File(getExternalStorageDir(),
+                "Android");
+    }
+
+    public static File getAudiobooksDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_AUDIOBOOKS);
+    }
+
+    public static File getDcimDir() {
+        return new File(getExternalStorageDir(), Environment.DIRECTORY_DCIM);
+    }
+
+    public static File getDocumentsDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_DOCUMENTS);
+    }
+
+    public static File getDownloadDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_DOWNLOADS);
+    }
+
+    public static File getMusicDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_MUSIC);
+    }
+
+    public static File getMoviesDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_MOVIES);
+    }
+
+    public static File getNotificationsDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_NOTIFICATIONS);
+    }
+
+    public static File getPicturesDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_PICTURES);
+    }
+
+    public static File getPodcastsDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_PODCASTS);
+    }
+
+    public static File getRingtonesDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_RINGTONES);
+    }
+
+    public static File getAndroidDataDir() {
+        return new File(getAndroidDir(), "data");
+    }
+
+    public static File getAndroidMediaDir() {
+        return new File(getAndroidDir(), "media");
+    }
+
+    public static File[] getDefaultTopLevelDirs() {
+        return new File [] { getAlarmsDir(), getAndroidDir(), getAudiobooksDir(), getDcimDir(),
+                getDocumentsDir(), getDownloadDir(), getMusicDir(), getMoviesDir(),
+                getNotificationsDir(), getPicturesDir(), getPodcastsDir(), getRingtonesDir() };
     }
 
     private static void assertInputStreamContent(InputStream in, byte[] expectedContent)
@@ -830,22 +958,37 @@ public class TestUtils {
 
     @NonNull
     private static Cursor queryFile(@NonNull Uri uri, @NonNull File file, String... projection) {
-        final Cursor c = getContentResolver().query(uri, projection,
-                /*selection*/ MediaStore.MediaColumns.DATA + " = ?",
-                /*selectionArgs*/ new String[] {file.getAbsolutePath()},
-                /*sortOrder*/ null);
+        Bundle queryArgs = new Bundle();
+        queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION,
+                MediaStore.MediaColumns.DATA + " = ?");
+        queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+                new String[] { file.getAbsolutePath() });
+        queryArgs.putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_INCLUDE);
+        queryArgs.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_INCLUDE);
+
+        final Cursor c = getContentResolver().query(uri, projection, queryArgs, null);
         assertThat(c).isNotNull();
         return c;
     }
 
-    /**
-     * Asserts that {@code dir} is a directory and that it contains all of {@code expectedContent}
-     */
-    public static void assertDirectoryContains(@NonNull File dir, File... expectedContent) {
-        assertThat(dir.isDirectory()).isTrue();
-        final List<File> actualContent = Arrays.asList(dir.listFiles());
-        for (File f : expectedContent) {
-            assertThat(actualContent).contains(f);
+    private static boolean partitionDisk() {
+        try {
+            final String listDisks = executeShellCommand("sm list-disks").trim();
+            executeShellCommand("sm partition " + listDisks + " public");
+            return true;
+        } catch (Exception e) {
+            return false;
         }
+    }
+
+    private static void pollForCondition(Supplier<Boolean> condition, String errorMessage)
+            throws Exception {
+        for (int i = 0; i < POLLING_TIMEOUT_MILLIS / POLLING_SLEEP_MILLIS; i++) {
+            if (condition.get()) {
+                return;
+            }
+            Thread.sleep(POLLING_SLEEP_MILLIS);
+        }
+        throw new TimeoutException(errorMessage);
     }
 }
