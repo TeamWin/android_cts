@@ -21,8 +21,10 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKA
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileNoAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileNotPresent;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileReadWriteAccess;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificNoGiftPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificObbGiftPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.readInt;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.writeInt;
 
 import android.test.AndroidTestCase;
 
@@ -30,13 +32,28 @@ import java.io.File;
 import java.util.List;
 
 public class GiftTest extends AndroidTestCase {
+    public void testStageNonGifts() throws Exception {
+        final List<File> noneList = getAllPackageSpecificNoGiftPaths(getContext(), PACKAGE_NONE);
+        for (File none : noneList) {
+            none.getParentFile().mkdirs();
+            assertTrue(none.createNewFile());
+            writeInt(none, 100);
+        }
+    }
+
     /**
-     * Verify we can't read other obb dirs.
+     * Verify we can read & write only our gifts.
      */
-    public void testCantAccessOtherObbDirs() throws Exception {
-        final List<File> readList = getAllPackageSpecificObbGiftPaths(getContext(), PACKAGE_READ);
+    public void testNoGifts() throws Exception {
+        final List<File> readList = getAllPackageSpecificNoGiftPaths(getContext(), PACKAGE_READ);
         for (File read : readList) {
             assertFileNoAccess(read);
+        }
+
+        final List<File> noneList = getAllPackageSpecificNoGiftPaths(getContext(), PACKAGE_NONE);
+        for (File none : noneList) {
+            assertFileReadWriteAccess(none);
+            assertEquals(100, readInt(none));
         }
     }
 
