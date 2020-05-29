@@ -3,8 +3,10 @@ package android.location.cts.gnss;
 import android.location.GnssStatus;
 import android.location.cts.common.GnssTestCase;
 import android.location.cts.common.SoftAssert;
+import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
+import android.os.Build;
 import android.util.Log;
 
 public class GnssStatusTest extends GnssTestCase  {
@@ -23,9 +25,9 @@ public class GnssStatusTest extends GnssTestCase  {
    * Tests that one can listen for {@link GnssStatus}.
    */
   public void testGnssStatusChanges() throws Exception {
-    // Checks if GPS hardware feature is present, skips test (pass) if not,
-    // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, isCtsVerifierTest())) {
+    // Checks if GPS hardware feature is present, skips test (pass) if not
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N, mTestLocationManager,
+        TAG)) {
       return;
     }
 
@@ -62,9 +64,9 @@ public class GnssStatusTest extends GnssTestCase  {
    * Tests values of {@link GnssStatus}.
    */
   public void testGnssStatusValues() throws InterruptedException {
-    // Checks if GPS hardware feature is present, skips test (pass) if not,
-    // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, isCtsVerifierTest())) {
+    // Checks if GPS hardware feature is present, skips test (pass) if not
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N, mTestLocationManager,
+        TAG)) {
       return;
     }
     SoftAssert softAssert = new SoftAssert(TAG);
