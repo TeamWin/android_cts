@@ -25,6 +25,7 @@ import static android.autofillservice.cts.Timeouts.CONNECTION_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.FILL_EVENTS_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.FILL_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.IDLE_UNBIND_TIMEOUT;
+import static android.autofillservice.cts.Timeouts.RESPONSE_DELAY_MS;
 import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -110,6 +111,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         sInstance.set(this);
         sServiceLabel = SERVICE_CLASS;
         mHandler = Handler.createAsync(sMyThread.getLooper());
+        sReplier.setHandler(mHandler);
     }
 
     private static InstrumentedAutoFillService peekInstance() {
@@ -236,7 +238,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         mHandler.post(
                 () -> sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
                         cancellationSignal, callback, request.getFlags(),
-                        request.getInlineSuggestionsRequest()));
+                        request.getInlineSuggestionsRequest(), request.getId()));
     }
 
     @Override
@@ -432,6 +434,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         private IntentSender mOnSaveIntentSender;
         private String mAcceptedPackageName;
 
+        private Handler mHandler;
+
         private boolean mReportUnhandledFillRequest = true;
         private boolean mReportUnhandledSaveRequest = true;
 
@@ -592,6 +596,10 @@ public class InstrumentedAutoFillService extends AutofillService {
                     + mSaveRequests);
         }
 
+        public void setHandler(Handler handler) {
+            mHandler = handler;
+        }
+
         /**
          * Resets its internal state.
          */
@@ -608,7 +616,7 @@ public class InstrumentedAutoFillService extends AutofillService {
 
         private void onFillRequest(List<FillContext> contexts, Bundle data,
                 CancellationSignal cancellationSignal, FillCallback callback, int flags,
-                InlineSuggestionsRequest inlineRequest) {
+                InlineSuggestionsRequest inlineRequest, int requestId) {
             try {
                 CannedFillResponse response = null;
                 try {
@@ -676,8 +684,20 @@ public class InstrumentedAutoFillService extends AutofillService {
                         throw new IllegalStateException("Unknown id mode: " + mIdMode);
                 }
 
-                Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
-                callback.onSuccess(fillResponse);
+                if (response.getResponseType() == ResponseType.DELAY) {
+                    mHandler.postDelayed(() -> {
+                        Log.v(TAG,
+                                "onFillRequest(" + requestId + "): fillResponse = " + fillResponse);
+                        callback.onSuccess(fillResponse);
+                        // Add a fill request to let test case know response was sent.
+                        Helper.offer(mFillRequests,
+                                new FillRequest(contexts, data, cancellationSignal, callback,
+                                        flags, inlineRequest), CONNECTION_TIMEOUT.ms());
+                    }, RESPONSE_DELAY_MS);
+                } else {
+                    Log.v(TAG, "onFillRequest(" + requestId + "): fillResponse = " + fillResponse);
+                    callback.onSuccess(fillResponse);
+                }
             } catch (Throwable t) {
                 addException(t);
             } finally {
