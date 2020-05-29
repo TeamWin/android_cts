@@ -1191,6 +1191,7 @@
     <string name="snsr_test_play_sound">A sound will be played once the verification is complete...</string>
     <string name="snsr_no_interaction">Leave the device on top of a flat surface.</string>
     <string name="snsr_interaction_needed">Once the test begins, you will have to wave your hand over the front of the device.</string>
+    <string name="snsr_interaction_needed_prox">Once the test begins, if possible, flip the device so it is face down on a surface, then flip back to face up after a second or two. Otherwise, wave your hand over the front of the device.</string>
     <string name="snsr_device_steady">Keep the device steady.</string>
     <string name="snsr_keep_device_rotating_clockwise">Once the test begins, you will have to keep rotating the device clockwise.</string>
     <string name="snsr_wait_for_user">Press \'Next\' to continue.</string>
@@ -2145,6 +2146,35 @@
         dismiss them.
     </string>
     <string name="msg_extras_preserved">Check that Message extras Bundle was preserved.</string>
+    <string name="qs_media_player_title">QS Media Controls Test</string>
+    <string name="qs_media_player_test">Media Controls Test</string>
+    <string name="qs_media_player_info">This test checks that media controls appear in the
+        Quick Settings shade for applications that post a media style notification.</string>
+    <string name="qs_media_player_song_and_artist">Fully expand Quick Settings and look at the media
+        player controls for the CTS Verifier app.
+        Check that the media player contains the strings "Song" and "Artist".
+    </string>
+    <string name="qs_media_player_album_art">Open Quick Settings and look at the media player
+        controls for the CTS Verifier app.
+        Check that the media player contains a solid yellow image.
+    </string>
+    <string name="qs_media_player_progress_bar">Fully expand Quick Settings and look at the media
+        player controls for the CTS Verifier app.
+        Check that the media player contains a progress bar showing 6 seconds have elapsed of a
+        one minute long track.
+    </string>
+    <string name="qs_media_player_actions">Fully expand Quick Settings and look at the media player
+        controls for the CTS Verifier app.
+        Check that icons appear for rewind, previous track, pause, next track and fast forward.
+    </string>
+    <string name="qs_media_player_compact_actions">Open Notification Shade and look at the media player
+        controls for the CTS Verifier app.
+        Check that icons appear for only previous track, pause and next track.
+    </string>
+    <string name="qs_media_player_output_switcher">Open Quick Settings and look at the media player
+        controls for the CTS Verifier app. Click on the button showing that the media is playing
+        on the phone speaker. Check that the Output Switcher opens.
+    </string>
     <string name="tile_service_name">Tile Service for CTS Verifier</string>
     <string name="tiles_test">Tile Service Test</string>
     <string name="tiles_info">This test checks that a Tile Service added by a third party
