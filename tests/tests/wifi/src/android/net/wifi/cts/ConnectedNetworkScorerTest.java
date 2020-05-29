@@ -300,6 +300,7 @@ public class ConnectedNetworkScorerTest {
                 new TestConnectedNetworkScorer(countDownLatchScorer);
         TestUsabilityStatsListener usabilityStatsListener =
                 new TestUsabilityStatsListener(countDownLatchUsabilityStats);
+        boolean disconnected = false;
         try {
             uiAutomation.adoptShellPermissionIdentity();
             // Clear any external scorer already active on the device.
@@ -341,6 +342,7 @@ public class ConnectedNetworkScorerTest {
                     DURATION,
                     () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
             assertThat(mWifiManager.getConnectionInfo().getNetworkId()).isEqualTo(-1);
+            disconnected = true;
 
             // Wait for stop to be invoked and ensure that the session id matches.
             assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
@@ -349,6 +351,16 @@ public class ConnectedNetworkScorerTest {
         } finally {
             mWifiManager.removeOnWifiUsabilityStatsListener(usabilityStatsListener);
             mWifiManager.clearWifiConnectedNetworkScorer();
+
+            if (disconnected) {
+                mWifiManager.reconnect();
+                // Wait for it to be reconnected.
+                PollingCheck.check(
+                        "Wifi not reconnected",
+                        DURATION,
+                        () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+            }
+
             uiAutomation.dropShellPermissionIdentity();
         }
     }
