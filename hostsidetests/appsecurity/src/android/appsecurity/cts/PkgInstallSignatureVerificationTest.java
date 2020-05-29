@@ -44,6 +44,10 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     private static final String DEVICE_TESTS_APK = "CtsV3SigningSchemeRotationTest.apk";
     private static final String DEVICE_TESTS_PKG = "android.appsecurity.cts.v3rotationtests";
     private static final String DEVICE_TESTS_CLASS = DEVICE_TESTS_PKG + ".V3RotationTest";
+    private static final String SERVICE_PKG = "android.appsecurity.cts.keyrotationtest";
+    private static final String SERVICE_TEST_PKG = "android.appsecurity.cts.keyrotationtest.test";
+    private static final String SERVICE_TEST_CLASS =
+            SERVICE_TEST_PKG + ".SignatureQueryServiceInstrumentationTest";
     private static final String TEST_APK_RESOURCE_PREFIX = "/pkgsigverify/";
     private static final String INSTALL_ARG_FORCE_QUERYABLE = "--force-queryable";
 
@@ -664,6 +668,42 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFromBuildFails("v3-por_Z_1_2-default-caps-sharedUid-companion.apk");
     }
 
+    public void testInstallV3UpdateAfterRotation() throws Exception {
+        // This test performs an end to end verification of the update of an app with a rotated
+        // key. The app under test exports a bound service that performs its own PackageManager key
+        // rotation API verification, and the instrumentation test binds to the service and invokes
+        // the verifySignatures method to verify that the key rotation APIs return the expected
+        // results. The instrumentation test app is signed with the same key and lineage as the
+        // app under test to also provide a second app that can be used for the checkSignatures
+        // verification.
+
+        // Install the initial versions of the apps; the test method verifies the app under test is
+        // signed with the original signing key.
+        assertInstallFromBuildSucceeds("CtsSignatureQueryService.apk");
+        assertInstallFromBuildSucceeds("CtsSignatureQueryServiceTest.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_noRotation_succeeds");
+
+        // Install the second version of the app signed with the rotated key. This test verifies the
+        // app still functions as expected after the update with the rotated key. The
+        // instrumentation test app is not updated here to allow verification of the pre-key
+        // rotation behavior for the checkSignatures APIs. These APIs should behave similar to the
+        // GET_SIGNATURES flag in that if one or both apps have a signing lineage if the oldest
+        // signers in the lineage match then the methods should return that the signatures match
+        // even if one is signed with a newer key in the lineage.
+        assertInstallFromBuildSucceeds("CtsSignatureQueryService_v2.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_withRotation_succeeds");
+
+        // Installs the third version of the app under test and the instrumentation test, both
+        // signed with the same rotated key and lineage. This test is intended to verify that the
+        // app can still be updated and function as expected after an update with a rotated key.
+        assertInstallFromBuildSucceeds("CtsSignatureQueryService_v3.apk");
+        assertInstallFromBuildSucceeds("CtsSignatureQueryServiceTest_v2.apk");
+        Utils.runDeviceTests(getDevice(), SERVICE_TEST_PKG, SERVICE_TEST_CLASS,
+                "verifySignatures_withRotation_succeeds");
+    }
+
     public void testInstallV3KeyRotationSigPerm() throws Exception {
         // tests that a v3 signed APK can still get a signature permission from an app with its
         // older signing certificate.
@@ -1146,9 +1186,15 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         return getDevice().uninstallPackage(DEVICE_TESTS_PKG);
     }
 
+    private void uninstallServicePackages() throws DeviceNotAvailableException {
+        getDevice().uninstallPackage(SERVICE_PKG);
+        getDevice().uninstallPackage(SERVICE_TEST_PKG);
+    }
+
     private void uninstallPackages() throws DeviceNotAvailableException {
         uninstallPackage();
         uninstallCompanionPackages();
         uninstallDeviceTestPackage();
+        uninstallServicePackages();
     }
 }
