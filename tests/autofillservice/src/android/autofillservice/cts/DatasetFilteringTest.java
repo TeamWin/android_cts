@@ -679,12 +679,18 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
 
         // Filter all out
         changeUsername("aaa");
-        callback.assertUiHiddenEvent(username);
+        // TODO(b/157762527): Fix this for the inline case.
+        if (!isInlineMode()) {
+            callback.assertUiHiddenEvent(username);
+        }
         mUiBot.assertNoDatasets();
 
         // Now delete the char and assert aa is showing again
         changeUsername("aa");
-        callback.assertUiShownEvent(username);
+        // TODO(b/157762527): Fix this for the inline case.
+        if (!isInlineMode()) {
+            callback.assertUiShownEvent(username);
+        }
         mUiBot.assertDatasets(aa);
 
         // Delete one more and assert two datasets showing
@@ -702,5 +708,9 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
 
         // Check the results.
         mActivity.assertAutoFilled();
+
+        // Reset back to all choices
+        changeUsername("");
+        mUiBot.assertDatasets(aa, ab, b);
     }
 }
