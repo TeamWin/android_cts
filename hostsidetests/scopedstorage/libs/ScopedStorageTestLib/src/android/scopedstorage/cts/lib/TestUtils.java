@@ -68,6 +68,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -99,6 +100,7 @@ public class TestUtils {
 
     // Root of external storage
     private static File sExternalStorageDirectory = Environment.getExternalStorageDirectory();
+    private static String sStorageVolumeName = MediaStore.VOLUME_EXTERNAL;
 
     private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
     private static final long POLLING_SLEEP_MILLIS = 100;
@@ -325,14 +327,14 @@ public class TestUtils {
      */
     @Nullable
     public static Uri getFileUri(@NonNull File file) {
-        final Uri contentUri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL);
+        final Uri contentUri = MediaStore.Files.getContentUri(sStorageVolumeName);
         final int id = getFileRowIdFromDatabase(file);
         return id == -1 ? null : ContentUris.withAppendedId(contentUri, id);
     }
 
     /**
      * Queries {@link ContentResolver} for a file and returns the corresponding row ID for its
-     * entry in the database.
+     * entry in the database. Returns {@code -1} if file is not found.
      */
     public static int getFileRowIdFromDatabase(@NonNull File file) {
         int id = -1;
@@ -360,12 +362,28 @@ public class TestUtils {
     }
 
     /**
+     * Queries {@link ContentResolver} for a file and returns the corresponding file size for its
+     * entry in the database. Returns {@code -1} if file is not found.
+     */
+    @Nullable
+    public static int getFileSizeFromDatabase(@NonNull File file) {
+        int size = -1;
+        try (Cursor c = queryFile(file, MediaStore.MediaColumns.SIZE)) {
+            if (c.moveToFirst()) {
+                size = c.getInt(0);
+            }
+        }
+        return size;
+    }
+
+    /**
      * Queries {@link ContentResolver} for a video file and returns a {@link Cursor} with the given
      * columns.
      */
     @NonNull
     public static Cursor queryVideoFile(File file, String... projection) {
-        return queryFile(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, file, projection);
+        return queryFile(MediaStore.Video.Media.getContentUri(sStorageVolumeName), file,
+                projection);
     }
 
     /**
@@ -374,7 +392,8 @@ public class TestUtils {
      */
     @NonNull
     public static Cursor queryImageFile(File file, String... projection) {
-        return queryFile(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, file, projection);
+        return queryFile(MediaStore.Images.Media.getContentUri(sStorageVolumeName), file,
+                projection);
     }
 
     /**
@@ -416,7 +435,7 @@ public class TestUtils {
      */
     public static void deleteWithMediaProvider(@NonNull File file) {
         assertThat(getContentResolver().delete(
-                           MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL),
+                           MediaStore.Files.getContentUri(sStorageVolumeName),
                            /*where*/ MediaStore.MediaColumns.DATA + " = ?",
                            /*selectionArgs*/ new String[] {file.getPath()}))
                 .isEqualTo(1);
@@ -448,17 +467,17 @@ public class TestUtils {
         String[] selectionArgs = {relativePath + '/', oldDisplayName};
         String[] projection = {MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATA};
 
+        final Uri contentUri = MediaStore.Files.getContentUri(sStorageVolumeName);
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME, newDisplayName);
 
-        try (Cursor cursor =
-                        getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                projection, selection, selectionArgs, null)) {
+        try (Cursor cursor = getContentResolver().query(contentUri, projection, selection,
+                selectionArgs, null)) {
             assertThat(cursor.getCount()).isEqualTo(1);
             cursor.moveToFirst();
             int id = cursor.getInt(cursor.getColumnIndex(MediaStore.MediaColumns._ID));
             String data = cursor.getString(cursor.getColumnIndex(MediaStore.MediaColumns.DATA));
-            Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+            Uri uri = ContentUris.withAppendedId(contentUri, id);
             Log.i(TAG, "Uri: " + uri + ". Data: " + data);
             assertThat(getContentResolver().update(uri, values, selection, selectionArgs))
                     .isEqualTo(1);
@@ -665,6 +684,7 @@ public class TestUtils {
     }
 
     public static void setExternalStorageVolume(@NonNull String volName) {
+        sStorageVolumeName = volName.toLowerCase(Locale.ROOT);
         sExternalStorageDirectory = new File("/storage/" + volName);
     }
 
@@ -674,6 +694,7 @@ public class TestUtils {
      * @see Environment#getExternalStorageDirectory()
      */
     public static void resetDefaultExternalStorageVolume() {
+        sStorageVolumeName = MediaStore.VOLUME_EXTERNAL;
         sExternalStorageDirectory = Environment.getExternalStorageDirectory();
     }
 
@@ -953,7 +974,7 @@ public class TestUtils {
     @NonNull
     private static Cursor queryFile(@NonNull File file, String... projection) {
         return queryFile(
-                MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL), file, projection);
+                MediaStore.Files.getContentUri(sStorageVolumeName), file, projection);
     }
 
     @NonNull
@@ -971,6 +992,24 @@ public class TestUtils {
         return c;
     }
 
+    /**
+     * Creates a new virtual public volume and returns the volume's name.
+     */
+    public static String createNewPublicVolume() throws Exception {
+        executeShellCommand("sm set-force-adoptable on");
+        executeShellCommand("sm set-virtual-disk true");
+        Thread.sleep(2000);
+        pollForCondition(TestUtils::partitionDisk, "Timed out while waiting for disk partitioning");
+
+        final String[] res = new String[1];
+        pollForCondition(() -> {
+            res[0] = getPublicVolumeName();
+            return res[0] != null;
+        }, "Timed out while waiting for public volume to be created");
+
+        return res[0];
+    }
+
     private static boolean partitionDisk() {
         try {
             final String listDisks = executeShellCommand("sm list-disks").trim();
@@ -979,6 +1018,27 @@ public class TestUtils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Gets the name of the public volume.
+     */
+    public static String getPublicVolumeName() {
+        final String[] allVolumeDetails;
+        try {
+            allVolumeDetails = executeShellCommand("sm list-volumes")
+                    .trim().split("\n");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to execute shell command", e);
+            return null;
+        }
+        for (String volDetails : allVolumeDetails) {
+            if (volDetails.startsWith("public")) {
+                final String[] publicVolumeDetails = volDetails.trim().split(" ");
+                return publicVolumeDetails[publicVolumeDetails.length - 1];
+            }
+        }
+        return null;
     }
 
     private static void pollForCondition(Supplier<Boolean> condition, String errorMessage)
