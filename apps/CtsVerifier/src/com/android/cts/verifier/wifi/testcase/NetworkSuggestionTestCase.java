@@ -67,11 +67,11 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
     private final Object mLock = new Object();
     private final ScheduledExecutorService mExecutorService;
-    private final List<WifiNetworkSuggestion> mNetworkSuggestions = new ArrayList<>();
     private final WifiNetworkSuggestion.Builder mNetworkSuggestionBuilder =
             new WifiNetworkSuggestion.Builder();
 
     private ConnectivityManager mConnectivityManager;
+    private List<WifiNetworkSuggestion> mNetworkSuggestions;
     private NetworkRequest mNetworkRequest;
     private CallbackUtils.NetworkCallback mNetworkCallback;
     private ConnectionStatusListener mConnectionStatusListener;
@@ -113,11 +113,19 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         if (mSetRequiresAppInteraction) {
             mNetworkSuggestionBuilder.setIsAppInteractionRequired(true);
         }
-        // Use a random password to simulate connection failure.
-        if (TestUtils.isScanResultForWpa2Network(scanResult)) {
-            mNetworkSuggestionBuilder.setWpa2Passphrase(mTestUtils.generateRandomPassphrase());
-        } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
-            mNetworkSuggestionBuilder.setWpa3Passphrase(mTestUtils.generateRandomPassphrase());
+        if (mSimulateConnectionFailure) {
+            // Use a random password to simulate connection failure.
+            if (TestUtils.isScanResultForWpa2Network(scanResult)) {
+                mNetworkSuggestionBuilder.setWpa2Passphrase(mTestUtils.generateRandomPassphrase());
+            } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
+                mNetworkSuggestionBuilder.setWpa3Passphrase(mTestUtils.generateRandomPassphrase());
+            }
+        } else if (!mPsk.isEmpty()) {
+            if (TestUtils.isScanResultForWpa2Network(scanResult)) {
+                mNetworkSuggestionBuilder.setWpa2Passphrase(mPsk);
+            } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
+                mNetworkSuggestionBuilder.setWpa3Passphrase(mPsk);
+            }
         }
         return mNetworkSuggestionBuilder.build();
     }
@@ -172,10 +180,14 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
     @Override
     protected boolean executeTest() throws InterruptedException {
-        // Step: Scan and find any open network around.
-        if (DBG) Log.v(TAG, "Scan and find a network");
+        if (mSimulateConnectionFailure && mPsk.isEmpty()) {
+            setFailureReason(mContext.getString(R.string.wifi_status_need_psk));
+            return false;
+        }
+        // Step: Scan and find the network around.
+        if (DBG) Log.v(TAG, "Scan and find the network: " + mSsid);
         ScanResult testNetwork = mTestUtils.startScanAndFindAnyMatchingNetworkInResults(
-                mSimulateConnectionFailure ? SCAN_RESULT_TYPE_PSK : SCAN_RESULT_TYPE_OPEN);
+                mSsid, mPsk.isEmpty() ? SCAN_RESULT_TYPE_OPEN : SCAN_RESULT_TYPE_PSK);
         if (testNetwork == null) {
             setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
             return false;
@@ -215,7 +227,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
         // Step: Create a suggestion for the chosen open network depending on the type of test.
         WifiNetworkSuggestion networkSuggestion = createNetworkSuggestion(testNetwork);
-        mNetworkSuggestions.add(networkSuggestion);
+        mNetworkSuggestions = Arrays.asList(networkSuggestion);
 
         // Step: Add a network suggestions.
         if (DBG) Log.v(TAG, "Adding suggestion");
