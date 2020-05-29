@@ -20,6 +20,9 @@ import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssStatus;
 import android.location.cts.common.GnssTestCase;
+import android.location.cts.common.TestGnssMeasurementListener;
+import android.location.cts.common.TestLocationListener;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.location.cts.common.TestUtils;
@@ -98,10 +101,10 @@ public class GnssMeasurementWhenNoLocationTest extends GnssTestCase {
      */
     @AppModeFull(reason = "Requires use of extra LocationManager commands")
     public void testGnssMeasurementWhenNoLocation() throws Exception {
-        // Checks if GPS hardware feature is present, skips test (pass) if not,
-        // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-        if (!TestMeasurementUtil
-                .canTestRunOnCurrentDevice(mTestLocationManager, isCtsVerifierTest())) {
+        // Checks if GPS hardware feature is present, skips test (pass) if not
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N,
+                mTestLocationManager,
+                TAG)) {
             return;
         }
 
@@ -111,13 +114,11 @@ public class GnssMeasurementWhenNoLocationTest extends GnssTestCase {
         //       Hence, airplane mode is turned on only when this test is run as a regular CTS test
         //       and not when it is invoked through CtsVerifier.
         boolean isAirplaneModeOffBeforeTest = true;
-        if (!isCtsVerifierTest()) {
-            // Record the state of the airplane mode before the test so that we can restore it
-            // after the test.
-            isAirplaneModeOffBeforeTest = !TestUtils.isAirplaneModeOn();
-            if (isAirplaneModeOffBeforeTest) {
-                TestUtils.setAirplaneModeOn(getContext(), true);
-            }
+        // Record the state of the airplane mode before the test so that we can restore it
+        // after the test.
+        isAirplaneModeOffBeforeTest = !TestUtils.isAirplaneModeOn();
+        if (isAirplaneModeOffBeforeTest) {
+            TestUtils.setAirplaneModeOn(getContext(), true);
         }
 
         try {
@@ -208,7 +209,7 @@ public class GnssMeasurementWhenNoLocationTest extends GnssTestCase {
             softAssert.assertAll();
         } finally {
             // Set the airplane mode back to off if it was off before this test.
-            if (!isCtsVerifierTest() && isAirplaneModeOffBeforeTest) {
+            if (isAirplaneModeOffBeforeTest) {
                 TestUtils.setAirplaneModeOn(getContext(), false);
             }
         }
