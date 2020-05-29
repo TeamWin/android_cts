@@ -51,6 +51,7 @@ import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
+import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.SearchCondition;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -377,6 +378,30 @@ public class UiBot {
      * intent.
      */
     public void longPressSuggestion(String name) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Asserts the suggestion chooser is shown in the suggestion view.
+     */
+    public void assertSuggestion(String name) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Asserts the suggestion chooser is not shown in the suggestion view.
+     */
+    public void assertNoSuggestion(String name) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Scrolls the suggestion view.
+     *
+     * @param direction The direction to scroll.
+     * @param speed The speed to scroll per second.
+     */
+    public void scrollSuggestionView(Direction direction, int speed) throws Exception {
         throw new UnsupportedOperationException();
     }
 
