@@ -37,6 +37,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class BaseContextCrossProfileTest implements IDeviceTest {
 
+    private static final int USER_SYSTEM = 0; // From the UserHandle class.
+
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
     protected boolean mIsSplitSystemUser;
@@ -52,12 +54,30 @@ public class BaseContextCrossProfileTest implements IDeviceTest {
     public void setUp() throws Exception {
         mSupportsMultiUser = getDevice().getMaxNumberOfUsersSupported() > 1;
         mIsSplitSystemUser = checkIfSplitSystemUser();
-
-        mInitialUserId = getDevice().getCurrentUser();
         mPrimaryUserId = getDevice().getPrimaryUserId();
+        setFixedUsers();
+        removeTestUsers();
+    }
 
-        // Test should not modify / remove any of the existing users.
-        mFixedUsers = getDevice().listUsers();
+    /**
+     * Sets the list of users that should not be removed during setup.
+     */
+    private void setFixedUsers() throws Exception{
+        mFixedUsers = new ArrayList<>();
+        mFixedUsers.add(mPrimaryUserId);
+
+        // Set the value of initial user ID calls in {@link #setUp}.
+        if (mSupportsMultiUser) {
+            mInitialUserId = getDevice().getCurrentUser();
+        }
+
+        if (mPrimaryUserId != USER_SYSTEM) {
+            mFixedUsers.add(USER_SYSTEM);
+        }
+
+        if (getDevice().getCurrentUser() != mPrimaryUserId) {
+            mFixedUsers.add(getDevice().getCurrentUser());
+        }
     }
 
     @After
