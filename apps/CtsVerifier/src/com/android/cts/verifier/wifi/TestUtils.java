@@ -101,6 +101,8 @@ public class TestUtils {
     public static final int SCAN_RESULT_TYPE_PSK = 1;
 
     @IntDef(prefix = { "SCAN_RESULT_TYPE_" }, value = {
+            SCAN_RESULT_TYPE_OPEN,
+            SCAN_RESULT_TYPE_PSK,
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface ScanResultType {}
@@ -151,7 +153,7 @@ public class TestUtils {
      * scan failed or if there are networks found.
      */
     public @Nullable ScanResult startScanAndFindAnyMatchingNetworkInResults(
-            @ScanResultType int type)
+            String ssid, @ScanResultType int type)
             throws InterruptedException {
         // Start scan and wait for new results.
         if (!startScanAndWaitForResults()) {
@@ -160,14 +162,14 @@ public class TestUtils {
         // Filter results to find an open network.
         List<ScanResult> scanResults = mWifiManager.getScanResults();
         for (ScanResult scanResult : scanResults) {
-            if (!TextUtils.isEmpty(scanResult.SSID)
+            if (TextUtils.equals(ssid, scanResult.SSID)
                     && !TextUtils.isEmpty(scanResult.BSSID)
                     && doesScanResultMatchType(scanResult, type)) {
-                if (DBG) Log.v(TAG, "Found open network " + scanResult);
+                if (DBG) Log.v(TAG, "Found network " + scanResult);
                 return scanResult;
             }
         }
-        Log.e(TAG, "No open networks found in scan results");
+        Log.e(TAG, "No matching network found in scan results");
         return null;
     }
 
