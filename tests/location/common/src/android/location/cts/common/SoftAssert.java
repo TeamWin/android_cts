@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Google Inc.
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package android.location.cts.common;
 
-import junit.framework.Assert;
-
 import android.util.Log;
+
+import junit.framework.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
