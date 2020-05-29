@@ -16,9 +16,6 @@
 
 package com.android.cts.writeexternalstorageapp;
 
-import static android.test.MoreAsserts.assertNotEqual;
-
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_NONE;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.TAG;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadOnlyAccess;
@@ -34,11 +31,10 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.readI
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.writeInt;
 
 import android.os.Environment;
-import android.os.SystemClock;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.system.Os;
 import android.test.AndroidTestCase;
-import android.text.format.DateUtils;
 import android.util.Log;
 
 import com.android.cts.externalstorageapp.CommonExternalStorageTest;
@@ -90,15 +86,25 @@ public class WriteExternalStorageTest extends AndroidTestCase {
     }
 
     public void testWriteExternalStorage() throws Exception {
-        final long testValue = 12345000;
+        final long newTimeMillis = 12345000;
         assertExternalStorageMounted();
 
         // Write a value and make sure we can read it back
         writeInt(TEST_FILE, 32);
         assertEquals(readInt(TEST_FILE), 32);
 
-        assertTrue("Must be able to set last modified", TEST_FILE.setLastModified(testValue));
-        assertEquals(testValue, TEST_FILE.lastModified());
+        assertTrue("Must be able to set last modified", TEST_FILE.setLastModified(newTimeMillis));
+
+        // This uses the same fd, so info is cached by VFS.
+        assertEquals(newTimeMillis, TEST_FILE.lastModified());
+
+        // Obtain a new fd, using the low FS and check timestamp on it.
+        ParcelFileDescriptor fd =
+                getContext().getContentResolver().openFileDescriptor(
+                        MediaStore.scanFile(getContext().getContentResolver(), TEST_FILE), "rw");
+
+        long newTimeSeconds = newTimeMillis / 1000;
+        assertEquals(newTimeSeconds, Os.fstat(fd.getFileDescriptor()).st_mtime);
     }
 
     public void testWriteExternalStorageDirs() throws Exception {
