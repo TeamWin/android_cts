@@ -19,9 +19,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.FeatureGroupInfo;
-import android.content.pm.FeatureInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.BatteryManager;
 import android.os.Environment;
@@ -29,10 +26,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.DisplayMetrics;
 import android.util.Log;
-
 import android.view.WindowManager;
-import java.util.Arrays;
-import java.util.Comparator;
 
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class FeatureTest extends AndroidTestCase {
@@ -57,16 +51,6 @@ public class FeatureTest extends AndroidTestCase {
                 mPackageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS);
     }
 
-    public void testNoManagedUsersIfLowRamDevice() {
-        if (mPackageManager == null || mActivityManager == null) {
-            Log.w(TAG, "Skipping testNoManagedUsersIfLowRamDevice");
-            return;
-        }
-        if (mActivityManager.isLowRamDevice()) {
-            assertFalse(mSupportsManagedProfiles);
-        }
-    }
-
     /**
      * Test whether device supports managed profiles as required by CDD
      */
@@ -89,11 +73,6 @@ public class FeatureTest extends AndroidTestCase {
 
         // Skip the tests for non-emulated sdcard
         if (!Environment.isExternalStorageEmulated()) {
-            return;
-        }
-
-        // Skip the tests for low-RAM devices
-        if (mActivityManager.isLowRamDevice()) {
             return;
         }
 
