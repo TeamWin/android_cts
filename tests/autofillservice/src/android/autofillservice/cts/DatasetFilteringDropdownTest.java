@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.location.cts.common;
 
-import android.test.AndroidTestCase;
+package android.autofillservice.cts;
 
-/**
- * Base Test Case class for all Gnss Tests.
- *
- * @deprecated Pointless base class, do not use.
- */
-@Deprecated
-public abstract class GnssTestCase extends AndroidTestCase {
-
-    protected static boolean YEAR_2017_CAPABILITY_ENFORCED = false;
-
-    public TestLocationManager mTestLocationManager;
-
-    protected GnssTestCase() {
-    }
-
-    public boolean isCtsVerifierTest() {
-        return false;
-    }
+public class DatasetFilteringDropdownTest extends DatasetFilteringTest {
 }

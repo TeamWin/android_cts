@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Google Inc.
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.location.cts.gnss;
+package android.location.cts.common;
 
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.cts.common.TestUtils;
 import android.os.Bundle;
 
 import java.util.ArrayList;

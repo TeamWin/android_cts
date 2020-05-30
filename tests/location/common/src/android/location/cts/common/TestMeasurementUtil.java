@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Google Inc.
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import android.location.GnssMeasurementsEvent;
 import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
 import android.location.LocationManager;
-import android.os.Build;
-import android.os.SystemProperties;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -89,14 +87,17 @@ public final class TestMeasurementUtil {
     /**
      * Check if test can be run on the current device.
      *
+     * @param  androidSdkVersionCode must be from {@link android.os.Build.VERSION_CODES}
      * @param  testLocationManager TestLocationManager
-     * @return true if Build.VERSION &gt;=  Build.VERSION_CODES.N and Location GPS present on
+     * @return true if Build.VERSION &gt;= {@code androidSdkVersionCode} and Location GPS present on
      *         device.
      */
-    public static boolean canTestRunOnCurrentDevice(TestLocationManager testLocationManager,
-            boolean isCtsVerifier) {
-       if (ApiLevelUtil.isBefore(Build.VERSION_CODES.N)) {
-            Log.i(TAG, "This test is designed to work on N or newer. " +
+    public static boolean canTestRunOnCurrentDevice(int androidSdkVersionCode,
+            TestLocationManager testLocationManager,
+            String testTag) {
+        if (ApiLevelUtil.isBefore(androidSdkVersionCode)) {
+            Log.i(testTag, "This test is designed to work on API level " +
+                    androidSdkVersionCode + " or newer. " +
                     "Test is being skipped because the platform version is being run in " +
                     ApiLevelUtil.getApiLevel());
             return false;
@@ -104,7 +105,7 @@ public final class TestMeasurementUtil {
 
         // If device does not have a GPS, skip the test.
         if (!TestUtils.deviceHasGpsFeature(testLocationManager.getContext())) {
-           return false;
+            return false;
         }
 
         // If device has a GPS, but it's turned off in settings, and this is CTS verifier,
@@ -113,14 +114,9 @@ public final class TestMeasurementUtil {
         // (Cts non-verifier deep-indoors-forgiveness happens later, *if* needed)
         boolean gpsProviderEnabled = testLocationManager.getLocationManager()
                 .isProviderEnabled(LocationManager.GPS_PROVIDER);
-        SoftAssert.failOrWarning(isCtsVerifier, " GPS location disabled on the device. " +
-                "Enable location in settings to continue test.", gpsProviderEnabled);
-        // If CTS only, allow an early exit pass
-        if (!isCtsVerifier && !gpsProviderEnabled) {
-            return false;
-        }
-
-        return true;
+        SoftAssert.failOrWarning(true, " GPS location disabled on the device. "
+                + "Enable location in settings to continue test.", gpsProviderEnabled);
+        return gpsProviderEnabled;
     }
 
     /**
