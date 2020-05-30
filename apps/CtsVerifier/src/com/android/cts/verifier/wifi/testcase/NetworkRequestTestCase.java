@@ -92,6 +92,13 @@ public class NetworkRequestTestCase extends BaseTestCase {
             case NETWORK_SPECIFIER_SPECIFIC_SSID_BSSID:
                 configBuilder.setSsid(scanResult.SSID);
                 configBuilder.setBssid(MacAddress.fromString(scanResult.BSSID));
+                if (!mPsk.isEmpty()) {
+                    if (TestUtils.isScanResultForWpa2Network(scanResult)) {
+                        configBuilder.setWpa2Passphrase(mPsk);
+                    } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
+                        configBuilder.setWpa3Passphrase(mPsk);
+                    }
+                }
                 break;
             case NETWORK_SPECIFIER_PATTERN_SSID_BSSID:
                 String ssidPrefix = scanResult.SSID.substring(0, scanResult.SSID.length() - 1);
@@ -99,6 +106,13 @@ public class NetworkRequestTestCase extends BaseTestCase {
                 configBuilder.setSsidPattern(
                         new PatternMatcher(ssidPrefix, PatternMatcher.PATTERN_PREFIX));
                 configBuilder.setBssidPattern(MacAddress.fromString(scanResult.BSSID), bssidMask);
+                if (!mPsk.isEmpty()) {
+                    if (TestUtils.isScanResultForWpa2Network(scanResult)) {
+                        configBuilder.setWpa2Passphrase(mPsk);
+                    } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
+                        configBuilder.setWpa3Passphrase(mPsk);
+                    }
+                }
                 break;
             case NETWORK_SPECIFIER_UNAVAILABLE_SSID_BSSID:
                 String ssid = UNAVAILABLE_SSID;
@@ -110,6 +124,13 @@ public class NetworkRequestTestCase extends BaseTestCase {
                 }
                 configBuilder.setSsid(UNAVAILABLE_SSID);
                 configBuilder.setBssid(bssid);
+                if (!mPsk.isEmpty()) {
+                    if (TestUtils.isScanResultForWpa2Network(scanResult)) {
+                        configBuilder.setWpa2Passphrase(mPsk);
+                    } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
+                        configBuilder.setWpa3Passphrase(mPsk);
+                    }
+                }
                 break;
             case NETWORK_SPECIFIER_INVALID_CREDENTIAL:
                 configBuilder.setSsid(scanResult.SSID);
@@ -136,11 +157,14 @@ public class NetworkRequestTestCase extends BaseTestCase {
 
     @Override
     protected boolean executeTest() throws InterruptedException {
-        // Step: Scan and find any open network around.
-        if (DBG) Log.v(TAG, "Scan and find an open network");
+        if (mNetworkSpecifierType == NETWORK_SPECIFIER_INVALID_CREDENTIAL && mPsk.isEmpty()) {
+            setFailureReason(mContext.getString(R.string.wifi_status_need_psk));
+            return false;
+        }
+        // Step: Scan and find the network around.
+        if (DBG) Log.v(TAG, "Scan and find the network: " + mSsid);
         ScanResult testNetwork = mTestUtils.startScanAndFindAnyMatchingNetworkInResults(
-                mNetworkSpecifierType == NETWORK_SPECIFIER_INVALID_CREDENTIAL
-                        ? SCAN_RESULT_TYPE_PSK : SCAN_RESULT_TYPE_OPEN);
+                mSsid, mPsk.isEmpty() ? SCAN_RESULT_TYPE_OPEN : SCAN_RESULT_TYPE_PSK);
         if (testNetwork == null) {
             setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
             return false;

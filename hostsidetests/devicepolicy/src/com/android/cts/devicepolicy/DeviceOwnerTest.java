@@ -29,6 +29,7 @@ import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.util.LocationModeSetter;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -698,6 +699,17 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("DeviceOwnerProvisioningTest");
+    }
+
+    /**
+     *  Only allow provisioning flow to be disabled if Android TV device
+     */
+    @Test
+    public void testAllowProvisioningProperty() throws Exception {
+        boolean isProvisioningAllowedForNormalUsers =
+                getBooleanSystemProperty("ro.config.allowuserprovisioning", true);
+        boolean isTv = hasDeviceFeature("android.software.leanback");
+        assertTrue(isProvisioningAllowedForNormalUsers || isTv);
     }
 
     @Test

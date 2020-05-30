@@ -61,7 +61,7 @@ import android.view.inputmethod.InputMethod;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import android.widget.inline.InlinePresentationSpec;
 
@@ -454,7 +454,7 @@ public final class MockIme extends InputMethodService {
             mLayout.setOrientation(LinearLayout.VERTICAL);
 
             if (mSettings.getInlineSuggestionsEnabled()) {
-                final ScrollView scrollView = new ScrollView(getContext());
+                final HorizontalScrollView scrollView = new HorizontalScrollView(getContext());
                 final LayoutParams scrollViewParams = new LayoutParams(MATCH_PARENT, 100);
                 scrollView.setLayoutParams(scrollViewParams);
 
@@ -619,7 +619,13 @@ public final class MockIme extends InputMethodService {
     @Override
     public void onStartInputView(EditorInfo editorInfo, boolean restarting) {
         getTracer().onStartInputView(editorInfo, restarting,
-                () -> super.onStartInputView(editorInfo, restarting));
+                () -> {
+                    super.onStartInputView(editorInfo, restarting);
+                    final PendingInlineSuggestions pendingInlineSuggestions =
+                            new PendingInlineSuggestions();
+                    pendingInlineSuggestions.mValid.set(true);
+                    mView.updateInlineSuggestions(pendingInlineSuggestions);
+                });
     }
 
     @Override
@@ -721,6 +727,13 @@ public final class MockIme extends InputMethodService {
         final View[] mViews;
         final AtomicInteger mInflatedViewCount;
         final AtomicBoolean mValid = new AtomicBoolean(true);
+
+        PendingInlineSuggestions() {
+            mResponse = null;
+            mTotalCount = 0;
+            mViews = null;
+            mInflatedViewCount = null;
+        }
 
         PendingInlineSuggestions(InlineSuggestionsResponse response) {
             mResponse = response;
