@@ -19,8 +19,10 @@ package android.location.cts.gnss;
 import android.location.Location;
 import android.location.cts.common.GnssTestCase;
 import android.location.cts.common.SoftAssert;
+import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
+import android.os.Build;
 import android.util.Log;
 
 /**
@@ -64,10 +66,10 @@ public class GnssLocationValuesTest extends GnssTestCase {
    * only test them if the hardware is later than 2017
    */
   public void testAccuracyFields() throws Exception {
-    // Checks if GPS hardware feature is present, skips test (pass) if not,
-    // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, isCtsVerifierTest())) {
-        return;
+    // Checks if GPS hardware feature is present, skips test (pass) if not
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N, mTestLocationManager,
+        TAG)) {
+      return;
     }
 
     SoftAssert softAssert = new SoftAssert(TAG);
@@ -136,10 +138,10 @@ public class GnssLocationValuesTest extends GnssTestCase {
    * check whether all fields' value make sense
    */
   public void testLocationRegularFields() throws Exception {
-    // Checks if GPS hardware feature is present, skips test (pass) if not,
-    // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, isCtsVerifierTest())) {
-        return;
+    // Checks if GPS hardware feature is present, skips test (pass) if not
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N, mTestLocationManager,
+        TAG)) {
+      return;
     }
 
     SoftAssert softAssert = new SoftAssert(TAG);
