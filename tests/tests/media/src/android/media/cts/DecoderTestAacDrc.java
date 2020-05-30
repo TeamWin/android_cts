@@ -30,6 +30,7 @@ import android.media.MediaFormat;
 import android.media.cts.DecoderTest.AudioParameter;
 import android.media.cts.R;
 import android.util.Log;
+import android.os.Bundle;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -316,46 +317,49 @@ public class DecoderTestAacDrc {
      */
     private void checkUsacLoudness(int decoderTargetLevel, int heavy, float normFactor,
             String decoderName) throws Exception {
-        AudioParameter decParams = new AudioParameter();
-        DrcParams drcParams_def  = new DrcParams(127, 127, DEFAULT_DECODER_TARGET_LEVEL, 1);
-        DrcParams drcParams_test = new DrcParams(127, 127, decoderTargetLevel, heavy);
+        for (boolean runtimeChange : new boolean[] {false, true}) {
+            AudioParameter decParams = new AudioParameter();
+            DrcParams drcParams_def  = new DrcParams(127, 127, DEFAULT_DECODER_TARGET_LEVEL, 1);
+            DrcParams drcParams_test = new DrcParams(127, 127, decoderTargetLevel, heavy);
 
-        short[] decSamples_def = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot42_19_lufs_mp4,
-                -1, null, drcParams_def, decoderName);
-        short[] decSamples_test = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot42_19_lufs_mp4,
-                -1, null, drcParams_test, decoderName);
+            short[] decSamples_def = decodeToMemory(decParams,
+                    R.raw.noise_2ch_48khz_aot42_19_lufs_mp4,
+                    -1, null, drcParams_def, decoderName);
+            short[] decSamples_test = decodeToMemory(decParams,
+                    R.raw.noise_2ch_48khz_aot42_19_lufs_mp4,
+                    -1, null, drcParams_test, decoderName, runtimeChange);
 
-        DecoderTestXheAac decTesterXheAac = new DecoderTestXheAac();
-        float[] nrg_def  = decTesterXheAac.checkEnergyUSAC(decSamples_def, decParams, 2, 1);
-        float[] nrg_test = decTesterXheAac.checkEnergyUSAC(decSamples_test, decParams, 2, 1);
+            DecoderTestXheAac decTesterXheAac = new DecoderTestXheAac();
+            float[] nrg_def  = decTesterXheAac.checkEnergyUSAC(decSamples_def, decParams, 2, 1);
+            float[] nrg_test = decTesterXheAac.checkEnergyUSAC(decSamples_test, decParams, 2, 1);
 
-        float[] nrgThreshold = {2602510595620.0f, 2354652443657.0f};
+            float[] nrgThreshold = {2602510595620.0f, 2354652443657.0f};
 
-        // Check default loudness behavior
-        if (nrg_def[0] > nrgThreshold[0] || nrg_def[0] < nrgThreshold[1]) {
-            throw new Exception("Default loudness behavior not as expected");
-        }
+            // Check default loudness behavior
+            if (nrg_def[0] > nrgThreshold[0] || nrg_def[0] < nrgThreshold[1]) {
+                throw new Exception("Default loudness behavior not as expected");
+            }
 
-        float nrgRatio = nrg_def[0]/nrg_test[0];
+            float nrgRatio = nrg_def[0]/nrg_test[0];
 
-        // Check for loudness boost/attenuation if decoderTargetLevel deviates from default value
-        // used in these tests (note that the default target level can change from platform
-        // to platform, or device to device)
-        if ((decoderTargetLevel < DEFAULT_DECODER_TARGET_LEVEL) // boosted loudness
-                && (nrg_def[0] > nrg_test[0])) {
-            throw new Exception("Signal not attenuated");
-        } else if ((decoderTargetLevel > DEFAULT_DECODER_TARGET_LEVEL) // attenuated loudness
-                && (nrg_def[0] < nrg_test[0])) {
-            throw new Exception("Signal not boosted");
-        }
-        nrgRatio = nrgRatio * normFactor;
+            // Check for loudness boost/attenuation if decoderTargetLevel deviates from default value
+            // used in these tests (note that the default target level can change from platform
+            // to platform, or device to device)
+            if ((decoderTargetLevel < DEFAULT_DECODER_TARGET_LEVEL) // boosted loudness
+                    && (nrg_def[0] > nrg_test[0])) {
+                throw new Exception("Signal not attenuated");
+            } else if ((decoderTargetLevel > DEFAULT_DECODER_TARGET_LEVEL) // attenuated loudness
+                    && (nrg_def[0] < nrg_test[0])) {
+                throw new Exception("Signal not boosted");
+            }
+            nrgRatio = nrgRatio * normFactor;
 
-        // Check whether loudness behavior is as expected
-        if (nrgRatio > 1.05f || nrgRatio < 0.95f ){
-            throw new Exception("Loudness behavior not as expected");
+            // Check whether loudness behavior is as expected
+            if (nrgRatio > 1.05f || nrgRatio < 0.95f ){
+                throw new Exception("Loudness behavior not as expected");
+            }
         }
     }
-
 
     /**
      *  Class handling all MPEG-4 and MPEG-D Dynamic Range Control (DRC) parameter relevant for testing
@@ -394,8 +398,8 @@ public class DecoderTestAacDrc {
     //          - addition of application of DRC parameters
     //          - no need/use of resetMode, configMode
     //       Split method so code can be shared
-    private short[] decodeToMemory(AudioParameter audioParams, int testinput,
-            int eossample, List<Long> timestamps, DrcParams drcParams, String decoderName)
+    private short[] decodeToMemory(AudioParameter audioParams, int testinput, int eossample,
+            List<Long> timestamps, DrcParams drcParams, String decoderName, boolean runtimeChange)
             throws IOException
     {
         String localTag = TAG + "#decodeToMemory";
@@ -430,18 +434,46 @@ public class DecoderTestAacDrc {
         if (drcParams != null) {
             configFormat.setInteger(MediaFormat.KEY_AAC_DRC_BOOST_FACTOR, drcParams.mBoost);
             configFormat.setInteger(MediaFormat.KEY_AAC_DRC_ATTENUATION_FACTOR, drcParams.mCut);
-            if (drcParams.mDecoderTargetLevel != 0) {
-                configFormat.setInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL,
-                        drcParams.mDecoderTargetLevel);
+            if (!runtimeChange) {
+                if (drcParams.mDecoderTargetLevel != 0) {
+                    configFormat.setInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL,
+                            drcParams.mDecoderTargetLevel);
+                }
             }
             configFormat.setInteger(MediaFormat.KEY_AAC_DRC_HEAVY_COMPRESSION, drcParams.mHeavy);
         }
         Log.v(localTag, "configuring with " + configFormat);
         codec.configure(configFormat, null /* surface */, null /* crypto */, 0 /* flags */);
 
+        if (drcParams != null) {
+            if(!runtimeChange) {
+                // check if MediaCodec gives back correct drc parameters
+                if (drcParams.mDecoderTargetLevel != 0) {
+                    final int targetLevelFromCodec = codec.getOutputFormat()
+                            .getInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
+                    if (false) { // TODO disabled until b/157773721 fixed
+                        if (targetLevelFromCodec != drcParams.mDecoderTargetLevel) {
+                            fail("Drc Target Reference Level received from MediaCodec is not the Target Reference Level set");
+                        }
+                    }
+                }
+            }
+        }
+
         codec.start();
         codecInputBuffers = codec.getInputBuffers();
         codecOutputBuffers = codec.getOutputBuffers();
+
+        if (drcParams != null) {
+            if (runtimeChange) {
+                if (drcParams.mDecoderTargetLevel != 0) {
+                    Bundle b = new Bundle();
+                    b.putInt(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL,
+                            drcParams.mDecoderTargetLevel);
+                    codec.setParameters(b);
+                }
+            }
+        }
 
         extractor.selectTrack(0);
 
@@ -539,8 +571,30 @@ public class DecoderTestAacDrc {
             fail("decoder stopped outputing data");
         }
 
+        // check if MediaCodec gives back correct drc parameters
+        if (drcParams != null) {
+            if (drcParams.mDecoderTargetLevel != 0) {
+                final int targetLevelFromCodec = codec.getOutputFormat()
+                        .getInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
+                if (false) { // TODO disabled until b/157773721 fixed
+                    if (targetLevelFromCodec != drcParams.mDecoderTargetLevel) {
+                        fail("Drc Target Reference Level received from MediaCodec is not the Target Reference Level set");
+                    }
+                }
+            }
+        }
+
         codec.stop();
         codec.release();
+        return decoded;
+    }
+
+    private short[] decodeToMemory(AudioParameter audioParams, int testinput,
+            int eossample, List<Long> timestamps, DrcParams drcParams, String decoderName)
+            throws IOException
+    {
+        final short[] decoded = decodeToMemory(audioParams, testinput, eossample, timestamps,
+                drcParams, decoderName, false);
         return decoded;
     }
 
