@@ -322,6 +322,29 @@ public class TestUtils {
     }
 
     /**
+     * Inserts a file into the database using {@link MediaStore.MediaColumns#DATA}.
+     */
+    public static Uri insertFileUsingDataColumn(@NonNull File file) {
+        final ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DATA, file.getPath());
+        return getContentResolver().insert(MediaStore.Files.getContentUri(sStorageVolumeName),
+                values);
+    }
+
+    /**
+     * Renames the given file using {@link ContentResolver} and {@link MediaStore} and APIs.
+     * This method uses the data column, and not all apps can use it.
+     * @see MediaStore.MediaColumns#DATA
+     */
+    public static int renameWithMediaProvider(@NonNull File oldPath, @NonNull File newPath) {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DATA, newPath.getPath());
+        return getContentResolver().update(MediaStore.Files.getContentUri(sStorageVolumeName),
+                values, /*where*/ MediaStore.MediaColumns.DATA + "=?",
+                /*whereArgs*/ new String[] {oldPath.getPath()});
+    }
+
+    /**
      * Queries {@link ContentResolver} for a file and returns the corresponding {@link Uri} for its
      * entry in the database. Returns {@code null} if file doesn't exist in the database.
      */
@@ -1039,6 +1062,13 @@ public class TestUtils {
             }
         }
         return null;
+    }
+
+    /**
+     * Returns the content URI of the volume on which the test is running.
+     */
+    public static Uri getTestVolumeFileUri() {
+        return MediaStore.Files.getContentUri(sStorageVolumeName);
     }
 
     private static void pollForCondition(Supplier<Boolean> condition, String errorMessage)
