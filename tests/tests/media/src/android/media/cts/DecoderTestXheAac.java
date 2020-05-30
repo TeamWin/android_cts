@@ -318,6 +318,70 @@ public class DecoderTestXheAac {
         }
     }
 
+    /**
+     * Verify the correct decoding of USAC bitstreams with different boost and attenuation settings
+     */
+    @Test
+    public void testDecodeUsacDrcBoostAndAttenuationM4a() throws Exception {
+        Log.v(TAG, "START testDecodeUsacDrcBoostAndAttenuationM4a");
+
+        assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
+
+        for (String aacDecName : sAacDecoderNames) {
+            try {
+                runDecodeUsacDrcBoostAndAttenuationM4a(aacDecName);
+            } catch (Error err) {
+                throw new Error(err.getMessage() + " [dec=" + aacDecName + "]" , err);
+            }
+        }
+    }
+
+    private void runDecodeUsacDrcBoostAndAttenuationM4a(String aacDecName) throws Exception {
+        Log.v(TAG, "testDecodeUsacDrcBoostAndAttenuationM4a running for dec=" + aacDecName);
+        // test drcBoost and drcAttenuation parameters
+        // DRC effectTypeID 6 "GENERAL"
+        // L +6dB -> normalization factor = 10^(6/10 * (1 - boostFactor:64/127)) = 1.9844f
+        // R -3dB -> normalization factor = 10^(-3/10 * (1 - attenuationFactor:127/127)) = 1.0f
+        try {
+            checkUsacDrcBoostAndAttenuation(1.9844f, 1.0f, 64, 127, 2, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcBoostAndAttenuationM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+
+        // test drcBoost and drcAttenuation parameters
+        // DRC effectTypeID 6 "GENERAL"
+        // L +6dB -> normalization factor = 10^(6/10 * (1 - boostFactor:127/127)) = 1.0f
+        // R -3dB -> normalization factor = 10^(-3/10 * (1 - attenuationFactor:64/127)) = 0.7099f
+        try {
+            checkUsacDrcBoostAndAttenuation(1.0f, 0.7099f, 127, 64, 2, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcBoostAndAttenuationM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+
+        // test drcBoost and drcAttenuation parameters
+        // DRC effectTypeID 6 "GENERAL"
+        // L +6dB -> normalization factor = 10^(6/10 * (1 - boostFactor:0/127)) = 3.9811f
+        // R -3dB -> normalization factor = 10^(-3/10 * (1 - attenuationFactor:127/127)) = 1.0f
+        try {
+            checkUsacDrcBoostAndAttenuation(3.9811f, 1.0f, 0, 127, 2, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcBoostAndAttenuationM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+
+        // test drcBoost and drcAttenuation parameters
+        // DRC effectTypeID 6 "GENERAL"
+        // L +6dB -> normalization factor = 10^(6/10 * (1 - boostFactor:127/127)) = 1.0f
+        // R -3dB -> normalization factor = 10^(-3/10 * (1 - attenuationFactor:0/127)) = 0.5012f
+        try {
+            checkUsacDrcBoostAndAttenuation(1.0f, 0.5012f, 127, 0, 2, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacDrcBoostAndAttenuationM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      *  Internal utilities
@@ -441,6 +505,48 @@ public class DecoderTestXheAac {
         }
     }
 
+    /**
+     * USAC test DRC Boost and Attenuation
+     */
+    private void checkUsacDrcBoostAndAttenuation(float normFactor_L, float normFactor_R,
+                                                 int boostFactor, int attenuationFactor,
+                                                 int nCh, String decoderName) throws Exception {
+        for (int i = 0; i <= 1 ; i++) {
+
+            int testinput = R.raw.noise_2ch_32khz_aot42_19_lufs_drc_mp4;
+
+            boolean runtimeChange = false;
+            if (i == 1) { /* first run: configure decoder before starting decoding,
+                             second_run: configure decoder at runtime */
+                runtimeChange = true;
+            }
+            AudioParameter decParams = new AudioParameter();
+            DrcParams drcParams_def = new DrcParams(127, 127, 64, 0, 6);
+            DrcParams drcParams_test = new DrcParams(boostFactor, attenuationFactor, 64, 0, 6);
+
+            short[] decSamples_def = decodeToMemory(decParams, testinput, -1, null,
+                    drcParams_def, decoderName);
+            short[] decSamples_test = decodeToMemory(decParams, testinput, -1, null,
+                    drcParams_test, decoderName, runtimeChange);
+
+            float[] nrg_def = checkEnergyUSAC(decSamples_def, decParams, 2, 1);
+            float[] nrg_test = checkEnergyUSAC(decSamples_test, decParams, 2, 1);
+
+            float nrgRatioLeft = nrg_test[1] / nrg_def[1];
+            float nrgRatioRight = nrg_test[2] / nrg_def[2];
+
+            float testValueLeft = normFactor_L * nrgRatioLeft;
+            float testValueRight = normFactor_R * nrgRatioRight;
+
+            // Check whether loudness behavior is as expected
+            if (testValueLeft > 1.05f || testValueLeft < 0.95f) {
+                throw new Exception("DRC boost/attenuation behavior not as expected");
+            }
+            if (testValueRight > 1.05f || testValueRight < 0.95f) {
+                throw new Exception("DRC boost/attenuation behavior not as expected");
+            }
+        }
+    }
     /**
      * Perform a segmented energy analysis on given audio signal samples and run several tests on
      * the energy values.
