@@ -197,23 +197,19 @@ public class ExtractorTest {
 
     static boolean isCSDIdentical(MediaFormat refFormat, MediaFormat testFormat) {
         String mime = refFormat.getString(MediaFormat.KEY_MIME);
-        /* TODO(b/154177490) */
-        if (mime.equals(MediaFormat.MIMETYPE_VIDEO_VP9) ||
-                mime.equals(MediaFormat.MIMETYPE_VIDEO_AV1)) {
-            return true;
-        }
         for (int i = 0; ; i++) {
             String csdKey = "csd-" + i;
             boolean refHasCSD = refFormat.containsKey(csdKey);
             boolean testHasCSD = testFormat.containsKey(csdKey);
             if (refHasCSD != testHasCSD) {
                 if (ENABLE_LOGS) {
-                    Log.w(LOG_TAG, "error, ref fmt has CSD: " + refHasCSD + "test fmt has CSD: " +
+                    Log.w(LOG_TAG, "error, ref fmt has CSD: " + refHasCSD + " test fmt has CSD: " +
                             testHasCSD);
                 }
                 return false;
             }
             if (refHasCSD) {
+                Log.v(LOG_TAG, mime + " has " + csdKey);
                 ByteBuffer r = refFormat.getByteBuffer(csdKey);
                 ByteBuffer t = testFormat.getByteBuffer(csdKey);
                 if (!r.equals(t)) {
@@ -327,7 +323,7 @@ public class ExtractorTest {
                     }
                     if (!testBuffer.equals(refBuffer)) {
                         if (ENABLE_LOGS) {
-                            Log.d(LOG_TAG, "Mime: " + refMime + "sample data is not identical");
+                            Log.d(LOG_TAG, "Mime: " + refMime + " sample data is not identical");
                         }
                         areTracksIdentical = false;
                         break;
@@ -626,20 +622,16 @@ public class ExtractorTest {
 
         @Parameterized.Parameters(name = "{index}({0})")
         public static Collection<Object[]> input() {
-            /* TODO: add ts files for MPEG2, AVC and AAC. These parameters are used by seek tests
-                 as well. Would it make sense to add ts files to this list */
-            /* TODO: add .flac, .midi, .wav, .aac-adts to the list */
+            /* TODO(b/157108639) - add missing test files */
             return Arrays.asList(new Object[][]{
                     {MediaFormat.MIMETYPE_VIDEO_MPEG2, new String[]{
                             "bbb_cif_768kbps_30fps_mpeg2_stereo_48kHz_192kbps_mp3.mp4",
                             "bbb_cif_768kbps_30fps_mpeg2.mkv",}},
                     {MediaFormat.MIMETYPE_VIDEO_H263, new String[]{
                             "bbb_cif_768kbps_30fps_h263.mp4",
-                            "bbb_cif_768kbps_30fps_h263_mono_8kHz_12kbps_amrnb.3gp",
-                            "bbb_cif_768kbps_30fps_h263_stereo_48kHz_192kbps_flac.mkv",}},
+                            "bbb_cif_768kbps_30fps_h263_mono_8kHz_12kbps_amrnb.3gp",}},
                     {MediaFormat.MIMETYPE_VIDEO_MPEG4, new String[]{
                             "bbb_cif_768kbps_30fps_mpeg4_stereo_48kHz_192kbps_flac.mp4",
-                            "bbb_cif_768kbps_30fps_mpeg4.mkv",
                             "bbb_cif_768kbps_30fps_mpeg4_mono_16kHz_20kbps_amrwb.3gp",}},
                     {MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
                             "bbb_cif_768kbps_30fps_avc_stereo_48kHz_192kbps_vorbis.mp4",
@@ -872,10 +864,6 @@ public class ExtractorTest {
         public void testExtract() throws IOException {
             assumeTrue(shouldRunTest(mMime));
             assertTrue(mSrcFiles.length > 1);
-            assumeTrue("TODO(b/146925481)", mMime == MediaFormat.MIMETYPE_VIDEO_VP8 ||
-                    mMime == MediaFormat.MIMETYPE_VIDEO_VP9 ||
-                    mMime == MediaFormat.MIMETYPE_VIDEO_AV1 ||
-                    mMime == MediaFormat.MIMETYPE_AUDIO_FLAC);
             MediaExtractor refExtractor = new MediaExtractor();
             refExtractor.setDataSource(mInpPrefix + mSrcFiles[0]);
             boolean isOk = true;
@@ -964,8 +952,6 @@ public class ExtractorTest {
         @Test
         public void testSeekToZero() throws IOException {
             assumeTrue(shouldRunTest(mMime));
-            assumeTrue("TODO(b/146925481)", mMime != MediaFormat.MIMETYPE_AUDIO_MPEG &&
-                    mMime != MediaFormat.MIMETYPE_AUDIO_AAC);
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
                 MediaExtractor extractor = new MediaExtractor();
@@ -1047,10 +1033,6 @@ public class ExtractorTest {
         public void testExtractNative() {
             assumeTrue(shouldRunTest(mMime));
             assertTrue(mSrcFiles.length > 1);
-            assumeTrue("TODO(b/146925481)", mMime == MediaFormat.MIMETYPE_VIDEO_VP8 ||
-                    mMime == MediaFormat.MIMETYPE_VIDEO_VP9 ||
-                    mMime == MediaFormat.MIMETYPE_VIDEO_AV1 ||
-                    mMime == MediaFormat.MIMETYPE_AUDIO_FLAC);
             boolean isOk = true;
             for (int i = 1; i < mSrcFiles.length; i++) {
                 if (!nativeTestExtract(mInpPrefix + mSrcFiles[0], mInpPrefix + mSrcFiles[i],
@@ -1103,8 +1085,6 @@ public class ExtractorTest {
         @Test
         public void testSeekToZeroNative() {
             assumeTrue(shouldRunTest(mMime));
-            assumeTrue("TODO(b/146925481)", mMime != MediaFormat.MIMETYPE_AUDIO_MPEG &&
-                    mMime != MediaFormat.MIMETYPE_AUDIO_AAC);
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
                 if (!nativeTestSeekToZero(mInpPrefix + srcFile, mMime)) {
