@@ -17,6 +17,7 @@
 package android.telecom.cts;
 
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.Connection;
@@ -101,5 +102,43 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
 
         // Notify as missed instead of rejected, since the user did not explicitly reject.
         verifyCallLogging(normalCallNumber, CallLog.Calls.MISSED_TYPE);
+    }
+
+    /**
+     * While on an outgoing call, receive an incoming ringing call and then place an emergency call.
+     * The other two calls should stay active while the ringing call should be rejected and logged
+     * as a new missed call.
+     */
+    public void testActiveCallAndIncomingRingingCallAndPlaceEmergencyCall() throws Exception {
+        if (!mShouldTestTelecom) return;
+
+        Uri normalOutgoingCallNumber = createRandomTestNumber();
+        Bundle extras = new Bundle();
+        extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, normalOutgoingCallNumber);
+        placeAndVerifyCall(extras);
+        Connection outgoingConnection = verifyConnectionForOutgoingCall();
+        Call outgoingCall = getInCallService().getLastCall();
+        outgoingConnection.setActive();
+        assertCallState(outgoingCall, Call.STATE_ACTIVE);
+
+        Uri normalIncomingCallNumber = createRandomTestNumber();
+        addAndVerifyNewIncomingCall(normalIncomingCallNumber, null);
+        Connection incomingConnection = verifyConnectionForIncomingCall();
+        Call incomingCall = getInCallService().getLastCall();
+        assertCallState(incomingCall, Call.STATE_RINGING);
+
+        // Do not support holding incoming call for emergency call.
+        Connection eConnection = placeAndVerifyEmergencyCall(false /*supportsHold*/);
+        Call eCall = getInCallService().getLastCall();
+        assertCallState(eCall, Call.STATE_DIALING);
+
+        assertConnectionState(incomingConnection, Connection.STATE_DISCONNECTED);
+        assertCallState(incomingCall, Call.STATE_DISCONNECTED);
+
+        eConnection.setActive();
+        assertCallState(eCall, Call.STATE_ACTIVE);
+
+        // Notify as missed instead of rejected, since the user did not explicitly reject.
+        verifyCallLogging(normalIncomingCallNumber, CallLog.Calls.MISSED_TYPE);
     }
 }
