@@ -119,7 +119,8 @@ public class TestUtils {
             .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER |
                     PhoneAccount.CAPABILITY_VIDEO_CALLING |
                     PhoneAccount.CAPABILITY_RTT |
-                    PhoneAccount.CAPABILITY_CONNECTION_MANAGER)
+                    PhoneAccount.CAPABILITY_CONNECTION_MANAGER |
+                    PhoneAccount.CAPABILITY_PLACE_EMERGENCY_CALLS)
             .setHighlightColor(Color.RED)
             .setShortDescription(ACCOUNT_LABEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
