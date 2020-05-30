@@ -16,6 +16,8 @@
 
 package android.content.cts;
 
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
@@ -27,7 +29,11 @@ import android.app.Service;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
+import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
@@ -53,6 +59,8 @@ import java.util.concurrent.TimeoutException;
  *     <li>Context via {@link Context#createWindowContext(int, Bundle)}
  *     - get {@link Display} entity</li>
  *     <li>Context via {@link Context#createDisplayContext(Display)}
+ *     - get {@link Display} entity</li>
+ *     <li>Context derived from display context
  *     - get {@link Display} entity</li>
  *     <li>{@link ContextWrapper} with base display-associated {@link Context}
  *     - get {@link Display} entity</li>
@@ -96,6 +104,42 @@ public class ContextAccessTest {
         Context displayContext = mContext.createDisplayContext(display);
 
         assertEquals(display, displayContext.getDisplay());
+    }
+
+    @Test
+    public void testGetDisplayFromDisplayContextDerivedContextOnPrimaryDisplay() {
+        verifyGetDisplayFromDisplayContextDerivedContext(false /* onSecondaryDisplay */);
+    }
+
+    @Test
+    public void testGetDisplayFromDisplayContextDerivedContextOnSecondaryDisplay() {
+        verifyGetDisplayFromDisplayContextDerivedContext(true /* onSecondaryDisplay */);
+    }
+
+    private void verifyGetDisplayFromDisplayContextDerivedContext(
+            boolean onSecondaryDisplay) {
+        final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        final Display display;
+        if (onSecondaryDisplay) {
+            display = getSecondaryDisplay(displayManager);
+        } else {
+            display = displayManager.getDisplay(DEFAULT_DISPLAY);
+        }
+        final Context context = mContext.createDisplayContext(display)
+                .createConfigurationContext(new Configuration());
+        assertEquals(display, context.getDisplay());
+    }
+
+    private static Display getSecondaryDisplay(DisplayManager displayManager) {
+        final int width = 800;
+        final int height = 480;
+        final int density = 160;
+        ImageReader reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888,
+                2 /* maxImages */);
+        VirtualDisplay virtualDisplay = displayManager.createVirtualDisplay(
+                ContextTest.class.getName(), width, height, density, reader.getSurface(),
+                VIRTUAL_DISPLAY_FLAG_PUBLIC | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+        return virtualDisplay.getDisplay();
     }
 
     @Test
