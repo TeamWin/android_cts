@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Google Inc.
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package android.location.cts.common;
 import android.content.Context;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssNavigationMessage;
+import android.location.GnssRequest;
 import android.location.GnssStatus;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationRequest;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -85,6 +87,45 @@ public class TestLocationManager {
             // Registration of GnssMeasurements listener has failed, this indicates a platform bug.
             Log.i(TAG, TestMeasurementUtil.REGISTRATION_ERROR_MESSAGE);
             Assert.fail(TestMeasurementUtil.REGISTRATION_ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * See {@link android.location.LocationManager#registerGnssMeasurementsCallback
+     * (GnssMeasurementsEvent.Callback callback)}
+     *
+     * @param callback the listener to add
+     */
+    public void registerGnssMeasurementCallback(GnssMeasurementsEvent.Callback callback,
+            GnssRequest request) {
+        Log.i(TAG, "Add Gnss Measurement Callback. enableFullTracking=" + request);
+        boolean measurementListenerAdded =
+                mLocationManager.registerGnssMeasurementsCallback(request, Runnable::run, callback);
+        if (!measurementListenerAdded) {
+            // Registration of GnssMeasurements listener has failed, this indicates a platform bug.
+            Log.i(TAG, TestMeasurementUtil.REGISTRATION_ERROR_MESSAGE);
+            Assert.fail(TestMeasurementUtil.REGISTRATION_ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Request GNSS location updates with {@code LocationRequest#setLowPowerMode()} enabled.
+     *
+     * See {@code LocationManager#requestLocationUpdates}.
+     *
+     * @param locationListener location listener for request
+     */
+    public void requestLowPowerModeGnssLocationUpdates(int minTimeMillis,
+            LocationListener locationListener) {
+        LocationRequest request = LocationRequest.createFromDeprecatedProvider(
+                LocationManager.GPS_PROVIDER, /* minTime= */ minTimeMillis, /* minDistance= */0,
+                false);
+        request.setLowPowerMode(true);
+        if (mLocationManager.getProvider(LocationManager.GPS_PROVIDER) != null) {
+            Log.i(TAG, "Request Location updates.");
+            mLocationManager.requestLocationUpdates(request,
+                    locationListener,
+                    Looper.getMainLooper());
         }
     }
 
