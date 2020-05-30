@@ -211,11 +211,12 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Verify that app without REQUEST_INSTALL_PACKAGES can't access obb
-     * directories belonging to other apps.
+     * Verify that apps can't leave gifts in package specific external storage
+     * directories belonging to other apps. Apps can only create files in their
+     * external storage directories.
      */
     @Test
-    public void testCantAccessOtherObbDirs() throws Exception {
+    public void testExternalStorageNoGifts() throws Exception {
         try {
             wipePrimaryExternalStorage();
 
@@ -227,14 +228,14 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
-
             for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest",
-                        "testCantAccessOtherObbDirs", user);
-                runDeviceTests(READ_PKG, READ_PKG + ".ReadGiftTest", "testCantAccessOtherObbDirs",
-                        user);
-                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testCantAccessOtherObbDirs",
-                        user);
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testStageNonGifts", user);
+                runDeviceTests(READ_PKG, READ_PKG + ".ReadGiftTest", "testStageNonGifts", user);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testStageNonGifts", user);
+
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testNoGifts", user);
+                runDeviceTests(READ_PKG, READ_PKG + ".ReadGiftTest", "testNoGifts", user);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testNoGifts", user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);

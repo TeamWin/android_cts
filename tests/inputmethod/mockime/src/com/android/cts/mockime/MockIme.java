@@ -61,7 +61,7 @@ import android.view.inputmethod.InputMethod;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import android.widget.inline.InlinePresentationSpec;
 
@@ -454,7 +454,7 @@ public final class MockIme extends InputMethodService {
             mLayout.setOrientation(LinearLayout.VERTICAL);
 
             if (mSettings.getInlineSuggestionsEnabled()) {
-                final ScrollView scrollView = new ScrollView(getContext());
+                final HorizontalScrollView scrollView = new HorizontalScrollView(getContext());
                 final LayoutParams scrollViewParams = new LayoutParams(MATCH_PARENT, 100);
                 scrollView.setLayoutParams(scrollViewParams);
 
@@ -613,7 +613,12 @@ public final class MockIme extends InputMethodService {
     @Override
     public void onStartInput(EditorInfo editorInfo, boolean restarting) {
         getTracer().onStartInput(editorInfo, restarting,
-                () -> super.onStartInput(editorInfo, restarting));
+                () -> {
+                    super.onStartInput(editorInfo, restarting);
+                    if (mSettings.getInlineSuggestionsEnabled()) {
+                        maybeClearExistingInlineSuggestions();
+                    }
+                });
     }
 
     @Override
@@ -722,6 +727,13 @@ public final class MockIme extends InputMethodService {
         final AtomicInteger mInflatedViewCount;
         final AtomicBoolean mValid = new AtomicBoolean(true);
 
+        PendingInlineSuggestions() {
+            mResponse = null;
+            mTotalCount = 0;
+            mViews = null;
+            mInflatedViewCount = null;
+        }
+
         PendingInlineSuggestions(InlineSuggestionsResponse response) {
             mResponse = response;
             mTotalCount = response.getInlineSuggestions().size();
@@ -797,6 +809,15 @@ public final class MockIme extends InputMethodService {
             }
             return true;
         });
+    }
+
+    @MainThread
+    private void maybeClearExistingInlineSuggestions() {
+        if (mPendingInlineSuggestions != null
+                && mPendingInlineSuggestions.mTotalCount > 0) {
+            mView.updateInlineSuggestions(new PendingInlineSuggestions());
+            mPendingInlineSuggestions = null;
+        }
     }
 
     /**

@@ -40,7 +40,7 @@ import java.util.List;
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 public class WifiRttTest extends TestBase {
     // Number of scans to do while searching for APs supporting IEEE 802.11mc
-    private static final int NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP = 2;
+    private static final int NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP = 5;
 
     // Number of RTT measurements per AP
     private static final int NUM_OF_RTT_ITERATIONS = 10;

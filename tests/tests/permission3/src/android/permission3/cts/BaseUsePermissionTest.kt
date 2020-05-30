@@ -53,7 +53,21 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_LATEST = "$APK_DIRECTORY/CtsUsePermissionAppLatest.apk"
         const val APP_APK_PATH_LATEST_WITH_BACKGROUND =
                 "$APK_DIRECTORY/CtsUsePermissionAppLatestWithBackground.apk"
+        const val APP_APK_PATH_WITH_OVERLAY = "$APK_DIRECTORY/CtsUsePermissionAppWithOverlay.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
+
+        const val ALLOW_BUTTON =
+                "com.android.permissioncontroller:id/permission_allow_button"
+        const val ALLOW_FOREGROUND_BUTTON =
+                "com.android.permissioncontroller:id/permission_allow_foreground_only_button"
+        const val DENY_BUTTON = "com.android.permissioncontroller:id/permission_deny_button"
+        const val DENY_AND_DONT_ASK_AGAIN_BUTTON =
+                "com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button"
+        const val NO_UPGRADE_BUTTON =
+                "com.android.permissioncontroller:id/permission_no_upgrade_button"
+        const val NO_UPGRADE_AND_DONT_ASK_AGAIN_BUTTON =
+                "com.android.permissioncontroller:" +
+                        "id/permission_no_upgrade_and_dont_ask_again_button"
     }
 
     enum class PermissionState {
@@ -217,6 +231,25 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         )
     }
 
+    protected inline fun requestAppPermissionsForNoResult(
+        vararg permissions: String?,
+        block: () -> Unit
+    ) {
+        // Request the permissions
+        context.startActivity(
+                Intent().apply {
+                    component = ComponentName(
+                            APP_PACKAGE_NAME, "$APP_PACKAGE_NAME.RequestPermissionsActivity"
+                    )
+                    putExtra("$APP_PACKAGE_NAME.PERMISSIONS", permissions)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+        )
+        waitForIdle()
+        // Perform the post-request action
+        block()
+    }
+
     protected inline fun requestAppPermissions(
         vararg permissions: String?,
         block: () -> Unit
@@ -268,7 +301,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     )
 
     protected fun clickPermissionRequestAllowButton() =
-        click(By.res("com.android.permissioncontroller:id/permission_allow_button"))
+        click(By.res(ALLOW_BUTTON))
 
     protected fun clickPermissionRequestSettingsLinkAndAllowAlways() {
         eventually({
@@ -283,10 +316,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickPermissionRequestAllowForegroundButton() =
-        click(By.res("com.android.permissioncontroller:id/permission_allow_foreground_only_button"))
+        click(By.res(ALLOW_FOREGROUND_BUTTON))
 
     protected fun clickPermissionRequestDenyButton() =
-        click(By.res("com.android.permissioncontroller:id/permission_deny_button"))
+        click(By.res(DENY_BUTTON))
 
     protected fun clickPermissionRequestSettingsLinkAndDeny() {
         clickPermissionRequestSettingsLink()
@@ -312,19 +345,17 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected fun clickPermissionRequestDenyAndDontAskAgainButton() =
         click(
-            By.res("com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button")
+            By.res(DENY_AND_DONT_ASK_AGAIN_BUTTON)
         )
 
     protected fun clickPermissionRequestDontAskAgainButton() =
         click(By.res("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button"))
 
     protected fun clickPermissionRequestNoUpgradeButton() =
-        click(By.res("com.android.permissioncontroller:id/permission_no_upgrade_button"))
+        click(By.res(NO_UPGRADE_BUTTON))
 
     protected fun clickPermissionRequestNoUpgradeAndDontAskAgainButton() = click(
-        By.res(
-            "com.android.permissioncontroller:id/permission_no_upgrade_and_dont_ask_again_button"
-        )
+        By.res(NO_UPGRADE_AND_DONT_ASK_AGAIN_BUTTON)
     )
 
     protected fun grantAppPermissions(vararg permissions: String, targetSdk: Int = 30) {

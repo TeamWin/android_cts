@@ -28,6 +28,7 @@ import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
+import com.android.compatibility.common.util.LocationModeSetter;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -57,11 +58,13 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testManagedProfilesSupportedWithLockScreenOnly() throws Exception {
-        if (mHasFeature) {
-            // Managed profiles should be only supported if the device supports the secure lock
-            // screen feature.
-            assertTrue(mHasSecureLockScreen);
+        if (!mHasFeature || hasDeviceFeature("android.software.leanback")) {
+            return;
         }
+        // Managed profiles should be only supported if the device supports the secure lock
+        // screen feature.
+        // Exception is Android TV which does not support lock screen feature.
+        assertTrue(mHasSecureLockScreen);
     }
 
     @Test
@@ -83,8 +86,14 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
         if (newUserId > 0) {
             removeUser(newUserId);
-            fail(mHasFeature ? "Device must allow creating only one managed profile"
-                    : "Device must not allow creating a managed profile");
+            if (mHasFeature) {
+                // Exception is Android TV which can create multiple managed profiles
+                if (!hasDeviceFeature("android.software.leanback")) {
+                    fail("Device must allow creating only one managed profile");
+                }
+            } else {
+                fail("Device must not allow creating a managed profile");
+            }
         }
     }
 

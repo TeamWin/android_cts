@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.sensors;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.sensors.base.SensorCtsVerifierTestActivity;
 
@@ -82,20 +83,22 @@ public class BatchingTestActivity extends SensorCtsVerifierTestActivity {
                 R.string.snsr_batching_walking_needed);
     }
 
+    @CddTest(requirement="7.3.8/C-1-1,C-1-2")
     @SuppressWarnings("unused")
     public String testProximity_batching() throws Throwable {
         return runBatchTest(
                 Sensor.TYPE_PROXIMITY,
                 REPORT_LATENCY_10_SEC,
-                R.string.snsr_interaction_needed);
+                R.string.snsr_interaction_needed_prox);
     }
 
+    @CddTest(requirement="7.3.8/C-1-1,C-1-2")
     @SuppressWarnings("unused")
     public String testProximity_flush() throws Throwable {
         return runFlushTest(
                 Sensor.TYPE_PROXIMITY,
                 REPORT_LATENCY_10_SEC,
-                R.string.snsr_interaction_needed);
+                R.string.snsr_interaction_needed_prox);
     }
 
     @SuppressWarnings("unused")

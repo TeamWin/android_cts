@@ -1169,6 +1169,39 @@
     <string name="accessService">AccessService</string>
     <string name="offhostService">OffhostService</string>
     <string name="felicaservice">Felica Service</string>
+    <string name="UiccTransactionEventService">Uicc Transaction Event Service</string>
+
+    <string name="nfc_offhost_uicc">Offhost UICC-based card emulation</string>
+    <string name="nfc_offhost_uicc_emulator_tests">Offhost card emulation emulator tests</string>
+    <string name="nfc_offhost_uicc_reader_tests">Offhost card emulation reader tests</string>
+    <string name="nfc_offhost_uicc_transaction_event1_emulator">Offhost transaction event-field off (Emulator)</string>
+    <string name="nfc_offhost_uicc_transaction_event1_reader">Offhost transaction event-field off (Reader)</string>
+    <string name="nfc_offhost_uicc_transaction_event2_emulator">Offhost transaction event-deselect (Emulator)</string>
+    <string name="nfc_offhost_uicc_transaction_event2_reader">Offhost transaction event-deselect (Reader)</string>
+    <string name="nfc_offhost_uicc_transaction_event3_emulator">Offhost transaction event-HCI CMD (Emulator)</string>
+    <string name="nfc_offhost_uicc_transaction_event3_reader">Offhost transaction event-HCI CMD (Reader)</string>
+
+    <string name="nfc_offhost_uicc_emulator_test_info">The offhost-based card emulation
+        tests require two devices to be completed. The emulator tests are used
+        to actually test the off-based card emulation feature of the device-under-test. So the
+        device running the emulator tests must be the candidate device running the software
+        to be tested. \n\nFor each emulator test, there is a corresponding "reader test"
+        in the "Offhost reader tests" section. The "reader test" acts as a NFC terminal/POS
+        and makes sure the device-under-test implements card emulation correctly
+    </string>
+    <string name="nfc_offhost_uicc_reader_test_info">The offhost-based card emulation
+        tests require two devices to be completed. The emulator tests are used
+        to actually test the off-based card emulation feature of the device-under-test. So the
+        device running the emulator tests must be the candidate device running the software
+        to be tested. \n\nFor each emulator test, there is a corresponding "reader test"
+        in the "Offhost card emulation reader tests" section. The "reader test" acts as a NFC terminal/POS
+        and makes sure the device-under-test implements card emulation correctly.
+    </string>
+    <string name="nfc_offhost_uicc_type_selection">By default Offhost card emulation applications run on type A.
+      If your device supports type B (for example, because of a type B only UICC), select "Type B" from the drop-down box above. Note that all tests must be completed in the same mode (either "Type A" or "Type B").</string>
+    <string name="nfc_offhost_please_wait">Please wait</string>
+    <string name="nfc_offhost_setting_up">Setting up card emulation services...</string>
+    <string name="nfc_offhost_uicc_transaction_event_emulator_help">Switch application to background before starting tests. Successful transaction event will switch application to foreground with transaction event data.</string>
 
     <!-- Strings for Sensor Test Activities -->
     <string name="snsr_device_admin_receiver">Sensor Tests Device Admin Receiver</string>
@@ -1191,6 +1224,7 @@
     <string name="snsr_test_play_sound">A sound will be played once the verification is complete...</string>
     <string name="snsr_no_interaction">Leave the device on top of a flat surface.</string>
     <string name="snsr_interaction_needed">Once the test begins, you will have to wave your hand over the front of the device.</string>
+    <string name="snsr_interaction_needed_prox">Once the test begins, if possible, flip the device so it is face down on a surface, then flip back to face up after a second or two. Otherwise, wave your hand over the front of the device.</string>
     <string name="snsr_device_steady">Keep the device steady.</string>
     <string name="snsr_keep_device_rotating_clockwise">Once the test begins, you will have to keep rotating the device clockwise.</string>
     <string name="snsr_wait_for_user">Press \'Next\' to continue.</string>
@@ -1696,6 +1730,11 @@
     <string name="wifi_setup_error">Test failed with set up error.</string>
     <string name="wifi_unexpected_error">Test failed with unexpected error. Check logcat.</string>
 
+    <string name="wifi_ssid_label">SSID for network</string>
+    <string name="wifi_psk_label">Passphrase for network (leave empty for open network)</string>
+    <string name="wifi_start_test_label">Start test</string>
+
+    <string name="wifi_status_need_psk">Need a psk network for this test.</string>
     <string name="wifi_status_initiating_scan">Initiating scan.</string>
     <string name="wifi_status_scan_failure">Unable to initiate scan or find any open network in scan results.</string>
     <string name="wifi_status_connected_to_other_network">Connected to some other network on the device. Please ensure that there is no saved networks on the device.</string>
@@ -2474,9 +2513,12 @@ You should be prompted to select credentials; choose the ones you just installed
 
         3. Tap \"Prepare VPN\" button below and consent to the VPN connection.\n
 
-        4. Finish all three test cases listed below.\n
+        4. Once connected, verify that the system shows disclosure (on some devices this is shown in
+           the notification area) that network traffic is being routed through the VPN app.\n
 
-        5. Repeat step 1 to remove CtsVpnFirewallApp.
+        5. Finish all three test cases listed below.\n
+
+        6. Repeat step 1 to remove CtsVpnFirewallApp.
     </string>
     <string name="provisioning_byod_always_on_vpn_prepare_button">Prepare VPN</string>
     <string name="provisioning_byod_always_on_vpn_vpn_not_found_note">

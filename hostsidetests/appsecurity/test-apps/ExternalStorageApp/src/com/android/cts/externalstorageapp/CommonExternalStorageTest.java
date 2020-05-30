@@ -177,6 +177,31 @@ public class CommonExternalStorageTest extends AndroidTestCase {
         return targetFiles;
     }
 
+    /**
+     * Return a set of several package-specific external storage paths pointing
+     * at "gift" files designed to be exchanged with the target package in Q.
+     * These directories can't be used to exchange "gift" files in R.
+     */
+    public static List<File> getAllPackageSpecificNoGiftPaths(Context context,
+            String targetPackageName) {
+        final List<File> files = getPrimaryPackageSpecificPathsExceptMedia(context);
+        final List<File> targetFiles = new ArrayList<>();
+        for (File file : files) {
+            final File targetFile = new File(
+                    file.getAbsolutePath().replace(context.getPackageName(), targetPackageName));
+            targetFiles.add(new File(targetFile, targetPackageName + ".gift"));
+        }
+        return targetFiles;
+    }
+
+    public static List<File> getPrimaryPackageSpecificPathsExceptMedia(Context context) {
+        final List<File> paths = new ArrayList<File>();
+        Collections.addAll(paths, context.getExternalCacheDir());
+        Collections.addAll(paths, context.getExternalFilesDir(null));
+        Collections.addAll(paths, context.getObbDir());
+        return paths;
+    }
+
     public static List<File> getPrimaryPackageSpecificPaths(Context context) {
         final List<File> paths = new ArrayList<File>();
         Collections.addAll(paths, context.getExternalCacheDir());
@@ -301,21 +326,6 @@ public class CommonExternalStorageTest extends AndroidTestCase {
             assertFalse(probe.exists());
             assertFalse(probe.delete());
             fail("able to create probe!");
-        } catch (IOException e) {
-            // expected
-        }
-    }
-
-    public static void assertFileReadOnlyAccess(File path) {
-        try {
-            new FileInputStream(path).close();
-        } catch (IOException e) {
-            fail("failed to read!");
-        }
-
-        try {
-            new FileOutputStream(path, true).close();
-            fail("able to write!");
         } catch (IOException e) {
             // expected
         }
