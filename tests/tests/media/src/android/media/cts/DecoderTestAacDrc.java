@@ -140,6 +140,18 @@ public class DecoderTestAacDrc {
     }
 
     /**
+     * Test if there is decoder internal clipping of MPEG-4 AAC decoder.
+     * Uses a two channel 248 Hz sine tone at 48 kHz sampling rate for input.
+     */
+    @Test
+    public void testDecodeAacInternalClipM4a() throws Exception {
+        AudioParameter decParams = new AudioParameter();
+        short[] decSamples = decodeToMemory(decParams, R.raw.sine_2ch_48khz_aot2_internalclip_mp4,
+                -1, null, null, null /*decoderName: use default decoder*/);
+        checkClipping(decSamples, decParams, 248.0f /* Hz */);
+    }
+
+    /**
      * Default decoder target level.
      * The actual default value used by the decoder can differ between platforms, or even devices,
      * but tests will measure energy relative to this value.
