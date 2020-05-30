@@ -33,8 +33,6 @@ import org.junit.runner.RunWith;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class LegacyStorageHostTest extends BaseHostJUnit4Test {
-    public static final String SHELL_FILE = "/sdcard/LegacyAccessHostTest_shell";
-
     private boolean isExternalStorageSetup = false;
 
     private String executeShellCommand(String cmd) throws Exception {
@@ -45,7 +43,7 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
      * Runs the given phase of LegacyFileAccessTest by calling into the device.
      * Throws an exception if the test phase fails.
      */
-    private void runDeviceTest(String phase) throws Exception {
+    void runDeviceTest(String phase) throws Exception {
         assertTrue(runDeviceTests("android.scopedstorage.cts.legacy",
                 "android.scopedstorage.cts.legacy.LegacyStorageTest", phase));
     }
@@ -115,35 +113,20 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testReadOnlyExternalStorage_hasR() throws Exception {
         revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE");
-        createFileAsShell(SHELL_FILE);
-        try {
-            runDeviceTest("testReadOnlyExternalStorage_hasR");
-        } finally {
-            executeShellCommand("rm " + SHELL_FILE);
-        }
+        runDeviceTest("testReadOnlyExternalStorage_hasR");
     }
 
     @Test
     public void testCantAccessExternalStorage() throws Exception {
         revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE",
                 "android.permission.READ_EXTERNAL_STORAGE");
-        createFileAsShell(SHELL_FILE);
-        try {
-            runDeviceTest("testCantAccessExternalStorage");
-        } finally {
-            executeShellCommand("rm " + SHELL_FILE);
-        }
+        runDeviceTest("testCantAccessExternalStorage");
     }
 
     @Test
     public void testListFiles_hasR() throws Exception {
         revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE");
-        createFileAsShell(SHELL_FILE);
-        try {
-            runDeviceTest("testListFiles_hasR");
-        } finally {
-            executeShellCommand("rm " + SHELL_FILE);
-        }
+        runDeviceTest("testListFiles_hasR");
     }
 
     @Test
@@ -154,24 +137,14 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testCantRename_hasR() throws Exception {
         revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE");
-        createFileAsShell(SHELL_FILE);
-        try {
-            runDeviceTest("testCantRename_hasR");
-        } finally {
-            executeShellCommand("rm " + SHELL_FILE);
-        }
+        runDeviceTest("testCantRename_hasR");
     }
 
     @Test
     public void testCantRename_noStoragePermission() throws Exception {
         revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE",
                 "android.permission.READ_EXTERNAL_STORAGE");
-        createFileAsShell(SHELL_FILE);
-        try {
-            runDeviceTest("testCantRename_noStoragePermission");
-        } finally {
-            executeShellCommand("rm " + SHELL_FILE);
-        }
+        runDeviceTest("testCantRename_noStoragePermission");
     }
 
     @Test
