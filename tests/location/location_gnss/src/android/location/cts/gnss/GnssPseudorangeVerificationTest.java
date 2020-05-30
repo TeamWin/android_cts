@@ -22,9 +22,12 @@ import android.location.GnssStatus;
 import android.location.Location;
 import android.location.cts.common.GnssTestCase;
 import android.location.cts.common.SoftAssert;
+import android.location.cts.common.TestGnssMeasurementListener;
+import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
 import android.location.cts.gnss.pseudorange.PseudorangePositionVelocityFromRealTimeEvents;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
@@ -104,10 +107,10 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
    */
   @CddTest(requirement="7.3.3")
   public void testPseudorangeValue() throws Exception {
-    // Checks if Gnss hardware feature is present, skips test (pass) if not,
-    // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
-    // From android O, CTS tests should run in the lab with GPS signal.
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, true)) {
+    // Checks if Gnss hardware feature is present, skips test (pass) if not
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N,
+          mTestLocationManager,
+          TAG)) {
       return;
     }
 
@@ -249,10 +252,10 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
     @CddTest(requirement = "7.3.3")
     @AppModeFull(reason = "Flaky in instant mode")
     public void testPseudoPosition() throws Exception {
-        // Checks if Gnss hardware feature is present, skips test (pass) if not,
-        // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
-        // From android O, CTS tests should run in the lab with GPS signal.
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, true)) {
+        // Checks if Gnss hardware feature is present, skips test (pass) if not
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N,
+                mTestLocationManager,
+                TAG)) {
             return;
         }
 
