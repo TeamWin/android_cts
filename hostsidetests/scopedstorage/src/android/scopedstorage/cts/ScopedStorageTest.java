@@ -1588,7 +1588,7 @@ public class ScopedStorageTest {
 
             assertThat(deleteFileAs(TEST_APP_A, otherAppExternalDataFile.getPath())).isTrue();
 
-            assertThrows(IOException.class, "Permission denied",
+            assertThrows(IOException.class,
                     () -> { otherAppExternalDataFile.createNewFile(); });
 
         } finally {
