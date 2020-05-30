@@ -18,6 +18,7 @@ package android.view.accessibility.cts;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -35,8 +36,10 @@ import android.platform.test.annotations.Presubmit;
 import android.text.InputType;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
+import android.text.style.ReplacementSpan;
 import android.util.ArrayMap;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -46,7 +49,6 @@ import android.view.accessibility.AccessibilityNodeInfo.CollectionInfo;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionItemInfo;
 import android.view.accessibility.AccessibilityNodeInfo.RangeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.TouchDelegateInfo;
-import android.view.accessibility.AccessibilityWindowInfo;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -248,22 +250,37 @@ public class AccessibilityNodeInfoTest {
 
     @SmallTest
     @Test
-    public void testSetTextWithImageSpan_shouldTextSetToInfo() {
+    public void testParcelTextImageSpans_haveSameContentDescriptions() {
         final Bitmap bitmap = Bitmap.createBitmap(/* width= */10, /* height= */10,
                 Bitmap.Config.ARGB_8888);
-        final ImageSpan imageSpan = new ImageSpan(getContext(), bitmap);
-        final String testString = "test string";
-        final String replacementString = " ";
-        final SpannableString textWithImageSpan = new SpannableString(testString);
-        final int indexIconStart = testString.indexOf(replacementString);
-        final int indexIconEnd = indexIconStart + replacementString.length();
-        textWithImageSpan.setSpan(imageSpan, /* start= */indexIconStart,/* end= */indexIconEnd,
-                /* flags= */Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        final ImageSpan span1 = new ImageSpan(getContext(), bitmap);
+        span1.setContentDescription("Span1 contentDescription");
+        final ImageSpan span2 = new ImageSpan(getContext(), bitmap);
+        span2.setContentDescription("Span2 contentDescription");
+        final String testString = "test string%s";
+        final String replaceSpan1 = " ";
+        final String replaceSpan2 = "%s";
+        final Spannable stringWithSpans = new SpannableString(testString);
+        final int span1Start = testString.indexOf(replaceSpan1);
+        final int span1End = span1Start + replaceSpan1.length();
+        final int span2Start = testString.indexOf(replaceSpan2);
+        final int span2End = span2Start + replaceSpan2.length();
+        final AccessibilityNodeInfo sentInfo = AccessibilityNodeInfo.obtain();
+        final Parcel parcel = Parcel.obtain();
 
-        AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
-        info.setText(textWithImageSpan);
+        stringWithSpans.setSpan(span1, span1Start, span1End, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        stringWithSpans.setSpan(span2, span2Start, span2End, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sentInfo.setText(stringWithSpans);
+        sentInfo.writeToParcelNoRecycle(parcel, 0);
+        parcel.setDataPosition(0);
+        final AccessibilityNodeInfo receivedInfo = AccessibilityNodeInfo.CREATOR.createFromParcel(
+                parcel);
+        final Spanned receivedString = (Spanned) receivedInfo.getText();
+        final ReplacementSpan[] actualSpans = receivedString.getSpans(0, receivedString.length(),
+                ReplacementSpan.class);
 
-        assertEquals(testString, info.getText().toString());
+        assertEquals(span1.getContentDescription(), actualSpans[0].getContentDescription());
+        assertEquals(span2.getContentDescription(), actualSpans[1].getContentDescription());
     }
 
     @SmallTest
@@ -695,7 +712,6 @@ public class AccessibilityNodeInfoTest {
         assertFalse("isHeading not properly reset", info.isHeading());
         assertFalse("isTextEntryKey not properly reset", info.isTextEntryKey());
     }
-
 
     private static class MockBinder extends Binder {
     }
