@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.contentcaptureservice.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.Service;
+import android.content.Intent;
 import android.content.LocusId;
-import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
+import android.os.Binder;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.view.contentcapture.ContentCaptureManager;
 import android.view.contentcapture.DataShareRequest;
 import android.view.contentcapture.DataShareWriteAdapter;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,23 +36,30 @@ import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class DataSharingActivity extends AbstractContentCaptureActivity {
-
+public class DataSharingService extends Service {
     private static final Executor sExecutor = Executors.newCachedThreadPool();
     private static final Random sRandom = new Random();
-    private static final String sLocusId = "DataShare_CTSTest";
-    private static final String sMimeType = "application/octet-stream";
 
     boolean mSessionFinished = false;
     boolean mSessionSucceeded = false;
     int mSessionErrorCode = 0;
     boolean mSessionRejected = false;
+    boolean mShouldAttemptConcurrentRequest = false;
+    boolean mConcurrentRequestFailed = false;
+    int mConcurrentRequestErrorCode = 0;
     byte[] mDataWritten = new byte[10_000];
+    String mLocusId = "DataShare_CTSTest";
+    String mMimeType = "application/octet-stream";
 
+    private final IBinder mBinder = new LocalBinder();
+
+    @Nullable
     @Override
-    public void onStart() {
-        super.onStart();
+    public IBinder onBind(Intent intent) {
+        return mBinder;
+    }
 
+    public void shareData() {
         ContentCaptureManager manager =
                 getApplicationContext().getSystemService(ContentCaptureManager.class);
 
@@ -56,20 +67,21 @@ public class DataSharingActivity extends AbstractContentCaptureActivity {
         assertThat(manager.isContentCaptureEnabled()).isTrue();
 
         manager.shareData(
-                new DataShareRequest(new LocusId(sLocusId), sMimeType),
+                new DataShareRequest(new LocusId(mLocusId), mMimeType),
                 sExecutor, new DataShareWriteAdapter() {
                     @Override
                     public void onWrite(ParcelFileDescriptor destination) {
-                        sRandom.nextBytes(mDataWritten);
-
+                        if (mShouldAttemptConcurrentRequest) {
+                            attemptConcurrentRequest();
+                        }
                         try (OutputStream outputStream =
                                      new ParcelFileDescriptor.AutoCloseOutputStream(destination)) {
+                            sRandom.nextBytes(mDataWritten);
                             outputStream.write(mDataWritten);
+                            mSessionSucceeded = true;
                         } catch (IOException e) {
-                            // fall through, sessionSucceeded will stay false.
                         }
 
-                        mSessionSucceeded = true;
                         mSessionFinished = true;
                     }
 
@@ -89,8 +101,46 @@ public class DataSharingActivity extends AbstractContentCaptureActivity {
                 });
     }
 
-    @Override
-    public void assertDefaultEvents(@NonNull Session session) {
-        // Do nothing - this test operates with file sharing.
+    private void attemptConcurrentRequest() {
+        ContentCaptureManager manager =
+                getApplicationContext().getSystemService(ContentCaptureManager.class);
+
+        assertThat(manager).isNotNull();
+        assertThat(manager.isContentCaptureEnabled()).isTrue();
+
+        manager.shareData(
+                new DataShareRequest(new LocusId(mLocusId), mMimeType),
+                sExecutor, new DataShareWriteAdapter() {
+                    @Override
+                    public void onWrite(ParcelFileDescriptor destination) {}
+
+                    @Override
+                    public void onRejected() {}
+
+                    @Override
+                    public void onError(int errorCode) {
+                        mConcurrentRequestFailed = true;
+                        mConcurrentRequestErrorCode = errorCode;
+                    }
+                });
     }
+
+    public void setLocusId(String locusId) {
+        mLocusId = locusId;
+    }
+
+    public void setMimeType(String mimeType) {
+        mMimeType = mimeType;
+    }
+
+    public void setShouldAttemptConcurrentRequest(boolean attemptConcurrentRequest) {
+        mShouldAttemptConcurrentRequest = attemptConcurrentRequest;
+    }
+
+    public class LocalBinder extends Binder {
+        DataSharingService getService() {
+            return DataSharingService.this;
+        }
+    }
+
 }
