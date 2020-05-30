@@ -150,6 +150,12 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_340x280_768kbps_30fps_mpeg2.mp4",
                         "bbb_520x390_1mbps_30fps_mpeg2.mp4"},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2,
+                        "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_2fields.mp4",
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4"},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2,
+                        "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_1field.ts",
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4"},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_340x280_768kbps_30fps_avc.mp4",
                         "bbb_520x390_1mbps_30fps_avc.mp4"},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_360x640_768kbps_30fps_avc.mp4",
