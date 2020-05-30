@@ -189,6 +189,19 @@ public class DecoderTestAacDrc {
                         + aacDecName);
                 throw new RuntimeException(e);
             }
+
+            // test loudness normalization off
+            // decoderTargetLevel = -1 --> target output level = -19.0 dBFs (program loudness of
+            // waveform)
+            // normFactor = 1/(10^(3/10)) = 0.5f
+            // where 3 is the difference between the default level (-16), and -19 for this test
+            try {
+                checkUsacLoudness(-1, 0, (float)(1.0f/Math.pow(10.0f, 3.0f/10.0f)), aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacLoudnessM4a for loudness attenuation failed for "
+                        + aacDecName);
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -345,12 +358,15 @@ public class DecoderTestAacDrc {
             // Check for loudness boost/attenuation if decoderTargetLevel deviates from default value
             // used in these tests (note that the default target level can change from platform
             // to platform, or device to device)
-            if ((decoderTargetLevel < DEFAULT_DECODER_TARGET_LEVEL) // boosted loudness
-                    && (nrg_def[0] > nrg_test[0])) {
-                throw new Exception("Signal not attenuated");
-            } else if ((decoderTargetLevel > DEFAULT_DECODER_TARGET_LEVEL) // attenuated loudness
-                    && (nrg_def[0] < nrg_test[0])) {
-                throw new Exception("Signal not boosted");
+            if (decoderTargetLevel != -1) {
+                if ((decoderTargetLevel < DEFAULT_DECODER_TARGET_LEVEL) // boosted loudness
+                        && (nrg_def[0] > nrg_test[0])) {
+                    throw new Exception("Signal not attenuated");
+                }
+                if ((decoderTargetLevel > DEFAULT_DECODER_TARGET_LEVEL) // attenuated loudness
+                        && (nrg_def[0] < nrg_test[0])) {
+                    throw new Exception("Signal not boosted");
+                }
             }
             nrgRatio = nrgRatio * normFactor;
 
