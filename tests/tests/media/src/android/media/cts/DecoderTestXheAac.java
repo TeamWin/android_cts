@@ -33,6 +33,7 @@ import android.media.cts.DecoderTest.AudioParameter;
 import android.media.cts.DecoderTestAacDrc.DrcParams;
 import android.media.cts.R;
 import android.util.Log;
+import android.os.Bundle;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -116,7 +117,7 @@ public class DecoderTestXheAac {
         } catch (Exception e) {
             Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Night/2/0 failed for dec=" + aacDecName);
             throw new RuntimeException(e);
-        } 
+        }
 
         // test DRC effectTypeID 2 "NOISY"
         // L +3dB -> normalization factor = 1/(10^( 3/10)) = 1.9952f
@@ -328,40 +329,42 @@ public class DecoderTestXheAac {
     private void checkUsacDrcEffectType(int effectTypeID, float normFactor_L, float normFactor_R,
                  String effectTypeName, int nCh, int aggressiveDrc, String decoderName)
                          throws Exception {
-        int testinput = -1;
-        AudioParameter decParams = new AudioParameter();
-        DrcParams drcParams_def  = new DrcParams(127, 127, 96, 0, -1);
-        DrcParams drcParams_test = new DrcParams(127, 127, 96, 0, effectTypeID);
+        for (boolean runtimeChange : new boolean[] {false, true}) {
+            int testinput = -1;
+            AudioParameter decParams = new AudioParameter();
+            DrcParams drcParams_def  = new DrcParams(127, 127, 96, 0, -1);
+            DrcParams drcParams_test = new DrcParams(127, 127, 96, 0, effectTypeID);
 
-        if (aggressiveDrc == 0) {
-            testinput = R.raw.noise_2ch_32khz_aot42_19_lufs_drc_mp4;
-        } else {
+            if (aggressiveDrc == 0) {
+                testinput = R.raw.noise_2ch_32khz_aot42_19_lufs_drc_mp4;
+            } else {
+                if (nCh == 2) {
+                    testinput = R.raw.noise_2ch_35_28khz_aot42_19_lufs_drc_config_change_mp4;
+                } else if (nCh == 1){
+                    testinput = R.raw.noise_1ch_29_4khz_aot42_19_lufs_drc_config_change_mp4;
+                }
+            }
+
+            short[] decSamples_def  = decodeToMemory(decParams, testinput,
+                    -1, null, drcParams_def, decoderName);
+            short[] decSamples_test = decodeToMemory(decParams, testinput,
+                    -1, null, drcParams_test, decoderName, runtimeChange);
+
+            float[] nrg_def  = checkEnergyUSAC(decSamples_def, decParams, nCh, 1, 0);
+            float[] nrg_test = checkEnergyUSAC(decSamples_test, decParams, nCh, 1, 1);
+
             if (nCh == 2) {
-                testinput = R.raw.noise_2ch_35_28khz_aot42_19_lufs_drc_config_change_mp4;
+                float nrgRatio_L = (nrg_test[1]/nrg_def[1])/normFactor_L;
+                float nrgRatio_R = (nrg_test[2]/nrg_def[2])/normFactor_R;
+                if ((nrgRatio_R > 1.05f || nrgRatio_R < 0.95f)
+                        || (nrgRatio_L > 1.05f || nrgRatio_L < 0.95f) ){
+                    throw new Exception("DRC Effect Type '" + effectTypeName + "' not as expected");
+                }
             } else if (nCh == 1){
-                testinput = R.raw.noise_1ch_29_4khz_aot42_19_lufs_drc_config_change_mp4;
-            }
-        }
-
-        short[] decSamples_def  = decodeToMemory(decParams, testinput,
-                -1, null, drcParams_def, decoderName);
-        short[] decSamples_test = decodeToMemory(decParams, testinput,
-                -1, null, drcParams_test, decoderName);
-
-        float[] nrg_def  = checkEnergyUSAC(decSamples_def, decParams, nCh, 1, 0);
-        float[] nrg_test = checkEnergyUSAC(decSamples_test, decParams, nCh, 1, 1);
-
-        if (nCh == 2) {
-            float nrgRatio_L = (nrg_test[1]/nrg_def[1])/normFactor_L;
-            float nrgRatio_R = (nrg_test[2]/nrg_def[2])/normFactor_R;
-            if ((nrgRatio_R > 1.05f || nrgRatio_R < 0.95f) 
-                    || (nrgRatio_L > 1.05f || nrgRatio_L < 0.95f) ){
-                throw new Exception("DRC Effect Type '" + effectTypeName + "' not as expected");
-            }
-        } else if (nCh == 1){
-            float nrgRatio_L = (nrg_test[0]/nrg_def[0])/normFactor_L;
-            if (nrgRatio_L > 1.05f || nrgRatio_L < 0.95f){
-                throw new Exception("DRC Effect Type '" + effectTypeName + "' not as expected");
+                float nrgRatio_L = (nrg_test[0]/nrg_def[0])/normFactor_L;
+                if (nrgRatio_L > 1.05f || nrgRatio_L < 0.95f){
+                    throw new Exception("DRC Effect Type '" + effectTypeName + "' not as expected");
+                }
             }
         }
     }
@@ -810,10 +813,11 @@ public class DecoderTestXheAac {
      * @param drcParams the MPEG-D DRC decoder parameter configuration
      * @param decoderName if non null, the name of the decoder to use for the decoding, otherwise
      *     the default decoder for the format will be used
+     * @param runtimeChange defines whether the decoder is configured at runtime or not
      * @throws RuntimeException
      */
-    public short[] decodeToMemory(AudioParameter audioParams, int testinput,
-            int eossample, List<Long> timestamps, DrcParams drcParams, String decoderName)
+    public short[] decodeToMemory(AudioParameter audioParams, int testinput, int eossample,
+            List<Long> timestamps, DrcParams drcParams, String decoderName, boolean runtimeChange)
             throws IOException
     {
         // TODO: code is the same as in DecoderTest, differences are:
@@ -851,25 +855,62 @@ public class DecoderTestXheAac {
 
         // set DRC parameters
         if (drcParams != null) {
-            configFormat.setInteger(MediaFormat.KEY_AAC_DRC_BOOST_FACTOR, drcParams.mBoost);
-            configFormat.setInteger(MediaFormat.KEY_AAC_DRC_ATTENUATION_FACTOR, drcParams.mCut);
-            if (drcParams.mDecoderTargetLevel != 0) {
-                configFormat.setInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL,
-                        drcParams.mDecoderTargetLevel);
-            }
             configFormat.setInteger(MediaFormat.KEY_AAC_DRC_HEAVY_COMPRESSION, drcParams.mHeavy);
-            if (drcParams.mEffectType != 0){
-                configFormat.setInteger(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE,
-                        drcParams.mEffectType);
+            if (!runtimeChange) {
+                configFormat.setInteger(MediaFormat.KEY_AAC_DRC_BOOST_FACTOR, drcParams.mBoost);
+                configFormat.setInteger(MediaFormat.KEY_AAC_DRC_ATTENUATION_FACTOR, drcParams.mCut);
+                if (drcParams.mDecoderTargetLevel != 0) {
+                    configFormat.setInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL,
+                            drcParams.mDecoderTargetLevel);
+                }
+                if (drcParams.mEffectType != 0){
+                    configFormat.setInteger(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE,
+                            drcParams.mEffectType);
+                }
             }
         }
 
         Log.v(localTag, "configuring with " + configFormat);
         codec.configure(configFormat, null /* surface */, null /* crypto */, 0 /* flags */);
 
+        if (drcParams != null) {
+            if(!runtimeChange) {
+                if (drcParams.mEffectType != 0) {
+                    final int effectTypeFromCodec = codec.getOutputFormat()
+                            .getInteger(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE);
+                    if (effectTypeFromCodec != drcParams.mEffectType) {
+                        fail("Drc Effect Type received from MediaCodec is not the Effect Type set");
+                    }
+                }
+                if (drcParams.mDecoderTargetLevel != 0) {
+                    final int targetLevelFromCodec = codec.getOutputFormat()
+                            .getInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
+                    if (targetLevelFromCodec != drcParams.mDecoderTargetLevel) {
+                        fail("Drc Target Reference Level received from MediaCodec is not the Target Reference Level set");
+                    }
+                }
+            }
+        }
+
         codec.start();
         codecInputBuffers = codec.getInputBuffers();
         codecOutputBuffers = codec.getOutputBuffers();
+
+        if (drcParams != null) {
+            if (runtimeChange) {
+                Bundle b = new Bundle();
+                b.putInt(MediaFormat.KEY_AAC_DRC_BOOST_FACTOR, drcParams.mBoost);
+                b.putInt(MediaFormat.KEY_AAC_DRC_ATTENUATION_FACTOR, drcParams.mCut);
+                if (drcParams.mEffectType != 0) {
+                    b.putInt(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE, drcParams.mEffectType);
+                }
+                if (drcParams.mDecoderTargetLevel != 0) {
+                    b.putInt(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL,
+                            drcParams.mDecoderTargetLevel);
+                }
+                codec.setParameters(b);
+            }
+        }
 
         extractor.selectTrack(0);
 
@@ -972,10 +1013,39 @@ public class DecoderTestXheAac {
             fail("decoder stopped outputting data");
         }
 
+        // check if MediaCodec gives back correct drc parameters
+        if (drcParams != null) {
+            if (drcParams.mEffectType != 0) {
+                final int effectTypeFromCodec = codec.getOutputFormat()
+                        .getInteger(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE);
+                if (false) { // TODO disabled until b/157773721 fixed
+                    if (effectTypeFromCodec != drcParams.mEffectType) {
+                        fail("Drc Effect Type received from MediaCodec is not the Effect Type set");
+                    }
+                }
+            }
+            if (drcParams.mDecoderTargetLevel != 0) {
+                final int targetLevelFromCodec = codec.getOutputFormat()
+                        .getInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
+                if (false) { // TODO disabled until b/157773721 fixed
+                    if (targetLevelFromCodec != drcParams.mDecoderTargetLevel) {
+                        fail("Drc Target Reference Level received from MediaCodec is not the Target Reference Level set");
+                    }
+                }
+            }
+        }
         codec.stop();
         codec.release();
         return decoded;
     }
 
+    private short[] decodeToMemory(AudioParameter audioParams, int testinput,
+            int eossample, List<Long> timestamps, DrcParams drcParams, String decoderName)
+            throws IOException
+    {
+        final short[] decoded = decodeToMemory(audioParams, testinput, eossample, timestamps,
+                drcParams, decoderName, false);
+        return decoded;
+    }
 }
 
