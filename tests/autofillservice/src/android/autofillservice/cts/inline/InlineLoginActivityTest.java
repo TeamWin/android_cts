@@ -35,10 +35,13 @@ import android.autofillservice.cts.DummyActivity;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService;
 import android.autofillservice.cts.LoginActivityCommonTestCase;
+import android.autofillservice.cts.NonAutofillableActivity;
+import android.autofillservice.cts.UsernameOnlyActivity;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
 import android.service.autofill.FillContext;
+import android.support.test.uiautomator.Direction;
 
 import com.android.cts.mockime.MockImeSession;
 
@@ -123,6 +126,57 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
                 findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
         assertWithMessage("Password node is focused").that(
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+    }
+
+    @Test
+    public void testAutofill_SwitchToAutofillableActivity() throws Exception {
+        assertAutofill_SwitchActivity(UsernameOnlyActivity.class);
+    }
+
+    @Test
+    public void testAutofill_SwitchToNonAutofillableActivity() throws Exception {
+        assertAutofill_SwitchActivity(NonAutofillableActivity.class);
+    }
+
+    private void assertAutofill_SwitchActivity(Class<?> clazz) throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "password")
+                        .setPresentation(createPresentation("The Username"))
+                        .setInlinePresentation(createInlinePresentation("The Username"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+        sReplier.getNextFillRequest();
+        // Make sure the suggestion is shown.
+        mUiBot.assertDatasets("The Username");
+
+        mUiBot.pressHome();
+        mUiBot.waitForIdle();
+
+        // Switch to another Activity
+        startActivity(clazz);
+        mUiBot.waitForIdle();
+
+        // Trigger input method show.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+        // Make sure suggestion is not shown.
+        mUiBot.assertNoDatasets();
+    }
+
+    protected final void startActivity(Class<?> clazz) {
+        final Intent intent = new Intent(mContext, clazz);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
     }
 
     @Test
@@ -294,5 +348,41 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
 
         // Confirm new fill request
         sReplier.getNextFillRequest();
+    }
+
+    @Test
+    public void testScrollSuggestionView() throws Exception {
+        // Set service.
+        enableService();
+
+        final int firstDataset = 1;
+        final int lastDataset = 6;
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder();
+        for (int i = firstDataset; i <= lastDataset; i++) {
+            builder.addDataset(new CannedFillResponse.CannedDataset.Builder()
+                    .setField(ID_USERNAME, "dude" + i)
+                    .setPresentation(createPresentation("Username" + i))
+                    .setInlinePresentation(createInlinePresentation("Username" + i))
+                    .build());
+        }
+
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertSuggestion("Username" + firstDataset);
+        mUiBot.assertNoSuggestion("Username" + lastDataset);
+
+        // Scroll the suggestion view
+        mUiBot.scrollSuggestionView(Direction.RIGHT, /* speed */ 5000);
+        mUiBot.waitForIdleSync();
+
+        mUiBot.assertNoSuggestion("Username" + firstDataset);
+        mUiBot.assertSuggestion("Username" + lastDataset);
+
+        sReplier.getNextFillRequest();
+        mUiBot.waitForIdleSync();
     }
 }

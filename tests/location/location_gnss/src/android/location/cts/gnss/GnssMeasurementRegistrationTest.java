@@ -21,8 +21,11 @@ import android.location.GnssMeasurementsEvent;
 import android.location.GnssStatus;
 import android.location.cts.common.GnssTestCase;
 import android.location.cts.common.SoftAssert;
+import android.location.cts.common.TestGnssMeasurementListener;
+import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
+import android.os.Build;
 import android.util.Log;
 
 import java.util.List;
@@ -82,10 +85,10 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
      * Test GPS measurements registration.
      */
     public void testGnssMeasurementRegistration() throws Exception {
-        // Checks if GPS hardware feature is present, skips test (pass) if not,
-        // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
-                isCtsVerifierTest())) {
+        // Checks if GPS hardware feature is present, skips test (pass) if not
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N,
+                mTestLocationManager,
+                TAG)) {
             return;
         }
 

@@ -32,7 +32,6 @@ import android.content.IntentSender;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.view.KeyEvent;
-import android.view.View;
 import android.widget.EditText;
 
 import com.android.cts.mockime.ImeCommand;
@@ -45,7 +44,14 @@ import org.junit.Test;
 
 import java.util.regex.Pattern;
 
-public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
+public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase {
+
+    protected DatasetFilteringTest() {
+    }
+
+    protected DatasetFilteringTest(UiBot inlineUiBot) {
+        super(inlineUiBot);
+    }
 
     @BeforeClass
     public static void setMaxDatasets() throws Exception {
@@ -74,20 +80,21 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "aa")
-                        .setPresentation(createPresentation(aa))
+                        .setPresentation(aa, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "ab")
-                        .setPresentation(createPresentation(ab))
+                        .setPresentation(ab, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "b")
-                        .setPresentation(createPresentation(b))
+                        .setPresentation(b, isInlineMode())
                         .build())
                 .build());
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
@@ -112,7 +119,10 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
-        callback.assertUiHiddenEvent(mActivity.getUsername());
+        // TODO(b/157762527): Fix this for the inline case.
+        if (!isInlineMode()) {
+            callback.assertUiHiddenEvent(mActivity.getUsername());
+        }
         mUiBot.assertNoDatasets();
     }
 
@@ -128,20 +138,21 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "aa")
-                        .setPresentation(createPresentation(aa))
+                        .setPresentation(aa, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "ab")
-                        .setPresentation(createPresentation(ab))
+                        .setPresentation(ab, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "b")
-                        .setPresentation(createPresentation(b))
+                        .setPresentation(b, isInlineMode())
                         .build())
                 .build());
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
@@ -168,7 +179,10 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sendKeyEvent("KEYCODE_A");
         sendKeyEvent("KEYCODE_A");
         sendKeyEvent("KEYCODE_A");
-        callback.assertUiHiddenEvent(mActivity.getUsername());
+        // TODO(b/157762527): Fix this for the inline case.
+        if (!isInlineMode()) {
+            callback.assertUiHiddenEvent(mActivity.getUsername());
+        }
         mUiBot.assertNoDatasets();
     }
 
@@ -187,22 +201,23 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "aa")
-                        .setPresentation(createPresentation(aa))
+                        .setPresentation(aa, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "ab")
-                        .setPresentation(createPresentation(ab))
+                        .setPresentation(ab, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "b")
-                        .setPresentation(createPresentation(b))
+                        .setPresentation(b, isInlineMode())
                         .build())
                 .build());
 
         final ImeEventStream stream = mockImeSession.openEventStream();
 
         // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
 
         // Wait until the MockIme gets bound to the TestActivity.
         expectBindInput(stream, Process.myPid(), MOCK_IME_TIMEOUT_MS);
@@ -238,7 +253,10 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         final MyAutofillCallback callback = mActivity.registerCallback();
         final ImeCommand cmd5 = mockImeSession.callCommitText("aaa", 1);
         expectCommand(stream, cmd5, MOCK_IME_TIMEOUT_MS);
-        callback.assertUiHiddenEvent(mActivity.getUsername());
+        // TODO(b/157762527): Fix this for the inline case.
+        if (!isInlineMode()) {
+            callback.assertUiHiddenEvent(mActivity.getUsername());
+        }
         mUiBot.assertNoDatasets();
     }
 
@@ -255,20 +273,21 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "aa")
-                        .setPresentation(createPresentation(aa))
+                        .setPresentation(aa, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "ab")
-                        .setPresentation(createPresentation(ab))
+                        .setPresentation(ab, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, (String) null)
-                        .setPresentation(createPresentation(b))
+                        .setPresentation(b, isInlineMode())
                         .build())
                 .build());
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
@@ -308,20 +327,21 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, a)
-                        .setPresentation(createPresentation(a))
+                        .setPresentation(a, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, b)
-                        .setPresentation(createPresentation(b))
+                        .setPresentation(b, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, c)
-                        .setPresentation(createPresentation(c))
+                        .setPresentation(c, isInlineMode())
                         .build())
                 .build());
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
@@ -334,7 +354,9 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(b);
 
         changeUsername("c");
-        mUiBot.assertDatasets(c);
+        if (!isInlineMode()) { // With inline, we don't show the datasets now to protect privacy.
+            mUiBot.assertDatasets(c);
+        }
     }
 
     @Test
@@ -351,20 +373,22 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "whatever", Pattern.compile("a|aa"))
-                        .setPresentation(createPresentation(aa))
+                        .setPresentation(aa, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "whatsoever", createPresentation(ab),
+                        .setField(ID_USERNAME, "whatsoever",
                                 Pattern.compile("a|ab"))
+                        .setPresentation(ab, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, (String) null, Pattern.compile("b"))
-                        .setPresentation(createPresentation(b))
+                        .setPresentation(b, isInlineMode())
                         .build())
                 .build());
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
@@ -389,7 +413,10 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
-        callback.assertUiHiddenEvent(mActivity.getUsername());
+        // TODO(b/157762527): Fix this for the inline case.
+        if (!isInlineMode()) {
+            callback.assertUiHiddenEvent(mActivity.getUsername());
+        }
         mUiBot.assertNoDatasets();
     }
 
@@ -408,22 +435,24 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
                 // This dataset has a value but filter is disabled
                 .addDataset(new CannedDataset.Builder()
                         .setUnfilterableField(ID_USERNAME, "a am I")
-                        .setPresentation(createPresentation(unfilterable))
+                        .setPresentation(unfilterable, isInlineMode())
                         .build())
                 // This dataset uses pattern to filter
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "whatsoever", createPresentation(aOrW),
+                        .setField(ID_USERNAME, "whatsoever",
                                 Pattern.compile("a|aw"))
+                        .setPresentation(aOrW, isInlineMode())
                         .build())
                 // This dataset uses value to filter
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "wazzup")
-                        .setPresentation(createPresentation(w))
+                        .setPresentation(w, isInlineMode())
                         .build())
                 .build());
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
@@ -447,12 +476,17 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
 
         // Only one datasets start with 'w'
         changeUsername("w");
-        mUiBot.assertDatasets(w);
+        if (!isInlineMode()) { // With inline, we don't show the datasets now to protect privacy.
+            mUiBot.assertDatasets(w);
+        }
 
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
-        callback.assertUiHiddenEvent(mActivity.getUsername());
+        // TODO(b/157762527): Fix this for the inline case.
+        if (!isInlineMode()) {
+            callback.assertUiHiddenEvent(mActivity.getUsername());
+        }
         mUiBot.assertNoDatasets();
     }
 
@@ -475,25 +509,27 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "aword")
-                        .setPresentation(createPresentation(plain))
+                        .setPresentation(plain, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "a ignore", everything)
-                        .setPresentation(createPresentation(regexPlain))
+                        .setPresentation(regexPlain, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "ab ignore", everything)
                         .setAuthentication(authentication)
-                        .setPresentation(createPresentation(authRegex))
+                        .setPresentation(authRegex, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "ab ignore", createPresentation(kitchnSync),
+                        .setField(ID_USERNAME, "ab ignore",
                                 everything)
+                        .setPresentation(kitchnSync, isInlineMode())
                         .build())
                 .build());
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
@@ -527,25 +563,27 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "aword")
-                        .setPresentation(createPresentation(plain))
+                        .setPresentation(plain, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "a ignore", everything)
-                        .setPresentation(createPresentation(regexPlain))
+                        .setPresentation(regexPlain, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "ab ignore", everything)
                         .setAuthentication(authentication)
-                        .setPresentation(createPresentation(authRegex))
+                        .setPresentation(authRegex, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
-                        .setField(ID_USERNAME, "ab ignore", createPresentation(kitchnSync),
+                        .setField(ID_USERNAME, "ab ignore",
                                 everything)
+                        .setPresentation(kitchnSync, isInlineMode())
                         .build())
                 .build());
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
@@ -589,15 +627,15 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "aa")
-                        .setPresentation(createPresentation(aa))
+                        .setPresentation(aa, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "ab")
-                        .setPresentation(createPresentation(ab))
+                        .setPresentation(ab, isInlineMode())
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setField(ID_USERNAME, "b")
-                        .setPresentation(createPresentation(b))
+                        .setPresentation(b, isInlineMode())
                         .build())
                 .build());
 
@@ -623,7 +661,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         final EditText username = mActivity.getUsername();
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mUiBot.selectByRelativeId(ID_USERNAME);
         callback.assertUiShownEvent(username);
 
         sReplier.getNextFillRequest();
@@ -641,12 +679,18 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
 
         // Filter all out
         changeUsername("aaa");
-        callback.assertUiHiddenEvent(username);
+        // TODO(b/157762527): Fix this for the inline case.
+        if (!isInlineMode()) {
+            callback.assertUiHiddenEvent(username);
+        }
         mUiBot.assertNoDatasets();
 
         // Now delete the char and assert aa is showing again
         changeUsername("aa");
-        callback.assertUiShownEvent(username);
+        // TODO(b/157762527): Fix this for the inline case.
+        if (!isInlineMode()) {
+            callback.assertUiShownEvent(username);
+        }
         mUiBot.assertDatasets(aa);
 
         // Delete one more and assert two datasets showing
@@ -664,5 +708,9 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
+
+        // Reset back to all choices
+        changeUsername("");
+        mUiBot.assertDatasets(aa, ab, b);
     }
 }

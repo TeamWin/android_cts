@@ -36,6 +36,8 @@ public class DataSharingActivity extends AbstractContentCaptureActivity {
 
     private static final Executor sExecutor = Executors.newCachedThreadPool();
     private static final Random sRandom = new Random();
+    private static final String sLocusId = "DataShare_CTSTest";
+    private static final String sMimeType = "application/octet-stream";
 
     boolean mSessionFinished = false;
     boolean mSessionSucceeded = false;
@@ -54,7 +56,7 @@ public class DataSharingActivity extends AbstractContentCaptureActivity {
         assertThat(manager.isContentCaptureEnabled()).isTrue();
 
         manager.shareData(
-                new DataShareRequest(new LocusId("cts"), "application/octet-stream"),
+                new DataShareRequest(new LocusId(sLocusId), sMimeType),
                 sExecutor, new DataShareWriteAdapter() {
                     @Override
                     public void onWrite(ParcelFileDescriptor destination) {

@@ -16,6 +16,7 @@ android_test {
     name: "CtsLocationPrivilegedTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
+        "LocationCtsCommon",
         "androidx.test.ext.junit",
         "androidx.test.ext.truth",
         "androidx.test.rules",

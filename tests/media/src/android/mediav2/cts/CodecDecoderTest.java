@@ -104,7 +104,13 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             info.offset = offset;
             info.presentationTimeUs = pts;
-            info.flags = flags;
+            info.flags = 0;
+            if ((flags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
+                info.flags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
+            }
+            if ((flags & MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0) {
+                info.flags |= MediaCodec.BUFFER_FLAG_PARTIAL_FRAME;
+            }
             if (i != sfCount - 1) {
                 info.size = size / sfCount;
                 info.flags |= MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME;
@@ -189,6 +195,12 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 {MediaFormat.MIMETYPE_AUDIO_AAC, "bbb_1ch_16kHz_aac.mp4",
                         "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_aac.mp4", -1.0f},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_340x280_768kbps_30fps_mpeg2.mp4", null,
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2,
+                        "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_2fields.mp4", null,
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2,
+                        "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_1field.ts", null,
                         "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_340x280_768kbps_30fps_avc.mp4", null,
                         "bbb_520x390_1mbps_30fps_avc.mp4", -1.0f},
