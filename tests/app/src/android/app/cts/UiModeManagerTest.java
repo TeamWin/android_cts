@@ -222,6 +222,9 @@ public class UiModeManagerTest extends AndroidTestCase {
      * while specifying a priority.
      */
     public void testEnterCarModePrioritized() {
+        if (mUiModeManager.isUiModeLocked()) {
+            return;
+        }
         // Adopt shell permission so the required permission
         // (android.permission.ENTER_CAR_MODE_PRIORITIZED) is granted.
         UiAutomation ui = getInstrumentation().getUiAutomation();
@@ -243,6 +246,9 @@ public class UiModeManagerTest extends AndroidTestCase {
      * permission to use that API.
      */
     public void testEnterCarModePrioritizedDenied() {
+        if (mUiModeManager.isUiModeLocked()) {
+            return;
+        }
         try {
             mUiModeManager.enableCarMode(100, 0);
         } catch (SecurityException se) {
