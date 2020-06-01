@@ -79,6 +79,8 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
     @Test
     public void cect_11_2_15_11_VolumeUpDownUserControlPressed() throws Exception {
         ITestDevice device = getDevice();
+        hdmiCecClient.sendCecMessage(LogicalAddress.AUDIO_SYSTEM, LogicalAddress.BROADCAST,
+                CecOperand.SET_SYSTEM_AUDIO_MODE, CecMessage.formatParams(1));
         device.executeShellCommand("input keyevent KEYCODE_VOLUME_UP");
         String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM,
                 CecOperand.USER_CONTROL_PRESSED);
@@ -104,6 +106,8 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
     @Test
     public void cect_11_2_15_12_MuteUserControlPressed() throws Exception {
         ITestDevice device = getDevice();
+        hdmiCecClient.sendCecMessage(LogicalAddress.AUDIO_SYSTEM, LogicalAddress.BROADCAST,
+                CecOperand.SET_SYSTEM_AUDIO_MODE, CecMessage.formatParams(1));
         device.executeShellCommand("input keyevent KEYCODE_MUTE");
         String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM,
                 CecOperand.USER_CONTROL_PRESSED);
