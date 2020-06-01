@@ -35,5 +35,6 @@
         <option name="class" value="android.cts.install.host.InstallTest" />
         <option name="class" value="android.cts.install.host.DowngradeTest" />
         <option name="class" value="android.cts.install.host.SamegradeTest" />
+        <option name="class" value="android.cts.install.host.UpgradeTest" />
     </test>
 </configuration>
