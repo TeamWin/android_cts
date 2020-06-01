@@ -255,7 +255,7 @@ public class FileObserverTest extends AndroidTestCase {
 
     @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testFileObserverExternalStorageDirectory() throws Exception {
-        helpTestFileObserver(Environment.getExternalStorageDirectory(), false);
+        helpTestFileObserver(Environment.getExternalStorageDirectory(), true);
     }
 
     @AppModeFull(reason = "Instant apps cannot access external storage")
@@ -264,7 +264,7 @@ public class FileObserverTest extends AndroidTestCase {
                 Pair.create(getContext().getCacheDir(), false),
                 Pair.create(getContext().getFilesDir(), false),
                 Pair.create(getContext().getExternalFilesDir(null), true),
-                Pair.create(Environment.getExternalStorageDirectory(), false)
+                Pair.create(Environment.getExternalStorageDirectory(), true)
         );
     }
 
