@@ -48,11 +48,11 @@ import java.util.Set;
 @RunWith(AndroidJUnit4.class)
 public class IntentTest {
 
-    private static final String CURRENT_API_RESOURCE = "current.txt";
+    private static final String CURRENT_API_RESOURCE = "current.api.gz";
 
-    private static final String SYSTEM_CURRENT_API_RESOURCE = "system-current.txt";
+    private static final String SYSTEM_CURRENT_API_RESOURCE = "system-current.api.gz";
 
-    private static final String SYSTEM_REMOVED_API_RESOURCE = "system-removed.txt";
+    private static final String SYSTEM_REMOVED_API_RESOURCE = "system-removed.api.gz";
 
     private static final String TAG = IntentTest.class.getSimpleName();
 
