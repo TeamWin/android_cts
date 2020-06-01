@@ -12,115 +12,111 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-default_visibility = [
-    "//cts/tests/signature/api-check:__subpackages__",
-    "//cts/tests/signature/intent-check",
-]
+genrule_defaults {
+    name: "signature-cts-api-api-gz",
+    cmd: "$(location metalava) --no-banner -convert2xmlnostrip $(in) $(genDir)/api.xml && gzip -c $(genDir)/api.xml > $(out)",
+    tools: ["metalava"],
+    visibility: [
+        "//cts/tests/signature/api-check:__subpackages__",
+        "//cts/tests/signature/intent-check",
+    ],
+}
 
 genrule {
-    name: "cts-current-txt",
-    visibility: default_visibility,
+    name: "cts-current-api-gz",
+    defaults: ["signature-cts-api-api-gz"],
     srcs: [
         ":frameworks-base-api-current.txt",
     ],
     out: [
-        "current.txt",
+        "current.api.gz",
     ],
-    cmd: "cp $(in) $(out)",
 }
 
 genrule {
-    name: "cts-system-current-txt",
-    visibility: default_visibility,
+    name: "cts-system-current-api-gz",
+    defaults: ["signature-cts-api-api-gz"],
     srcs: [
         ":frameworks-base-api-system-current.txt",
     ],
     out: [
-        "system-current.txt",
+        "system-current.api.gz",
     ],
-    cmd: "cp $(in) $(out)",
 }
 
 genrule {
-    name: "cts-system-removed-txt",
-    visibility: default_visibility,
+    name: "cts-system-removed-api-gz",
+    defaults: ["signature-cts-api-api-gz"],
     srcs: [
         ":frameworks-base-api-system-removed.txt",
     ],
     out: [
-        "system-removed.txt",
+        "system-removed.api.gz",
     ],
-    cmd: "cp $(in) $(out)",
 }
 
 genrule {
-    name: "cts-android-test-base-current-txt",
-    visibility: default_visibility,
+    name: "cts-android-test-base-current-api-gz",
+    defaults: ["signature-cts-api-api-gz"],
     srcs: [
         ":android-test-base-current.txt",
     ],
     out: [
-        "android-test-base-current.txt",
+        "android-test-base-current.api.gz",
     ],
-    cmd: "cp $(in) $(out)",
 }
 
 genrule {
-    name: "cts-android-test-mock-current-txt",
-    visibility: default_visibility,
+    name: "cts-android-test-mock-current-api-gz",
+    defaults: ["signature-cts-api-api-gz"],
     srcs: [
         ":android-test-mock-current.txt",
     ],
     out: [
-        "android-test-mock-current.txt",
+        "android-test-mock-current.api.gz",
     ],
-    cmd: "cp $(in) $(out)",
 }
 
 genrule {
-    name: "cts-android-test-runner-current-txt",
-    visibility: default_visibility,
+    name: "cts-android-test-runner-current-api-gz",
+    defaults: ["signature-cts-api-api-gz"],
     srcs: [
         ":android-test-runner-current.txt",
     ],
     out: [
-        "android-test-runner-current.txt",
+        "android-test-runner-current.api.gz",
     ],
-    cmd: "cp $(in) $(out)",
 }
 
 genrule {
-    name: "cts-apache-http-legacy-current-txt",
-    visibility: default_visibility,
+    name: "cts-apache-http-legacy-current-api-gz",
+    defaults: ["signature-cts-api-api-gz"],
     srcs: [
         ":apache-http-legacy-current.txt",
     ],
     out: [
-        "apache-http-legacy-current.txt",
+        "apache-http-legacy-current.api.gz",
     ],
-    cmd: "cp $(in) $(out)",
 }
 
 genrule {
-    name: "cts-car-system-current-txt",
-    visibility: default_visibility,
+    name: "cts-car-system-current-api-gz",
+    defaults: ["signature-cts-api-api-gz"],
     srcs: [
         ":car-api-system-current.txt",
     ],
     out: [
-        "car-system-current.txt",
+        "car-system-current.api.gz",
     ],
-    cmd: "cp $(in) $(out)",
 }
 
 genrule {
-    name: "cts-car-system-removed-txt",
-    visibility: default_visibility,
+    name: "cts-car-system-removed-api-gz",
+    defaults: ["signature-cts-api-api-gz"],
     srcs: [
         ":car-api-system-removed.txt",
     ],
     out: [
-        "car-system-removed.txt",
+        "car-system-removed.api.gz",
     ],
-    cmd: "cp $(in) $(out)",
 }

@@ -20,6 +20,7 @@ import android.signature.cts.JDiffClassDescription.JDiffField;
 import android.signature.cts.JDiffClassDescription.JDiffMethod;
 import android.util.Log;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,6 +29,8 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import java.util.zip.GZIPInputStream;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -106,11 +109,13 @@ class XmlApiParser extends ApiParser {
     }
 
     private final String tag;
+    private final boolean gzipped;
 
     private final XmlPullParserFactory factory;
 
-    XmlApiParser(String tag) {
+    XmlApiParser(String tag, boolean gzipped) {
         this.tag = tag;
+        this.gzipped = gzipped;
         try {
             factory = XmlPullParserFactory.newInstance();
         } catch (XmlPullParserException e) {
@@ -121,17 +126,24 @@ class XmlApiParser extends ApiParser {
     /**
      * Load field information from xml to memory.
      *
-     * @param className
+     * @param currentClass
      *         of the class being examined which will be shown in error messages
      * @param parser
      *         The XmlPullParser which carries the xml information.
      * @return the new field
      */
-    private static JDiffField loadFieldInfo(String className, XmlPullParser parser) {
+    private static JDiffField loadFieldInfo(
+            JDiffClassDescription currentClass, XmlPullParser parser) {
         String fieldName = parser.getAttributeValue(null, ATTRIBUTE_NAME);
         String fieldType = canonicalizeType(parser.getAttributeValue(null, ATTRIBUTE_TYPE));
-        int modifier = jdiffModifierToReflectionFormat(className, parser);
+        int modifier = jdiffModifierToReflectionFormat(currentClass.getClassName(), parser);
         String value = parser.getAttributeValue(null, ATTRIBUTE_VALUE);
+
+        if (currentClass.isEnumType() && fieldType.equals(currentClass.getAbsoluteClassName())
+                && (value != null && value.startsWith("PsiEnumConstant:"))) {
+            // We don't need to check the value.
+            value = null;
+        }
 
         // Canonicalize the expected value to ensure that it is consistent with the values obtained
         // using reflection by ApiComplianceChecker.getFieldValueAsString(...).
@@ -148,10 +160,24 @@ class XmlApiParser extends ApiParser {
                         break;
 
                     case "char":
-                        // A character is encoded in XML as its numeric value. Convert it to a
+                        // A character may be encoded in XML as its numeric value. Convert it to a
                         // string containing the single character.
-                        char c = (char) Integer.parseInt(value);
-                        value = String.valueOf(c);
+                        try {
+                            char c = (char) Integer.parseInt(value);
+                            value = String.valueOf(c);
+                        } catch (NumberFormatException e) {
+                            // If not, it must be a string "'?'". Extract the second character,
+                            // but we need to unescape it.
+                            int len = value.length();
+                            if (value.charAt(0) == '\'' && value.charAt(len - 1) == '\'') {
+                                String sub = value.substring(1, len - 1);
+                                value = unescapeFieldStringValue(sub);
+                            } else {
+                                throw new NumberFormatException(String.format(
+                                        "Cannot parse the value of field '%s': invalid number '%s'",
+                                        fieldName, value));
+                            }
+                        }
                         break;
 
                     case "double":
@@ -248,10 +274,25 @@ class XmlApiParser extends ApiParser {
         String className = parser.getAttributeValue(null, ATTRIBUTE_NAME);
         JDiffClassDescription currentClass = new JDiffClassDescription(pkg, className);
 
-        currentClass.setModifier(jdiffModifierToReflectionFormat(className, parser));
         currentClass.setType(isInterface ? JDiffClassDescription.JDiffType.INTERFACE :
                 JDiffClassDescription.JDiffType.CLASS);
-        currentClass.setExtendsClass(parser.getAttributeValue(null, ATTRIBUTE_EXTENDS));
+
+        String superClass = stripGenericsArgs(parser.getAttributeValue(null, ATTRIBUTE_EXTENDS));
+        int modifiers = jdiffModifierToReflectionFormat(className, parser);
+        if (isInterface) {
+            if (superClass != null) {
+                currentClass.addImplInterface(superClass);
+            }
+        } else {
+            if ("java.lang.annotation.Annotation".equals(superClass)) {
+                // ApiComplianceChecker expects "java.lang.annotation.Annotation" to be in
+                // the "impl interfaces".
+                currentClass.addImplInterface(superClass);
+            } else {
+                currentClass.setExtendsClass(superClass);
+            }
+        }
+        currentClass.setModifier(modifiers);
         return currentClass;
     }
 
@@ -324,12 +365,20 @@ class XmlApiParser extends ApiParser {
         XmlPullParser parser;
         try {
             parser = factory.newPullParser();
-            parser.setInput(path.newInputStream(), null);
+            InputStream input = path.newInputStream();
+            if (gzipped) {
+                input = new GZIPInputStream(input);
+            }
+            parser.setInput(input, null);
             return StreamSupport
                     .stream(new ClassDescriptionSpliterator(parser), false);
         } catch (XmlPullParserException | IOException e) {
             throw new RuntimeException("Could not parse " + path, e);
         }
+    }
+
+    private static String stripGenericsArgs(String typeName) {
+        return typeName == null ? null : typeName.replaceFirst("<.*", "");
     }
 
     private class ClassDescriptionSpliterator implements Spliterator<JDiffClassDescription> {
@@ -444,8 +493,8 @@ class XmlApiParser extends ApiParser {
                         break;
 
                     case TAG_IMPLEMENTS:
-                        currentClass
-                                .addImplInterface(parser.getAttributeValue(null, ATTRIBUTE_NAME));
+                        currentClass.addImplInterface(stripGenericsArgs(
+                                parser.getAttributeValue(null, ATTRIBUTE_NAME)));
                         break;
 
                     case TAG_CONSTRUCTOR:
@@ -470,7 +519,7 @@ class XmlApiParser extends ApiParser {
                         break;
 
                     case TAG_FIELD:
-                        JDiffField field = loadFieldInfo(currentClass.getClassName(), parser);
+                        JDiffField field = loadFieldInfo(currentClass, parser);
                         currentClass.addField(field);
                         break;
 
