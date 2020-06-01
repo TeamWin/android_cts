@@ -43,7 +43,6 @@ public class BackgroundPermissionButtonLabelTest {
             int stringId = permissionControllerContext.getResources().getIdentifier(
                     APP_PERMISSION_BUTTON_ALLOW_ALWAYS, "string",
                     "com.android.permissioncontroller");
-//                    mPermissionController); STOPSHIP b/147434671
 
             Assert.assertEquals(mContext.getPackageManager().getBackgroundPermissionOptionLabel(),
                     permissionControllerContext.getString(stringId));
