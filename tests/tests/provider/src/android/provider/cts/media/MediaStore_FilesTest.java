@@ -63,6 +63,7 @@ public class MediaStore_FilesTest {
     private Context mContext;
     private ContentResolver mResolver;
 
+    private Uri mExternalAudio;
     private Uri mExternalImages;
     private Uri mExternalFiles;
 
@@ -80,6 +81,7 @@ public class MediaStore_FilesTest {
         mResolver = mContext.getContentResolver();
 
         Log.d(TAG, "Using volume " + mVolumeName);
+        mExternalAudio = MediaStore.Audio.Media.getContentUri(mVolumeName);
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
         mExternalFiles = MediaStore.Files.getContentUri(mVolumeName);
     }
@@ -329,9 +331,9 @@ public class MediaStore_FilesTest {
     @Test
     public void testInPlaceUpdate_mediaFileWithInvalidRelativePath() throws Exception {
         final File file = new File(ProviderTestUtils.stageDownloadDir(mVolumeName),
-                "test" + System.nanoTime() + ".jpg");
-        ProviderTestUtils.stageFile(R.raw.scenery, file);
-        Log.d(TAG, "Staged image file at " + file.getAbsolutePath());
+                "test" + System.nanoTime() + ".mp3");
+        ProviderTestUtils.stageFile(R.raw.testmp3, file);
+        Log.d(TAG, "Staged audio file at " + file.getAbsolutePath());
 
         // Since file is created by shell, package name in MediaStore database row for this file
         // will not be test app's package name. To treat the insert as upsert, package name in
@@ -342,19 +344,14 @@ public class MediaStore_FilesTest {
 
         final ContentValues insertValues = new ContentValues();
         insertValues.put(MediaColumns.DATA, file.getAbsolutePath());
-        insertValues.put(MediaStore.Images.ImageColumns.DESCRIPTION, "Not a cat photo");
-        final Uri uri = mResolver.insert(mExternalImages, insertValues);
-        assertEquals(0, queryLong(uri, MediaStore.Images.ImageColumns.IS_PRIVATE));
-        assertStringColumn(uri, MediaStore.Images.ImageColumns.DESCRIPTION, "Not a cat photo");
+        insertValues.put(MediaStore.Audio.AudioColumns.BOOKMARK, 42L);
+        final Uri uri = mResolver.insert(mExternalAudio, insertValues);
+        assertEquals(42L, queryLong(uri, MediaStore.Audio.AudioColumns.BOOKMARK));
 
         final ContentValues updateValues = new ContentValues();
-        updateValues.put(FileColumns.MEDIA_TYPE, FileColumns.MEDIA_TYPE_IMAGE);
-        updateValues.put(FileColumns.MIME_TYPE, "image/jpeg");
-        updateValues.put(MediaStore.Images.ImageColumns.IS_PRIVATE, 1);
-        int updateRows = mResolver.update(uri, updateValues, null, null);
-        assertEquals(1, updateRows);
-        // Only interested in update not throwing exception. No need in checking whenever values
-        // were actually updates, as it is not in the scope of this test.
+        updateValues.put(MediaStore.Audio.AudioColumns.BOOKMARK, 43L);
+        assertEquals(1, mResolver.update(uri, updateValues, null, null));
+        assertEquals(43L, queryLong(uri, MediaStore.Audio.AudioColumns.BOOKMARK));
     }
 
     @Test
