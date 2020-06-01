@@ -1029,7 +1029,7 @@ public class WindowManagerState {
         private String mAppTransitionState;
 
         DisplayContent(DisplayContentProto proto) {
-            super(proto.windowContainer);
+            super(proto.rootDisplayArea.windowContainer);
             mId = proto.id;
             mFocusedRootTaskId = proto.focusedRootTaskId;
             mSingleTaskInstance = proto.singleTaskInstance;
