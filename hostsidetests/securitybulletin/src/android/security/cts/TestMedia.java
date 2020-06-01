@@ -143,6 +143,20 @@ public class TestMedia extends SecurityTestCase {
     }
 
     /**
+     * b/64340921
+     * Vulnerability Behaviour: SIGABRT in audioserver
+     */
+    @SecurityTest(minPatchLevel = "2018-02")
+    @Test
+    public void testPocCVE_2017_0837() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2017-0837", getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns("audioserver");
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/66969193
      * Vulnerability Behaviour: SIGSEGV in self
      */
