@@ -441,6 +441,8 @@ implements OnClickListener, SurfaceHolder.Callback {
                         case STAGE_INTENT_PICTURE:
                         case STAGE_INTENT_PICTURE_SECURE:
                             handleIntentPictureResult();
+                            // No broadcast should be received. Proceed to update test result
+                            updateSuccessState();
                             break;
                         case STAGE_INTENT_VIDEO:
                             handleIntentVideoResult();
@@ -597,6 +599,11 @@ implements OnClickListener, SurfaceHolder.Callback {
             mState = STATE_STARTED;
             mUriSuccess = false;
             mActionSuccess = false;
+
+            // Skip URI check for stages that should not receive intent
+            if (EXPECTED_INTENTS[stageIndex] == null) {
+                mUriSuccess = true;
+            }
 
             JobScheduler jobScheduler = (JobScheduler) getSystemService(
                     Context.JOB_SCHEDULER_SERVICE);
