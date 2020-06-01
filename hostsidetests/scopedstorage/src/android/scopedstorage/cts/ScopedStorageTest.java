@@ -2322,6 +2322,53 @@ public class ScopedStorageTest {
         }
     }
 
+    @Test
+    public void testAndroidMedia() throws Exception {
+        pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
+
+        try {
+            installApp(TEST_APP_A);
+
+            final File myMediaDir = getExternalMediaDir();
+            final File otherAppMediaDir = new File(myMediaDir.getAbsolutePath().
+                    replace(THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
+
+            // Verify that accessing other app's /sdcard/Android/media behaves exactly like DCIM for
+            // image files and exactly like Downloads for documents.
+            assertSharedStorageAccess(otherAppMediaDir, otherAppMediaDir, TEST_APP_A);
+            assertSharedStorageAccess(getDcimDir(), getDownloadDir(), TEST_APP_A);
+
+        } finally {
+            uninstallApp(TEST_APP_A);
+        }
+    }
+
+    /**
+     * Verifies that files created by {@code otherApp} in shared locations {@code imageDir}
+     * and {@code documentDir} follow the scoped storage rules. Requires the running app to hold
+     * {@code READ_EXTERNAL_STORAGE}.
+     */
+    private void assertSharedStorageAccess(File imageDir, File documentDir, TestApp otherApp)
+            throws Exception {
+        final File otherAppImage = new File(imageDir, "abc.jpg");
+        final File otherAppBinary = new File(documentDir, "abc.bin");
+        try {
+            assertCreateFilesAs(otherApp, otherAppImage, otherAppBinary);
+
+            // We can read the other app's image
+            assertFileAccess_readOnly(otherAppImage);
+            assertFileContent(otherAppImage, new String().getBytes());
+
+            // .. but not the binary file
+            assertFileAccess_existsOnly(otherAppBinary);
+            assertThrows(FileNotFoundException.class, () -> {
+                assertFileContent(otherAppBinary, new String().getBytes()); });
+        } finally {
+            deleteFileAsNoThrow(otherApp, otherAppImage.getAbsolutePath());
+            deleteFileAsNoThrow(otherApp, otherAppBinary.getAbsolutePath());
+        }
+    }
+
     /**
      * Checks restrictions for opening pending and trashed files by different apps. Assumes that
      * given {@code testApp} is already installed and has READ_EXTERNAL_STORAGE permission. This

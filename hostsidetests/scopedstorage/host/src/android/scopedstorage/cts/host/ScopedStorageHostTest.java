@@ -356,13 +356,23 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void testAccess_directory() throws Exception {
-        grantPermissions("android.permission.WRITE_EXTERNAL_STORAGE",
-                "android.permission.READ_EXTERNAL_STORAGE");
+        grantPermissions("android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE");
         try {
             runDeviceTest("testAccess_directory");
         } finally {
             revokePermissions("android.permission.READ_EXTERNAL_STORAGE",
-                    "android.permission.READ_EXTERNAL_STORAGE");
+                    "android.permission.WRITE_EXTERNAL_STORAGE");
+        }
+    }
+
+    @Test
+    public void testAndroidMedia() throws Exception {
+        grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
+        try {
+            runDeviceTest("testAndroidMedia");
+        } finally {
+            revokePermissions("android.permission.READ_EXTERNAL_STORAGE");
         }
     }
 
