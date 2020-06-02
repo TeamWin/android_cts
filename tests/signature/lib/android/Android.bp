@@ -24,7 +24,6 @@ java_library {
     ],
     static_libs: [
         "signature-common-javalib",
-        "metalava",
     ],
     sdk_version: "current",
 }
