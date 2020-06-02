@@ -18,8 +18,8 @@ android_test {
         "signature-api-check-defaults",
     ],
     java_resources: [
-        ":cts-current-txt",
-        ":cts-apache-http-legacy-current-txt",
+        ":cts-current-api-gz",
+        ":cts-apache-http-legacy-current-api-gz",
     ],
     min_sdk_version: "27",
 
