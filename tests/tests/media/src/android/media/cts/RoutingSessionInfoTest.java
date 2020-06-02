@@ -39,6 +39,7 @@ import androidx.test.runner.AndroidJUnit4;
  */
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@NonMediaMainlineTest
 public class RoutingSessionInfoTest {
     public static final String TEST_ID = "test_id";
     public static final String TEST_CLIENT_PACKAGE_NAME = "com.test.client.package.name";
