@@ -42,7 +42,6 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -158,8 +157,6 @@ public class MediaStoreTest {
 
     @Test
     public void testGetStorageVolume() throws Exception {
-        Assume.assumeFalse(MediaStore.VOLUME_EXTERNAL.equals(mVolumeName));
-
         final Uri uri = ProviderTestUtils.stageMedia(R.raw.volantis, mExternalImages);
 
         final StorageManager sm = mContext.getSystemService(StorageManager.class);

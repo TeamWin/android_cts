@@ -224,6 +224,10 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         });
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
             mEmbeddedView, null);
+        // We need to draw twice to make sure the first buffer actually
+        // arrives.
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
+            mEmbeddedView, null);
 
         // But after the click should hit.
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
