@@ -19,6 +19,13 @@
 
     <application>
         <uses-library android:name="android.test.runner" />
+        <service android:name=".IsolatedService"
+                 android:process=":Isolated"
+                 android:isolatedProcess="true"/>
+        <service android:name=".AppZygoteIsolatedService"
+                 android:process=":Isolated2"
+                 android:isolatedProcess="true"
+                 android:useAppZygote="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

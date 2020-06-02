@@ -77,6 +77,9 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
     private static final String CHECK_IF_FUSE_DATA_ISOLATION_IS_ENABLED_COMMANDLINE =
             "getprop persist.sys.vold_app_data_isolation_enabled";
     private static final String APPA_METHOD_CREATE_EXTERNAL_DIRS = "testCreateExternalDirs";
+    private static final String APPA_METHOD_TEST_ISOLATED_PROCESS = "testIsolatedProcess";
+    private static final String APPA_METHOD_TEST_APP_ZYGOTE_ISOLATED_PROCESS =
+            "testAppZygoteIsolatedProcess";
     private static final String APPB_METHOD_CAN_NOT_ACCESS_APPA_EXTERNAL_DIRS =
             "testCanNotAccessAppAExternalDirs";
     private static final String APPB_METHOD_CAN_ACCESS_APPA_EXTERNAL_DIRS =
@@ -327,5 +330,19 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         Assume.assumeThat(device.executeShellCommand(
                 CHECK_IF_FUSE_DATA_ISOLATION_IS_ENABLED_COMMANDLINE).trim(),
                 is("true"));
+    }
+
+    @Test
+    public void testIsolatedProcess() throws Exception {
+        new InstallMultiple().addFile(APPA_APK).run();
+        new InstallMultiple().addFile(APPB_APK).run();
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_TEST_ISOLATED_PROCESS);
+    }
+
+    @Test
+    public void testAppZygoteIsolatedProcess() throws Exception {
+        new InstallMultiple().addFile(APPA_APK).run();
+        new InstallMultiple().addFile(APPB_APK).run();
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_TEST_APP_ZYGOTE_ISOLATED_PROCESS);
     }
 }
