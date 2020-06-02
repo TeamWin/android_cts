@@ -17,14 +17,14 @@ LOCAL_PATH := $(call my-dir)
 all_system_api_modules :=
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
-    $(eval all_system_api_modules += system-$(ver).txt)\
+    $(eval all_system_api_modules += system-$(ver).api)\
   )\
 )
 all_system_api_files := $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(all_system_api_modules))
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := cts-system-all.txt
-LOCAL_MODULE_STEM := system-all.txt.zip
+LOCAL_MODULE := cts-system-all.api
+LOCAL_MODULE_STEM := system-all.api.zip
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts10 general-tests
@@ -46,11 +46,11 @@ LOCAL_PACKAGE_NAME := CtsSystemApiSignatureTestCases
 LOCAL_JAVA_RESOURCE_FILES := $(all_system_api_zip_file)
 
 LOCAL_SIGNATURE_API_FILES := \
-    current.txt \
-    android-test-mock-current.txt \
-    android-test-runner-current.txt \
-    system-current.txt \
-    system-removed.txt \
+    current.api.gz \
+    android-test-mock-current.api.gz \
+    android-test-runner-current.api.gz \
+    system-current.api.gz \
+    system-removed.api.gz \
 
 include $(LOCAL_PATH)/../build_signature_apk.mk
 
