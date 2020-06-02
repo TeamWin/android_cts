@@ -51,15 +51,13 @@ public class SensorSupportTest extends SensorTestCase {
     @Override
     public void setUp() {
         PackageManager pm = getContext().getPackageManager();
-        // Tests will only run if either HIFI_SENSORS or VR high performance mode is supported.
+        // Some tests will only run if either HIFI_SENSORS or VR high performance mode is supported.
         mAreHifiSensorsSupported = pm.hasSystemFeature(PackageManager.FEATURE_HIFI_SENSORS);
         mVrHighPerformanceModeSupported = pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
         mIsVrHeadset = (getContext().getResources().getConfiguration().uiMode
             & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_VR_HEADSET;
-        if (mAreHifiSensorsSupported || mVrHighPerformanceModeSupported) {
-            mSensorManager =
-                    (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
-        }
+        mSensorManager =
+                (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
 
         mHasAccel = hasSensorType(Sensor.TYPE_ACCELEROMETER);
         mHasGyro = hasSensorType(Sensor.TYPE_GYROSCOPE);
@@ -171,6 +169,6 @@ public class SensorSupportTest extends SensorTestCase {
     }
 
     private boolean hasSensorType(int sensorType) {
-        return (mSensorManager.getDefaultSensor(sensorType) != null);
+        return (mSensorManager != null && mSensorManager.getDefaultSensor(sensorType) != null);
     }
 }
