@@ -262,9 +262,16 @@ class MuxerTestHelper {
         return mTrackCount;
     }
 
-    // offset pts of samples from index sampleOffset till the end by tsOffset
-    void offsetTimeStamp(int trackID, long tsOffset, int sampleOffset) {
-        if (trackID < mTrackCount) {
+    // offset pts of samples from index sampleOffset till the end by tsOffset for each audio and
+    // video track
+    void offsetTimeStamp(long tsAudioOffset, long tsVideoOffset, int sampleOffset) {
+        for (int trackID = 0; trackID < mTrackCount; trackID++) {
+            long tsOffset = 0;
+            if (mFormat.get(trackID).getString(MediaFormat.KEY_MIME).startsWith("video/")) {
+                tsOffset = tsVideoOffset;
+            } else if (mFormat.get(trackID).getString(MediaFormat.KEY_MIME).startsWith("audio/")) {
+                tsOffset = tsAudioOffset;
+            }
             for (int i = sampleOffset; i < mBufferInfo.get(trackID).size(); i++) {
                 MediaCodec.BufferInfo bufferInfo = mBufferInfo.get(trackID).get(i);
                 bufferInfo.presentationTimeUs += tsOffset;
@@ -289,7 +296,7 @@ class MuxerTestHelper {
                 MediaFormat thatFormat = that.mFormat.get(j);
                 String thatMime = thatFormat.getString(MediaFormat.KEY_MIME);
                 if (thisMime != null && thisMime.equals(thatMime)) {
-                    if (!ExtractorTest.isCSDIdentical(thisFormat, thatFormat)) continue;
+                    if (!ExtractorTest.isFormatSimilar(thisFormat, thatFormat)) continue;
                     if (mBufferInfo.get(i).size() == that.mBufferInfo.get(j).size()) {
                         long tolerance = thisMime.startsWith("video/") ? STTS_TOLERANCE_US : 0;
                         // TODO(b/157008437) - muxed file pts is +1us of target pts
@@ -700,8 +707,8 @@ public class MuxerTest {
         public static Collection<Object[]> input() {
             return Arrays.asList(new Object[][]{
                     // audio, video are 3 sec
-                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_mpeg4" +
-                            ".mkv", "bbb_stereo_48kHz_192kbps_aac.mp4", "mp4"},
+                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_h263" +
+                            ".mp4", "bbb_stereo_48kHz_192kbps_aac.mp4", "mp4"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM, "bbb_cif_768kbps_30fps_vp9.mkv"
                             , "bbb_stereo_48kHz_192kbps_vorbis.ogg", "webm"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP, "bbb_cif_768kbps_30fps_h263.mp4"
@@ -716,8 +723,8 @@ public class MuxerTest {
                             , "bbb_mono_16kHz_20kbps_amrwb.amr", "3gpp"},
 
                     // audio 10 sec, video 3 sec
-                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_mpeg4" +
-                            ".mkv", "bbb_stereo_48kHz_128kbps_aac.mp4", "mp4"},
+                    {MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4, "bbb_cif_768kbps_30fps_h263" +
+                            ".mp4", "bbb_stereo_48kHz_128kbps_aac.mp4", "mp4"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM, "bbb_cif_768kbps_30fps_vp9.mkv"
                             , "bbb_stereo_48kHz_128kbps_vorbis.ogg", "webm"},
                     {MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP, "bbb_cif_768kbps_30fps_h263.mp4"
@@ -740,7 +747,8 @@ public class MuxerTest {
             Assume.assumeTrue("TODO(b/146423022)",
                     mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
             // number of times to repeat {mSrcFileA, mSrcFileB} in Output
-            final int[][] numTracks = {{2, 0}, {0, 2}, {1, 2}, {2, 1}};
+            // values should be in sync with nativeTestMultiTrack
+            final int[][] numTracks = {{2, 0}, {0, 2}, {1, 2}, {2, 1}, {2, 2}};
 
             MuxerTestHelper mediaInfoA = new MuxerTestHelper(mInpPathA);
             MuxerTestHelper mediaInfoB = new MuxerTestHelper(mInpPathB);
@@ -860,7 +868,9 @@ public class MuxerTest {
 
         @Test
         public void testOffsetPresentationTime() throws IOException {
-            final int OFFSET_TS = 111000;
+            // values sohuld be in sync with nativeTestOffsetPts
+            final long[] OFFSET_TS_AUDIO_US = {-23220L, 0L, 200000L, 400000L};
+            final long[] OFFSET_TS_VIDEO_US = {0L, 200000L, 400000L};
             Assume.assumeTrue(shouldRunTest(mOutFormat));
             Assume.assumeTrue("TODO(b/148978457)",
                     mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
@@ -870,24 +880,27 @@ public class MuxerTest {
                     mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
             Assume.assumeTrue("TODO(b/146421018)",
                     mOutFormat != MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG);
-            assertTrue(OFFSET_TS > MuxerTestHelper.STTS_TOLERANCE_US);
             MuxerTestHelper mediaInfo = new MuxerTestHelper(mInpPath);
-            for (int trackID = 0; trackID < mediaInfo.getTrackCount(); trackID++) {
-                for (int i = 0; i < mOffsetIndices.length; i++) {
-                    mediaInfo.offsetTimeStamp(trackID, OFFSET_TS, mOffsetIndices[i]);
-                }
-                MediaMuxer muxer = new MediaMuxer(mOutPath, mOutFormat);
-                mediaInfo.muxMedia(muxer);
-                muxer.release();
-                MuxerTestHelper outInfo = new MuxerTestHelper(mOutPath);
-                if (!outInfo.isSubsetOf(mediaInfo)) {
-                    String msg = String.format(
-                            "testOffsetPresentationTime: inp: %s, fmt: %d, trackID %d", mSrcFile,
-                            mOutFormat, trackID);
-                    fail(msg + "error! output != input");
-                }
-                for (int i = mOffsetIndices.length - 1; i >= 0; i--) {
-                    mediaInfo.offsetTimeStamp(trackID, -OFFSET_TS, mOffsetIndices[i]);
+            for (long audioOffsetUs : OFFSET_TS_AUDIO_US) {
+                for (long videoOffsetUs : OFFSET_TS_VIDEO_US) {
+                    for (int i = 0; i < mOffsetIndices.length; i++) {
+                        mediaInfo.offsetTimeStamp(audioOffsetUs, videoOffsetUs, mOffsetIndices[i]);
+                    }
+                    MediaMuxer muxer = new MediaMuxer(mOutPath, mOutFormat);
+                    mediaInfo.muxMedia(muxer);
+                    muxer.release();
+                    MuxerTestHelper outInfo = new MuxerTestHelper(mOutPath);
+                    if (!outInfo.isSubsetOf(mediaInfo)) {
+                        String msg = String.format(
+                                "testOffsetPresentationTime: inp: %s, fmt: %d, audioOffsetUs %d, " +
+                                        "videoOffsetUs %d ",
+                                mSrcFile, mOutFormat, audioOffsetUs, videoOffsetUs);
+                        fail(msg + "error! output != input");
+                    }
+                    for (int i = mOffsetIndices.length - 1; i >= 0; i--) {
+                        mediaInfo.offsetTimeStamp(-audioOffsetUs, -videoOffsetUs,
+                                mOffsetIndices[i]);
+                    }
                 }
             }
         }

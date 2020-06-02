@@ -47,38 +47,6 @@ static bool isSampleInfoValidAndIdentical(AMediaCodecBufferInfo* refSample,
            (int)refSample->flags >= 0 && refSample->size >= 0 && refSample->presentationTimeUs >= 0;
 }
 
-static bool isFormatSimilar(AMediaFormat* refFormat, AMediaFormat* testFormat) {
-    const char *refMime = nullptr, *testMime = nullptr;
-    bool hasRefMime = AMediaFormat_getString(refFormat, AMEDIAFORMAT_KEY_MIME, &refMime);
-    bool hasTestMime = AMediaFormat_getString(testFormat, AMEDIAFORMAT_KEY_MIME, &testMime);
-
-    if (!hasRefMime || !hasTestMime || strcmp(refMime, testMime) != 0) return false;
-    if (!isCSDIdentical(refFormat, testFormat)) return false;
-    if (!strncmp(refMime, "audio/", strlen("audio/"))) {
-        int32_t refSampleRate, testSampleRate, refNumChannels, testNumChannels;
-        bool hasRefSampleRate =
-                AMediaFormat_getInt32(refFormat, AMEDIAFORMAT_KEY_SAMPLE_RATE, &refSampleRate);
-        bool hasTestSampleRate =
-                AMediaFormat_getInt32(testFormat, AMEDIAFORMAT_KEY_SAMPLE_RATE, &testSampleRate);
-        bool hasRefNumChannels =
-                AMediaFormat_getInt32(refFormat, AMEDIAFORMAT_KEY_CHANNEL_COUNT, &refNumChannels);
-        bool hasTestNumChannels =
-                AMediaFormat_getInt32(testFormat, AMEDIAFORMAT_KEY_CHANNEL_COUNT, &testNumChannels);
-        return hasRefSampleRate && hasTestSampleRate && hasRefNumChannels && hasTestNumChannels &&
-               refNumChannels == testNumChannels && refSampleRate == testSampleRate;
-    } else if (!strncmp(refMime, "video/", strlen("video/"))) {
-        int32_t refWidth, testWidth, refHeight, testHeight;
-        bool hasRefWidth = AMediaFormat_getInt32(refFormat, AMEDIAFORMAT_KEY_WIDTH, &refWidth);
-        bool hasTestWidth = AMediaFormat_getInt32(testFormat, AMEDIAFORMAT_KEY_WIDTH, &testWidth);
-        bool hasRefHeight = AMediaFormat_getInt32(refFormat, AMEDIAFORMAT_KEY_HEIGHT, &refHeight);
-        bool hasTestHeight =
-                AMediaFormat_getInt32(testFormat, AMEDIAFORMAT_KEY_HEIGHT, &testHeight);
-        return hasRefWidth && hasTestWidth && hasRefHeight && hasTestHeight &&
-               refWidth == testWidth && refHeight == testHeight;
-    }
-    return true;
-}
-
 static void inline setSampleInfo(AMediaExtractor* extractor, AMediaCodecBufferInfo* info) {
     info->flags = AMediaExtractor_getSampleFlags(extractor);
     info->offset = 0;
