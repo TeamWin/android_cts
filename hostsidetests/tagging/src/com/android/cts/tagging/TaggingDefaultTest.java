@@ -31,6 +31,11 @@ public class TaggingDefaultTest extends TaggingBaseTest {
         installPackage(TEST_APK, true);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        uninstallPackage(TEST_PKG, true);
+    }
+
     public void testCompatFeatureEnabled() throws Exception {
         if (supportsTaggedPointers) {
             runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapTaggingEnabled",
