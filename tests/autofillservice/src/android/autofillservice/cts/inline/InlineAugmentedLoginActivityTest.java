@@ -34,6 +34,7 @@ import android.autofillservice.cts.augmented.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.view.autofill.AutofillId;
@@ -284,6 +285,7 @@ public class InlineAugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "WRITE_SECURE_SETTING permission can't be grant to instant apps")
     public void testSwitchInputMethod() throws Exception {
         // Set services
         enableService();
@@ -333,6 +335,7 @@ public class InlineAugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "WRITE_SECURE_SETTING permission can't be grant to instant apps")
     public void testSwitchInputMethod_mainServiceDisabled() throws Exception {
         // Set services
         Helper.disableAutofillService(sContext);
