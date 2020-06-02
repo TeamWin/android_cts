@@ -19,6 +19,7 @@ package android.telephony.cts.telephonypermission;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.telephony.TelephonyManager;
@@ -48,6 +49,12 @@ public class TelephonyManagerReadPhoneStatePermissionTest {
         assertNotNull(mTelephonyManager);
     }
 
+    public static void grantUserReadPhoneStatePermission() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.grantRuntimePermission(getContext().getPackageName(),
+                android.Manifest.permission.READ_PHONE_STATE);
+    }
+
     /**
      * Verify that TelephonyManager APIs requiring READ_PHONE_STATE Permission must work.
      * <p>
@@ -63,6 +70,8 @@ public class TelephonyManagerReadPhoneStatePermissionTest {
         if (!mHasTelephony) {
             return;
         }
+
+        grantUserReadPhoneStatePermission();
 
         try {
             mTelephonyManager.getNetworkType();
