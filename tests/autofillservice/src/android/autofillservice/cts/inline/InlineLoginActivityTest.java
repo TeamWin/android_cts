@@ -40,6 +40,7 @@ import android.autofillservice.cts.UsernameOnlyActivity;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillContext;
 import android.support.test.uiautomator.Direction;
 
@@ -305,6 +306,7 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
     }
 
     @Test
+    @AppModeFull(reason = "WRITE_SECURE_SETTING permission can't be grant to instant apps")
     public void testSwitchInputMethod() throws Exception {
         // Set service
         enableService();
