@@ -161,6 +161,12 @@ final class TextClassifierTestWatcher extends TestWatcher {
         // set the test service
         runShellCommand("device_config put textclassifier textclassifier_service_package_override "
                 + CtsTextClassifierService.MY_PACKAGE);
+        // Wait for the current bound TCS to be unbounded.
+        try {
+            Thread.sleep(1_000);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Error while sleeping");
+        }
     }
 
     private void resetOriginalService() {
