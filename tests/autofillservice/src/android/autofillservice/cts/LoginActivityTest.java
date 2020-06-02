@@ -2860,6 +2860,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
     }
 
     @Test
+    @AppModeFull(reason = "WRITE_SECURE_SETTING permission can't be grant to instant apps")
     public void testSwitchInputMethod_noNewFillRequest() throws Exception {
         // Set service
         enableService();
