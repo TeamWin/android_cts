@@ -176,4 +176,9 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
     public void testCanRenameAFileWithNoDBRow_hasRW() throws Exception {
         runDeviceTest("testCanRenameAFileWithNoDBRow_hasRW");
     }
+
+    @Test
+    public void testCaseInsensitivity() throws Exception {
+        runDeviceTest("testAndroidDataObbCannotBeDeleted");
+    }
 }

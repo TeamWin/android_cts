@@ -617,6 +617,25 @@ public class LegacyStorageTest {
         }
     }
 
+    @Test
+    public void testAndroidDataObbCannotBeDeleted() throws Exception {
+        File canDeleteDir = new File("/sdcard/canDelete");
+        canDeleteDir.mkdirs();
+
+        File dataDir = new File("/sdcard/Android/data");
+        File obbDir = new File("/sdcard/Android/obb");
+        File androidDir = new File("/sdcard/Android");
+
+        assertThat(dataDir.exists()).isTrue();
+        assertThat(obbDir.exists()).isTrue();
+        assertThat(androidDir.exists()).isTrue();
+
+        assertThat(dataDir.delete()).isFalse();
+        assertThat(obbDir.delete()).isFalse();
+        assertThat(androidDir.delete()).isFalse();
+        assertThat(canDeleteDir.delete()).isTrue();
+    }
+
     private static void assertCanCreateFile(File file) throws IOException {
         if (file.exists()) {
             file.delete();

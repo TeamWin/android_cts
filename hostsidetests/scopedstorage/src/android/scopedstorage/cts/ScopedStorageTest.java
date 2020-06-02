@@ -121,6 +121,7 @@ import android.os.Process;
 import android.provider.MediaStore;
 import android.system.ErrnoException;
 import android.system.Os;
+import android.system.StructStat;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -998,6 +999,30 @@ public class ScopedStorageTest {
         File mixedCase2 = new File(getDownloadDir(), "cReAtE_mIxEd_DeLeTe_MiXeD");
 
         createDeleteCreate(mixedCase1, mixedCase2);
+    }
+
+    @Test
+    public void testAndroidDataObbDoesNotForgetMount() throws Exception {
+        File dataDir = getContext().getExternalFilesDir(null);
+        File upperCaseDataDir = new File(dataDir.getPath().replace("Android/data", "ANDROID/DATA"));
+
+        File obbDir = getContext().getObbDir();
+        File upperCaseObbDir = new File(obbDir.getPath().replace("Android/obb", "ANDROID/OBB"));
+
+
+        StructStat beforeDataStruct = Os.stat(dataDir.getPath());
+        StructStat beforeObbStruct = Os.stat(obbDir.getPath());
+
+        assertThat(dataDir.exists()).isTrue();
+        assertThat(upperCaseDataDir.exists()).isTrue();
+        assertThat(obbDir.exists()).isTrue();
+        assertThat(upperCaseObbDir.exists()).isTrue();
+
+        StructStat afterDataStruct = Os.stat(upperCaseDataDir.getPath());
+        StructStat afterObbStruct = Os.stat(upperCaseObbDir.getPath());
+
+        assertThat(beforeDataStruct.st_dev).isEqualTo(afterDataStruct.st_dev);
+        assertThat(beforeObbStruct.st_dev).isEqualTo(afterObbStruct.st_dev);
     }
 
     private void createDeleteCreate(File create, File delete) throws Exception {
