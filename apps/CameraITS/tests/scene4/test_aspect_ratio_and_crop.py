@@ -33,6 +33,25 @@ THRESH_XS_CP = 0.075  # Crop test threshold of mini images
 THRESH_MIN_PIXEL = 4  # Crop test allowed offset
 PREVIEW_SIZE = (1920, 1080)  # preview size
 
+# Before API level 30, only resolutions with the following listed aspect ratio
+# are checked. Device launched after API level 30 will need to pass the test
+# for all advertised resolutions. Device launched before API level 30 just
+# needs to pass the test for all resolutions within these aspect ratios.
+AR_CHECKED_PRE_API_30 = ["4:3", "16:9", "18:9"]
+AR_DIFF_ATOL = 0.01
+
+
+def is_checked_aspect_ratio(first_api_level, w, h):
+    if first_api_level >= 30:
+        return True
+
+    for ar_check in AR_CHECKED_PRE_API_30:
+        match_ar_list = [float(x) for x in ar_check.split(":")]
+        match_ar = match_ar_list[0] / match_ar_list[1]
+        if np.isclose(float(w)/h, match_ar, atol=AR_DIFF_ATOL):
+            return True
+
+    return False
 
 def calc_expected_circle_image_ratio(ref_fov, img_w, img_h):
     """Determine the circle image area ratio in percentage for a given image size.
@@ -536,8 +555,9 @@ def main():
                 fov_percent = calc_circle_image_ratio(
                         cc_w, cc_h, w_iter, h_iter)
                 chk_percent = calc_expected_circle_image_ratio(ref_fov, w_iter, h_iter)
-                if not np.isclose(fov_percent, chk_percent,
-                                  rtol=FOV_PERCENT_RTOL):
+                chk_enabled = is_checked_aspect_ratio(first_api, w_iter, h_iter)
+                if chk_enabled and not np.isclose(fov_percent, chk_percent,
+                                                  rtol=FOV_PERCENT_RTOL):
                     msg = "FoV %%: %.2f, Ref FoV %%: %.2f, " % (
                             fov_percent, chk_percent)
                     msg += "TOL=%.f%%, img: %dx%d, ref: %dx%d" % (
