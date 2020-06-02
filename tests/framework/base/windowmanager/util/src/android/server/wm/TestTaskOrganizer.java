@@ -168,9 +168,10 @@ class TestTaskOrganizer extends TaskOrganizer {
 
     private void removeTask(ActivityManager.RunningTaskInfo taskInfo) {
         final int taskId = taskInfo.taskId;
-        mKnownTasks.remove(taskId);
-
-        if (taskId == mRootPrimary.taskId) mRootPrimary = null;
-        if (taskId == mRootSecondary.taskId) mRootSecondary = null;
+        // ignores cleanup on duplicated removal request
+        if (mKnownTasks.remove(taskId) != null) {
+            if (mRootPrimary != null && taskId == mRootPrimary.taskId) mRootPrimary = null;
+            if (mRootSecondary != null && taskId == mRootSecondary.taskId) mRootSecondary = null;
+        }
     }
 }
