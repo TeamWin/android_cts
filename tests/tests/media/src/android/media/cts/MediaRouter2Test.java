@@ -74,6 +74,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "The system should be able to bind to StubMediaRoute2ProviderService")
 @LargeTest
+@NonMediaMainlineTest
 public class MediaRouter2Test {
     private static final String TAG = "MR2Test";
     Context mContext;
