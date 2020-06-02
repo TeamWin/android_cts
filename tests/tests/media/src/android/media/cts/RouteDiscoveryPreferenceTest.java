@@ -36,6 +36,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@NonMediaMainlineTest
 public class RouteDiscoveryPreferenceTest {
 
     private static final String TEST_FEATURE_1 = "TEST_FEATURE_1";
