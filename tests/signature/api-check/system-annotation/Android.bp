@@ -21,10 +21,10 @@ android_test {
         "compatibility-device-util-axt",
     ],
     java_resources: [
-        ":cts-system-current-txt",
-        ":cts-system-removed-txt",
-        ":cts-car-system-current-txt",
-        ":cts-car-system-removed-txt",
+        ":cts-system-current-api-gz",
+        ":cts-system-removed-api-gz",
+        ":cts-car-system-current-api-gz",
+        ":cts-car-system-removed-api-gz",
     ],
     min_sdk_version: "27",
 

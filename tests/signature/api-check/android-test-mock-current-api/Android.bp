@@ -18,7 +18,7 @@ android_test {
         "signature-api-check-defaults",
     ],
     java_resources: [
-        ":cts-android-test-mock-current-txt",
+        ":cts-android-test-mock-current-api-gz",
     ],
 
     use_embedded_native_libs: false,
