@@ -22,13 +22,13 @@ $(foreach ver,$(call int_range_list,28,$(PLATFORM_SDK_VERSION)),\
   $(foreach api_level,public system,\
     $(foreach lib,$(filter-out android,$(filter-out %removed,$(filter-out incompatibilities,\
       $(basename $(notdir $(wildcard $(HISTORICAL_SDK_VERSIONS_ROOT)/$(ver)/$(api_level)/api/*.txt)))))),\
-        $(eval all_shared_libs_modules += $(lib)-$(ver)-$(api_level).txt))))
+        $(eval all_shared_libs_modules += $(lib)-$(ver)-$(api_level).api))))
 
 all_shared_libs_files := $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(all_shared_libs_modules))
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := cts-shared-libs-all.txt
-LOCAL_MODULE_STEM := shared-libs-all.txt.zip
+LOCAL_MODULE := cts-shared-libs-all.api
+LOCAL_MODULE_STEM := shared-libs-all.api.zip
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
 include $(BUILD_SYSTEM)/base_rules.mk
