@@ -28,12 +28,14 @@ import static com.android.compatibility.common.util.LocationUtils.createLocation
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
@@ -191,7 +193,11 @@ public class LocationManagerCoarseTest {
     public void testGetProviders() {
         List<String> providers = mManager.getProviders(false);
         assertTrue(providers.contains(TEST_PROVIDER));
-        assertTrue(providers.contains(GPS_PROVIDER));
+        if (hasGpsFeature()) {
+            assertTrue(providers.contains(GPS_PROVIDER));
+        } else {
+            assertFalse(providers.contains(GPS_PROVIDER));
+        }
         assertTrue(providers.contains(PASSIVE_PROVIDER));
     }
 
@@ -271,5 +277,9 @@ public class LocationManagerCoarseTest {
         Thread.sleep(200);
         long clockms = SystemClock.currentGnssTimeClock().millis();
         assertTrue(System.currentTimeMillis() - clockms < 1000);
+    }
+
+    private boolean hasGpsFeature() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
     }
 }
