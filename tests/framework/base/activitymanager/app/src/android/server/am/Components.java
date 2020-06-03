@@ -68,6 +68,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
     public static final ComponentName NO_RELAUNCH_ACTIVITY = component("NoRelaunchActivity");
     public static final ComponentName NON_RESIZEABLE_ACTIVITY = component("NonResizeableActivity");
+    public static final ComponentName PRESENTATION_ACTIVITY = component("PresentationActivity");
     public static final ComponentName PIP_ACTIVITY = component("PipActivity");
     public static final ComponentName PIP_ACTIVITY2 = component("PipActivity2");
     public static final ComponentName PIP_ACTIVITY_WITH_SAME_AFFINITY =
@@ -331,10 +332,15 @@ public class Components extends ComponentsBase {
         public static final String KEY_LAUNCH_TARGET_COMPONENT = "launch_target_component";
         public static final String KEY_PUBLIC_DISPLAY = "public_display";
         public static final String KEY_RESIZE_DISPLAY = "resize_display";
+        public static final String KEY_PRESENTATION_DISPLAY = "presentation_display";
         // Value constants of {@link #KEY_COMMAND}.
         public static final String COMMAND_CREATE_DISPLAY = "create_display";
         public static final String COMMAND_DESTROY_DISPLAY = "destroy_display";
         public static final String COMMAND_RESIZE_DISPLAY = "resize_display";
+    }
+
+    public static class PresentationActivity {
+        public static final String KEY_DISPLAY_ID = "display_id";
     }
 
     private static ComponentName component(String className) {
