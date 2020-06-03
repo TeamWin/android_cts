@@ -30,6 +30,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.R;
 import android.net.Uri;
+import android.os.Build;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
@@ -38,6 +39,7 @@ import android.view.Surface;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
@@ -76,6 +78,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     // Time out processing, as we have no way to query whether the decoder will produce output.
     private static final int TIMEOUT_MS = 60000;  // 1 minute
 
+    private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     /**
      * Tests whether decoding a short group-of-pictures succeeds. The test queues a few video frames
      * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
@@ -84,6 +87,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testDecodeShortVideo() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runDecodeShortVideo(
                 INPUT_RESOURCE_ID,
                 LAST_BUFFER_TIMESTAMP_US,
@@ -100,6 +104,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
      * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
      */
     public void testDecodeShortEncryptedVideo() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runDecodeShortEncryptedVideo(
                 true /* obtainBlockForEachBuffer */));
         runThread(() -> runDecodeShortEncryptedVideo(
@@ -114,6 +119,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testDecodeShortAudio() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runDecodeShortAudio(
                 INPUT_RESOURCE_ID,
                 LAST_BUFFER_TIMESTAMP_US,
@@ -132,6 +138,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testEncodeShortAudio() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runEncodeShortAudio());
     }
 
@@ -143,6 +150,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testEncodeShortVideo() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runEncodeShortVideo());
     }
 
@@ -153,6 +161,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testFormatChange() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         List<FormatChangeEvent> events = new ArrayList<>();
         runThread(() -> runDecodeShortVideo(
                 getMediaExtractorForMimeType(INPUT_RESOURCE_ID, "video/"),
