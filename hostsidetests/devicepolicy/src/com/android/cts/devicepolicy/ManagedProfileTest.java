@@ -1728,6 +1728,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     "settings put --user " + mProfileUserId
                     + " secure managed_profile_contact_remote_search 1");
 
+            // Wait for updating cache
+            waitForBroadcastIdle();
+
             // Add test account
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testAddTestAccount", mParentUserId);
