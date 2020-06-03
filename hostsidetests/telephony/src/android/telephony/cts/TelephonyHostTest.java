@@ -41,11 +41,4 @@ public class TelephonyHostTest extends CompatChangeGatingTestCase {
                 /*enabledChanges*/ImmutableSet.of(PHONE_STATE_LISTENER_LIMIT_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of());
     }
-
-    public void testWithChangeDisabled() throws Exception {
-        runDeviceCompatTest(TEST_PKG, ".TelephonyTest",
-                "testListenerRegistrationWithChangeDisabled",
-                /*enabledChanges*/ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(PHONE_STATE_LISTENER_LIMIT_CHANGE_ID));
-    }
 }
