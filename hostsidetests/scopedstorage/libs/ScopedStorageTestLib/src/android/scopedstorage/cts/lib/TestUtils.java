@@ -457,11 +457,15 @@ public class TestUtils {
      * and asserts that the file was successfully deleted from the database.
      */
     public static void deleteWithMediaProvider(@NonNull File file) {
+        Bundle extras = new Bundle();
+        extras.putString(ContentResolver.QUERY_ARG_SQL_SELECTION,
+                MediaStore.MediaColumns.DATA + " = ?");
+        extras.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
+                new String[] {file.getPath()});
+        extras.putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_INCLUDE);
+        extras.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_INCLUDE);
         assertThat(getContentResolver().delete(
-                           MediaStore.Files.getContentUri(sStorageVolumeName),
-                           /*where*/ MediaStore.MediaColumns.DATA + " = ?",
-                           /*selectionArgs*/ new String[] {file.getPath()}))
-                .isEqualTo(1);
+                MediaStore.Files.getContentUri(sStorageVolumeName), extras)).isEqualTo(1);
     }
 
     /**
@@ -483,28 +487,21 @@ public class TestUtils {
      * Renames the given file through {@link ContentResolver} and {@link MediaStore} APIs,
      * and asserts that the file was updated in the database.
      */
-    public static void updateDisplayNameWithMediaProvider(
-            String relativePath, String oldDisplayName, String newDisplayName) {
+    public static void updateDisplayNameWithMediaProvider(Uri uri, String relativePath,
+            String oldDisplayName, String newDisplayName) {
         String selection = MediaStore.MediaColumns.RELATIVE_PATH + " = ? AND "
                 + MediaStore.MediaColumns.DISPLAY_NAME + " = ?";
         String[] selectionArgs = {relativePath + '/', oldDisplayName};
-        String[] projection = {MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATA};
+        Bundle extras = new Bundle();
+        extras.putString(ContentResolver.QUERY_ARG_SQL_SELECTION, selection);
+        extras.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, selectionArgs);
+        extras.putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_INCLUDE);
+        extras.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_INCLUDE);
 
-        final Uri contentUri = MediaStore.Files.getContentUri(sStorageVolumeName);
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME, newDisplayName);
 
-        try (Cursor cursor = getContentResolver().query(contentUri, projection, selection,
-                selectionArgs, null)) {
-            assertThat(cursor.getCount()).isEqualTo(1);
-            cursor.moveToFirst();
-            int id = cursor.getInt(cursor.getColumnIndex(MediaStore.MediaColumns._ID));
-            String data = cursor.getString(cursor.getColumnIndex(MediaStore.MediaColumns.DATA));
-            Uri uri = ContentUris.withAppendedId(contentUri, id);
-            Log.i(TAG, "Uri: " + uri + ". Data: " + data);
-            assertThat(getContentResolver().update(uri, values, selection, selectionArgs))
-                    .isEqualTo(1);
-        }
+        assertThat(getContentResolver().update(uri, values, extras)).isEqualTo(1);
     }
 
     /**
@@ -995,7 +992,7 @@ public class TestUtils {
     }
 
     @NonNull
-    private static Cursor queryFile(@NonNull File file, String... projection) {
+    public static Cursor queryFile(@NonNull File file, String... projection) {
         return queryFile(
                 MediaStore.Files.getContentUri(sStorageVolumeName), file, projection);
     }

@@ -77,6 +77,7 @@ import static android.scopedstorage.cts.lib.TestUtils.openFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
+import static android.scopedstorage.cts.lib.TestUtils.queryFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryImageFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryVideoFile;
 import static android.scopedstorage.cts.lib.TestUtils.readExifMetadataFromTestApp;
@@ -963,8 +964,12 @@ public class ScopedStorageTest {
 
         try {
             assertThat(oldFile.createNewFile()).isTrue();
+            // Publish the pending oldFile before updating with MediaProvider. Not publishing the
+            // file will make MP consider pending from FUSE as explicit IS_PENDING
+            final Uri uri = MediaStore.scanFile(getContentResolver(), oldFile);
+            assertNotNull(uri);
 
-            updateDisplayNameWithMediaProvider(
+            updateDisplayNameWithMediaProvider(uri,
                     Environment.DIRECTORY_DCIM, oldDisplayName, newDisplayName);
 
             assertThat(oldFile.exists()).isFalse();
@@ -2146,7 +2151,8 @@ public class ScopedStorageTest {
         final File otherHiddenFile = new File(getPicturesDir(), ".otherHiddenFile.jpg");
         try {
             installApp(TEST_APP_A);
-            assertCreateFilesAs(
+            // Apps can't query other app's pending file, hence create file and publish it.
+            assertCreatePublishedFilesAs(
                     TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
 
             // Once the test has permission to manage external storage, it can query for other
@@ -2172,7 +2178,8 @@ public class ScopedStorageTest {
         final File otherHiddenFile = new File(getPicturesDir(), ".otherHiddenFile.jpg");
         try {
             installApp(TEST_APP_A);
-            assertCreateFilesAs(
+            // Apps can't query other app's pending file, hence create file and publish it.
+            assertCreatePublishedFilesAs(
                     TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
 
             // Since the test doesn't have READ_EXTERNAL_STORAGE nor any other special permissions,
@@ -2195,7 +2202,8 @@ public class ScopedStorageTest {
         final File otherHiddenFile = new File(getPicturesDir(), ".otherHiddenFile.jpg");
         try {
             installApp(TEST_APP_A);
-            assertCreateFilesAs(
+            // Apps can't query other app's pending file, hence create file and publish it.
+            assertCreatePublishedFilesAs(
                     TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
 
             // System gallery apps have access to video and image files
@@ -2395,6 +2403,32 @@ public class ScopedStorageTest {
     }
 
     /**
+     * Test that IS_PENDING is set for files created via filepath
+     */
+    @Test
+    public void testPendingFromFuse() throws Exception {
+        final File pendingFile = new File(getDcimDir(), IMAGE_FILE_NAME);
+        try {
+            assertTrue(pendingFile.createNewFile());
+            // Newly created file should have IS_PENDING set
+            try (Cursor c = queryFile(pendingFile, MediaStore.MediaColumns.IS_PENDING)) {
+                assertTrue(c.moveToFirst());
+                assertThat(c.getInt(0)).isEqualTo(1);
+            }
+
+            assertNotNull(MediaStore.scanFile(getContentResolver(), pendingFile));
+
+            // IS_PENDING should be unset after the scan
+            try (Cursor c = queryFile(pendingFile, MediaStore.MediaColumns.IS_PENDING)) {
+                assertTrue(c.moveToFirst());
+                assertThat(c.getInt(0)).isEqualTo(0);
+            }
+        } finally {
+            pendingFile.delete();
+        }
+    }
+
+    /**
      * Checks restrictions for opening pending and trashed files by different apps. Assumes that
      * given {@code testApp} is already installed and has READ_EXTERNAL_STORAGE permission. This
      * method doesn't uninstall given {@code testApp} at the end.
@@ -2546,13 +2580,33 @@ public class ScopedStorageTest {
         assertEquals(0, c.getCount());
     }
 
-    private static void assertCantQueryFile(File file) { assertThat(getFileUri(file)).isNull(); }
+    private static void assertCantQueryFile(File file) {
+        assertThat(getFileUri(file)).isNull();
+        // Confirm that file exists in the database.
+        assertNotNull(MediaStore.scanFile(getContentResolver(), file));
+    }
 
     private static void assertCreateFilesAs(TestApp testApp, File... files) throws Exception {
         for (File file : files) {
             assertThat(createFileAs(testApp, file.getPath())).isTrue();
         }
     }
+
+    /**
+     * Makes {@code testApp} create {@code files}. Publishes {@code files} by scanning the file.
+     * Pending files from FUSE are not visible to other apps via MediaStore APIs. We have to publish
+     * the file or make the file non-pending to make the file visible to other apps.
+     * <p>
+     * Note that this method can only be used for scannable files.
+     */
+    private static void assertCreatePublishedFilesAs(TestApp testApp, File... files)
+            throws Exception {
+        for (File file : files) {
+            assertThat(createFileAs(testApp, file.getPath())).isTrue();
+            assertNotNull(MediaStore.scanFile(getContentResolver(), file));
+        }
+    }
+
 
     private static void deleteFilesAs(TestApp testApp, File... files) throws Exception {
         for (File file : files) {
