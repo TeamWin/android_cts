@@ -48,9 +48,11 @@ import android.os.SystemClock;
 
 import android.util.Log;
 import android.annotation.Nullable;
+import android.platform.test.annotations.AppModeFull;
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertTrue;
 
+@AppModeFull
 @SecurityTest
 public class NanoAppBundleTest extends AndroidTestCase {
 
@@ -130,7 +132,7 @@ public class NanoAppBundleTest extends AndroidTestCase {
             ActivityInfo info = intent.resolveActivityInfo(
                     mContext.getPackageManager(), intent.getFlags());
             // Will throw NullPointerException if activity not found.
-            if (info.exported) {
+            if (info != null && info.exported) {
                 mContext.startActivity(intent);
             } else {
                 Log.i(TAG, "Activity is not exported");

@@ -191,6 +191,7 @@
         <!--__________________-->
         <!-- Bulletin 2018-11 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2018-9536->/data/local/tmp/CVE-2018-9536" />
         <option name="push" value="CVE-2018-9539->/data/local/tmp/CVE-2018-9539" />
 
         <!--__________________-->
@@ -200,6 +201,20 @@
         <option name="push" value="CVE-2019-2025->/data/local/tmp/CVE-2019-2025" />
 
         <option name="append-bitness" value="true" />
+    </target_preparer>
+
+    <!-- The following tests hit either 32-bit or 64-bit, but not both. All tests in this -->
+    <!-- section should take care to build either 32 bit or 64 bit binary, but not both.  -->
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="cleanup" value="true" />
+
+        <!-- Please add 32-bit binary tests below to avoid merge conflict -->
+
+
+        <!-- Please add 64-bit binary tests below to avoid merge conflict -->
+
+
+        <option name="append-bitness" value="false" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

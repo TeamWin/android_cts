@@ -256,3 +256,4 @@ public class PackageDeviceInfo extends DeviceInfo {
                 .getIdentifier(name, type, "android");
     }
 }
+
