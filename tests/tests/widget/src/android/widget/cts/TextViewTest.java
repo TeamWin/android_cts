@@ -8586,6 +8586,8 @@ public class TextViewTest {
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
         assertTrue(text.length() >= SMARTSELECT_END);
         mActivityRule.runOnUiThread(() -> {
+            // Support small devices. b/155842369
+            mTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, 20);
             mTextView.setTextIsSelectable(true);
             mTextView.setText(text);
             mTextView.setTextClassifier(FAKE_TEXT_CLASSIFIER);
