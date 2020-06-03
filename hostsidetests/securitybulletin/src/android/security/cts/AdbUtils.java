@@ -144,7 +144,7 @@ public class AdbUtils {
      */
     public static void runPoc(String pocName, ITestDevice device, int timeout,
             String arguments, IShellOutputReceiver receiver) throws Exception {
-        device.executeShellCommand("chmod +x " + TMP_PATH + pocName);
+        assertPocExecutable(pocName, device);
         if (receiver == null) {
             receiver = new NullOutputReceiver();
         }
@@ -153,6 +153,22 @@ public class AdbUtils {
         }
         device.executeShellCommand(TMP_PATH + pocName + " " + arguments,
                 receiver, timeout, TimeUnit.SECONDS, 0);
+    }
+
+    /**
+     * Assert the poc is executable
+     * @param pocName name of the poc binary
+     * @param device device to be ran on
+     */
+    private static void assertPocExecutable(String pocName, ITestDevice device) throws Exception {
+        String fullPocPath = TMP_PATH + pocName;
+        device.executeShellCommand("chmod 777 " + fullPocPath);
+        assertEquals("'" + pocName + "' must exist and be readable.", 0,
+                runCommandGetExitCode("test -r " + fullPocPath, device));
+        assertEquals("'" + pocName + "'poc must exist and be writable.", 0,
+                runCommandGetExitCode("test -w " + fullPocPath, device));
+        assertEquals("'" + pocName + "'poc must exist and be executable.", 0,
+                runCommandGetExitCode("test -x " + fullPocPath, device));
     }
 
     /**
@@ -340,7 +356,7 @@ public class AdbUtils {
      */
     public static int runPocGetExitStatus(String pocName, String arguments, ITestDevice device,
             int timeout) throws Exception {
-        device.executeShellCommand("chmod +x " + TMP_PATH + pocName);
+        assertPocExecutable(pocName, device);
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
         String cmd = TMP_PATH + pocName + " " + arguments + " > /dev/null 2>&1; echo $?";
         long time = System.currentTimeMillis();
@@ -391,7 +407,7 @@ public class AdbUtils {
         String targetPath = TMP_PATH + pacName;
         AdbUtils.pushResource("/" + pacName, targetPath, device);
         runPocAssertNoCrashes(
-                TMP_PATH + "pacrunner", device, targetPath,
+                "pacrunner", device, targetPath,
                 new CrashUtils.Config().setProcessPatterns("pacrunner"));
         runCommandLine("rm " + targetPath, device);
         return 0; // b/157172329 fix tests that manually check the result; remove return statement
