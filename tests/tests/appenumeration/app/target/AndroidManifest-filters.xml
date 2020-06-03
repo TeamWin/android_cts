@@ -16,59 +16,62 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.appenumeration.filters">
+     package="android.appenumeration.filters">
     <application>
-        <uses-library android:name="android.test.runner" />
+        <uses-library android:name="android.test.runner"/>
         <activity android:name="android.appenumeration.testapp.DummyActivity"
-                  android:visibleToInstantApps="true">
+             android:visibleToInstantApps="true"
+             android:exported="true">
             <!-- Marked visible to instant apps to ensure this logic doesn't conflict with non
-                 instant filtering -->
+                                 instant filtering -->
             <intent-filter>
-                <action android:name="android.appenumeration.action.ACTIVITY" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.appenumeration.action.ACTIVITY"/>
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
-        <service android:name="android.appenumeration.testapp.DummyService">
+        <service android:name="android.appenumeration.testapp.DummyService"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.appenumeration.action.SERVICE" />
+                <action android:name="android.appenumeration.action.SERVICE"/>
             </intent-filter>
         </service>
         <provider android:name="android.appenumeration.testapp.DummyProvider"
-                  android:authorities="android.appenumeration.testapp"
-                  android:exported="true">
+             android:authorities="android.appenumeration.testapp"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.appenumeration.action.PROVIDER" />
+                <action android:name="android.appenumeration.action.PROVIDER"/>
             </intent-filter>
         </provider>
-        <receiver android:name="android.appenumeration.testapp.DummyReceiver">
+        <receiver android:name="android.appenumeration.testapp.DummyReceiver"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.appenumeration.action.BROADCAST" />
+                <action android:name="android.appenumeration.action.BROADCAST"/>
             </intent-filter>
         </receiver>
 
         <activity android:name="android.appenumeration.testapp.DummyActivityNotExported"
-                  android:exported="false">
+             android:exported="false">
             <intent-filter>
-                <action android:name="android.appenumeration.action.ACTIVITY_UNEXPORTED" />
+                <action android:name="android.appenumeration.action.ACTIVITY_UNEXPORTED"/>
             </intent-filter>
         </activity>
         <service android:name="android.appenumeration.testapp.DummyServiceNotExported"
-                 android:exported="false">
+             android:exported="false">
             <intent-filter>
-                <action android:name="android.appenumeration.action.SERVICE_UNEXPORTED" />
+                <action android:name="android.appenumeration.action.SERVICE_UNEXPORTED"/>
             </intent-filter>
         </service>
         <provider android:name="android.appenumeration.testapp.DummyProviderNotExported"
-                  android:authorities="android.appenumeration.testapp.unexported"
-                  android:exported="false" >
+             android:authorities="android.appenumeration.testapp.unexported"
+             android:exported="false">
             <intent-filter>
-                <action android:name="android.appenumeration.action.PROVIDER_UNEXPORTED" />
+                <action android:name="android.appenumeration.action.PROVIDER_UNEXPORTED"/>
             </intent-filter>
         </provider>
         <receiver android:name="android.appenumeration.testapp.DummyReceiverNotExported"
-                  android:exported="false">
+             android:exported="false">
             <intent-filter>
-                <action android:name="android.appenumeration.action.BROADCAST_UNEXPORTED" />
+                <action android:name="android.appenumeration.action.BROADCAST_UNEXPORTED"/>
             </intent-filter>
         </receiver>
     </application>

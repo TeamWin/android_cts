@@ -13,39 +13,41 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
 <!-- Declare the contents of this Android application.  The namespace
      attribute brings in the Android platform namespace, and the package
      supplies a unique name for the application.  When writing your
      own application, the package name must be changed from "com.example.*"
      to come from a domain that you own or have control over. -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.openlinksskeleton"
-    android:versionCode="1"
-    android:versionName="1.0">
+     package="com.android.cts.openlinksskeleton"
+     android:versionCode="1"
+     android:versionName="1.0">
 
-    <application android:label="Open Links Skeleton" android:hasCode="false" >
+    <application android:label="Open Links Skeleton"
+         android:hasCode="false">
 
-        <activity android:name="DummyWebLinkActivity">
+        <activity android:name="DummyWebLinkActivity"
+             android:exported="true">
             <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:host="*.wildcard.tld" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="http"/>
+                <data android:scheme="https"/>
+                <data android:host="*.wildcard.tld"/>
             </intent-filter>
 
             <!-- Also make sure that verification picks up web navigation
-                 handling even when the filter matches non-web schemes -->
+                                 handling even when the filter matches non-web schemes -->
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-                <data android:scheme="nonweb" />
-                <data android:host="explicit.example.com" />
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="http"/>
+                <data android:scheme="https"/>
+                <data android:scheme="nonweb"/>
+                <data android:host="explicit.example.com"/>
             </intent-filter>
         </activity>
 

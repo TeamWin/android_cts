@@ -16,291 +16,258 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
-          package="android.server.wm.cts"
-          android:targetSandboxVersion="2">
+     xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
+     package="android.server.wm.cts"
+     android:targetSandboxVersion="2">
 
-    <uses-permission android:name="android.permission.READ_LOGS" />
-    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.READ_LOGS"/>
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES"/>
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.STOP_APP_SWITCHES" />
-    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.STOP_APP_SWITCHES"/>
+    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
 
     <application android:label="CtsWindowManagerDeviceTestCases"
-            android:requestLegacyExternalStorage="true">
+         android:requestLegacyExternalStorage="true">
         <uses-library android:name="android.test.runner"/>
 
-        <activity
-            android:name="android.server.wm.AspectRatioTests$MaxAspectRatioActivity"
-            android:label="MaxAspectRatioActivity"
-            android:maxAspectRatio="1.0"
-            android:resizeableActivity="false" />
+        <activity android:name="android.server.wm.AspectRatioTests$MaxAspectRatioActivity"
+             android:label="MaxAspectRatioActivity"
+             android:maxAspectRatio="1.0"
+             android:resizeableActivity="false"/>
 
-        <activity
-            android:name="android.server.wm.AspectRatioTests$MetaDataMaxAspectRatioActivity"
-            android:label="MetaDataMaxAspectRatioActivity"
-            android:resizeableActivity="false">
-            <meta-data
-                android:name="android.max_aspect"
-                android:value="1.0" />
+        <activity android:name="android.server.wm.AspectRatioTests$MetaDataMaxAspectRatioActivity"
+             android:label="MetaDataMaxAspectRatioActivity"
+             android:resizeableActivity="false">
+            <meta-data android:name="android.max_aspect"
+                 android:value="1.0"/>
         </activity>
 
-        <activity
-            android:name="android.server.wm.AspectRatioTests$MaxAspectRatioResizeableActivity"
-            android:label="MaxAspectRatioResizeableActivity"
-            android:maxAspectRatio="1.0"
-            android:resizeableActivity="true" />
+        <activity android:name="android.server.wm.AspectRatioTests$MaxAspectRatioResizeableActivity"
+             android:label="MaxAspectRatioResizeableActivity"
+             android:maxAspectRatio="1.0"
+             android:resizeableActivity="true"/>
 
-        <activity
-            android:name="android.server.wm.AspectRatioTests$MaxAspectRatioUnsetActivity"
-            android:label="MaxAspectRatioUnsetActivity"
-            android:resizeableActivity="false" />
+        <activity android:name="android.server.wm.AspectRatioTests$MaxAspectRatioUnsetActivity"
+             android:label="MaxAspectRatioUnsetActivity"
+             android:resizeableActivity="false"/>
 
-        <activity
-            android:name="android.server.wm.AspectRatioTests$MinAspectRatioActivity"
-            android:label="MinAspectRatioActivity"
-            android:minWidth="1dp"
-            android:minAspectRatio="3.0"
-            android:resizeableActivity="false" />
+        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioActivity"
+             android:label="MinAspectRatioActivity"
+             android:minWidth="1dp"
+             android:minAspectRatio="3.0"
+             android:resizeableActivity="false"/>
 
-        <activity
-            android:name="android.server.wm.AspectRatioTests$MinAspectRatioResizeableActivity"
-            android:label="MinAspectRatioResizeableActivity"
-            android:minWidth="1dp"
-            android:minAspectRatio="3.0"
-            android:resizeableActivity="true" />
+        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioResizeableActivity"
+             android:label="MinAspectRatioResizeableActivity"
+             android:minWidth="1dp"
+             android:minAspectRatio="3.0"
+             android:resizeableActivity="true"/>
 
-        <activity
-            android:name="android.server.wm.AspectRatioTests$MinAspectRatioUnsetActivity"
-            android:label="MinAspectRatioUnsetActivity"
-            android:resizeableActivity="false" />
+        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioUnsetActivity"
+             android:label="MinAspectRatioUnsetActivity"
+             android:resizeableActivity="false"/>
 
-        <activity
-            android:name="android.server.wm.AspectRatioTests$MinAspectRatioLandscapeActivity"
-            android:label="MinAspectRatioLandscapeActivity"
-            android:minWidth="1dp"
-            android:minAspectRatio="3.0"
-            android:resizeableActivity="false"
-            android:screenOrientation="landscape" />
+        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioLandscapeActivity"
+             android:label="MinAspectRatioLandscapeActivity"
+             android:minWidth="1dp"
+             android:minAspectRatio="3.0"
+             android:resizeableActivity="false"
+             android:screenOrientation="landscape"/>
 
-        <activity
-            android:name="android.server.wm.AspectRatioTests$MinAspectRatioPortraitActivity"
-            android:label="MinAspectRatioPortraitActivity"
-            android:minWidth="1dp"
-            android:minAspectRatio="3.0"
-            android:resizeableActivity="false"
-            android:screenOrientation="portrait" />
+        <activity android:name="android.server.wm.AspectRatioTests$MinAspectRatioPortraitActivity"
+             android:label="MinAspectRatioPortraitActivity"
+             android:minWidth="1dp"
+             android:minAspectRatio="3.0"
+             android:resizeableActivity="false"
+             android:screenOrientation="portrait"/>
 
         <activity android:name="android.server.wm.ActivityManagerTestBase$SideActivity"
-                  android:resizeableActivity="true"
-                  android:taskAffinity="nobody.but.SideActivity"/>
+             android:resizeableActivity="true"
+             android:taskAffinity="nobody.but.SideActivity"/>
 
         <activity android:name="android.server.wm.ActivityManagerTestBase$ConfigChangeHandlingActivity"
-            android:resizeableActivity="true"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen" />
+             android:resizeableActivity="true"
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
 
-        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$FirstActivity" />
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$FirstActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ThirdActivity"/>
 
-        <activity
-            android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TranslucentActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TranslucentActivity"
+             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
 
-        <activity
-            android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondTranslucentActivity"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondTranslucentActivity"
+             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$CallbackTrackingActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondCallbackTrackingActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TranslucentCallbackTrackingActivity"
-                  android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
 
-        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ShowWhenLockedCallbackTrackingActivity" />
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ShowWhenLockedCallbackTrackingActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondProcessCallbackTrackingActivity"
-                  android:process=":SecondProcess"
-                  android:exported="true"/>
+             android:process=":SecondProcess"
+             android:exported="true"/>
 
         <provider android:name="android.server.wm.lifecycle.LifecycleLog"
-                  android:authorities="android.server.wm.lifecycle.logprovider"
-                  android:exported="true" />
+             android:authorities="android.server.wm.lifecycle.logprovider"
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$LaunchForResultActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ResultActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SingleTopActivity"
-                  android:launchMode="singleTop" />
+             android:launchMode="singleTop"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ConfigChangeHandlingActivity"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density" />
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$PipActivity"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
-                  android:supportsPictureInPicture="true"/>
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+             android:supportsPictureInPicture="true"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$AlwaysFocusablePipActivity"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
-                  android:resizeableActivity="false"
-                  android:supportsPictureInPicture="true"
-                  androidprv:alwaysFocusable="true"
-                  android:exported="true"/>
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+             android:resizeableActivity="false"
+             android:supportsPictureInPicture="true"
+             androidprv:alwaysFocusable="true"
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SlowActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$NoDisplayActivity"
-                  android:theme="@android:style/Theme.NoDisplay" />
+             android:theme="@android:style/Theme.NoDisplay"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$DifferentAffinityActivity"
-                  android:taskAffinity="nobody.but.DifferentAffinityActivity" />
+             android:taskAffinity="nobody.but.DifferentAffinityActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TransitionSourceActivity"
-                  android:theme="@style/window_activity_transitions" />
+             android:theme="@style/window_activity_transitions"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TransitionDestinationActivity"
-                  android:theme="@style/window_activity_transitions" />
+             android:theme="@style/window_activity_transitions"/>
 
         <activity android:name="android.server.wm.MultiDisplayActivityLaunchTests$ImmediateLaunchTestActivity"
-                  android:allowEmbedded="true" />
+             android:allowEmbedded="true"/>
 
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity"
-                  android:resizeableActivity="true"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen" />
-        <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity2" />
-        <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivityWithBrokenContextWrapper" />
+             android:resizeableActivity="true"
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
+        <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity2"/>
+        <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivityWithBrokenContextWrapper"/>
 
-        <activity android:name="android.server.wm.MultiDisplayClientTests$ClientTestActivity" />
+        <activity android:name="android.server.wm.MultiDisplayClientTests$ClientTestActivity"/>
         <activity android:name="android.server.wm.MultiDisplayClientTests$NoRelaunchActivity"
-                  android:resizeableActivity="true"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
-        />
+             android:resizeableActivity="true"
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
 
-        <activity android:name="android.server.wm.KeyguardLockedTests$ShowImeAfterLockscreenActivity" />
+        <activity android:name="android.server.wm.KeyguardLockedTests$ShowImeAfterLockscreenActivity"/>
 
-        <activity android:name="android.server.wm.KeyguardLockedTests$ShowWhenLockedImeActivity" />
+        <activity android:name="android.server.wm.KeyguardLockedTests$ShowWhenLockedImeActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$StandardActivity"
-                  android:exported="true" />
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$SecondStandardActivity"
-                  android:exported="true" />
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$StandardWithSingleTopActivity"
-                  android:exported="true" />
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$SingleTopActivity"
-                  android:launchMode="singleTop"
-                  android:exported="true" />
+             android:launchMode="singleTop"
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$SingleInstanceActivity"
-                  android:launchMode="singleInstance"
-                  android:exported="true" />
+             android:launchMode="singleInstance"
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$SingleTaskActivity"
-                  android:launchMode="singleTask"
-                  android:exported="true" />
+             android:launchMode="singleTask"
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$TestLaunchingActivity"
-                  android:taskAffinity="nobody.but.LaunchingActivity"
-                  android:exported="true" />
+             android:taskAffinity="nobody.but.LaunchingActivity"
+             android:exported="true"/>
 
-        <activity
-            android:name="android.server.wm.lifecycle.ActivityStarterTests$LaunchingAndFinishActivity"
-            android:taskAffinity="nobody.but.LaunchingActivity"
-            android:exported="true"/>
+        <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$LaunchingAndFinishActivity"
+             android:taskAffinity="nobody.but.LaunchingActivity"
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.ActivityViewTest$ActivityViewTestActivity"
-                  android:configChanges="keyboardHidden"
-                  android:exported="true"/>
+             android:configChanges="keyboardHidden"
+             android:exported="true"/>
 
-        <provider
-            android:name="android.server.wm.TestJournalProvider"
-            android:authorities="android.server.wm.testjournalprovider"
-            android:exported="true" />
+        <provider android:name="android.server.wm.TestJournalProvider"
+             android:authorities="android.server.wm.testjournalprovider"
+             android:exported="true"/>
 
         <!--intent tests-->
         <activity android:name="android.server.wm.intent.Activities$RegularActivity"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$SingleTopActivity"
-            android:launchMode="singleTop"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$SingleInstanceActivity"
-            android:launchMode="singleInstance"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$SingleInstanceActivity2"
-            android:launchMode="singleInstance"
-            android:taskAffinity=".t1"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$SingleTaskActivity"
-            android:launchMode="singleTask"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$SingleTaskActivity2"
-            android:launchMode="singleTask"
-            android:taskAffinity=".t1"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$TaskAffinity1Activity"
-            android:allowTaskReparenting="true"
-            android:launchMode="standard"
-            android:taskAffinity=".t1"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$TaskAffinity1Activity2"
-            android:allowTaskReparenting="true"
-            android:launchMode="standard"
-            android:taskAffinity=".t1"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$TaskAffinity1RelinquishTaskIdentityActivity"
-            android:relinquishTaskIdentity="true"
-            android:taskAffinity=".t1"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$TaskAffinity2Activity"
-            android:allowTaskReparenting="true"
-            android:launchMode="standard"
-            android:taskAffinity=".t2"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$TaskAffinity3Activity"
-            android:allowTaskReparenting="true"
-            android:launchMode="standard"
-            android:taskAffinity=".t3"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$ClearTaskOnLaunchActivity"
-            android:allowTaskReparenting="true"
-            android:clearTaskOnLaunch="true"
-            android:launchMode="standard"
-            android:taskAffinity=".t2"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$DocumentLaunchIntoActivity"
-            android:documentLaunchMode="intoExisting"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$DocumentLaunchAlwaysActivity"
-            android:documentLaunchMode="always"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$DocumentLaunchNeverActivity"
-            android:documentLaunchMode="never"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$NoHistoryActivity"
-            android:noHistory="true"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$LauncherActivity"
-            android:documentLaunchMode="always"
-            android:launchMode="singleInstance"/>
-        <activity
-            android:name="android.server.wm.intent.Activities$RelinquishTaskIdentityActivity"
-            android:relinquishTaskIdentity="true"/>
+        <activity android:name="android.server.wm.intent.Activities$SingleTopActivity"
+             android:launchMode="singleTop"/>
+        <activity android:name="android.server.wm.intent.Activities$SingleInstanceActivity"
+             android:launchMode="singleInstance"/>
+        <activity android:name="android.server.wm.intent.Activities$SingleInstanceActivity2"
+             android:launchMode="singleInstance"
+             android:taskAffinity=".t1"/>
+        <activity android:name="android.server.wm.intent.Activities$SingleTaskActivity"
+             android:launchMode="singleTask"/>
+        <activity android:name="android.server.wm.intent.Activities$SingleTaskActivity2"
+             android:launchMode="singleTask"
+             android:taskAffinity=".t1"/>
+        <activity android:name="android.server.wm.intent.Activities$TaskAffinity1Activity"
+             android:allowTaskReparenting="true"
+             android:launchMode="standard"
+             android:taskAffinity=".t1"/>
+        <activity android:name="android.server.wm.intent.Activities$TaskAffinity1Activity2"
+             android:allowTaskReparenting="true"
+             android:launchMode="standard"
+             android:taskAffinity=".t1"/>
+        <activity android:name="android.server.wm.intent.Activities$TaskAffinity1RelinquishTaskIdentityActivity"
+             android:relinquishTaskIdentity="true"
+             android:taskAffinity=".t1"/>
+        <activity android:name="android.server.wm.intent.Activities$TaskAffinity2Activity"
+             android:allowTaskReparenting="true"
+             android:launchMode="standard"
+             android:taskAffinity=".t2"/>
+        <activity android:name="android.server.wm.intent.Activities$TaskAffinity3Activity"
+             android:allowTaskReparenting="true"
+             android:launchMode="standard"
+             android:taskAffinity=".t3"/>
+        <activity android:name="android.server.wm.intent.Activities$ClearTaskOnLaunchActivity"
+             android:allowTaskReparenting="true"
+             android:clearTaskOnLaunch="true"
+             android:launchMode="standard"
+             android:taskAffinity=".t2"/>
+        <activity android:name="android.server.wm.intent.Activities$DocumentLaunchIntoActivity"
+             android:documentLaunchMode="intoExisting"/>
+        <activity android:name="android.server.wm.intent.Activities$DocumentLaunchAlwaysActivity"
+             android:documentLaunchMode="always"/>
+        <activity android:name="android.server.wm.intent.Activities$DocumentLaunchNeverActivity"
+             android:documentLaunchMode="never"/>
+        <activity android:name="android.server.wm.intent.Activities$NoHistoryActivity"
+             android:noHistory="true"/>
+        <activity android:name="android.server.wm.intent.Activities$LauncherActivity"
+             android:documentLaunchMode="always"
+             android:launchMode="singleInstance"/>
+        <activity android:name="android.server.wm.intent.Activities$RelinquishTaskIdentityActivity"
+             android:relinquishTaskIdentity="true"/>
 
-        <service
-            android:name="android.server.wm.TestLogService"
-            android:enabled="true"
-            android:exported="true">
+        <service android:name="android.server.wm.TestLogService"
+             android:enabled="true"
+             android:exported="true">
         </service>
 
         <activity android:name="android.server.wm.AlertWindowsAppOpsTestsActivity"/>
@@ -313,115 +280,116 @@
                   android:showWhenLocked="true"/>
 
         <activity android:name="android.server.wm.WindowInsetsAnimationSynchronicityTests$TestActivity"
-                  android:turnScreenOn="true"
-                  android:showWhenLocked="true"/>
-        <service
-            android:name="android.server.wm.WindowInsetsAnimationSynchronicityTests$SimpleIme"
-            android:label="Simple IME"
-            android:permission="android.permission.BIND_INPUT_METHOD">
+             android:turnScreenOn="true"
+             android:showWhenLocked="true"/>
+        <service android:name="android.server.wm.WindowInsetsAnimationSynchronicityTests$SimpleIme"
+             android:label="Simple IME"
+             android:permission="android.permission.BIND_INPUT_METHOD"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.view.InputMethod" />
+                <action android:name="android.view.InputMethod"/>
             </intent-filter>
-            <meta-data
-                android:name="android.view.im"
-                android:resource="@xml/simple_method" />
+            <meta-data android:name="android.view.im"
+                 android:resource="@xml/simple_method"/>
         </service>
 
         <activity android:name="android.server.wm.KeyEventActivity"
-                  android:exported="true"
-                  android:configChanges="orientation|screenLayout"
-                  android:showWhenLocked="true"
-        />
+             android:exported="true"
+             android:configChanges="orientation|screenLayout"
+             android:showWhenLocked="true"/>
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$TestActivity"
-                  android:turnScreenOn="true"
-                  android:showWhenLocked="true"/>
+             android:turnScreenOn="true"
+             android:showWhenLocked="true"/>
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$FullscreenTestActivity"/>
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$FullscreenWmFlagsTestActivity"/>
         <activity android:name="android.server.wm.WindowInsetsPolicyTest$ImmersiveFullscreenTestActivity"
-                  android:documentLaunchMode="always"
-                  android:theme="@style/no_animation" />
+             android:documentLaunchMode="always"
+             android:theme="@style/no_animation"/>
         <activity android:name="android.server.wm.LayoutTests$TestActivity"
-                  android:theme="@style/no_animation" />
+             android:theme="@style/no_animation"/>
         <activity android:name="android.server.wm.LocationOnScreenTests$TestActivity"
-                  android:theme="@style/no_starting_window" />
-        <activity android:name="android.server.wm.LocationInWindowTests$TestActivity" />
+             android:theme="@style/no_starting_window"/>
+        <activity android:name="android.server.wm.LocationInWindowTests$TestActivity"/>
         <activity android:name="android.server.wm.EnsureBarContrastTest$TestActivity"
-                  android:theme="@style/no_starting_window" />
-        <activity android:name="android.server.wm.WindowFocusTests$PrimaryActivity" />
+             android:theme="@style/no_starting_window"/>
+        <activity android:name="android.server.wm.WindowFocusTests$PrimaryActivity"/>
         <activity android:name="android.server.wm.WindowFocusTests$SecondaryActivity"
-                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density" />
-        <activity android:name="android.server.wm.WindowFocusTests$LosingFocusActivity" />
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density"/>
+        <activity android:name="android.server.wm.WindowFocusTests$LosingFocusActivity"/>
         <activity android:name="android.server.wm.WindowMetricsTests$MetricsActivity"
-                  android:exported="true" />
+             android:exported="true"/>
         <activity android:name="android.app.Activity"/>
-        <activity android:name="android.server.wm.WindowInsetsLayoutTests$TestActivity" />
-        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestActivity" />
-        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestHideOnCreateActivity" />
-        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestShowOnCreateActivity" />
+        <activity android:name="android.server.wm.WindowInsetsLayoutTests$TestActivity"/>
+        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestActivity"/>
+        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestHideOnCreateActivity"/>
+        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestShowOnCreateActivity"/>
 
         <activity android:name="android.server.wm.DragDropTest$DragDropActivity"
-                  android:screenOrientation="locked"
-                  android:turnScreenOn="true"
-                  android:showWhenLocked="true"
-                  android:label="DragDropActivity">
+             android:screenOrientation="locked"
+             android:turnScreenOn="true"
+             android:showWhenLocked="true"
+             android:label="DragDropActivity"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="android.server.wm.DecorInsetTestsBase$TestActivity"
-            android:label="DecorInsetTestsBase.TestActivity"
-            android:exported="true" />
+        <activity android:name="android.server.wm.DecorInsetTestsBase$TestActivity"
+             android:label="DecorInsetTestsBase.TestActivity"
+             android:exported="true"/>
 
         <activity android:name="android.server.wm.WindowCtsActivity"
-                  android:theme="@android:style/Theme.Material.NoActionBar"
-                  android:screenOrientation="locked"
-                  android:turnScreenOn="true"
-                  android:showWhenLocked="true"
-                  android:label="WindowCtsActivity">
+             android:theme="@android:style/Theme.Material.NoActionBar"
+             android:screenOrientation="locked"
+             android:turnScreenOn="true"
+             android:showWhenLocked="true"
+             android:label="WindowCtsActivity"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
         <activity android:name="android.server.wm.SurfaceViewCtsActivity"
-                  android:screenOrientation="locked"
-                  android:turnScreenOn="true"
-                  android:showWhenLocked="true"
-                  android:label="SurfaceViewCtsActivity">
+             android:screenOrientation="locked"
+             android:turnScreenOn="true"
+             android:showWhenLocked="true"
+             android:label="SurfaceViewCtsActivity"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
         <activity android:name="android.view.cts.surfacevalidator.CapturedActivity"
-                  android:screenOrientation="locked"
-                  android:theme="@style/WhiteBackgroundTheme">
+             android:screenOrientation="locked"
+             android:theme="@style/WhiteBackgroundTheme"
+             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
         <service android:name="android.view.cts.surfacevalidator.LocalMediaProjectionService"
-                 android:foregroundServiceType="mediaProjection"
-                 android:enabled="true">
+             android:foregroundServiceType="mediaProjection"
+             android:enabled="true">
         </service>
 
         <activity android:name="android.server.wm.StartActivityAsUserActivity"
-                  android:directBootAware="true"/>
+             android:directBootAware="true"/>
 
         <activity android:name="android.server.wm.WindowInsetsAnimationTestBase$TestActivity"
-                  android:theme="@android:style/Theme.Material.NoActionBar" />
+             android:theme="@android:style/Theme.Material.NoActionBar"/>
 
         <activity android:name="android.server.wm.ForceRelayoutTestBase$TestActivity"
-                  android:exported="true" />
+             android:exported="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.server.wm.cts"
-                     android:label="CTS tests of WindowManager">
+         android:targetPackage="android.server.wm.cts"
+         android:label="CTS tests of WindowManager">
     </instrumentation>
 
 </manifest>

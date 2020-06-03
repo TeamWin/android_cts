@@ -110,6 +110,7 @@
 
         <activity android:name=".admin.PolicySerializationTestActivity"
                 android:label="@string/da_policy_serialization_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -124,6 +125,7 @@
 
         <activity android:name=".admin.DeviceAdminUninstallTestActivity"
                   android:label="@string/da_uninstall_test"
+                  android:exported="true"
                   android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -136,6 +138,7 @@
 
         <activity android:name=".admin.tapjacking.DeviceAdminTapjackingTestActivity"
                   android:label="@string/da_tapjacking_test"
+                  android:exported="true"
                   android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -147,6 +150,7 @@
         </activity>
 
         <receiver android:name=".admin.tapjacking.EmptyDeviceAdminReceiver"
+                  android:exported="true"
                   android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                        android:resource="@xml/tapjacking_device_admin" />
@@ -163,6 +167,7 @@
         <activity
             android:name=".battery.BatterySaverTestActivity"
             android:label="@string/battery_saver_test"
+            android:exported="true"
             android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -173,6 +178,7 @@
 
         <activity android:name=".forcestop.RecentTaskRemovalTestActivity"
                   android:label="@string/remove_from_recents_test"
+                  android:exported="true"
                   android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -183,6 +189,7 @@
 
         <activity android:name=".companion.CompanionDeviceTestActivity"
                   android:label="@string/companion_test"
+                  android:exported="true"
                   android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -203,6 +210,7 @@
 
         <activity android:name=".admin.ScreenLockTestActivity"
                 android:label="@string/da_screen_lock_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -218,6 +226,7 @@
         <activity
             android:name=".bluetooth.BluetoothTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bluetooth_test" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -241,6 +250,7 @@
         <activity
             android:name=".bluetooth.BluetoothToggleActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bt_toggle_bluetooth" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -267,6 +277,7 @@
         <activity
             android:name=".bluetooth.HidDeviceActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bt_hid_device" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -290,6 +301,7 @@
         <activity
             android:name=".bluetooth.HidHostActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bt_hid_host" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -313,6 +325,7 @@
         <activity
             android:name=".bluetooth.SecureServerActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bt_secure_server" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -338,6 +351,7 @@
         <activity
             android:name=".bluetooth.InsecureServerActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bt_insecure_server" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -363,6 +377,7 @@
         <activity
             android:name=".bluetooth.SecureClientActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bt_secure_client" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -388,6 +403,7 @@
         <activity
             android:name=".bluetooth.InsecureClientActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bt_insecure_client" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -414,6 +430,7 @@
         <activity
             android:name=".bluetooth.ConnectionAccessServerActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bt_connection_access_server" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -436,6 +453,7 @@
         <activity
             android:name=".bluetooth.ConnectionAccessClientActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/bt_connection_access_client" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -497,6 +515,7 @@
         <activity
             android:name=".bluetooth.BleInsecureClientTestListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_insecure_client_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -524,6 +543,7 @@
         <activity
             android:name=".bluetooth.BleInsecureClientStartActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_client_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -551,6 +571,7 @@
             android:name=".bluetooth.BleInsecureConnectionPriorityClientTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/ble_connection_priority_client_name"
+            android:exported="true"
             android:windowSoftInputMode="stateAlwaysHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -582,6 +603,7 @@
             android:name=".bluetooth.BleInsecureEncryptedClientTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/ble_encrypted_client_name"
+            android:exported="true"
             android:windowSoftInputMode="stateAlwaysHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -614,6 +636,7 @@
         <activity
             android:name=".bluetooth.BleInsecureServerTestListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_insecure_server_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -640,6 +663,7 @@
         <activity
             android:name=".bluetooth.BleInsecureServerStartActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_server_start_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -666,6 +690,7 @@
         <activity
             android:name=".bluetooth.BleInsecureConnectionPriorityServerTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_connection_priority_server_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -697,6 +722,7 @@
             android:name=".bluetooth.BleInsecureEncryptedServerTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/ble_encrypted_server_name"
+            android:exported="true"
             android:windowSoftInputMode="stateAlwaysHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -729,6 +755,7 @@
         <activity
             android:name=".bluetooth.BleSecureClientTestListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_secure_client_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -755,6 +782,7 @@
         <activity
             android:name=".bluetooth.BleSecureClientStartActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_client_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -782,6 +810,7 @@
             android:name=".bluetooth.BleSecureConnectionPriorityClientTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/ble_connection_priority_client_name"
+            android:exported="true"
             android:windowSoftInputMode="stateAlwaysHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -812,6 +841,7 @@
             android:name=".bluetooth.BleSecureEncryptedClientTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/ble_encrypted_client_name"
+            android:exported="true"
             android:windowSoftInputMode="stateAlwaysHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -843,6 +873,7 @@
         <activity
             android:name=".bluetooth.BleSecureServerTestListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_secure_server_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -869,6 +900,7 @@
         <activity
             android:name=".bluetooth.BleSecureServerStartActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_server_start_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -895,6 +927,7 @@
         <activity
             android:name=".bluetooth.BleSecureConnectionPriorityServerTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_connection_priority_server_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -925,6 +958,7 @@
             android:name=".bluetooth.BleSecureEncryptedServerTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/ble_encrypted_server_name"
+            android:exported="true"
             android:windowSoftInputMode="stateAlwaysHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -956,6 +990,7 @@
         <activity
             android:name=".bluetooth.BleCocInsecureClientTestListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_coc_insecure_client_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -982,6 +1017,7 @@
         <activity
             android:name=".bluetooth.BleCocInsecureClientStartActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_coc_client_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1013,6 +1049,7 @@
         <activity
             android:name=".bluetooth.BleCocInsecureServerTestListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_coc_insecure_server_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1039,6 +1076,7 @@
         <activity
             android:name=".bluetooth.BleCocInsecureServerStartActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_coc_server_start_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1070,6 +1108,7 @@
         <activity
             android:name=".bluetooth.BleCocSecureClientTestListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_coc_secure_client_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1096,6 +1135,7 @@
         <activity
             android:name=".bluetooth.BleCocSecureClientStartActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_coc_client_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1127,6 +1167,7 @@
         <activity
             android:name=".bluetooth.BleCocSecureServerTestListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_coc_secure_server_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1153,6 +1194,7 @@
         <activity
             android:name=".bluetooth.BleCocSecureServerStartActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_coc_server_start_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1184,6 +1226,7 @@
         <activity
             android:name=".bluetooth.BleScannerTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_scanner_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1210,6 +1253,7 @@
         <activity
             android:name=".bluetooth.BleScannerPowerLevelActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_power_level_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1239,6 +1283,7 @@
         <activity
             android:name=".bluetooth.BleAdvertiserTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_advertiser_test_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1265,6 +1310,7 @@
         <activity
             android:name=".bluetooth.BleAdvertiserPowerLevelActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/ble_power_level_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1282,6 +1328,7 @@
 
         <activity android:name=".biometrics.BiometricTestList"
             android:label="@string/biometric_test"
+            android:exported="true"
             android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1297,6 +1344,7 @@
         <activity
             android:name=".biometrics.SensorConfigurationTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_sensor_configuration_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1315,6 +1363,7 @@
         <activity
             android:name=".biometrics.CredentialNotEnrolledTests"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_credential_not_enrolled_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1333,6 +1382,7 @@
         <activity
             android:name=".biometrics.CredentialEnrolledTests"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_credential_enrolled_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1351,6 +1401,7 @@
         <activity
             android:name=".biometrics.CredentialCryptoTests"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_credential_crypto_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1369,6 +1420,7 @@
         <activity
             android:name=".biometrics.BiometricStrongTests"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_strong_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1387,6 +1439,7 @@
         <activity
             android:name=".biometrics.BiometricWeakTests"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_weak_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1405,6 +1458,7 @@
         <activity
             android:name=".biometrics.UserAuthenticationCredentialCipherTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_set_user_authentication_credential_cipher_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1423,6 +1477,7 @@
         <activity
             android:name=".biometrics.UserAuthenticationBiometricCipherTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_set_user_authentication_biometric_cipher_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1441,6 +1496,7 @@
         <activity
             android:name=".biometrics.UserAuthenticationBiometricOrCredentialCipherTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_set_user_authentication_biometric_credential_cipher_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1459,6 +1515,7 @@
         <activity
             android:name=".biometrics.UserAuthenticationCredentialSignatureTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_set_user_authentication_credential_signature_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1477,6 +1534,7 @@
         <activity
             android:name=".biometrics.UserAuthenticationBiometricSignatureTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_set_user_authentication_biometric_signature_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1495,6 +1553,7 @@
         <activity
             android:name=".biometrics.UserAuthenticationBiometricOrCredentialSignatureTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_set_user_authentication_biometric_or_credential_signature_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1513,6 +1572,7 @@
         <activity
             android:name=".biometrics.UserAuthenticationCredentialMacTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_set_user_authentication_credential_mac_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1531,6 +1591,7 @@
         <activity
             android:name=".biometrics.UserAuthenticationBiometricMacTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_set_user_authentication_biometric_mac_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1549,6 +1610,7 @@
         <activity
             android:name=".biometrics.UserAuthenticationBiometricOrCredentialMacTest"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:label="@string/biometric_test_set_user_authentication_biometric_or_credential_mac_label" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1566,6 +1628,7 @@
 
         <activity android:name=".security.IdentityCredentialAuthentication"
                 android:label="@string/sec_identity_credential_authentication_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1580,6 +1643,7 @@
 
         <activity android:name=".security.FingerprintBoundKeysTest"
                 android:label="@string/sec_fingerprint_bound_key_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1594,6 +1658,7 @@
 
         <activity android:name=".security.ProtectedConfirmationTest"
             android:label="@string/sec_protected_confirmation_test"
+            android:exported="true"
             android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1604,6 +1669,7 @@
 
         <activity android:name=".security.ScreenLockBoundKeysTest"
                 android:label="@string/sec_lock_bound_key_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1618,6 +1684,7 @@
 
         <activity android:name=".security.LockConfirmBypassTest"
                 android:label="@string/lock_confirm_test_title"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1632,6 +1699,7 @@
 
         <activity android:name=".security.SetNewPasswordComplexityTest"
                   android:label="@string/set_complexity_test_title"
+                  android:exported="true"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1646,6 +1714,7 @@
 
         <activity android:name=".streamquality.StreamingVideoActivity"
                 android:label="@string/streaming_video"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1662,7 +1731,8 @@
                 android:screenOrientation="nosensor" />
 
         <!-- FeatureSummaryActivity is replaced by CTS SystemFeaturesTest
-        <activity android:name=".features.FeatureSummaryActivity" android:label="@string/feature_summary">
+        <activity android:name=".features.FeatureSummaryActivity" android:label="@string/feature_summary"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
@@ -1673,6 +1743,7 @@
 
         <activity android:name=".location.LocationListenerActivity"
                 android:label="@string/location_listener_activity"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.location.SET_LOCATION_AND_CHECK" />
@@ -1681,6 +1752,7 @@
         </activity>
 
         <activity android:name=".net.ConnectivityBackgroundTestActivity"
+                android:exported="true"
                 android:label="@string/network_background_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1691,6 +1763,7 @@
         </activity>
 
         <activity android:name=".net.MultiNetworkConnectivityTestActivity"
+                  android:exported="true"
                   android:label="@string/multinetwork_connectivity_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1705,6 +1778,7 @@
 
         <activity android:name=".nfc.NfcTestActivity"
                 android:label="@string/nfc_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2022,7 +2096,8 @@
             <meta-data android:name="android.nfc.cardemulation.off_host_apdu_service" android:resource="@xml/uicc_transaction_event_aid_list"/>
         </service>
 
-        <receiver android:name=".nfc.offhost.UiccTransactionEventReceiver">
+        <receiver android:name=".nfc.offhost.UiccTransactionEventReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.nfc.action.TRANSACTION_DETECTED" >
                 </action>
@@ -2040,6 +2115,7 @@
 
         <!-- Service used for Camera ITS tests -->
         <service android:name=".camera.its.ItsService"
+            android:exported="true"
             android:foregroundServiceType="camera">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.camera.its.START"/>
@@ -2053,6 +2129,7 @@
         -->
         <receiver android:name=".sensors.helpers.SensorDeviceAdminReceiver"
                 android:label="@string/snsr_device_admin_receiver"
+                android:exported="true"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                        android:resource="@xml/sensor_device_admin" />
@@ -2063,6 +2140,7 @@
 
         <activity android:name=".sensors.AccelerometerMeasurementTestActivity"
                   android:label="@string/snsr_accel_m_test"
+                  android:exported="true"
                   android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -2077,6 +2155,7 @@
 
         <activity android:name=".sensors.GyroscopeMeasurementTestActivity"
                   android:label="@string/snsr_gyro_m_test"
+                  android:exported="true"
                   android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -2091,6 +2170,7 @@
 
         <activity android:name=".sensors.HeartRateMonitorTestActivity"
                   android:label="@string/snsr_heartrate_test"
+                  android:exported="true"
                   android:screenOrientation="nosensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2103,6 +2183,7 @@
 
         <activity android:name=".sensors.MagneticFieldMeasurementTestActivity"
                   android:label="@string/snsr_mag_m_test"
+                  android:exported="true"
                   android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2114,6 +2195,7 @@
         </activity>
 
         <activity android:name=".sensors.OffBodySensorTestActivity"
+            android:exported="true"
             android:label="@string/snsr_offbody_sensor_test">
 <!--            <receiver android:name="com.android.cts.verifier.sensors.OffBodySensorTestActivity$AlarmReceiver"></receiver>-->
             <intent-filter>
@@ -2127,6 +2209,7 @@
             android:name=".sensors.RVCVXCheckTestActivity"
             android:keepScreenOn="true"
             android:label="@string/snsr_rvcvxchk_test"
+            android:exported="true"
             android:screenOrientation="locked" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2151,6 +2234,7 @@
         <!-- TODO: enable when a full set of verifications can be implemented -->
         <!--activity android:name=".sensors.RotationVectorTestActivity"
                   android:label="@string/snsr_rot_vec_test"
+                  android:exported="true"
                   android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2163,6 +2247,7 @@
 
         <activity android:name=".sensors.BatchingTestActivity"
                   android:label="@string/snsr_batch_test"
+                  android:exported="true"
                   android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2176,6 +2261,7 @@
         <!-- TODO: enable when a more reliable way to identify time synchronization is available -->
         <!--activity android:name=".sensors.SensorSynchronizationTestActivity"
                   android:label="@string/snsr_synch_test"
+                  android:exported="true"
                   android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2188,6 +2274,7 @@
 
         <activity android:name=".sensors.DynamicSensorDiscoveryTestActivity"
                   android:label="@string/snsr_dynamic_sensor_discovery_test"
+                  android:exported="true"
                   android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -2201,6 +2288,7 @@
 
         <activity android:name=".camera.formats.CameraFormatsActivity"
                  android:label="@string/camera_format"
+                 android:exported="true"
                  android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2212,6 +2300,7 @@
         </activity>
 
         <activity android:name=".camera.intents.CameraIntentsActivity"
+                 android:exported="true"
                  android:label="@string/camera_intents">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2227,6 +2316,7 @@
 
         <activity android:name=".camera.orientation.CameraOrientationActivity"
                  android:label="@string/camera_orientation"
+                 android:exported="true"
                  android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2241,6 +2331,7 @@
             android:name=".camera.fov.PhotoCaptureActivity"
             android:label="@string/camera_fov_calibration"
             android:screenOrientation="landscape"
+            android:exported="true"
             android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" >
             <intent-filter android:label="@string/camera_fov_calibration" >
                 <action android:name="android.intent.action.MAIN" />
@@ -2263,6 +2354,7 @@
 
         <activity android:name=".camera.video.CameraVideoActivity"
                  android:label="@string/camera_video"
+                 android:exported="true"
                  android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2277,6 +2369,7 @@
                   android:label="@string/camera_its_test"
                   android:launchMode="singleTop"
                   android:configChanges="keyboardHidden|screenSize"
+                  android:exported="true"
                   android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2288,6 +2381,7 @@
 
         <activity android:name=".camera.flashlight.CameraFlashlightActivity"
                   android:label="@string/camera_flashlight_test"
+                  android:exported="true"
                   android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2299,6 +2393,7 @@
 
         <activity android:name=".camera.performance.CameraPerformanceActivity"
                   android:label="@string/camera_performance_test"
+                  android:exported="true"
                   android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2311,6 +2406,7 @@
         <activity android:name=".camera.bokeh.CameraBokehActivity"
                   android:label="@string/camera_bokeh_test"
                   android:configChanges="keyboardHidden|screenSize"
+                  android:exported="true"
                   android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2322,6 +2418,7 @@
 
         <activity android:name=".usb.accessory.UsbAccessoryTestActivity"
                 android:label="@string/usb_accessory_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2333,7 +2430,8 @@
                     android:value="android.hardware.type.watch" />
         </activity>
 
-        <activity android:name=".usb.accessory.AccessoryAttachmentHandler">
+        <activity android:name=".usb.accessory.AccessoryAttachmentHandler"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
             </intent-filter>
@@ -2344,6 +2442,7 @@
 
         <activity android:name=".usb.device.UsbDeviceTestActivity"
                 android:label="@string/usb_device_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2356,7 +2455,8 @@
                     android:value="android.hardware.type.watch" />
         </activity>
 
-        <activity android:name=".usb.mtp.MtpHostTestActivity" android:label="@string/mtp_host_test">
+        <activity android:name=".usb.mtp.MtpHostTestActivity" android:label="@string/mtp_host_test"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
@@ -2370,6 +2470,7 @@
 <!-- Turned off Sensor Power Test in initial L release
         <activity android:name=".sensors.SensorPowerTestActivity"
                 android:label="@string/sensor_power_test"
+                  android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2382,6 +2483,7 @@
 -->
         <activity android:name=".p2p.P2pTestListActivity"
                 android:label="@string/p2p_test"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2396,6 +2498,7 @@
         </activity>
         <activity android:name=".managedprovisioning.IntermediateRecentActivity"
                   android:label="@string/provisioning_byod_recents"
+                  android:exported="true"
                   android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.RECENTS" />
@@ -2404,6 +2507,7 @@
         </activity>
         <activity android:name=".wifi.TestListActivity"
                   android:label="@string/wifi_test"
+                  android:exported="true"
                   android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2414,6 +2518,7 @@
         </activity>
         <activity android:name=".wifiaware.TestListActivity"
                   android:label="@string/aware_test"
+                  android:exported="true"
                   android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2424,6 +2529,7 @@
         </activity>
 
         <activity android:name=".notifications.NotificationListenerVerifierActivity"
+                  android:exported="true"
                 android:label="@string/nls_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2432,7 +2538,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
         </activity>
 
-        <receiver android:name=".notifications.BlockChangeReceiver">
+        <receiver android:name=".notifications.BlockChangeReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.NOTIFICATION_CHANNEL_BLOCK_STATE_CHANGED"/>
                 <action android:name="android.app.action.NOTIFICATION_CHANNEL_GROUP_BLOCK_STATE_CHANGED"/>
@@ -2440,13 +2547,15 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".notifications.AutomaticZenRuleStatusReceiver">
+        <receiver android:name=".notifications.AutomaticZenRuleStatusReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.AUTOMATIC_ZEN_RULE_STATUS_CHANGED"/>
             </intent-filter>
         </receiver>
 
         <activity android:name=".notifications.ConditionProviderVerifierActivity"
+                  android:exported="true"
                   android:label="@string/cp_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2466,6 +2575,7 @@
         </activity>
 
         <activity android:name=".notifications.AttentionManagementVerifierActivity"
+                  android:exported="true"
                 android:label="@string/attention_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2477,6 +2587,7 @@
         </activity>
 
         <activity android:name=".notifications.BubblesVerifierActivity"
+                  android:exported="true"
                   android:label="@string/bubbles_notification_title">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2489,6 +2600,7 @@
 
         <activity android:name=".notifications.BubbleActivity"
                   android:label="@string/bubble_activity_title"
+                  android:exported="true"
                   android:resizeableActivity="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -2502,6 +2614,7 @@
         </activity>
 
         <activity android:name=".notifications.MediaPlayerVerifierActivity"
+                  android:exported="true"
                   android:label="@string/qs_media_player_title">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2533,6 +2646,7 @@
 
         <activity android:name=".notifications.ShortcutThrottlingResetActivity"
             android:label="@string/shortcut_reset_test"
+                  android:exported="true"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2544,6 +2658,7 @@
         </activity>
 
         <activity android:name=".qstiles.TileServiceVerifierActivity"
+                  android:exported="true"
                   android:label="@string/tiles_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2558,6 +2673,7 @@
                  android:icon="@android:drawable/ic_dialog_alert"
                  android:label="@string/tile_service_name"
                  android:enabled="false"
+                  android:exported="true"
                  android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
@@ -2566,6 +2682,7 @@
 
         <activity android:name=".vr.VrListenerVerifierActivity"
             android:configChanges="uiMode"
+            android:exported="true"
             android:label="@string/vr_tests">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2620,6 +2737,7 @@
         <service  android:name=".notifications.InteractiveVerifierActivity$DismissService"/>
 
         <activity android:name=".security.CAInstallNotificationVerifierActivity"
+                android:exported="true"
                 android:label="@string/cacert_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2631,6 +2749,7 @@
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
         </activity>
         <activity android:name=".security.CANotifyOnBootActivity"
+                android:exported="true"
                 android:label="@string/caboot_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2643,6 +2762,7 @@
         </activity>
 
         <activity android:name=".security.KeyChainTest"
+                android:exported="true"
                 android:label="@string/keychain_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2655,6 +2775,7 @@
         </activity>
 
         <activity android:name=".security.CaCertInstallViaIntentTest"
+                  android:exported="true"
                   android:label="@string/cacert_install_via_intent">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2847,6 +2968,7 @@
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity-alias android:name=".CtsVerifierActivity" android:label="@string/app_name"
+                android:exported="true"
                 android:targetActivity=".TestListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2857,6 +2979,7 @@
 
         <!-- remove comment from the next activity to see the sample test surfacing in the app -->
         <!-- activity android:name=".sample.SampleTestActivity"
+                android:exported="true"
                   android:label="@string/sample_framework_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2866,6 +2989,7 @@
         </activity -->
 
         <activity android:name=".widget.WidgetTestActivity"
+                android:exported="true"
                 android:label="@string/widget_framework_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2879,6 +3003,7 @@
         </activity>
 
         <activity android:name=".deskclock.DeskClockTestsActivity"
+                android:exported="true"
                   android:label="@string/deskclock_tests">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2895,6 +3020,7 @@
         <activity
                 android:name="com.android.cts.verifier.sensors.StepCounterTestActivity"
                 android:label="@string/snsr_step_counter_test"
+                android:exported="true"
                 android:screenOrientation="nosensor" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2909,6 +3035,7 @@
        <activity
             android:name="com.android.cts.verifier.sensors.StepSensorPermissionTestActivity"
             android:label="@string/snsr_step_permission_test"
+                android:exported="true"
             android:screenOrientation="nosensor" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2926,6 +3053,7 @@
         <activity
                 android:name="com.android.cts.verifier.sensors.DeviceSuspendTestActivity"
                 android:label="@string/snsr_device_suspend_test"
+                android:exported="true"
                 android:screenOrientation="nosensor" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2953,6 +3081,7 @@
         <activity
             android:name="com.android.cts.verifier.sensors.SignificantMotionTestActivity"
             android:label="@string/snsr_significant_motion_test"
+                android:exported="true"
             android:screenOrientation="nosensor" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2970,6 +3099,7 @@
         <activity
             android:name="com.android.cts.verifier.sensors.EventSanitizationTestActivity"
             android:label="@string/snsr_event_sanitization_test"
+            android:exported="true"
             android:screenOrientation="nosensor" >
 
             <intent-filter>
@@ -2992,6 +3122,7 @@
        <activity
             android:name="com.android.cts.verifier.sensors.HingeAngleTestActivity"
             android:label="@string/snsr_hinge_angle_test"
+                android:exported="true"
             android:screenOrientation="nosensor" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3006,7 +3137,8 @@
                        android:value="android.hardware.sensor.hinge_angle" />
         </activity>
 
-        <receiver android:name=".widget.WidgetCtsProvider">
+        <receiver android:name=".widget.WidgetCtsProvider"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -3021,6 +3153,7 @@
             android:exported="false" />
 
         <activity android:name=".projection.cube.ProjectionCubeActivity"
+                android:exported="true"
                   android:label="@string/pca_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3031,6 +3164,7 @@
         </activity>
 
         <activity android:name=".projection.widgets.ProjectionWidgetActivity"
+                android:exported="true"
                   android:label="@string/pwa_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3041,6 +3175,7 @@
         </activity>
 
         <activity android:name=".projection.list.ProjectionListActivity"
+                android:exported="true"
                   android:label="@string/pla_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3052,6 +3187,7 @@
         </activity>
 
         <activity android:name=".projection.video.ProjectionVideoActivity"
+                android:exported="true"
                   android:label="@string/pva_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3063,6 +3199,7 @@
         </activity>
 
         <activity android:name=".projection.touch.ProjectionTouchActivity"
+                android:exported="true"
                   android:label="@string/pta_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3075,6 +3212,7 @@
 
 
         <activity android:name=".projection.offscreen.ProjectionOffscreenActivity"
+                android:exported="true"
                   android:label="@string/poa_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3090,6 +3228,7 @@
                  android:process=":projectionservice" />
 
         <activity android:name=".managedprovisioning.DeviceOwnerNegativeTestActivity"
+                android:exported="true"
                 android:label="@string/negative_device_owner">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3104,6 +3243,7 @@
         <activity android:name=".managedprovisioning.DeviceOwnerNegativeTestActivity$TrampolineActivity" />
 
         <activity android:name=".managedprovisioning.EnterprisePrivacyInfoOnlyTestActivity"
+                android:exported="true"
                 android:label="@string/enterprise_privacy_test">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_ENTERPRISE_PRIVACY_INFO_ONLY" />
@@ -3112,6 +3252,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerPositiveTestActivity"
+                android:exported="true"
                 android:label="@string/positive_device_owner">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3126,6 +3267,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.ManagedUserPositiveTestActivity"
+                 android:exported="true"
                   android:label="@string/managed_user_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3135,6 +3277,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerRequestingBugreportTestActivity"
+                android:exported="true"
                 android:label="@string/device_owner_requesting_bugreport_tests">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3155,6 +3298,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.CrossProfilePermissionControlActivity"
+                android:exported="true"
                   android:label="@string/provisioning_byod_cross_profile_permission_control">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CROSS_PROFILE_PERMISSION_CONTROL" />
@@ -3167,6 +3311,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.LockTaskUiTestActivity"
+                android:exported="true"
                 android:label="@string/device_owner_lock_task_ui_test">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.STOP_LOCK_TASK" />
@@ -3179,6 +3324,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.VpnTestActivity"
+                android:exported="true"
                 android:label="@string/device_owner_vpn_test">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.VPN" />
@@ -3187,6 +3333,7 @@
         </activity>
 
         <service android:name=".managedprovisioning.VpnTestActivity$MyTestVpnService"
+                android:exported="true"
                 android:permission="android.permission.BIND_VPN_SERVICE">
             <intent-filter>
                 <action android:name="android.net.VpnService"/>
@@ -3194,6 +3341,7 @@
         </service>
 
         <activity android:name=".managedprovisioning.AlwaysOnVpnSettingsTestActivity"
+                android:exported="true"
                 android:label="@string/provisioning_byod_always_on_vpn">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.ALWAYS_ON_VPN_SETTINGS_TEST" />
@@ -3202,6 +3350,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.KeyChainTestActivity"
+                android:exported="true"
                 android:label="@string/provisioning_byod_keychain">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.KEYCHAIN" />
@@ -3210,6 +3359,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.PermissionLockdownTestActivity"
+                android:exported="true"
                 android:label="@string/device_profile_owner_permission_lockdown_test">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_PERMISSION_LOCKDOWN" />
@@ -3219,6 +3369,7 @@
 
         <activity-alias
                 android:name=".managedprovisioning.ManagedProfilePermissionLockdownTestActivity"
+                android:exported="true"
                 android:targetActivity=".managedprovisioning.PermissionLockdownTestActivity">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.MANAGED_PROFILE_CHECK_PERMISSION_LOCKDOWN" />
@@ -3231,6 +3382,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.PolicyTransparencyTestListActivity"
+                android:exported="true"
                 android:label="@string/device_profile_owner_policy_transparency_test">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_POLICY_TRANSPARENCY" />
@@ -3238,7 +3390,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".managedprovisioning.PolicyTransparencyTestActivity">
+        <activity android:name=".managedprovisioning.PolicyTransparencyTestActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.SHOW_POLICY_TRANSPARENCY_TEST" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -3246,6 +3399,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.EnterprisePrivacyTestListActivity"
+                android:exported="true"
                 android:label="@string/enterprise_privacy_test">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_ENTERPRISE_PRIVACY" />
@@ -3255,6 +3409,7 @@
 
         <activity android:name=".managedprovisioning.EnterprisePrivacyTestDefaultAppActivity"
                 android:label="@string/enterprise_privacy_default_app"
+                android:exported="true"
                 android:enabled="false">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -3297,6 +3452,7 @@
 
         <activity android:name=".managedprovisioning.CommandReceiverActivity"
                 android:theme="@android:style/Theme.NoDisplay"
+                android:exported="true"
                 android:noHistory="true">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.EXECUTE_COMMAND" />
@@ -3304,7 +3460,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".managedprovisioning.SetSupportMessageActivity">
+        <activity android:name=".managedprovisioning.SetSupportMessageActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.SET_SUPPORT_MSG" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -3313,6 +3470,7 @@
 
         <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$DummyInputMethod"
                 android:label="@string/dummy_input_method_label"
+                android:exported="true"
                 android:permission="android.permission.BIND_INPUT_METHOD">
             <intent-filter>
                 <action android:name="android.view.InputMethod" />
@@ -3322,6 +3480,7 @@
 
         <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$DummyAccessibilityService"
                 android:label="@string/dummy_accessibility_service_label"
+                android:exported="true"
                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
@@ -3329,6 +3488,7 @@
         </service>
 
         <activity android:name=".managedprovisioning.AuthenticationBoundKeyTestActivity"
+                android:exported="true"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.AUTH_BOUND_KEY_TEST" />
@@ -3338,6 +3498,7 @@
 
         <activity android:name=".managedprovisioning.ByodFlowTestActivity"
                 android:launchMode="singleTask"
+                android:exported="true"
                 android:label="@string/provisioning_byod">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3360,13 +3521,15 @@
         </activity>
 
         <receiver
-            android:name=".managedprovisioning.ByodFlowTestActivity$ProvisioningCompleteReceiver">
+            android:name=".managedprovisioning.ByodFlowTestActivity$ProvisioningCompleteReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.MANAGED_PROFILE_PROVISIONED" />
             </intent-filter>
         </receiver>
 
         <activity android:name=".managedprovisioning.ByodProvisioningTestActivity"
+                android:exported="true"
                 android:label="@string/provisioning_tests_byod">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3378,7 +3541,8 @@
 
         <activity android:name=".managedprovisioning.ByodProvisioningTestActivity$ProvisioningStartingActivity" />
 
-        <activity android:name=".managedprovisioning.ByodHelperActivity">
+        <activity android:name=".managedprovisioning.ByodHelperActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_QUERY" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_REMOVE" />
@@ -3411,7 +3575,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".managedprovisioning.ByodPrimaryHelperActivity">
+        <activity android:name=".managedprovisioning.ByodPrimaryHelperActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK_IN_PRIMARY" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -3432,7 +3597,8 @@
                 android:resource="@xml/filepaths" />
         </provider>
 
-        <activity android:name=".managedprovisioning.ByodIconSamplerActivity">
+        <activity android:name=".managedprovisioning.ByodIconSamplerActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_SAMPLE_ICON" />
                 <category android:name="android.intent.category.DEFAULT"></category>
@@ -3440,6 +3606,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.HandleIntentActivity"
+                android:exported="true"
                 android:enabled="false">
             <intent-filter>
                 <!-- We need to have at least one activity listening to these intents on the device
@@ -3511,7 +3678,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".managedprovisioning.CrossProfileTestActivity">
+        <activity android:name=".managedprovisioning.CrossProfileTestActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.CROSS_PROFILE_TO_PERSONAL" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.CROSS_PROFILE_TO_WORK" />
@@ -3531,7 +3699,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".managedprovisioning.WorkStatusTestActivity">
+        <activity android:name=".managedprovisioning.WorkStatusTestActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.WORK_STATUS_ICON" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.WORK_STATUS_TOAST" />
@@ -3544,6 +3713,7 @@
         </activity>
 
         <activity android:name=".managedprovisioning.WorkProfileWidgetActivity"
+                android:exported="true"
                   android:label="@string/provisioning_byod_work_profile_widget">
         <intent-filter>
                 <action android:name="com.android.cts.verifier.byod.test_work_profile_widget"/>
@@ -3553,6 +3723,7 @@
 
         <receiver android:name=".managedprovisioning.DeviceAdminTestReceiver"
                 android:label="@string/afw_device_admin"
+                android:exported="true"
                 android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                        android:resource="@xml/device_admin_byod" />
@@ -3570,6 +3741,7 @@
         <activity android:name=".os.TimeoutResetActivity"/>
 
         <activity android:name=".tv.TvInputDiscoveryTestActivity"
+                android:exported="true"
                 android:label="@string/tv_input_discover_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3581,6 +3753,7 @@
         </activity>
 
         <activity android:name=".tv.ParentalControlTestActivity"
+                android:exported="true"
                 android:label="@string/tv_parental_control_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3592,6 +3765,7 @@
         </activity>
 
         <activity android:name=".tv.MultipleTracksTestActivity"
+                android:exported="true"
                 android:label="@string/tv_multiple_tracks_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3603,6 +3777,7 @@
         </activity>
 
         <activity android:name=".tv.TimeShiftTestActivity"
+                android:exported="true"
                 android:label="@string/tv_time_shift_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3615,6 +3790,7 @@
 
         <activity android:name=".tv.AppLinkTestActivity"
             android:label="@string/tv_app_link_test"
+                android:exported="true"
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3626,6 +3802,7 @@
         </activity>
 
         <activity android:name=".tv.MicrophoneDeviceTestActivity"
+                android:exported="true"
                   android:label="@string/tv_microphone_device_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3638,6 +3815,7 @@
 
         <activity android:name=".tv.display.DisplayHdrCapabilitiesTestActivity"
                   android:label="@string/tv_hdr_capabilities_test"
+                android:exported="true"
                   android:configChanges="orientation|screenSize|density|smallestScreenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3649,6 +3827,7 @@
         </activity>
         <activity android:name=".tv.display.DisplayModesTestActivity"
                   android:label="@string/tv_display_modes_test"
+                android:exported="true"
                   android:configChanges="orientation|screenSize|density|smallestScreenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3661,6 +3840,7 @@
 
 
         <activity android:name=".screenpinning.ScreenPinningTestActivity"
+                android:exported="true"
             android:label="@string/screen_pinning_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3671,13 +3851,15 @@
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
-        <activity android:name=".tv.MockTvInputSetupActivity">
+        <activity android:name=".tv.MockTvInputSetupActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
 
         <activity android:name=".audio.RingerModeActivity"
+                android:exported="true"
                   android:label="@string/ringer_mode_tests">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3690,6 +3872,7 @@
 
         <activity android:name=".audio.HifiUltrasoundTestActivity"
                 android:label="@string/hifi_ultrasound_test"
+                android:exported="true"
                 android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3701,6 +3884,7 @@
 
         <activity android:name=".audio.HifiUltrasoundSpeakerTestActivity"
                 android:label="@string/hifi_ultrasound_speaker_test"
+                android:exported="true"
                 android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3711,6 +3895,7 @@
         </activity>
 
         <activity android:name=".audio.AudioOutputDeviceNotificationsActivity"
+                android:exported="true"
                   android:label="@string/audio_out_devices_notifications_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3722,6 +3907,7 @@
         </activity>
 
         <activity android:name=".audio.AudioInputDeviceNotificationsActivity"
+                android:exported="true"
                   android:label="@string/audio_in_devices_notifications_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3733,6 +3919,7 @@
         </activity>
 
         <activity android:name=".audio.AudioOutputRoutingNotificationsActivity"
+                android:exported="true"
                   android:label="@string/audio_output_routingnotifications_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3744,6 +3931,7 @@
         </activity>
 
         <activity android:name=".audio.AudioInputRoutingNotificationsActivity"
+                android:exported="true"
                   android:label="@string/audio_input_routingnotifications_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3755,6 +3943,7 @@
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralAttributesActivity"
+                android:exported="true"
                   android:label="@string/audio_uap_attribs_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3767,6 +3956,7 @@
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralNotificationsTest"
+                android:exported="true"
                   android:label="@string/audio_uap_notifications_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3779,6 +3969,7 @@
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralPlayActivity"
+                android:exported="true"
                   android:label="@string/audio_uap_play_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3791,6 +3982,7 @@
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralRecordActivity"
+                android:exported="true"
                   android:label="@string/audio_uap_record_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3803,6 +3995,7 @@
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralButtonsActivity"
+                android:exported="true"
             android:label="@string/audio_uap_buttons_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3815,6 +4008,7 @@
         </activity>
 
         <activity android:name=".audio.USBRestrictRecordAActivity"
+                android:exported="true"
                   android:label="@string/audio_usb_restrict_record_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3827,6 +4021,7 @@
         </activity>
 
         <activity android:name=".audio.ProAudioActivity"
+                android:exported="true"
                   android:label="@string/pro_audio_latency_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3837,6 +4032,7 @@
         </activity>
 
         <activity android:name=".audio.AnalogHeadsetAudioActivity"
+                android:exported="true"
             android:label="@string/audio_headset_audio_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3846,6 +4042,7 @@
         </activity>
 
         <activity android:name=".audio.AudioLoopbackLatencyActivity"
+                android:exported="true"
                   android:label="@string/audio_loopback_latency_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3858,6 +4055,7 @@
         </activity>
 
         <activity android:name=".audio.MidiActivity"
+                android:exported="true"
                   android:label="@string/midi_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3869,6 +4067,7 @@
         </activity>
 
         <activity android:name=".audio.NDKMidiActivity"
+                android:exported="true"
                   android:label="@string/ndk_midi_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3880,6 +4079,7 @@
         </activity>
 
         <service android:name="com.android.midi.MidiEchoTestService"
+                android:exported="true"
             android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE">
             <intent-filter>
                 <action android:name="android.media.midi.MidiDeviceService" />
@@ -3889,6 +4089,7 @@
         </service>
 
         <activity android:name=".audio.AudioFrequencyLineActivity"
+                android:exported="true"
                   android:label="@string/audio_frequency_line_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3899,6 +4100,7 @@
         </activity>
 
         <activity android:name=".audio.AudioFrequencySpeakerActivity"
+                android:exported="true"
                   android:label="@string/audio_frequency_speaker_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3909,6 +4111,7 @@
         </activity>
 
         <activity android:name=".audio.AudioFrequencyMicActivity"
+                android:exported="true"
                   android:label="@string/audio_frequency_mic_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3919,6 +4122,7 @@
         </activity>
 
         <activity android:name=".audio.AudioFrequencyUnprocessedActivity"
+                android:exported="true"
                   android:label="@string/audio_frequency_unprocessed_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3929,6 +4133,7 @@
         </activity>
 
         <activity android:name=".audio.AudioFrequencyVoiceRecognitionActivity"
+                android:exported="true"
                   android:label="@string/audio_frequency_voice_recognition_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3939,6 +4144,7 @@
         </activity>
 
         <activity android:name=".audio.AudioAEC"
+                android:exported="true"
                   android:label="@string/audio_aec_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3949,6 +4155,7 @@
         </activity>
 
         <service android:name=".tv.MockTvInputService"
+                android:exported="true"
             android:permission="android.permission.BIND_TV_INPUT">
             <intent-filter>
                 <action android:name="android.media.tv.TvInputService" />
@@ -3957,7 +4164,8 @@
                 android:resource="@xml/mock_tv_input_service" />
         </service>
 
-        <receiver android:name=".tv.TvInputReceiver">
+        <receiver android:name=".tv.TvInputReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.media.tv.action.QUERY_CONTENT_RATING_SYSTEMS" />
             </intent-filter>
@@ -3966,6 +4174,7 @@
         </receiver>
 
         <activity android:name=".car.CarDockTestActivity"
+                android:exported="true"
                 android:label="@string/car_dock_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3989,6 +4198,7 @@
 
         <!-- See explaination in CarDockTestActivity.java -->
         <activity-alias android:name=".car.CarDockActivity1"
+                android:exported="true"
             android:targetActivity=".car.CarDockActivity" >
             <meta-data
                 android:name="android.dock_home"
@@ -4002,6 +4212,7 @@
 
         <activity-alias android:name=".car.CarDockActivity2"
             android:targetActivity=".car.CarDockActivity"
+                android:exported="true"
             android:enabled="false" >
             <meta-data
                 android:name="android.dock_home"
@@ -4014,6 +4225,7 @@
         </activity-alias>
 
         <activity android:name=".car.GearSelectionTestActivity"
+                android:exported="true"
                 android:label="@string/gear_selection_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4026,6 +4238,7 @@
         </activity>
 
         <activity android:name=".car.NightModeTestActivity"
+                android:exported="true"
                 android:label="@string/night_mode_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4038,6 +4251,7 @@
         </activity>
 
         <activity android:name=".car.ParkingBrakeOnTestActivity"
+                android:exported="true"
                 android:label="@string/parking_brake_on_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4052,6 +4266,7 @@
         <!-- 6DoF sensor test -->
         <activity
                 android:name="com.android.cts.verifier.sensors.sixdof.Activities.StartActivity"
+                android:exported="true"
                 android:label="@string/six_dof_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4065,6 +4280,7 @@
         </activity>
 
         <activity android:name=".voicemail.VoicemailBroadcastActivity"
+                android:exported="true"
           android:label="@string/voicemail_broadcast_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4088,7 +4304,8 @@
                 android:value="config_voice_capable"/>
         </activity>
 
-        <receiver android:name=".voicemail.VoicemailBroadcastReceiver">
+        <receiver android:name=".voicemail.VoicemailBroadcastReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.telephony.action.SHOW_VOICEMAIL_NOTIFICATION" />
             </intent-filter>
@@ -4096,6 +4313,7 @@
 
         <activity
             android:name=".voicemail.VisualVoicemailServiceActivity"
+                android:exported="true"
             android:label="@string/visual_voicemail_service_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4115,6 +4333,7 @@
 
         <activity
             android:name=".dialer.DialerIncomingCallTestActivity"
+                android:exported="true"
             android:label="@string/dialer_incoming_call_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4133,6 +4352,7 @@
         </activity>
 
         <service android:name=".dialer.DialerCallTestService"
+                android:exported="true"
             android:permission="android.permission.BIND_INCALL_SERVICE">
             <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
             <intent-filter>
@@ -4142,6 +4362,7 @@
 
         <activity
             android:name=".dialer.DialerShowsHunOnIncomingCallActivity"
+                android:exported="true"
             android:label="@string/dialer_shows_hun_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4161,6 +4382,7 @@
 
         <activity
             android:name=".voicemail.CallSettingsCheckActivity"
+                android:exported="true"
             android:label="@string/call_settings_check_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4180,6 +4402,7 @@
 
         <activity
             android:name=".voicemail.VoicemailSettingsCheckActivity"
+                android:exported="true"
             android:label="@string/ringtone_settings_check_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4199,6 +4422,7 @@
 
         <activity
             android:name=".dialer.DialerImplementsTelecomIntentsActivity"
+                android:exported="true"
             android:label="@string/dialer_telecom_intents_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4227,6 +4451,7 @@
 
         <activity
             android:name=".telecom.EnablePhoneAccountTestActivity"
+                android:exported="true"
             android:label="@string/telecom_enable_phone_account_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4246,6 +4471,7 @@
 
         <activity
             android:name=".telecom.OutgoingCallTestActivity"
+                android:exported="true"
             android:label="@string/telecom_outgoing_call_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4265,6 +4491,7 @@
 
         <activity
             android:name=".telecom.SelfManagedIncomingCallTestActivity"
+                android:exported="true"
             android:label="@string/telecom_incoming_self_mgd_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4284,6 +4511,7 @@
 
         <activity
             android:name=".telecom.IncomingCallTestActivity"
+                android:exported="true"
             android:label="@string/telecom_incoming_call_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -4302,6 +4530,7 @@
         </activity>
 
         <activity android:name=".telecom.TelecomDefaultDialerTestActivity"
+                android:exported="true"
                   android:label="@string/telecom_default_dialer_test_title">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4320,6 +4549,7 @@
         </activity>
 
         <activity android:name=".telecom.CtsVerifierInCallUi"
+                android:exported="true"
                   android:label="@string/telecom_in_call_ui_label">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4331,12 +4561,14 @@
             android:label="@string/device_owner_customize_lockscreen_message" />
 
         <service android:name="com.android.cts.verifier.telecom.CtsConnectionService"
+                android:exported="true"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE" >
             <intent-filter>
                 <action android:name="android.telecom.ConnectionService" />
             </intent-filter>
         </service>
         <service android:name="com.android.cts.verifier.telecom.CtsSelfManagedConnectionService"
+                android:exported="true"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE" >
             <intent-filter>
                 <action android:name="android.telecom.ConnectionService" />
@@ -4344,6 +4576,7 @@
         </service>
 
         <activity android:name=".instantapps.NotificationTestActivity"
+                android:exported="true"
                  android:label="@string/ia_notification">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4352,6 +4585,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
         </activity>
         <activity android:name=".instantapps.RecentAppsTestActivity"
+                android:exported="true"
                  android:label="@string/ia_recents">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4360,6 +4594,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
         </activity>
         <activity android:name=".instantapps.AppInfoTestActivity"
+                android:exported="true"
                  android:label="@string/ia_app_info">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4371,6 +4606,7 @@
         </activity>
 
         <activity android:name=".displaycutout.DisplayCutoutTestActivity"
+                android:exported="true"
                   android:label="@string/display_cutout_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
