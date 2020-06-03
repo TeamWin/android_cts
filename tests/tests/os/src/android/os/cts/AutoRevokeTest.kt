@@ -45,10 +45,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
-private const val APK_WHITELISTED_PATH =
-        "/data/local/tmp/cts/os/CtsAutoRevokeWhitelistedDummyApp.apk"
 private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
-private const val APK_WHITELISTED_PACKAGE_NAME = "android.os.cts.autorevokewhitelisteddummyapp"
 
 /**
  * Test for auto revoke
@@ -148,28 +145,6 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 startApp()
                 assertWhitelistState(true)
                 assertPermission(PERMISSION_GRANTED)
-            }
-        }
-    }
-
-    @AppModeFull(reason = "Uses separate apps for testing")
-    fun testAutoRevoke_manifestWhitelisting() {
-        wakeUpScreen()
-        withUnusedThresholdMs(5L) {
-            withDummyApp(APK_WHITELISTED_PATH, APK_WHITELISTED_PACKAGE_NAME) {
-                // Setup
-                startApp(APK_WHITELISTED_PACKAGE_NAME)
-                clickPermissionAllow()
-                assertWhitelistState(true)
-
-                // Run
-                goHome()
-                Thread.sleep(20L)
-                runAutoRevoke()
-                Thread.sleep(500L)
-
-                // Verify
-                assertPermission(PERMISSION_GRANTED, APK_WHITELISTED_PACKAGE_NAME)
             }
         }
     }
