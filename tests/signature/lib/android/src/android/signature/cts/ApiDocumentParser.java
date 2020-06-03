@@ -34,9 +34,14 @@ public class ApiDocumentParser {
 
     private ApiParser getApiParser(VirtualPath path) {
         if (path.toString().endsWith(".txt")) {
-            return new TextApiParser();
+            // At one point we used the "text" signature format in this test, but we stopped doing
+            // it because we don't want metalava to be used as a library, especially
+            // on the device side.
+            throw new RuntimeException("Signature format not supported");
         } else if (path.toString().endsWith(".api")) {
-            return new XmlApiParser(tag);
+            return new XmlApiParser(tag, /*gzipped=*/ false);
+        } else if (path.toString().endsWith(".api.gz")) {
+            return new XmlApiParser(tag, /*gzipped=*/ true);
         } else {
             throw new IllegalStateException("Unrecognized file type: " + path);
         }
