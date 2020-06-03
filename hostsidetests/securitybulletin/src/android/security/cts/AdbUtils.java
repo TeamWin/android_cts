@@ -407,7 +407,7 @@ public class AdbUtils {
         String targetPath = TMP_PATH + pacName;
         AdbUtils.pushResource("/" + pacName, targetPath, device);
         runPocAssertNoCrashes(
-                TMP_PATH + "pacrunner", device, targetPath,
+                "pacrunner", device, targetPath,
                 new CrashUtils.Config().setProcessPatterns("pacrunner"));
         runCommandLine("rm " + targetPath, device);
         return 0; // b/157172329 fix tests that manually check the result; remove return statement
