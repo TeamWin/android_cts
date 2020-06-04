@@ -160,17 +160,13 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
                 + " in landscape and reverse-landscape", sameSize);
     }
 
-    private ActivityLifecycleCounts getLifecycleCountsForRotation(ComponentName activityName,
-            RotationSession session, int before, int after, boolean canHandleConfigChange)  {
-        final int currentRotation = mWmState.getRotation();
-        // The test verifies the events from "before" rotation to "after" rotation. So when
-        // preparing "before" rotation, the changes should be consumed to avoid being mixed into
-        // the result to verify.
-        final boolean is90DegreeDelta = Math.abs(currentRotation - before) % 2 != 0;
+    private void prepareRotation(ComponentName activityName, RotationSession session,
+            int currentRotation, int initialRotation, boolean canHandleConfigChange) {
+        final boolean is90DegreeDelta = Math.abs(currentRotation - initialRotation) % 2 != 0;
         if (is90DegreeDelta) {
             separateTestJournal();
         }
-        session.set(before);
+        session.set(initialRotation);
         if (is90DegreeDelta) {
             // Consume the changes of "before" rotation to make sure the activity is in a stable
             // state to apply "after" rotation.
@@ -181,6 +177,15 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
                     .countWithRetry("activity rotated with 90 degree delta",
                             countSpec(expectedCallback, CountSpec.GREATER_THAN, 0)));
         }
+    }
+
+    private ActivityLifecycleCounts getLifecycleCountsForRotation(ComponentName activityName,
+            RotationSession session, int before, int after, boolean canHandleConfigChange)  {
+        final int currentRotation = mWmState.getRotation();
+        // The test verifies the events from "before" rotation to "after" rotation. So when
+        // preparing "before" rotation, the changes should be consumed to avoid being mixed into
+        // the result to verify.
+        prepareRotation(activityName, session, currentRotation, before, canHandleConfigChange);
         separateTestJournal();
         session.set(after);
         mWmState.computeState(activityName);
@@ -202,13 +207,12 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     private void testRotation(ComponentName activityName, int rotationStep, int numRelaunch,
             int numConfigChange) {
         launchActivity(activityName);
-
         mWmState.computeState(activityName);
 
         final int initialRotation = 4 - rotationStep;
         final RotationSession rotationSession = createManagedRotationSession();
-        rotationSession.set(initialRotation);
-        mWmState.computeState(activityName);
+        prepareRotation(activityName, rotationSession, mWmState.getRotation(), initialRotation,
+                numConfigChange > 0);
         final int actualStackId =
                 mWmState.getTaskByActivity(activityName).mRootTaskId;
         final int displayId = mWmState.getRootTask(actualStackId).mDisplayId;
