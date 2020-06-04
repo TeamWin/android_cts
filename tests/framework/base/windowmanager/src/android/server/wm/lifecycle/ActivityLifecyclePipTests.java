@@ -218,6 +218,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testSplitScreenBelowPip() throws Exception {
+        assumeTrue(supportsSplitScreenMultiWindow());
+
         // TODO(b/149338177): Fix test to pass with organizer API.
         mUseTaskOrganizer = false;
         // Launch Pip-capable activity and enter Pip immediately
@@ -255,6 +257,8 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testPipAboveSplitScreen() throws Exception {
+        assumeTrue(supportsSplitScreenMultiWindow());
+
         // TODO(b/149338177): Fix test to pass with organizer API.
         mUseTaskOrganizer = false;
         // Launch first activity
