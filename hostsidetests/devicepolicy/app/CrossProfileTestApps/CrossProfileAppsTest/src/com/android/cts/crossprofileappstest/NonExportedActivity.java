@@ -34,7 +34,7 @@ public class NonExportedActivity extends Activity {
     @Override
     public void onStart() {
         super.onStart();
-        TextView textView = findViewById(R.id.user_textview);
+        TextView textView = findViewById(R.id.user_textview_nonmain);
         textView.setText(Long.toString(getCurrentUserSerialNumber()));
     }
 
