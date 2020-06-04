@@ -58,8 +58,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
@@ -216,7 +214,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * - The window which lost top-focus can be notified about pointer-capture lost.
      */
     @Test
-    @FlakyTest(bugId = 135574991)
     public void testPointerCapture() {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
@@ -241,6 +238,31 @@ public class WindowFocusTests extends WindowManagerTestBase {
 
         // Assert secondary activity lost pointer capture when it is not top focused.
         secondaryActivity.waitAndAssertPointerCaptureState(false /* hasCapture */);
+    }
+
+    /**
+     * Pointer capture could be requested after activity regains focus.
+     */
+    @Test
+    public void testPointerCaptureWhenFocus() {
+        final AutoEngagePointerCaptureActivity primaryActivity =
+                startActivity(AutoEngagePointerCaptureActivity.class, DEFAULT_DISPLAY);
+
+        // Assert primary activity can have pointer capture before we have multiple focused windows.
+        primaryActivity.waitAndAssertPointerCaptureState(true /* hasCapture */);
+
+        assumeTrue(supportsMultiDisplay());
+        final SecondaryActivity secondaryActivity =
+                createManagedInvisibleDisplaySession().startActivityAndFocus();
+
+        primaryActivity.waitAndAssertWindowFocusState(false /* hasFocus */);
+        // Assert primary activity lost pointer capture when it is not top focused.
+        primaryActivity.waitAndAssertPointerCaptureState(false /* hasCapture */);
+        secondaryActivity.waitAndAssertPointerCaptureState(false /* hasCapture */);
+
+        tapOnCenterOfDisplay(DEFAULT_DISPLAY);
+        primaryActivity.waitAndAssertWindowFocusState(true /* hasFocus */);
+        primaryActivity.waitAndAssertPointerCaptureState(true /* hasCapture */);
     }
 
     /**
@@ -464,6 +486,16 @@ public class WindowFocusTests extends WindowManagerTestBase {
             synchronized (this) {
                 return mLosesFocusWhenNewFocusIsNotDrawn;
             }
+        }
+    }
+
+    public static class AutoEngagePointerCaptureActivity extends InputTargetActivity {
+        @Override
+        public void onWindowFocusChanged(boolean hasFocus) {
+            if (hasFocus) {
+                requestPointerCapture();
+            }
+            super.onWindowFocusChanged(hasFocus);
         }
     }
 
