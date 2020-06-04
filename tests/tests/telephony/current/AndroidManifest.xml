@@ -34,6 +34,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
     <uses-permission android:name="android.telephony.embms.cts.permission.TEST_BROADCAST"/>
+    <uses-permission android:name="android.permission.WRITE_EMBEDDED_SUBSCRIPTIONS" />
 
     <permission android:name="android.telephony.embms.cts.permission.TEST_BROADCAST"
                 android:protectionLevel="signature"/>
