@@ -133,12 +133,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testStageAnotherSessionImmediatelyAfterAbandon() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
         runPhase("testStageAnotherSessionImmediatelyAfterAbandon");
     }
 
     @Test
     public void testNoSessionUpdatedBroadcastSentForStagedSessionAbandon() throws Exception {
-        assumeTrue(isUpdatingApexSupported());
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
         runPhase("testNoSessionUpdatedBroadcastSentForStagedSessionAbandon");
     }
 
