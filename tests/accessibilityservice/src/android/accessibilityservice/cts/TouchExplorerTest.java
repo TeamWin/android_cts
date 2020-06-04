@@ -115,17 +115,16 @@ public class TouchExplorerTest {
             new ActivityTestRule<>(GestureDispatchActivity.class, false);
 
     private InstrumentedAccessibilityServiceTestRule<TouchExplorationStubAccessibilityService>
-            mServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
-                    TouchExplorationStubAccessibilityService.class, false);
+            mServiceRule =
+                    new InstrumentedAccessibilityServiceTestRule<>(
+                            TouchExplorationStubAccessibilityService.class, false);
 
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
     @Rule
-    public final RuleChain mRuleChain = RuleChain
-            .outerRule(mActivityRule)
-            .around(mServiceRule)
-            .around(mDumpOnFailureRule);
+    public final RuleChain mRuleChain =
+            RuleChain.outerRule(mActivityRule).around(mServiceRule).around(mDumpOnFailureRule);
 
     Point mCenter; // Center of screen. Gestures all start from this point.
     PointF mTapLocation;
@@ -135,11 +134,13 @@ public class TouchExplorerTest {
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mUiAutomation = mInstrumentation.getUiAutomation(
-            UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        mUiAutomation =
+                mInstrumentation.getUiAutomation(
+                        UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         PackageManager pm = mInstrumentation.getContext().getPackageManager();
-        mHasTouchscreen = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
-                || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
+        mHasTouchscreen =
+                pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+                        || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
         // Find screen size, check that it is big enough for gestures.
         // Gestures will start in the center of the screen, so we need enough horiz/vert space.
         WindowManager windowManager =
@@ -147,8 +148,6 @@ public class TouchExplorerTest {
                         mInstrumentation.getContext().getSystemService(Context.WINDOW_SERVICE);
         final DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getRealMetrics(metrics);
-        mCenter = new Point((int) metrics.widthPixels / 2, (int) metrics.heightPixels / 2);
-        mTapLocation = new PointF(mCenter);
         mScreenBigEnough = (metrics.widthPixels / (2 * metrics.xdpi) > GESTURE_LENGTH_INCHES);
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         mService = mServiceRule.enableService();
@@ -157,7 +156,14 @@ public class TouchExplorerTest {
         mView.setOnTouchListener(mTouchListener);
         mInstrumentation.runOnMainSync(
                 () -> {
-                    mSwipeDistance = mView.getWidth() / 4;
+                    int[] viewLocation = new int[2];
+                    mView = mActivityRule.getActivity().findViewById(R.id.full_screen_text_view);
+                    final int midX = mView.getWidth() / 2;
+                    final int midY = mView.getHeight() / 2;
+                    mView.getLocationOnScreen(viewLocation);
+                    mCenter = new Point(viewLocation[0] + midX, viewLocation[1] + midY);
+                    mTapLocation = new PointF(mCenter);
+                    mSwipeDistance = (viewLocation[0] + mView.getWidth()) / 4;
                     mView.setOnClickListener(mClickListener);
                     mView.setOnLongClickListener(mLongClickListener);
                 });
@@ -301,8 +307,7 @@ public class TouchExplorerTest {
     }
 
     /**
-     * Test the case where we double tap but there is no  accessibility focus. Nothing should
-     * happen.
+     * Test the case where we double tap but there is no accessibility focus. Nothing should happen.
      */
     @Test
     @AppModeFull
@@ -311,8 +316,7 @@ public class TouchExplorerTest {
         dispatch(doubleTap(mTapLocation));
         mHoverListener.assertNonePropagated();
         mTouchListener.assertNonePropagated();
-        mService.assertPropagated(
-                 TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
+        mService.assertPropagated(TYPE_TOUCH_INTERACTION_START, TYPE_TOUCH_INTERACTION_END);
         mService.clearEvents();
         mClickListener.assertNoneClicked();
     }
@@ -340,8 +344,8 @@ public class TouchExplorerTest {
     }
 
     /**
-     * Test the case where we double tap and hold but there is no accessibility focus.
-     * Nothing should happen.
+     * Test the case where we double tap and hold but there is no accessibility focus. Nothing
+     * should happen.
      */
     @Test
     @AppModeFull
