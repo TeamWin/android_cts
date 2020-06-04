@@ -474,7 +474,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPersonalAppsSuspensionSms() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasTelephony) {
             return;
         }
 
