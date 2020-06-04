@@ -16,11 +16,14 @@
 
 package android.server.wm.app;
 
+import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_APP_CONFIG_INFO;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_CONFIG_INFO_IN_ON_CREATE;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_DISPLAY_REAL_SIZE;
 
+import android.app.Application;
 import android.content.res.Configuration;
 import android.graphics.Point;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.server.wm.CommandSession.ConfigInfo;
 import android.view.Display;
@@ -40,6 +43,13 @@ public class LandscapeOrientationActivity extends AbstractLifecycleLogActivity {
             display.getRealSize(size);
             extras.putParcelable(EXTRA_CONFIG_INFO_IN_ON_CREATE, new ConfigInfo(this, display));
             extras.putParcelable(EXTRA_DISPLAY_REAL_SIZE, size);
+
+            final Application app = getApplication();
+            extras.putParcelable(EXTRA_APP_CONFIG_INFO, new ConfigInfo(app,
+                    // The display object is associated with application resources that it has its
+                    // own display adjustments.
+                    app.getSystemService(DisplayManager.class)
+                            .getDisplay(Display.DEFAULT_DISPLAY)));
             client.putExtras(extras);
         });
     }
