@@ -43,7 +43,7 @@ public class NonMainActivity extends Activity {
     @Override
     public void onStart() {
         super.onStart();
-        TextView textView = findViewById(R.id.user_textview2);
+        TextView textView = findViewById(R.id.user_textview_nonmain);
         textView.setText(Long.toString(getCurrentUserSerialNumber()));
     }
 
