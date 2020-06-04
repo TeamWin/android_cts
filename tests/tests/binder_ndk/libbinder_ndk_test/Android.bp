@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-aidl_interface {
-    name: "libbinder_ndk_test_interface",
+filegroup {
+    name: "libbinder_ndk_test_interface_srcs",
     srcs: [
         "test_package/Bar.aidl",
         "test_package/ByteEnum.aidl",
@@ -24,6 +24,12 @@ aidl_interface {
         "test_package/LongEnum.aidl",
         "test_package/RegularPolygon.aidl",
     ],
+    visibility: ["//visibility:private"]
+}
+
+aidl_interface {
+    name: "libbinder_ndk_test_interface",
+    srcs: [":libbinder_ndk_test_interface_srcs"],
     versions: [
         "1",
         "2",
@@ -36,6 +42,29 @@ aidl_interface {
             enabled: false,
         }
     },
+}
+
+aidl_interface {
+    name: "libbinder_ndk_test_interface_dup",
+    srcs: [":libbinder_ndk_test_interface_srcs"],
+    versions: [
+        "1",
+    ],
+    backend: {
+        java: {
+            enabled: false,
+        },
+        cpp: {
+            enabled: false,
+        },
+        ndk: {
+            enabled: true,
+        },
+    },
+    visibility: [
+        ":__subpackages__",
+        "//system/tools/aidl/build:__pkg__",
+    ]
 }
 
 cc_defaults {
@@ -82,7 +111,8 @@ cc_test_library {
     cflags: ["-DUSING_VERSION_1"],
     // Using the frozen version 1 of the interface
     static_libs: [
-        "libbinder_ndk_test_interface-V1-ndk",
+        // this refers to the latest stable version which is 1
+        "libbinder_ndk_test_interface_dup-ndk",
     ],
     shared_libs: [
         "libbinder_ndk_test_utilities",
