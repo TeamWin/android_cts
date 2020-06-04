@@ -16,10 +16,11 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.appenumeration.editor.activity">
+     package="android.appenumeration.editor.activity">
     <application>
-        <uses-library android:name="android.test.runner" />
-        <activity android:name="android.appenumeration.EditorActivity">
+        <uses-library android:name="android.test.runner"/>
+        <activity android:name="android.appenumeration.EditorActivity"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <action android:name="android.intent.action.EDIT"/>

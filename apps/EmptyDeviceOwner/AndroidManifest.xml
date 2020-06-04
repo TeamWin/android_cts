@@ -15,23 +15,24 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.emptydeviceowner" >
+     package="com.android.cts.emptydeviceowner">
 
     <uses-sdk android:minSdkVersion="12"/>
 
-    <application android:label="Test Device Owner" android:testOnly="true">
-        <receiver
-            android:name=".EmptyDeviceAdmin"
-            android:permission="android.permission.BIND_DEVICE_ADMIN">
-            <meta-data
-                android:name="android.app.device_admin"
-                android:resource="@xml/device_admin"/>
+    <application android:label="Test Device Owner"
+         android:testOnly="true">
+        <receiver android:name=".EmptyDeviceAdmin"
+             android:permission="android.permission.BIND_DEVICE_ADMIN"
+             android:exported="true">
+            <meta-data android:name="android.app.device_admin"
+                 android:resource="@xml/device_admin"/>
             <intent-filter>
-                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".DeviceOwnerChangedReceiver">
+        <receiver android:name=".DeviceOwnerChangedReceiver"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_OWNER_CHANGED"/>
             </intent-filter>

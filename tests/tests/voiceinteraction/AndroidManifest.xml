@@ -16,37 +16,38 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.voiceinteraction.cts">
+     package="android.voiceinteraction.cts">
 
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <uses-permission android:name="android.permission.BIND_VOICE_INTERACTION" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+    <uses-permission android:name="android.permission.BIND_VOICE_INTERACTION"/>
 
     <application>
-      <uses-library android:name="android.test.runner" />
+      <uses-library android:name="android.test.runner"/>
 
       <activity android:name="TestStartActivity"
-                android:label="Voice Interaction Target">
+           android:label="Voice Interaction Target"
+           android:exported="true">
           <intent-filter>
-              <action android:name="android.intent.action.TEST_START_ACTIVITY" />
-              <category android:name="android.intent.category.LAUNCHER" />
-              <category android:name="android.intent.category.DEFAULT" />
+              <action android:name="android.intent.action.TEST_START_ACTIVITY"/>
+              <category android:name="android.intent.category.LAUNCHER"/>
+              <category android:name="android.intent.category.DEFAULT"/>
           </intent-filter>
       </activity>
       <activity android:name="TestLocalInteractionActivity"
-                android:label="Local Interaction Activity">
+           android:label="Local Interaction Activity"
+           android:exported="true">
           <intent-filter>
-              <action android:name="android.intent.action.TEST_LOCAL_INTERACTION_ACTIVITY" />
+              <action android:name="android.intent.action.TEST_LOCAL_INTERACTION_ACTIVITY"/>
           </intent-filter>
       </activity>
       <receiver android:name="VoiceInteractionTestReceiver"
-              android:exported="true" />
+           android:exported="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.voiceinteraction.cts"
-                     android:label="CTS tests of android.voiceinteraction">
+         android:targetPackage="android.voiceinteraction.cts"
+         android:label="CTS tests of android.voiceinteraction">
         <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
+             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 </manifest>
-

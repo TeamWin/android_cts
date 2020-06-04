@@ -15,36 +15,34 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.android.cts.deviceowner" >
+     package="com.google.android.cts.deviceowner">
 
-    <application
-        android:label="Privacy Settings for Device Owner CTS host side app"
-        android:testOnly="true">
+    <application android:label="Privacy Settings for Device Owner CTS host side app"
+         android:testOnly="true">
 
-        <uses-library android:name="android.test.runner" />
+        <uses-library android:name="android.test.runner"/>
 
-        <activity
-            android:name="com.google.android.cts.deviceowner.WorkPolicyInfoActivity"
-            android:exported="true"
-            android:launchMode="singleTask">
+        <activity android:name="com.google.android.cts.deviceowner.WorkPolicyInfoActivity"
+             android:exported="true"
+             android:launchMode="singleTask">
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <action android:name="android.settings.SHOW_WORK_POLICY_INFO"/>
             </intent-filter>
         </activity>
 
-        <receiver
-            android:name="com.google.android.cts.deviceowner.DeviceOwnerTest$BasicAdminReceiver"
-            android:permission="android.permission.BIND_DEVICE_ADMIN">
+        <receiver android:name="com.google.android.cts.deviceowner.DeviceOwnerTest$BasicAdminReceiver"
+             android:permission="android.permission.BIND_DEVICE_ADMIN"
+             android:exported="true">
             <meta-data android:name="android.app.device_admin"
-                       android:resource="@xml/device_admin" />
+                 android:resource="@xml/device_admin"/>
             <intent-filter>
-                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
             </intent-filter>
         </receiver>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.google.android.cts.deviceowner"
-                     android:label="Privacy Settings for Device Owner CTS tests"/>
+         android:targetPackage="com.google.android.cts.deviceowner"
+         android:label="Privacy Settings for Device Owner CTS tests"/>
 </manifest>
