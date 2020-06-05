@@ -47,13 +47,18 @@ public class SipManagerTest {
 
     @After
     public void tearDown() throws SipException {
-        for (SipProfile profile : mSipManager.getProfiles()) {
-            mSipManager.close(profile.getUriString());
+        if (mSipManager != null) {
+            for (SipProfile profile : mSipManager.getProfiles()) {
+                mSipManager.close(profile.getUriString());
+            }
         }
     }
 
     @Test
     public void testGetProfiles() throws SipException, ParseException {
+        if (!SipManager.isApiSupported(mContext)) {
+            return;
+        }
         SipProfile sipProfile1 = new SipProfile.Builder(SIP_URI1).build();
         SipProfile sipProfile2 = new SipProfile.Builder(SIP_URI2).build();
         mSipManager.open(sipProfile1);
