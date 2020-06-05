@@ -721,6 +721,9 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, kFrameRate);
             mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 1000000);
             mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+            mediaFormat.setInteger(
+                    MediaFormat.KEY_COLOR_FORMAT,
+                    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
             // TODO: b/147748978
             String[] codecs = MediaUtils.getEncoderNames(true /* isGoog */, mediaFormat);
             if (codecs.length == 0) {
