@@ -5668,4 +5668,22 @@ Follow the instructions on the screen to measure the frequency response for the 
     1. All buttons are fully visible \n
     2. All buttons are clickable. \n
     </string>
+
+    <!-- TTS Test Resources -->
+    <string name="tts_test">TTS Test</string>
+    <string name="tts_test_info">
+      1. Install the CtsTtsEngineSelectorTestHelper and CtsTtsEngineSelectorTestHelper2 apps on the device.\n
+      2. Click on the "Go To Accessibility Settings" button.\n
+      3. Go to Text-to-speech output > Preferred engine.\n
+      4. Ensure that two engines are listed, both named "TTS CTS Test Helper App".\n
+      5. Ensure that each engine can be selected.
+    </string>
+    <string name="tts_test_steps">
+      1. Install the CtsTtsEngineSelectorTestHelper and CtsTtsEngineSelectorTestHelper2 apps on the device.\n
+      2. Click on the "Go To Accessibility Settings" button.\n
+      3. Go to Text-to-speech output > Preferred engine.\n
+      4. Ensure that two engines are listed, both named "TTS CTS Test Helper App".\n
+      5. Ensure that each engine can be selected.
+    </string>
+    <string name="tts_accessibility_settings_button">Go To Accessibility Settings</string>
 </resources>

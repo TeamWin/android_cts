@@ -527,4 +527,59 @@ public class EditTextTest {
         CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mEditText1, KeyEvent.KEYCODE_NUMPAD_ENTER);
         assertTrue(mEditText2.hasFocus());
     }
+
+    private static final int FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT = 5000;
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_explicit_singleLine() {
+        mActivity.setContentView(R.layout.edittext_singleline_maxlength);
+
+        EditText et = (EditText) mActivity.findViewById(
+                R.id.edittext_explicit_singleline_max_length);
+        assertTrue(et.getText().length() <= FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_explicit_singleLine_with_explicit_maxLength() {
+        mActivity.setContentView(R.layout.edittext_singleline_maxlength);
+
+        EditText et = (EditText) mActivity.findViewById(
+                R.id.edittext_explicit_singleline_with_explicit_max_length);
+        // This EditText has maxLength=2000 and singeLine=true.
+        // User specified maxLength must be respected.
+        assertTrue(et.getText().length() <= 2000);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_singleLine_from_inputType() {
+        mActivity.setContentView(R.layout.edittext_singleline_maxlength);
+
+        EditText et = (EditText) mActivity.findViewById(R.id.edittext_singleLine);
+        // This EditText has inputType="text" which is translated to singleLine.
+        assertTrue(et.getText().length() <= FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_multiline() {
+        mActivity.setContentView(R.layout.edittext_singleline_maxlength);
+
+        EditText et = (EditText) mActivity.findViewById(R.id.edittext_multiLine);
+        // Multiline text doesn't have automated char limit.
+        assertTrue(et.getText().length() > FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_textView() {
+        mActivity.setContentView(R.layout.edittext_singleline_maxlength);
+
+        TextView tv = (TextView) mActivity.findViewById(
+                R.id.textview_explicit_singleline_max_length);
+        // Automated maxLength for singline text is not applied to TextView.
+        assertTrue(tv.getText().length() > FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+    }
 }

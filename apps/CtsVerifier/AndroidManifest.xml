@@ -4614,6 +4614,15 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_display_cutout" />
         </activity>
+        <activity android:name=".speech.tts.TtsTestActivity"
+                  android:label="@string/tts_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_other" />
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.watch" />
+        </activity>
     </application>
 
 </manifest>
