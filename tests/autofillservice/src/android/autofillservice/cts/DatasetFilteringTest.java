@@ -108,14 +108,6 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         changeUsername("aa");
         mUiBot.assertDatasets(aa);
 
-        // Only two datasets start with 'a'
-        changeUsername("a");
-        mUiBot.assertDatasets(aa, ab);
-
-        // With no filter text all datasets should be shown
-        changeUsername("");
-        mUiBot.assertDatasets(aa, ab, b);
-
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
@@ -124,6 +116,14 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
             callback.assertUiHiddenEvent(mActivity.getUsername());
         }
         mUiBot.assertNoDatasets();
+
+        // Delete some text to bring back 2 datasets
+        changeUsername("a");
+        mUiBot.assertDatasets(aa, ab);
+
+        // With no filter text all datasets should be shown again
+        changeUsername("");
+        mUiBot.assertDatasets(aa, ab, b);
     }
 
     @Test
@@ -616,6 +616,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         resetFilterTest(3);
     }
 
+    // Tests that datasets are re-shown after clearing a selected value.
     private void resetFilterTest(int number) throws Exception {
         final String aa = "Two A's";
         final String ab = "A and B";
@@ -667,38 +668,6 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
-        mUiBot.assertDatasets(aa, ab, b);
-
-        // Only two datasets start with 'a'
-        changeUsername("a");
-        mUiBot.assertDatasets(aa, ab);
-
-        // One dataset starts with 'aa'
-        changeUsername("aa");
-        mUiBot.assertDatasets(aa);
-
-        // Filter all out
-        changeUsername("aaa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(username);
-        }
-        mUiBot.assertNoDatasets();
-
-        // Now delete the char and assert aa is showing again
-        changeUsername("aa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiShownEvent(username);
-        }
-        mUiBot.assertDatasets(aa);
-
-        // Delete one more and assert two datasets showing
-        changeUsername("a");
-        mUiBot.assertDatasets(aa, ab);
-
-        // Reset back to all choices
-        changeUsername("");
         mUiBot.assertDatasets(aa, ab, b);
 
         // select the choice
