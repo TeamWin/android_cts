@@ -214,6 +214,18 @@ public class TestMedia extends SecurityTestCase {
     }
 
     /**
+     * b/111210196
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2019-12")
+    @Test
+    public void testPocCVE_2019_2228() throws Exception {
+        String inputFiles[] = {"cve_2019_2228_ipp.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2228",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/62151041 - Has 4 CVEs filed together
      */
     /** 1. CVE-2017-9047
