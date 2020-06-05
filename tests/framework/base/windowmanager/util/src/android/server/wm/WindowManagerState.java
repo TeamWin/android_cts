@@ -37,6 +37,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.graphics.Rect;
@@ -1674,5 +1675,10 @@ public class WindowManagerState {
 
     int defaultMinimalTaskSize(int displayId) {
         return dpToPx(DEFAULT_RESIZABLE_TASK_SIZE_DP, getDisplay(displayId).getDpi());
+    }
+
+    int defaultMinimalDisplaySizeForSplitScreen(int displayId) {
+        return dpToPx(ActivityTaskManager.DEFAULT_MINIMAL_SPLIT_SCREEN_DISPLAY_SIZE_DP,
+                getDisplay(displayId).getDpi());
     }
 }
