@@ -1044,4 +1044,9 @@ public class MockImeSession implements AutoCloseable {
     public ImeCommand callVerifyGetViewConfiguration() {
         return callCommandInternal("verifyGetViewConfiguration", new Bundle());
     }
+
+    @NonNull
+    public ImeCommand callVerifyGetGestureDetector() {
+        return callCommandInternal("verifyGetGestureDetector", new Bundle());
+    }
 }

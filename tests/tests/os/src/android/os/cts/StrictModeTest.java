@@ -58,15 +58,17 @@ import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
 import android.view.Display;
+import android.view.GestureDetector;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -97,6 +99,11 @@ public class StrictModeTest {
 
     private StrictMode.ThreadPolicy mThreadPolicy;
     private StrictMode.VmPolicy mVmPolicy;
+
+    @Rule
+    public ActivityTestRule<SimpleTestActivity> mActivityRule =
+            new ActivityTestRule<>(SimpleTestActivity.class, true /* initialTouchMode */,
+                    false /* launchActivity */);
 
     private Context getContext() {
         return ApplicationProvider.getApplicationContext();
@@ -640,10 +647,8 @@ public class StrictModeTest {
                 .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
         assertNoViolation(() -> visualContext.getSystemService(WINDOW_SERVICE));
 
-        Intent intent = new Intent(getContext(), SimpleTestActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        final Activity activity = InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(intent);
+        final Activity activity = mActivityRule.launchActivity(
+                new Intent(getContext(), SimpleTestActivity.class));
         assertNoViolation(() -> activity.getSystemService(WINDOW_SERVICE));
     }
 
@@ -665,11 +670,8 @@ public class StrictModeTest {
                 displayContext.createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
         assertNoViolation(windowContext::getDisplay);
 
-        Intent intent = new Intent(getContext(), SimpleTestActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-        final Activity activity = InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(intent);
+        final Activity activity = mActivityRule.launchActivity(
+                new Intent(getContext(), SimpleTestActivity.class));
         assertNoViolation(() -> activity.getDisplay());
 
         try {
@@ -704,11 +706,44 @@ public class StrictModeTest {
                 displayContext.createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
         assertNoViolation(() -> ViewConfiguration.get(windowContext));
 
-        Intent intent = new Intent(baseContext, SimpleTestActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        final Activity activity = InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(intent);
+        final Activity activity = mActivityRule.launchActivity(
+                new Intent(getContext(), SimpleTestActivity.class));
         assertNoViolation(() -> ViewConfiguration.get(activity));
+    }
+
+    @Test
+    public void testIncorrectContextUse_GetGestureDetector() throws Throwable {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+        final Activity activity = mActivityRule.launchActivity(
+                new Intent(getContext(), SimpleTestActivity.class));
+        mActivityRule.runOnUiThread(() -> {
+            try {
+                final Context baseContext = getContext();
+                final GestureDetector.SimpleOnGestureListener listener
+                        = new GestureDetector.SimpleOnGestureListener();
+
+                assertViolation("Tried to access UI constants from a non-visual Context.",
+                        () -> new GestureDetector(baseContext, listener));
+
+                final Display display = baseContext.getSystemService(DisplayManager.class)
+                        .getDisplay(DEFAULT_DISPLAY);
+                final Context displayContext = baseContext.createDisplayContext(display);
+                assertViolation("Tried to access UI constants from a non-visual Context.",
+                        () -> new GestureDetector(displayContext, listener));
+
+                final Context windowContext = displayContext
+                        .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
+                assertNoViolation(() -> new GestureDetector(windowContext, listener));
+
+                assertNoViolation(() -> new GestureDetector(activity, listener));
+            } catch (Exception e) {
+                fail("Failed because of " + e);
+            }
+        });
     }
 
     private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)
