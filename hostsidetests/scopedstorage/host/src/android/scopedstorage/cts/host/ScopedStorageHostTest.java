@@ -346,6 +346,11 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testPendingFromFuse() throws Exception {
+        runDeviceTest("testPendingFromFuse");
+    }
+
+    @Test
     public void testAccess_file() throws Exception {
         grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
         try {
