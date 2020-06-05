@@ -242,7 +242,6 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     }
 
     private void enableCrossProfileAppsOp() throws DeviceNotAvailableException {
-        enableCrossProfileAppsOp(ENABLED_TEST_PACKAGE, mPrimaryUserId);
         enableCrossProfileAppsOp(ENABLED_NO_PERMS_TEST_PACKAGE, mPrimaryUserId);
     }
 
