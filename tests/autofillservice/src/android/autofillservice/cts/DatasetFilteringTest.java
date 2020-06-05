@@ -616,7 +616,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         resetFilterTest(3);
     }
 
-    // Tests that datasets are re-shown after clearing a selected value.
+    // Tests that datasets are re-shown and filtering still works after clearing a selected value.
     private void resetFilterTest(int number) throws Exception {
         final String aa = "Two A's";
         final String ab = "A and B";
@@ -677,6 +677,10 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
 
         // Check the results.
         mActivity.assertAutoFilled();
+
+        // Change the filled text and check that filtering still works.
+        changeUsername("a");
+        mUiBot.assertDatasets(aa, ab);
 
         // Reset back to all choices
         changeUsername("");
