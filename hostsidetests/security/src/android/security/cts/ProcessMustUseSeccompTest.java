@@ -101,8 +101,18 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
 
     private void assertSeccompFilter(String Name, String Cmd, boolean prefix)
                 throws DeviceNotAvailableException {
+        assertSeccompFilter(Name, Cmd, prefix, true /* mustHaveProcess */);
+    }
+
+    private void assertSeccompFilter(String Name, String Cmd, boolean prefix, boolean mustHaveProcess)
+                throws DeviceNotAvailableException {
         String Pid = getPidFromCmd(Name, Cmd, prefix);
-        assertFalse(Name + " process not found.", Pid.equals(""));
+        boolean processFound = !Pid.equals("");
+        if (!processFound && !mustHaveProcess) {
+            // don't bother if the existence of the process isn't guaranteed
+            return;
+        }
+        assertTrue(Name + " process not found.", processFound);
         assertTrue(Name + " must have a seccomp filter enabled.\n"
                    + "The \"Seccomp\" field of " + Name + "'s "
                    + "/proc/" + Pid + "/status file should be set to \"2\"",
@@ -111,7 +121,8 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
 
     public void testConfigStoreHalHasSeccompFilter() throws DeviceNotAvailableException {
         if (CpuFeatures.isArm64(mDevice)) {
-            assertSeccompFilter("android.hardware.configstore", PS_CMD, true);
+            assertSeccompFilter("android.hardware.configstore", PS_CMD, true,
+                    false /* mustHaveProcess */);
         }
     }
 
