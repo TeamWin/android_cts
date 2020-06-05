@@ -61,6 +61,7 @@ public class WifiInfoTest extends AndroidTestCase {
     private static final int TIMEOUT_MSEC = 6000;
     private static final int WAIT_MSEC = 60;
     private static final int DURATION = 10000;
+    private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
     private IntentFilter mIntentFilter;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -140,7 +141,7 @@ public class WifiInfoTest extends AndroidTestCase {
         PollingCheck.check(
                 "Wifi not connected - Please ensure there is a saved network in range of this "
                         + "device",
-                20000,
+                WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
 
         // this test case should in Wifi environment
