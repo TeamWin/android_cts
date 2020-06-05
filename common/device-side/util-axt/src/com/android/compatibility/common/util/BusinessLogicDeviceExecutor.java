@@ -32,10 +32,9 @@ public class BusinessLogicDeviceExecutor extends BusinessLogicExecutor {
     private Context mContext;
     private Object mTestObj;
 
-    public BusinessLogicDeviceExecutor(Context context, Object testObj, List<String> redactionRegexes) {
+    public BusinessLogicDeviceExecutor(Context context, Object testObj) {
         mContext = context;
         mTestObj = testObj;
-        mRedactionRegexes = redactionRegexes;
     }
 
     /**
