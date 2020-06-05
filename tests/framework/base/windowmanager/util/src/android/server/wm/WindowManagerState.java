@@ -825,6 +825,14 @@ public class WindowManagerState {
         return mRootTasks.size();
     }
 
+    public int getRootTasksCount(int displayId) {
+        int count = 0;
+        for (ActivityTask rootTask : mRootTasks) {
+            if (rootTask.mDisplayId == displayId) ++count;
+        }
+        return count;
+    }
+
     boolean pendingActivityContain(ComponentName activityName) {
         return mPendingActivities.contains(getActivityName(activityName));
     }
