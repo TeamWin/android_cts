@@ -44,10 +44,10 @@ public class HdmiSwitchClientTest {
     private HdmiControlManager mManager;
     private HdmiSwitchClient mHdmiSwitchClient;
     private HdmiControlServiceWrapper mService;
-    private List<HdmiPortInfo> mInfoList = new ArrayList();
+    private final List<HdmiPortInfo> mExpectedInfo = new ArrayList();
 
     @Rule
-    public AdoptShellPermissionsRule shellPermRule = new AdoptShellPermissionsRule();
+    public final AdoptShellPermissionsRule shellPermRule = new AdoptShellPermissionsRule();
 
     @Before
     public void setUp() {
@@ -63,17 +63,22 @@ public class HdmiSwitchClientTest {
 
     @After
     public void tearDown() {
-        mInfoList.clear();
+        mExpectedInfo.clear();
     }
 
     @Test
     public void testGetPortInfo() {
-        HdmiPortInfo info =
-                new HdmiPortInfo(0, HdmiPortInfo.PORT_INPUT, 0x1000, true, false, true);
-        mInfoList.add(info);
-        mService.setPortInfo(mInfoList);
+        final int id = 0;
+        final int address = 0x1000;
+        final boolean cec = true;
+        final boolean mhl = false;
+        final boolean arc = true;
+        final HdmiPortInfo info =
+                new HdmiPortInfo(id, HdmiPortInfo.PORT_INPUT, address, cec, mhl, arc);
+        mExpectedInfo.add(info);
+        mService.setPortInfo(mExpectedInfo);
 
-        List<HdmiPortInfo> portInfo = mHdmiSwitchClient.getPortInfo();
-        assertThat(portInfo).isEqualTo(mInfoList);
+        final List<HdmiPortInfo> portInfo = mHdmiSwitchClient.getPortInfo();
+        assertThat(portInfo).isEqualTo(mExpectedInfo);
     }
 }
