@@ -34,6 +34,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
@@ -101,6 +102,81 @@ class HistoricalAppopsTest {
     @Test
     fun testHistoricalAggregationTwoLevelsDeep() {
         testHistoricalAggregationSomeLevelsDeep(1)
+    }
+
+    @Test
+    fun testRebootHistory() {
+        // Configure historical registry behavior.
+        appOpsManager.setHistoryParameters(
+                AppOpsManager.HISTORICAL_MODE_ENABLED_PASSIVE,
+                SNAPSHOT_INTERVAL_MILLIS,
+                INTERVAL_COMPRESSION_MULTIPLIER)
+
+        // Add the data to the history
+        val chunk = createDataChunk()
+        val chunkCount = (INTERVAL_COMPRESSION_MULTIPLIER * 2) + 3
+        for (i in 0 until chunkCount) {
+            appOpsManager.addHistoricalOps(chunk)
+        }
+
+        // Validate the data for the first interval
+        val firstIntervalBeginMillis = computeIntervalBeginRawMillis(0)
+        val firstIntervalEndMillis = computeIntervalBeginRawMillis(1)
+        var firstOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                firstIntervalBeginMillis, firstIntervalEndMillis)
+        assertHasCounts(firstOps!!, 197)
+
+        // Validate the data for the second interval
+        val secondIntervalBeginMillis = computeIntervalBeginRawMillis(1)
+        val secondIntervalEndMillis = computeIntervalBeginRawMillis(2)
+        var secondOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                secondIntervalBeginMillis, secondIntervalEndMillis)
+        assertHasCounts(secondOps!!, 33)
+
+        // Validate the data for all intervals
+        val everythingIntervalBeginMillis = Instant.EPOCH.toEpochMilli();
+        val everythingIntervalEndMillis = Long.MAX_VALUE;
+        var allOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                everythingIntervalBeginMillis, everythingIntervalEndMillis)
+        assertHasCounts(allOps!!, 230)
+
+        // Now reboot the history
+        appOpsManager.rebootHistory(firstIntervalEndMillis);
+
+        // Validate the data for the first interval
+        firstOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                firstIntervalBeginMillis, firstIntervalEndMillis)
+        assertHasCounts(firstOps!!, 0)
+
+        // Validate the data for the second interval
+        secondOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                secondIntervalBeginMillis, secondIntervalEndMillis)
+        assertHasCounts(secondOps!!, 230)
+
+        // Validate the data for all intervals
+        allOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                everythingIntervalBeginMillis, everythingIntervalEndMillis)
+        assertHasCounts(allOps!!, 230)
+
+        // Write some more ops to the first interval
+        for (i in 0 until chunkCount) {
+            appOpsManager.addHistoricalOps(chunk)
+        }
+
+        // Validate the data for the first interval
+        firstOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                firstIntervalBeginMillis, firstIntervalEndMillis)
+        assertHasCounts(firstOps!!, 197)
+
+        // Validate the data for the second interval
+        secondOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                secondIntervalBeginMillis, secondIntervalEndMillis)
+        assertHasCounts(secondOps!!, 263)
+
+        // Validate the data for all intervals
+        allOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                everythingIntervalBeginMillis, everythingIntervalEndMillis)
+        assertHasCounts(allOps!!, 460)
     }
 
     @Test
@@ -463,6 +539,12 @@ class HistoricalAppopsTest {
 
     private fun assertHasCounts(ops: HistoricalOps, count: Long) {
         assertThat(ops).isNotNull()
+
+        if (count <= 0) {
+            assertThat(ops.uidCount).isEqualTo(0)
+            return;
+        }
+
         assertThat(ops.uidCount).isEqualTo(1)
 
         val uidOps = ops.getUidOpsAt(0)
