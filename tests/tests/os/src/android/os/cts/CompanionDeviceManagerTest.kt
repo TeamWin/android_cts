@@ -17,23 +17,31 @@
 package android.os.cts
 
 import android.companion.CompanionDeviceManager
+import android.content.pm.PackageManager.FEATURE_COMPANION_DEVICE_SETUP
 import android.net.MacAddress
 import android.platform.test.annotations.AppModeFull
 import android.test.InstrumentationTestCase
+import androidx.test.InstrumentationRegistry
+import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
+import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 
 const val COMPANION_APPROVE_WIFI_CONNECTIONS =
         "android.permission.COMPANION_APPROVE_WIFI_CONNECTIONS"
 const val DUMMY_MAC_ADDRESS = "00:00:00:00:00:10"
 const val MANAGE_COMPANION_DEVICES = "android.permission.MANAGE_COMPANION_DEVICES"
 const val SHELL_PACKAGE_NAME = "com.android.shell"
-val InstrumentationTestCase.context get() = instrumentation.context
+val InstrumentationTestCase.context get() = InstrumentationRegistry.getTargetContext()
 
 /**
  * Test for [CompanionDeviceManager]
  */
+@RunWith(AndroidJUnit4::class)
 class CompanionDeviceManagerTest : InstrumentationTestCase() {
 
     val cdm by lazy { context.getSystemService(CompanionDeviceManager::class.java) }
@@ -58,7 +66,13 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
         }, *permissions)
     }
 
+    @Before
+    fun assumeHasFeature() {
+        assumeTrue(context.packageManager.hasSystemFeature(FEATURE_COMPANION_DEVICE_SETUP))
+    }
+
     @AppModeFull(reason = "Companion API for non-instant apps only")
+    @Test
     fun testIsDeviceAssociated() {
         val userId = context.userId
         val packageName = context.packageName
@@ -78,6 +92,7 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
     }
 
     @AppModeFull(reason = "Companion API for non-instant apps only")
+    @Test
     fun testIsDeviceAssociatedWithCompanionApproveWifiConnectionsPermission() {
         assertTrue(isCdmAssociated(
             DUMMY_MAC_ADDRESS, SHELL_PACKAGE_NAME, MANAGE_COMPANION_DEVICES,
