@@ -212,7 +212,6 @@ class AppOpsLoggingTest {
         }
     }
 
-    @Ignore("b/154775996")
     @Test
     fun disableCollectedAndNoteSyncOpAndCheckLog() {
         rethrowThrowableFrom {
