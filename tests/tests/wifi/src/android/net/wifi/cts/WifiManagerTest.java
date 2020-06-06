@@ -142,6 +142,7 @@ public class WifiManagerTest extends AndroidTestCase {
     // duration of roughly 8 seconds. So we set scan timeout as 9 seconds here.
     private static final int SCAN_TEST_WAIT_DURATION_MS = 9000;
     private static final int TEST_WAIT_DURATION_MS = 10_000;
+    private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
     private static final int WAIT_MSEC = 60;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
     private static final int DURATION_SETTINGS_TOGGLE = 1_000;
@@ -384,10 +385,11 @@ public class WifiManagerTest extends AndroidTestCase {
         }
     }
 
-    private void waitForNetworkInfoState(NetworkInfo.State state) throws Exception {
+    private void waitForNetworkInfoState(NetworkInfo.State state, int timeoutMillis)
+            throws Exception {
         synchronized (mMySync) {
             if (mNetworkInfo.getState() == state) return;
-            long timeout = System.currentTimeMillis() + TEST_WAIT_DURATION_MS;
+            long timeout = System.currentTimeMillis() + timeoutMillis;
             while (System.currentTimeMillis() < timeout
                     && mNetworkInfo.getState() != state)
                 mMySync.wait(WAIT_MSEC);
@@ -396,11 +398,11 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     private void waitForConnection() throws Exception {
-        waitForNetworkInfoState(NetworkInfo.State.CONNECTED);
+        waitForNetworkInfoState(NetworkInfo.State.CONNECTED, WIFI_CONNECT_TIMEOUT_MILLIS);
     }
 
     private void waitForDisconnection() throws Exception {
-        waitForNetworkInfoState(NetworkInfo.State.DISCONNECTED);
+        waitForNetworkInfoState(NetworkInfo.State.DISCONNECTED, TEST_WAIT_DURATION_MS);
     }
 
     private void ensureNotNetworkInfoState(NetworkInfo.State state) throws Exception {
@@ -2330,7 +2332,7 @@ public class WifiManagerTest extends AndroidTestCase {
         PollingCheck.check(
                 "Wifi not connected - Please ensure there is a saved network in range of this "
                         + "device",
-                20000,
+                WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
 
         Network wifiCurrentNetwork = ShellIdentityUtils.invokeWithShellPermissions(
