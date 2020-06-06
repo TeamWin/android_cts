@@ -43,6 +43,7 @@
 #include <utils/threads.h>
 #include <inttypes.h>
 #include <utils/Log.h>
+#include <media/stagefright/OMXClient.h>
 
 #define DEFAULT_TIMEOUT   5000000
 #define OMX_UTILS_IP_PORT 0
@@ -73,15 +74,15 @@ status_t omxUtilsSetParameter(int portIndex,
                               OMX_PARAM_PORTDEFINITIONTYPE *params);
 status_t omxUtilsSetPortMode(OMX_U32 port_index, IOMX::PortMode mode);
 status_t omxUtilsUseBuffer(OMX_U32 portIndex, const OMXBuffer &omxBuf,
-                           android::BnOMX::buffer_id *buffer);
+                           android::IOMX::buffer_id *buffer);
 status_t omxUtilsSendCommand(OMX_COMMANDTYPE cmd, OMX_S32 param);
-status_t omxUtilsEmptyBuffer(android::BnOMX::buffer_id buffer,
+status_t omxUtilsEmptyBuffer(android::IOMX::buffer_id buffer,
                              const OMXBuffer &omxBuf, OMX_U32 flags,
                              OMX_TICKS timestamp, int fenceFd);
-status_t omxUtilsFillBuffer(android::BnOMX::buffer_id buffer,
+status_t omxUtilsFillBuffer(android::IOMX::buffer_id buffer,
                             const OMXBuffer &omxBuf, int fenceFd);
 status_t omxUtilsFreeBuffer(OMX_U32 portIndex,
-                            android::BnOMX::buffer_id buffer);
+                            android::IOMX::buffer_id buffer);
 status_t omxUtilsFreeNode();
 status_t dequeueMessageForNode(omx_message *msg, int64_t timeoutUs);
 void omxExitOnError(status_t ret);

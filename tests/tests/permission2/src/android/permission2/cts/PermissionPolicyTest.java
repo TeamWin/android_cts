@@ -28,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
+import android.os.Build;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArrayMap;
@@ -82,6 +83,9 @@ public class PermissionPolicyTest {
     private static final String ATTR_PROTECTION_LEVEL = "protectionLevel";
     private static final String ATTR_BACKGROUND_PERMISSION = "backgroundPermission";
 
+    private static final String CAMERA_OPEN_CLOSE_LISTENER_PERMISSION =
+            "android.permission.CAMERA_OPEN_CLOSE_LISTENER";
+
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
 
@@ -113,6 +117,13 @@ public class PermissionPolicyTest {
         for (ExpectedPermissionInfo expectedPermission : expectedPermissions) {
             String expectedPermissionName = expectedPermission.name;
             if (shouldSkipPermission(expectedPermissionName)) {
+                continue;
+            }
+
+            // Skip CAMERA OPEN_CLOSE_LISTENER_PERMISSION check for Android Q
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q
+                    && expectedPermissionName.equals(CAMERA_OPEN_CLOSE_LISTENER_PERMISSION)) {
+                declaredPermissionsMap.remove(expectedPermissionName);
                 continue;
             }
 

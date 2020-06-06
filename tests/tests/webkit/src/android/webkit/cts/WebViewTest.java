@@ -1698,7 +1698,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final int previousScrollX = mOnUiThread.getScrollX();
         final int previousScrollY = mOnUiThread.getScrollY();
 
-        mOnUiThread.flingScroll(100, 100);
+        mOnUiThread.flingScroll(10000, 10000);
 
         new PollingCheck() {
             @Override

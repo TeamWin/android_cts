@@ -640,6 +640,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
         int maxMusicVolume = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
 
         for (int stream : streams) {
+
+            if (mIsSingleVolume && stream != AudioManager.STREAM_MUSIC) {
+                continue;
+            }
+
             // set ringer mode to back normal to not interfere with volume tests
             mAudioManager.setRingerMode(RINGER_MODE_NORMAL);
 
