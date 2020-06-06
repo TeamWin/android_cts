@@ -197,7 +197,7 @@ class AppOpEventCollectionTest {
 
         // Using the shell identity causes a trusted proxy note
         runWithShellPermissionIdentity {
-            appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
+            appOpsManager.noteProxyOp(OPSTR_WIFI_SCAN, myPackage, myUid, null, null)
         }
         val afterTrusted = System.currentTimeMillis()
 
