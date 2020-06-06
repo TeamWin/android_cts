@@ -103,13 +103,14 @@ class AppOpsUserService : Service() {
                     client.noteSyncOp()
 
                     assertThat(asyncNoted).isEmpty()
+                    assertThat(noted).isEmpty()
 
                     setNotedAppOpsCollector()
 
-                    assertThat(noted).isEmpty()
+                    assertThat(asyncNoted).isEmpty()
                     assertThat(selfNoted).isEmpty()
                     eventually {
-                        assertThat(asyncNoted.map { it.op }).containsExactly(OPSTR_COARSE_LOCATION)
+                        assertThat(noted.map { it.first.op }).containsExactly(OPSTR_COARSE_LOCATION)
                     }
                 }
             }
