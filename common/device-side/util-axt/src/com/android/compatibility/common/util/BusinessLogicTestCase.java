@@ -75,7 +75,7 @@ public class BusinessLogicTestCase {
         String testName = String.format("%s#%s", this.getClass().getName(), methodName);
         if (mBusinessLogic.hasLogicFor(testName)) {
             Log.i(TAG, "Finding business logic for test case: " + testName);
-            BusinessLogicExecutor executor = new BusinessLogicDeviceExecutor(getContext(), this);
+            BusinessLogicExecutor executor = new BusinessLogicDeviceExecutor(getContext(), this, mBusinessLogic.getRedactionRegexes());
             mBusinessLogic.applyLogicFor(testName, executor);
         } else {
             /* There are cases in which this is an acceptable outcome, and we do not want to fail.

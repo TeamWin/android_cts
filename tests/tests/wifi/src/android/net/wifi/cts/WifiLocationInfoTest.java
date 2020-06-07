@@ -75,6 +75,7 @@ public class WifiLocationInfoTest {
             WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".RetrieveConnectionInfoAndReturnStatusService";
 
     private static final int DURATION_MS = 10_000;
+    private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
 
     @Rule
     public final ActivityTestRule<WaitForResultActivity> mActivityRule =
@@ -120,7 +121,7 @@ public class WifiLocationInfoTest {
         ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected",
-                DURATION_MS,
+                WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
     }
 

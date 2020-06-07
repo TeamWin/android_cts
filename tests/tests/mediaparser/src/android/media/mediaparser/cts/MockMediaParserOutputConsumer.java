@@ -83,7 +83,10 @@ public class MockMediaParserOutputConsumer implements MediaParser.OutputConsumer
 
                     @Override
                     public long getDurationUs() {
-                        return seekMap.getDurationMicros();
+                        long durationUs = seekMap.getDurationMicros();
+                        return durationUs != MediaParser.SeekMap.UNKNOWN_DURATION
+                                ? durationUs
+                                : C.TIME_UNSET;
                     }
 
                     @Override
