@@ -33,3 +33,27 @@ android_test_import {
         "general-tests",
     ]
 }
+
+android_test_import {
+    name: "CtsCorruptApkTests_Unaligned_Q",
+    apk: "unaligned_Q.apk",
+    presigned: true,
+    preprocessed: true,
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ]
+}
+
+android_test_import {
+    name: "CtsCorruptApkTests_Unaligned_R",
+    apk: "unaligned_R.apk",
+    presigned: true,
+    preprocessed: true,
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ]
+}
