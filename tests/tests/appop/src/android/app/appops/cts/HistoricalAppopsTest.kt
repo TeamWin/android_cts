@@ -107,7 +107,7 @@ class HistoricalAppopsTest {
     @Test
     fun testRebootHistory() {
         // Configure historical registry behavior.
-        appOpsManager.setHistoryParameters(
+        setHistoryParameters(
                 AppOpsManager.HISTORICAL_MODE_ENABLED_PASSIVE,
                 SNAPSHOT_INTERVAL_MILLIS,
                 INTERVAL_COMPRESSION_MULTIPLIER)
@@ -116,7 +116,7 @@ class HistoricalAppopsTest {
         val chunk = createDataChunk()
         val chunkCount = (INTERVAL_COMPRESSION_MULTIPLIER * 2) + 3
         for (i in 0 until chunkCount) {
-            appOpsManager.addHistoricalOps(chunk)
+            addHistoricalOps(chunk)
         }
 
         // Validate the data for the first interval
@@ -134,14 +134,16 @@ class HistoricalAppopsTest {
         assertHasCounts(secondOps!!, 33)
 
         // Validate the data for all intervals
-        val everythingIntervalBeginMillis = Instant.EPOCH.toEpochMilli();
-        val everythingIntervalEndMillis = Long.MAX_VALUE;
+        val everythingIntervalBeginMillis = Instant.EPOCH.toEpochMilli()
+        val everythingIntervalEndMillis = Long.MAX_VALUE
         var allOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
                 everythingIntervalBeginMillis, everythingIntervalEndMillis)
         assertHasCounts(allOps!!, 230)
 
         // Now reboot the history
-        appOpsManager.rebootHistory(firstIntervalEndMillis);
+        runWithShellPermissionIdentity {
+            appOpsManager.rebootHistory(firstIntervalEndMillis)
+        }
 
         // Validate the data for the first interval
         firstOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
@@ -160,7 +162,7 @@ class HistoricalAppopsTest {
 
         // Write some more ops to the first interval
         for (i in 0 until chunkCount) {
-            appOpsManager.addHistoricalOps(chunk)
+            addHistoricalOps(chunk)
         }
 
         // Validate the data for the first interval
@@ -542,7 +544,7 @@ class HistoricalAppopsTest {
 
         if (count <= 0) {
             assertThat(ops.uidCount).isEqualTo(0)
-            return;
+            return
         }
 
         assertThat(ops.uidCount).isEqualTo(1)
