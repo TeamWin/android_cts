@@ -73,6 +73,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private final String JPEG_PATH = Environment.getExternalStorageDirectory().getPath() +
             "/test.jpg";
+    private String mRecordingPath = null;
     private byte[] mJpegData;
 
     private static final int PREVIEW_CALLBACK_NOT_RECEIVED = 0;
@@ -187,7 +188,15 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             fail("initializeMessageLooper: start timeout");
         }
         assertNotNull("Fail to open camera.", mCamera);
-        mCamera.setPreviewDisplay(getActivity().getSurfaceView().getHolder());
+
+        final CameraCtsActivity activity = getActivity();
+        mCamera.setPreviewDisplay(activity.getSurfaceView().getHolder());
+
+        File parent = activity.getPackageManager().isInstantApp()
+                ? activity.getFilesDir()
+                : activity.getExternalFilesDir(null);
+
+        mRecordingPath = parent.getPath() + "/test_video.mp4";
     }
 
     /*
@@ -1323,7 +1332,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             recorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
             recorder.setVideoSize(size.width, size.height);
-            recorder.setOutputFile("/dev/null");
+            recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
             recorder.start();
@@ -1370,7 +1379,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             recorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
             recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
             recorder.setProfile(profile);
-            recorder.setOutputFile("/dev/null");
+            recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
             recorder.start();
@@ -2843,7 +2852,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             recorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
             recorder.setVideoSize(size.width, size.height);
-            recorder.setOutputFile("/dev/null");
+            recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
             recorder.start();
@@ -2864,7 +2873,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             recorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
             recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
             recorder.setProfile(profile);
-            recorder.setOutputFile("/dev/null");
+            recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
             recorder.start();
@@ -3317,7 +3326,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
                 recorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
                 recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
                 recorder.setProfile(profile);
-                recorder.setOutputFile("/dev/null");
+                recorder.setOutputFile(mRecordingPath);
                 recorder.setPreviewDisplay(holder.getSurface());
                 recorder.prepare();
                 recorder.start();
