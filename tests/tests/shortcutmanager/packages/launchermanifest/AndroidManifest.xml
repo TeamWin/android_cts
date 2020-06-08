@@ -31,7 +31,8 @@
             </intent-filter>
         </activity>
         <activity-alias android:name="Launcher2"
-             android:targetActivity="Launcher">
+             android:targetActivity="Launcher"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -39,7 +40,8 @@
             </intent-filter>
         </activity-alias>
         <activity-alias android:name="Launcher3"
-             android:targetActivity="Launcher">
+             android:targetActivity="Launcher"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.DEFAULT"/>
