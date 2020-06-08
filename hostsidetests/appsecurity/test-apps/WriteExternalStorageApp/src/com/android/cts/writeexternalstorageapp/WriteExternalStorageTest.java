@@ -18,7 +18,6 @@ package com.android.cts.writeexternalstorageapp;
 
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.TAG;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoWriteAccess;
-import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadOnlyAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.buildCommonChildDirs;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.buildProbeFile;
@@ -220,9 +219,10 @@ public class WriteExternalStorageTest extends AndroidTestCase {
 
     /**
      * Verify that we have write access in our package-specific directories on
-     * secondary storage devices, but it becomes read-only access above them.
+     * secondary storage devices, and it still has read-write access above them (except
+     * /Android/[data|obb] dirs).
      */
-    public void testSecondaryWalkingUpTreeReadOnly() throws Exception {
+    public void testSecondaryWalkingUpTreeReadWrite() throws Exception {
         final List<File> paths = getSecondaryPackageSpecificPaths(getContext());
         final String packageName = getContext().getPackageName();
 
@@ -242,11 +242,18 @@ public class WriteExternalStorageTest extends AndroidTestCase {
             // Walk all the way up to root
             while (path != null) {
                 if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState(path))) {
-                    assertDirReadOnlyAccess(path);
+                    // /Android/data and /Android/obb is not write accessible on any volume
+                    // (/storage/emulated/<user_id>/ or /storage/1234-ABCD/)
+                    if (path.getAbsolutePath().endsWith("/Android/data")
+                            || path.getAbsolutePath().endsWith("/Android/obb")) {
+                        assertDirNoWriteAccess(path);
+                    } else {
+                        assertDirReadWriteAccess(path);
+                    }
                 } else {
                     assertDirNoWriteAccess(path);
+                    assertDirNoWriteAccess(buildCommonChildDirs(path));
                 }
-                assertDirNoWriteAccess(buildCommonChildDirs(path));
                 path = path.getParentFile();
             }
         }
@@ -291,11 +298,11 @@ public class WriteExternalStorageTest extends AndroidTestCase {
     }
 
     /**
-     * Secondary external storage mount points must always be read-only, per
+     * Secondary external storage mount points must always be read-only (unless mounted), per
      * CDD, <em>except</em> for the package specific directories tested by
      * {@link CommonExternalStorageTest#testAllPackageDirsWritable()}.
      */
-    public void testSecondaryMountPointsNotWritable() throws Exception {
+    public void testSecondaryMountPoints() throws Exception {
         // Probe path could be /storage/emulated/0 or /storage/1234-5678
         final File probe = buildProbeFile(Environment.getExternalStorageDirectory());
         assertTrue(probe.createNewFile());
@@ -313,11 +320,20 @@ public class WriteExternalStorageTest extends AndroidTestCase {
             if (testProbe.exists() || testUserProbe.exists()) {
                 Log.d(TAG, "Primary external mountpoint " + path);
             } else {
-                // This mountpoint is not primary external storage; we must
-                // not be able to write.
                 Log.d(TAG, "Other mountpoint " + path);
-                assertDirNoWriteAccess(path);
-                assertDirNoWriteAccess(userPath);
+                if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState(path))) {
+                    if (path.getAbsolutePath().endsWith("/Android/data")
+                            || path.getAbsolutePath().endsWith("/Android/obb")) {
+                        assertDirNoWriteAccess(path);
+                    } else {
+                        assertDirReadWriteAccess(path);
+                        assertDirReadWriteAccess(buildCommonChildDirs(path));
+                    }
+                }
+                else {
+                    assertDirNoWriteAccess(path);
+                    assertDirNoWriteAccess(userPath);
+                }
             }
         }
     }
