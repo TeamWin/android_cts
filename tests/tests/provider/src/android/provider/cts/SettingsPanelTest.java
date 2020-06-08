@@ -17,6 +17,7 @@
 package android.provider.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
@@ -89,6 +90,8 @@ public class SettingsPanelTest {
         Intent settingsIntent = new Intent(android.provider.Settings.ACTION_SETTINGS);
         mSettingsPackage = packageManager.resolveActivity(settingsIntent,
                 PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
+
+        assumeFalse("Skipping test: Auto does not support provider android.settings.panel", isCar());
     }
 
     @After
@@ -381,5 +384,10 @@ public class SettingsPanelTest {
     private void pressSeeMore() {
         mDevice.findObject(By.res(mSettingsPackage, RESOURCE_SEE_MORE)).click();
         mDevice.wait(Until.hasObject(By.pkg(mSettingsPackage).depth(0)), TIMEOUT);
+    }
+
+    private boolean isCar() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }
