@@ -28,5 +28,5 @@ android_test {
     ],
 
     srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
+    sdk_version: "system_current",
 }
