@@ -1719,7 +1719,7 @@
     <!-- Strings for TestListActivity -->
     <string name="wifi_test">Wi-Fi Test</string>
     <string name="wifi_test_info">
-        The Wi-Fi tests requires an open (no security) access point in the environment along with the DUT.
+        The Wi-Fi tests requires an open or PSK access point in the environment along with the DUT.
         \nPlease perform a network settings reset between each test to reset platform\'s internal state which
         might interfere with the test flow.\nNavigate to \"Settings -> System -> Reset Options -> Reset Wi-Fi,
         mobile &amp; Bluetooth\" to perform a network settings reset.
@@ -1738,7 +1738,7 @@
 
     <string name="wifi_status_need_psk">Need a psk network for this test.</string>
     <string name="wifi_status_initiating_scan">Initiating scan.</string>
-    <string name="wifi_status_scan_failure">Unable to initiate scan or find any open network in scan results.</string>
+    <string name="wifi_status_scan_failure">Unable to initiate scan or find matching network in scan results.</string>
     <string name="wifi_status_connected_to_other_network">Connected to some other network on the device. Please ensure that there is no saved networks on the device.</string>
     <string name="wifi_status_initiating_network_request">Initiating network request.</string>
     <string name="wifi_status_network_wait_for_available">Waiting for network connection. Please click the network in the dialog that pops up for approving the request.</string>
