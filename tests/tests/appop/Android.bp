@@ -25,6 +25,7 @@ cc_test_library {
 
     srcs: ["jni/**/*.cpp"],
 
+    header_libs: ["jni_headers"],
     shared_libs: [
         "libbinder",
         "libutils",
