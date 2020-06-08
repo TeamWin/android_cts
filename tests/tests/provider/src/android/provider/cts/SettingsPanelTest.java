@@ -110,6 +110,7 @@ public class SettingsPanelTest {
 
     @Test
     public void volumePanel_correctPackage() {
+        assumeTrue(mHasTouchScreen);
         launchVolumePanel();
 
         String currentPackage = mDevice.getCurrentPackageName();
@@ -181,6 +182,7 @@ public class SettingsPanelTest {
 
     @Test
     public void volumePanel_doneClosesPanel() {
+        assumeTrue(mHasTouchScreen);
         // Launch panel
         launchVolumePanel();
         String currentPackage = mDevice.getCurrentPackageName();
@@ -262,13 +264,13 @@ public class SettingsPanelTest {
 
     @Test
     public void volumePanel_seeMoreButton_launchesIntoSettings() {
+        assumeTrue(mHasTouchScreen);
         // Launch panel
         launchVolumePanel();
         String currentPackage = mDevice.getCurrentPackageName();
         assertThat(currentPackage).isEqualTo(mSettingsPackage);
 
         // Click the see more button
-        assumeTrue(mHasTouchScreen);
         pressSeeMore();
 
         // Assert that we're still in Settings, on a different page.
