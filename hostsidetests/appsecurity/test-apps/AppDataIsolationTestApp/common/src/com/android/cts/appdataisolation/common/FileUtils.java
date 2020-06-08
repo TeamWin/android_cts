@@ -37,6 +37,10 @@ import java.io.IOException;
  */
 public class FileUtils {
 
+    public static final String APPA_PKG = "com.android.cts.appdataisolation.appa";
+    public static final String APPB_PKG = "com.android.cts.appdataisolation.appb";
+    public static final String NOT_INSTALLED_PKG = "com.android.cts.appdataisolation.not_installed_pkg";
+
     public static final String CE_DATA_FILE_NAME = "ce_data_file";
     public static final String DE_DATA_FILE_NAME = "de_data_file";
     public final static String EXTERNAL_DATA_FILE_NAME = "external_data_file";
@@ -72,7 +76,7 @@ public class FileUtils {
             Os.mkdir(path, 0700);
             fail("Should not able to mkdir() on " + path);
         } catch (ErrnoException e) {
-            assertEquals(e.errno, OsConstants.EACCES);
+            assertEquals(e.errno, OsConstants.EACCES, "Error on path: " + path);
         }
     }
 
@@ -111,5 +115,13 @@ public class FileUtils {
     public static void touchFile(String path, String name) throws IOException {
         File file = new File(path, name);
         file.createNewFile();
+    }
+
+    public static String replacePackageAWithPackageB(String path) {
+        return path.replace(APPA_PKG, APPB_PKG);
+    }
+
+    public static String replacePackageAWithNotInstalledPkg(String path) {
+        return path.replace(APPA_PKG, NOT_INSTALLED_PKG);
     }
 }
