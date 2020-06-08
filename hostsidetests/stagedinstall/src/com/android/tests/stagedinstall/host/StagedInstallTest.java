@@ -227,6 +227,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    // Don't mark as @LargeTest since we want at least one test to install apex during pre-submit.
     public void testInstallStagedApexAndApk() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
@@ -551,6 +552,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testInstallApkChangingFingerprint() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
 
