@@ -75,6 +75,7 @@ public class CameraTest extends Assert {
     private static final String TAG = "CameraTest";
     private static final String PACKAGE = "android.hardware.cts";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
+    private String mRecordingPath = null;
     private String mJpegPath = null;
     private byte[] mJpegData;
 
@@ -195,6 +196,7 @@ public class CameraTest extends Assert {
                 : activity.getExternalFilesDir(null);
 
         mJpegPath = parent.getPath() + "/test.jpg";
+        mRecordingPath = parent.getPath() + "/test_video.mp4";
     }
 
     /*
@@ -1330,7 +1332,7 @@ public class CameraTest extends Assert {
             recorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
             recorder.setVideoSize(size.width, size.height);
-            recorder.setOutputFile("/dev/null");
+            recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
             recorder.start();
@@ -1377,7 +1379,7 @@ public class CameraTest extends Assert {
             recorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
             recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
             recorder.setProfile(profile);
-            recorder.setOutputFile("/dev/null");
+            recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
             recorder.start();
@@ -2862,7 +2864,7 @@ public class CameraTest extends Assert {
             recorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
             recorder.setVideoSize(size.width, size.height);
-            recorder.setOutputFile("/dev/null");
+            recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
             recorder.start();
@@ -2883,7 +2885,7 @@ public class CameraTest extends Assert {
             recorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
             recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
             recorder.setProfile(profile);
-            recorder.setOutputFile("/dev/null");
+            recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
             recorder.start();
@@ -3338,7 +3340,7 @@ public class CameraTest extends Assert {
                 recorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
                 recorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
                 recorder.setProfile(profile);
-                recorder.setOutputFile("/dev/null");
+                recorder.setOutputFile(mRecordingPath);
                 recorder.setPreviewDisplay(holder.getSurface());
                 recorder.prepare();
                 recorder.start();
