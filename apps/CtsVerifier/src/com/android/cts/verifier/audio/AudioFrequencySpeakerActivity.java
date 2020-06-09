@@ -16,19 +16,16 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.wavelib.*;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import android.content.Context;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 
@@ -61,7 +58,6 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
     static final double MIN_FRACTION_POINTS_IN_BAND = 0.3;
 
     final OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
-    Context mContext;
 
     Button mLoopbackPlugReady;          //user signal to have connected USB Microphone
     Button mTestButton;                 //user to start test
@@ -125,8 +121,6 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_frequency_speaker_activity);
 
-        mContext = this;
-
         mLoopbackPlugReady = (Button)findViewById(R.id.audio_frequency_speaker_mic_ready_btn);
         mLoopbackPlugReady.setOnClickListener(mBtnClickListener);
         mUsbStatusText = (TextView)findViewById(R.id.audio_frequency_speaker_usb_status);
@@ -138,7 +132,7 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
         enableLayout(R.id.audio_frequency_speaker_layout,false);         //disabled all content
 
         mSPlayer = new SoundPlayerObject();
-        mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.stereo_mono_white_noise_48);
+        mSPlayer.setSoundWithResId(mContext, R.raw.stereo_mono_white_noise_48);
         mSPlayer.setBalance(0.5f);
 
         //Init FFT stuff
@@ -704,8 +698,8 @@ public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implem
     }
 
     private void testUSB() {
-        boolean isConnected = UsbMicrophoneTester.getIsMicrophoneConnected(getApplicationContext());
-        mUsbDevicesInfo = UsbMicrophoneTester.getUSBDeviceListString(getApplicationContext());
+        boolean isConnected = UsbMicrophoneTester.getIsMicrophoneConnected(mContext);
+        mUsbDevicesInfo = UsbMicrophoneTester.getUSBDeviceListString(mContext);
 
         if (isConnected) {
             mUsbStatusText.setText(
