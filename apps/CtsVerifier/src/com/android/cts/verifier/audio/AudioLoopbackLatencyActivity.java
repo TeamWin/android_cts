@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
@@ -46,8 +45,8 @@ import android.widget.ProgressBar;
 /**
  * Tests Audio Device roundtrip latency by using a loopback plug.
  */
-public class AudioLoopbackActivity extends AudioFrequencyActivity {
-    private static final String TAG = "AudioLoopbackActivity";
+public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
+    private static final String TAG = "AudioLoopbackLatencyActivity";
 
     public static final int BYTES_PER_FRAME = 2;
 
@@ -57,21 +56,19 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
     private int mMinBufferSizeInFrames = 0;
     private static final double CONFIDENCE_THRESHOLD = 0.6;
 
-    private double mLatencyMillis;
-    private double mConfidence;
-
     OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
     Context mContext;
 
-    Button mHeadsetPortYes;
-    Button mHeadsetPortNo;
-
-    Button mLoopbackPlugReady;
     TextView mAudioLevelText;
     SeekBar mAudioLevelSeekbar;
+
     Button mTestButton;
+
     TextView mResultText;
     ProgressBar mProgressBar;
+
+    private double mLatencyMillis = 0.0;
+    private double mConfidence = 0.0;
 
     int mMaxLevel;
     private class OnBtnClickListener implements OnClickListener {
@@ -83,23 +80,10 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
                     //enable all the other views.
                     enableLayout(R.id.audio_loopback_layout, true);
                     break;
+
                 case R.id.audio_loopback_test_btn:
                     Log.i(TAG, "audio loopback test");
                     startAudioTest();
-                    break;
-                case R.id.audio_general_headset_yes:
-                    Log.i(TAG, "User confirms Headset Port existence");
-                    mLoopbackPlugReady.setEnabled(true);
-                    recordHeadsetPortFound(true);
-                    mHeadsetPortYes.setEnabled(false);
-                    mHeadsetPortNo.setEnabled(false);
-                    break;
-                case R.id.audio_general_headset_no:
-                    Log.i(TAG, "User denies Headset Port existence");
-                    recordHeadsetPortFound(false);
-                    getPassButton().setEnabled(true);
-                    mHeadsetPortYes.setEnabled(false);
-                    mHeadsetPortNo.setEnabled(false);
                     break;
             }
         }
@@ -107,21 +91,15 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // we need to do this first so that the layout is inplace when the super-class inits
+        setContentView(R.layout.audio_loopback_latency_activity);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.audio_loopback_activity);
 
         mContext = this;
 
-        mHeadsetPortYes = (Button)findViewById(R.id.audio_general_headset_yes);
-        mHeadsetPortYes.setOnClickListener(mBtnClickListener);
-        mHeadsetPortNo = (Button)findViewById(R.id.audio_general_headset_no);
-        mHeadsetPortNo.setOnClickListener(mBtnClickListener);
-
-        mLoopbackPlugReady = (Button)findViewById(R.id.audio_loopback_plug_ready_btn);
-        mLoopbackPlugReady.setOnClickListener(mBtnClickListener);
-        mLoopbackPlugReady.setEnabled(false);
         mAudioLevelText = (TextView)findViewById(R.id.audio_loopback_level_text);
         mAudioLevelSeekbar = (SeekBar)findViewById(R.id.audio_loopback_level_seekbar);
+        findViewById(R.id.audio_loopback_plug_ready_btn).setOnClickListener(mBtnClickListener);
         mTestButton =(Button)findViewById(R.id.audio_loopback_test_btn);
         mTestButton.setOnClickListener(mBtnClickListener);
         mResultText = (TextView)findViewById(R.id.audio_loopback_results_text);
@@ -157,8 +135,7 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
 
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
-        setInfoResources(R.string.audio_loopback_test, R.string.audio_loopback_info, -1);
-
+        setInfoResources(R.string.audio_loopback_latency_test, R.string.audio_loopback_info, -1);
     }
 
     /**
@@ -309,13 +286,5 @@ public class AudioLoopbackActivity extends AudioFrequencyActivity {
                 ResultUnit.NONE);
 
         Log.v(TAG,"Results Recorded");
-    }
-
-    private void recordHeadsetPortFound(boolean found) {
-        getReportLog().addValue(
-                "User Reported Headset Port",
-                found ? 1.0 : 0,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
     }
 }
