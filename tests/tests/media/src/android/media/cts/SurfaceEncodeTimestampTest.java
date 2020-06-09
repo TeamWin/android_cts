@@ -27,6 +27,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaFormat;
 import android.opengl.GLES20;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -38,6 +39,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.filters.SdkSuppress;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
@@ -153,6 +155,7 @@ public class SurfaceEncodeTimestampTest extends AndroidTestCase {
      * compress) the output timestamp so that the output fps becomes that specified
      * by  KEY_FRAME_RATE.
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
     public void testCaptureFps() throws Throwable {
         // test slow motion
         testCaptureFps(120, false /*useFloatKey*/);
