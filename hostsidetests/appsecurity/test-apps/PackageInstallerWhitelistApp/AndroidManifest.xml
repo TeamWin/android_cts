@@ -20,7 +20,7 @@
                      android:targetPackage="com.android.cts.packageinstallerpermissionwhitelistapp"
                      android:label="Test for unset package installer permission exploit."/>
 
-    <application>
+    <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
     </application>
 
