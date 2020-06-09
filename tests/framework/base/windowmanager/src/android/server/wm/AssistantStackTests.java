@@ -224,7 +224,6 @@ public class AssistantStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
     }
 
-    @FlakyTest(bugId = 69573940)
     @Test
     public void testTranslucentAssistantActivityStackVisibility() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {
@@ -264,7 +263,9 @@ public class AssistantStackTests extends ActivityManagerTestBase {
                     EXTRA_ASSISTANT_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY));
             waitForValidStateWithActivityTypeAndWindowingMode(
                     TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, WINDOWING_MODE_FULLSCREEN);
-            mWmState.assertHomeActivityVisible(false);
+
+            final ComponentName homeActivity = mWmState.getHomeActivityName();
+            mWmState.waitAndAssertVisibilityGone(homeActivity);
             pressBackButton();
             mWmState.waitForFocusedStack(WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();

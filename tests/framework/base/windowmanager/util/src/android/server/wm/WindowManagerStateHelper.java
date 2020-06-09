@@ -273,6 +273,12 @@ public class WindowManagerStateHelper extends WindowManagerState {
                         "keyguard window to dismiss"));
     }
 
+    void waitForWindowSurfaceDisappeared(String windowName) {
+        waitForWithAmState(state -> {
+            return !state.isWindowSurfaceShown(windowName);
+        }, windowName + "'s surface is disappeared");
+    }
+
     public boolean waitForWithAmState(Predicate<WindowManagerState> waitCondition,
             String message) {
         return waitFor((amState) -> waitCondition.test(amState), message);
@@ -552,6 +558,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 containsActivity(activityName));
         assertFalse("Window=" + windowName + " must NOT exits.",
                 containsWindow(windowName));
+    }
+
+    public void waitAndAssertVisibilityGone(final ComponentName activityName) {
+        // Sometimes the surface can be shown due to the late animation.
+        // Wait for the animation is done.
+        waitForWindowSurfaceDisappeared(getWindowName(activityName));
+        assertVisibility(activityName, false);
     }
 
     public void assertVisibility(final ComponentName activityName, final boolean visible) {
