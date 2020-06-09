@@ -32,10 +32,14 @@ import android.media.MediaFormat;
 import android.media.cts.DecoderTest.AudioParameter;
 import android.media.cts.DecoderTestAacDrc.DrcParams;
 import android.media.cts.R;
+import android.os.Build;
 import android.util.Log;
 import android.os.Bundle;
 
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -48,6 +52,9 @@ import java.util.List;
 
 public class DecoderTestXheAac {
     private static final String TAG = "DecoderTestXheAac";
+
+    private static final boolean sIsAndroidRAndAbove =
+            ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     private Resources mResources;
 
@@ -227,6 +234,10 @@ public class DecoderTestXheAac {
     public void testDecodeUsacDrcAlbumModeM4a() throws Exception {
         Log.v(TAG, "START testDecodeUsacDrcAlbumModeM4a");
 
+        // Album mode is R feature
+        if (!MediaUtils.check(sIsAndroidRAndAbove, "Album mode support requires Android R"))
+                return;
+
         assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
 
         for (String aacDecName : sAacDecoderNames) {
@@ -358,6 +369,9 @@ public class DecoderTestXheAac {
     public void testDecodeUsacDrcBoostAndAttenuationM4a() throws Exception {
         Log.v(TAG, "START testDecodeUsacDrcBoostAndAttenuationM4a");
 
+        if (!MediaUtils.check(sIsAndroidRAndAbove, "Att/Boost corrected in Android R"))
+            return;
+
         assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
 
         for (String aacDecName : sAacDecoderNames) {
@@ -423,6 +437,9 @@ public class DecoderTestXheAac {
     @Test
     public void testDecodeUsacDrcLoudnessPreferenceM4a() throws Exception {
         Log.v(TAG, "START testDecodeUsacDrcLoudnessPreferenceM4a");
+
+        if (!MediaUtils.check(sIsAndroidRAndAbove, "Loudness preference in Android R"))
+            return;
 
         assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
 
@@ -553,6 +570,10 @@ public class DecoderTestXheAac {
                  String effectTypeName, int nCh, int aggressiveDrc, String decoderName)
                          throws Exception {
         for (boolean runtimeChange : new boolean[] {false, true}) {
+            if (runtimeChange && !sIsAndroidRAndAbove) {
+                // changing decoder configuration after it has been initialized requires R and above
+                continue;
+            }
             int testinput = -1;
             AudioParameter decParams = new AudioParameter();
             DrcParams drcParams_def  = new DrcParams(127, 127, 96, 0, -1);
@@ -668,12 +689,7 @@ public class DecoderTestXheAac {
      * USAC test DRC Album Mode
      */
     private void checkUsacDrcAlbumMode(int testinput, String decoderName) throws Exception {
-        for (int i = 0; i <= 1 ; i++) {
-            boolean runtimeChange = false;
-            if (i == 1) { /* first run: configure decoder before starting decoding,
-                             second_run: configure decoder at runtime */
-                runtimeChange = true;
-            }
+        for (boolean runtimeChange : new boolean[] {false, true}) {
             AudioParameter decParams = new AudioParameter();
             DrcParams drcParams_album_off = new DrcParams(127, 127, 64, 0, 0, 0);
             DrcParams drcParams_album_on  = new DrcParams(127, 127, 64, 0, 0, 1);
@@ -704,15 +720,14 @@ public class DecoderTestXheAac {
     private void checkUsacDrcBoostAndAttenuation(float normFactor_L, float normFactor_R,
                                                  int boostFactor, int attenuationFactor,
                                                  int nCh, String decoderName) throws Exception {
-        for (int i = 0; i <= 1 ; i++) {
+        for (boolean runtimeChange : new boolean[] {false, true}) {
+            if (runtimeChange && !sIsAndroidRAndAbove) {
+                // changing decoder configuration after it has been initialized requires R and above
+                continue;
+            }
 
             int testinput = R.raw.noise_2ch_32khz_aot42_19_lufs_drc_mp4;
 
-            boolean runtimeChange = false;
-            if (i == 1) { /* first run: configure decoder before starting decoding,
-                             second_run: configure decoder at runtime */
-                runtimeChange = true;
-            }
             AudioParameter decParams = new AudioParameter();
             DrcParams drcParams_def = new DrcParams(127, 127, 64, 0, 6);
             DrcParams drcParams_test = new DrcParams(boostFactor, attenuationFactor, 64, 0, 6);
@@ -770,12 +785,7 @@ public class DecoderTestXheAac {
     */
     private void checkUsacDrcOutputLoudness(int testInput, int decoderTargetLevel,
             int expectedOutputLoudness, String decoderName) throws Exception {
-        for (int i = 0; i <= 1 ; i++) {
-            boolean runtimeChange = false;
-            if (i == 1) { /* first run: configure decoder before starting decoding,
-                             second_run: configure decoder at runtime */
-                runtimeChange = true;
-            }
+        for (boolean runtimeChange : new boolean[] {false, true}) {
             AudioParameter decParams = new AudioParameter();
             DrcParams drcParams_test = new DrcParams(127, 127, decoderTargetLevel, 0, 6);
 
@@ -1223,7 +1233,7 @@ public class DecoderTestXheAac {
         Log.v(localTag, "configuring with " + configFormat);
         codec.configure(configFormat, null /* surface */, null /* crypto */, 0 /* flags */);
 
-        if (drcParams != null) {
+        if (drcParams != null && sIsAndroidRAndAbove) { // querying output format requires R
             if(!runtimeChange) {
                 if (drcParams.mAlbumMode != 0) {
                     int albumModeFromCodec = codec.getOutputFormat()
@@ -1374,7 +1384,7 @@ public class DecoderTestXheAac {
         }
 
         // check if MediaCodec gives back correct drc parameters
-        if (drcParams != null) {
+        if (drcParams != null && sIsAndroidRAndAbove) {
             if (drcParams.mAlbumMode != 0) {
                 final int albumModeFromCodec = codec.getOutputFormat()
                         .getInteger(MediaFormat.KEY_AAC_DRC_ALBUM_MODE);
@@ -1405,7 +1415,7 @@ public class DecoderTestXheAac {
         }
 
         // expectedOutputLoudness == -2 indicates that output loudness is not tested
-        if (expectedOutputLoudness != -2) {
+        if (expectedOutputLoudness != -2 && sIsAndroidRAndAbove) {
             final int outputLoudnessFromCodec = codec.getOutputFormat()
                     .getInteger(MediaFormat.KEY_AAC_DRC_OUTPUT_LOUDNESS);
             if (outputLoudnessFromCodec != expectedOutputLoudness) {
