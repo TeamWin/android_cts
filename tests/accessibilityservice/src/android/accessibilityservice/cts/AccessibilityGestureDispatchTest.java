@@ -217,6 +217,7 @@ public class AccessibilityGestureDispatchTest {
             return;
         }
 
+        float pointTolerance = 1f;
         PointF startPoint = new PointF(mStartPoint.x, mStartPoint.y);
         PointF endPoint = new PointF(mStartPoint.x + 10, mStartPoint.y + 20);
         int gestureTime = 500;
@@ -229,8 +230,9 @@ public class AccessibilityGestureDispatchTest {
 
         MotionEvent downEvent = mMotionEvents.get(0);
         MotionEvent upEvent = mMotionEvents.get(numEvents - 1);
-        assertThat(downEvent, both(IS_ACTION_DOWN).and(isAtPoint(startPoint)));
-        assertThat(upEvent, both(IS_ACTION_UP).and(isAtPoint(endPoint)));
+        assertThat(downEvent, both(IS_ACTION_DOWN).and(isAtPoint(startPoint,
+                    pointTolerance)));
+        assertThat(upEvent, both(IS_ACTION_UP).and(isAtPoint(endPoint, pointTolerance)));
         assertEquals(gestureTime, upEvent.getEventTime() - downEvent.getEventTime());
 
         long lastEventTime = downEvent.getEventTime();
@@ -240,8 +242,9 @@ public class AccessibilityGestureDispatchTest {
             float fractionOfSwipe =
                     ((float) (moveEvent.getEventTime() - downEvent.getEventTime())) / gestureTime;
             PointF intermediatePoint = add(startPoint,
-                    ceil(times(fractionOfSwipe, diff(endPoint, startPoint))));
-            assertThat(moveEvent, both(IS_ACTION_MOVE).and(isAtPoint(intermediatePoint)));
+                    times(fractionOfSwipe, diff(endPoint, startPoint)));
+            assertThat(moveEvent, both(IS_ACTION_MOVE).and(
+                isAtPoint(intermediatePoint, pointTolerance)));
             lastEventTime = moveEvent.getEventTime();
         }
     }
