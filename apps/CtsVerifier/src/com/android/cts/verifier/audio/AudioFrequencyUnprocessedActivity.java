@@ -24,11 +24,6 @@ import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
 import android.content.Context;
-import android.content.BroadcastReceiver;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.media.AudioDeviceCallback;
-import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -43,8 +38,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.SeekBar;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 /**
@@ -87,24 +80,20 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
     final OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
     Context mContext;
 
-    LinearLayout mLayoutTestTone;
     Button mButtonTestTone;
     ProgressBar mProgressTone;
     TextView mResultTestTone;
     Button mButtonPlayTone;
 
-    LinearLayout mLayoutTestNoise;
     Button mButtonTestNoise;
     ProgressBar mProgressNoise;
     TextView mResultTestNoise;
     Button mButtonPlayNoise;
 
-    LinearLayout mLayoutTestUsbBackground;
     Button mButtonTestUsbBackground;
     ProgressBar mProgressUsbBackground;
     TextView mResultTestUsbBackground;
 
-    LinearLayout mLayoutTestUsbNoise;
     Button mButtonTestUsbNoise;
     ProgressBar mProgressUsbNoise;
     TextView mResultTestUsbNoise;
@@ -181,7 +170,6 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
         playerSetSource(SOURCE_TONE);
 
         // Test tone
-        mLayoutTestTone = (LinearLayout) findViewById(R.id.unprocessed_layout_test_tone);
         mButtonTestTone = (Button) findViewById(R.id.unprocessed_test_tone_btn);
         mButtonTestTone.setOnClickListener(mBtnClickListener);
         mProgressTone = (ProgressBar) findViewById(R.id.unprocessed_test_tone_progress_bar);
@@ -191,7 +179,6 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
         showWait(mProgressTone, false);
 
         //Test Noise
-        mLayoutTestNoise = (LinearLayout) findViewById(R.id.unprocessed_layout_test_noise);
         mButtonTestNoise = (Button) findViewById(R.id.unprocessed_test_noise_btn);
         mButtonTestNoise.setOnClickListener(mBtnClickListener);
         mProgressNoise = (ProgressBar) findViewById(R.id.unprocessed_test_noise_progress_bar);
@@ -201,8 +188,6 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
         showWait(mProgressNoise, false);
 
         //USB Background
-        mLayoutTestUsbBackground = (LinearLayout)
-                findViewById(R.id.unprocessed_layout_test_usb_background);
         mButtonTestUsbBackground = (Button) findViewById(R.id.unprocessed_test_usb_background_btn);
         mButtonTestUsbBackground.setOnClickListener(mBtnClickListener);
         mProgressUsbBackground = (ProgressBar)
@@ -211,7 +196,6 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
                 findViewById(R.id.unprocessed_test_usb_background_result);
         showWait(mProgressUsbBackground, false);
 
-        mLayoutTestUsbNoise = (LinearLayout) findViewById(R.id.unprocessed_layout_test_usb_noise);
         mButtonTestUsbNoise = (Button) findViewById(R.id.unprocessed_test_usb_noise_btn);
         mButtonTestUsbNoise.setOnClickListener(mBtnClickListener);
         mProgressUsbNoise = (ProgressBar)findViewById(R.id.unprocessed_test_usb_noise_progress_bar);
@@ -390,16 +374,6 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
         if (mSPlayer.isAlive() && mSPlayer.isPlaying()) {
             mSPlayer.play(false);
             setButtonPlayStatus(-1);
-        }
-    }
-
-    /**
-     * enable test ui elements
-     */
-    private void enableLayout(LinearLayout layout, boolean enable) {
-        for (int i = 0; i < layout.getChildCount(); i++) {
-            View view = layout.getChildAt(i);
-            view.setEnabled(enable);
         }
     }
 
