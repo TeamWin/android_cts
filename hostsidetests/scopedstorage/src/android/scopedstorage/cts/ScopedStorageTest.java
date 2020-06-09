@@ -866,14 +866,14 @@ public class ScopedStorageTest {
         try {
             assertThat(file.createNewFile()).isTrue();
 
-            // Since we can only place one F_WRLCK, the second open for readPfd will go
-            // throuh FUSE
+            // We upgrade 'w' only to 'rw'
             ParcelFileDescriptor writePfd = openWithMediaProvider(file, "w");
             ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw");
 
             assertRWR(readPfd, writePfd);
+            assertRWR(writePfd, readPfd); // Can read on 'w' only pfd
             assertLowerFsFd(writePfd);
-            assertUpperFsFd(readPfd); // Without cache
+            assertLowerFsFd(readPfd);
         } finally {
             file.delete();
         }
