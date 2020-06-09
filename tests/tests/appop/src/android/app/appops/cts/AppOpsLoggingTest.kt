@@ -666,6 +666,8 @@ class AppOpsLoggingTest {
     fun getWallpaper() {
         val wallpaperManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
                 .getSystemService(WallpaperManager::class.java)
+        assumeTrue("Device does not support wallpaper",
+                wallpaperManager.isWallpaperSupported())
 
         wallpaperManager.getWallpaperFile(FLAG_SYSTEM)
 
