@@ -32,6 +32,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
@@ -165,7 +166,11 @@ public class LocationManagerCoarseTest {
     public void testGetProviders() {
         List<String> providers = mManager.getProviders(false);
         assertTrue(providers.contains(TEST_PROVIDER));
-        assertTrue(providers.contains(GPS_PROVIDER));
+        if (hasGpsFeature()) {
+            assertTrue(providers.contains(GPS_PROVIDER));
+        } else {
+            assertFalse(providers.contains(GPS_PROVIDER));
+        }
         assertTrue(providers.contains(PASSIVE_PROVIDER));
     }
 
@@ -237,5 +242,9 @@ public class LocationManagerCoarseTest {
 
     private static Executor directExecutor() {
         return Runnable::run;
+    }
+
+    private boolean hasGpsFeature() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
     }
 }
