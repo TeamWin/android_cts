@@ -38,6 +38,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+import com.android.compatibility.common.util.RequiredServiceRule;
 import com.android.compatibility.common.util.SafeCleanerRule;
 
 import org.junit.Rule;
@@ -69,9 +70,13 @@ public class TextClassifierServiceSwapTest {
                     ApplicationProvider.getApplicationContext().getPackageName(),
                     TextClassifier.WIDGET_TYPE_EDIT_WEBVIEW)
                     .build();
+    private final RequiredServiceRule mRequiredServiceRule =
+            new RequiredServiceRule(Context.TEXT_CLASSIFICATION_SERVICE);
+
     @Rule
     public final RuleChain mAllRules = RuleChain
-            .outerRule(mTestWatcher)
+            .outerRule(mRequiredServiceRule)
+            .around(mTestWatcher)
             .around(mSafeCleanerRule);
 
     @Test
