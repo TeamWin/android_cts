@@ -112,40 +112,7 @@ public class DynamicAuthTest {
         KeyPair ephemeralKeyPair = credential.createEphemeralKeyPair();
         credential.setReaderEphemeralPublicKey(readerEphemeralKeyPair.getPublic());
 
-        // However it should fail if device authentication *is* requested. Also check that.
-        //
-        // First, create a fake sessionTranscript... we expect things to fail with
-        // with ERROR_EPHEMERAL_PUBLIC_KEY_NOT_FOUND because the correct ephemeral key is
-        // not in the right place.
-        ByteArrayOutputStream stBaos = new ByteArrayOutputStream();
-        try {
-            new CborEncoder(stBaos).encode(new CborBuilder()
-                    .addArray()
-                    .add(new byte[]{0x01, 0x02})  // The device engagement structure, encoded
-                    .add(new byte[]{0x03, 0x04})  // Reader ephemeral public key, encoded
-                    .end()
-                    .build());
-        } catch (CborException e) {
-            e.printStackTrace();
-            assertTrue(false);
-        }
-        byte[] sessionTranscript = stBaos.toByteArray();
-        try {
-            rd = credential.getEntries(
-                    Util.createItemsRequest(entriesToRequest, null),
-                    entriesToRequest,
-                    sessionTranscript,
-                    null);
-            assertTrue(false);
-        } catch (EphemeralPublicKeyNotFoundException e) {
-            // This is the expected path...
-        } catch (IdentityCredentialException e) {
-            e.printStackTrace();
-            assertTrue(false);
-        }
-
-        // Now, correct the sessionTranscript
-        sessionTranscript = Util.buildSessionTranscript(ephemeralKeyPair);
+        byte[] sessionTranscript = Util.buildSessionTranscript(ephemeralKeyPair);
         // Then check that getEntries() throw NoAuthenticationKeyAvailableException (_even_ when
         // allowing using exhausted keys).
         try {
@@ -221,6 +188,37 @@ public class DynamicAuthTest {
             assertTrue(false);
         }
         assertEquals(3, certificates.size());
+
+        // Now that we've provisioned authentication keys, presentation will no longer fail with
+        // NoAuthenticationKeyAvailableException ... So now we can try a sessionTranscript without
+        // the ephemeral public key that was created in the Secure Area and check it fails with
+        // EphemeralPublicKeyNotFoundException instead...
+        ByteArrayOutputStream stBaos = new ByteArrayOutputStream();
+        try {
+            new CborEncoder(stBaos).encode(new CborBuilder()
+                    .addArray()
+                    .add(new byte[]{0x01, 0x02})  // The device engagement structure, encoded
+                    .add(new byte[]{0x03, 0x04})  // Reader ephemeral public key, encoded
+                    .end()
+                    .build());
+        } catch (CborException e) {
+            e.printStackTrace();
+            assertTrue(false);
+        }
+        byte[] wrongSessionTranscript = stBaos.toByteArray();
+        try {
+            rd = credential.getEntries(
+                    Util.createItemsRequest(entriesToRequest, null),
+                    entriesToRequest,
+                    wrongSessionTranscript,
+                    null);
+            assertTrue(false);
+        } catch (EphemeralPublicKeyNotFoundException e) {
+            // This is the expected path...
+        } catch (IdentityCredentialException e) {
+            e.printStackTrace();
+            assertTrue(false);
+        }
 
         // Now use one of the keys...
         entriesToRequest = new LinkedHashMap<>();
