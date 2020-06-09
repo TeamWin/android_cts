@@ -55,8 +55,8 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
         @JvmStatic
         @Parameterized.Parameters(name = "{1}")
         fun parameters() = arrayOf(
-                arrayOf(true, "throwException"),
-                arrayOf(false, "failSilently")
+                arrayOf(false, "throwException"),
+                arrayOf(true, "failSilently")
         )
     }
 
@@ -78,16 +78,6 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
     fun resetChanges() {
         device.executeShellCommand("am compat reset $CHANGE_ID $TARGET_PKG")
         device.executeShellCommand("am compat reset $CHANGE_ID $WHITELIST_PKG")
-    }
-
-    @Before
-    fun initializeChangeState() {
-        if (failSilently) {
-            device.executeShellCommand("am compat disable $CHANGE_ID $TARGET_PKG")
-            device.executeShellCommand("am compat disable $CHANGE_ID $WHITELIST_PKG")
-        } else {
-            resetChanges()
-        }
     }
 
     @Test
@@ -148,6 +138,8 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
                 .forUser(mPrimaryUserId)
                 .run()
 
+        setChangeState()
+
         assertPermission(false, permission)
         assertTargetInstaller(null)
 
@@ -192,6 +184,12 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
         assertTargetInstaller(null)
         grantPermission(permission)
         assertGrantState(finalState, permission)
+    }
+
+    private fun setChangeState() {
+        val state = if (failSilently) "disable" else "enable"
+        device.executeShellCommand("am compat $state $CHANGE_ID $TARGET_PKG")
+        device.executeShellCommand("am compat $state $CHANGE_ID $WHITELIST_PKG")
     }
 
     private fun assertTargetInstaller(installer: String?) {
