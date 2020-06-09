@@ -25,7 +25,11 @@ import com.android.compatibility.common.util.ResultUnit;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
+import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -37,6 +41,13 @@ import android.widget.LinearLayout;
  */
 public class AudioFrequencyActivity extends PassFailButtons.Activity {
     private static final String TAG = "AudioFrequencyActivity";
+    private static final boolean DEBUG = true;
+
+    protected Context mContext;
+    protected AudioManager mAudioManager;
+
+    protected AudioDeviceInfo mOutputDevInfo;
+    protected AudioDeviceInfo mInputDevInfo;
 
     public int mMaxLevel = 0;
 
@@ -44,6 +55,18 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
     // TODO - These should be refactored into a RefMicActivity class
     // i.e. AudioFrequencyActivity <- RefMicActivity
     private OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        mContext = this;
+
+        mAudioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
+        mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
+    }
+
     //
     // Common UI Handling
     protected void connectRefMicUI() {
@@ -110,19 +133,16 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
     }
 
     public void setMaxLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        mMaxLevel = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, (int)(mMaxLevel), 0);
+        mMaxLevel = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, (int)(mMaxLevel), 0);
     }
 
     public void setMinLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
     }
 
     public void testMaxLevel() {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        int currentLevel = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+        int currentLevel = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         Log.i(TAG, String.format("Max level: %d curLevel: %d", mMaxLevel, currentLevel));
         if (currentLevel != mMaxLevel) {
             new AlertDialog.Builder(this)
@@ -134,30 +154,19 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
     }
 
     public int getMaxLevelForStream(int streamType) {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (am != null) {
-            return am.getStreamMaxVolume(streamType);
-        }
-        return -1;
+        return mAudioManager.getStreamMaxVolume(streamType);
     }
 
     public void setLevelForStream(int streamType, int level) {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (am != null) {
-            try {
-                am.setStreamVolume(streamType, level, 0);
-            } catch (Exception e) {
-                Log.e(TAG, "Error setting stream volume: ", e);
-            }
+        try {
+            mAudioManager.setStreamVolume(streamType, level, 0);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting stream volume: ", e);
         }
     }
 
     public int getLevelForStream(int streamType) {
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (am != null) {
-            return am.getStreamVolume(streamType);
-        }
-        return -1;
+        return mAudioManager.getStreamVolume(streamType);
     }
 
     public void enableUILayout(LinearLayout layout, boolean enable) {
@@ -167,4 +176,47 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
         }
     }
 
+    private void scanPeripheralList(AudioDeviceInfo[] devices) {
+        // Can't just use the first record because then we will only get
+        // Source OR sink, not both even on devices that are both.
+        mOutputDevInfo = null;
+        mInputDevInfo = null;
+
+        // Any valid peripherals
+        for(AudioDeviceInfo devInfo : devices) {
+            if (devInfo.getType() == AudioDeviceInfo.TYPE_USB_DEVICE ||
+                    devInfo.getType() == AudioDeviceInfo.TYPE_USB_HEADSET) {
+                if (devInfo.isSink()) {
+                    mOutputDevInfo = devInfo;
+                }
+                if (devInfo.isSource()) {
+                    mInputDevInfo = devInfo;
+                }
+            }
+        }
+
+    }
+
+    private class ConnectListener extends AudioDeviceCallback {
+        /*package*/ ConnectListener() {}
+
+        //
+        // AudioDevicesManager.OnDeviceConnectionListener
+        //
+        @Override
+        public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
+            // Log.i(TAG, "onAudioDevicesAdded() num:" + addedDevices.length);
+
+            scanPeripheralList(mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL));
+        }
+
+        @Override
+        public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
+            // Log.i(TAG, "onAudioDevicesRemoved() num:" + removedDevices.length);
+
+            scanPeripheralList(mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL));
+        }
+    }
+
+//    abstract public void updateConnectStatus();
 }
