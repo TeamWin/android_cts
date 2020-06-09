@@ -16,21 +16,18 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
 import com.android.cts.verifier.audio.wavelib.*;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import android.content.Context;
 
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
 
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -81,7 +78,6 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
     private static final int TEST_DURATION_USB_NOISE = TEST_DURATION_DEFAULT;
 
     final OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
-    Context mContext;
 
     ProgressBar mProgressNoise;
     TextView mResultTestNoise;
@@ -131,7 +127,6 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_frequency_mic_activity);
-        mContext = this;
 
         //Test Noise
         findViewById(R.id.frequency_mic_test_noise_btn).setOnClickListener(mBtnClickListener);
@@ -161,7 +156,7 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
         mGlobalResultText = (TextView) findViewById(R.id.frequency_mic_test_global_result);
 
         mSPlayer = new SoundPlayerObject();
-        mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.stereo_mono_white_noise_48);
+        mSPlayer.setSoundWithResId(mContext, R.raw.stereo_mono_white_noise_48);
         mSPlayer.setBalance(0.5f);
 
         //Init FFT stuff
@@ -438,7 +433,7 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
             mCurrentTest = mTestId;
             sendMessage(mTestId, TEST_STARTED,"");
             mUsbMicConnected =
-                    UsbMicrophoneTester.getIsMicrophoneConnected(getApplicationContext());
+                    UsbMicrophoneTester.getIsMicrophoneConnected(mContext);
         };
         public void record(int durationMs) {
             startRecording();
