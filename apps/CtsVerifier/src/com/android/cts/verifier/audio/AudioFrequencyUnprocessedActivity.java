@@ -16,14 +16,12 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.wavelib.*;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
-import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -78,7 +76,6 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
     private static final int TEST_DURATION_USB_NOISE = TEST_DURATION_DEFAULT;
 
     final OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
-    Context mContext;
 
     Button mButtonTestTone;
     ProgressBar mProgressTone;
@@ -153,7 +150,6 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_frequency_unprocessed_activity);
-        mContext = this;
         mTextViewUnprocessedStatus = (TextView) findViewById(
                 R.id.audio_frequency_unprocessed_defined);
         //unprocessed test
@@ -349,11 +345,11 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
     private void playerSetSource(int sourceIndex) {
         switch (sourceIndex) {
             case SOURCE_TONE:
-                mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.onekhztone);
+                mSPlayer.setSoundWithResId(mContext, R.raw.onekhztone);
                 break;
             default:
             case SOURCE_NOISE:
-                mSPlayer.setSoundWithResId(getApplicationContext(),
+                mSPlayer.setSoundWithResId(mContext,
                         R.raw.stereo_mono_white_noise_48);
                 break;
         }
@@ -442,8 +438,7 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
 
     private boolean supportsUnprocessed() {
         boolean unprocessedSupport = false;
-        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        String unprocessedSupportString = am.getProperty(
+        String unprocessedSupportString = mAudioManager.getProperty(
                 AudioManager.PROPERTY_SUPPORT_AUDIO_SOURCE_UNPROCESSED);
         Log.v(TAG,"unprocessed support: " + unprocessedSupportString);
         if (unprocessedSupportString == null ||
@@ -764,7 +759,7 @@ public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity im
             mCurrentTest = mTestId;
             sendMessage(mTestId, TEST_STARTED,"");
             mUsbMicConnected =
-                    UsbMicrophoneTester.getIsMicrophoneConnected(getApplicationContext());
+                    UsbMicrophoneTester.getIsMicrophoneConnected(mContext);
         };
         public void record(int durationMs) {
             startRecording();
