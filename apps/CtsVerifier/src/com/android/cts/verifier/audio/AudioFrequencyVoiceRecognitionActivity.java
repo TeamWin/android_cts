@@ -32,7 +32,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 /**
@@ -83,24 +82,20 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
 
     private Context mContext;
 
-    private LinearLayout mLayoutTestTone;
     private Button mButtonTestTone;
     private ProgressBar mProgressTone;
     private TextView mResultTestTone;
     private Button mButtonPlayTone;
 
-    private LinearLayout mLayoutTestNoise;
     private Button mButtonTestNoise;
     private ProgressBar mProgressNoise;
     private TextView mResultTestNoise;
     private Button mButtonPlayNoise;
 
-    private LinearLayout mLayoutTestUsbBackground;
     private Button mButtonTestUsbBackground;
     private ProgressBar mProgressUsbBackground;
     private TextView mResultTestUsbBackground;
 
-    private LinearLayout mLayoutTestUsbNoise;
     private Button mButtonTestUsbNoise;
     private ProgressBar mProgressUsbNoise;
     private TextView mResultTestUsbNoise;
@@ -221,7 +216,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         };
 
         // Test tone
-        mLayoutTestTone = (LinearLayout) findViewById(R.id.vr_layout_test_tone);
         mButtonTestTone = (Button) findViewById(R.id.vr_button_test_tone);
         mButtonTestTone.setOnClickListener(mBtnClickListener);
         mProgressTone = (ProgressBar) findViewById(R.id.vr_test_tone_progress_bar);
@@ -231,7 +225,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         showWait(mProgressTone, false);
 
         //Test Noise
-        mLayoutTestNoise = (LinearLayout) findViewById(R.id.vr_layout_test_noise);
         mButtonTestNoise = (Button) findViewById(R.id.vr_button_test_noise);
         mButtonTestNoise.setOnClickListener(mBtnClickListener);
         mProgressNoise = (ProgressBar) findViewById(R.id.vr_test_noise_progress_bar);
@@ -241,8 +234,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         showWait(mProgressNoise, false);
 
         //USB Background
-        mLayoutTestUsbBackground = (LinearLayout)
-                findViewById(R.id.vr_layout_test_usb_background);
         mButtonTestUsbBackground = (Button) findViewById(R.id.vr_button_test_usb_background);
         mButtonTestUsbBackground.setOnClickListener(mBtnClickListener);
         mProgressUsbBackground = (ProgressBar)
@@ -251,7 +242,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
                 findViewById(R.id.vr_test_usb_background_result);
         showWait(mProgressUsbBackground, false);
 
-        mLayoutTestUsbNoise = (LinearLayout) findViewById(R.id.vr_layout_test_usb_noise);
         mButtonTestUsbNoise = (Button) findViewById(R.id.vr_button_test_usb_noise);
         mButtonTestUsbNoise.setOnClickListener(mBtnClickListener);
         mProgressUsbNoise = (ProgressBar)findViewById(R.id.vr_test_usb_noise_progress_bar);
@@ -426,16 +416,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         if (mSPlayer.isAlive() && mSPlayer.isPlaying()) {
             mSPlayer.play(false);
             setButtonPlayStatus(-1);
-        }
-    }
-
-    /**
-     * enable test ui elements
-     */
-    private void enableLayout(LinearLayout layout, boolean enable) {
-        for (int i = 0; i < layout.getChildCount(); i++) {
-            View view = layout.getChildAt(i);
-            view.setEnabled(enable);
         }
     }
 

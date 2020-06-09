@@ -25,8 +25,6 @@ import com.android.compatibility.common.util.ResultUnit;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.media.AudioDeviceCallback;
-import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -41,8 +39,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.SeekBar;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 /**
@@ -65,7 +61,6 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
     Button mHeadsetPortNo;
 
     Button mLoopbackPlugReady;
-    LinearLayout mLinearLayout;
     Button mTestButton;
     TextView mResultText;
     ProgressBar mProgressBar;
@@ -109,7 +104,7 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
                 case R.id.audio_frequency_line_plug_ready_btn:
                     Log.i(TAG, "audio loopback plug ready");
                     //enable all the other views.
-                    enableLayout(true);
+                    enableLayout(R.id.audio_frequency_line_layout,true);
                     setMaxLevel();
                     testMaxLevel();
                     break;
@@ -150,13 +145,12 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
         mLoopbackPlugReady = (Button)findViewById(R.id.audio_frequency_line_plug_ready_btn);
         mLoopbackPlugReady.setOnClickListener(mBtnClickListener);
         mLoopbackPlugReady.setEnabled(false);
-        mLinearLayout = (LinearLayout)findViewById(R.id.audio_frequency_line_layout);
         mTestButton = (Button)findViewById(R.id.audio_frequency_line_test_btn);
         mTestButton.setOnClickListener(mBtnClickListener);
         mResultText = (TextView)findViewById(R.id.audio_frequency_line_results_text);
         mProgressBar = (ProgressBar)findViewById(R.id.audio_frequency_line_progress_bar);
         showWait(false);
-        enableLayout(false);         //disabled all content
+        enableLayout(R.id.audio_frequency_line_layout, false);         //disabled all content
 
         mSPlayer = new SoundPlayerObject();
         mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.stereo_mono_white_noise_48);
@@ -197,16 +191,6 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
                 12000, 20000,   /* frequency start,stop */
                 5.0, -5.0,      /* start top,bottom value */
                 5.0, -30.0      /* stop top,bottom value */);
-    }
-
-    /**
-     * enable test ui elements
-     */
-    private void enableLayout(boolean enable) {
-        for (int i = 0; i < mLinearLayout.getChildCount(); i++) {
-            View view = mLinearLayout.getChildAt(i);
-            view.setEnabled(enable);
-        }
     }
 
     /**

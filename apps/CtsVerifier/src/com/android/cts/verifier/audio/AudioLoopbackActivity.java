@@ -41,13 +41,12 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.SeekBar;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 /**
  * Tests Audio Device roundtrip latency by using a loopback plug.
  */
-public class AudioLoopbackActivity extends PassFailButtons.Activity {
+public class AudioLoopbackActivity extends AudioFrequencyActivity {
     private static final String TAG = "AudioLoopbackActivity";
 
     public static final int BYTES_PER_FRAME = 2;
@@ -70,7 +69,6 @@ public class AudioLoopbackActivity extends PassFailButtons.Activity {
     Button mLoopbackPlugReady;
     TextView mAudioLevelText;
     SeekBar mAudioLevelSeekbar;
-    LinearLayout mLinearLayout;
     Button mTestButton;
     TextView mResultText;
     ProgressBar mProgressBar;
@@ -83,7 +81,7 @@ public class AudioLoopbackActivity extends PassFailButtons.Activity {
                 case R.id.audio_loopback_plug_ready_btn:
                     Log.i(TAG, "audio loopback plug ready");
                     //enable all the other views.
-                    enableLayout(true);
+                    enableLayout(R.id.audio_loopback_layout, true);
                     break;
                 case R.id.audio_loopback_test_btn:
                     Log.i(TAG, "audio loopback test");
@@ -122,7 +120,6 @@ public class AudioLoopbackActivity extends PassFailButtons.Activity {
         mLoopbackPlugReady = (Button)findViewById(R.id.audio_loopback_plug_ready_btn);
         mLoopbackPlugReady.setOnClickListener(mBtnClickListener);
         mLoopbackPlugReady.setEnabled(false);
-        mLinearLayout = (LinearLayout)findViewById(R.id.audio_loopback_layout);
         mAudioLevelText = (TextView)findViewById(R.id.audio_loopback_level_text);
         mAudioLevelSeekbar = (SeekBar)findViewById(R.id.audio_loopback_level_seekbar);
         mTestButton =(Button)findViewById(R.id.audio_loopback_test_btn);
@@ -131,7 +128,7 @@ public class AudioLoopbackActivity extends PassFailButtons.Activity {
         mProgressBar = (ProgressBar)findViewById(R.id.audio_loopback_progress_bar);
         showWait(false);
 
-        enableLayout(false);         //disabled all content
+        enableLayout(R.id.audio_loopback_layout, false);         //disabled all content
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         mMaxLevel = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         mAudioLevelSeekbar.setMax(mMaxLevel);
@@ -177,16 +174,6 @@ public class AudioLoopbackActivity extends PassFailButtons.Activity {
                 getResources().getString(R.string.audio_loopback_level_text),
                 currentLevel, mMaxLevel);
         mAudioLevelText.setText(levelText);
-    }
-
-    /**
-     * enable test ui elements
-     */
-    private void enableLayout(boolean enable) {
-        for (int i = 0; i<mLinearLayout.getChildCount(); i++) {
-            View view = mLinearLayout.getChildAt(i);
-            view.setEnabled(enable);
-        }
     }
 
     /**
