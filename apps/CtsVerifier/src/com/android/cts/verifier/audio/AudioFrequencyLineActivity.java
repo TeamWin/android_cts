@@ -16,18 +16,13 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.wavelib.*;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
-import android.app.AlertDialog;
-import android.content.Context;
 import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -55,7 +50,6 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
     static final double MIN_FRACTION_POINTS_IN_BAND = 0.3;
 
     OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
-    Context mContext;
 
     Button mHeadsetPortYes;
     Button mHeadsetPortNo;
@@ -135,8 +129,6 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_frequency_line_activity);
 
-        mContext = this;
-
         mHeadsetPortYes = (Button)findViewById(R.id.audio_general_headset_yes);
         mHeadsetPortYes.setOnClickListener(mBtnClickListener);
         mHeadsetPortNo = (Button)findViewById(R.id.audio_general_headset_no);
@@ -153,7 +145,7 @@ public class AudioFrequencyLineActivity extends AudioFrequencyActivity implement
         enableLayout(R.id.audio_frequency_line_layout, false);         //disabled all content
 
         mSPlayer = new SoundPlayerObject();
-        mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.stereo_mono_white_noise_48);
+        mSPlayer.setSoundWithResId(mContext, R.raw.stereo_mono_white_noise_48);
         mSPlayer.setBalance(0.5f);
 
         //Init FFT stuff
