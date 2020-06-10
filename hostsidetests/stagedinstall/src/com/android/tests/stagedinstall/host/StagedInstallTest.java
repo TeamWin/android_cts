@@ -526,6 +526,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testFailureReasonPersists_SingleSession() throws Exception {
+        assumeTrue(isCheckpointSupported());
         runPhase("testFailureReasonPersists_SingleSession_Commit");
         getDevice().reboot();
         runPhase("testFailureReasonPersists_SingleSession_VerifyPostReboot");
