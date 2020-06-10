@@ -22,7 +22,7 @@
 
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="30" />
 
-    <application android:autoRevokePermissions="discouraged">
+    <application>
         <activity android:name="android.os.cts.autorevokedummyapp.MainActivity"
                   android:exported="true"
                   android:visibleToInstantApps="true" >

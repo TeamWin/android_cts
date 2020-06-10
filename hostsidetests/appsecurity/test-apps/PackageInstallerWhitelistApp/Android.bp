@@ -29,7 +29,7 @@ android_test_helper_app {
         "general-tests",
     ],
     sdk_version: "test_current",
-    target_sdk_version: "30",
+    target_sdk_version: "29",
     // sign this app with a different cert than CtsPkgInstallerPermRequestApp
     certificate: ":cts-testkey1",
 }
