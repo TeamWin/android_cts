@@ -16,10 +16,14 @@ android_test {
     name: "SimpleSmsApp",
     sdk_version: "test_current",
     srcs: ["src/**/*.java"],
+    defaults: ["cts_defaults"],
     static_libs: [
         "cts-devicepolicy-suspensionchecker",
     ],
     test_suites: [
+        "arcts",
         "cts",
+        "vts10",
+        "general-tests",
     ],
 }
