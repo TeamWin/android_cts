@@ -53,11 +53,14 @@ public class PermissionGroupChange {
 
     private Context mContext;
     private UiDevice mUiDevice;
+    private boolean mIsAutomotive;
 
     @Before
     public void setContextAndUiDevice() {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mIsAutomotive = mContext.getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     @Before
@@ -100,8 +103,12 @@ public class PermissionGroupChange {
     }
 
     protected void clickAllowButton() throws Exception {
-        mUiDevice.findObject(new UiSelector().resourceId(
-                "com.android.permissioncontroller:id/permission_allow_button")).click();
+        if (mIsAutomotive) {
+            mUiDevice.findObject(new UiSelector().text("Allow")).click();
+        } else {
+            mUiDevice.findObject(new UiSelector().resourceId(
+                    "com.android.permissioncontroller:id/permission_allow_button")).click();
+        }
     }
 
     private void grantPermissionViaUi() throws Throwable {
