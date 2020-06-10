@@ -43,6 +43,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -288,27 +289,24 @@ public class SearchViewTest {
         when(mockQueryTextListener.onQueryTextSubmit(anyString())).thenReturn(Boolean.TRUE);
         mSearchView.setOnQueryTextListener(mockQueryTextListener);
 
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSearchView, () -> {
             mSearchView.setQuery("alpha", false);
             mSearchView.requestFocus();
         });
         mInstrumentation.waitForIdleSync();
 
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER);
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSearchView, null);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mSearchView, KeyEvent.KEYCODE_ENTER);
 
         verify(mockQueryTextListener, times(1)).onQueryTextChange("alpha");
         verify(mockQueryTextListener, atLeastOnce()).onQueryTextSubmit("alpha");
 
-        mInstrumentation.waitForIdleSync();
-        mActivityRule.runOnUiThread(() -> {
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSearchView, () -> {
             mSearchView.setQuery("beta", false);
             mSearchView.requestFocus();
         });
         mInstrumentation.waitForIdleSync();
 
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_NUMPAD_ENTER);
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mSearchView, null);
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mSearchView, KeyEvent.KEYCODE_NUMPAD_ENTER);
 
         verify(mockQueryTextListener, times(1)).onQueryTextChange("beta");
         verify(mockQueryTextListener, atLeastOnce()).onQueryTextSubmit("beta");
