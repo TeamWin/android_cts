@@ -34,6 +34,8 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.PropertyUtil;
@@ -150,6 +152,13 @@ public class MediaCasTest extends AndroidTestCase {
             "70 3d 30 20 6b 65 79 69  6e 74 3d 32 35 30 20 6b" +
             "65 79 69 6e 74 5f 6d 69  6e 3d 32 35 20 73 63 65" +
             "6e 65                                           " ;
+
+    // Need MANAGE_USERS or CREATE_USERS permission to access ActivityManager#getCurrentUse,
+    // then adopt it from shell.
+    public void setUp() throws Exception {
+        InstrumentationRegistry
+            .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+    }
 
     /**
      * Test that all enumerated CA systems can be instantiated.
