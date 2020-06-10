@@ -32,7 +32,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.hardware.display.DisplayManager;
+import android.inputmethodservice.InputMethodService;
 import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.IBinder;
@@ -708,6 +710,15 @@ public class StrictModeTest {
         final Activity activity = InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(intent);
         assertNoViolation(() -> ViewConfiguration.get(activity));
+
+        final TestInputMethodService ims = new TestInputMethodService(getContext());
+        assertNoViolation(() -> ViewConfiguration.get(ims));
+    }
+
+    private static class TestInputMethodService extends InputMethodService {
+        private TestInputMethodService(Context baseContext) {
+           attachBaseContext(baseContext);
+        }
     }
 
     private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)
