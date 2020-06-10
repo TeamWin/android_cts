@@ -17,6 +17,7 @@
 package android.hardware.camera2.cts;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
+import static com.android.ex.camera2.blocking.BlockingCameraManager.*;
 import static com.android.ex.camera2.blocking.BlockingStateCallback.*;
 import static com.android.ex.camera2.blocking.BlockingSessionCallback.*;
 import static org.mockito.Mockito.*;
@@ -2787,35 +2788,23 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             assertTrue("Audio restriction mode mismatch: input: " + mode0 + ", output:" + retMode,
                     retMode == mode0);
 
-            cam1 = CameraTestUtils.openCamera(mCameraManager, id1, cam1Cb, mHandler);
+            try {
+                cam1 = CameraTestUtils.openCamera(mCameraManager, id1, cam1Cb, mHandler);
+            } catch (CameraAccessException | BlockingOpenException e) {
+                Log.i(TAG, "Camera " + id1 + "cannot be opened along with camera " + id0 +
+                        ", skipping the test");
+                return;
+            }
             cam1Cb.waitForState(STATE_OPENED, CAMERA_OPEN_TIMEOUT_MS);
 
             // See if cam0 is evicted.
-            boolean cam0Evicted = true;
             try {
                 final int cameraEvictedTimeoutMs = 1000;
                 cam0Cb.waitForState(STATE_DISCONNECTED, cameraEvictedTimeoutMs);
+                fail("Opened camera " + id0 + " is evicted by a later open call for camera " +
+                        id1 + " from the same process");
             } catch (TimeoutRuntimeException e) {
                 // camera 0 is not evicted
-                cam0Evicted = false;
-            }
-
-            if (cam0Evicted) {
-                Log.i(TAG, "Camera " + id0 + " is evicted. Testing camera " + id1 + " alone.");
-                // cam0 is evicted
-                try {
-                    cam0.setCameraAudioRestriction(mode0);
-                    fail("Should get CameraAccessException for disconnected camera.");
-                } catch (CameraAccessException e) {
-                    // expected
-                }
-                // Test the behavior for single remaining client
-                int mode1 = CameraDevice.AUDIO_RESTRICTION_VIBRATION;
-                cam1.setCameraAudioRestriction(mode1);
-                retMode = cam1.getCameraAudioRestriction();
-                assertTrue("Audio restriction mode mismatch: input: " + mode1 +
-                        ", output:" + retMode, retMode == mode1);
-                return;
             }
 
             // The output mode should be union of all CameraDevices
