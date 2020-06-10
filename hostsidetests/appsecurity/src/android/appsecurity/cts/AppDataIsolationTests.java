@@ -22,9 +22,11 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -187,6 +189,8 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
 
     @Test
     public void testDirectBootModeWorks() throws Exception {
+        assumeTrue("Screen lock is not supported so skip direct boot test",
+                hasDeviceFeature("android.software.secure_lock_screen"));
         // Install AppA and verify no data stored
         new InstallMultiple().addFile(APP_DIRECT_BOOT_A_APK).run();
         new InstallMultiple().addFile(APPB_APK).run();
@@ -218,7 +222,10 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             // Follow DirectBootHostTest, reboot system into known state with keys ejected
             if (isFbeModeEmulated()) {
                 final String res = getDevice().executeShellCommand("sm set-emulate-fbe true");
-                assertThat(res).contains("Emulation not supported");
+                if (res != null && res.contains("Emulation not supported")) {
+                    LogUtil.CLog.i("FBE emulation is not supported, skipping test");
+                    return;
+                }
                 getDevice().waitForDeviceNotAvailable(30000);
                 getDevice().waitForDeviceOnline(120000);
             } else {
