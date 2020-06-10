@@ -210,6 +210,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testPinnedStackInBoundsAfterRotation() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
         // Launch an activity that is not fixed-orientation so that the display can rotate
         launchActivity(TEST_ACTIVITY);
         // Launch an activity into the pinned stack
