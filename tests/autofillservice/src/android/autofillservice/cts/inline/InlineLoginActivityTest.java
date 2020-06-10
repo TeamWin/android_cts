@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts.inline;
 
+import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
@@ -131,15 +132,16 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
 
     @Test
     public void testAutofill_SwitchToAutofillableActivity() throws Exception {
-        assertAutofill_SwitchActivity(UsernameOnlyActivity.class);
+        assertAutofill_SwitchActivity(UsernameOnlyActivity.class, /* autofillable */ true);
     }
 
     @Test
     public void testAutofill_SwitchToNonAutofillableActivity() throws Exception {
-        assertAutofill_SwitchActivity(NonAutofillableActivity.class);
+        assertAutofill_SwitchActivity(NonAutofillableActivity.class, /* autofillable */ false);
     }
 
-    private void assertAutofill_SwitchActivity(Class<?> clazz) throws Exception {
+    private void assertAutofill_SwitchActivity(Class<?> clazz, boolean autofillable)
+            throws Exception {
         // Set service.
         enableService();
 
@@ -170,6 +172,10 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         // Trigger input method show.
         mUiBot.selectByRelativeId(ID_USERNAME);
         mUiBot.waitForIdleSync();
+        if (autofillable) {
+            sReplier.addResponse(NO_RESPONSE);
+            sReplier.getNextFillRequest();
+        }
         // Make sure suggestion is not shown.
         mUiBot.assertNoDatasets();
     }
@@ -358,9 +364,8 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         enableService();
 
         final int firstDataset = 1;
-        final int lastDataset = 6;
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder();
-        for (int i = firstDataset; i <= lastDataset; i++) {
+        for (int i = firstDataset; i <= 20; i++) {
             builder.addDataset(new CannedFillResponse.CannedDataset.Builder()
                     .setField(ID_USERNAME, "dude" + i)
                     .setPresentation(createPresentation("Username" + i))
@@ -375,14 +380,12 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.waitForIdleSync();
 
         mUiBot.assertSuggestion("Username" + firstDataset);
-        mUiBot.assertNoSuggestion("Username" + lastDataset);
 
         // Scroll the suggestion view
         mUiBot.scrollSuggestionView(Direction.RIGHT, /* speed */ 5000);
         mUiBot.waitForIdleSync();
 
         mUiBot.assertNoSuggestion("Username" + firstDataset);
-        mUiBot.assertSuggestion("Username" + lastDataset);
 
         sReplier.getNextFillRequest();
         mUiBot.waitForIdleSync();

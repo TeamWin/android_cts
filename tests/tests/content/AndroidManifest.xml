@@ -145,7 +145,8 @@
         </activity>
 
         <activity-alias android:name="android.content.cts.MockActivity2"
-             android:targetActivity="android.content.cts.MockActivity">
+             android:targetActivity="android.content.cts.MockActivity"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.content.cts.action.TEST_ACTION"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -251,7 +252,8 @@
         <!--Used by test for LauncherApps-->
         <activity-alias android:name="android.content.pm.cts.MockActivity_Disabled"
              android:targetActivity="android.content.cts.MockActivity"
-             android:enabled="false">
+             android:enabled="false"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.content.cts.action.TEST_ACTION"/>
                 <category android:name="android.intent.category.DEFAULT"/>
