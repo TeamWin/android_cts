@@ -92,6 +92,8 @@ class XmlApiParser extends ApiParser {
 
     private static final String MODIFIER_VISIBILITY = "visibility";
 
+    private static final String MODIFIER_ENUM_CONSTANT = "metalava:enumConstant";
+
     private static final Set<String> KEY_TAG_SET;
 
     static {
@@ -138,12 +140,6 @@ class XmlApiParser extends ApiParser {
         String fieldType = canonicalizeType(parser.getAttributeValue(null, ATTRIBUTE_TYPE));
         int modifier = jdiffModifierToReflectionFormat(currentClass.getClassName(), parser);
         String value = parser.getAttributeValue(null, ATTRIBUTE_VALUE);
-
-        if (currentClass.isEnumType() && fieldType.equals(currentClass.getAbsoluteClassName())
-                && (value != null && value.startsWith("PsiEnumConstant:"))) {
-            // We don't need to check the value.
-            value = null;
-        }
 
         // Canonicalize the expected value to ensure that it is consistent with the values obtained
         // using reflection by ApiComplianceChecker.getFieldValueAsString(...).
@@ -356,6 +352,8 @@ class XmlApiParser extends ApiParser {
                     default:
                         throw new RuntimeException("Unknown modifier found in API spec: " + value);
                 }
+            case MODIFIER_ENUM_CONSTANT:
+                return value.equals("true") ? ApiComplianceChecker.FIELD_MODIFIER_ENUM_VALUE : 0;
         }
         return 0;
     }
