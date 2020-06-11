@@ -3983,7 +3983,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press \'Create uninitialized user\' to create a user that is not set up. Then press the
         \'Set restriction\' button to set the user restriction.
         Then press \'Go\' to open \'Multiple users\' setting. \n
-        Click the Settings icon adjacent to the managed user.\n\n
+        Click the managed user to open settings.\n\n
 
         Mark this test as passed if:\n\n
         - \"Delete User\" is disabled.\n
