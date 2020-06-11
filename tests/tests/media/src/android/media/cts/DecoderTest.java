@@ -1691,8 +1691,12 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     private List<String> codecsFor(int resource) throws IOException {
+        return codecsFor(resource, mResources);
+    }
+
+    protected static List<String> codecsFor(int resource, Resources resources) throws IOException {
         MediaExtractor ex = new MediaExtractor();
-        AssetFileDescriptor fd = mResources.openRawResourceFd(resource);
+        AssetFileDescriptor fd = resources.openRawResourceFd(resource);
         try {
             ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
         } finally {
