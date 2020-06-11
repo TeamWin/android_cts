@@ -289,6 +289,12 @@ public class CipherTest extends AndroidTestCase {
             mLockCredential.gotoKeyguard();
             mLockCredential.enterAndConfirmLockCredential();
             launchHomeActivity();
+            KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(
+                    Context.KEYGUARD_SERVICE);
+            for (int i = 0; i < 25 && keyguardManager.isDeviceLocked(); i++) {
+                SystemClock.sleep(200);
+            }
+            assertFalse(keyguardManager.isDeviceLocked());
         }
 
         @Override
