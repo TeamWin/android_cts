@@ -2356,7 +2356,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <!-- Strings for CA cert installation via intent test -->
     <string name="cacert_install_via_intent">CA Cert install via intent</string>
     <string name="cacert_install_via_intent_title">This test attempts to install a CA certificate via an intent.</string>
-    <string name="cacert_install_via_intent_info">Attempt installing a CA certificate via an intent, which should fail. If you see a dialog redirecting the user to Settings for installing the certificate, the test passed. If a any other dialog comes up, the test failed.</string>
+    <string name="cacert_install_via_intent_info">Attempt installing a CA certificate via an intent, which should not be possible. Tapping Go should show a dialog telling the user that CA certificates can put their privacy at risk and must be installed via Settings. If a any other dialog comes up, the test failed.</string>
 
     <!-- Strings for Widget -->
     <string name="widget_framework_test">Widget Framework Test</string>
