@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
@@ -53,6 +54,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
+        // Activity may not be launched yet even if app transition is in idle state.
+        mWmState.waitForActivityState(SPLASHSCREEN_ACTIVITY, STATE_RESUMED);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         mWmState.getStableBounds();
         final Bitmap image = takeScreenshot();
