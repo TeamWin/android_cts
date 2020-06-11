@@ -146,9 +146,9 @@ public class FileObserverTest extends AndroidTestCase {
             expected = new int[] {UNDEFINED};
             moveEvents = waitForEvent(fileObserver);
             if (isEmulated)
-                assertEventsContains(expected, moveEvents);
+                assertEventsContains(testFile, expected, moveEvents);
             else
-                assertEventsEquals(expected, moveEvents);
+                assertEventsEquals(testFile, expected, moveEvents);
         } finally {
             fileObserver.stopWatching();
             if (out != null)
@@ -185,9 +185,9 @@ public class FileObserverTest extends AndroidTestCase {
             };
             moveEvents = waitForEvent(movedFileObserver);
             if (isEmulated) {
-                assertEventsContains(expected, moveEvents);
+                assertEventsContains(testFile, expected, moveEvents);
             } else {
-                assertEventsEquals(expected, moveEvents);
+                assertEventsEquals(testFile, expected, moveEvents);
             }
         } finally {
             movedFileObserver.stopWatching();
@@ -213,9 +213,9 @@ public class FileObserverTest extends AndroidTestCase {
 
         final FileEvent[] moveEvents = waitForEvent(fileObserver);
         if (isEmulated) {
-            assertEventsContains(expected, moveEvents);
+            assertEventsContains(testFile, expected, moveEvents);
         } else {
-            assertEventsEquals(expected, moveEvents);
+            assertEventsEquals(testFile, expected, moveEvents);
         }
     }
 
@@ -238,9 +238,9 @@ public class FileObserverTest extends AndroidTestCase {
 
         final FileEvent[] moveEvents = waitForEvent(fileObserver);
         if (isEmulated) {
-            assertEventsContains(expected, moveEvents);
+            assertEventsContains(testFile, expected, moveEvents);
         } else {
-            assertEventsEquals(expected, moveEvents);
+            assertEventsEquals(testFile, expected, moveEvents);
         }
     }
 
@@ -311,26 +311,30 @@ public class FileObserverTest extends AndroidTestCase {
         }
     }
 
-    private void assertEventsEquals(final int[] expected, final FileEvent[] moveEvents) {
+    private void assertEventsEquals(
+            File testFile, final int[] expected, final FileEvent[] moveEvents) {
         List<Integer> expectedEvents = new ArrayList<Integer>();
         for (int i = 0; i < expected.length; i++) {
             expectedEvents.add(expected[i]);
         }
         List<FileEvent> actualEvents = Arrays.asList(moveEvents);
-        String message = "Expected: " + expectedEvents + " Actual: " + actualEvents;
+        String message = "For test file [" + testFile.getAbsolutePath()
+                + "] expected: " + expectedEvents + " Actual: " + actualEvents;
         assertEquals(message, expected.length, moveEvents.length);
         for (int i = 0; i < expected.length; i++) {
             assertEquals(message, expected[i], moveEvents[i].event);
         }
     }
 
-    private void assertEventsContains(final int[] expected, final FileEvent[] moveEvents) {
+    private void assertEventsContains(
+            File testFile, final int[] expected, final FileEvent[] moveEvents) {
         List<Integer> expectedEvents = new ArrayList<Integer>();
         for (int i = 0; i < expected.length; i++) {
             expectedEvents.add(expected[i]);
         }
         List<FileEvent> actualEvents = Arrays.asList(moveEvents);
-        String message = "Expected to contain: " + expectedEvents + " Actual: " + actualEvents;
+        String message = "For test file [" + testFile.getAbsolutePath()
+                + "] expected: " + expectedEvents + " Actual: " + actualEvents;
         int j = 0;
         for (int i = 0; i < expected.length; i++) {
             while (expected[i] != moveEvents[j].event) {
