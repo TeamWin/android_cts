@@ -40,6 +40,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -77,6 +79,9 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     private final static long TIMEOUT = 1000; // milliseconds
     private final static long TIME_SLICE = 50; // milliseconds
     private final static AnimationCallback ANIMATION_CALLBACK = new AnimationCallback();
+
+    private static final String AM_BROADCAST_CLOSE_SYSTEM_DIALOGS =
+            "am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS";
 
     @Rule
     public final ErrorCollector mErrorCollector = new ErrorCollector();
@@ -394,6 +399,12 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         // Swiping from top of display can show bars.
         dragFromTopToCenter(rootView);
         PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
+
+        // The swipe action brings down the notification shade which causes subsequent tests to
+        // fail.
+        if (isAutomotive(mContext)) {
+            broadcastCloseSystemDialogs();
+        }
     }
 
     @Test
@@ -507,6 +518,14 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             activity.getWindowManager().removeView(childWindow);
         });
 
+    }
+
+    private static void broadcastCloseSystemDialogs() {
+        executeShellCommand(AM_BROADCAST_CLOSE_SYSTEM_DIALOGS);
+    }
+
+    private static boolean isAutomotive(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     private static void hideInsets(View view, int types) throws InterruptedException {
