@@ -1258,10 +1258,11 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         assertDomainZeroOrOne("u:r:wpa:s0", "/system/bin/wpa_supplicant");
     }
 
-    /* permissioncontroller may or may not be running */
+    /* permissioncontroller, if running, always runs in permissioncontroller_app */
     @CddTest(requirement="9.7")
     public void testPermissionControllerDomain() throws DeviceNotAvailableException {
-        assertDomainZeroOrOne("u:r:permissioncontroller_app:s0", "com.google.android.permissioncontroller");
+        assertExecutableHasDomain("com.google.android.permissioncontroller", "u:r:permissioncontroller_app:s0");
+        assertExecutableHasDomain("com.android.permissioncontroller", "u:r:permissioncontroller_app:s0");
     }
 
     /* vzwomatrigger may or may not be running */
