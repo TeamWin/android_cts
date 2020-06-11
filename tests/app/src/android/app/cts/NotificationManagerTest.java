@@ -1465,7 +1465,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testCanBubble_ranking() throws Exception {
         if ((mActivityManager.isLowRamDevice() && !FeatureUtil.isWatch())
-                || FeatureUtil.isAutomotive()) {
+                || FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
             return;
         }
 
@@ -2876,8 +2876,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flag_intentBubble()
             throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -2896,8 +2896,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_noFlag_service()
             throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
@@ -2922,8 +2922,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_noFlag_phonecall()
             throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         Intent serviceIntent = new Intent(mContext, BubblesTestService.class);
@@ -2948,8 +2948,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_noFlag_foreground() throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -2975,8 +2975,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubble_checkActivityFlagsDocumentLaunchMode()
             throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3016,8 +3016,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_flag_shortcutBubble()
             throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3041,8 +3041,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_noFlag_invalidShortcut()
             throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3066,8 +3066,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_noFlag_invalidNotif()
             throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3089,8 +3089,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_appAll_globalOn() throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3112,8 +3112,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_appAll_globalOff() throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3134,8 +3134,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_appAll_channelNo() throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3156,8 +3156,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_appSelected_channelNo() throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3178,8 +3178,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_appSelected_channelYes() throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3201,8 +3201,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubblePolicy_appNone_channelNo() throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
@@ -3224,8 +3224,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_noFlag_shortcutRemoved()
             throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
 
@@ -3251,8 +3251,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubbleNotificationSuppression() throws Exception {
-        if (FeatureUtil.isAutomotive()) {
-            // Automotive does not support notification bubbles.
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+            // These do not support bubbles.
             return;
         }
         try {
