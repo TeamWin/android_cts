@@ -18,6 +18,7 @@ package android.scopedstorage.cts;
 import static android.scopedstorage.cts.lib.RedactionTestHelper.EXIF_METADATA_QUERY;
 import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadata;
 import static android.scopedstorage.cts.lib.TestUtils.CAN_READ_WRITE_QUERY;
+import static android.scopedstorage.cts.lib.TestUtils.CREATE_IMAGE_ENTRY_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CREATE_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.DELETE_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.INTENT_EXCEPTION;
@@ -27,10 +28,14 @@ import static android.scopedstorage.cts.lib.TestUtils.OPEN_FILE_FOR_WRITE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_TYPE;
 import static android.scopedstorage.cts.lib.TestUtils.READDIR_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
+import static android.scopedstorage.cts.lib.TestUtils.getMediaContentUri;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.os.Bundle;
+import android.provider.MediaStore;
 
 import androidx.annotation.Nullable;
 
@@ -78,6 +83,9 @@ public class ScopedStorageTestHelper extends Activity {
                 case EXIF_METADATA_QUERY:
                     returnIntent = sendMetadata(queryType);
                     break;
+                case CREATE_IMAGE_ENTRY_QUERY:
+                    returnIntent = createImageEntry(queryType);
+                    break;
                 case "null":
                 default:
                     throw new IllegalStateException(
@@ -122,6 +130,28 @@ public class ScopedStorageTestHelper extends Activity {
         } else {
             throw new IllegalStateException(
                     READDIR_QUERY + ": Directory path not set from launcher app");
+        }
+    }
+
+    private Intent createImageEntry(String queryType) throws Exception {
+        if (getIntent().hasExtra(INTENT_EXTRA_PATH)) {
+            final String path = getIntent().getStringExtra(INTENT_EXTRA_PATH);
+            final String relativePath = path.substring(0, path.lastIndexOf('/'));
+            final String name = path.substring(path.lastIndexOf('/') + 1);
+
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+            values.put(MediaStore.Images.Media.RELATIVE_PATH, relativePath);
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, name);
+
+            getContentResolver().insert(getMediaContentUri(), values);
+
+            final Intent intent = new Intent(queryType);
+            intent.putExtra(queryType, true);
+            return intent;
+        } else {
+            throw new IllegalStateException(
+                    CREATE_IMAGE_ENTRY_QUERY + ": File path not set from launcher app");
         }
     }
 

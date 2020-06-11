@@ -84,8 +84,11 @@ public class TestUtils {
     public static final String INTENT_EXTRA_PATH = "android.scopedstorage.cts.path";
     public static final String INTENT_EXCEPTION = "android.scopedstorage.cts.exception";
     public static final String CREATE_FILE_QUERY = "android.scopedstorage.cts.createfile";
+    public static final String CREATE_IMAGE_ENTRY_QUERY =
+            "android.scopedstorage.cts.createimageentry";
     public static final String DELETE_FILE_QUERY = "android.scopedstorage.cts.deletefile";
-    public static final String OPEN_FILE_FOR_READ_QUERY = "android.scopedstorage.cts.openfile_read";
+    public static final String OPEN_FILE_FOR_READ_QUERY =
+            "android.scopedstorage.cts.openfile_read";
     public static final String OPEN_FILE_FOR_WRITE_QUERY =
             "android.scopedstorage.cts.openfile_write";
     public static final String CAN_READ_WRITE_QUERY =
@@ -210,6 +213,17 @@ public class TestUtils {
     }
 
     /**
+     * Makes the given {@code testApp} create a mediastore DB entry under
+     * {@code MediaStore.Media.Images}.
+     *
+     * The {@code path} argument is treated as a relative path and a name separated
+     * by an {@code '/'}.
+     */
+    public static boolean createImageEntryAs(TestApp testApp, String path) throws Exception {
+        return getResultFromTestApp(testApp, path, CREATE_IMAGE_ENTRY_QUERY);
+    }
+
+    /**
      * Makes the given {@code testApp} delete a file.
      *
      * <p>This method drops shell permission identity.
@@ -329,6 +343,13 @@ public class TestUtils {
         values.put(MediaStore.MediaColumns.DATA, file.getPath());
         return getContentResolver().insert(MediaStore.Files.getContentUri(sStorageVolumeName),
                 values);
+    }
+
+    /**
+     * Returns the content URI for images based on the current storage volume.
+     */
+    public static Uri getMediaContentUri() {
+        return MediaStore.Images.Media.getContentUri(sStorageVolumeName);
     }
 
     /**
