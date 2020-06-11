@@ -22,6 +22,7 @@ import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.accessibilityservice.AccessibilityService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -204,10 +205,9 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.waitForIdle();
     }
 
-    private void retryPressKeyCode(int keyCode, BooleanSupplier waitFor, String msg) {
+    private void waitFor(String msg, BooleanSupplier waitFor) {
         int retry = 1;
         do {
-            mDevice.pressKeyCode(keyCode);
             if (waitFor.getAsBoolean()) {
                 return;
             }
@@ -221,9 +221,10 @@ public class EncryptionAppTest extends InstrumentationTestCase {
 
     private void summonKeyguard() throws Exception {
         final PowerManager pm = mDe.getSystemService(PowerManager.class);
-        retryPressKeyCode(KeyEvent.KEYCODE_SLEEP, () -> pm != null && !pm.isInteractive(),
-                "***Waiting for device sleep...");
-        mDevice.waitForIdle();
+        mDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP);
+        getInstrumentation().getUiAutomation().performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
+        waitFor("display to turn off", () -> pm != null && !pm.isInteractive());
     }
 
     public void assertLocked() throws Exception {

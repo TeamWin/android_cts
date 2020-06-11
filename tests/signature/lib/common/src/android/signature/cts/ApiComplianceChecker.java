@@ -63,6 +63,9 @@ public class ApiComplianceChecker extends AbstractApiChecker {
     /** Indicates that the method is a synthetic method. */
     private static final int METHOD_MODIFIER_SYNTHETIC = 0x00001000;
 
+    /** Indicates that a field is an enum value. */
+    public static final int FIELD_MODIFIER_ENUM_VALUE = 0x00004000;
+
     private final InterfaceChecker interfaceChecker;
 
     public ApiComplianceChecker(ResultObserver resultObserver, ClassProvider classProvider) {
