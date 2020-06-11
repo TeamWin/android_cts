@@ -29,6 +29,10 @@ import org.junit.Test;
 
 import java.util.List;
 
+/**
+ * Build/Install/Run:
+ *     atest CtsWindowManagerDeviceTestCases:PresentationTest
+ */
 @Presubmit
 public class PresentationTest extends MultiDisplayTestBase {
 

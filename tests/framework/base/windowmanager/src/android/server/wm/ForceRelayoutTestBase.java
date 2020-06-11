@@ -16,16 +16,18 @@
 
 package android.server.wm;
 
+import static android.view.WindowInsets.Type.navigationBars;
+import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsets.Type.systemBars;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
 import android.graphics.Insets;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
@@ -49,6 +51,8 @@ public class ForceRelayoutTestBase {
             throws Throwable {
         TestActivity activity = mDecorActivity.getActivity();
         assertNotNull("test setup failed", activity.mLastContentInsets);
+        assumeFalse(Insets.NONE.equals(activity.mLastContentInsets.getInsetsIgnoringVisibility(
+                statusBars() | navigationBars())));
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
             activity.mLayoutHappened = false;
