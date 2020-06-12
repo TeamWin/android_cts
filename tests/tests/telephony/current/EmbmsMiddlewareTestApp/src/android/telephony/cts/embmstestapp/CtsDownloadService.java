@@ -258,7 +258,7 @@ public class CtsDownloadService extends Service {
         }
 
         @Override
-        public int addServiceAnnouncementFile(int subscriptionId, byte[] announcementFile) {
+        public int addServiceAnnouncement(int subscriptionId, byte[] announcementFile) {
             Bundle b = new Bundle();
             b.putString(METHOD_NAME, METHOD_ADD_SERVICE_ANNOUNCEMENT);
             b.putInt(ARGUMENT_SUBSCRIPTION_ID, subscriptionId);
