@@ -26,6 +26,7 @@
 
 #include <android/log.h>
 #include <dlfcn.h>
+#include <vulkan/vulkan.h>
 
 #define ALOGI(msg, ...)                                                        \
   __android_log_print(ANDROID_LOG_INFO, LOG_TAG, (msg), __VA_ARGS__)
@@ -84,22 +85,120 @@ int startCounterProducer() {
   return 0;
 }
 
+int initVulkan(VkDevice &device) {
+  std::string result = "";
+
+  const VkApplicationInfo appInfo = {
+      VK_STRUCTURE_TYPE_APPLICATION_INFO,
+      nullptr,            // pNext
+      "GpuProfilingData", // app name
+      0,                  // app version
+      nullptr,            // engine name
+      0,                  // engine version
+      VK_API_VERSION_1_0,
+  };
+  const VkInstanceCreateInfo instanceInfo = {
+      VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+      nullptr, // pNext
+      0,       // flags
+      &appInfo,
+      0,       // layer count
+      nullptr, // layers
+      0,       // extension count
+      nullptr, // extensions
+  };
+  VkInstance instance;
+  REQUIRE_SUCCESS(vkCreateInstance(&instanceInfo, nullptr, &instance),
+                  "vkCreateInstance");
+
+  VkPhysicalDevice physicalDevice = {};
+  uint32_t nPhysicalDevices;
+  REQUIRE_SUCCESS(
+      vkEnumeratePhysicalDevices(instance, &nPhysicalDevices, nullptr),
+      "vkEnumeratePhysicalDevices");
+  std::vector<VkPhysicalDevice> physicalDevices(nPhysicalDevices);
+
+  REQUIRE_SUCCESS(vkEnumeratePhysicalDevices(instance, &nPhysicalDevices,
+                                             physicalDevices.data()),
+                  "vkEnumeratePhysicalDevices");
+
+  uint32_t queueFamilyIndex = static_cast<uint32_t>(-1);
+  uint32_t i;
+  for (i = 0; i < nPhysicalDevices; ++i) {
+    uint32_t nQueueProperties = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevices[i],
+                                             &nQueueProperties, nullptr);
+    std::vector<VkQueueFamilyProperties> queueProperties(nQueueProperties);
+    vkGetPhysicalDeviceQueueFamilyProperties(
+        physicalDevices[i], &nQueueProperties, queueProperties.data());
+    for (uint32_t j = 0; j < nQueueProperties; ++j) {
+      if (queueProperties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        queueFamilyIndex = j;
+        break;
+      }
+    }
+    if (queueFamilyIndex != static_cast<uint32_t>(-1)) {
+      break;
+    }
+  }
+  if (i == nPhysicalDevices) {
+    ALOGE("%s",
+          "Could not find a physical device that supports a graphics queue");
+    return -1;
+  }
+  physicalDevice = physicalDevices[i];
+
+  float priority = 1.0f;
+  VkDeviceQueueCreateInfo queueCreateInfo{
+      VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+      nullptr, // pNext
+      0,       // flags
+      queueFamilyIndex,
+      1,
+      &priority,
+  };
+
+  VkDeviceCreateInfo deviceCreateInfo{
+      VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+      nullptr, // pNext
+      0,       // flags
+      1,
+      &queueCreateInfo,
+      0,
+      nullptr,
+      0,
+      nullptr,
+      nullptr,
+  };
+
+  REQUIRE_SUCCESS(
+      vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device),
+      "vkCreateDevice");
+
+  return 0;
+}
+
 volatile std::sig_atomic_t done = 0;
 
 } // anonymous namespace
 
 int main() {
+  ALOGI("%s", "Creating Vulkan device");
+  VkDevice device;
   std::signal(SIGTERM, [](int /*signal*/) {
     ALOGI("%s", "SIGTERM received");
     done = 1;
   });
+  int result = initVulkan(device);
+  ALOGI("%s %d", "initVulkan returned", result);
   std::thread dummy([&]() {
-    int result = startCounterProducer();
+    result = startCounterProducer();
     ALOGI("%s %d", "startCounterProducer returned", result);
   });
   ALOGI("%s", "Waiting for host");
   while (!done) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+  vkDestroyDevice(device, nullptr);
   return 0;
 }
