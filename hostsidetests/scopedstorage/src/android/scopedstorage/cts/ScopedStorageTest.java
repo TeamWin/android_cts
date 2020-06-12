@@ -1030,6 +1030,27 @@ public class ScopedStorageTest {
         assertThat(beforeObbStruct.st_dev).isEqualTo(afterObbStruct.st_dev);
     }
 
+    @Test
+    public void testCacheConsistencyForCaseInsensitivity() throws Exception {
+        File upperCaseFile = new File(getDownloadDir(), "CACHE_CONSISTENCY_FOR_CASE_INSENSITIVITY");
+        File lowerCaseFile = new File(getDownloadDir(), "cache_consistency_for_case_insensitivity");
+
+        try {
+            ParcelFileDescriptor upperCasePfd =
+                    ParcelFileDescriptor.open(upperCaseFile,
+                            ParcelFileDescriptor.MODE_READ_WRITE | ParcelFileDescriptor.MODE_CREATE);
+            ParcelFileDescriptor lowerCasePfd =
+                    ParcelFileDescriptor.open(lowerCaseFile,
+                            ParcelFileDescriptor.MODE_READ_WRITE | ParcelFileDescriptor.MODE_CREATE);
+
+            assertRWR(upperCasePfd, lowerCasePfd);
+            assertRWR(lowerCasePfd, upperCasePfd);
+        } finally {
+            upperCaseFile.delete();
+            lowerCaseFile.delete();
+        }
+    }
+
     private void createDeleteCreate(File create, File delete) throws Exception {
         try {
             assertThat(create.createNewFile()).isTrue();
@@ -1042,7 +1063,7 @@ public class ScopedStorageTest {
             Thread.sleep(5);
         } finally {
             create.delete();
-            create.delete();
+            delete.delete();
         }
     }
 
