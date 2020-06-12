@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.CANCELLED;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.FINISHED;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.READY;
+import static android.server.wm.WindowInsetsAnimationTestBase.showImeWithHardKeyboardSetting;
 import static android.server.wm.WindowInsetsAnimationUtils.INSETS_EVALUATOR;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
@@ -26,8 +27,6 @@ import static android.view.WindowInsets.Type.statusBars;
 
 import static androidx.test.internal.runner.junit4.statement.UiThreadStatement.runOnUiThread;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
@@ -124,6 +123,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mActivity = startActivity(TestActivity.class);
         mRootView = mActivity.getWindow().getDecorView();
         mListener = new ControlListener(mErrorCollector);
+        showImeWithHardKeyboardSetting(mObjectTracker);
         assumeTestCompatibility();
     }
 
