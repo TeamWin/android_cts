@@ -48,6 +48,24 @@
         <option name="run-command" value="wm dismiss-keyguard" />
     </target_preparer>
 
+    <!--
+        A (separate) standalone test app APK is needed to test implicit app-visibility from the IME
+        process to the IME target process, because if the IME target process is directly interacting
+        with MockIme process via MockImeSession, then the system would already give the MockIme an
+        implicit app-visibility back to the test app.  To fully test app-visibility scenario,
+        MockImeSession cannot be used in the process where the focused Activity is hosted.
+    -->
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <!--
+            In order to simulate the scenario where the IME client process is normally
+            installed, explicitly set false here.  Otherwise, the test APP will be installed under
+            force-queryable mode, which makes the test useless.
+        -->
+        <option name="force-queryable" value="false" />
+        <option name="test-file-name" value="CtsInputMethodStandaloneTestApp.apk" />
+    </target_preparer>
+
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsInputMethodTestCases.apk" />
