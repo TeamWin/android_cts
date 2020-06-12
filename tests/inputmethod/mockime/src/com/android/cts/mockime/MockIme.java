@@ -25,6 +25,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.inputmethodservice.InputMethodService;
@@ -286,6 +287,15 @@ public final class MockIme extends InputMethodService {
                         final int keyEventCode = command.getExtras().getInt("keyEventCode");
                         sendDownUpKeyEvents(keyEventCode);
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "getApplicationInfo": {
+                        final String packageName = command.getExtras().getString("packageName");
+                        final int flags = command.getExtras().getInt("flags");
+                        try {
+                            return getPackageManager().getApplicationInfo(packageName, flags);
+                        } catch (PackageManager.NameNotFoundException e) {
+                            return e;
+                        }
                     }
                     case "getDisplayId":
                         return getSystemService(WindowManager.class)
