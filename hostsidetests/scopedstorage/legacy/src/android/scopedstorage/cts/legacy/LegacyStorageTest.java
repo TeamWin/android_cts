@@ -27,6 +27,7 @@ import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
+import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
 import static android.scopedstorage.cts.lib.TestUtils.getContentResolver;
 import static android.scopedstorage.cts.lib.TestUtils.getFileOwnerPackageFromDatabase;
@@ -614,6 +615,35 @@ public class LegacyStorageTest {
             renamedImageInDCIM.delete();
             noMediaFile.delete();
             directoryNoMedia.delete();
+        }
+    }
+
+    /**
+     * Test that legacy apps creating files for existing db row doesn't upsert and set IS_PENDING
+     */
+    @Test
+    public void testCreateDoesntUpsert() throws Exception {
+        pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
+        pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
+
+        final File file = new File(TestUtils.getDcimDir(), IMAGE_FILE_NAME);
+        Uri uri = null;
+        try {
+            uri = TestUtils.insertFileUsingDataColumn(file);
+            assertNotNull(uri);
+
+            assertTrue(file.createNewFile());
+
+            try (Cursor c = TestUtils.queryFile(file,
+                    new String[] {MediaStore.MediaColumns.IS_PENDING})) {
+                // This file will not have IS_PENDING=1 because create didn't set IS_PENDING.
+                assertTrue(c.moveToFirst());
+                assertEquals(c.getInt(0), 0);
+            }
+        } finally {
+            file.delete();
+            // If create file fails, we should delete the inserted db row.
+            deleteWithMediaProviderNoThrow(uri);
         }
     }
 
