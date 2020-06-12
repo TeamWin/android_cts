@@ -93,7 +93,7 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
     @Test
     public void testAddServiceAnnouncementFile() throws Exception {
         byte[] sampleAnnouncementFile = "<xml></xml>".getBytes();
-        mDownloadSession.addServiceAnnouncementFile(sampleAnnouncementFile);
+        mDownloadSession.addServiceAnnouncement(sampleAnnouncementFile);
         List<Bundle> addServiceAnnouncementCalls =
                 getMiddlewareCalls(CtsDownloadService.METHOD_ADD_SERVICE_ANNOUNCEMENT);
         assertEquals(1, addServiceAnnouncementCalls.size());
