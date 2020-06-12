@@ -13,9 +13,9 @@
 // limitations under the License.
 
 cc_test {
-    name: "ctsgraphicsgpuprofilinginit",
+    name: "ctsgraphicsgpucountersinit",
     srcs: [
-        "android_graphics_cts_GpuProfilingData.cpp",
+        "android_graphics_cts_GpuCounters.cpp",
     ],
     test_suites: ["cts"],
     compile_multilib: "both",
@@ -34,9 +34,43 @@ cc_test {
     shared_libs: [
         "libdl",
         "libandroid",
-        "libvulkan",
         "liblog",
     ],
     stl: "c++_static",
     sdk_version: "current",
+}
+
+cc_test_library {
+    name: "libctsgraphicsgpuprofiling_jni",
+    gtest: false,
+    srcs: [
+        "jni/CtsGraphicsProfilingDataJniOnLoad.cpp",
+        "jni/android_graphics_cts_GpuRenderStages.cpp",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    shared_libs: [
+        "libandroid",
+        "libvulkan",
+        "liblog",
+    ],
+    stl: "c++_shared",
+    sdk_version: "current",
+}
+
+android_test_helper_app {
+    name: "CtsGraphicsProfilingDataApp",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    // tag this module as a cts test artifact
+    test_suites: ["cts"],
+    compile_multilib: "both",
+    jni_libs: [
+        "libctsgraphicsgpuprofiling_jni",
+    ],
+    use_embedded_native_libs: false,
+    stl: "c++_shared",
 }
