@@ -54,22 +54,34 @@ public class ImsUtils {
 
     public static int getPreferredActiveSubId() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        int defaultSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
-        if (defaultSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
-            return defaultSubId;
-        }
-        // Couldn't resolve a default. We can try to resolve a default using the active
-        // subscriptions.
         SubscriptionManager sm = (SubscriptionManager) context.getSystemService(
                 Context.TELEPHONY_SUBSCRIPTION_SERVICE);
         List<SubscriptionInfo> infos = ShellIdentityUtils.invokeMethodWithShellPermissions(sm,
                 SubscriptionManager::getActiveSubscriptionInfoList);
+
+        int defaultSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
+        if (defaultSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
+                && isSubIdInInfoList(infos, defaultSubId)) {
+            return defaultSubId;
+        }
+
+        defaultSubId = SubscriptionManager.getDefaultSubscriptionId();
+        if (defaultSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
+                && isSubIdInInfoList(infos, defaultSubId)) {
+            return defaultSubId;
+        }
+
+        // Couldn't resolve a default. We can try to resolve a default using the active
+        // subscriptions.
         if (!infos.isEmpty()) {
             return infos.get(0).getSubscriptionId();
         }
-        // The best we can do is fall back to any default set. If it fails, notify the tester
-        // that there must be a default set.
-        return SubscriptionManager.getDefaultSubscriptionId();
+        // There must be at least one active subscription.
+        return SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+    }
+
+    private static boolean isSubIdInInfoList(List<SubscriptionInfo> infos, int subId) {
+        return infos.stream().anyMatch(info -> info.getSubscriptionId() == subId);
     }
 
     /**
