@@ -166,6 +166,7 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
         runDeviceTest("testCreateUpperCaseDeleteLowerCase");
         runDeviceTest("testCreateMixedCaseDeleteDifferentMixedCase");
         runDeviceTest("testAndroidDataObbDoesNotForgetMount");
+        runDeviceTest("testCacheConsistencyForCaseInsensitivity");
     }
 
     @Test

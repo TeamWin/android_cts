@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.graphics.PixelFormat.TRANSLUCENT;
+import static android.server.wm.WindowInsetsAnimationTestBase.showImeWithHardKeyboardSetting;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE;
@@ -180,6 +181,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testImeShowAndHide() {
+        showImeWithHardKeyboardSetting(mObjectTracker);
+
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         getInstrumentation().runOnMainSync(() -> {
@@ -459,6 +462,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testShowImeOnCreate() throws Exception {
+        showImeWithHardKeyboardSetting(mObjectTracker);
+
         final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
