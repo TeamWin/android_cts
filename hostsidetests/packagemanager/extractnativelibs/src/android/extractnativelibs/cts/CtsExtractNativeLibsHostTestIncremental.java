@@ -25,6 +25,7 @@ import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.util.AbiUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,28 +49,131 @@ public class CtsExtractNativeLibsHostTestIncremental extends CtsExtractNativeLib
     private boolean isIncrementalInstallSupported() throws Exception {
         return getDevice().hasFeature("android.software.incremental_delivery");
     }
+
     /** Test with a app that has extractNativeLibs=false using Incremental install. */
     @Test
     @AppModeFull
     public void testNoExtractNativeLibsIncremental() throws Exception {
         installPackageIncremental(TEST_NO_EXTRACT_APK);
         assertTrue(isPackageInstalled(TEST_NO_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_NO_EXTRACT_PKG, TEST_NO_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
         assertTrue(runDeviceTests(
                 TEST_NO_EXTRACT_PKG, TEST_NO_EXTRACT_CLASS, TEST_NO_EXTRACT_TEST));
     }
 
-    /** Test with a app that has extractNativeLibs=true using Incremental install. */
+    /** Test with a 32-bit app that has extractNativeLibs=true using Incremental install. */
     @Test
     @AppModeFull
-    public void testExtractNativeLibsIncremental() throws Exception {
-        installPackageIncremental(TEST_EXTRACT_APK);
+    public void testExtractNativeLibsIncremental32() throws Exception {
+        installPackageIncremental(TEST_EXTRACT_APK32);
         assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
-        assertTrue(runDeviceTests(
-                TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS, TEST_EXTRACT_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_V7A));
     }
 
-    /** Test with a app that has extractNativeLibs=false but with mis-aligned lib files,
-     *  using Incremental install. */
+    /** Test with a 64-bit app that has extractNativeLibs=true using Incremental install. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsIncremental64() throws Exception {
+        installPackageIncremental(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app that has extractNativeLibs=true for both 32-bit and 64-bit native libs. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsIncrementalBoth() throws Exception {
+        installPackageIncremental(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        // Lib will only be extracted to arm64 if 64-bit is supported
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app upgrade from 32-bit to 64-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsIncrementalFor32To64Upgrade() throws Exception {
+        installPackageIncremental(TEST_EXTRACT_APK32);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackageIncremental(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app upgrade from 64-bit to 32-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsIncrementalFor64To32Upgrade() throws Exception {
+        installPackageIncremental(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackageIncremental(TEST_EXTRACT_APK32);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_V7A));
+    }
+
+    /** Test with a app upgrade from both 32 and 64-bit to only 64-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsIncrementalForBothTo64Upgrade() throws Exception {
+        installPackageIncremental(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackageIncremental(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app upgrade from both 32 and 64-bit to only 32-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsIncrementalForBothTo32Upgrade() throws Exception {
+        installPackageIncremental(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackageIncremental(TEST_EXTRACT_APK32);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_V7A));
+    }
+
+    /** Test with a app upgrade from 32-bit to both 32-bit and 64-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsIncrementalFor32ToBothUpgrade() throws Exception {
+        installPackageIncremental(TEST_EXTRACT_APK32);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackageIncremental(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app upgrade from 64-bit to both 32-bit and 64-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsIncrementalFor64ToBothUpgrade() throws Exception {
+        installPackageIncremental(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackageIncremental(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /**
+     * Test with a app that has extractNativeLibs=false but with mis-aligned lib files,
+     * using Incremental install.
+     */
     @Test
     @AppModeFull
     public void testExtractNativeLibsIncrementalFails() throws Exception {
