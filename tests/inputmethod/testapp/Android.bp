@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-java_test_host {
-    name: "CtsPackageManagerMultiUserHostTestCases",
+android_test_helper_app {
+    name: "CtsInputMethodStandaloneTestApp",
     defaults: ["cts_defaults"],
-    srcs: ["src/**/*.java"],
+    sdk_version: "current",
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
+        "vts10",
         "general-tests",
     ],
-    libs: [
-        "cts-tradefed",
-        "tradefed",
-        "compatibility-host-util",
+    compile_multilib: "both",
+    static_libs: [
+        "androidx.annotation_annotation",
+    ],
+    srcs: [
+        "src/**/*.java",
+        "src/**/I*.aidl",
     ],
 }

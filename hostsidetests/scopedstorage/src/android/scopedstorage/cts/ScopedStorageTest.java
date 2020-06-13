@@ -867,14 +867,14 @@ public class ScopedStorageTest {
         try {
             assertThat(file.createNewFile()).isTrue();
 
-            // Since we can only place one F_WRLCK, the second open for readPfd will go
-            // throuh FUSE
+            // We upgrade 'w' only to 'rw'
             ParcelFileDescriptor writePfd = openWithMediaProvider(file, "w");
             ParcelFileDescriptor readPfd = openWithMediaProvider(file, "rw");
 
             assertRWR(readPfd, writePfd);
+            assertRWR(writePfd, readPfd); // Can read on 'w' only pfd
             assertLowerFsFd(writePfd);
-            assertUpperFsFd(readPfd); // Without cache
+            assertLowerFsFd(readPfd);
         } finally {
             file.delete();
         }
@@ -1030,6 +1030,27 @@ public class ScopedStorageTest {
         assertThat(beforeObbStruct.st_dev).isEqualTo(afterObbStruct.st_dev);
     }
 
+    @Test
+    public void testCacheConsistencyForCaseInsensitivity() throws Exception {
+        File upperCaseFile = new File(getDownloadDir(), "CACHE_CONSISTENCY_FOR_CASE_INSENSITIVITY");
+        File lowerCaseFile = new File(getDownloadDir(), "cache_consistency_for_case_insensitivity");
+
+        try {
+            ParcelFileDescriptor upperCasePfd =
+                    ParcelFileDescriptor.open(upperCaseFile,
+                            ParcelFileDescriptor.MODE_READ_WRITE | ParcelFileDescriptor.MODE_CREATE);
+            ParcelFileDescriptor lowerCasePfd =
+                    ParcelFileDescriptor.open(lowerCaseFile,
+                            ParcelFileDescriptor.MODE_READ_WRITE | ParcelFileDescriptor.MODE_CREATE);
+
+            assertRWR(upperCasePfd, lowerCasePfd);
+            assertRWR(lowerCasePfd, upperCasePfd);
+        } finally {
+            upperCaseFile.delete();
+            lowerCaseFile.delete();
+        }
+    }
+
     private void createDeleteCreate(File create, File delete) throws Exception {
         try {
             assertThat(create.createNewFile()).isTrue();
@@ -1042,7 +1063,7 @@ public class ScopedStorageTest {
             Thread.sleep(5);
         } finally {
             create.delete();
-            create.delete();
+            delete.delete();
         }
     }
 
@@ -1979,6 +2000,8 @@ public class ScopedStorageTest {
 
         final File downloadDir = getDownloadDir();
         final File otherAppPdf = new File(downloadDir, "other-" + NONMEDIA_FILE_NAME);
+        final File shellPdfAtRoot = new File(getExternalStorageDir(),
+                "shell-" + NONMEDIA_FILE_NAME);
         final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
         final File myAppPdf = new File(downloadDir, "my-" + NONMEDIA_FILE_NAME);
         final File doesntExistPdf = new File(downloadDir, "nada-" + NONMEDIA_FILE_NAME);
@@ -1993,14 +2016,21 @@ public class ScopedStorageTest {
             assertThat(myAppPdf.createNewFile()).isTrue();
             assertFileAccess_readWrite(myAppPdf);
 
-            // We can read the other app's image file because we hold R_E_S, but we can only
-            // check exists for the pdf file.
+            // We can read the other app's image file because we hold R_E_S, but we can
+            // check only exists for the pdf files.
             assertFileAccess_readOnly(otherAppImage);
             assertFileAccess_existsOnly(otherAppPdf);
             assertAccess(doesntExistPdf, false, false, false);
+
+            // We can check only exists for another app's files on root.
+            // Use shell to create root file because TEST_APP_A is in
+            // scoped storage.
+            executeShellCommand("touch " + shellPdfAtRoot.getAbsolutePath());
+            assertFileAccess_existsOnly(shellPdfAtRoot);
         } finally {
             deleteFileAsNoThrow(TEST_APP_A, otherAppPdf.getAbsolutePath());
             deleteFileAsNoThrow(TEST_APP_A, otherAppImage.getAbsolutePath());
+            executeShellCommand("rm " + shellPdfAtRoot.getAbsolutePath());
             myAppPdf.delete();
             uninstallApp(TEST_APP_A);
         }
@@ -2024,17 +2054,17 @@ public class ScopedStorageTest {
             // We cannot read or write the file, but app A can.
             assertThat(canReadAndWriteAs(TEST_APP_A,
                     otherAppExternalDataFile.getAbsolutePath())).isTrue();
-            assertCannotAccessOtherAppFile(otherAppExternalDataFile);
+            assertCannotReadOrWrite(otherAppExternalDataFile);
 
             // We cannot read or write the dir, but app A can.
             assertThat(canReadAndWriteAs(TEST_APP_A,
                     otherAppExternalDataDir.getAbsolutePath())).isTrue();
-            assertCannotAccessOtherAppFile(otherAppExternalDataDir);
+            assertCannotReadOrWrite(otherAppExternalDataDir);
 
             // We cannot read or write the sub dir, but app A can.
             assertThat(canReadAndWriteAs(TEST_APP_A,
                     otherAppExternalDataSubDir.getAbsolutePath())).isTrue();
-            assertCannotAccessOtherAppFile(otherAppExternalDataSubDir);
+            assertCannotReadOrWrite(otherAppExternalDataSubDir);
 
             // We can read and write our own app dir, but app A cannot.
             assertThat(canReadAndWriteAs(TEST_APP_A,
@@ -2045,6 +2075,7 @@ public class ScopedStorageTest {
             assertDirectoryAccess(getExternalStorageDir(), true);
             assertDirectoryAccess(new File(getExternalStorageDir(), "Android"), true);
             assertDirectoryAccess(new File(getExternalStorageDir(), "doesnt/exist"), false);
+            assertCannotReadOrWrite(new File("/storage/emulated"));
         } finally {
             uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
         }
@@ -2747,7 +2778,7 @@ public class ScopedStorageTest {
         assertAccess(file, exists, canRead, canWrite, true /* checkExists */);
     }
 
-    private static void assertCannotAccessOtherAppFile(File file)
+    private static void assertCannotReadOrWrite(File file)
             throws Exception {
         // App data directories have different 'x' bits on upgrading vs new devices. Let's not
         // check 'exists', by passing checkExists=false. But assert this app cannot read or write
