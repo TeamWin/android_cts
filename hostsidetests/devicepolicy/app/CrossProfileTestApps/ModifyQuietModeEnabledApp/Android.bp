@@ -12,31 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_test {
-    name: "ctsgraphicsgpuprofilinginit",
-    srcs: [
-        "android_graphics_cts_GpuProfilingData.cpp",
+android_test_helper_app {
+    name: "CtsModifyQuietModeEnabledApp",
+    defaults: ["cts_defaults"],
+    srcs: ["src/**/*.java"],
+    libs: ["junit"],
+    static_libs: [
+        "androidx.legacy_legacy-support-v4",
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+        "androidx.test.rules",
+        "truth-prebuilt",
+        "ub-uiautomator",
     ],
-    test_suites: ["cts"],
-    compile_multilib: "both",
-    multilib: {
-        lib32: {
-            suffix: "32",
-        },
-        lib64: {
-            suffix: "64",
-        },
-    },
-    cflags: [
-        "-Wall",
-        "-Werror",
+    min_sdk_version: "29",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
     ],
-    shared_libs: [
-        "libdl",
-        "libandroid",
-        "libvulkan",
-        "liblog",
-    ],
-    stl: "c++_static",
-    sdk_version: "current",
 }
