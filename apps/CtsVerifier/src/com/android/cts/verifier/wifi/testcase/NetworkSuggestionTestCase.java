@@ -127,6 +127,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
                 mNetworkSuggestionBuilder.setWpa3Passphrase(mPsk);
             }
         }
+        mNetworkSuggestionBuilder.setIsMetered(false);
         return mNetworkSuggestionBuilder.build();
     }
 
