@@ -19,6 +19,9 @@
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
+    <!-- TODO(b/158958526): Example of parameterized mainline module. Remove it once the workflow is confirmed working fine. -->
+    <option name="config-descriptor:metadata" key="mainline-param" value="com.google.android.ipsec.apex" />
+    <option name="config-descriptor:metadata" key="mainline-param" value="com.google.android.ipsec.apex+com.google.android.permission.apex" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsSampleDeviceApp.apk" />
