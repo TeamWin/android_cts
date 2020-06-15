@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-package android.scopedstorage.cts.legacy;
-
-import static com.google.common.truth.Truth.assertThat;
+package android.scopedstorage.cts;
 
 import android.scopedstorage.cts.lib.TestUtils;
 
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Runs {@link LegacyStorageTest} on a public volume.
+ * Creates public volume for running tests from {@link PublicVolumeTest} and
+ * {@link PublicVolumeLegacyTest}
  */
 @RunWith(AndroidJUnit4.class)
-public class PublicVolumeLegacyTest extends LegacyStorageTest {
-    @Override
-    @Before
-    public void setup() throws Exception {
-        final String volumeName = TestUtils.getPublicVolumeName();
-        assertThat(volumeName).isNotNull();
-        TestUtils.setExternalStorageVolume(volumeName);
-        super.setup();
+public class PublicVolumeTestHelper {
+    /**
+     * This is not an actual test, but rather just a one time setup method that creates the new
+     * public volume on which the test would run.
+     */
+    @Test
+    public void setupNewPublicVolume() throws Exception {
+        TestUtils.createNewPublicVolume();
     }
 }
