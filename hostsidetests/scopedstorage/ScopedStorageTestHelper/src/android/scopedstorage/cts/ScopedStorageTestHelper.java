@@ -26,6 +26,7 @@ import static android.scopedstorage.cts.lib.TestUtils.OPEN_FILE_FOR_READ_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.OPEN_FILE_FOR_WRITE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_TYPE;
 import static android.scopedstorage.cts.lib.TestUtils.READDIR_QUERY;
+import static android.scopedstorage.cts.lib.TestUtils.SETATTR_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
 
 import android.app.Activity;
@@ -73,6 +74,7 @@ public class ScopedStorageTestHelper extends Activity {
                 case DELETE_FILE_QUERY:
                 case OPEN_FILE_FOR_READ_QUERY:
                 case OPEN_FILE_FOR_WRITE_QUERY:
+                case SETATTR_QUERY:
                     returnIntent = accessFile(queryType);
                     break;
                 case EXIF_METADATA_QUERY:
@@ -141,6 +143,9 @@ public class ScopedStorageTestHelper extends Activity {
                 returnStatus = canOpen(file, false /* forWrite */);
             } else if (queryType.equals(OPEN_FILE_FOR_WRITE_QUERY)) {
                 returnStatus = canOpen(file, true /* forWrite */);
+            } else if (queryType.equals(SETATTR_QUERY)) {
+                int newTimeMillis = 12345000;
+                returnStatus = file.setLastModified(newTimeMillis);
             }
             final Intent intent = new Intent(queryType);
             intent.putExtra(queryType, returnStatus);
