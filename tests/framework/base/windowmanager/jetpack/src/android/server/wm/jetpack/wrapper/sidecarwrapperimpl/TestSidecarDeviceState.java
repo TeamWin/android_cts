@@ -24,7 +24,7 @@ import androidx.window.sidecar.SidecarDeviceState;
 
 /** Extension interface compatibility wrapper for v0.1 sidecar. */
 @SuppressWarnings("deprecation")
-final class TestSidecarDeviceState implements TestDeviceState {
+public final class TestSidecarDeviceState implements TestDeviceState {
 
     @Nullable
     static TestSidecarDeviceState create(@Nullable SidecarDeviceState sidecarDeviceState) {
