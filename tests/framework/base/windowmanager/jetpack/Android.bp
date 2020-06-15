@@ -13,6 +13,21 @@
 // limitations under the License.
 
 android_library_import {
+    name: "cts_window-extensions_nodeps",
+    aars: ["window-extensions-release.aar"],
+    sdk_version: "current",
+}
+
+java_library {
+    name: "cts_window-extensions",
+    sdk_version: "current",
+    static_libs: [
+        "cts_window-extensions_nodeps",
+    ],
+    installable: false,
+}
+
+android_library_import {
     name: "cts_window-sidecar_nodeps",
     aars: ["window-sidecar-release.aar"],
     sdk_version: "current",
@@ -39,8 +54,8 @@ android_test {
         "platform-test-annotations",
     ],
     libs: [
-        "androidx.window.extensions",
         "android.test.base.stubs",
+        "cts_window-extensions",
         "cts_window-sidecar",
     ],
     test_suites: [
