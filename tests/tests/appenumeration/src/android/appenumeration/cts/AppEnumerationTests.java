@@ -23,11 +23,13 @@ import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
+import static android.appenumeration.cts.Constants.ACTION_QUERY_RESOLVER;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
+import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
@@ -35,6 +37,7 @@ import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.QUERIES_ACTIVITY_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PROVIDER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_Q;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
 import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
@@ -65,6 +68,7 @@ import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -100,6 +104,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -428,6 +433,22 @@ public class AppEnumerationTests {
         } catch (MissingBroadcastException e) {
             fail();
         }
+    }
+
+    @Test
+    public void queriesResolver_grantsVisibilityToProvider() throws Exception {
+        assertNotVisible(QUERIES_NOTHING_PROVIDER, QUERIES_NOTHING_PERM);
+
+        String[] result = sendCommandBlocking(
+                QUERIES_NOTHING_PERM, QUERIES_NOTHING_PROVIDER, null, ACTION_QUERY_RESOLVER)
+                .getStringArray(Intent.EXTRA_RETURN_RESULT);
+        Arrays.sort(result);
+        assertThat(QUERIES_NOTHING_PERM + " not visible to " + QUERIES_NOTHING_PROVIDER
+                        + " during resolver interaction",
+                Arrays.binarySearch(result, QUERIES_NOTHING_PERM),
+                greaterThanOrEqualTo(0));
+
+        assertVisible(QUERIES_NOTHING_PROVIDER, QUERIES_NOTHING_PERM);
     }
 
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
