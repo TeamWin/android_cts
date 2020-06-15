@@ -46,6 +46,7 @@ public class UtilsProvider extends ContentProvider {
     public static final String EXTRA_INTENT = Intent.EXTRA_INTENT;
     public static final String EXTRA_URI = "uri";
     public static final String EXTRA_MODE = "mode";
+    public static final String EXTRA_RUN_EXPLICIT = "runExplicit";
 
     @Override
     public Bundle call(String method, String arg, Bundle extras) {
