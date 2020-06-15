@@ -300,23 +300,26 @@ class HistoricalAppopsTest {
                 null)
         appOpsManager.noteOp(OPSTR_REQUEST_DELETE_PACKAGES, uid, packageName, "secondAttribution",
                 null)
+        var memOps: AppOpsManager.HistoricalOps? = null
+        eventually(SNAPSHOT_INTERVAL_MILLIS / 2) {
+            memOps = getHistoricalOps(appOpsManager, uid = uid)!!
 
-        val memOps = getHistoricalOps(appOpsManager, uid = uid)!!
-
-        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!
-                .getForegroundAccessCount(OP_FLAGS_ALL)).isEqualTo(2)
-        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getAttributedOps("firstAttribution")!!
-                .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
-                .isEqualTo(1)
-        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getAttributedOps("secondAttribution")!!
-                .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
-                .isEqualTo(1)
+            assertThat(memOps!!.getUidOpsAt(0).getPackageOpsAt(0)
+                    .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
+                    .isEqualTo(2)
+            assertThat(memOps!!.getUidOpsAt(0).getPackageOpsAt(0)
+                    .getAttributedOps("firstAttribution")!!.getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!
+                    .getForegroundAccessCount(OP_FLAGS_ALL)).isEqualTo(1)
+            assertThat(memOps!!.getUidOpsAt(0).getPackageOpsAt(0)
+                    .getAttributedOps("secondAttribution")!!.getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!
+                    .getForegroundAccessCount(OP_FLAGS_ALL)).isEqualTo(1)
+        }
 
         // Wait until data is on disk and verify no entry got lost
         Thread.sleep(SNAPSHOT_INTERVAL_MILLIS)
 
         val diskOps = getHistoricalOps(appOpsManager, uid = uid)!!
-        assertThat(diskOps.getUidOpsAt(0)).isEqualTo(memOps.getUidOpsAt(0))
+        assertThat(diskOps.getUidOpsAt(0)).isEqualTo(memOps?.getUidOpsAt(0))
     }
 
     private fun testHistoricalAggregationSomeLevelsDeep(depth: Int) {
