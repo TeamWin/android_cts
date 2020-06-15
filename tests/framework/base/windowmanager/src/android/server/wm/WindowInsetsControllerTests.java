@@ -74,7 +74,7 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsControllerTests
  */
-@Presubmit
+//TODO(b/159038873) @Presubmit
 public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds
