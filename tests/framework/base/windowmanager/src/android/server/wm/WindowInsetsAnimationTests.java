@@ -106,7 +106,6 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
     }
 
     @Test
-    @FlakyTest(detail = "Promote once confirmed non-flaky")
     public void testAnimationCallbacks_overlapping() {
         WindowInsets before = mActivity.mLastWindowInsets;
 
@@ -250,10 +249,9 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
             });
         });
 
-        getWmState().waitFor(state -> !state.isWindowVisible("StatusBar"),
-                "Waiting for status bar to be hidden");
-        assertFalse(getWmState().isWindowVisible("StatusBar"));
+        waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
 
+        assertFalse(getWmState().isWindowVisible("StatusBar"));
         verify(mActivity.mCallback).onPrepare(any());
         verify(mActivity.mCallback).onStart(any(), any());
         verify(mActivity.mCallback, atLeastOnce()).onProgress(any(), any());
