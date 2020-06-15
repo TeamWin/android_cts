@@ -17,11 +17,13 @@ android_test_helper_app {
     defaults: ["cts_support_defaults"],
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
     ],
     sdk_version: "current",
     static_libs: [
         "CtsPermissionDeclareUtilLib",
         "androidx.test.rules",
+        "testng",
         "truth-prebuilt",
     ],
     libs: ["android.test.base.stubs"],
