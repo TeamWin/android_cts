@@ -85,7 +85,7 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationControllerTests
  */
-@Presubmit
+//TODO(b/159038873) @Presubmit
 @RunWith(Parameterized.class)
 public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase {
 
