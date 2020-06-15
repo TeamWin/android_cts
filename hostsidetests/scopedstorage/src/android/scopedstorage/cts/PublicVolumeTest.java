@@ -23,7 +23,6 @@ import android.scopedstorage.cts.lib.TestUtils;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -38,14 +37,5 @@ public class PublicVolumeTest extends ScopedStorageTest {
         assertThat(volumeName).isNotNull();
         TestUtils.setExternalStorageVolume(volumeName);
         super.setup();
-    }
-
-    /**
-     * This is not an actual test, but rather just a one time setup method that creates the new
-     * public volume on which the test would run.
-     */
-    @Test
-    public void setupNewPublicVolume() throws Exception {
-        TestUtils.createNewPublicVolume();
     }
 }

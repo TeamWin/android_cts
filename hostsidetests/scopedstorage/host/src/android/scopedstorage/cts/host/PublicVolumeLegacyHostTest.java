@@ -33,7 +33,8 @@ public class PublicVolumeLegacyHostTest extends LegacyStorageHostTest {
 
     private void setupNewPublicVolume() throws Exception {
         if (!mIsPublicVolumeSetup) {
-            runDeviceTest("setupNewPublicVolume");
+            assertTrue(runDeviceTests("android.scopedstorage.cts",
+                    "android.scopedstorage.cts.PublicVolumeTestHelper", "setupNewPublicVolume"));
             mIsPublicVolumeSetup = true;
         }
     }
