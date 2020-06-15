@@ -43,6 +43,8 @@ public class Constants {
     public static final String QUERIES_ACTIVITY_ACTION = PKG_BASE + "queries.activity.action";
     /** A package that has no queries but gets the QUERY_ALL_PACKAGES permission */
     public static final String QUERIES_NOTHING_PERM = PKG_BASE + "queries.nothing.haspermission";
+    /** A package that has no queries but has a provider that can be queried */
+    public static final String QUERIES_NOTHING_PROVIDER = PKG_BASE + "queries.nothing.hasprovider";
     /** A package that has no queries tag or permissions but targets Q */
     public static final String QUERIES_NOTHING_Q = PKG_BASE + "queries.nothing.q";
     /** A package that has no queries tag or permission to query any specific packages */
@@ -127,9 +129,12 @@ public class Constants {
             PKG_BASE + "cts.action.GET_INSTALLED_PACKAGES";
     public static final String ACTION_START_SENDER_FOR_RESULT =
             PKG_BASE + "cts.action.START_SENDER_FOR_RESULT";
+    public static final String ACTION_QUERY_RESOLVER =
+            PKG_BASE + "cts.action.QUERY_RESOLVER_FOR_VISIBILITY";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_ERROR = "error";
     public static final String EXTRA_FLAGS = "flags";
     public static final String EXTRA_DATA = "data";
+    public static final String EXTRA_AUTHORITY = "authority";
 }
