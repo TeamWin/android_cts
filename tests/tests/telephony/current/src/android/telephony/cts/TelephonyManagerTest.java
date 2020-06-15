@@ -564,7 +564,8 @@ public class TelephonyManagerTest {
         }
 
         mTelephonyManager.getDefaultRespondViaMessageApplication();
-        mTelephonyManager.getAndUpdateDefaultRespondViaMessageApplication();
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                TelephonyManager::getAndUpdateDefaultRespondViaMessageApplication);
     }
 
     /**
