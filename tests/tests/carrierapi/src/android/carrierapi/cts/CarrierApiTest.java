@@ -269,6 +269,11 @@ public class CarrierApiTest extends AndroidTestCase {
         assertEquals(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS, value);
     }
 
+    private static void assertUpdateAvailableNetworkNoOpportunisticSubAvailable(int value) {
+        assertEquals(
+                TelephonyManager.UPDATE_AVAILABLE_NETWORKS_NO_OPPORTUNISTIC_SUB_AVAILABLE, value);
+    }
+
     private static void assertSetOpportunisticSubSuccess(int value) {
         assertEquals(TelephonyManager.SET_OPPORTUNISTIC_SUB_SUCCESS, value);
     }
@@ -322,6 +327,8 @@ public class CarrierApiTest extends AndroidTestCase {
                 CarrierApiTest::assertUpdateAvailableNetworkSuccess;
         Consumer<Integer> callbackFailure =
                 CarrierApiTest::assertUpdateAvailableNetworkInvalidArguments;
+        Consumer<Integer> callbackNoOpportunisticSubAvailable =
+                CarrierApiTest::assertUpdateAvailableNetworkNoOpportunisticSubAvailable;
         Consumer<Integer> setOpCallbackSuccess = CarrierApiTest::assertSetOpportunisticSubSuccess;
         if (subscriptionInfoList == null || subscriptionInfoList.size() == 0
                 || !mSubscriptionManager.isActiveSubscriptionId(
@@ -332,10 +339,11 @@ public class CarrierApiTest extends AndroidTestCase {
                         bands);
                 availableNetworkInfos.add(availableNetworkInfo);
                 // Call updateAvailableNetworks without opportunistic subscription.
-                // callbackFailure is expected to be triggered and the return value will be checked
-                // against UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS
+                // callbackNoOpportunisticSubAvailable is expected to be triggered
+                // and the return value will be checked against
+                // UPDATE_AVAILABLE_NETWORKS_NO_OPPORTUNISTIC_SUB_AVAILABLE
                 mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
-                        AsyncTask.SERIAL_EXECUTOR, callbackFailure);
+                        AsyncTask.SERIAL_EXECUTOR, callbackNoOpportunisticSubAvailable);
             } finally {
                 // clear all the operations at the end of test.
                 availableNetworkInfos.clear();
