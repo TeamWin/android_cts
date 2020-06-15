@@ -60,7 +60,7 @@ import androidx.test.filters.FlakyTest;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationTests
  */
-@Presubmit
+//TODO(b/159038873) @Presubmit
 public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
 
     @Before
