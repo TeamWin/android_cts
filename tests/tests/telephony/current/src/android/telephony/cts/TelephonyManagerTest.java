@@ -2210,20 +2210,21 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-
-        boolean rebootRequired = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelephonyManager, (tm) -> tm.doesSwitchMultiSimConfigTriggerReboot());
-
-        // It's hard to test if reboot is needed.
-        if (!rebootRequired) {
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.switchMultiSimConfig(1));
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.switchMultiSimConfig(2));
-        } else {
+        try {
+            mTelephonyManager.switchMultiSimConfig(mTelephonyManager.getActiveModemCount());
+            fail("TelephonyManager#switchMultiSimConfig should require the MODIFY_PHONE_STATE"
+                    + " permission to access.");
+        } catch (SecurityException e) {
+            // expected
+        }
+        try {
             // This should result in no-op.
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.switchMultiSimConfig(mTelephonyManager.getPhoneCount()));
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.switchMultiSimConfig(mTelephonyManager.getActiveModemCount()),
+                    SecurityException.class, "android.permission.MODIFY_PHONE_STATE");
+        } catch (SecurityException e) {
+            fail("TelephonyManager#switchMultiSimConfig should require MODIFY_PHONE_STATE"
+                    + "permission to access.");
         }
     }
 
