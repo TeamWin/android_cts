@@ -128,8 +128,9 @@ public class ApexShimValidationTest {
         int sessionId = Install.single(apexTestApp).setStaged().createSession();
         try (PackageInstaller.Session session =
                      InstallUtils.openPackageInstallerSession(sessionId)) {
-            session.commit(LocalIntentSender.getIntentSender());
-            Intent result = LocalIntentSender.getIntentSenderResult();
+            LocalIntentSender sender = new LocalIntentSender();
+            session.commit(sender.getIntentSender());
+            Intent result = sender.getResult();
             InstallUtils.assertStatusSuccess(result);
             return sessionId;
         }
