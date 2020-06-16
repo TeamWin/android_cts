@@ -68,7 +68,6 @@ public class TestSystemIntents {
     private final IntentEntry[] mTestIntents = {
             /* Settings-namespace intent actions */
             new IntentEntry(0, new Intent(Settings.ACTION_SETTINGS)),
-            new IntentEntry(0, new Intent(Settings.ACTION_WEBVIEW_SETTINGS)),
             new IntentEntry(0, new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)),
             new IntentEntry(0, new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)),
             new IntentEntry(0, new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
