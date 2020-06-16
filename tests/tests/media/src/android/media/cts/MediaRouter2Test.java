@@ -280,6 +280,8 @@ public class MediaRouter2Test {
         final CountDownLatch successLatch2 = new CountDownLatch(1);
         final CountDownLatch failureLatch = new CountDownLatch(1);
         final CountDownLatch stopLatch = new CountDownLatch(1);
+        final CountDownLatch onReleaseSessionLatch = new CountDownLatch(1);
+
         final List<RoutingController> createdControllers = new ArrayList<>();
 
         // Create session with this route
@@ -305,6 +307,16 @@ public class MediaRouter2Test {
                 stopLatch.countDown();
             }
         };
+
+        StubMediaRoute2ProviderService service = mService;
+        if (service != null) {
+            service.setProxy(new StubMediaRoute2ProviderService.Proxy() {
+                @Override
+                public void onReleaseSession(long requestId, String sessionId) {
+                    onReleaseSessionLatch.countDown();
+                }
+            });
+        }
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteType);
         MediaRoute2Info route1 = routes.get(ROUTE_ID1);
@@ -332,15 +344,19 @@ public class MediaRouter2Test {
             RoutingController controller1 = createdControllers.get(0);
             RoutingController controller2 = createdControllers.get(1);
 
-            // The first controller is expected to be released.
-            assertTrue(controller1.isReleased());
-
             assertNotEquals(controller1.getId(), controller2.getId());
             assertTrue(createRouteMap(controller1.getSelectedRoutes()).containsKey(
                     ROUTE_ID1));
             assertTrue(createRouteMap(controller2.getSelectedRoutes()).containsKey(
                     ROUTE_ID2));
 
+            // Transferred controllers shouldn't be obtainable.
+            assertFalse(mRouter2.getControllers().contains(controller1));
+            assertTrue(mRouter2.getControllers().contains(controller2));
+
+            // Should be able to release transferred controllers.
+            controller1.release();
+            assertTrue(onReleaseSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             releaseControllers(createdControllers);
             mRouter2.unregisterRouteCallback(routeCallback);
