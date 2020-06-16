@@ -27,6 +27,7 @@ import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA2;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA2;
+import static android.scopedstorage.cts.lib.TestUtils.adoptShellPermissionIdentity;
 import static android.scopedstorage.cts.lib.TestUtils.allowAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameDirectory;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
@@ -44,6 +45,7 @@ import static android.scopedstorage.cts.lib.TestUtils.deleteRecursively;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
+import static android.scopedstorage.cts.lib.TestUtils.dropShellPermissionIdentity;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
 import static android.scopedstorage.cts.lib.TestUtils.getAlarmsDir;
 import static android.scopedstorage.cts.lib.TestUtils.getAndroidDataDir;
@@ -111,6 +113,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.AppOpsManager;
+import android.app.WallpaperManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -2405,6 +2408,50 @@ public class ScopedStorageTest {
 
         } finally {
             uninstallApp(TEST_APP_A);
+        }
+    }
+
+    @Test
+    public void testWallpaperApisNoPermission() throws Exception {
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+        assertThrows(SecurityException.class, () -> wallpaperManager.getFastDrawable());
+        assertThrows(SecurityException.class, () -> wallpaperManager.peekFastDrawable());
+        assertThrows(SecurityException.class,
+                () -> wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM));
+    }
+
+    @Test
+    public void testWallpaperApisReadExternalStorage() throws Exception {
+        pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+        wallpaperManager.getFastDrawable();
+        wallpaperManager.peekFastDrawable();
+        wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
+    }
+
+    @Test
+    public void testWallpaperApisManageExternalStorageAppOp() throws Exception {
+        try {
+            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
+            WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+            wallpaperManager.getFastDrawable();
+            wallpaperManager.peekFastDrawable();
+            wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
+        } finally {
+            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
+        }
+    }
+
+    @Test
+    public void testWallpaperApisManageExternalStoragePrivileged() throws Exception {
+        adoptShellPermissionIdentity(Manifest.permission.MANAGE_EXTERNAL_STORAGE);
+        try {
+            WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+            wallpaperManager.getFastDrawable();
+            wallpaperManager.peekFastDrawable();
+            wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
+        } finally {
+            dropShellPermissionIdentity();
         }
     }
 
