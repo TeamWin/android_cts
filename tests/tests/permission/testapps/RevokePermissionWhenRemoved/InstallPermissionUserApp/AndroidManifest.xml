@@ -15,11 +15,11 @@
  * limitations under the License.
  -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission.cts.revokepermissionwhenremoved.installtimepermissionuserapp">
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="android.permission.cts.revokepermissionwhenremoved.installpermissionuserapp">
 
-    <uses-permission android:name="android.permission.cts.revokepermissionwhenremoved.TestInstalltimePermission" />
+    <uses-permission android:name="android.permission.cts.revokepermissionwhenremoved.TestInstallPermission" />
 
-    <application>
-    </application>
+    <application />
 </manifest>
