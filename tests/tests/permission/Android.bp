@@ -40,7 +40,8 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
-        "src/**/*.aidl"
+        "src/**/*.aidl",
+        "src/**/*.kt",
     ],
     sdk_version: "test_current",
     libs: [
