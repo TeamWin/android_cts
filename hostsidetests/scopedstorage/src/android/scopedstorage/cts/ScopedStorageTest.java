@@ -78,6 +78,7 @@ import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.queryFile;
+import static android.scopedstorage.cts.lib.TestUtils.queryFileExcludingPending;
 import static android.scopedstorage.cts.lib.TestUtils.queryImageFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryVideoFile;
 import static android.scopedstorage.cts.lib.TestUtils.readExifMetadataFromTestApp;
@@ -2439,10 +2440,18 @@ public class ScopedStorageTest {
     @Test
     public void testPendingFromFuse() throws Exception {
         final File pendingFile = new File(getDcimDir(), IMAGE_FILE_NAME);
+        final File otherPendingFile = new File(getDcimDir(), VIDEO_FILE_NAME);
         try {
             assertTrue(pendingFile.createNewFile());
             // Newly created file should have IS_PENDING set
             try (Cursor c = queryFile(pendingFile, MediaStore.MediaColumns.IS_PENDING)) {
+                assertTrue(c.moveToFirst());
+                assertThat(c.getInt(0)).isEqualTo(1);
+            }
+
+            // If we query with MATCH_EXCLUDE, we should still see this pendingFile
+            try (Cursor c = queryFileExcludingPending(pendingFile, MediaColumns.IS_PENDING)) {
+                assertThat(c.getCount()).isEqualTo(1);
                 assertTrue(c.moveToFirst());
                 assertThat(c.getInt(0)).isEqualTo(1);
             }
@@ -2454,8 +2463,35 @@ public class ScopedStorageTest {
                 assertTrue(c.moveToFirst());
                 assertThat(c.getInt(0)).isEqualTo(0);
             }
+
+            installAppWithStoragePermissions(TEST_APP_A);
+            assertCreateFilesAs(TEST_APP_A, otherPendingFile);
+            // We can't query other apps pending file from FUSE with MATCH_EXCLUDE
+            try (Cursor c = queryFileExcludingPending(otherPendingFile, MediaColumns.IS_PENDING)) {
+                assertThat(c.getCount()).isEqualTo(0);
+            }
         } finally {
             pendingFile.delete();
+            deleteFileAsNoThrow(TEST_APP_A, otherPendingFile.getAbsolutePath());
+            uninstallAppNoThrow(TEST_APP_A);
+        }
+    }
+
+    @Test
+    public void testOpenOtherPendingFilesFromFuse() throws Exception {
+        final File otherPendingFile = new File(getDcimDir(), IMAGE_FILE_NAME);
+        try {
+            installApp(TEST_APP_A);
+            assertCreateFilesAs(TEST_APP_A, otherPendingFile);
+
+            // We can read other app's pending file from FUSE via filePath
+            assertCanQueryAndOpenFile(otherPendingFile, "r");
+
+            // We can also read other app's pending file via MediaStore API
+            assertNotNull(openWithMediaProvider(otherPendingFile, "r"));
+        } finally {
+            deleteFileAsNoThrow(TEST_APP_A, otherPendingFile.getAbsolutePath());
+            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
