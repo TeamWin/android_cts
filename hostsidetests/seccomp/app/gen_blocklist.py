@@ -3,7 +3,7 @@
 # This script generates syscall name to number mapping for supported
 # architectures.  To update the output, runs:
 #
-#  $ app/gen_blacklist.py --allowed app/assets/syscalls_allowed.json \
+#  $ app/gen_blocklist.py --allowed app/assets/syscalls_allowed.json \
 #      --blocked app/assets/syscalls_blocked.json
 #
 # Note that these are just syscalls that explicitly allowed and blocked in CTS
@@ -176,7 +176,7 @@ def main():
         arch,
         collect_syscall_names_for_arch(_SYSCALLS_ALLOWED_IN_CTS, arch))
 
-  msg_do_not_modify = '# DO NOT MODIFY.  CHANGE gen_blacklist.py INSTEAD.'
+  msg_do_not_modify = '# DO NOT MODIFY.  CHANGE gen_blocklist.py INSTEAD.'
   with open(args.allowed, 'w') as f:
     print(msg_do_not_modify, file=f)
     json.dump(allowed, f, sort_keys=True, indent=2)

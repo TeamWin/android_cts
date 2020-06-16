@@ -16,6 +16,8 @@
 
 package android.telephony.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
@@ -38,7 +40,6 @@ import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.net.ConnectivityManager;
 import android.net.Uri;
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -911,19 +912,16 @@ public class TelephonyManagerTest {
     private String getWifiMacAddress() {
         WifiManager wifiManager = getContext().getSystemService(WifiManager.class);
 
-        boolean enabled = wifiManager.isWifiEnabled();
+        if (wifiManager.isWifiEnabled()) {
+            return wifiManager.getConnectionInfo().getMacAddress();
+        } else {
+            try {
+                runWithShellPermissionIdentity(() -> wifiManager.setWifiEnabled(true));
 
-        try {
-            if (!enabled) {
-                wifiManager.setWifiEnabled(true);
-            }
+                return wifiManager.getConnectionInfo().getMacAddress();
 
-            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-            return wifiInfo.getMacAddress();
-
-        } finally {
-            if (!enabled) {
-                wifiManager.setWifiEnabled(false);
+            } finally {
+                runWithShellPermissionIdentity(() -> wifiManager.setWifiEnabled(false));
             }
         }
     }
@@ -2212,20 +2210,21 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-
-        boolean rebootRequired = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelephonyManager, (tm) -> tm.doesSwitchMultiSimConfigTriggerReboot());
-
-        // It's hard to test if reboot is needed.
-        if (!rebootRequired) {
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.switchMultiSimConfig(1));
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.switchMultiSimConfig(2));
-        } else {
+        try {
+            mTelephonyManager.switchMultiSimConfig(mTelephonyManager.getActiveModemCount());
+            fail("TelephonyManager#switchMultiSimConfig should require the MODIFY_PHONE_STATE"
+                    + " permission to access.");
+        } catch (SecurityException e) {
+            // expected
+        }
+        try {
             // This should result in no-op.
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.switchMultiSimConfig(mTelephonyManager.getPhoneCount()));
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.switchMultiSimConfig(mTelephonyManager.getActiveModemCount()),
+                    SecurityException.class, "android.permission.MODIFY_PHONE_STATE");
+        } catch (SecurityException e) {
+            fail("TelephonyManager#switchMultiSimConfig should require MODIFY_PHONE_STATE"
+                    + "permission to access.");
         }
     }
 
