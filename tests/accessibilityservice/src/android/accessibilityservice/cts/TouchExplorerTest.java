@@ -99,12 +99,12 @@ import java.util.List;
 public class TouchExplorerTest {
     // Constants
     private static final float GESTURE_LENGTH_INCHES = 1.0f;
-    private static final int SWIPE_TIME_MILLIS = 400;
     private TouchExplorationStubAccessibilityService mService;
     private Instrumentation mInstrumentation;
     private UiAutomation mUiAutomation;
     private boolean mHasTouchscreen;
     private boolean mScreenBigEnough;
+    private long mSwipeTimeMillis;
     private EventCapturingHoverListener mHoverListener = new EventCapturingHoverListener(false);
     private EventCapturingTouchListener mTouchListener = new EventCapturingTouchListener(false);
     private EventCapturingClickListener mClickListener = new EventCapturingClickListener();
@@ -164,6 +164,7 @@ public class TouchExplorerTest {
                     mCenter = new Point(viewLocation[0] + midX, viewLocation[1] + midY);
                     mTapLocation = new PointF(mCenter);
                     mSwipeDistance = (viewLocation[0] + mView.getWidth()) / 4;
+                    mSwipeTimeMillis = (long) mSwipeDistance * 4;
                     mView.setOnClickListener(mClickListener);
                     mView.setOnLongClickListener(mLongClickListener);
                 });
@@ -174,7 +175,7 @@ public class TouchExplorerTest {
     @AppModeFull
     public void testSlowSwipe_initiatesTouchExploration() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
-        dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0), SWIPE_TIME_MILLIS));
+        dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0), mSwipeTimeMillis));
         mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_MOVE, ACTION_HOVER_EXIT);
         mTouchListener.assertNonePropagated();
         mService.assertPropagated(
@@ -218,8 +219,8 @@ public class TouchExplorerTest {
         final PointF finger2Start = add(dragStart, -twoFingerOffset, 0);
         final PointF finger2End = add(finger2Start, 0, mSwipeDistance);
         dispatch(
-                swipe(finger1Start, finger1End, SWIPE_TIME_MILLIS),
-                swipe(finger2Start, finger2End, SWIPE_TIME_MILLIS));
+                swipe(finger1Start, finger1End, mSwipeTimeMillis),
+                swipe(finger2Start, finger2End, mSwipeTimeMillis));
         List<MotionEvent> twoFingerPoints = mTouchListener.getRawEvents();
 
         // Check the drag events performed by a two finger drag. The moving locations would be
@@ -433,9 +434,9 @@ public class TouchExplorerTest {
         PointF finger2End = add(mTapLocation, 0, mSwipeDistance);
         PointF finger3Start = add(mTapLocation, mSwipeDistance, 0);
         PointF finger3End = add(mTapLocation, mSwipeDistance, mSwipeDistance);
-        StrokeDescription swipe1 = swipe(finger1Start, finger1End, SWIPE_TIME_MILLIS);
-        StrokeDescription swipe2 = swipe(finger2Start, finger2End, SWIPE_TIME_MILLIS);
-        StrokeDescription swipe3 = swipe(finger3Start, finger3End, SWIPE_TIME_MILLIS);
+        StrokeDescription swipe1 = swipe(finger1Start, finger1End, mSwipeTimeMillis);
+        StrokeDescription swipe2 = swipe(finger2Start, finger2End, mSwipeTimeMillis);
+        StrokeDescription swipe3 = swipe(finger3Start, finger3End, mSwipeTimeMillis);
         dispatch(swipe1, swipe2, swipe3);
         mHoverListener.assertNonePropagated();
         mTouchListener.assertPropagated(
@@ -460,10 +461,10 @@ public class TouchExplorerTest {
         // Move two fingers towards eacher slowly.
         PointF finger1Start = add(mTapLocation, -mSwipeDistance, 0);
         PointF finger1End = add(mTapLocation, -10, 0);
-        StrokeDescription swipe1 = swipe(finger1Start, finger1End, SWIPE_TIME_MILLIS);
+        StrokeDescription swipe1 = swipe(finger1Start, finger1End, mSwipeTimeMillis);
         PointF finger2Start = add(mTapLocation, mSwipeDistance, 0);
         PointF finger2End = add(mTapLocation, 10, 0);
-        StrokeDescription swipe2 = swipe(finger2Start, finger2End, SWIPE_TIME_MILLIS);
+        StrokeDescription swipe2 = swipe(finger2Start, finger2End, mSwipeTimeMillis);
         dispatch(swipe1, swipe2);
         mHoverListener.assertNonePropagated();
         mTouchListener.assertPropagated(
