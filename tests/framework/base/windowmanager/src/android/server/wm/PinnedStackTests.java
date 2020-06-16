@@ -570,6 +570,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    @FlakyTest(bugId=159062106)
     public void testDisallowMultipleTasksInPinnedStack() throws Exception {
         // Launch a test activity so that we have multiple fullscreen tasks
         launchActivity(TEST_ACTIVITY);
