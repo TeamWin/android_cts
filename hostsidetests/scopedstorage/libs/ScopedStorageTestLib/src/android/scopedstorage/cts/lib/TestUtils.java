@@ -406,7 +406,7 @@ public class TestUtils {
     @NonNull
     public static Cursor queryVideoFile(File file, String... projection) {
         return queryFile(MediaStore.Video.Media.getContentUri(sStorageVolumeName), file,
-                projection);
+                /*includePending*/ true, projection);
     }
 
     /**
@@ -416,7 +416,7 @@ public class TestUtils {
     @NonNull
     public static Cursor queryImageFile(File file, String... projection) {
         return queryFile(MediaStore.Images.Media.getContentUri(sStorageVolumeName), file,
-                projection);
+                /*includePending*/ true, projection);
     }
 
     /**
@@ -991,21 +991,37 @@ public class TestUtils {
         }
     }
 
+    /**
+     * Queries {@link ContentResolver} for a file IS_PENDING=0 and returns a {@link Cursor} with the
+     * given columns.
+     */
     @NonNull
-    public static Cursor queryFile(@NonNull File file, String... projection) {
-        return queryFile(
-                MediaStore.Files.getContentUri(sStorageVolumeName), file, projection);
+    public static Cursor queryFileExcludingPending(@NonNull File file, String... projection) {
+        return queryFile(MediaStore.Files.getContentUri(sStorageVolumeName), file,
+                /*includePending*/ false, projection);
     }
 
     @NonNull
-    private static Cursor queryFile(@NonNull Uri uri, @NonNull File file, String... projection) {
+    public static Cursor queryFile(@NonNull File file, String... projection) {
+        return queryFile(MediaStore.Files.getContentUri(sStorageVolumeName), file,
+                /*includePending*/ true, projection);
+    }
+
+    @NonNull
+    private static Cursor queryFile(@NonNull Uri uri, @NonNull File file, boolean includePending,
+            String... projection) {
         Bundle queryArgs = new Bundle();
         queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION,
                 MediaStore.MediaColumns.DATA + " = ?");
         queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS,
                 new String[] { file.getAbsolutePath() });
-        queryArgs.putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_INCLUDE);
         queryArgs.putInt(MediaStore.QUERY_ARG_MATCH_TRASHED, MediaStore.MATCH_INCLUDE);
+
+        if (includePending) {
+            queryArgs.putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_INCLUDE);
+        } else {
+            queryArgs.putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_EXCLUDE);
+        }
 
         final Cursor c = getContentResolver().query(uri, projection, queryArgs, null);
         assertThat(c).isNotNull();
