@@ -592,6 +592,56 @@ public class BlobStoreManagerTest {
     }
 
     @Test
+    public void testRecommitBlob() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+
+        try {
+            commitBlob(blobData);
+            // Verify that blob can be access after committing.
+            try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
+                assertThat(pfd).isNotNull();
+                blobData.verifyBlob(pfd);
+            }
+
+            commitBlob(blobData);
+            // Verify that blob can be access after re-committing.
+            try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
+                assertThat(pfd).isNotNull();
+                blobData.verifyBlob(pfd);
+            }
+        } finally {
+            blobData.delete();
+        }
+    }
+
+    @Test
+    public void testRecommitBlob_fromMultiplePackages() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+        final TestServiceConnection connection = bindToHelperService(HELPER_PKG);
+        try {
+            commitBlob(blobData);
+            // Verify that blob can be access after committing.
+            try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
+                assertThat(pfd).isNotNull();
+                blobData.verifyBlob(pfd);
+            }
+
+            commitBlobFromPkg(blobData, connection);
+            // Verify that blob can be access after re-committing.
+            try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
+                assertThat(pfd).isNotNull();
+                blobData.verifyBlob(pfd);
+            }
+            assertPkgCanAccess(blobData, connection);
+        } finally {
+            blobData.delete();
+            connection.unbind();
+        }
+    }
+
+    @Test
     public void testOpenBlob() throws Exception {
         final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
