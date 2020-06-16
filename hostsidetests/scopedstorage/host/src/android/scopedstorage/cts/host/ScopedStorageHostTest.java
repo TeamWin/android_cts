@@ -393,6 +393,31 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    @Test
+    public void testWallpaperApisNoPermission() throws Exception {
+        runDeviceTest("testWallpaperApisNoPermission");
+    }
+
+    @Test
+    public void testWallpaperApisReadExternalStorage() throws Exception {
+        grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
+        try {
+            runDeviceTest("testWallpaperApisReadExternalStorage");
+        } finally {
+            revokePermissions("android.permission.READ_EXTERNAL_STORAGE");
+        }
+    }
+
+    @Test
+    public void testWallpaperApisManageExternalStorageAppOp() throws Exception {
+        runDeviceTest("testWallpaperApisManageExternalStorageAppOp");
+    }
+
+    @Test
+    public void testWallpaperApisManageExternalStoragePrivileged() throws Exception {
+        runDeviceTest("testWallpaperApisManageExternalStoragePrivileged");
+    }
+
     private void grantPermissions(String... perms) throws Exception {
         for (String perm : perms) {
             executeShellCommand("pm grant android.scopedstorage.cts " + perm);
