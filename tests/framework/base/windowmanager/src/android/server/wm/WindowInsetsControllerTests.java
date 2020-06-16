@@ -30,6 +30,7 @@ import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
@@ -633,6 +634,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setViews(this);
+            getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
         }
     }
 
