@@ -315,6 +315,8 @@ public class InlineAugmentedLoginActivityTest
         Helper.mockSwitchInputMethod(sContext);
         mUiBot.waitForIdleSync();
 
+        // Set new expectations
+        sReplier.addResponse(NO_RESPONSE);
         sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
                 .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me 2")
                         .setField(usernameId, "dude2", createInlinePresentation("dude2"))
@@ -326,8 +328,7 @@ public class InlineAugmentedLoginActivityTest
         // Trigger auto-fill
         mUiBot.selectByRelativeId(ID_USERNAME);
         mUiBot.waitForIdle();
-
-        // Confirm new fill request
+        sReplier.getNextFillRequest();
         sAugmentedReplier.getNextFillRequest();
 
         // Confirm new suggestion
