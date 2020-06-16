@@ -55,6 +55,8 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
     private static final String MODE_NONE = "none";
 
     private static final String FEATURE_DEVICE_ADMIN = "feature:android.software.device_admin";
+    private static final String FEATURE_SECURE_LOCK_SCREEN =
+            "feature:android.software.secure_lock_screen";
     private static final String FEATURE_AUTOMOTIVE = "feature:android.hardware.type.automotive";
 
     private static final long SHUTDOWN_TIME_MS = 30 * 1000;
@@ -213,7 +215,8 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
     }
 
     private boolean isSupportedDevice() throws Exception {
-        return getDevice().hasFeature(FEATURE_DEVICE_ADMIN);
+        return getDevice().hasFeature(FEATURE_DEVICE_ADMIN)
+                && getDevice().hasFeature(FEATURE_SECURE_LOCK_SCREEN);
     }
 
     private boolean isAutomotiveDevice() throws Exception {
