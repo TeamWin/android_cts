@@ -259,7 +259,7 @@ public class AccessibilityTextActionTest {
 
         ReplacementSpan replacementSpanFromA11y = findSingleSpanInViewWithText(R.string.a_b,
                 ReplacementSpan.class);
-        
+
         assertEquals(contentDescription, replacementSpanFromA11y.getContentDescription());
     }
 
@@ -480,8 +480,8 @@ public class AccessibilityTextActionTest {
         final int expectedHeightInPx = textView.getLayoutParams().height;
         final float expectedTextSize = textView.getTextSize();
         final float newTextSize = 20f;
-        final float expectedNewTextSize = (int) (0.5f + TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_SP, newTextSize, displayMetrics));
+        final float expectedNewTextSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,
+                newTextSize, displayMetrics);
         makeTextViewVisibleAndSetText(textView, stringToSet);
 
         final AccessibilityNodeInfo info = sUiAutomation.getRootInActiveWindow()
