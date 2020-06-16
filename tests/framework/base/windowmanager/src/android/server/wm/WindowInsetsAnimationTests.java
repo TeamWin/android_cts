@@ -238,6 +238,7 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "b/159038873")
     public void testAnimationCallbacks_withLegacyFlags() {
         getInstrumentation().runOnMainSync(() -> {
             mActivity.getWindow().setDecorFitsSystemWindows(true);
