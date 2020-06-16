@@ -16,6 +16,8 @@
 
 package android.server.wm.jetpack;
 
+import static android.server.wm.jetpack.ExtensionUtils.assertEqualsState;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeFalse;
@@ -168,8 +170,8 @@ public class ExtensionTest extends JetpackExtensionTestBase {
         mExtension.onDeviceStateListenersChanged(true /* isEmpty */);
         TestDeviceState deviceState3 = mExtension.getDeviceState();
 
-        assertThat(deviceState1).isEqualTo(deviceState2);
-        assertThat(deviceState1).isEqualTo(deviceState3);
+        assertEqualsState(deviceState1, deviceState2);
+        assertEqualsState(deviceState1, deviceState3);
     }
 
     @Test

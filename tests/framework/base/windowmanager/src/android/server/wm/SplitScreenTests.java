@@ -208,6 +208,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
 
         // Make sure docked stack is focused. This way when we dismiss it later fullscreen stack
         // will come up.
+        launchActivity(LAUNCHING_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
 
         // Move activity back to fullscreen stack.
