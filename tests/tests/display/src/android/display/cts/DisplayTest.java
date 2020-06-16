@@ -297,14 +297,12 @@ public class DisplayTest {
         assertEquals((float)SECONDARY_DISPLAY_DPI, outMetrics.ydpi, 0.0001f);
     }
 
-    /**
-     * Test that the getFlags method returns no flag bits set for the overlay display.
-     */
+    /** Test that the getFlags method returns expected flag bits set for the overlay display. */
     @Test
     public void testFlags() {
         Display display = getSecondaryDisplay(mDisplayManager.getDisplays());
 
-        assertEquals(Display.FLAG_PRESENTATION, display.getFlags());
+        assertEquals(Display.FLAG_PRESENTATION | Display.FLAG_TRUSTED, display.getFlags());
     }
 
     /**
