@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-#include <jni.h>
+package com.android.cts.extractnativelibs.app.extract;
 
-#include <android/log.h>
-#define LOG(...) __android_log_write(ANDROID_LOG_INFO, "NativeLibOutput", __VA_ARGS__)
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
 
-jint JNI_OnLoad(JavaVM *vm, void *reserved) {
-    JNIEnv* env = nullptr;
-    if (vm->GetEnv((void**)&env, JNI_VERSION_1_6) != JNI_OK) {
-        return JNI_ERR;
+/**
+ * Launch activity for test app
+ */
+public class MainActivity extends Activity {
+    static {
+        System.loadLibrary("test_extract_native_libs");
     }
-    LOG("libtest_extract_native_libs is loaded");
-    return JNI_VERSION_1_6;
+
+    @Override
+    public void onCreate(Bundle savedOnstanceState) {
+        // The native lib should have been loaded already
+        Intent intent = new Intent(
+                getApplicationContext().getPackageName() + ".NativeLibLoaded");
+        sendBroadcast(intent);
+    }
 }

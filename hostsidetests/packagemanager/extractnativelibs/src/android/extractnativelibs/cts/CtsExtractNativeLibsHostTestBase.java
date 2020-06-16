@@ -15,7 +15,12 @@
  */
 package android.extractnativelibs.cts;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.targetprep.BuildError;
+import com.android.tradefed.targetprep.TargetSetupError;
+import com.android.tradefed.targetprep.suite.SuiteApkInstaller;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.FileUtil;
 
 import org.junit.After;
@@ -26,6 +31,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * TODO(b/147496159): add more tests.
@@ -47,15 +54,20 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
     static final String TEST_EXTRACT_CLASS =
             TEST_EXTRACT_PKG + ".ExtractNativeLibsTrueDeviceTest";
     static final String TEST_EXTRACT_TEST = "testNativeLibsExtracted";
-    static final String TEST_EXTRACT_APK = "CtsExtractNativeLibsAppTrue.apk";
+    static final String TEST_EXTRACT_APK32 = "CtsExtractNativeLibsAppTrue32.apk";
+    static final String TEST_EXTRACT_APK64 = "CtsExtractNativeLibsAppTrue64.apk";
+    static final String TEST_EXTRACT_APK_BOTH = "CtsExtractNativeLibsAppTrueBoth.apk";
     static final String TEST_NO_EXTRACT_MISALIGNED_APK =
             "CtsExtractNativeLibsAppFalseWithMisalignedLib.apk";
+
+    static final String TEST_NATIVE_LIB_LOADED_TEST = "testNativeLibsLoaded";
 
     /** Setup test dir. */
     @Before
     public void setUp() throws Exception {
         getDevice().executeShellCommand("mkdir " + TEST_REMOTE_DIR);
     }
+
     /** Uninstall apps after tests. */
     @After
     public void cleanUp() throws Exception {
@@ -64,8 +76,7 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("rm -r " + TEST_REMOTE_DIR);
     }
 
-    File getFileFromResource(String filenameInResources)
-            throws Exception {
+    File getFileFromResource(String filenameInResources) throws Exception {
         String fullResourceName = TEST_APK_RESOURCE_PREFIX + filenameInResources;
         File tempDir = FileUtil.createTempDir(TEST_HOST_TMP_DIR_PREFIX);
         File file = new File(tempDir, filenameInResources);
@@ -83,4 +94,33 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
         return file;
     }
 
+    private boolean runDeviceTestsWithArgs(String pkgName, String testClassName,
+            String testMethodName, Map<String, String> testArgs) throws Exception {
+        final String testRunner = "androidx.test.runner.AndroidJUnitRunner";
+        final long defaultTestTimeoutMs = 60 * 1000L;
+        final long defaultMaxTimeoutToOutputMs = 60 * 1000L; // 1min
+        return runDeviceTests(getDevice(), testRunner, pkgName, testClassName, testMethodName,
+                null, defaultTestTimeoutMs, defaultMaxTimeoutToOutputMs,
+                0L, true, false, testArgs);
+    }
+
+    final void installPackage(String apkFileName)
+            throws DeviceNotAvailableException, TargetSetupError {
+        SuiteApkInstaller installer = new SuiteApkInstaller();
+        installer.addTestFileName(apkFileName);
+        try {
+            installer.setUp(getTestInformation());
+        } catch (BuildError e) {
+            throw new TargetSetupError(e.getMessage(), e, getDevice().getDeviceDescriptor());
+        }
+    }
+
+    final boolean checkExtractedNativeLibDirForAbi(String abi) throws Exception {
+        final String expectedSubDirArg = "expectedSubDir";
+        final String expectedNativeLibSubDir = AbiUtils.getArchForAbi(abi);
+        final Map<String, String> testArgs = new HashMap<>();
+        testArgs.put(expectedSubDirArg, expectedNativeLibSubDir);
+        return runDeviceTestsWithArgs(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS, TEST_EXTRACT_TEST,
+                testArgs);
+    }
 }

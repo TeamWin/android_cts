@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.util.AbiUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,18 +40,122 @@ public class CtsExtractNativeLibsHostTestLegacy extends CtsExtractNativeLibsHost
     public void testNoExtractNativeLibsLegacy() throws Exception {
         installPackage(TEST_NO_EXTRACT_APK);
         assertTrue(isPackageInstalled(TEST_NO_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_NO_EXTRACT_PKG, TEST_NO_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
         assertTrue(runDeviceTests(
                 TEST_NO_EXTRACT_PKG, TEST_NO_EXTRACT_CLASS, TEST_NO_EXTRACT_TEST));
     }
 
-    /** Test with a app that has extractNativeLibs=true. */
+    /** Test with a app that has extractNativeLibs=true for 32-bit native libs. */
     @Test
     @AppModeFull
-    public void testExtractNativeLibsLegacy() throws Exception {
-        installPackage(TEST_EXTRACT_APK);
+    public void testExtractNativeLibsLegacy32() throws Exception {
+        installPackage(TEST_EXTRACT_APK32);
         assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
-        assertTrue(runDeviceTests(
-                TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS, TEST_EXTRACT_TEST));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_V7A));
+    }
+
+    /** Test with a app that has extractNativeLibs=true for 64-bit native libs. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsLegacy64() throws Exception {
+        installPackage(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app that has extractNativeLibs=true for both 32-bit and 64-bit native libs. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsLegacyBoth() throws Exception {
+        installPackage(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        // Lib will only be extracted to arm64 if 64-bit is supported
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app upgrade from 32-bit to 64-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsLegacyFor32To64Upgrade() throws Exception {
+        installPackage(TEST_EXTRACT_APK32);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackage(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app upgrade from 64-bit to 32-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsLegacyFor64To32Upgrade() throws Exception {
+        installPackage(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackage(TEST_EXTRACT_APK32);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_V7A));
+    }
+
+    /** Test with a app upgrade from both 32 and 64-bit to only 64-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsLegacyForBothTo64Upgrade() throws Exception {
+        installPackage(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackage(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app upgrade from both 32 and 64-bit to only 32-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsLegacyForBothTo32Upgrade() throws Exception {
+        installPackage(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackage(TEST_EXTRACT_APK32);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_V7A));
+    }
+
+    /** Test with a app upgrade from 32-bit to both 32-bit and 64-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsLegacyFor32ToBothUpgrade() throws Exception {
+        installPackage(TEST_EXTRACT_APK32);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackage(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
+    }
+
+    /** Test with a app upgrade from 64-bit to both 32-bit and 64-bit. */
+    @Test
+    @AppModeFull
+    public void testExtractNativeLibsLegacyFor64ToBothUpgrade() throws Exception {
+        installPackage(TEST_EXTRACT_APK64);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        installPackage(TEST_EXTRACT_APK_BOTH);
+        assertTrue(isPackageInstalled(TEST_EXTRACT_PKG));
+        assertTrue(runDeviceTests(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS,
+                TEST_NATIVE_LIB_LOADED_TEST));
+        assertTrue(checkExtractedNativeLibDirForAbi(AbiUtils.ABI_ARM_64_V8A));
     }
 
     /** Test with a app that has extractNativeLibs=false but with mis-aligned lib files */
