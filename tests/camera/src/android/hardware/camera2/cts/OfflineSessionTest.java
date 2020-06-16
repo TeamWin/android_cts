@@ -59,6 +59,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
+import junit.framework.AssertionFailedError;
+
 @RunWith(Parameterized.class)
 public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "OfflineSessionTest";
@@ -325,19 +327,19 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 }
 
                 openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
-                        ImageFormat.JPEG, OfflineTestSequence.CloseDeviceAndOpenRemote);
-
-                // Verify that the remote camera was opened correctly
-                List<ErrorLoggingService.LogEvent> allEvents = null;
-                try {
-                    allEvents = errorConnection.getLog(WAIT_FOR_STATE_TIMEOUT_MS,
-                            TestConstants.EVENT_CAMERA_CONNECT);
-                } catch (TimeoutException e) {
-                    fail("Timed out waiting on remote offline process error log!");
+                if (camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                            ImageFormat.JPEG, OfflineTestSequence.CloseDeviceAndOpenRemote)) {
+                    // Verify that the remote camera was opened correctly
+                    List<ErrorLoggingService.LogEvent> allEvents = null;
+                    try {
+                        allEvents = errorConnection.getLog(WAIT_FOR_STATE_TIMEOUT_MS,
+                                TestConstants.EVENT_CAMERA_CONNECT);
+                    } catch (TimeoutException e) {
+                        fail("Timed out waiting on remote offline process error log!");
+                    }
+                    assertNotNull("Failed to connect to camera device in remote offline process!",
+                            allEvents);
                 }
-                assertNotNull("Failed to connect to camera device in remote offline process!",
-                        allEvents);
             } finally {
                 closeDevice();
 
@@ -481,6 +483,17 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
         }
     }
 
+    private void checkForSequenceAbort(SimpleCaptureCallback resultListener, int sequenceId) {
+        ArrayList<Integer> abortedSeq = resultListener.geAbortedSequences(
+                1 /*maxNumbAborts*/);
+        assertNotNull("No aborted capture sequence ids present", abortedSeq);
+        assertTrue("Unexpected number of aborted capture sequence ids : " +
+                abortedSeq.size() + " expected 1", abortedSeq.size() == 1);
+        assertTrue("Unexpected abort capture sequence id: " +
+                abortedSeq.get(0).intValue() + " expected capture sequence id: " +
+                sequenceId, abortedSeq.get(0).intValue() == sequenceId);
+    }
+
     private void verifyCaptureResults(SimpleCaptureCallback resultListener,
             SimpleImageReaderListener imageListener, int sequenceId, boolean offlineResults)
             throws Exception {
@@ -524,8 +537,18 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 sequenceLastFrameNumber, lastFrameNumberReceived);
     }
 
-    private void camera2OfflineSessionTest(String cameraId, Size offlineSize, int offlineFormat,
+    /**
+     * Verify offline session behavior during common use cases
+     *
+     * @param cameraId      Id of the camera device under test
+     * @param offlineSize   The offline surface size
+     * @param offlineFormat The offline surface pixel format
+     * @param testSequence  Specific scenario to be verified
+     * @return true if the offline session switch is successful, false if there is any failure.
+     */
+    private boolean camera2OfflineSessionTest(String cameraId, Size offlineSize, int offlineFormat,
             OfflineTestSequence testSequence) throws Exception {
+        boolean ret = false;
         int remoteOfflinePID = -1;
         Size previewSize = mOrderedPreviewSizes.get(0);
         for (Size sz : mOrderedPreviewSizes) {
@@ -571,7 +594,7 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
 
         if (!mSession.supportsOfflineProcessing(mReaderSurface)) {
             Log.i(TAG, "Camera does not support offline processing for still capture output");
-            return;
+            return false;
         }
 
         // Configure the requests.
@@ -626,8 +649,16 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
             verify(mockOfflineCb, times(0)).onError(offlineSession,
                     CameraOfflineSessionCallback.STATUS_INTERNAL_ERROR);
 
-            verifyCaptureResults(resultListener, null /*imageListener*/, repeatingSeqId,
-                    false /*offlineResults*/);
+            try {
+                verifyCaptureResults(resultListener, null /*imageListener*/, repeatingSeqId,
+                        false /*offlineResults*/);
+            } catch (AssertionFailedError e) {
+                if (testSequence == OfflineTestSequence.RepeatingSequenceAbort) {
+                    checkForSequenceAbort(resultListener, repeatingSeqId);
+                } else {
+                    throw e;
+                }
+            }
             verifyCaptureResults(offlineResultListener, null /*imageListener*/, offlineSeqId,
                     true /*offlineResults*/);
         } else {
@@ -636,14 +667,7 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
 
             switch (testSequence) {
                 case RepeatingSequenceAbort:
-                    ArrayList<Integer> abortedSeq = resultListener.geAbortedSequences(
-                            1 /*maxNumbAborts*/);
-                    assertNotNull("No aborted capture sequence ids present", abortedSeq);
-                    assertTrue("Unexpected number of aborted capture sequence ids : " +
-                            abortedSeq.size() + " expected 1", abortedSeq.size() == 1);
-                    assertTrue("Unexpected abort capture sequence id: " +
-                            abortedSeq.get(0).intValue() + " expected capture sequence id: " +
-                            repeatingSeqId, abortedSeq.get(0).intValue() == repeatingSeqId);
+                    checkForSequenceAbort(resultListener, repeatingSeqId);
                     break;
                 case CloseDeviceAndOpenRemote:
                     // According to the documentation, closing the initial camera device and
@@ -741,11 +765,15 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
             offlineCb.waitForState(BlockingOfflineSessionCallback.STATE_CLOSED,
                   WAIT_FOR_STATE_TIMEOUT_MS);
             verify(mockOfflineCb, times(1)).onClosed(offlineSession);
+
+            ret = true;
         }
 
         closeImageReader();
 
         stopRemoteOfflineTestProcess(remoteOfflinePID);
+
+        return ret;
     }
 
     private void checkInitialResults(SimpleCaptureCallback resultListener) {
