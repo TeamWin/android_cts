@@ -178,6 +178,11 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testCreateDoesntUpsert() throws Exception {
+        runDeviceTest("testCreateDoesntUpsert");
+    }
+
+    @Test
     public void testCaseInsensitivity() throws Exception {
         runDeviceTest("testAndroidDataObbCannotBeDeleted");
     }
