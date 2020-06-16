@@ -28,6 +28,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     private static final String ENABLED_TEST_APK = "CtsCrossProfileEnabledApp.apk";
     private static final String USER_ENABLED_TEST_APK = "CtsCrossProfileUserEnabledApp.apk";
     private static final String ENABLED_NO_PERMS_TEST_APK = "CtsCrossProfileEnabledNoPermsApp.apk";
+    private static final String QUIET_MODE_ENABLED_TEST_APK = "CtsQuietModeEnabledApp.apk";
     private static final String NOT_ENABLED_TEST_APK = "CtsCrossProfileNotEnabledApp.apk";
     private static final String ENABLED_TEST_PACKAGE = "com.android.cts.crossprofileenabledapp";
     private static final String USER_ENABLED_TEST_PACKAGE =
@@ -36,6 +37,8 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
             "com.android.cts.crossprofileenablednopermsapp";
     private static final String NOT_ENABLED_TEST_PACKAGE =
             "com.android.cts.crossprofilenotenabledapp";
+    private static final String QUIET_MODE_ENABLED_TEST_PACKAGE =
+            "com.android.cts.quietmodeenabledapp";
 
     private int mProfileId;
     private String mOriginalLauncher;
@@ -194,6 +197,8 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
         assertThat(result).doesNotContain(
                 buildReceivedBroadcastRegex(actionName,
                         "CrossProfileNotEnabledAppReceiver"));
+        assertThat(result).contains(
+                buildReceivedBroadcastRegex(actionName, "ModifyQuietModeEnabledAppReceiver"));
     }
 
     private String buildReceivedBroadcastRegex(String actionName, String className) {
@@ -231,6 +236,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
         getDevice().uninstallPackage(USER_ENABLED_TEST_PACKAGE);
         getDevice().uninstallPackage(ENABLED_NO_PERMS_TEST_PACKAGE);
         getDevice().uninstallPackage(NOT_ENABLED_TEST_PACKAGE);
+        getDevice().uninstallPackage(QUIET_MODE_ENABLED_TEST_PACKAGE);
     }
 
     private void installCrossProfileApps()
@@ -239,6 +245,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
         installCrossProfileApp(USER_ENABLED_TEST_APK, /* grantPermissions= */ true);
         installCrossProfileApp(NOT_ENABLED_TEST_APK, /* grantPermissions= */ true);
         installCrossProfileApp(ENABLED_NO_PERMS_TEST_APK, /* grantPermissions= */  false);
+        installCrossProfileApp(QUIET_MODE_ENABLED_TEST_APK, /* grantPermissions= */  true);
     }
 
     private void enableCrossProfileAppsOp() throws DeviceNotAvailableException {
