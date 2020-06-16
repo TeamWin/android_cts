@@ -103,7 +103,7 @@ public class CommonExternalStorageTest extends AndroidTestCase {
      * Verify we can write to our own package dirs.
      */
     public void testAllPackageDirsWritable() throws Exception {
-        final long testValue = 12345000;
+        final long testValue = 1234500000000L;
         final List<File> paths = getAllPackageSpecificPaths(getContext());
         for (File path : paths) {
             assertNotNull("Valid media must be inserted during CTS", path);
