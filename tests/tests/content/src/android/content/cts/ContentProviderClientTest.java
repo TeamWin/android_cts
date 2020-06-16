@@ -17,11 +17,13 @@
 package android.content.cts;
 
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.RETURNS_DEFAULTS;
 
 import android.content.ContentProvider;
 import android.content.ContentProviderClient;
@@ -83,12 +85,10 @@ public class ContentProviderClientTest extends AndroidTestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        mIContentProvider = mock(IContentProvider.class, invocation -> {
-            throw new UnsupportedOperationException("unimplemented mock method");
-        });
+        mIContentProvider = mock(IContentProvider.class, RETURNS_DEFAULTS);
         mICancellationSignal = mock(ICancellationSignal.class);
 
-        when(mIContentProvider.createCancellationSignal()).thenReturn(mICancellationSignal);
+        doReturn(mICancellationSignal).when(mIContentProvider).createCancellationSignal();
 
         mContentResolver = spy(
                 new MockContentResolver(getContext().createFeatureContext(FEATURE_ID)));
@@ -115,8 +115,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testQueryTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.query(PACKAGE_NAME, FEATURE_ID, URI, null, ARGS,
-                mICancellationSignal)).thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).query(PACKAGE_NAME, FEATURE_ID, URI, null,
+                ARGS, mICancellationSignal);
 
         testTimeout(() -> mContentProviderClient.query(URI, null, ARGS, mCancellationSignal));
 
@@ -137,8 +137,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testGetTypeTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.getType(URI))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).getType(URI);
 
         testTimeout(() -> mContentProviderClient.getType(URI));
 
@@ -151,8 +150,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testGetStreamTypesTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.getStreamTypes(URI, ""))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).getStreamTypes(URI, "");
 
         testTimeout(() -> mContentProviderClient.getStreamTypes(URI, ""));
 
@@ -165,8 +163,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testCanonicalizeTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.canonicalize(PACKAGE_NAME, FEATURE_ID, URI))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).canonicalize(PACKAGE_NAME, FEATURE_ID, URI);
 
         testTimeout(() -> mContentProviderClient.canonicalize(URI));
 
@@ -179,8 +176,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testUncanonicalizeTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.uncanonicalize(PACKAGE_NAME, FEATURE_ID, URI))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).uncanonicalize(PACKAGE_NAME, FEATURE_ID, URI);
 
         testTimeout(() -> mContentProviderClient.uncanonicalize(URI));
 
@@ -194,8 +190,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testRefreshTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.refresh(PACKAGE_NAME, FEATURE_ID, URI, ARGS, mICancellationSignal))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).refresh(PACKAGE_NAME, FEATURE_ID, URI, ARGS,
+                mICancellationSignal);
 
         testTimeout(() -> mContentProviderClient.refresh(URI, ARGS, mCancellationSignal));
 
@@ -215,8 +211,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testInsertTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.insert(PACKAGE_NAME, FEATURE_ID, URI, VALUES, EXTRAS))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).insert(PACKAGE_NAME, FEATURE_ID, URI,
+                VALUES, EXTRAS);
 
         testTimeout(() -> mContentProviderClient.insert(URI, VALUES, EXTRAS));
 
@@ -229,8 +225,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testBulkInsertTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.bulkInsert(PACKAGE_NAME, FEATURE_ID, URI, VALUES_ARRAY))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).bulkInsert(PACKAGE_NAME, FEATURE_ID, URI,
+                VALUES_ARRAY);
 
         testTimeout(() -> mContentProviderClient.bulkInsert(URI, VALUES_ARRAY));
 
@@ -243,8 +239,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testDeleteTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.delete(PACKAGE_NAME, FEATURE_ID, URI, EXTRAS))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).delete(PACKAGE_NAME, FEATURE_ID, URI,
+                EXTRAS);
 
         testTimeout(() -> mContentProviderClient.delete(URI, EXTRAS));
 
@@ -257,8 +253,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testUpdateTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.update(PACKAGE_NAME, FEATURE_ID, URI, VALUES, EXTRAS))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).update(PACKAGE_NAME, FEATURE_ID, URI,
+                VALUES, EXTRAS);
 
         testTimeout(() -> mContentProviderClient.update(URI, VALUES, EXTRAS));
 
@@ -274,8 +270,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
     public void testOpenFileTimeout()
             throws RemoteException, InterruptedException, FileNotFoundException {
-        when(mIContentProvider.openFile(PACKAGE_NAME, FEATURE_ID, URI, MODE, mICancellationSignal,
-                null)).thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).openFile(PACKAGE_NAME, FEATURE_ID, URI, MODE,
+                mICancellationSignal, null);
 
         testTimeout(() -> mContentProviderClient.openFile(URI, MODE, mCancellationSignal));
 
@@ -299,8 +295,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
     public void testOpenAssetFileTimeout()
             throws RemoteException, InterruptedException, FileNotFoundException {
-        when(mIContentProvider.openAssetFile(PACKAGE_NAME, FEATURE_ID, URI, MODE,
-                mICancellationSignal)).thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).openAssetFile(PACKAGE_NAME, FEATURE_ID, URI,
+                MODE, mICancellationSignal);
 
         testTimeout(() -> mContentProviderClient.openAssetFile(URI, MODE, mCancellationSignal));
 
@@ -332,9 +328,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
     public void testOpenTypedAssetFileTimeout()
             throws RemoteException, InterruptedException, FileNotFoundException {
-        when(mIContentProvider.openTypedAssetFile(PACKAGE_NAME, FEATURE_ID, URI, MODE, ARGS,
-                mICancellationSignal))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).openTypedAssetFile(PACKAGE_NAME, FEATURE_ID,
+                URI, MODE, ARGS, mICancellationSignal);
 
         testTimeout(() -> mContentProviderClient.openTypedAssetFile(URI, MODE, ARGS,
                 mCancellationSignal));
@@ -360,8 +355,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
     public void testApplyBatchTimeout()
             throws RemoteException, InterruptedException, OperationApplicationException {
-        when(mIContentProvider.applyBatch(PACKAGE_NAME, FEATURE_ID, AUTHORITY, OPS))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).applyBatch(PACKAGE_NAME, FEATURE_ID,
+                AUTHORITY, OPS);
 
         testTimeout(() -> mContentProviderClient.applyBatch(AUTHORITY, OPS));
 
@@ -375,8 +370,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
     }
 
     public void testCallTimeout() throws RemoteException, InterruptedException {
-        when(mIContentProvider.call(PACKAGE_NAME, FEATURE_ID, AUTHORITY, METHOD, ARG, ARGS))
-                .thenAnswer(ANSWER_SLEEP);
+        doAnswer(ANSWER_SLEEP).when(mIContentProvider).call(PACKAGE_NAME, FEATURE_ID, AUTHORITY,
+                METHOD, ARG, ARGS);
 
         testTimeout(() -> mContentProviderClient.call(AUTHORITY, METHOD, ARG, ARGS));
 
