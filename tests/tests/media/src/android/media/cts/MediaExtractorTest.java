@@ -349,7 +349,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     public void testGetAudioPresentations() throws Exception {
-        final int resid = R.raw.MultiLangPerso_1PID_PC0_Select_AC4_H265_DVB_50fps;
+        final int resid = R.raw.MultiLangPerso_1PID_PC0_Select_AC4_H265_DVB_50fps_Audio_Only;
         TestMediaDataSource dataSource = setDataSource(resid);
         int ac4TrackIndex = -1;
         for (int i = 0; i < mExtractor.getTrackCount(); i++) {
@@ -360,9 +360,15 @@ public class MediaExtractorTest extends AndroidTestCase {
                 break;
             }
         }
-        assertNotEquals(
-                "AC4 track was not found in MultiLangPerso_1PID_PC0_Select_AC4_H265_DVB_50fps",
-                -1, ac4TrackIndex);
+
+        // Not all devices support AC4
+        if (ac4TrackIndex == -1) {
+            List<AudioPresentation> presentations =
+                    mExtractor.getAudioPresentations(0 /*trackIndex*/);
+            assertNotNull(presentations);
+            assertTrue(presentations.isEmpty());
+            return;
+        }
 
         // The test file has two sets of audio presentations. The presentation set
         // changes for every 100 audio presentation descriptors between two presentations.
