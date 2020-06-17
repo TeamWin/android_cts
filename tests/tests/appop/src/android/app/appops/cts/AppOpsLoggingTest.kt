@@ -515,7 +515,7 @@ class AppOpsLoggingTest {
 
             assertThat(asyncNoted[0].message).contains(locationListener::class.java.name)
             assertThat(asyncNoted[0].message).contains(
-                Integer.toHexString(System.identityHashCode(locationListener)))
+                Integer.toString(System.identityHashCode(locationListener)))
         }
     }
 
