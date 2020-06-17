@@ -46,6 +46,7 @@ import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
 private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
+private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
 
 /**
  * Test for auto revoke
@@ -278,39 +279,10 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     private fun assertPermission(state: Int, packageName: String = APK_PACKAGE_NAME) {
-        // For some reason this incorrectly always returns PERMISSION_DENIED
-//        runWithShellPermissionIdentity {
-//            assertEquals(
-//                permissionStateToString(state),
-//                permissionStateToString(context.packageManager.checkPermission(READ_CALENDAR, APK_PACKAGE_NAME)))
-//        }
-
-        try {
-            goToPermissions(packageName)
-
-            waitForIdle()
-            val ui = instrumentation.uiAutomation.rootInActiveWindow
-            val permStateSection = ui.lowestCommonAncestor(
-                    { node -> node.textAsString.equals("Allowed", ignoreCase = true) },
-                    { node -> node.textAsString.equals("Denied", ignoreCase = true) }
-            ).assertNotNull {
-                "Cannot find permissions state section in\n${uiDump(ui)}"
-            }
-            val sectionHeaderIndex = permStateSection.children.indexOfFirst {
-                it?.depthFirstSearch { node ->
-                    node.textAsString.equals(
-                            if (state == PERMISSION_GRANTED) "Allowed" else "Denied",
-                            ignoreCase = true)
-                } != null
-            }
-            permStateSection.getChild(sectionHeaderIndex + 1).depthFirstSearch { node ->
-                node.textAsString.equals("Calendar", ignoreCase = true)
-            }.assertNotNull {
-                "Permission must be ${permissionStateToString(state)}\n${uiDump(ui)}"
-            }
-        } finally {
-            goBack()
-            goBack()
+        runWithShellPermissionIdentity {
+            assertEquals(
+                permissionStateToString(state),
+                permissionStateToString(context.packageManager.checkPermission(READ_CALENDAR, APK_PACKAGE_NAME)))
         }
     }
 
