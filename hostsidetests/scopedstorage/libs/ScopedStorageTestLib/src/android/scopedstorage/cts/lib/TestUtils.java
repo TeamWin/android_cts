@@ -91,6 +91,7 @@ public class TestUtils {
     public static final String CAN_READ_WRITE_QUERY =
             "android.scopedstorage.cts.can_read_and_write";
     public static final String READDIR_QUERY = "android.scopedstorage.cts.readdir";
+    public static final String SETATTR_QUERY = "android.scopedstorage.cts.setattr";
 
     public static final String STR_DATA1 = "Just some random text";
     public static final String STR_DATA2 = "More arbitrary stuff";
@@ -251,6 +252,16 @@ public class TestUtils {
             throws Exception {
         return getResultFromTestApp(
                 testApp, path, forWrite ? OPEN_FILE_FOR_WRITE_QUERY : OPEN_FILE_FOR_READ_QUERY);
+    }
+
+    /**
+     * Makes the given {@code testApp} setattr for given file path.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean setAttrAs(TestApp testApp, String path)
+            throws Exception {
+        return getResultFromTestApp(testApp, path, SETATTR_QUERY);
     }
 
     /**
