@@ -27,6 +27,7 @@ import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA2;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA2;
+import static android.scopedstorage.cts.lib.TestUtils.adoptShellPermissionIdentity;
 import static android.scopedstorage.cts.lib.TestUtils.allowAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameDirectory;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
@@ -44,6 +45,7 @@ import static android.scopedstorage.cts.lib.TestUtils.deleteRecursively;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
+import static android.scopedstorage.cts.lib.TestUtils.dropShellPermissionIdentity;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
 import static android.scopedstorage.cts.lib.TestUtils.getAlarmsDir;
 import static android.scopedstorage.cts.lib.TestUtils.getAndroidDataDir;
@@ -78,6 +80,7 @@ import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.queryFile;
+import static android.scopedstorage.cts.lib.TestUtils.queryFileExcludingPending;
 import static android.scopedstorage.cts.lib.TestUtils.queryImageFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryVideoFile;
 import static android.scopedstorage.cts.lib.TestUtils.readExifMetadataFromTestApp;
@@ -110,6 +113,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.AppOpsManager;
+import android.app.WallpaperManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -2407,6 +2411,50 @@ public class ScopedStorageTest {
         }
     }
 
+    @Test
+    public void testWallpaperApisNoPermission() throws Exception {
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+        assertThrows(SecurityException.class, () -> wallpaperManager.getFastDrawable());
+        assertThrows(SecurityException.class, () -> wallpaperManager.peekFastDrawable());
+        assertThrows(SecurityException.class,
+                () -> wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM));
+    }
+
+    @Test
+    public void testWallpaperApisReadExternalStorage() throws Exception {
+        pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+        wallpaperManager.getFastDrawable();
+        wallpaperManager.peekFastDrawable();
+        wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
+    }
+
+    @Test
+    public void testWallpaperApisManageExternalStorageAppOp() throws Exception {
+        try {
+            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
+            WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+            wallpaperManager.getFastDrawable();
+            wallpaperManager.peekFastDrawable();
+            wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
+        } finally {
+            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
+        }
+    }
+
+    @Test
+    public void testWallpaperApisManageExternalStoragePrivileged() throws Exception {
+        adoptShellPermissionIdentity(Manifest.permission.MANAGE_EXTERNAL_STORAGE);
+        try {
+            WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+            wallpaperManager.getFastDrawable();
+            wallpaperManager.peekFastDrawable();
+            wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
+        } finally {
+            dropShellPermissionIdentity();
+        }
+    }
+
     /**
      * Verifies that files created by {@code otherApp} in shared locations {@code imageDir}
      * and {@code documentDir} follow the scoped storage rules. Requires the running app to hold
@@ -2439,10 +2487,18 @@ public class ScopedStorageTest {
     @Test
     public void testPendingFromFuse() throws Exception {
         final File pendingFile = new File(getDcimDir(), IMAGE_FILE_NAME);
+        final File otherPendingFile = new File(getDcimDir(), VIDEO_FILE_NAME);
         try {
             assertTrue(pendingFile.createNewFile());
             // Newly created file should have IS_PENDING set
             try (Cursor c = queryFile(pendingFile, MediaStore.MediaColumns.IS_PENDING)) {
+                assertTrue(c.moveToFirst());
+                assertThat(c.getInt(0)).isEqualTo(1);
+            }
+
+            // If we query with MATCH_EXCLUDE, we should still see this pendingFile
+            try (Cursor c = queryFileExcludingPending(pendingFile, MediaColumns.IS_PENDING)) {
+                assertThat(c.getCount()).isEqualTo(1);
                 assertTrue(c.moveToFirst());
                 assertThat(c.getInt(0)).isEqualTo(1);
             }
@@ -2454,8 +2510,35 @@ public class ScopedStorageTest {
                 assertTrue(c.moveToFirst());
                 assertThat(c.getInt(0)).isEqualTo(0);
             }
+
+            installAppWithStoragePermissions(TEST_APP_A);
+            assertCreateFilesAs(TEST_APP_A, otherPendingFile);
+            // We can't query other apps pending file from FUSE with MATCH_EXCLUDE
+            try (Cursor c = queryFileExcludingPending(otherPendingFile, MediaColumns.IS_PENDING)) {
+                assertThat(c.getCount()).isEqualTo(0);
+            }
         } finally {
             pendingFile.delete();
+            deleteFileAsNoThrow(TEST_APP_A, otherPendingFile.getAbsolutePath());
+            uninstallAppNoThrow(TEST_APP_A);
+        }
+    }
+
+    @Test
+    public void testOpenOtherPendingFilesFromFuse() throws Exception {
+        final File otherPendingFile = new File(getDcimDir(), IMAGE_FILE_NAME);
+        try {
+            installApp(TEST_APP_A);
+            assertCreateFilesAs(TEST_APP_A, otherPendingFile);
+
+            // We can read other app's pending file from FUSE via filePath
+            assertCanQueryAndOpenFile(otherPendingFile, "r");
+
+            // We can also read other app's pending file via MediaStore API
+            assertNotNull(openWithMediaProvider(otherPendingFile, "r"));
+        } finally {
+            deleteFileAsNoThrow(TEST_APP_A, otherPendingFile.getAbsolutePath());
+            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 

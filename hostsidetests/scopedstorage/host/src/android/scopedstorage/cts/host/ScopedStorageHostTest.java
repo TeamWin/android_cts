@@ -352,6 +352,16 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testOpenOtherPendingFilesFromFuse() throws Exception {
+        grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
+        try {
+            runDeviceTest("testOpenOtherPendingFilesFromFuse");
+        } finally {
+            revokePermissions("android.permission.READ_EXTERNAL_STORAGE");
+        }
+    }
+
+    @Test
     public void testAccess_file() throws Exception {
         grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
         try {
@@ -381,6 +391,31 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
         } finally {
             revokePermissions("android.permission.READ_EXTERNAL_STORAGE");
         }
+    }
+
+    @Test
+    public void testWallpaperApisNoPermission() throws Exception {
+        runDeviceTest("testWallpaperApisNoPermission");
+    }
+
+    @Test
+    public void testWallpaperApisReadExternalStorage() throws Exception {
+        grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
+        try {
+            runDeviceTest("testWallpaperApisReadExternalStorage");
+        } finally {
+            revokePermissions("android.permission.READ_EXTERNAL_STORAGE");
+        }
+    }
+
+    @Test
+    public void testWallpaperApisManageExternalStorageAppOp() throws Exception {
+        runDeviceTest("testWallpaperApisManageExternalStorageAppOp");
+    }
+
+    @Test
+    public void testWallpaperApisManageExternalStoragePrivileged() throws Exception {
+        runDeviceTest("testWallpaperApisManageExternalStoragePrivileged");
     }
 
     private void grantPermissions(String... perms) throws Exception {
