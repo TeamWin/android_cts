@@ -74,7 +74,7 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsControllerTests
  */
-//TODO(b/159038873) @Presubmit
+@Presubmit
 public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds
@@ -180,6 +180,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "b/159038873")
     public void testImeShowAndHide() {
         showImeWithHardKeyboardSetting(mObjectTracker);
 
@@ -461,6 +462,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "b/159038873")
     public void testShowImeOnCreate() throws Exception {
         showImeWithHardKeyboardSetting(mObjectTracker);
 
