@@ -16,7 +16,6 @@
 
 package com.android.cts.appdataisolation.appa;
 
-import static com.android.cts.appdataisolation.common.FileUtils.assertDirDoesNotExist;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsNotAccessible;
 
 import android.app.Service;
@@ -35,25 +34,25 @@ public class IsolatedService extends Service {
         public void assertDataIsolated() throws RemoteException {
             try {
                 ApplicationInfo applicationInfo = getApplicationInfo();
-                assertDirDoesNotExist(applicationInfo.dataDir);
-                assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
-                assertDirDoesNotExist("/data/data/" + getPackageName());
-                assertDirDoesNotExist("/data/misc/profiles/cur/0/" + getPackageName());
+                assertDirIsNotAccessible(applicationInfo.dataDir);
+                assertDirIsNotAccessible(applicationInfo.deviceProtectedDataDir);
+                assertDirIsNotAccessible("/data/data/" + getPackageName());
+                assertDirIsNotAccessible("/data/misc/profiles/cur/0/" + getPackageName());
                 assertDirIsNotAccessible("/data/misc/profiles/ref");
 
-                assertDirDoesNotExist(FileUtils.replacePackageAWithPackageB(
+                assertDirIsNotAccessible(FileUtils.replacePackageAWithPackageB(
                         applicationInfo.dataDir));
-                assertDirDoesNotExist(FileUtils.replacePackageAWithPackageB(
+                assertDirIsNotAccessible(FileUtils.replacePackageAWithPackageB(
                         applicationInfo.deviceProtectedDataDir));
-                assertDirDoesNotExist("/data/data/" + FileUtils.APPB_PKG);
-                assertDirDoesNotExist("/data/misc/profiles/cur/0/" + FileUtils.APPB_PKG);
+                assertDirIsNotAccessible("/data/data/" + FileUtils.APPB_PKG);
+                assertDirIsNotAccessible("/data/misc/profiles/cur/0/" + FileUtils.APPB_PKG);
 
-                assertDirDoesNotExist(FileUtils.replacePackageAWithNotInstalledPkg(
+                assertDirIsNotAccessible(FileUtils.replacePackageAWithNotInstalledPkg(
                         applicationInfo.dataDir));
-                assertDirDoesNotExist(FileUtils.replacePackageAWithNotInstalledPkg(
+                assertDirIsNotAccessible(FileUtils.replacePackageAWithNotInstalledPkg(
                         applicationInfo.deviceProtectedDataDir));
-                assertDirDoesNotExist("/data/data/" + FileUtils.NOT_INSTALLED_PKG);
-                assertDirDoesNotExist("/data/misc/profiles/cur/0/" + FileUtils.NOT_INSTALLED_PKG);
+                assertDirIsNotAccessible("/data/data/" + FileUtils.NOT_INSTALLED_PKG);
+                assertDirIsNotAccessible("/data/misc/profiles/cur/0/" + FileUtils.NOT_INSTALLED_PKG);
             } catch (Throwable e) {
                 throw new IllegalStateException(e.getMessage());
             }

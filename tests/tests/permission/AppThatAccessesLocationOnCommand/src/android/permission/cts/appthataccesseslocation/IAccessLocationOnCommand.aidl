@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-#include <jni.h>
+package android.permission.cts.appthataccesseslocation;
 
-#include <android/log.h>
-#define LOG(...) __android_log_write(ANDROID_LOG_INFO, "NativeLibOutput", __VA_ARGS__)
-
-jint JNI_OnLoad(JavaVM *vm, void *reserved) {
-    JNIEnv* env = nullptr;
-    if (vm->GetEnv((void**)&env, JNI_VERSION_1_6) != JNI_OK) {
-        return JNI_ERR;
-    }
-    LOG("libtest_extract_native_libs is loaded");
-    return JNI_VERSION_1_6;
+interface IAccessLocationOnCommand {
+    /** Access location on command */
+    void accessLocation();
 }
