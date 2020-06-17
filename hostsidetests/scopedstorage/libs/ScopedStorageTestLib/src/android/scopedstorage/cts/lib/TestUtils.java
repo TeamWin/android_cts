@@ -65,6 +65,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -165,7 +166,21 @@ public class TestUtils {
     /**
      * Executes a shell command.
      */
-    public static String executeShellCommand(String cmd) throws Exception {
+    public static String executeShellCommand(String command) throws IOException {
+        int attempt = 0;
+        while (attempt++ < 5) {
+            try {
+                return executeShellCommandInternal(command);
+            } catch (InterruptedIOException e) {
+                // Hmm, we had trouble executing the shell command; the best we
+                // can do is try again a few more times
+                Log.v(TAG, "Trouble executing " + command + "; trying again", e);
+            }
+        }
+        throw new IOException("Failed to execute " + command);
+    }
+
+    private static String executeShellCommandInternal(String cmd) throws IOException {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try (FileInputStream output = new FileInputStream(
                      uiAutomation.executeShellCommand(cmd).getFileDescriptor())) {
