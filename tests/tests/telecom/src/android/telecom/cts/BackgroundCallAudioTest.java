@@ -575,6 +575,7 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             assertAudioMode(audioManager, MODE_CALL_SCREENING);
         }
         assertConnectionState(connection, Connection.STATE_ACTIVE);
+        assertTrue(mTelecomManager.isRinging());
 
         call.disconnect();
         assertCallState(call, Call.STATE_DISCONNECTED);
