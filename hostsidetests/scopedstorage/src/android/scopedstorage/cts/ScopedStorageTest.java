@@ -162,14 +162,21 @@ public class ScopedStorageTest {
     static final String TAG = "ScopedStorageTest";
     static final String THIS_PACKAGE_NAME = getContext().getPackageName();
 
-    static final String TEST_DIRECTORY_NAME = "ScopedStorageTestDirectory";
+    /**
+     * To help avoid flaky tests, give ourselves a unique nonce to be used for
+     * all filesystem paths, so that we don't risk conflicting with previous
+     * test runs.
+     */
+    static final String NONCE = String.valueOf(System.nanoTime());
 
-    static final String AUDIO_FILE_NAME = "ScopedStorageTest_file.mp3";
-    static final String PLAYLIST_FILE_NAME = "ScopedStorageTest_file.m3u";
-    static final String SUBTITLE_FILE_NAME = "ScopedStorageTest_file.srt";
-    static final String VIDEO_FILE_NAME = "ScopedStorageTest_file.mp4";
-    static final String IMAGE_FILE_NAME = "ScopedStorageTest_file.jpg";
-    static final String NONMEDIA_FILE_NAME = "ScopedStorageTest_file.pdf";
+    static final String TEST_DIRECTORY_NAME = "ScopedStorageTestDirectory" + NONCE;
+
+    static final String AUDIO_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".mp3";
+    static final String PLAYLIST_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".m3u";
+    static final String SUBTITLE_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".srt";
+    static final String VIDEO_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".mp4";
+    static final String IMAGE_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".jpg";
+    static final String NONMEDIA_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".pdf";
 
     static final String FILE_CREATION_ERROR_MESSAGE = "No such file or directory";
 

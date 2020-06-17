@@ -93,9 +93,16 @@ public class LegacyStorageTest {
     private static final String TAG = "LegacyFileAccessTest";
     static final String THIS_PACKAGE_NAME = InstrumentationRegistry.getContext().getPackageName();
 
-    static final String IMAGE_FILE_NAME = "LegacyStorageTest_file.jpg";
-    static final String VIDEO_FILE_NAME = "LegacyStorageTest_file.mp4";
-    static final String NONMEDIA_FILE_NAME = "LegacyStorageTest_file.pdf";
+    /**
+     * To help avoid flaky tests, give ourselves a unique nonce to be used for
+     * all filesystem paths, so that we don't risk conflicting with previous
+     * test runs.
+     */
+    static final String NONCE = String.valueOf(System.nanoTime());
+
+    static final String IMAGE_FILE_NAME = "LegacyStorageTest_file_" + NONCE + ".jpg";
+    static final String VIDEO_FILE_NAME = "LegacyStorageTest_file_" + NONCE + ".mp4";
+    static final String NONMEDIA_FILE_NAME = "LegacyStorageTest_file_" + NONCE + ".pdf";
 
     private static final TestApp TEST_APP_A = new TestApp("TestAppA",
             "android.scopedstorage.cts.testapp.A", 1, false, "CtsScopedStorageTestAppA.apk");
