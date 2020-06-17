@@ -150,11 +150,13 @@ public class AccessibilityWindowQueryTest {
     }
 
     private final AccessibilityEventFilter mDividerPresentFilter = (event) ->
-            (event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED)
+            (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+                    || event.getEventType() == TYPE_WINDOWS_CHANGED)
                     && isDividerWindowPresent();
 
     private final AccessibilityEventFilter mDividerAbsentFilter = (event) ->
-            (event.getEventType() == AccessibilityEvent.TYPE_WINDOWS_CHANGED)
+            (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+                    || event.getEventType() == TYPE_WINDOWS_CHANGED)
                     && !isDividerWindowPresent();
 
     @MediumTest
@@ -700,11 +702,14 @@ public class AccessibilityWindowQueryTest {
     }
 
     private boolean isDividerWindowPresent() {
-        List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
+        final List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
         final int windowCount = windows.size();
         for (int i = 0; i < windowCount; i++) {
-            AccessibilityWindowInfo window = windows.get(i);
-            if (window.getType() == AccessibilityWindowInfo.TYPE_SPLIT_SCREEN_DIVIDER) {
+            final AccessibilityWindowInfo window = windows.get(i);
+            final AccessibilityNodeInfo rootNode = window.getRoot();
+            if (window.getType() == AccessibilityWindowInfo.TYPE_SPLIT_SCREEN_DIVIDER &&
+                    rootNode != null &&
+                    rootNode.isVisibleToUser()) {
                 return true;
             }
         }
