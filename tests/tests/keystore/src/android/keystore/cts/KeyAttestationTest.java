@@ -780,6 +780,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                 case 2:
                 case 3:
                 case 4:
+                case 41:
                     assertThat(teeEnforcedDigests, is(expectedDigests));
                     break;
 
@@ -808,8 +809,8 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @SuppressWarnings("unchecked")
     private void checkAttestationSecurityLevelDependentParams(Attestation attestation) {
-        assertThat("Attestation version must be 1, 2, or 3", attestation.getAttestationVersion(),
-               either(is(1)).or(is(2)).or(is(3)));
+        assertThat("Attestation version must be 1, 2, 3, or 4", attestation.getAttestationVersion(),
+               either(is(1)).or(is(2)).or(is(3)).or(is(4)));
 
         AuthorizationList teeEnforced = attestation.getTeeEnforced();
         AuthorizationList softwareEnforced = attestation.getSoftwareEnforced();
