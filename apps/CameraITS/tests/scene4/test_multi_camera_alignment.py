@@ -26,8 +26,8 @@ import its.objects
 
 import numpy as np
 
-ALIGN_TOL_MM = 4.0E-3  # mm
-ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
+ALIGN_ATOL_MM = 10E-3  # mm
+ALIGN_RTOL = 0.01  # multiplied by sensor diagonal to convert to pixels
 CIRCLE_RTOL = 0.1
 GYRO_REFERENCE = 1
 LENS_FACING_BACK = 1  # 0: FRONT, 1: BACK, 2: EXTERNAL
@@ -241,7 +241,7 @@ def find_circle(gray, name):
         gray:           numpy grayscale array with pixel values in [0,255].
         name:           string of file name.
     Returns:
-        circle:         (circle_center_x, circle_center_y, radius)
+        circle:         {'x': val, 'y': val, 'r': val}
     """
     size = gray.shape
     # otsu threshold to binarize the image
@@ -315,7 +315,7 @@ def find_circle(gray, name):
         print 'More than one black circle was detected. Background of scene',
         print 'may be too complex.\n'
         assert num_circle == 1
-    return [circle_ctx, circle_cty, (circle_w+circle_h)/4.0]
+    return {'x': circle_ctx, 'y': circle_cty, 'r': (circle_w+circle_h)/4.0}
 
 
 def define_reference_camera(pose_reference, cam_reference):
@@ -335,6 +335,9 @@ def define_reference_camera(pose_reference, cam_reference):
         i_2nd = list(cam_reference.keys())[1]
     else:
         print 'pose_reference is CAMERA'
+        num_ref_cameras = len([v for v in cam_reference.itervalues() if v])
+        e_msg = 'Too many/few reference cameras: %s' % str(cam_reference)
+        assert num_ref_cameras == 1, e_msg
         i_ref = (k for (k, v) in cam_reference.iteritems() if v).next()
         i_2nd = (k for (k, v) in cam_reference.iteritems() if not v).next()
     return i_ref, i_2nd
@@ -378,7 +381,6 @@ def main():
                              its.caps.logical_multi_camera(props) and
                              its.caps.backward_compatible(props))
         debug = its.caps.debug_mode()
-        avail_fls = props['android.lens.info.availableFocalLengths']
         pose_reference = props['android.lens.poseReference']
 
         # Convert chart_distance for lens facing back
@@ -458,6 +460,7 @@ def main():
         circle = {}
         fl = {}
         sensor_diag = {}
+        pixel_sizes = {}
         capture_cam_ids = physical_ids
         if fmt == 'raw':
             capture_cam_ids = physical_raw_ids
@@ -519,7 +522,7 @@ def main():
                 print 't:', t[i]
                 print 'r:', r[i]
 
-            # Correct lens distortion to image (if available)
+            # Correct lens distortion to RAW image (if available)
             if its.caps.distortion_correction(physical_props[i]) and fmt == 'raw':
                 distort = np.array(physical_props[i]['android.lens.distortion'])
                 assert len(distort) == 5, 'distortion has wrong # of params.'
@@ -536,26 +539,37 @@ def main():
             # Find the circles in grayscale image
             circle[i] = find_circle(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
                                     '%s_%s_gray_%s.jpg' % (NAME, fmt, i))
-            print 'Circle radius ', i, ': ', circle[i][2]
+            print 'Circle %s radius: %.3f' % (i, circle[i]['r'])
 
             # Undo zoom to image (if applicable). Assume that the maximum
             # physical YUV image size is close to active array size.
             if fmt == 'yuv':
-                ar = physical_props[i]['android.sensor.info.activeArraySize']
-                arw = ar['right'] - ar['left']
-                arh = ar['bottom'] - ar['top']
+                yuv_w = caps[(fmt, i)]['width']
+                yuv_h = caps[(fmt, i)]['height']
+                print 'cap size: %d x %d' % (yuv_w, yuv_h)
                 cr = caps[(fmt, i)]['metadata']['android.scaler.cropRegion']
                 crw = cr['right'] - cr['left']
                 crh = cr['bottom'] - cr['top']
                 # Assume pixels remain square after zoom, so use same zoom
                 # ratios for x and y.
-                zoom_ratio = min(1.0 * arw / crw, 1.0 * arh / crh)
-                circle[i][0] = cr['left'] + circle[i][0] / zoom_ratio
-                circle[i][1] = cr['top'] + circle[i][1] / zoom_ratio
-                circle[i][2] = circle[i][2] / zoom_ratio
+                zoom_ratio = min(1.0 * yuv_w / crw, 1.0 * yuv_h / crh)
+                circle[i]['x'] = cr['left'] + circle[i]['x'] / zoom_ratio
+                circle[i]['y'] = cr['top'] + circle[i]['y'] / zoom_ratio
+                circle[i]['r'] = circle[i]['r'] / zoom_ratio
+                print ' Calculated zoom_ratio:', zoom_ratio
+                print ' Corrected circle X:', circle[i]['x']
+                print ' Corrected circle Y:', circle[i]['y']
+                print ' Corrected circle radius : %.3f'  % circle[i]['r']
 
-            # Find focal length & sensor size
+            # Find focal length and pixel & sensor size
             fl[i] = physical_props[i]['android.lens.info.availableFocalLengths'][0]
+            ar = physical_props[i]['android.sensor.info.activeArraySize']
+            sensor_size = physical_props[i]['android.sensor.info.physicalSize']
+            pixel_size_w = sensor_size['width'] / (ar['right'] - ar['left'])
+            pixel_size_h = sensor_size['height'] / (ar['bottom'] - ar['top'])
+            print 'pixel size(um): %.2f x %.2f' % (
+                pixel_size_w*1E3, pixel_size_h*1E3)
+            pixel_sizes[i] = (pixel_size_w + pixel_size_h) / 2 * 1E3
             sensor_diag[i] = math.sqrt(size[i][0] ** 2 + size[i][1] ** 2)
 
         i_ref, i_2nd = define_reference_camera(pose_reference, cam_reference)
@@ -566,7 +580,7 @@ def main():
         y_w = {}
         for i in [i_ref, i_2nd]:
             x_w[i], y_w[i] = convert_to_world_coordinates(
-                    circle[i][0], circle[i][1], r[i], t[i], k[i],
+                    circle[i]['x'], circle[i]['y'], r[i], t[i], k[i],
                     chart_distance)
 
         # Back convert to image coordinates for sanity check
@@ -582,7 +596,7 @@ def main():
         # Summarize results
         for i in [i_ref, i_2nd]:
             print ' Camera: %s' % i
-            print ' x, y (pixels): %.1f, %.1f' % (circle[i][0], circle[i][1])
+            print ' x, y (pixels): %.1f, %.1f' % (circle[i]['x'], circle[i]['y'])
             print ' x_w, y_w (mm): %.2f, %.2f' % (x_w[i]*1.0E3, y_w[i]*1.0E3)
             print ' x_p, y_p (pixels): %.1f, %.1f' % (x_p[i], y_p[i])
 
@@ -591,31 +605,31 @@ def main():
                              np.array([x_w[i_2nd], y_w[i_2nd]]))
         print 'Center location err (mm): %.2f' % (err*1E3)
         msg = 'Center locations %s <-> %s too different!' % (i_ref, i_2nd)
-        msg += ' val=%.2fmm, THRESH=%.fmm' % (err*1E3, ALIGN_TOL_MM*1E3)
-        assert err < ALIGN_TOL, msg
+        msg += ' val=%.2fmm, THRESH=%.fmm' % (err*1E3, ALIGN_ATOL_MM*1E3)
+        assert err < ALIGN_ATOL_MM, msg
 
         # Check projections back into pixel space
         for i in [i_ref, i_2nd]:
-            err = np.linalg.norm(np.array([circle[i][0], circle[i][1]]) -
+            err = np.linalg.norm(np.array([circle[i]['x'], circle[i]['y']]) -
                                  np.array([x_p[i], y_p[i]]))
-            print 'Camera %s projection error (pixels): %.1f' % (i, err)
-            tol = ALIGN_TOL * sensor_diag[i]
+            print 'Camera %s projection error (pixels): %.2f' % (i, err)
+            tol = ALIGN_RTOL * sensor_diag[i]
             msg = 'Camera %s project locations too different!' % i
             msg += ' diff=%.2f, TOL=%.2f' % (err, tol)
             assert err < tol, msg
 
         # Check focal length and circle size if more than 1 focal length
-        if len(avail_fls) > 1:
+        if len(fl) > 1:
             print 'Circle radii (pixels); ref: %.1f, 2nd: %.1f' % (
-                    circle[i_ref][2], circle[i_2nd][2])
+                    circle[i_ref]['r'], circle[i_2nd]['r'])
             print 'Focal lengths (diopters); ref: %.2f, 2nd: %.2f' % (
                     fl[i_ref], fl[i_2nd])
-            print 'Sensor diagonals (pixels); ref: %.2f, 2nd: %.2f' % (
-                    sensor_diag[i_ref], sensor_diag[i_2nd])
+            print 'Pixel size (um); ref: %.2f, 2nd: %.2f' % (
+                    pixel_sizes[i_ref], pixel_sizes[i_2nd])
             msg = 'Circle size scales improperly! RTOL=%.1f' % CIRCLE_RTOL
-            msg += '\nMetric: radius/focal_length*sensor_diag should be equal.'
-            assert np.isclose(circle[i_ref][2]/fl[i_ref]*sensor_diag[i_ref],
-                              circle[i_2nd][2]/fl[i_2nd]*sensor_diag[i_2nd],
+            msg += '\nMetric: radius*pixel_size/focal_length should be equal.'
+            assert np.isclose(circle[i_ref]['r']*pixel_sizes[i_ref]/fl[i_ref],
+                              circle[i_2nd]['r']*pixel_sizes[i_2nd]/fl[i_2nd],
                               rtol=CIRCLE_RTOL), msg
 
 if __name__ == '__main__':
