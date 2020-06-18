@@ -52,6 +52,9 @@ public class TestBase extends AndroidTestCase {
     // wait for Wi-Fi scan results to become available
     private static final int WAIT_FOR_SCAN_RESULTS_SECS = 20;
 
+    // wait for network selection and connection finish
+    private static final int WAIT_FOR_CONNECTION_FINISH_MS = 30_000;
+
     protected WifiRttManager mWifiRttManager;
     protected WifiManager mWifiManager;
     private LocationManager mLocationManager;
@@ -96,8 +99,10 @@ public class TestBase extends AndroidTestCase {
         mWifiLock.acquire();
         if (!mWifiManager.isWifiEnabled()) {
             SystemUtil.runShellCommand("svc wifi enable");
+            // Turn on Wi-Fi may trigger connection. Wait connection state stable.
+            scanAps();
+            Thread.sleep(WAIT_FOR_CONNECTION_FINISH_MS);
         }
-
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiRttManager.ACTION_WIFI_RTT_STATE_CHANGED);
         WifiRttBroadcastReceiver receiver = new WifiRttBroadcastReceiver();
