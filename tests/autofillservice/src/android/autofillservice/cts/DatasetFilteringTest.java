@@ -111,10 +111,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
 
         // Delete some text to bring back 2 datasets
@@ -179,10 +176,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         sendKeyEvent("KEYCODE_A");
         sendKeyEvent("KEYCODE_A");
         sendKeyEvent("KEYCODE_A");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
@@ -253,10 +247,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         final MyAutofillCallback callback = mActivity.registerCallback();
         final ImeCommand cmd5 = mockImeSession.callCommitText("aaa", 1);
         expectCommand(stream, cmd5, MOCK_IME_TIMEOUT_MS);
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
@@ -413,10 +404,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
@@ -483,10 +471,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
