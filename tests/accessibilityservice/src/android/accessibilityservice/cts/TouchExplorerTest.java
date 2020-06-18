@@ -17,20 +17,14 @@
 package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AsyncUtils.await;
-import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_DOWN;
-import static android.accessibilityservice.cts.utils.GestureUtils.IS_ACTION_UP;
 import static android.accessibilityservice.cts.utils.GestureUtils.add;
-import static android.accessibilityservice.cts.utils.GestureUtils.ceil;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
-import static android.accessibilityservice.cts.utils.GestureUtils.diff;
 import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
 import static android.accessibilityservice.cts.utils.GestureUtils.doubleTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.doubleTapAndHold;
-import static android.accessibilityservice.cts.utils.GestureUtils.isRawAtPoint;
 import static android.accessibilityservice.cts.utils.GestureUtils.multiTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.secondFingerMultiTap;
 import static android.accessibilityservice.cts.utils.GestureUtils.swipe;
-import static android.accessibilityservice.cts.utils.GestureUtils.times;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_HOVER_ENTER;
 import static android.view.MotionEvent.ACTION_HOVER_EXIT;
@@ -48,9 +42,6 @@ import static android.view.accessibility.AccessibilityEvent.TYPE_TOUCH_INTERACTI
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_LONG_CLICKED;
-
-import static org.hamcrest.CoreMatchers.both;
-import static org.hamcrest.MatcherAssert.assertThat;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
@@ -71,7 +62,6 @@ import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
 import android.util.DisplayMetrics;
 import android.view.Display;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
@@ -86,8 +76,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-
-import java.util.List;
 
 /**
  * A set of tests for testing touch exploration. Each test dispatches a gesture and checks for the
@@ -221,27 +209,7 @@ public class TouchExplorerTest {
         dispatch(
                 swipe(finger1Start, finger1End, mSwipeTimeMillis),
                 swipe(finger2Start, finger2End, mSwipeTimeMillis));
-        List<MotionEvent> twoFingerPoints = mTouchListener.getRawEvents();
-
-        // Check the drag events performed by a two finger drag. The moving locations would be
-        // adjusted to the middle of two fingers.
-        final int numEvents = twoFingerPoints.size();
-        final int upEventIndex = numEvents - 1;
-        final float stepDuration =
-                (float)
-                        (twoFingerPoints.get(1).getEventTime()
-                                - twoFingerPoints.get(0).getEventTime());
-        final float gestureDuration =
-                (float)
-                        (twoFingerPoints.get(upEventIndex).getEventTime()
-                                - twoFingerPoints.get(0).getEventTime());
-        final float intervalFraction =
-                stepDuration * (mSwipeDistance / gestureDuration) / gestureDuration;
-        PointF downPoint = add(dragStart, ceil(times(intervalFraction, diff(dragEnd, dragStart))));
-        assertThat(twoFingerPoints.get(0), both(IS_ACTION_DOWN).and(isRawAtPoint(downPoint, 1.0f)));
-        assertThat(
-                twoFingerPoints.get(upEventIndex),
-                both(IS_ACTION_UP).and(isRawAtPoint(finger2End, 1.0f)));
+        mTouchListener.assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
     }
 
     /** Test a basic single tap which should initiate touch exploration. */
