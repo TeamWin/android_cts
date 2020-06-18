@@ -38,9 +38,9 @@ import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 import java.util.regex.Pattern;
 
@@ -53,15 +53,12 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         super(inlineUiBot);
     }
 
-    @BeforeClass
-    public static void setMaxDatasets() throws Exception {
-        Helper.setMaxVisibleDatasets(4);
+    @Override
+    protected TestRule getMainTestRule() {
+        return RuleChain.outerRule(new MaxVisibleDatasetsRule(4))
+                        .around(super.getMainTestRule());
     }
 
-    @AfterClass
-    public static void restoreMaxDatasets() throws Exception {
-        Helper.setMaxVisibleDatasets(0);
-    }
 
     private void changeUsername(CharSequence username) {
         mActivity.onUsername((v) -> v.setText(username));
