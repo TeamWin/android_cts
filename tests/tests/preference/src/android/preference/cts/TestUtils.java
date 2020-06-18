@@ -31,6 +31,7 @@ import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.Window;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -49,6 +50,7 @@ public class TestUtils {
     private final UiAutomation mAutomation;
     private int mStatusBarHeight = -1;
     private int mNavigationBarHeight = -1;
+    private Display mDisplay;
     private Window mWindow;
 
     TestUtils(ActivityTestRule<?> rule) {
@@ -57,6 +59,7 @@ public class TestUtils {
         mPackageName = mContext.getPackageName();
         mDevice = UiDevice.getInstance(mInstrumentation);
         mAutomation = mInstrumentation.getUiAutomation();
+        mDisplay = rule.getActivity().getDisplay();
         mWindow = rule.getActivity().getWindow();
     }
 
@@ -164,7 +167,7 @@ public class TestUtils {
         Rect displayFrame = new Rect();
         mWindow.getDecorView().getWindowVisibleDisplayFrame(displayFrame);
         DisplayMetrics dm = new DisplayMetrics();
-        mContext.getDisplay().getRealMetrics(dm);
+        mDisplay.getRealMetrics(dm);
         return dm.heightPixels == displayFrame.bottom;
     }
 
