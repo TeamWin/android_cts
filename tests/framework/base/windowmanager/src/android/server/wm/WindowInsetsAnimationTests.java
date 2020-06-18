@@ -52,8 +52,6 @@ import org.mockito.InOrder;
 
 import java.util.List;
 
-import androidx.test.filters.FlakyTest;
-
 /**
  * Test whether {@link WindowInsetsAnimation.Callback} are properly dispatched to views.
  *
@@ -237,7 +235,6 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
     }
 
     @Test
-    @FlakyTest(detail = "b/159038873")
     public void testAnimationCallbacks_withLegacyFlags() {
         getInstrumentation().runOnMainSync(() -> {
             mActivity.getWindow().setDecorFitsSystemWindows(true);
