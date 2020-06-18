@@ -931,7 +931,11 @@ public class TestUtils {
         intent.putExtra(INTENT_EXTRA_PATH, dirPath);
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
         getContext().startActivity(intent);
-        latch.await();
+        if (!latch.await(POLLING_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+            final String errorMessage = "Timed out while waiting to receive " + actionName
+                    + " intent from " + packageName;
+            throw new TimeoutException(errorMessage);
+        }
         getContext().unregisterReceiver(broadcastReceiver);
     }
 
