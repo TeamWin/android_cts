@@ -24,6 +24,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.se.omapi.Channel;
 import android.se.omapi.Reader;
 import android.se.omapi.SEService;
@@ -154,7 +155,7 @@ public class OmapiTest {
 
     private boolean supportsHardware() {
         final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
-        boolean lowRamDevice = PropertyUtil.propertyEquals("ro.config.low_ram", "true");
+        boolean lowRamDevice = SystemProperties.getBoolean("ro.config.low_ram", false);
         return !lowRamDevice || pm.hasSystemFeature("android.hardware.type.watch")
                 || hasSecureElementPackage(pm);
     }
