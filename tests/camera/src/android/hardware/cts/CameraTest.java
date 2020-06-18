@@ -152,31 +152,50 @@ public class CameraTest extends Assert {
      * receive the callback messages.
      */
     private void initializeMessageLooper(final int cameraId) throws IOException {
+        LooperInfo looperInfo = new LooperInfo();
+        initializeMessageLooper(cameraId, mErrorCallback, looperInfo);
+        mIsExternalCamera = looperInfo.isExternalCamera;
+        mCamera = looperInfo.camera;
+        mLooper = looperInfo.looper;
+    }
+
+    private final class LooperInfo {
+        Camera camera = null;
+        Looper looper = null;
+        boolean isExternalCamera = false;
+    };
+
+    /*
+     * Initializes the message looper so that the Camera object can
+     * receive the callback messages.
+     */
+    private void initializeMessageLooper(final int cameraId, final ErrorCallback errorCallback,
+            LooperInfo looperInfo) throws IOException {
         final ConditionVariable startDone = new ConditionVariable();
         final CameraCtsActivity activity = mActivityRule.getActivity();
         new Thread() {
             @Override
             public void run() {
-                Log.v(TAG, "start loopRun");
+                Log.v(TAG, "start loopRun for cameraId " + cameraId);
                 // Set up a looper to be used by camera.
                 Looper.prepare();
                 // Save the looper so that we can terminate this thread
                 // after we are done with it.
-                mLooper = Looper.myLooper();
+                looperInfo.looper = Looper.myLooper();
                 try {
-                    mIsExternalCamera = CameraUtils.isExternal(
+                    looperInfo.isExternalCamera = CameraUtils.isExternal(
                             activity.getApplicationContext(), cameraId);
                 } catch (Exception e) {
                     Log.e(TAG, "Unable to query external camera!" + e);
                 }
 
                 try {
-                    mCamera = Camera.open(cameraId);
-                    mCamera.setErrorCallback(mErrorCallback);
+                    looperInfo.camera = Camera.open(cameraId);
+                    looperInfo.camera.setErrorCallback(errorCallback);
                 } catch (RuntimeException e) {
-                    Log.e(TAG, "Fail to open camera." + e);
+                    Log.e(TAG, "Fail to open camera id " + cameraId + ": " + e);
                 }
-                Log.v(TAG, "camera is opened");
+                Log.v(TAG, "camera" + cameraId + " is opened");
                 startDone.open();
                 Looper.loop(); // Blocks forever until Looper.quit() is called.
                 if (VERBOSE) Log.v(TAG, "initializeMessageLooper: quit.");
@@ -188,9 +207,8 @@ public class CameraTest extends Assert {
             Log.v(TAG, "initializeMessageLooper: start timeout");
             fail("initializeMessageLooper: start timeout");
         }
-        assertNotNull("Fail to open camera.", mCamera);
-        mCamera.setPreviewDisplay(activity.getSurfaceView().getHolder());
-
+        assertNotNull("Fail to open camera " + cameraId, looperInfo.camera);
+        looperInfo.camera.setPreviewDisplay(activity.getSurfaceView().getHolder());
         File parent = activity.getPackageManager().isInstantApp()
                 ? activity.getFilesDir()
                 : activity.getExternalFilesDir(null);
@@ -210,21 +228,33 @@ public class CameraTest extends Assert {
      * Terminates the message looper thread, optionally allowing evict error
      */
     private void terminateMessageLooper(boolean allowEvict) throws Exception {
-        mLooper.quit();
+        LooperInfo looperInfo = new LooperInfo();
+        looperInfo.camera = mCamera;
+        looperInfo.looper = mLooper;
+        terminateMessageLooper(allowEvict, mCameraErrorCode, looperInfo);
+        mCamera = null;
+    }
+
+    /*
+     * Terminates the message looper thread, optionally allowing evict error
+     */
+    private void terminateMessageLooper(final boolean allowEvict, final int errorCode,
+            final LooperInfo looperInfo) throws Exception {
+        looperInfo.looper.quit();
         // Looper.quit() is asynchronous. The looper may still has some
         // preview callbacks in the queue after quit is called. The preview
         // callback still uses the camera object (setHasPreviewCallback).
         // After camera is released, RuntimeException will be thrown from
         // the method. So we need to join the looper thread here.
-        mLooper.getThread().join();
-        mCamera.release();
-        mCamera = null;
+        looperInfo.looper.getThread().join();
+        looperInfo.camera.release();
+        looperInfo.camera = null;
         if (allowEvict) {
             assertTrue("Got unexpected camera error callback.",
-                    (NO_ERROR == mCameraErrorCode ||
-                    Camera.CAMERA_ERROR_EVICTED == mCameraErrorCode));
+                    (NO_ERROR == errorCode ||
+                    Camera.CAMERA_ERROR_EVICTED == errorCode));
         } else {
-            assertEquals("Got camera error callback.", NO_ERROR, mCameraErrorCode);
+            assertEquals("Got camera error callback.", NO_ERROR, errorCode);
         }
     }
 
@@ -338,6 +368,15 @@ public class CameraTest extends Assert {
 
     // Implement the ErrorCallback
     private final class TestErrorCallback implements ErrorCallback {
+        public void onError(int error, Camera camera) {
+            Log.e(TAG, "Got camera error=" + error);
+            mCameraErrorCode = error;
+        }
+    }
+
+    // parent independent version of TestErrorCallback
+    private static final class TestErrorCallbackI implements ErrorCallback {
+        private int mCameraErrorCode = NO_ERROR;
         public void onError(int error, Camera camera) {
             Log.e(TAG, "Got camera error=" + error);
             mCameraErrorCode = error;
@@ -2554,54 +2593,53 @@ public class CameraTest extends Assert {
         testCamera0.release();
         testCamera1.release();
 
-        // Start first camera
-        if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Opening camera 0");
-        initializeMessageLooper(0);
-        SimplePreviewStreamCb callback0 = new SimplePreviewStreamCb(0);
-        mCamera.setPreviewCallback(callback0);
+        LooperInfo looperInfo0 = new LooperInfo();
+        LooperInfo looperInfo1 = new LooperInfo();
+
+        ConditionVariable previewDone0 = new ConditionVariable();
+        ConditionVariable previewDone1 = new ConditionVariable();
+        // Open both cameras camera
+        if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Opening cameras 0 and 1");
+        TestErrorCallbackI errorCallback0 = new TestErrorCallbackI();
+        TestErrorCallbackI errorCallback1 = new TestErrorCallbackI();
+        initializeMessageLooper(0, errorCallback0, looperInfo0);
+        initializeMessageLooper(1, errorCallback1, looperInfo1);
+
+        SimplePreviewStreamCbI callback0 = new SimplePreviewStreamCbI(0, previewDone0);
+        looperInfo0.camera.setPreviewCallback(callback0);
         if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Starting preview on camera 0");
-        mCamera.startPreview();
+        looperInfo0.camera.startPreview();
         // Run preview for a bit
         for (int f = 0; f < 100; f++) {
-            mPreviewDone.close();
+            previewDone0.close();
             assertTrue("testMultiCameraRelease: First camera preview timed out on frame " + f + "!",
-                       mPreviewDone.block( WAIT_FOR_COMMAND_TO_COMPLETE));
+                       previewDone0.block( WAIT_FOR_COMMAND_TO_COMPLETE));
         }
         if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Stopping preview on camera 0");
-        mCamera.stopPreview();
-        // Save message looper and camera to deterministically release them, instead
-        // of letting GC do it at some point.
-        Camera firstCamera = mCamera;
-        Looper firstLooper = mLooper;
-        //terminateMessageLooper(); // Intentionally not calling this
-        // Preview surface should be released though!
-        mCamera.setPreviewDisplay(null);
+        looperInfo0.camera.stopPreview();
 
-        // Start second camera without releasing the first one (will
-        // set mCamera and mLooper to new objects)
-        if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Opening camera 1");
-        initializeMessageLooper(1);
-        SimplePreviewStreamCb callback1 = new SimplePreviewStreamCb(1);
-        mCamera.setPreviewCallback(callback1);
+        // Preview surface should be released though!
+        looperInfo0.camera.setPreviewDisplay(null);
+
+        SimplePreviewStreamCbI callback1 = new SimplePreviewStreamCbI(1, previewDone1);
+        looperInfo1.camera.setPreviewCallback(callback1);
         if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Starting preview on camera 1");
-        mCamera.startPreview();
-        // Run preview for a bit - GC of first camera instance should not impact the second's
-        // operation.
+        looperInfo1.camera.startPreview();
         for (int f = 0; f < 100; f++) {
-            mPreviewDone.close();
+            previewDone1.close();
             assertTrue("testMultiCameraRelease: Second camera preview timed out on frame " + f + "!",
-                       mPreviewDone.block( WAIT_FOR_COMMAND_TO_COMPLETE));
+                       previewDone1.block( WAIT_FOR_COMMAND_TO_COMPLETE));
             if (f == 50) {
                 // Release first camera mid-preview, should cause no problems
                 if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Releasing camera 0");
-                firstCamera.release();
+                looperInfo0.camera.release();
             }
         }
-        if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Stopping preview on camera 0");
-        mCamera.stopPreview();
+        if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Stopping preview on camera 1");
+        looperInfo1.camera.stopPreview();
 
-        firstLooper.quit();
-        terminateMessageLooper(true/*allowEvict*/);
+        looperInfo0.looper.quit();
+        terminateMessageLooper(true, errorCallback1.mCameraErrorCode, looperInfo1);
     }
 
     // This callback just signals on the condition variable, making it useful for checking that
@@ -2611,6 +2649,21 @@ public class CameraTest extends Assert {
         private int mId;
         public SimplePreviewStreamCb(int id) {
             mId = id;
+        }
+        public void onPreviewFrame(byte[] data, android.hardware.Camera camera) {
+            if (VERBOSE) Log.v(TAG, "Preview frame callback, id " + mId + ".");
+            mPreviewDone.open();
+        }
+    }
+
+    // Parent independent version of SimplePreviewStreamCb
+    private static final class SimplePreviewStreamCbI
+            implements android.hardware.Camera.PreviewCallback {
+        private int mId;
+        private ConditionVariable mPreviewDone = null;
+        public SimplePreviewStreamCbI(int id, ConditionVariable previewDone) {
+            mId = id;
+            mPreviewDone = previewDone;
         }
         public void onPreviewFrame(byte[] data, android.hardware.Camera camera) {
             if (VERBOSE) Log.v(TAG, "Preview frame callback, id " + mId + ".");
