@@ -62,10 +62,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -598,14 +602,14 @@ public class BlobStoreManagerTest {
 
         try {
             commitBlob(blobData);
-            // Verify that blob can be access after committing.
+            // Verify that blob can be accessed after committing.
             try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
                 assertThat(pfd).isNotNull();
                 blobData.verifyBlob(pfd);
             }
 
             commitBlob(blobData);
-            // Verify that blob can be access after re-committing.
+            // Verify that blob can be accessed after re-committing.
             try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
                 assertThat(pfd).isNotNull();
                 blobData.verifyBlob(pfd);
@@ -622,14 +626,14 @@ public class BlobStoreManagerTest {
         final TestServiceConnection connection = bindToHelperService(HELPER_PKG);
         try {
             commitBlob(blobData);
-            // Verify that blob can be access after committing.
+            // Verify that blob can be accessed after committing.
             try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
                 assertThat(pfd).isNotNull();
                 blobData.verifyBlob(pfd);
             }
 
             commitBlobFromPkg(blobData, connection);
-            // Verify that blob can be access after re-committing.
+            // Verify that blob can be accessed after re-committing.
             try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
                 assertThat(pfd).isNotNull();
                 blobData.verifyBlob(pfd);
@@ -639,6 +643,130 @@ public class BlobStoreManagerTest {
             blobData.delete();
             connection.unbind();
         }
+    }
+
+    @Test
+    public void testSessionCommit_largeBlob() throws Exception {
+        final long fileSizeBytes = Math.min(mBlobStoreManager.getRemainingLeaseQuotaBytes(),
+                150 * 1024L * 1024L);
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                .setFileSize(fileSizeBytes)
+                .build();
+        blobData.prepare();
+        final long commitTimeoutSec = TIMEOUT_COMMIT_CALLBACK_SEC * 2;
+        try {
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+            assertThat(sessionId).isGreaterThan(0L);
+            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+                blobData.writeToSession(session);
+
+                final CompletableFuture<Integer> callback = new CompletableFuture<>();
+                session.commit(mContext.getMainExecutor(), callback::complete);
+                assertThat(callback.get(commitTimeoutSec, TimeUnit.SECONDS))
+                        .isEqualTo(0);
+            }
+
+            // Verify that blob can be accessed after committing.
+            try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
+                assertThat(pfd).isNotNull();
+                blobData.verifyBlob(pfd);
+            }
+        } finally {
+            blobData.delete();
+        }
+    }
+
+    @Test
+    public void testCommitSession_multipleWrites() throws Exception {
+        final int numThreads = 2;
+        final Random random = new Random(0);
+        final ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+        final CompletableFuture<Throwable>[] completableFutures = new CompletableFuture[numThreads];
+        for (int i = 0; i < numThreads; ++i) {
+            completableFutures[i] = CompletableFuture.supplyAsync(() -> {
+                final int minSizeMb = 30;
+                final long fileSizeBytes = (minSizeMb + random.nextInt(minSizeMb)) * 1024L * 1024L;
+                final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                        .setFileSize(fileSizeBytes)
+                        .build();
+                try {
+                    blobData.prepare();
+                    commitAndVerifyBlob(blobData);
+                } catch (Throwable t) {
+                    return t;
+                } finally {
+                    blobData.delete();
+                }
+                return null;
+            }, executorService);
+        }
+        final ArrayList<Throwable> invalidResults = new ArrayList<>();
+        for (int i = 0; i < numThreads; ++i) {
+             final Throwable result = completableFutures[i].get();
+             if (result != null) {
+                 invalidResults.add(result);
+             }
+        }
+        assertThat(invalidResults).isEmpty();
+    }
+
+    @Test
+    public void testCommitSession_multipleReadWrites() throws Exception {
+        final int numThreads = 2;
+        final Random random = new Random(0);
+        final ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+        final CompletableFuture<Throwable>[] completableFutures = new CompletableFuture[numThreads];
+        for (int i = 0; i < numThreads; ++i) {
+            completableFutures[i] = CompletableFuture.supplyAsync(() -> {
+                final int minSizeMb = 30;
+                final long fileSizeBytes = (minSizeMb + random.nextInt(minSizeMb)) * 1024L * 1024L;
+                final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                        .setFileSize(fileSizeBytes)
+                        .build();
+                try {
+                    blobData.prepare();
+                    final long sessionId = mBlobStoreManager.createSession(
+                            blobData.getBlobHandle());
+                    assertThat(sessionId).isGreaterThan(0L);
+                    try (BlobStoreManager.Session session = mBlobStoreManager.openSession(
+                            sessionId)) {
+                        final long partialFileSizeBytes = minSizeMb * 1024L * 1024L;
+                        blobData.writeToSession(session, 0L, partialFileSizeBytes);
+                        blobData.readFromSessionAndVerifyBytes(session, 0L,
+                                (int) partialFileSizeBytes);
+                        blobData.writeToSession(session, partialFileSizeBytes,
+                                blobData.getFileSize() - partialFileSizeBytes);
+                        blobData.readFromSessionAndVerifyBytes(session, partialFileSizeBytes,
+                                (int) (blobData.getFileSize() - partialFileSizeBytes));
+
+                        final CompletableFuture<Integer> callback = new CompletableFuture<>();
+                        session.commit(mContext.getMainExecutor(), callback::complete);
+                        assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                                .isEqualTo(0);
+                    }
+
+                    // Verify that blob can be accessed after committing.
+                    try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(
+                            blobData.getBlobHandle())) {
+                        assertThat(pfd).isNotNull();
+                        blobData.verifyBlob(pfd);
+                    }
+                } catch (Throwable t) {
+                    return t;
+                } finally {
+                    blobData.delete();
+                }
+                return null;
+            }, executorService);
+        }
+        final ArrayList<Throwable> invalidResults = new ArrayList<>();
+        for (int i = 0; i < numThreads; ++i) {
+            final Throwable result = completableFutures[i].get();
+            if (result != null) {
+                invalidResults.add(result);
+            }
+        }
+        assertThat(invalidResults).isEmpty();
     }
 
     @Test
@@ -652,7 +780,7 @@ public class BlobStoreManagerTest {
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
                 blobData.writeToSession(session);
 
-                // Verify that trying to access the blob before commit throws
+                // Verify that trying to accessed the blob before commit throws
                 assertThrows(SecurityException.class,
                         () -> mBlobStoreManager.openBlob(blobData.getBlobHandle()));
 
@@ -662,7 +790,7 @@ public class BlobStoreManagerTest {
                         .isEqualTo(0);
             }
 
-            // Verify that blob can be access after committing.
+            // Verify that blob can be accessed after committing.
             try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
                 assertThat(pfd).isNotNull();
 
@@ -1193,6 +1321,16 @@ public class BlobStoreManagerTest {
                     }
                 });
             });
+        }
+    }
+
+    private void commitAndVerifyBlob(DummyBlobData blobData) throws Exception {
+        commitBlob(blobData);
+
+        // Verify that blob can be accessed after committing.
+        try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobData.getBlobHandle())) {
+            assertThat(pfd).isNotNull();
+            blobData.verifyBlob(pfd);
         }
     }
 
