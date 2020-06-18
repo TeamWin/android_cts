@@ -102,7 +102,7 @@ public class TestUtils {
     private static File sExternalStorageDirectory = Environment.getExternalStorageDirectory();
     private static String sStorageVolumeName = MediaStore.VOLUME_EXTERNAL;
 
-    private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
+    private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(20);
     private static final long POLLING_SLEEP_MILLIS = 100;
 
     /**
