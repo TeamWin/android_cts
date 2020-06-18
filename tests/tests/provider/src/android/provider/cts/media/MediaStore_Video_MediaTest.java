@@ -258,29 +258,45 @@ public class MediaStore_Video_MediaTest {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(StorageManager.hasIsolatedStorage());
 
-        final Uri publishUri = ProviderTestUtils.stageMedia(R.raw.testvideo_meta, mExternalVideo,
-                "video/mp4");
+        // These videos have all had their ISO location metadata (in the (c)xyz box) artificially
+        // modified to +58.0000+011.0000 (middle of Skagerrak).
+        int[] videoIds = new int[] {
+            R.raw.testvideo_meta,
+            R.raw.moov_at_end,
+            R.raw.moov_at_end_zero_len,
+        };
+        Uri[] uris = new Uri[videoIds.length];
+        for (int i = 0; i < videoIds.length; i++) {
+            uris[i] = ProviderTestUtils.stageMedia(videoIds[i], mExternalVideo, "video/mp4");
+        }
 
-        // Since we own the video, we should be able to see the location
-        // we ourselves contributed
-        try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
-                MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
-            mmr.setDataSource(pfd.getFileDescriptor());
-            assertEquals("+37.4217-122.0834/",
-                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
-            assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+        for (int i = 0; i < uris.length; i++) {
+            // Since we own the video, we should be able to see the location
+            // we ourselves contributed
+            try (ParcelFileDescriptor pfd = mContentResolver.openFile(uris[i], "r", null);
+                    MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
+                mmr.setDataSource(pfd.getFileDescriptor());
+                assertEquals("+58.0000+011.0000/",
+                        mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+                assertEquals("2",
+                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+            }
         }
 
         // Revoke location access and remove ownership, which means that location should be redacted
         ProviderTestUtils.revokeMediaLocationPermission(mContext);
-        ProviderTestUtils.clearOwner(publishUri);
 
-        try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
-                MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
-            mmr.setDataSource(pfd.getFileDescriptor());
-            assertEquals(null,
-                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
-            assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+        for (int i = 0; i < uris.length; i++) {
+            ProviderTestUtils.clearOwner(uris[i]);
+
+            try (ParcelFileDescriptor pfd = mContentResolver.openFile(uris[i], "r", null);
+                    MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
+                mmr.setDataSource(pfd.getFileDescriptor());
+                assertEquals(null,
+                        mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+                assertEquals("2",
+                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+            }
         }
     }
 
