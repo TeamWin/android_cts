@@ -30,6 +30,7 @@ import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
@@ -74,7 +75,7 @@ import java.util.List;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsControllerTests
  */
-//TODO(b/159038873) @Presubmit
+@Presubmit
 public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds
@@ -180,6 +181,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "b/159038873")
     public void testImeShowAndHide() {
         showImeWithHardKeyboardSetting(mObjectTracker);
 
@@ -461,6 +463,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "b/159038873")
     public void testShowImeOnCreate() throws Exception {
         showImeWithHardKeyboardSetting(mObjectTracker);
 
@@ -633,6 +636,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setViews(this);
+            getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
         }
     }
 

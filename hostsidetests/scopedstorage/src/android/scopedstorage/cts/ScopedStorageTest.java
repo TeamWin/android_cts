@@ -85,6 +85,7 @@ import static android.scopedstorage.cts.lib.TestUtils.queryImageFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryVideoFile;
 import static android.scopedstorage.cts.lib.TestUtils.readExifMetadataFromTestApp;
 import static android.scopedstorage.cts.lib.TestUtils.revokePermission;
+import static android.scopedstorage.cts.lib.TestUtils.setAttrAs;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
 import static android.scopedstorage.cts.lib.TestUtils.uninstallApp;
 import static android.scopedstorage.cts.lib.TestUtils.uninstallAppNoThrow;
@@ -102,6 +103,7 @@ import static android.system.OsConstants.W_OK;
 import static androidx.test.InstrumentationRegistry.getContext;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -162,14 +164,21 @@ public class ScopedStorageTest {
     static final String TAG = "ScopedStorageTest";
     static final String THIS_PACKAGE_NAME = getContext().getPackageName();
 
-    static final String TEST_DIRECTORY_NAME = "ScopedStorageTestDirectory";
+    /**
+     * To help avoid flaky tests, give ourselves a unique nonce to be used for
+     * all filesystem paths, so that we don't risk conflicting with previous
+     * test runs.
+     */
+    static final String NONCE = String.valueOf(System.nanoTime());
 
-    static final String AUDIO_FILE_NAME = "ScopedStorageTest_file.mp3";
-    static final String PLAYLIST_FILE_NAME = "ScopedStorageTest_file.m3u";
-    static final String SUBTITLE_FILE_NAME = "ScopedStorageTest_file.srt";
-    static final String VIDEO_FILE_NAME = "ScopedStorageTest_file.mp4";
-    static final String IMAGE_FILE_NAME = "ScopedStorageTest_file.jpg";
-    static final String NONMEDIA_FILE_NAME = "ScopedStorageTest_file.pdf";
+    static final String TEST_DIRECTORY_NAME = "ScopedStorageTestDirectory" + NONCE;
+
+    static final String AUDIO_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".mp3";
+    static final String PLAYLIST_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".m3u";
+    static final String SUBTITLE_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".srt";
+    static final String VIDEO_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".mp4";
+    static final String IMAGE_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".jpg";
+    static final String NONMEDIA_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".pdf";
 
     static final String FILE_CREATION_ERROR_MESSAGE = "No such file or directory";
 
@@ -2538,6 +2547,44 @@ public class ScopedStorageTest {
             assertNotNull(openWithMediaProvider(otherPendingFile, "r"));
         } finally {
             deleteFileAsNoThrow(TEST_APP_A, otherPendingFile.getAbsolutePath());
+            uninstallAppNoThrow(TEST_APP_A);
+        }
+    }
+
+    /**
+     * Test that apps can't set attributes on another app's files.
+     */
+    @Test
+    public void testCantSetAttrOtherAppsFile() throws Exception {
+        // This path's permission is checked in FuseDaemon (directory/external files dir).
+        final File externalFilesPath = new File(getExternalFilesDir(), VIDEO_FILE_NAME);
+        // This path's permission is checked in MediaProvider (directory/external media dir)
+        final File externalMediaPath = new File(getExternalMediaDir(), VIDEO_FILE_NAME);
+
+        try {
+            // Create the files
+            if (!externalFilesPath.exists()) {
+                assertThat(externalFilesPath.createNewFile()).isTrue();
+            }
+            if (!externalMediaPath.exists()) {
+                assertThat(externalMediaPath.createNewFile()).isTrue();
+            }
+
+            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
+            installAppWithStoragePermissions(TEST_APP_A);
+
+            // TEST_APP_A should not be able to setattr to other app's files.
+            assertWithMessage(
+                "setattr on directory/external files path [%s]", externalFilesPath.getPath())
+                .that(setAttrAs(TEST_APP_A, externalFilesPath.getPath()))
+                .isFalse();
+            assertWithMessage(
+                "setattr on directory/external media path [%s]", externalMediaPath.getPath())
+                .that(setAttrAs(TEST_APP_A, externalMediaPath.getPath()))
+                .isFalse();
+        } finally {
+            externalFilesPath.delete();
+            externalMediaPath.delete();
             uninstallAppNoThrow(TEST_APP_A);
         }
     }
