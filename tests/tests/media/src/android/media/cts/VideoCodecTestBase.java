@@ -832,8 +832,9 @@ public class VideoCodecTestBase extends AndroidTestCase {
             if (out.outputGenerated) {
                 if ((out.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
                     Log.d(TAG, "Storing codec config separately");
-                    mCodecConfigs.add(
-                            ByteBuffer.allocate(out.buffer.length).put(out.buffer));
+                    ByteBuffer csdBuffer = ByteBuffer.allocate(out.buffer.length).put(out.buffer);
+                    csdBuffer.rewind();
+                    mCodecConfigs.add(csdBuffer);
                     out.buffer = new byte[0];
                 }
                 if (out.buffer.length > 0) {
@@ -1480,8 +1481,9 @@ public class VideoCodecTestBase extends AndroidTestCase {
                 }
                 if ((out.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
                     Log.d(TAG, "Storing codec config separately");
-                    codecConfigs.add(
-                            ByteBuffer.allocate(out.buffer.length).put(out.buffer));
+                    ByteBuffer csdBuffer = ByteBuffer.allocate(out.buffer.length).put(out.buffer);
+                    csdBuffer.rewind();
+                    codecConfigs.add(csdBuffer);
                     out.buffer = new byte[0];
                 }
 
@@ -1786,8 +1788,9 @@ public class VideoCodecTestBase extends AndroidTestCase {
                     }
                     if ((out.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
                         Log.d(TAG, "----Enc" + i + ". Storing codec config separately");
-                        codecConfigs.get(i).add(
-                                ByteBuffer.allocate(out.buffer.length).put(out.buffer));
+                        ByteBuffer csdBuffer = ByteBuffer.allocate(out.buffer.length).put(out.buffer);
+                        csdBuffer.rewind();
+                        codecConfigs.get(i).add(csdBuffer);
                         out.buffer = new byte[0];
                     }
 
