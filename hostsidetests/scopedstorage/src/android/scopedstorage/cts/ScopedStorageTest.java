@@ -688,10 +688,8 @@ public class ScopedStorageTest {
             // TEST_APP_A should not see other app's external files directory.
             installAppWithStoragePermissions(TEST_APP_A);
 
-            // TODO(b/157650550): we don't have consistent behaviour on both primary and public
-            //  volumes
-//            assertThrows(IOException.class,
-//                    () -> listAs(TEST_APP_A, getAndroidDataDir().getPath()));
+            assertThrows(IOException.class,
+                    () -> listAs(TEST_APP_A, getAndroidDataDir().getPath()));
             assertThrows(IOException.class,
                     () -> listAs(TEST_APP_A, getExternalFilesDir().getPath()));
         } finally {
