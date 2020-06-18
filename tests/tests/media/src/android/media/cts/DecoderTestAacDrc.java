@@ -586,10 +586,8 @@ public class DecoderTestAacDrc {
                 if (drcParams.mDecoderTargetLevel != 0) {
                     final int targetLevelFromCodec = codec.getOutputFormat()
                             .getInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
-                    if (false) { // TODO disabled until b/157773721 fixed
-                        if (targetLevelFromCodec != drcParams.mDecoderTargetLevel) {
-                            fail("Drc Target Reference Level received from MediaCodec is not the Target Reference Level set");
-                        }
+                    if (targetLevelFromCodec != drcParams.mDecoderTargetLevel) {
+                        fail("DRC Target Ref Level received from MediaCodec is not the level set");
                     }
                 }
             }
@@ -711,12 +709,20 @@ public class DecoderTestAacDrc {
             if (drcParams.mDecoderTargetLevel != 0) {
                 final int targetLevelFromCodec = codec.getOutputFormat()
                         .getInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
-                if (false) { // TODO disabled until b/157773721 fixed
-                    if (targetLevelFromCodec != drcParams.mDecoderTargetLevel) {
-                        fail("Drc Target Reference Level received from MediaCodec is not the Target Reference Level set");
-                    }
+                if (targetLevelFromCodec != drcParams.mDecoderTargetLevel) {
+                    fail("DRC Target Ref Level received from MediaCodec is not the level set");
                 }
             }
+
+            final MediaFormat outputFormat = codec.getOutputFormat();
+            final int cutFromCodec = outputFormat.getInteger(
+                    MediaFormat.KEY_AAC_DRC_ATTENUATION_FACTOR);
+            assertEquals("Attenuation factor received from MediaCodec differs from set:",
+                    drcParams.mCut, cutFromCodec);
+            final int boostFromCodec = outputFormat.getInteger(
+                    MediaFormat.KEY_AAC_DRC_BOOST_FACTOR);
+            assertEquals("Boost factor received from MediaCodec differs from set:",
+                    drcParams.mBoost, boostFromCodec);
         }
 
         // expectedOutputLoudness == -2 indicates that output loudness is not tested
