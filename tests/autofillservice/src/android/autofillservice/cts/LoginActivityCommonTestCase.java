@@ -117,6 +117,10 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
         // Set service.
         enableService();
 
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final View username = mActivity.getUsername();
+        final View password = mActivity.getPassword();
+
         String[] expectedDatasets = new String[numDatasets];
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder();
         for (int i = 0; i < numDatasets; i++) {
@@ -136,11 +140,13 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
         mUiBot.waitForIdle();
 
         mUiBot.assertDatasets(expectedDatasets);
+        callback.assertUiShownEvent(username);
 
         mUiBot.selectDataset(expectedDatasets[selectedDatasetIndex]);
 
         // Check the results.
         mActivity.assertAutoFilled();
+        callback.assertUiHiddenEvent(username);
 
         // Make sure input was sanitized.
         final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();

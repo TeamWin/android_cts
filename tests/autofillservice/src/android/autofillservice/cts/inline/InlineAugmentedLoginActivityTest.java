@@ -29,6 +29,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
 import android.autofillservice.cts.Helper;
+import android.autofillservice.cts.MyAutofillCallback;
 import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
 import android.autofillservice.cts.augmented.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
@@ -175,6 +176,8 @@ public class InlineAugmentedLoginActivityTest
     }
 
     private void testBasicLoginAutofill() throws Exception {
+
+        final MyAutofillCallback callback = mActivity.registerCallback();
         // Set expectations
         final EditText username = mActivity.getUsername();
         final EditText password = mActivity.getPassword();
@@ -202,6 +205,7 @@ public class InlineAugmentedLoginActivityTest
 
         // Confirm two suggestion
         mUiBot.assertDatasets("dude");
+        callback.assertUiShownEvent(username);
 
         mActivity.expectAutoFill("dude", "sweet");
 
@@ -210,6 +214,8 @@ public class InlineAugmentedLoginActivityTest
         mUiBot.waitForIdle();
 
         mActivity.assertAutoFilled();
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiHiddenEvent(username);
     }
 
     @Test
