@@ -599,14 +599,20 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testThumbnailVP9Hdr() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
+
         testThumbnail(R.raw.video_1280x720_vp9_hdr_static_3mbps, 1280, 720);
     }
 
     public void testThumbnailAV1Hdr() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
+
         testThumbnail(R.raw.video_1280x720_av1_hdr_static_3mbps, 1280, 720);
     }
 
     public void testThumbnailHDR10() {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
+
         testThumbnail(R.raw.video_1280x720_hevc_hdr10_static_3mbps, 1280, 720);
     }
 
