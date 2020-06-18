@@ -1,4 +1,4 @@
-# Copyright 2015 The Android Open Source Project
+# Copyright 2015 The Android Open Source Project (lint as: python2)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,6 +39,40 @@ PREVIEW_SIZE = (1920, 1080)  # preview size
 # needs to pass the test for all resolutions within these aspect ratios.
 AR_CHECKED_PRE_API_30 = ["4:3", "16:9", "18:9"]
 AR_DIFF_ATOL = 0.01
+
+
+def print_failed_test_results(failed_ar, failed_fov, failed_crop):
+    """Print failed test results."""
+    if failed_ar:
+        print "\nAspect ratio test summary"
+        print "Images failed in the aspect ratio test:"
+        print "Aspect ratio value: width / height"
+        for fa in failed_ar:
+            print "%s with %s %dx%d: %.3f;" % (
+                    fa["fmt_iter"], fa["fmt_cmpr"],
+                    fa["w"], fa["h"], fa["ar"]),
+            print "valid range: %.3f ~ %.3f" % (
+                    fa["valid_range"][0], fa["valid_range"][1])
+
+    if failed_fov:
+        print "\nFoV test summary"
+        print "Images failed in the FoV test:"
+        for fov in failed_fov:
+            print fov
+
+    if failed_crop:
+        print "\nCrop test summary"
+        print "Images failed in the crop test:"
+        print "Circle center position, (horizontal x vertical), listed",
+        print "below is relative to the image center."
+        for fc in failed_crop:
+            print "%s with %s %dx%d: %.3f x %.3f;" % (
+                    fc["fmt_iter"], fc["fmt_cmpr"], fc["w"], fc["h"],
+                    fc["ct_hori"], fc["ct_vert"]),
+            print "valid horizontal range: %.3f ~ %.3f;" % (
+                    fc["valid_range_h"][0], fc["valid_range_h"][1]),
+            print "valid vertical range: %.3f ~ %.3f" % (
+                    fc["valid_range_v"][0], fc["valid_range_v"][1])
 
 
 def is_checked_aspect_ratio(first_api_level, w, h):
@@ -182,6 +216,7 @@ def find_jpeg_fov_reference(cam, req, props):
 
     Returns:
         ref_fov:    dict with [fmt, % coverage, w, h, circle_w, circle_h]
+        cc_ct_gt:   circle center position relative to the center of image.
     """
     ref_fov = {}
     fmt = its.objects.get_largest_jpeg_format(props)
@@ -193,8 +228,8 @@ def find_jpeg_fov_reference(cam, req, props):
     img = its.image.convert_capture_to_rgb_image(cap, props=props)
     print "Captured JPEG %dx%d" % (w, h)
     img_name = "%s_jpeg_w%d_h%d.png" % (NAME, w, h)
-    # Set debug to True to save the debug image
-    _, _, circle_size = measure_aspect_ratio(img, img_name, False, debug=True)
+    # Set debug to True to save the reference image
+    _, cc_ct_gt, circle_size = measure_aspect_ratio(img, img_name, False, debug=True)
     fov_percent = calc_circle_image_ratio(circle_size[0], circle_size[1], w, h)
     ref_fov["fmt"] = "JPEG"
     ref_fov["percent"] = fov_percent
@@ -203,7 +238,7 @@ def find_jpeg_fov_reference(cam, req, props):
     ref_fov["circle_w"] = circle_size[0]
     ref_fov["circle_h"] = circle_size[1]
     print "Using JPEG reference:", ref_fov
-    return ref_fov
+    return ref_fov, cc_ct_gt
 
 
 def calc_circle_image_ratio(circle_w, circle_h, image_w, image_h):
@@ -469,7 +504,11 @@ def main():
                   # as reference frame; otherwise the highest resolution JPEG is used.
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        fls_logical = props['android.lens.info.availableFocalLengths']
+        print 'logical available focal lengths: %s', str(fls_logical)
         props = cam.override_with_hidden_physical_camera_props(props)
+        fls_physical = props['android.lens.info.availableFocalLengths']
+        print 'physical available focal lengths: %s', str(fls_physical)
         # determine skip conditions
         first_api = its.device.get_first_api_level(its.device.get_device_id())
         if first_api < 30:  # original constraint
@@ -491,11 +530,11 @@ def main():
         cam.do_3a()
         req = its.objects.auto_capture_request()
 
-        # If raw capture is available, use it as ground truth.
-        if raw_avlb:
+        # If raw is available and main camera, use it as ground truth.
+        if raw_avlb and (fls_physical == fls_logical):
             ref_fov, cc_ct_gt, aspect_ratio_gt = find_raw_fov_reference(cam, req, props, debug)
         else:
-            ref_fov = find_jpeg_fov_reference(cam, req, props)
+            ref_fov, cc_ct_gt = find_jpeg_fov_reference(cam, req, props)
 
         if run_crop_test:
             # Normalize the circle size to 1/4 of the image size, so that
@@ -624,47 +663,12 @@ def main():
                                             "valid_range_v": thres_range_v_cp})
                         its.image.write_image(img/255, img_name, True)
 
-        # Print aspect ratio test results
-        failed_image_number_for_aspect_ratio_test = len(failed_ar)
-        if failed_image_number_for_aspect_ratio_test > 0:
-            print "\nAspect ratio test summary"
-            print "Images failed in the aspect ratio test:"
-            print "Aspect ratio value: width / height"
-            for fa in failed_ar:
-                print "%s with %s %dx%d: %.3f;" % (
-                        fa["fmt_iter"], fa["fmt_cmpr"],
-                        fa["w"], fa["h"], fa["ar"]),
-                print "valid range: %.3f ~ %.3f" % (
-                        fa["valid_range"][0], fa["valid_range"][1])
-
-        # Print FoV test results
-        failed_image_number_for_fov_test = len(failed_fov)
-        if failed_image_number_for_fov_test > 0:
-            print "\nFoV test summary"
-            print "Images failed in the FoV test:"
-            for fov in failed_fov:
-                print fov
-
-        # Print crop test results
-        failed_image_number_for_crop_test = len(failed_crop)
-        if failed_image_number_for_crop_test > 0:
-            print "\nCrop test summary"
-            print "Images failed in the crop test:"
-            print "Circle center position, (horizontal x vertical), listed",
-            print "below is relative to the image center."
-            for fc in failed_crop:
-                print "%s with %s %dx%d: %.3f x %.3f;" % (
-                        fc["fmt_iter"], fc["fmt_cmpr"], fc["w"], fc["h"],
-                        fc["ct_hori"], fc["ct_vert"]),
-                print "valid horizontal range: %.3f ~ %.3f;" % (
-                        fc["valid_range_h"][0], fc["valid_range_h"][1]),
-                print "valid vertical range: %.3f ~ %.3f" % (
-                        fc["valid_range_v"][0], fc["valid_range_v"][1])
-
-        assert failed_image_number_for_aspect_ratio_test == 0
-        assert failed_image_number_for_fov_test == 0
+        # Print failed any test results
+        print_failed_test_results(failed_ar, failed_fov, failed_crop)
+        assert not failed_ar
+        assert not failed_fov
         if level3_device:
-            assert failed_image_number_for_crop_test == 0
+            assert not failed_crop
 
 
 if __name__ == "__main__":
