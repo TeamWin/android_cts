@@ -28,7 +28,9 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.Layout;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.ArrowKeyMovementMethod;
 import android.text.method.MovementMethod;
@@ -39,6 +41,7 @@ import android.util.TypedValue;
 import android.util.Xml;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
@@ -582,4 +585,110 @@ public class EditTextTest {
         // Automated maxLength for singline text is not applied to TextView.
         assertTrue(tv.getText().length() > FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
     }
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_SetSingleLine() {
+        EditText et = new EditText(mActivity);
+        et.setText(mActivity.getResources().getText(R.string.even_more_long_text));
+        et.setSingleLine();
+
+        assertTrue(et.getText().length() <= FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_setInputType_singleLine() {
+        EditText et = new EditText(mActivity);
+        et.setText(mActivity.getResources().getText(R.string.even_more_long_text));
+        et.setInputType(EditorInfo.TYPE_CLASS_TEXT);
+
+        assertTrue(et.getText().length() <= FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_setInputType_multiLine() {
+        EditText et = new EditText(mActivity);
+        et.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_FLAG_MULTI_LINE);
+        et.setText(mActivity.getResources().getText(R.string.even_more_long_text));
+
+        assertTrue(et.getText().length() > FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+    }
+
+    class DummyFilter implements InputFilter {
+        @Override
+        public CharSequence filter(
+                CharSequence source,
+                int start,
+                int end,
+                Spanned dest,
+                int dstart,
+                int dend) {
+            return source;
+        }
+    }
+
+    private final InputFilter mFilterA = new DummyFilter();
+    private final InputFilter mFilterB = new DummyFilter();
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_SetSingleLine_preserveFilters() {
+        EditText et = new EditText(mActivity);
+        et.setText(mActivity.getResources().getText(R.string.even_more_long_text));
+        et.setFilters(new InputFilter[] { mFilterA, mFilterB });
+        et.setSingleLine();
+
+        assertTrue(et.getText().length() <= FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+
+        assertEquals(3, et.getFilters().length);
+        assertEquals(et.getFilters()[0], mFilterA);
+        assertEquals(et.getFilters()[1], mFilterB);
+        assertTrue(et.getFilters()[2] instanceof InputFilter.LengthFilter);
+
+        et.setSingleLine(false);
+        assertEquals(2, et.getFilters().length);
+        assertEquals(et.getFilters()[0], mFilterA);
+        assertEquals(et.getFilters()[1], mFilterB);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_SetSingleLine_preserveFilters_mixtureFilters() {
+        EditText et = new EditText(mActivity);
+        et.setText(mActivity.getResources().getText(R.string.even_more_long_text));
+        et.setSingleLine();
+        et.setFilters(new InputFilter[] { mFilterA, et.getFilters()[0], mFilterB });
+
+        assertTrue(et.getText().length() <= FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+
+        et.setSingleLine(false);
+        assertEquals(2, et.getFilters().length);
+        assertEquals(et.getFilters()[0], mFilterA);
+        assertEquals(et.getFilters()[1], mFilterB);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testSingleLineMaxLength_SetSingleLine_preserveFilters_anotherLengthFilter() {
+        EditText et = new EditText(mActivity);
+        et.setText(mActivity.getResources().getText(R.string.even_more_long_text));
+        final InputFilter myFilter =
+                new InputFilter.LengthFilter(FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+        et.setFilters(new InputFilter[] { myFilter });
+        et.setSingleLine();
+
+        assertTrue(et.getText().length() <= FRAMEWORK_MAX_LENGTH_FOR_SINGLE_LINE_EDIT_TEXT);
+
+        // setSingleLine(true) must not add new filter since there is already LengthFilter.
+        assertEquals(1, et.getFilters().length);
+        assertEquals(et.getFilters()[0], myFilter);
+
+        // setSingleLine(false) must not remove my custom filter.
+        et.setSingleLine(false);
+        assertEquals(1, et.getFilters().length);
+        assertEquals(et.getFilters()[0], myFilter);
+    }
+
 }
