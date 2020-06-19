@@ -49,6 +49,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String ACTION_WIPE_DATA =
             "com.android.cts.deviceandprofileowner.WIPE_DATA";
 
+    private static final String TEST_APP_APK = "CtsSimpleApp.apk";
+    private static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
     private static final String DUMMY_IME_APK = "DummyIme.apk";
     private static final String DUMMY_IME_PKG = "com.android.cts.dummyime";
     private static final String DUMMY_IME_COMPONENT = DUMMY_IME_PKG + "/.DummyIme";
@@ -554,8 +556,41 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        setPoAsUser(mPrimaryUserId);
+
+        try {
+            setScreenCaptureDisabled(true);
+        } finally {
+            setScreenCaptureDisabled(false);
+        }
+    }
+
+    private void takeScreenCaptureAsUser(int userId, String testMethodName) throws Exception {
+        installAppAsUser(TEST_APP_APK, /* grantPermissions */ true, /* dontKillApp */ true, userId);
+        startActivityAsUser(userId, TEST_APP_PKG, TEST_APP_PKG + ".SimpleActivity");
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ScreenCaptureDisabledTest",
-                "testSetScreenCaptureDisabledOnParent", mUserId);
+                testMethodName, userId);
+        forceStopPackageForUser(TEST_APP_PKG, userId);
+    }
+
+    private void setScreenCaptureDisabled(boolean disabled) throws Exception {
+        String testMethodName = disabled
+                ? "testSetScreenCaptureDisabledOnParent_true"
+                : "testSetScreenCaptureDisabledOnParent_false";
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ScreenCaptureDisabledTest",
+                testMethodName, mUserId);
+
+        testMethodName = disabled
+                ? "testScreenCaptureImpossible"
+                : "testScreenCapturePossible";
+
+        // Test personal profile
+        takeScreenCaptureAsUser(mPrimaryUserId, testMethodName);
+
+        // Test managed profile. This should not be disabled when screen capture is disabled on
+        // the parent by the profile owner of an organization-owned device.
+        takeScreenCaptureAsUser(mUserId, "testScreenCapturePossible");
     }
 
     private void assertHasNoUser(int userId) throws DeviceNotAvailableException {
