@@ -124,6 +124,21 @@ public class ActionBarTest extends ActivityInstrumentationTestCase2<ActionBarAct
         assertFalse(menuIsVisible[0]);
     }
 
+    @UiThreadTest
+    public void testElevation() {
+        if (mBar == null) {
+            return;
+        }
+        final float oldElevation = mBar.getElevation();
+        try {
+            final float newElevation = 42;
+            mBar.setElevation(newElevation);
+            assertEquals(newElevation, mBar.getElevation());
+        } finally {
+            mBar.setElevation(oldElevation);
+        }
+    }
+
     private Tab createTab(String name) {
         return mBar.newTab().setText("Tab 1").setTabListener(new TestTabListener());
     }

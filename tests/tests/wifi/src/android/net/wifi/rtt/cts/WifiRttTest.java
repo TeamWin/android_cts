@@ -49,7 +49,7 @@ public class WifiRttTest extends TestBase {
     private static final int MAX_FAILURE_RATE_PERCENT = 10;
 
     // Maximum variation from the average measurement (measures consistency)
-    private static final int MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM = 1000;
+    private static final int MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM = 2000;
 
     // Minimum valid RSSI value
     private static final int MIN_VALID_RSSI = -100;
@@ -176,10 +176,12 @@ public class WifiRttTest extends TestBase {
                         + ", AP SSID=" + testAp.SSID,
                 numFailures <= NUM_OF_RTT_ITERATIONS * MAX_FAILURE_RATE_PERCENT / 100);
         if (numFailures != NUM_OF_RTT_ITERATIONS) {
-            double distanceAvg = distanceSum / (NUM_OF_RTT_ITERATIONS - numFailures);
-            assertTrue("Wi-Fi RTT: Variation (max direction) exceeds threshold",
+            double distanceAvg = (double) distanceSum / (NUM_OF_RTT_ITERATIONS - numFailures);
+            assertTrue("Wi-Fi RTT: Variation (max direction) exceeds threshold, Variation ="
+                            + (distanceMax - distanceAvg),
                     (distanceMax - distanceAvg) <= MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM);
-            assertTrue("Wi-Fi RTT: Variation (min direction) exceeds threshold",
+            assertTrue("Wi-Fi RTT: Variation (min direction) exceeds threshold, Variation ="
+                            + (distanceAvg - distanceMin),
                     (distanceAvg - distanceMin) <= MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM);
             for (int i = 0; i < numGoodResults; ++i) {
                 assertNotSame("Number of attempted measurements is 0", 0, numAttempted[i]);
