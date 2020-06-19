@@ -22,8 +22,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -35,6 +37,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.UserManager;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
@@ -469,6 +472,33 @@ public class ProviderTestUtils {
             return new File(path.substring(matcher.end()));
         } else {
             throw new IllegalArgumentException();
+        }
+    }
+
+    /** Revokes ACCESS_MEDIA_LOCATION from the test app */
+    public static void revokeMediaLocationPermission(Context context) throws Exception {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity("android.permission.MANAGE_APP_OPS_MODES",
+                            "android.permission.REVOKE_RUNTIME_PERMISSIONS");
+
+            // Revoking ACCESS_MEDIA_LOCATION permission will kill the test app.
+            // Deny access_media_permission App op to revoke this permission.
+            PackageManager packageManager = context.getPackageManager();
+            String packageName = context.getPackageName();
+            if (packageManager.checkPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION,
+                    packageName) == PackageManager.PERMISSION_GRANTED) {
+                context.getPackageManager().updatePermissionFlags(
+                        android.Manifest.permission.ACCESS_MEDIA_LOCATION, packageName,
+                        PackageManager.FLAG_PERMISSION_REVOKED_COMPAT,
+                        PackageManager.FLAG_PERMISSION_REVOKED_COMPAT, context.getUser());
+                context.getSystemService(AppOpsManager.class).setUidMode(
+                        "android:access_media_location", Process.myUid(),
+                        AppOpsManager.MODE_IGNORED);
+            }
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().
+                    dropShellPermissionIdentity();
         }
     }
 }
