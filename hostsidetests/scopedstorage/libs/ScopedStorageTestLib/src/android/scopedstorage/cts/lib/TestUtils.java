@@ -65,6 +65,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -84,8 +85,11 @@ public class TestUtils {
     public static final String INTENT_EXTRA_PATH = "android.scopedstorage.cts.path";
     public static final String INTENT_EXCEPTION = "android.scopedstorage.cts.exception";
     public static final String CREATE_FILE_QUERY = "android.scopedstorage.cts.createfile";
+    public static final String CREATE_IMAGE_ENTRY_QUERY =
+            "android.scopedstorage.cts.createimageentry";
     public static final String DELETE_FILE_QUERY = "android.scopedstorage.cts.deletefile";
-    public static final String OPEN_FILE_FOR_READ_QUERY = "android.scopedstorage.cts.openfile_read";
+    public static final String OPEN_FILE_FOR_READ_QUERY =
+            "android.scopedstorage.cts.openfile_read";
     public static final String OPEN_FILE_FOR_WRITE_QUERY =
             "android.scopedstorage.cts.openfile_write";
     public static final String CAN_READ_WRITE_QUERY =
@@ -103,7 +107,7 @@ public class TestUtils {
     private static File sExternalStorageDirectory = Environment.getExternalStorageDirectory();
     private static String sStorageVolumeName = MediaStore.VOLUME_EXTERNAL;
 
-    private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
+    private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(20);
     private static final long POLLING_SLEEP_MILLIS = 100;
 
     /**
@@ -166,7 +170,21 @@ public class TestUtils {
     /**
      * Executes a shell command.
      */
-    public static String executeShellCommand(String cmd) throws Exception {
+    public static String executeShellCommand(String command) throws IOException {
+        int attempt = 0;
+        while (attempt++ < 5) {
+            try {
+                return executeShellCommandInternal(command);
+            } catch (InterruptedIOException e) {
+                // Hmm, we had trouble executing the shell command; the best we
+                // can do is try again a few more times
+                Log.v(TAG, "Trouble executing " + command + "; trying again", e);
+            }
+        }
+        throw new IOException("Failed to execute " + command);
+    }
+
+    private static String executeShellCommandInternal(String cmd) throws IOException {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try (FileInputStream output = new FileInputStream(
                      uiAutomation.executeShellCommand(cmd).getFileDescriptor())) {
@@ -208,6 +226,17 @@ public class TestUtils {
      */
     public static boolean createFileAs(TestApp testApp, String path) throws Exception {
         return getResultFromTestApp(testApp, path, CREATE_FILE_QUERY);
+    }
+
+    /**
+     * Makes the given {@code testApp} create a mediastore DB entry under
+     * {@code MediaStore.Media.Images}.
+     *
+     * The {@code path} argument is treated as a relative path and a name separated
+     * by an {@code '/'}.
+     */
+    public static boolean createImageEntryAs(TestApp testApp, String path) throws Exception {
+        return getResultFromTestApp(testApp, path, CREATE_IMAGE_ENTRY_QUERY);
     }
 
     /**
@@ -340,6 +369,13 @@ public class TestUtils {
         values.put(MediaStore.MediaColumns.DATA, file.getPath());
         return getContentResolver().insert(MediaStore.Files.getContentUri(sStorageVolumeName),
                 values);
+    }
+
+    /**
+     * Returns the content URI for images based on the current storage volume.
+     */
+    public static Uri getMediaContentUri() {
+        return MediaStore.Images.Media.getContentUri(sStorageVolumeName);
     }
 
     /**
@@ -895,7 +931,11 @@ public class TestUtils {
         intent.putExtra(INTENT_EXTRA_PATH, dirPath);
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
         getContext().startActivity(intent);
-        latch.await();
+        if (!latch.await(POLLING_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+            final String errorMessage = "Timed out while waiting to receive " + actionName
+                    + " intent from " + packageName;
+            throw new TimeoutException(errorMessage);
+        }
         getContext().unregisterReceiver(broadcastReceiver);
     }
 

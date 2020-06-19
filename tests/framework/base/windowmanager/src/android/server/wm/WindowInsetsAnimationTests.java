@@ -52,8 +52,6 @@ import org.mockito.InOrder;
 
 import java.util.List;
 
-import androidx.test.filters.FlakyTest;
-
 /**
  * Test whether {@link WindowInsetsAnimation.Callback} are properly dispatched to views.
  *
@@ -106,7 +104,6 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
     }
 
     @Test
-    @FlakyTest(detail = "Promote once confirmed non-flaky")
     public void testAnimationCallbacks_overlapping() {
         WindowInsets before = mActivity.mLastWindowInsets;
 
@@ -238,7 +235,6 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
     }
 
     @Test
-    @FlakyTest(detail = "b/159038873")
     public void testAnimationCallbacks_withLegacyFlags() {
         getInstrumentation().runOnMainSync(() -> {
             mActivity.getWindow().setDecorFitsSystemWindows(true);
@@ -251,10 +247,9 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
             });
         });
 
-        getWmState().waitFor(state -> !state.isWindowVisible("StatusBar"),
-                "Waiting for status bar to be hidden");
-        assertFalse(getWmState().isWindowVisible("StatusBar"));
+        waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
 
+        assertFalse(getWmState().isWindowVisible("StatusBar"));
         verify(mActivity.mCallback).onPrepare(any());
         verify(mActivity.mCallback).onStart(any(), any());
         verify(mActivity.mCallback, atLeastOnce()).onProgress(any(), any());
