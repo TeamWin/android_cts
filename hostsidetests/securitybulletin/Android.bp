@@ -53,4 +53,8 @@ cc_defaults {
         "vts10",
         "sts",
     ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
 }
