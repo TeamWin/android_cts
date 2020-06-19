@@ -18,6 +18,8 @@ package android.scopedstorage.cts.host;
 
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
+
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -30,6 +32,7 @@ import org.junit.runner.RunWith;
  * Runs the ScopedStorageTest tests.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@AppModeFull
 public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     private boolean mIsExternalStorageSetup = false;
 
