@@ -2730,6 +2730,46 @@ public class ScopedStorageTest {
         }
     }
 
+    @Test
+    public void testRenameFromShell() throws Exception {
+        final File imageFile = new File(getPicturesDir(), IMAGE_FILE_NAME);
+        final File dir = new File(getMoviesDir(), TEST_DIRECTORY_NAME);
+        final File renamedDir = new File(getMusicDir(), TEST_DIRECTORY_NAME);
+        final File renamedImageFile = new File(dir, IMAGE_FILE_NAME);
+        final File imageFileInRenamedDir = new File(renamedDir, IMAGE_FILE_NAME);
+        try {
+            assertTrue(imageFile.createNewFile());
+            assertThat(getFileRowIdFromDatabase(imageFile)).isNotEqualTo(-1);
+            if (!dir.exists()) {
+                assertThat(dir.mkdir()).isTrue();
+            }
+
+            final String renameFileCommand = String.format("mv %s %s",
+                    imageFile.getAbsolutePath(), renamedImageFile.getAbsolutePath());
+            executeShellCommand(renameFileCommand);
+            assertFalse(imageFile.exists());
+            assertThat(getFileRowIdFromDatabase(imageFile)).isEqualTo(-1);
+            assertTrue(renamedImageFile.exists());
+            assertThat(getFileRowIdFromDatabase(renamedImageFile)).isNotEqualTo(-1);
+
+            final String renameDirectoryCommand = String.format("mv %s %s",
+                    dir.getAbsolutePath(), renamedDir.getAbsolutePath());
+            executeShellCommand(renameDirectoryCommand);
+            assertFalse(dir.exists());
+            assertFalse(renamedImageFile.exists());
+            assertThat(getFileRowIdFromDatabase(renamedImageFile)).isEqualTo(-1);
+            assertTrue(renamedDir.exists());
+            assertTrue(imageFileInRenamedDir.exists());
+            assertThat(getFileRowIdFromDatabase(imageFileInRenamedDir)).isNotEqualTo(-1);
+        } finally {
+            imageFile.delete();
+            renamedImageFile.delete();
+            imageFileInRenamedDir.delete();
+            dir.delete();
+            renamedDir.delete();
+        }
+    }
+
     /**
      * Checks restrictions for opening pending and trashed files by different apps. Assumes that
      * given {@code testApp} is already installed and has READ_EXTERNAL_STORAGE permission. This
