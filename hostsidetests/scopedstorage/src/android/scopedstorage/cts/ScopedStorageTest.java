@@ -512,6 +512,29 @@ public class ScopedStorageTest {
     }
 
     /**
+     * Test that deleting uri corresponding to a file which was already deleted via filePath
+     * doesn't result in a security exception.
+     */
+    @Test
+    public void testDeleteAlreadyUnlinkedFile() throws Exception {
+        final File nonMediaFile = new File(getDownloadDir(), NONMEDIA_FILE_NAME);
+        try {
+            assertTrue(nonMediaFile.createNewFile());
+            final Uri uri = MediaStore.scanFile(getContentResolver(), nonMediaFile);
+            assertNotNull(uri);
+
+            // Delete the file via filePath
+            assertTrue(nonMediaFile.delete());
+
+            // If we delete nonMediaFile with ContentResolver#delete, it shouldn't result in a
+            // security exception.
+            assertThat(getContentResolver().delete(uri, Bundle.EMPTY)).isEqualTo(0);
+        } finally {
+            nonMediaFile.delete();
+        }
+    }
+
+    /**
      * This test relies on the fact that {@link File#list} uses opendir internally, and that it
      * returns {@code null} if opendir fails.
      */
@@ -688,10 +711,8 @@ public class ScopedStorageTest {
             // TEST_APP_A should not see other app's external files directory.
             installAppWithStoragePermissions(TEST_APP_A);
 
-            // TODO(b/157650550): we don't have consistent behaviour on both primary and public
-            //  volumes
-//            assertThrows(IOException.class,
-//                    () -> listAs(TEST_APP_A, getAndroidDataDir().getPath()));
+            assertThrows(IOException.class,
+                    () -> listAs(TEST_APP_A, getAndroidDataDir().getPath()));
             assertThrows(IOException.class,
                     () -> listAs(TEST_APP_A, getExternalFilesDir().getPath()));
         } finally {

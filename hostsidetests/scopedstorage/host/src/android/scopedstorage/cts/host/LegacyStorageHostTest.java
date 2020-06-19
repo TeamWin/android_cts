@@ -186,4 +186,9 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
     public void testCaseInsensitivity() throws Exception {
         runDeviceTest("testAndroidDataObbCannotBeDeleted");
     }
+
+    @Test
+    public void testLegacyAppUpdatingOwnershipOfExistingEntry() throws Exception {
+        runDeviceTest("testLegacyAppUpdatingOwnershipOfExistingEntry");
+    }
 }
