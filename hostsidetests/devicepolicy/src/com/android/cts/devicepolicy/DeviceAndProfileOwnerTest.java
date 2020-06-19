@@ -2225,13 +2225,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 ? "testScreenCaptureImpossible"
                 : "testScreenCapturePossible";
 
-        if (userId == mPrimaryUserId) {
-            // If testing for user-0, also make sure the existing screen can't be captured.
-            executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
-        }
-
         startSimpleActivityAsUser(userId);
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
+        forceStopPackageForUser(TEST_APP_PKG, userId);
     }
 
     protected void setScreenCaptureDisabled_assist(int userId, boolean disabled) throws Exception {
