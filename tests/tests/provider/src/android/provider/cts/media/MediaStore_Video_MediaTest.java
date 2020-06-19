@@ -27,19 +27,16 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
-import android.os.Process;
 import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Files.FileColumns;
@@ -203,30 +200,13 @@ public class MediaStore_Video_MediaTest {
         return context.getContentResolver().insert(mExternalVideo, values);
     }
 
-    /**
-     * This test doesn't hold
-     * {@link android.Manifest.permission#ACCESS_MEDIA_LOCATION}, so Exif and XMP
-     * location information should be redacted.
-     */
     @Test
     public void testLocationRedaction() throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(StorageManager.hasIsolatedStorage());
 
-        final String displayName = "cts" + System.nanoTime();
-        final PendingParams params = new PendingParams(
-                mExternalVideo, displayName, "video/mp4");
-
-        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
-        final Uri publishUri;
-        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
-            try (InputStream in = mContext.getResources().openRawResource(R.raw.testvideo_meta);
-                 OutputStream out = session.openOutputStream()) {
-                FileUtils.copy(in, out);
-            }
-            publishUri = session.publish();
-        }
-
+        final Uri publishUri = ProviderTestUtils.stageMedia(R.raw.testvideo_meta, mExternalVideo,
+                "video/mp4");
         final Uri originalUri = MediaStore.setRequireOriginal(publishUri);
 
         // Since we own the video, we should be able to see the location
@@ -252,32 +232,8 @@ public class MediaStore_Video_MediaTest {
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
         }
 
-        // Remove ACCESS_MEDIA_LOCATION permission
-        try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity("android.permission.MANAGE_APP_OPS_MODES",
-                            "android.permission.REVOKE_RUNTIME_PERMISSIONS");
-
-            // Revoking ACCESS_MEDIA_LOCATION permission will kill the test app.
-            // Deny access_media_permission App op to revoke this permission.
-            PackageManager packageManager = mContext.getPackageManager();
-            String packageName = mContext.getPackageName();
-            if (packageManager.checkPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION,
-                    packageName) == PackageManager.PERMISSION_GRANTED) {
-                mContext.getPackageManager().updatePermissionFlags(
-                        android.Manifest.permission.ACCESS_MEDIA_LOCATION, packageName,
-                        PackageManager.FLAG_PERMISSION_REVOKED_COMPAT,
-                        PackageManager.FLAG_PERMISSION_REVOKED_COMPAT, mContext.getUser());
-                mContext.getSystemService(AppOpsManager.class).setUidMode(
-                        "android:access_media_location", Process.myUid(),
-                        AppOpsManager.MODE_IGNORED);
-            }
-        } finally {
-                InstrumentationRegistry.getInstrumentation().getUiAutomation().
-                        dropShellPermissionIdentity();
-        }
-
-        // Now remove ownership, which means that location should be redacted
+        // Revoke location access and remove ownership, which means that location should be redacted
+        ProviderTestUtils.revokeMediaLocationPermission(mContext);
         ProviderTestUtils.clearOwner(publishUri);
         try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
