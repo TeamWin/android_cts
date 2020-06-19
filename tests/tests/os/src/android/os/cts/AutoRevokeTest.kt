@@ -17,6 +17,7 @@
 package android.os.cts
 
 import android.content.Intent
+import android.content.Intent.ACTION_AUTO_REVOKE_PERMISSIONS
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_DENIED
@@ -24,7 +25,6 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
-import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
@@ -287,7 +287,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     private fun goToPermissions(packageName: String = APK_PACKAGE_NAME) {
-        context.startActivity(Intent(ACTION_APPLICATION_DETAILS_SETTINGS)
+        context.startActivity(Intent(ACTION_AUTO_REVOKE_PERMISSIONS)
                 .setData(Uri.fromParts("package", packageName, null))
                 .addFlags(FLAG_ACTIVITY_NEW_TASK))
 
