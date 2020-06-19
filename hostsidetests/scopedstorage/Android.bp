@@ -15,28 +15,28 @@
 android_test_helper_app {
     name: "CtsScopedStorageTestAppA",
     manifest: "ScopedStorageTestHelper/TestAppA.xml",
-    static_libs: ["androidx.test.rules", "cts-scopedstorage-lib"],
+    static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
 }
 android_test_helper_app {
     name: "CtsScopedStorageTestAppB",
     manifest: "ScopedStorageTestHelper/TestAppB.xml",
-    static_libs: ["androidx.test.rules", "cts-scopedstorage-lib"],
+    static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
 }
 android_test_helper_app {
     name: "CtsScopedStorageTestAppC",
     manifest: "ScopedStorageTestHelper/TestAppC.xml",
-    static_libs: ["androidx.test.rules", "cts-scopedstorage-lib"],
+    static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
 }
 android_test_helper_app {
     name: "CtsScopedStorageTestAppCLegacy",
     manifest: "ScopedStorageTestHelper/TestAppCLegacy.xml",
-    static_libs: ["androidx.test.rules", "cts-scopedstorage-lib"],
+    static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     target_sdk_version: "28",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
@@ -46,9 +46,9 @@ android_test {
     name: "ScopedStorageTest",
     manifest: "AndroidManifest.xml",
     srcs: ["src/**/*.java"],
-    static_libs: ["androidx.test.rules", "truth-prebuilt", "cts-scopedstorage-lib"],
+    static_libs: ["truth-prebuilt", "cts-scopedstorage-lib"],
     compile_multilib: "both",
-    test_suites: ["general-tests", "mts"],
+    test_suites: ["general-tests", "mts", "cts"],
     sdk_version: "test_current",
     java_resources: [
         ":CtsScopedStorageTestAppA",
@@ -61,9 +61,9 @@ android_test {
     name: "LegacyStorageTest",
     manifest: "legacy/AndroidManifest.xml",
     srcs: ["legacy/src/**/*.java"],
-    static_libs: ["androidx.test.rules", "truth-prebuilt",  "cts-scopedstorage-lib"],
+    static_libs: ["truth-prebuilt", "cts-scopedstorage-lib"],
     compile_multilib: "both",
-    test_suites: ["general-tests", "mts"],
+    test_suites: ["general-tests", "mts", "cts"],
     sdk_version: "test_current",
     target_sdk_version: "29",
     java_resources: [
@@ -74,17 +74,15 @@ android_test {
 java_test_host {
     name: "CtsScopedStorageHostTest",
     srcs: ["host/src/**/*.java"],
-    libs: ["tradefed"],
-    static_libs: ["testng"],
-    test_suites: ["general-tests", "mts"],
+    libs: ["tradefed", "testng"],
+    test_suites: ["general-tests", "mts", "cts"],
     test_config: "AndroidTest.xml",
 }
 
 java_test_host {
     name: "CtsScopedStoragePublicVolumeHostTest",
     srcs: ["host/src/**/*.java"],
-    libs: ["tradefed"],
-    static_libs: ["testng"],
+    libs: ["tradefed", "testng"],
     test_suites: ["general-tests", "mts"],
     test_config: "PublicVolumeTest.xml",
 }
