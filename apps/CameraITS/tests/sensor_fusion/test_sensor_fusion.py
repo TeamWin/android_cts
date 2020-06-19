@@ -133,7 +133,7 @@ def main():
     else:
         events, frames, _, h = load_data()
 
-    # Sanity check camera timestamps are enclosed by sensor timestamps
+    # Check that camera timestamps are enclosed by sensor timestamps
     # This will catch bugs where camera and gyro timestamps go completely out
     # of sync
     cam_times = get_cam_times(events["cam"])

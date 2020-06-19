@@ -543,7 +543,7 @@ def measure_aspect_ratio(img, raw_avlb, img_name, debug):
         # 3. Child"s width > 0.1*Image width
         # 4. Child"s height > 0.1*Image height
         # 5. 0.25*Parent"s area < Child"s area < 0.45*Parent"s area
-        # 6. Child is a black, and Parent is white
+        # 6. Child == 0, and Parent == 255
         # 7. Center of Child and center of parent should overlap
         if (prt_shape["width"] * 0.56 < child_shape["width"]
                     < prt_shape["width"] * 0.76
