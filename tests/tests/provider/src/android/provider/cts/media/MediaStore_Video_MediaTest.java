@@ -201,23 +201,31 @@ public class MediaStore_Video_MediaTest {
     }
 
     @Test
-    public void testLocationRedaction() throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(StorageManager.hasIsolatedStorage());
-
+    public void testOriginalAccess() throws Exception {
         final Uri publishUri = ProviderTestUtils.stageMedia(R.raw.testvideo_meta, mExternalVideo,
                 "video/mp4");
         final Uri originalUri = MediaStore.setRequireOriginal(publishUri);
 
-        // Since we own the video, we should be able to see the location
-        // we ourselves contributed
-        try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
-                MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
-            mmr.setDataSource(pfd.getFileDescriptor());
-            assertEquals("+37.4217-122.0834/",
-                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
-            assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+        // As owner, we should be able to request the original bytes
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
         }
+
+        // Revoke location access and remove ownership, which means that location should be redacted
+        ProviderTestUtils.revokeMediaLocationPermission(mContext);
+        ProviderTestUtils.clearOwner(publishUri);
+
+        // We can't request original bytes unless we have permission
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
+            fail("Able to read original content without ACCESS_MEDIA_LOCATION");
+        } catch (UnsupportedOperationException expected) {
+        }
+    }
+
+    @Test
+    public void testXmpLocationRedaction() throws Exception {
+        final Uri publishUri = ProviderTestUtils.stageMedia(R.raw.testvideo_meta, mExternalVideo,
+                "video/mp4");
+
         try (InputStream in = mContentResolver.openInputStream(publishUri);
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             FileUtils.copy(in, out);
@@ -228,20 +236,11 @@ public class MediaStore_Video_MediaTest {
             assertTrue("Failed to read XMP latitude", xmp.contains("53,50.070500N"));
             assertTrue("Failed to read non-location XMP", xmp.contains("13166/7763"));
         }
-        // As owner, we should be able to request the original bytes
-        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
-        }
 
         // Revoke location access and remove ownership, which means that location should be redacted
         ProviderTestUtils.revokeMediaLocationPermission(mContext);
         ProviderTestUtils.clearOwner(publishUri);
-        try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
-                MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
-            mmr.setDataSource(pfd.getFileDescriptor());
-            assertEquals(null,
-                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
-            assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
-        }
+
         try (InputStream in = mContentResolver.openInputStream(publishUri);
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             FileUtils.copy(in, out);
@@ -252,10 +251,36 @@ public class MediaStore_Video_MediaTest {
             assertFalse("Failed to redact XMP latitude", xmp.contains("53,50.070500N"));
             assertTrue("Redacted non-location XMP", xmp.contains("13166/7763"));
         }
-        // We can't request original bytes unless we have permission
-        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
-            fail("Able to read original content without ACCESS_MEDIA_LOCATION");
-        } catch (UnsupportedOperationException expected) {
+    }
+
+    @Test
+    public void testIsoLocationRedaction() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(StorageManager.hasIsolatedStorage());
+
+        final Uri publishUri = ProviderTestUtils.stageMedia(R.raw.testvideo_meta, mExternalVideo,
+                "video/mp4");
+
+        // Since we own the video, we should be able to see the location
+        // we ourselves contributed
+        try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
+            mmr.setDataSource(pfd.getFileDescriptor());
+            assertEquals("+37.4217-122.0834/",
+                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+            assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+        }
+
+        // Revoke location access and remove ownership, which means that location should be redacted
+        ProviderTestUtils.revokeMediaLocationPermission(mContext);
+        ProviderTestUtils.clearOwner(publishUri);
+
+        try (ParcelFileDescriptor pfd = mContentResolver.openFile(publishUri, "r", null);
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
+            mmr.setDataSource(pfd.getFileDescriptor());
+            assertEquals(null,
+                    mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_LOCATION));
+            assertEquals("2", mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
         }
     }
 
