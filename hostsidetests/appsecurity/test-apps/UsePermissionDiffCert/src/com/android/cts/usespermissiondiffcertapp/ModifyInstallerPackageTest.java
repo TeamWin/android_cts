@@ -120,10 +120,8 @@ public class ModifyInstallerPackageTest extends AndroidTestCase {
         assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
 
         getPackageManager().setInstallerPackageName(OTHER_PACKAGE, MY_PACKAGE);
-        assertEquals(MY_PACKAGE, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
 
-        // Clean up.
-        getPackageManager().setInstallerPackageName(OTHER_PACKAGE, null);
+        // b/150857253, this no longer works without the permission, so assert null
         assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
     }
 
@@ -187,26 +185,8 @@ public class ModifyInstallerPackageTest extends AndroidTestCase {
         intent.putExtra("installer", OTHER_PACKAGE);
         SetInstallerPackageReceiver receiver = new SetInstallerPackageReceiver();
         getContext().sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
-        receiver.assertSuccess("Failure initializing with other installer");
 
-        assertEquals(OTHER_PACKAGE, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-
-        try {
-            getPackageManager().setInstallerPackageName(OTHER_PACKAGE, MY_PACKAGE);
-            fail("setInstallerPackageName did not throw SecurityException");
-        } catch (SecurityException e) {
-            // That's what we want!
-        }
-
-        assertEquals(OTHER_PACKAGE, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-
-        // Now clear the installer
-        intent.putExtra("target", OTHER_PACKAGE);
-        intent.putExtra("installer", (String)null);
-        receiver = new SetInstallerPackageReceiver();
-        getContext().sendOrderedBroadcast(intent, null, receiver, null, 0, null, null);
-        receiver.assertSuccess("Failure clearing other installer");
-
+        // b/150857253, this no longer works without the permission, so assert null
         assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
     }
 }
