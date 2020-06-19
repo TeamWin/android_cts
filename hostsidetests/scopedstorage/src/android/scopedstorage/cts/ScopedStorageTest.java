@@ -2614,16 +2614,11 @@ public class ScopedStorageTest {
      */
     @Test
     public void testCantSetAttrOtherAppsFile() throws Exception {
-        // This path's permission is checked in FuseDaemon (directory/external files dir).
-        final File externalFilesPath = new File(getExternalFilesDir(), VIDEO_FILE_NAME);
         // This path's permission is checked in MediaProvider (directory/external media dir)
         final File externalMediaPath = new File(getExternalMediaDir(), VIDEO_FILE_NAME);
 
         try {
             // Create the files
-            if (!externalFilesPath.exists()) {
-                assertThat(externalFilesPath.createNewFile()).isTrue();
-            }
             if (!externalMediaPath.exists()) {
                 assertThat(externalMediaPath.createNewFile()).isTrue();
             }
@@ -2633,15 +2628,10 @@ public class ScopedStorageTest {
 
             // TEST_APP_A should not be able to setattr to other app's files.
             assertWithMessage(
-                "setattr on directory/external files path [%s]", externalFilesPath.getPath())
-                .that(setAttrAs(TEST_APP_A, externalFilesPath.getPath()))
-                .isFalse();
-            assertWithMessage(
                 "setattr on directory/external media path [%s]", externalMediaPath.getPath())
                 .that(setAttrAs(TEST_APP_A, externalMediaPath.getPath()))
                 .isFalse();
         } finally {
-            externalFilesPath.delete();
             externalMediaPath.delete();
             uninstallAppNoThrow(TEST_APP_A);
         }
