@@ -55,10 +55,8 @@ public class ModifyInstallerPackageTest extends AndroidTestCase {
         assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
 
         getPackageManager().setInstallerPackageName(OTHER_PACKAGE, MY_PACKAGE);
-        assertEquals(MY_PACKAGE, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
 
-        // Clean up.
-        getPackageManager().setInstallerPackageName(OTHER_PACKAGE, null);
+        // b/150857253, this no longer works without the permission, so assert null
         assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
     }
 
@@ -122,23 +120,7 @@ public class ModifyInstallerPackageTest extends AndroidTestCase {
         intent.putExtra(EXTRA_INSTALLER_PACKAGE_NAME, OTHER_PACKAGE);
         call(intent);
 
-        assertEquals(OTHER_PACKAGE, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-
-        try {
-            getPackageManager().setInstallerPackageName(OTHER_PACKAGE, MY_PACKAGE);
-            fail("setInstallerPackageName did not throw SecurityException");
-        } catch (SecurityException e) {
-            // That's what we want!
-        }
-
-        assertEquals(OTHER_PACKAGE, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-
-        // Now clear the installer
-        intent.setAction(ACTION_SET_INSTALLER_PACKAGE_NAME);
-        intent.putExtra(EXTRA_PACKAGE_NAME, OTHER_PACKAGE);
-        intent.putExtra(EXTRA_INSTALLER_PACKAGE_NAME, (String)null);
-        call(intent);
-
+        // b/150857253, this no longer works without the permission, so assert null
         assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
     }
 }
