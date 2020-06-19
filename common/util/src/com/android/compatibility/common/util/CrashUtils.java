@@ -17,6 +17,7 @@
 package com.android.compatibility.common.util;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -203,10 +204,17 @@ public class CrashUtils {
     }
 
     public static class Config {
-        private boolean checkMinAddress = true;
-        private BigInteger minCrashAddress = MIN_CRASH_ADDR;
-        private List<String> signals = Arrays.asList(SIGSEGV, SIGBUS);
-        private List<Pattern> processPatterns = Collections.emptyList();
+        private boolean checkMinAddress;
+        private BigInteger minCrashAddress;
+        private List<String> signals;
+        private List<Pattern> processPatterns;
+
+        public Config() {
+            checkMinAddress = true;
+            minCrashAddress = MIN_CRASH_ADDR;
+            setSignals(SIGSEGV, SIGBUS);
+            processPatterns = new ArrayList();
+        }
 
         public Config setMinAddress(BigInteger minCrashAddress) {
             this.minCrashAddress = minCrashAddress;
@@ -219,7 +227,7 @@ public class CrashUtils {
         }
 
         public Config setSignals(String... signals) {
-            this.signals = Arrays.asList(signals);
+            this.signals = new ArrayList(Arrays.asList(signals));
             return this;
         }
 
@@ -237,7 +245,7 @@ public class CrashUtils {
         }
 
         public Config setProcessPatterns(Pattern... processPatterns) {
-            this.processPatterns = Arrays.asList(processPatterns);
+            this.processPatterns = new ArrayList(Arrays.asList(processPatterns));
             return this;
         }
 
