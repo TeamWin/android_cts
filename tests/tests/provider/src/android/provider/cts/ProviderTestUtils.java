@@ -255,10 +255,20 @@ public class ProviderTestUtils {
         if (userManager.isSystemUser() &&
                     FileUtils.contains(Environment.getStorageDirectory(), file)) {
             executeShellCommand("mkdir -p " + file.getParent());
+            waitUntilExists(file.getParentFile());
             try (AssetFileDescriptor afd = context.getResources().openRawResourceFd(resId)) {
                 final File source = ParcelFileDescriptor.getFile(afd.getFileDescriptor());
                 final long skip = afd.getStartOffset();
                 final long count = afd.getLength();
+
+                try {
+                    // Try to create the file as calling package so that calling package remains
+                    // as owner of the file.
+                    file.createNewFile();
+                } catch (IOException ignored) {
+                    // Apps can't create files in other app's private directories, but shell can. If
+                    // file creation fails, we ignore and let `dd` command create it instead.
+                }
 
                 executeShellCommand(String.format("dd bs=1 if=%s skip=%d count=%d of=%s",
                         source.getAbsolutePath(), skip, count, file.getAbsolutePath()));
