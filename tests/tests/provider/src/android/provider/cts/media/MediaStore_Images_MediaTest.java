@@ -297,8 +297,6 @@ public class MediaStore_Images_MediaTest {
      */
     @Test
     public void testUpdateAndReplace() throws Exception {
-        Assume.assumeFalse(mVolumeName.equals(MediaStore.VOLUME_EXTERNAL));
-
         File dir = mContext.getSystemService(StorageManager.class)
                 .getStorageVolume(mExternalImages).getDirectory();
         File dcimDir = new File(dir, Environment.DIRECTORY_DCIM);
@@ -336,8 +334,6 @@ public class MediaStore_Images_MediaTest {
 
     @Test
     public void testUpsert() throws Exception {
-        Assume.assumeFalse(mVolumeName.equals(MediaStore.VOLUME_EXTERNAL));
-
         File dir = mContext.getSystemService(StorageManager.class)
                 .getStorageVolume(mExternalImages).getDirectory();
         File dcimDir = new File(dir, Environment.DIRECTORY_DCIM);
