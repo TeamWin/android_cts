@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
@@ -492,6 +493,22 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
         runDeviceTest("testCreateFileInAppExternalDir");
         runDeviceTest("testCreateFileInOtherAppExternalDir");
         runDeviceTest("testReadWriteFilesInOtherAppExternalDir");
+    }
+
+    @Test
+    public void testRenameFromShell() throws Exception {
+        final ITestDevice device = getDevice();
+        final boolean isAdbRoot = device.isAdbRoot() ? true : false;
+        try {
+            if (isAdbRoot) {
+                device.disableAdbRoot();
+            }
+            runDeviceTest("testRenameFromShell");
+        } finally {
+            if (isAdbRoot) {
+                device.enableAdbRoot();
+            }
+        }
     }
 
     private void grantPermissions(String... perms) throws Exception {
