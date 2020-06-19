@@ -125,7 +125,14 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         // Step 2: request background only
         permissions = new String[]{ACCESS_BACKGROUND_LOCATION};
 
-        result = requestPermissions(permissions, this::clickAllowButton);
+        if (isAutomotive()) {
+            // In this test, the text changes to "Allow all the time", but is normally
+            // still put on the button with id "permission_allow_button".
+            // Since automotive finds views by text instead of id, check for the always allow button
+            result = requestPermissions(permissions, this::clickAllowAlwaysButton);
+        } else {
+            result = requestPermissions(permissions, this::clickAllowButton);
+        }
         assertPermissionRequestResult(result, permissions, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
@@ -144,7 +151,14 @@ public class UsePermissionTest29 extends BasePermissionsTest {
         assertDenied(ACCESS_BACKGROUND_LOCATION);
 
         // Step 2: grant background
-        result = requestPermissions(permissions, this::clickAllowButton);
+        if (isAutomotive()) {
+            // In this test, the text changes to "Allow all the time", but is normally
+            // still put on the button with id "permission_allow_button".
+            // Since automotive finds views by text instead of id, check for the always allow button
+            result = requestPermissions(permissions, this::clickAllowAlwaysButton);
+        } else {
+            result = requestPermissions(permissions, this::clickAllowButton);
+        }
         assertPermissionRequestResult(result, permissions, true, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
