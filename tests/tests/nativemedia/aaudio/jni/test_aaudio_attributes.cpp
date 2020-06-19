@@ -274,8 +274,14 @@ TEST(test_attributes, aaudio_system_usages_rejected) {
 
         AAudioStreamBuilder_setUsage(aaudioBuilder, systemUsage);
 
-        // Get failed status when trying to create an AAudioStream using the Builder.
-        ASSERT_EQ(AAUDIO_ERROR_ILLEGAL_ARGUMENT, AAudioStreamBuilder_openStream(aaudioBuilder, &aaudioStream));
+        aaudio_result_t result = AAudioStreamBuilder_openStream(aaudioBuilder, &aaudioStream);
+
+        // Get failed status when trying to create an AAudioStream using the Builder. There are two
+        // potential failures: one if the device doesn't support the system usage, and the  other
+        // if it does but this test doesn't have the MODIFY_AUDIO_ROUTING permission required to
+        // use it.
+        ASSERT_TRUE(result == AAUDIO_ERROR_ILLEGAL_ARGUMENT
+                || result == AAUDIO_ERROR_INTERNAL);
         AAudioStreamBuilder_delete(aaudioBuilder);
     }
 }
