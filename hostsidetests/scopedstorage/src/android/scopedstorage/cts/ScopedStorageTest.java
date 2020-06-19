@@ -125,6 +125,7 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
+import android.platform.test.annotations.AppModeInstant;
 import android.provider.MediaStore;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -200,8 +201,10 @@ public class ScopedStorageTest {
         // skips all test cases if FUSE is not active.
         assumeTrue(getBoolean("persist.sys.fuse", false));
 
-        pollForExternalStorageState();
-        getExternalFilesDir().mkdirs();
+        if (!getContext().getPackageManager().isInstantApp()) {
+            pollForExternalStorageState();
+            getExternalFilesDir().mkdirs();
+        }
     }
 
     /**
@@ -1662,8 +1665,7 @@ public class ScopedStorageTest {
                     THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
             final File otherAppExternalDataFile = new File(otherAppExternalDataDir,
                     NONMEDIA_FILE_NAME);
-            assertThat(createFileAs(TEST_APP_A, otherAppExternalDataFile.getAbsolutePath()))
-                    .isTrue();
+            assertCreateFilesAs(TEST_APP_A, otherAppExternalDataFile);
 
             // File Manager app gets global access with MANAGE_EXTERNAL_STORAGE permission, however,
             // file manager app doesn't have access to other app's external files directory
@@ -1680,6 +1682,41 @@ public class ScopedStorageTest {
             denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
             uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
         }
+    }
+
+    /**
+     * Tests that an instant app can't access external storage.
+     */
+    @Test
+    @AppModeInstant
+    public void testInstantAppsCantAccessExternalStorage() throws Exception {
+        assumeTrue("This test requires that the test runs as an Instant app",
+                getContext().getPackageManager().isInstantApp());
+        assertThat(getContext().getPackageManager().isInstantApp()).isTrue();
+
+        // Can't read ExternalStorageDir
+        assertThat(getExternalStorageDir().list()).isNull();
+
+        // Can't create a top-level direcotry
+        final File topLevelDir = new File(getExternalStorageDir(), TEST_DIRECTORY_NAME);
+        assertThat(topLevelDir.mkdir()).isFalse();
+
+        // Can't create file under root dir
+        final File newTxtFile = new File(getExternalStorageDir(), NONMEDIA_FILE_NAME);
+        assertThrows(IOException.class,
+                () -> { newTxtFile.createNewFile(); });
+
+        // Can't create music file under /MUSIC
+        final File newMusicFile = new File(getMusicDir(), AUDIO_FILE_NAME);
+        assertThrows(IOException.class,
+                () -> { newMusicFile.createNewFile(); });
+
+        // getExternalFilesDir() is not null
+        assertThat(getExternalFilesDir()).isNotNull();
+
+        // Can't read/write app specific dir
+        assertThat(getExternalFilesDir().list()).isNull();
+        assertThat(getExternalFilesDir().exists()).isFalse();
     }
 
     /**
