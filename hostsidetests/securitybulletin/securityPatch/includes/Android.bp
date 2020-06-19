@@ -25,3 +25,10 @@ filegroup {
         "omxUtils.cpp",
     ],
 }
+
+filegroup {
+    name: "cts_securitybulletin_memutils_track",
+    srcs: [
+        "memutils_track.c",
+    ],
+}
