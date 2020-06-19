@@ -39,5 +39,6 @@
         <option
             name="push"
             value="CtsAutoRevokeWhitelistedDummyApp.apk->/data/local/tmp/cts/os/CtsAutoRevokeWhitelistedDummyApp.apk" />
+        <option name="push" value="CtsAutoRevokePreRApp.apk->/data/local/tmp/cts/os/CtsAutoRevokePreRApp.apk" />
     </target_preparer>
 </configuration>

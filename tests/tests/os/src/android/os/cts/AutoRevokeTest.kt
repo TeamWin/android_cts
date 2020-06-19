@@ -31,10 +31,17 @@ import android.support.test.uiautomator.UiObject2
 import android.test.InstrumentationTestCase
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
-import com.android.compatibility.common.util.*
 import com.android.compatibility.common.util.textAsString
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
-import com.android.compatibility.common.util.SystemUtil.*
+import com.android.compatibility.common.util.SystemUtil
+import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.ThrowingSupplier
+import com.android.compatibility.common.util.UiAutomatorUtils
+import com.android.compatibility.common.util.click
+import com.android.compatibility.common.util.depthFirstSearch
+import com.android.compatibility.common.util.lowestCommonAncestor
+import com.android.compatibility.common.util.uiDump
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.containsStringIgnoringCase
 import org.hamcrest.Matcher
@@ -49,6 +56,9 @@ private const val APK_WHITELISTED_PATH =
         "/data/local/tmp/cts/os/CtsAutoRevokeWhitelistedDummyApp.apk"
 private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
 private const val APK_WHITELISTED_PACKAGE_NAME = "android.os.cts.autorevokewhitelisteddummyapp"
+private const val APK_PATH_2 = "/data/local/tmp/cts/os/CtsAutoRevokePreRApp.apk"
+private const val APK_PACKAGE_NAME_2 = "android.os.cts.autorevokeprerapp"
+private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
 
 /**
  * Test for auto revoke
@@ -107,10 +117,51 @@ class AutoRevokeTest : InstrumentationTestCase() {
 
                 // Run
                 runAutoRevoke()
-                Thread.sleep(500)
+                Thread.sleep(1000)
 
                 // Verify
                 assertPermission(PERMISSION_GRANTED)
+            }
+        }
+    }
+
+    @AppModeFull(reason = "Uses separate apps for testing")
+    fun testPreRUnusedApp_doesntGetPermissionRevoked() {
+        wakeUpScreen()
+        withUnusedThresholdMs(3L) {
+            withDummyApp(APK_PATH_2, APK_PACKAGE_NAME_2) {
+                withDummyApp {
+                    startApp(APK_PACKAGE_NAME_2)
+                    clickPermissionAllow()
+                    eventually {
+                        assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_2)
+                    }
+
+                    goBack()
+                    goHome()
+                    goBack()
+
+                    startApp()
+                    clickPermissionAllow()
+                    eventually {
+                        assertPermission(PERMISSION_GRANTED)
+                    }
+
+                    goBack()
+                    goHome()
+                    goBack()
+                    Thread.sleep(20)
+
+                    // Run
+                    runAutoRevoke()
+                    Thread.sleep(500)
+
+                    // Verify
+                    eventually {
+                        assertPermission(PERMISSION_DENIED)
+                        assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_2)
+                    }
+                }
             }
         }
     }
@@ -303,39 +354,11 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     private fun assertPermission(state: Int, packageName: String = APK_PACKAGE_NAME) {
-        // For some reason this incorrectly always returns PERMISSION_DENIED
-//        runWithShellPermissionIdentity {
-//            assertEquals(
-//                permissionStateToString(state),
-//                permissionStateToString(context.packageManager.checkPermission(READ_CALENDAR, APK_PACKAGE_NAME)))
-//        }
-
-        try {
-            goToPermissions(packageName)
-
-            waitForIdle()
-            val ui = instrumentation.uiAutomation.rootInActiveWindow
-            val permStateSection = ui.lowestCommonAncestor(
-                    { node -> node.textAsString.equals("Allowed", ignoreCase = true) },
-                    { node -> node.textAsString.equals("Denied", ignoreCase = true) }
-            ).assertNotNull {
-                "Cannot find permissions state section in\n${uiDump(ui)}"
-            }
-            val sectionHeaderIndex = permStateSection.children.indexOfFirst {
-                it?.depthFirstSearch { node ->
-                    node.textAsString.equals(
-                            if (state == PERMISSION_GRANTED) "Allowed" else "Denied",
-                            ignoreCase = true)
-                } != null
-            }
-            permStateSection.getChild(sectionHeaderIndex + 1).depthFirstSearch { node ->
-                node.textAsString.equals("Calendar", ignoreCase = true)
-            }.assertNotNull {
-                "Permission must be ${permissionStateToString(state)}\n${uiDump(ui)}"
-            }
-        } finally {
-            goBack()
-            goBack()
+        runWithShellPermissionIdentity {
+            assertEquals(
+                permissionStateToString(state),
+                permissionStateToString(
+                        context.packageManager.checkPermission(READ_CALENDAR, packageName)))
         }
     }
 
