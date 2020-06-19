@@ -22,7 +22,7 @@ import static com.android.cts.usespermissiondiffcertapp.AccessPermissionWithDiff
 import static com.android.cts.usespermissiondiffcertapp.AccessPermissionWithDiffSigTest.NOT_GRANTABLE_MODES;
 import static com.android.cts.usespermissiondiffcertapp.Asserts.assertAccess;
 import static com.android.cts.usespermissiondiffcertapp.UriGrantsTest.TAG;
-import static com.android.cts.usespermissiondiffcertapp.Utils.grantClipUriPermission;
+import static com.android.cts.usespermissiondiffcertapp.Utils.grantClipUriPermissionViaService;
 
 import static junit.framework.Assert.fail;
 
@@ -79,7 +79,7 @@ public class UriGrantsServiceTest {
         // --------------------------------
 
         ReceiveUriService.clearStarted();
-        grantClipUriPermission(subClip, mode, true);
+        grantClipUriPermissionViaService(subClip, mode);
         ReceiveUriService.waitForStart();
 
         int firstStartId = ReceiveUriService.getCurStartId();
@@ -96,7 +96,7 @@ public class UriGrantsServiceTest {
 
         // Send another Intent to it.
         ReceiveUriService.clearStarted();
-        grantClipUriPermission(sub2Clip, mode, true);
+        grantClipUriPermissionViaService(sub2Clip, mode);
         ReceiveUriService.waitForStart();
 
         assertAccess(uri, 0);
