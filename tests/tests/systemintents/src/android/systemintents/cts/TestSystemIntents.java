@@ -30,7 +30,10 @@ import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.google.common.truth.Expect;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -51,6 +54,8 @@ public class TestSystemIntents {
             intent = i;
         }
     }
+
+    @Rule public final Expect mExpect = Expect.create();
 
     private Context mContext;
     private PackageManager mPackageManager;
@@ -114,7 +119,8 @@ public class TestSystemIntents {
             if ((productFlags & e.flags) == 0) {
                 final ResolveInfo ri = mPackageManager.resolveActivity(e.intent,
                         PackageManager.MATCH_DEFAULT_ONLY);
-                assertTrue("API intent " + e.intent + " not implemented by any activity", ri != null);
+                mExpect.withMessage("API intent %s not implemented by any activity", e.intent)
+                        .that(ri).isNotNull();
             }
         }
     }
