@@ -19,12 +19,12 @@ package android.app.appops.cts
 import android.app.AppOpsManager
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OP_FLAGS_ALL
+import android.app.AppOpsManager.SECURITY_EXCEPTION_ON_INVALID_ATTRIBUTION_TAG_CHANGE
 import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Test
-import java.lang.AssertionError
 import java.lang.Thread.sleep
 
 private const val APK_PATH = "/data/local/tmp/cts/appops/"
@@ -62,7 +62,7 @@ class AttributionTest {
         sleep(1)
 
         runWithShellPermissionIdentity {
-            appOpsManager.noteOpNoThrow(OPSTR_WIFI_SCAN, appUid, APP_PKG, attribution, null)
+            appOpsManager.noteOp(OPSTR_WIFI_SCAN, appUid, APP_PKG, attribution, null)
         }
     }
 
@@ -103,6 +103,18 @@ class AttributionTest {
                     .getLastAccessTime(OP_FLAGS_ALL))
                     .isEqualTo(beforeUpdate.attributedOpEntries[ATTRIBUTION_5]!!
                             .getLastAccessTime(OP_FLAGS_ALL))
+        }
+    }
+
+    @Test(expected = SecurityException::class)
+    fun cannotUseUndeclaredAttributionTag() {
+        noteForAttribution("invalid attribution tag")
+    }
+
+    @Test
+    fun canUseUndeclaredAttributionTagIfChangeForBlameeIsDisabled() {
+        withDisabledCompatChange(SECURITY_EXCEPTION_ON_INVALID_ATTRIBUTION_TAG_CHANGE, APP_PKG) {
+            noteForAttribution("invalid attribution tag")
         }
     }
 
