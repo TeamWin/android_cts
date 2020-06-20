@@ -25,12 +25,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -40,7 +38,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
-import android.os.Process;
 import android.os.storage.StorageManager;
 import android.provider.BaseColumns;
 import android.provider.MediaStore;
@@ -300,8 +297,6 @@ public class MediaStore_Images_MediaTest {
      */
     @Test
     public void testUpdateAndReplace() throws Exception {
-        Assume.assumeFalse(mVolumeName.equals(MediaStore.VOLUME_EXTERNAL));
-
         File dir = mContext.getSystemService(StorageManager.class)
                 .getStorageVolume(mExternalImages).getDirectory();
         File dcimDir = new File(dir, Environment.DIRECTORY_DCIM);
@@ -339,8 +334,6 @@ public class MediaStore_Images_MediaTest {
 
     @Test
     public void testUpsert() throws Exception {
-        Assume.assumeFalse(mVolumeName.equals(MediaStore.VOLUME_EXTERNAL));
-
         File dir = mContext.getSystemService(StorageManager.class)
                 .getStorageVolume(mExternalImages).getDirectory();
         File dcimDir = new File(dir, Environment.DIRECTORY_DCIM);
@@ -395,30 +388,12 @@ public class MediaStore_Images_MediaTest {
         assertNotNull(mContentResolver.loadThumbnail(uri, new Size(96, 96), null));
     }
 
-    /**
-     * This test doesn't hold
-     * {@link android.Manifest.permission#ACCESS_MEDIA_LOCATION}, so Exif
-     * location information should be redacted.
-     */
     @Test
     public void testLocationRedaction() throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
         Assume.assumeTrue(StorageManager.hasIsolatedStorage());
-
-        final String displayName = "cts" + System.nanoTime();
-        final PendingParams params = new PendingParams(
-                mExternalImages, displayName, "image/jpeg");
-
-        final Uri pendingUri = MediaStoreUtils.createPending(mContext, params);
-        final Uri publishUri;
-        try (PendingSession session = MediaStoreUtils.openPending(mContext, pendingUri)) {
-            try (InputStream in = mContext.getResources().openRawResource(R.raw.lg_g4_iso_800_jpg);
-                 OutputStream out = session.openOutputStream()) {
-                android.os.FileUtils.copy(in, out);
-            }
-            publishUri = session.publish();
-        }
-
+        final Uri publishUri = ProviderTestUtils.stageMedia(R.raw.lg_g4_iso_800_jpg, mExternalImages,
+                "image/jpeg");
         final Uri originalUri = MediaStore.setRequireOriginal(publishUri);
 
         // Since we own the image, we should be able to see the Exif data that
@@ -439,32 +414,8 @@ public class MediaStore_Images_MediaTest {
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
         }
 
-        // Remove ACCESS_MEDIA_LOCATION permission
-        try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity("android.permission.MANAGE_APP_OPS_MODES",
-                            "android.permission.REVOKE_RUNTIME_PERMISSIONS");
-
-            // Revoking ACCESS_MEDIA_LOCATION permission will kill the test app.
-            // Deny access_media_permission App op to revoke this permission.
-            PackageManager packageManager = mContext.getPackageManager();
-            String packageName = mContext.getPackageName();
-            if (packageManager.checkPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION,
-                    packageName) == PackageManager.PERMISSION_GRANTED) {
-                mContext.getPackageManager().updatePermissionFlags(
-                        android.Manifest.permission.ACCESS_MEDIA_LOCATION, packageName,
-                        PackageManager.FLAG_PERMISSION_REVOKED_COMPAT,
-                        PackageManager.FLAG_PERMISSION_REVOKED_COMPAT, mContext.getUser());
-                mContext.getSystemService(AppOpsManager.class).setUidMode(
-                        "android:access_media_location", Process.myUid(),
-                        AppOpsManager.MODE_IGNORED);
-            }
-        } finally {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation().
-                    dropShellPermissionIdentity();
-        }
-
-        // Now remove ownership, which means that Exif/XMP location data should be redacted
+        // Revoke location access and remove ownership, which means that location should be redacted
+        ProviderTestUtils.revokeMediaLocationPermission(mContext);
         ProviderTestUtils.clearOwner(publishUri);
         try (InputStream is = mContentResolver.openInputStream(publishUri)) {
             final ExifInterface exif = new ExifInterface(is);
