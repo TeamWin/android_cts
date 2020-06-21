@@ -1812,7 +1812,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // Tapping URLSpan.
         final URLSpan span = mUiBot.findFirstUrlSpanWithText("Here is URLSpan");
-        span.onClick(/* unused= */ null);
+        mActivity.syncRunOnUiThread(() -> span.onClick(/* unused= */ null));
         // Waits for the save UI hided
         mUiBot.waitForIdle();
 
