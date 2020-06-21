@@ -1829,7 +1829,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 { LEGACY_COMBINATIONS, LIMITED_COMBINATIONS, BURST_COMBINATIONS, FULL_COMBINATIONS,
                   RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
 
-        sanityCheckConfigurationTables(TABLES);
+        validityCheckConfigurationTables(TABLES);
 
         for (String id : mCameraIdsUnderTest) {
             openDevice(id);
@@ -1965,7 +1965,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         final int[][][] TABLES =
                 { LIMITED_COMBINATIONS, FULL_COMBINATIONS, RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
 
-        sanityCheckConfigurationTables(TABLES);
+        validityCheckConfigurationTables(TABLES);
 
         for (String id : mCameraIdsUnderTest) {
             openDevice(id);
@@ -2091,9 +2091,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * Sanity check the configuration tables.
+     * Verify correctness of the configuration tables.
      */
-    private void sanityCheckConfigurationTables(final int[][][] tables) throws Exception {
+    private void validityCheckConfigurationTables(final int[][][] tables) throws Exception {
         int tableIdx = 0;
         for (int[][] table : tables) {
             int rowIdx = 0;
