@@ -85,12 +85,16 @@ public class BlobStoreManagerTest {
 
     private static final long TIMEOUT_BIND_SERVICE_SEC = 2;
 
+    private static final long TIMEOUT_WAIT_FOR_IDLE_MS = 2_000;
+
     // TODO: Make it a @TestApi or move the test using this to a different location.
     // Copy of DeviceConfig.NAMESPACE_BLOBSTORE constant
     private static final String NAMESPACE_BLOBSTORE = "blobstore";
     private static final String KEY_SESSION_EXPIRY_TIMEOUT_MS = "session_expiry_timeout_ms";
     private static final String KEY_LEASE_ACQUISITION_WAIT_DURATION_MS =
             "lease_acquisition_wait_time_ms";
+    private static final String KEY_DELETE_ON_LAST_LEASE_DELAY_MS =
+            "delete_on_last_lease_delay_ms";
     private static final String KEY_TOTAL_BYTES_PER_APP_LIMIT_FLOOR =
             "total_bytes_per_app_limit_floor";
     public static final String KEY_TOTAL_BYTES_PER_APP_LIMIT_FRACTION =
@@ -875,7 +879,7 @@ public class BlobStoreManagerTest {
     }
 
     @Test
-    public void testAcquireRelease_deleteImmediately() throws Exception {
+    public void testAcquireRelease_deleteAfterDelay() throws Exception {
         final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
         final long waitDurationMs = TimeUnit.SECONDS.toMillis(1);
@@ -892,6 +896,10 @@ public class BlobStoreManagerTest {
                 releaseLease(mContext, blobData.getBlobHandle());
                 assertNoLeasedBlobs(mBlobStoreManager);
 
+                SystemClock.sleep(waitDurationMs);
+                SystemUtil.runWithShellPermissionIdentity(() ->
+                        mBlobStoreManager.waitForIdle(TIMEOUT_WAIT_FOR_IDLE_MS));
+
                 assertThrows(SecurityException.class, () -> mBlobStoreManager.acquireLease(
                         blobData.getBlobHandle(), R.string.test_desc,
                         blobData.getExpiryTimeMillis()));
@@ -899,7 +907,8 @@ public class BlobStoreManagerTest {
             } finally {
                 blobData.delete();
             }
-        }, Pair.create(KEY_LEASE_ACQUISITION_WAIT_DURATION_MS, String.valueOf(waitDurationMs)));
+        }, Pair.create(KEY_LEASE_ACQUISITION_WAIT_DURATION_MS, String.valueOf(waitDurationMs)),
+                Pair.create(KEY_DELETE_ON_LAST_LEASE_DELAY_MS, String.valueOf(waitDurationMs)));
     }
 
     @Test
