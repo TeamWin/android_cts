@@ -21,6 +21,8 @@ import android.os.Bundle
 
 class AutoClosingActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
         finish()
     }
 }
