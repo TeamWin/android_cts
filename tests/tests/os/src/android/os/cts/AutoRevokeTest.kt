@@ -342,6 +342,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 .setData(Uri.fromParts("package", packageName, null))
                 .addFlags(FLAG_ACTIVITY_NEW_TASK))
 
+        waitForIdle()
         click("Permissions")
     }
 
