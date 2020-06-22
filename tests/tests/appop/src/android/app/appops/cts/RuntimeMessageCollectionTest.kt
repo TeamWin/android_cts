@@ -29,7 +29,6 @@ import java.lang.Thread.sleep
 private const val APK_PATH = "/data/local/tmp/cts/appops/"
 
 private const val APP_PKG = "android.app.appops.cts.apptocollect"
-private const val MESSAGE = "Stack trace message"
 
 @AppModeFull(reason = "Test relies on seeing other apps. Instant apps can't see other apps")
 class RuntimeMessageCollectionTest {
@@ -58,7 +57,7 @@ class RuntimeMessageCollectionTest {
             val start = System.currentTimeMillis()
             runWithShellPermissionIdentity {
                 appOpsManager.noteOp(AppOpsManager.OPSTR_READ_CONTACTS, appUid, APP_PKG,
-                        TEST_ATTRIBUTION_TAG, MESSAGE)
+                        TEST_ATTRIBUTION_TAG, null)
             }
             while (System.currentTimeMillis() - start < TIMEOUT_MILLIS) {
                 sleep(200)
@@ -71,7 +70,7 @@ class RuntimeMessageCollectionTest {
                         assertThat(message.op).isEqualTo(AppOpsManager.OPSTR_READ_CONTACTS)
                         assertThat(message.uid).isEqualTo(appUid)
                         assertThat(message.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
-                        assertThat(message.message).isEqualTo(MESSAGE)
+                        assertThat(message.message).isNotNull()
                         return
                     }
                 }
