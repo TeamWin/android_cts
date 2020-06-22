@@ -445,7 +445,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testInteractAcrossProfilesSettings() {
-        assertCanBeHandled(new Intent(Settings.ACTION_MANAGE_CROSS_PROFILE_ACCESS));
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_PROFILES)) {
+            assertCanBeHandled(new Intent(Settings.ACTION_MANAGE_CROSS_PROFILE_ACCESS));
+        }
     }
 
     public void testChangeDefaultSmsApplication() {
