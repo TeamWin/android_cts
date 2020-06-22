@@ -41,7 +41,9 @@ public class ApexTest extends BaseHostJUnit4Test {
       || systemProduct.equals("aosp_arm_ab") // _ab for Legacy GSI
       || systemProduct.equals("aosp_arm64_ab")
       || systemProduct.equals("aosp_x86_ab")
-      || systemProduct.equals("aosp_x86_64_ab");
+      || systemProduct.equals("aosp_x86_64_ab")
+      || systemProduct.equals("aosp_tv_arm")
+      || systemProduct.equals("aosp_tv_arm64");
   }
 
   /**
