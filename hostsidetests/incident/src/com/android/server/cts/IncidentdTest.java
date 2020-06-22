@@ -72,8 +72,6 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         AlarmManagerIncidentTest.verifyAlarmManagerServiceDumpProto(dump.getAlarm(), filterLevel);
 
-        MemInfoIncidentTest.verifyMemInfoDumpProto(dump.getMeminfo(), filterLevel);
-
         // GraphicsStats is expected to be all AUTOMATIC.
 
         WindowManagerIncidentTest.verifyWindowManagerServiceDumpProto(dump.getWindow(), filterLevel);
