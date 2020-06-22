@@ -49,7 +49,7 @@ public class PermissionPolicyTest extends AndroidTestCase {
 
     private static final Date MANAGE_COMPANION_DEVICES_PATCH_DATE = parseDate("2020-07-01");
     private static final String MANAGE_COMPANION_DEVICES_PERMISSION
-            = "android.Manifest.permission.MANAGE_COMPANION_DEVICES";
+            = "android.permission.MANAGE_COMPANION_DEVICES";
 
     private static final String LOG_TAG = "PermissionProtectionTest";
 
