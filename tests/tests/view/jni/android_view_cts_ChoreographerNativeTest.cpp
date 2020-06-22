@@ -408,16 +408,25 @@ static void android_view_cts_ChoreographerNativeTest_testRefreshRateCallbackMixe
     Callback* cb64 = new Callback("cb64");
     auto start = now();
 
+    auto vsyncPeriod = std::chrono::duration_cast<std::chrono::milliseconds>(
+                           NOMINAL_VSYNC_PERIOD)
+                           .count();
     auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(DELAY_PERIOD).count();
     AChoreographer_postFrameCallbackDelayed(choreographer, frameCallback, cb1, delay);
     AChoreographer_postFrameCallbackDelayed64(choreographer, frameCallback64, cb64, delay);
 
     std::this_thread::sleep_for(DELAY_PERIOD + NOMINAL_VSYNC_PERIOD * 10);
-    ALooper_pollAll(16, nullptr, nullptr, nullptr);
+    // Ensure that callbacks are seen by the looper instance at approximately
+    // the same time, and provide enough time for the looper instance to process
+    // the delayed callback and the requested vsync signal if needed.
+    ALooper_pollAll(vsyncPeriod * 5, nullptr, nullptr, nullptr);
     verifyRefreshRateCallback(env, cb, 1);
-    verifyCallback(env, cb64, 1, start, DELAY_PERIOD + NOMINAL_VSYNC_PERIOD * 11);
+    verifyCallback(env, cb64, 1, start,
+                   DELAY_PERIOD + NOMINAL_VSYNC_PERIOD * 15);
     const auto delayToTestFor32Bit =
-            sizeof(long) == sizeof(int64_t) ? DELAY_PERIOD + NOMINAL_VSYNC_PERIOD * 11 : ZERO;
+        sizeof(long) == sizeof(int64_t)
+            ? DELAY_PERIOD + NOMINAL_VSYNC_PERIOD * 15
+            : ZERO;
     verifyCallback(env, cb1, 1, start, delayToTestFor32Bit);
     AChoreographer_unregisterRefreshRateCallback(choreographer, refreshRateCallback, cb);
 }
