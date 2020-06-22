@@ -56,11 +56,13 @@ import org.mockito.InOrder;
 @Presubmit
 public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase {
 
+    private static final int KEYBOARD_HEIGHT = 400;
+
     @Rule
     public final MockImeSessionRule mMockImeSessionRule = new MockImeSessionRule(
             InstrumentationRegistry.getInstrumentation().getContext(),
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            new ImeSettings.Builder()
+            new ImeSettings.Builder().setInputViewHeight(KEYBOARD_HEIGHT).setDrawsBehindNavBar(true)
     );
 
     @Before
