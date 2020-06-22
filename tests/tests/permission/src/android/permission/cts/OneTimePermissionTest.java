@@ -43,6 +43,7 @@ import com.android.compatibility.common.util.UiAutomatorUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
@@ -69,6 +70,10 @@ public class OneTimePermissionTest {
             mContext.getSystemService(ActivityManager.class);
 
     private String mOldOneTimePermissionTimeoutValue;
+
+    @Rule
+    public IgnoreAllTestsRule mIgnoreAutomotive = new IgnoreAllTestsRule(
+            mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
 
     @Before
     public void wakeUpScreen() {
