@@ -2637,6 +2637,99 @@ public class ScopedStorageTest {
         }
     }
 
+    @Test
+    public void testNoIsolatedStorageCanCreateFilesAnywhere() throws Exception {
+        final File topLevelPdf = new File(getExternalStorageDir(), NONMEDIA_FILE_NAME);
+        final File musicFileInMovies = new File(getMoviesDir(), AUDIO_FILE_NAME);
+        final File imageFileInDcim = new File(getDcimDir(), IMAGE_FILE_NAME);
+        // Nothing special about this, anyone can create an image file in DCIM
+        assertCanCreateFile(imageFileInDcim);
+        // This is where we see the special powers of MANAGE_EXTERNAL_STORAGE, because it can
+        // create a top level file
+        assertCanCreateFile(topLevelPdf);
+        // It can even create a music file in Pictures
+        assertCanCreateFile(musicFileInMovies);
+    }
+
+    @Test
+    public void testNoIsolatedStorageCantReadWriteOtherAppExternalDir() throws Exception {
+        try {
+            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
+            installAppWithStoragePermissions(TEST_APP_A);
+
+            // Let app A create a file in its data dir
+            final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
+                    THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
+            final File otherAppExternalDataFile = new File(otherAppExternalDataDir,
+                    NONMEDIA_FILE_NAME);
+            assertCreateFilesAs(TEST_APP_A, otherAppExternalDataFile);
+
+            // File Manager app gets global access with MANAGE_EXTERNAL_STORAGE permission, however,
+            // file manager app doesn't have access to other app's external files directory
+            assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ false)).isFalse();
+            assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ true)).isFalse();
+            assertThat(otherAppExternalDataFile.delete()).isFalse();
+
+            assertThat(deleteFileAs(TEST_APP_A, otherAppExternalDataFile.getPath())).isTrue();
+
+            assertThrows(IOException.class,
+                    () -> { otherAppExternalDataFile.createNewFile(); });
+
+        } finally {
+            uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
+        }
+    }
+
+    @Test
+    public void testNoIsolatedStorageStorageReaddir() throws Exception {
+        final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
+        final File otherAppImg = new File(getDcimDir(), "other" + IMAGE_FILE_NAME);
+        final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
+        final File otherTopLevelFile = new File(getExternalStorageDir(),
+                "other" + NONMEDIA_FILE_NAME);
+        try {
+            installApp(TEST_APP_A);
+            assertCreateFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
+            executeShellCommand("touch " + otherTopLevelFile);
+
+            // We can list other apps' files
+            assertDirectoryContains(otherAppPdf.getParentFile(), otherAppPdf);
+            assertDirectoryContains(otherAppImg.getParentFile(), otherAppImg);
+            assertDirectoryContains(otherAppMusic.getParentFile(), otherAppMusic);
+            // We can list top level files
+            assertDirectoryContains(getExternalStorageDir(), otherTopLevelFile);
+
+            // We can also list all top level directories
+            assertDirectoryContains(getExternalStorageDir(), getDefaultTopLevelDirs());
+        } finally {
+            executeShellCommand("rm " + otherTopLevelFile);
+            deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
+            uninstallApp(TEST_APP_A);
+        }
+    }
+
+    @Test
+    public void testNoIsolatedStorageQueryOtherAppsFile() throws Exception {
+        final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
+        final File otherAppImg = new File(getDcimDir(), "other" + IMAGE_FILE_NAME);
+        final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
+        final File otherHiddenFile = new File(getPicturesDir(), ".otherHiddenFile.jpg");
+        try {
+            installApp(TEST_APP_A);
+            // Apps can't query other app's pending file, hence create file and publish it.
+            assertCreatePublishedFilesAs(
+                    TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
+
+            assertCanQueryAndOpenFile(otherAppPdf, "rw");
+            assertCanQueryAndOpenFile(otherAppImg, "rw");
+            assertCanQueryAndOpenFile(otherAppMusic, "rw");
+            assertCanQueryAndOpenFile(otherHiddenFile, "rw");
+        } finally {
+            deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
+            uninstallApp(TEST_APP_A);
+        }
+    }
+
     /**
      * Checks restrictions for opening pending and trashed files by different apps. Assumes that
      * given {@code testApp} is already installed and has READ_EXTERNAL_STORAGE permission. This
