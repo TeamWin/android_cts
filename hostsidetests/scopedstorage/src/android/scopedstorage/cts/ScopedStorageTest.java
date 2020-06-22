@@ -778,6 +778,8 @@ public class ScopedStorageTest {
         } finally {
             executeShellCommand("rm " + pdfFile.getAbsolutePath());
             executeShellCommand("rm " + videoFile.getAbsolutePath());
+            MediaStore.scanFile(getContentResolver(), pdfFile);
+            MediaStore.scanFile(getContentResolver(), videoFile);
             uninstallAppNoThrow(TEST_APP_A);
         }
     }
@@ -1384,6 +1386,7 @@ public class ScopedStorageTest {
             videoFile.delete();
             topLevelVideoFile.delete();
             executeShellCommand("rm  " + musicFile.getAbsolutePath());
+            MediaStore.scanFile(getContentResolver(), musicFile);
             denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
         }
     }
@@ -2060,11 +2063,13 @@ public class ScopedStorageTest {
             // Use shell to create root file because TEST_APP_A is in
             // scoped storage.
             executeShellCommand("touch " + shellPdfAtRoot.getAbsolutePath());
+            MediaStore.scanFile(getContentResolver(), shellPdfAtRoot);
             assertFileAccess_existsOnly(shellPdfAtRoot);
         } finally {
             deleteFileAsNoThrow(TEST_APP_A, otherAppPdf.getAbsolutePath());
             deleteFileAsNoThrow(TEST_APP_A, otherAppImage.getAbsolutePath());
             executeShellCommand("rm " + shellPdfAtRoot.getAbsolutePath());
+            MediaStore.scanFile(getContentResolver(), shellPdfAtRoot);
             myAppPdf.delete();
             uninstallApp(TEST_APP_A);
         }
@@ -2188,6 +2193,7 @@ public class ScopedStorageTest {
             installApp(TEST_APP_A);
             assertCreateFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
             executeShellCommand("touch " + otherTopLevelFile);
+            MediaStore.scanFile(getContentResolver(), otherTopLevelFile);
 
             allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
 
@@ -2203,6 +2209,7 @@ public class ScopedStorageTest {
         } finally {
             denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
             executeShellCommand("rm " + otherTopLevelFile);
+            MediaStore.scanFile(getContentResolver(), otherTopLevelFile);
             deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
             uninstallApp(TEST_APP_A);
         }
@@ -2307,6 +2314,7 @@ public class ScopedStorageTest {
             assertThat(dirInDcim.exists() || dirInDcim.mkdir()).isTrue();
 
             executeShellCommand("touch " + otherAppPdfFile1);
+            MediaStore.scanFile(getContentResolver(), otherAppPdfFile1);
 
             installAppWithStoragePermissions(TEST_APP_A);
             allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
@@ -2325,6 +2333,8 @@ public class ScopedStorageTest {
         } finally {
             executeShellCommand("rm " + otherAppPdfFile1);
             executeShellCommand("rm " + otherAppPdfFile2);
+            MediaStore.scanFile(getContentResolver(), otherAppPdfFile1);
+            MediaStore.scanFile(getContentResolver(), otherAppPdfFile2);
             otherAppImageFile1.delete();
             otherAppImageFile2.delete();
             otherAppVideoFile1.delete();

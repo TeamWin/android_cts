@@ -126,6 +126,7 @@ public class LegacyStorageTest {
     @After
     public void teardown() throws Exception {
         executeShellCommand("rm " + getShellFile());
+        MediaStore.scanFile(getContentResolver(), getShellFile());
     }
 
     /**
@@ -214,6 +215,7 @@ public class LegacyStorageTest {
 
         try {
             executeShellCommand("touch " + existingFile);
+            MediaStore.scanFile(getContentResolver(), existingFile);
             Os.open(existingFile.getPath(), OsConstants.O_RDONLY, /*mode*/ 0);
             fail("Opening file for read expected to fail: " + existingFile);
         } catch (ErrnoException expected) {
@@ -266,6 +268,7 @@ public class LegacyStorageTest {
         FileDescriptor fd = null;
         try {
             executeShellCommand("touch " + existingFile);
+            MediaStore.scanFile(getContentResolver(), existingFile);
             fd = Os.open(existingFile.getPath(), OsConstants.O_RDONLY, /*mode*/ 0);
         } finally {
             if (fd != null) {
@@ -307,6 +310,7 @@ public class LegacyStorageTest {
         final File shellFile = getShellFile();
 
         executeShellCommand("touch " + getShellFile());
+        MediaStore.scanFile(getContentResolver(), getShellFile());
         // can list a non-media file created by other package.
         assertThat(Arrays.asList(shellFile.getParentFile().list()))
                 .contains(shellFile.getName());
@@ -374,6 +378,7 @@ public class LegacyStorageTest {
                         "LegacyFileAccessTest2");
         try {
             executeShellCommand("touch " + shellFile1);
+            MediaStore.scanFile(getContentResolver(), shellFile1);
             // app can't rename shell file.
             assertCantRenameFile(shellFile1, shellFile2);
             // app can't move shell file to its media directory.
@@ -408,6 +413,7 @@ public class LegacyStorageTest {
                         "LegacyFileAccessTest2");
         try {
             executeShellCommand("touch " + shellFile1);
+            MediaStore.scanFile(getContentResolver(), shellFile1);
             // app can't rename shell file.
             assertCantRenameFile(shellFile1, shellFile2);
             // app can't move shell file to its media directory.
