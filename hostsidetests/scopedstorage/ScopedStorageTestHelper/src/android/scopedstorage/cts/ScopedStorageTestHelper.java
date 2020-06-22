@@ -29,11 +29,10 @@ import static android.scopedstorage.cts.lib.TestUtils.QUERY_TYPE;
 import static android.scopedstorage.cts.lib.TestUtils.READDIR_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.SETATTR_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
-import static android.scopedstorage.cts.lib.TestUtils.getMediaContentUri;
+import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -146,7 +145,7 @@ public class ScopedStorageTestHelper extends Activity {
             values.put(MediaStore.Images.Media.RELATIVE_PATH, relativePath);
             values.put(MediaStore.Images.Media.DISPLAY_NAME, name);
 
-            getContentResolver().insert(getMediaContentUri(), values);
+            getContentResolver().insert(getImageContentUri(), values);
 
             final Intent intent = new Intent(queryType);
             intent.putExtra(queryType, true);

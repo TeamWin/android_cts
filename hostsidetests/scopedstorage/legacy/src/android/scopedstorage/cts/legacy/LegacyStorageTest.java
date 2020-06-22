@@ -33,9 +33,11 @@ import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
 import static android.scopedstorage.cts.lib.TestUtils.getContentResolver;
 import static android.scopedstorage.cts.lib.TestUtils.getFileOwnerPackageFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getFileRowIdFromDatabase;
+import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
 import static android.scopedstorage.cts.lib.TestUtils.installApp;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.openFileAs;
+import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
@@ -55,11 +57,15 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.TestUtils;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -78,6 +84,7 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -697,6 +704,57 @@ public class LegacyStorageTest {
             deleteFileAsNoThrow(TEST_APP_A, fullPath.getAbsolutePath());
             uninstallAppNoThrow(TEST_APP_A);
             fullPath.delete();
+        }
+    }
+
+    /**
+     * b/156717256,b/156336269: Test that MediaProvider doesn't throw error on usage of unsupported
+     * or empty/null MIME type.
+     */
+    @Test
+    public void testInsertWithUnsupportedMimeType() throws Exception {
+        pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
+        pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
+
+        final String IMAGE_FILE_DISPLAY_NAME = "LegacyStorageTest_file_" + NONCE;
+        final File imageFile = new File(TestUtils.getDcimDir(), IMAGE_FILE_DISPLAY_NAME + ".jpg");
+
+        for (String mimeType : new String[] {
+            "image/*", "", null, "foo/bar"
+        }) {
+            Uri uri = null;
+            try {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DCIM);
+                if (TextUtils.isEmpty(mimeType)) {
+                    values.put(MediaStore.MediaColumns.DISPLAY_NAME, imageFile.getName());
+                } else {
+                    values.put(MediaStore.MediaColumns.DISPLAY_NAME, IMAGE_FILE_DISPLAY_NAME);
+                }
+                values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
+
+                uri = getContentResolver().insert(getImageContentUri(), values, Bundle.EMPTY);
+                assertNotNull(uri);
+
+                try (final OutputStream fos = getContentResolver().openOutputStream(uri, "rw")) {
+                    fos.write(BYTES_DATA1);
+                }
+
+                // Closing the file should trigger a scan, we still scan again to ensure MIME type
+                // is extracted from file extension
+                assertNotNull(MediaStore.scanFile(getContentResolver(), imageFile));
+
+                final String[] projection = {MediaStore.MediaColumns.DISPLAY_NAME,
+                        MediaStore.MediaColumns.MIME_TYPE};
+                try (Cursor c = getContentResolver().query(uri, projection, null, null, null)) {
+                    assertTrue(c.moveToFirst());
+                    assertEquals(c.getCount(), 1);
+                    assertEquals(c.getString(0), imageFile.getName());
+                    assertTrue("image/jpeg".equalsIgnoreCase(c.getString(1)));
+                }
+            } finally {
+                deleteWithMediaProviderNoThrow(uri);
+            }
         }
     }
 
