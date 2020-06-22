@@ -210,9 +210,15 @@ public class BlobStoreManagerTest {
                 blobData.readFromSessionAndVerifyBytes(session,
                         101 /* offset */, 1001 /* length */);
 
-                blobData.writeToSession(session, 202 /* offset */, 2002 /* length */);
+                blobData.writeToSession(session, 202 /* offset */, 2002 /* length */,
+                        blobData.getFileSize());
                 blobData.readFromSessionAndVerifyBytes(session,
                         202 /* offset */, 2002 /* length */);
+
+                final CompletableFuture<Integer> callback = new CompletableFuture<>();
+                session.commit(mContext.getMainExecutor(), callback::complete);
+                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                        .isEqualTo(0);
             }
         } finally {
             blobData.delete();
@@ -735,11 +741,13 @@ public class BlobStoreManagerTest {
                     try (BlobStoreManager.Session session = mBlobStoreManager.openSession(
                             sessionId)) {
                         final long partialFileSizeBytes = minSizeMb * 1024L * 1024L;
-                        blobData.writeToSession(session, 0L, partialFileSizeBytes);
+                        blobData.writeToSession(session, 0L, partialFileSizeBytes,
+                                blobData.getFileSize());
                         blobData.readFromSessionAndVerifyBytes(session, 0L,
                                 (int) partialFileSizeBytes);
                         blobData.writeToSession(session, partialFileSizeBytes,
-                                blobData.getFileSize() - partialFileSizeBytes);
+                                blobData.getFileSize() - partialFileSizeBytes,
+                                blobData.getFileSize());
                         blobData.readFromSessionAndVerifyBytes(session, partialFileSizeBytes,
                                 (int) (blobData.getFileSize() - partialFileSizeBytes));
 
@@ -950,7 +958,7 @@ public class BlobStoreManagerTest {
         final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
         assertThat(sessionId).isGreaterThan(0L);
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-            blobData.writeToSession(session, 0, partialFileSize);
+            blobData.writeToSession(session, 0, partialFileSize, partialFileSize);
         }
 
         StorageStats afterStatsForPkg = storageStatsManager
@@ -967,7 +975,8 @@ public class BlobStoreManagerTest {
         // Complete writing data.
         final long totalFileSize = blobData.getFileSize();
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-            blobData.writeToSession(session, partialFileSize, totalFileSize - partialFileSize);
+            blobData.writeToSession(session, partialFileSize, totalFileSize - partialFileSize,
+                    totalFileSize);
         }
 
         afterStatsForPkg = storageStatsManager
@@ -983,7 +992,8 @@ public class BlobStoreManagerTest {
 
         // Commit the session.
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-            blobData.writeToSession(session, partialFileSize, session.getSize() - partialFileSize);
+            blobData.writeToSession(session, partialFileSize,
+                    session.getSize() - partialFileSize, blobData.getFileSize());
             final CompletableFuture<Integer> callback = new CompletableFuture<>();
             session.commit(mContext.getMainExecutor(), callback::complete);
             assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
@@ -1241,7 +1251,7 @@ public class BlobStoreManagerTest {
         assertThat(sessionId).isGreaterThan(0L);
 
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-            blobData.writeToSession(session, 0, partialFileSize);
+            blobData.writeToSession(session, 0, partialFileSize, blobData.getFileSize());
         }
 
         SystemClock.sleep(waitDurationMs);
@@ -1251,7 +1261,7 @@ public class BlobStoreManagerTest {
 
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
             blobData.writeToSession(session, partialFileSize,
-                    blobData.getFileSize() - partialFileSize);
+                    blobData.getFileSize() - partialFileSize, blobData.getFileSize());
             final CompletableFuture<Integer> callback = new CompletableFuture<>();
             session.commit(mContext.getMainExecutor(), callback::complete);
             assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
@@ -1287,7 +1297,7 @@ public class BlobStoreManagerTest {
             assertThat(sessionId).isGreaterThan(0L);
 
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
-                blobData.writeToSession(session, 0, 100);
+                blobData.writeToSession(session, 0, 100, blobData.getFileSize());
             }
 
             SystemClock.sleep(waitDurationMs);
