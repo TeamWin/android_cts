@@ -24,9 +24,6 @@ import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 
-import com.android.compatibility.common.util.SystemUtil.runShellCommand
-import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -41,12 +38,6 @@ private const val CANCEL_BUTTON_ID = "button2"
 @AppModeFull(reason = "Instant apps cannot install packages")
 class IntentTest : PackageInstallerTestBase() {
     private val context = InstrumentationRegistry.getTargetContext()
-
-    private fun setSecureFrp(secureFrp: Boolean) {
-        runWithShellPermissionIdentity {
-            runShellCommand("settings put secure secure_frp_mode ${if (secureFrp) 1 else 0}")
-        }
-    }
 
     @After
     fun disableSecureFrp() {
