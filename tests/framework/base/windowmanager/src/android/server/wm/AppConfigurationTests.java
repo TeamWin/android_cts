@@ -64,12 +64,10 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.provider.Settings;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ConfigInfo;
 import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
-import android.server.wm.settings.SettingsSession;
 import android.view.Display;
 
 import org.junit.Test;
@@ -452,10 +450,9 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     public void testRotatedInfoWithFixedRotationTransform() {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
-        // TODO(b/143053092): Remove the settings if it becomes stable.
-        mObjectTracker.manage(new SettingsSession<>(
-                Settings.Global.getUriFor("fixed_rotation_transform"),
-                Settings.Global::getInt, Settings.Global::putInt)).set(1);
+        // Start a portrait activity first to ensure that the orientation will change.
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        mWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
 
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
