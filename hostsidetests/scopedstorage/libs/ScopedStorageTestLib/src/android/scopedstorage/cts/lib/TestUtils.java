@@ -374,7 +374,7 @@ public class TestUtils {
     /**
      * Returns the content URI for images based on the current storage volume.
      */
-    public static Uri getMediaContentUri() {
+    public static Uri getImageContentUri() {
         return MediaStore.Images.Media.getContentUri(sStorageVolumeName);
     }
 
