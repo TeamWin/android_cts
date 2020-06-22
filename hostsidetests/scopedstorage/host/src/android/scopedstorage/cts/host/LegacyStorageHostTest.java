@@ -194,4 +194,9 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
     public void testLegacyAppUpdatingOwnershipOfExistingEntry() throws Exception {
         runDeviceTest("testLegacyAppUpdatingOwnershipOfExistingEntry");
     }
+
+    @Test
+    public void testInsertWithUnsupportedMimeType() throws Exception {
+        runDeviceTest("testInsertWithUnsupportedMimeType");
+    }
 }
