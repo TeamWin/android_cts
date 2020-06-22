@@ -62,6 +62,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
@@ -599,6 +601,52 @@ public class BlobStoreManagerTest {
                 assertThrows(IOException.class, () -> blobData.writeToFd(
                         pfd.getFileDescriptor() /* length */, 0 /* offset */, 100 /* length */));
                 assertThrows(IllegalStateException.class, () -> session.openWrite(0L, 0L));
+            }
+        } finally {
+            blobData.delete();
+        }
+    }
+
+    @Test
+    public void testSessionCommit_incompleteData() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+        try {
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+            assertThat(sessionId).isGreaterThan(0L);
+
+            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+                blobData.writeToSession(session, 0, blobData.getFileSize() - 2);
+
+                final CompletableFuture<Integer> callback = new CompletableFuture<>();
+                session.commit(mContext.getMainExecutor(), callback::complete);
+                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                        .isEqualTo(1);
+            }
+        } finally {
+            blobData.delete();
+        }
+    }
+
+    @Test
+    public void testSessionCommit_incorrectData() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+        try {
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+            assertThat(sessionId).isGreaterThan(0L);
+
+            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+                blobData.writeToSession(session, 0, blobData.getFileSize());
+                try (OutputStream out = new ParcelFileDescriptor.AutoCloseOutputStream(
+                        session.openWrite(0, blobData.getFileSize()))) {
+                    out.write("wrong_data".getBytes(StandardCharsets.UTF_8));
+                }
+
+                final CompletableFuture<Integer> callback = new CompletableFuture<>();
+                session.commit(mContext.getMainExecutor(), callback::complete);
+                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                        .isEqualTo(1);
             }
         } finally {
             blobData.delete();
