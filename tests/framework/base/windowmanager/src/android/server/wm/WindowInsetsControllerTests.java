@@ -17,7 +17,6 @@
 package android.server.wm;
 
 import static android.graphics.PixelFormat.TRANSLUCENT;
-import static android.server.wm.WindowInsetsAnimationTestBase.showImeWithHardKeyboardSetting;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE;
@@ -35,13 +34,19 @@ import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -57,10 +62,14 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeSettings;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -181,20 +190,27 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
-    @FlakyTest(detail = "b/159038873")
-    public void testImeShowAndHide() {
-        showImeWithHardKeyboardSetting(mObjectTracker);
+    public void testImeShowAndHide() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
+                nullValue());
+        try (MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
+                instrumentation.getUiAutomation(), new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
 
-        final TestActivity activity = startActivity(TestActivity.class);
-        final View rootView = activity.getWindow().getDecorView();
-        getInstrumentation().runOnMainSync(() -> {
-            rootView.getWindowInsetsController().show(ime());
-        });
-        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
-        getInstrumentation().runOnMainSync(() -> {
-            rootView.getWindowInsetsController().hide(ime());
-        });
-        PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(ime()));
+            final TestActivity activity = startActivity(TestActivity.class);
+            expectEvent(stream, editorMatcher("onStartInput", activity.mEditTextMarker), TIMEOUT);
+
+            final View rootView = activity.getWindow().getDecorView();
+            getInstrumentation().runOnMainSync(() -> {
+                rootView.getWindowInsetsController().show(ime());
+            });
+            PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
+            getInstrumentation().runOnMainSync(() -> {
+                rootView.getWindowInsetsController().hide(ime());
+            });
+            PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(ime()));
+        }
     }
 
     @Test
@@ -463,15 +479,18 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
-    @FlakyTest(detail = "b/159038873")
     public void testShowImeOnCreate() throws Exception {
-        showImeWithHardKeyboardSetting(mObjectTracker);
-
-        final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
-        final View rootView = activity.getWindow().getDecorView();
-        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
-        PollingCheck.waitFor(TIMEOUT,
-                () -> rootView.getRootWindowInsets().isVisible(ime()));
+        final Instrumentation instrumentation = getInstrumentation();
+        assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
+                nullValue());
+        try (MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
+                instrumentation.getUiAutomation(), new ImeSettings.Builder())) {
+            final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
+            final View rootView = activity.getWindow().getDecorView();
+            ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+            PollingCheck.waitFor(TIMEOUT,
+                    () -> rootView.getRootWindowInsets().isVisible(ime()));
+        }
     }
 
     @Test
@@ -619,10 +638,11 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         }
     }
 
-    private static View setViews(Activity activity) {
+    private static View setViews(Activity activity, @Nullable String privateImeOptions) {
         LinearLayout layout = new LinearLayout(activity);
         View text = new TextView(activity);
         EditText editor = new EditText(activity);
+        editor.setPrivateImeOptions(privateImeOptions);
         layout.addView(text);
         layout.addView(editor);
         activity.setContentView(layout);
@@ -631,11 +651,13 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     public static class TestActivity extends FocusableActivity {
+        final String mEditTextMarker =
+                getClass().getName() + "/" + SystemClock.elapsedRealtimeNanos();
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            setViews(this);
+            setViews(this, mEditTextMarker);
             getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
         }
     }
@@ -645,7 +667,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            View layout = setViews(this);
+            View layout = setViews(this, null /* privateImeOptions */);
             ANIMATION_CALLBACK.reset();
             getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
             getWindow().getInsetsController().hide(statusBars());
@@ -654,11 +676,10 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     public static class TestShowOnCreateActivity extends FocusableActivity {
-
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            View layout = setViews(this);
+            setViews(this, null /* privateImeOptions */);
             ANIMATION_CALLBACK.reset();
             getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
             getWindow().getInsetsController().show(ime());

@@ -19,13 +19,16 @@ package android.server.wm;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.CANCELLED;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.FINISHED;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.READY;
-import static android.server.wm.WindowInsetsAnimationTestBase.showImeWithHardKeyboardSetting;
 import static android.server.wm.WindowInsetsAnimationUtils.INSETS_EVALUATOR;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 
 import static androidx.test.internal.runner.junit4.statement.UiThreadStatement.runOnUiThread;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -33,14 +36,17 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.app.Instrumentation;
 import android.graphics.Insets;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.Presubmit;
@@ -59,6 +65,10 @@ import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeSettings;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
@@ -85,7 +95,7 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationControllerTests
  */
-//TODO(b/159038873) @Presubmit
+@Presubmit
 @RunWith(Parameterized.class)
 public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase {
 
@@ -101,6 +111,13 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Rule
     public LimitedErrorCollector mErrorCollector = new LimitedErrorCollector();
+
+    /**
+     * {@link MockImeSession} used when {@link #mType} is
+     * {@link android.view.WindowInsets.Type#ime()}.
+     */
+    @Nullable
+    private MockImeSession mMockImeSession;
 
     @Parameter(0)
     public int mType;
@@ -120,15 +137,41 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        final ImeEventStream mockImeEventStream;
+        if (mType == ime()) {
+            final Instrumentation instrumentation = getInstrumentation();
+            assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
+                    nullValue());
+
+            // For the best test stability MockIme should be selected before launching TestActivity.
+            mMockImeSession = MockImeSession.create(
+                    instrumentation.getContext(), instrumentation.getUiAutomation(),
+                    new ImeSettings.Builder());
+            mockImeEventStream = mMockImeSession.openEventStream();
+        } else {
+            mockImeEventStream = null;
+        }
+
         mActivity = startActivity(TestActivity.class);
         mRootView = mActivity.getWindow().getDecorView();
         mListener = new ControlListener(mErrorCollector);
-        showImeWithHardKeyboardSetting(mObjectTracker);
         assumeTestCompatibility();
+
+        if (mockImeEventStream != null) {
+            // TestActivity has a focused EditText. Hence MockIme should receive onStartInput() for
+            // that EditText within a reasonable time.
+            expectEvent(mockImeEventStream,
+                    editorMatcher("onStartInput", mActivity.getEditTextMarker()),
+                    TimeUnit.SECONDS.toMillis(10));
+        }
     }
 
     @After
     public void tearDown() throws Throwable {
+        if (mMockImeSession != null) {
+            mMockImeSession.close();
+            mMockImeSession = null;
+        }
         runOnUiThread(() -> {});  // Fence to make sure we dispatched everything.
         mCallbacks.forEach(VerifyingCallback::assertNoRunningAnimations);
     }
