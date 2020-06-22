@@ -215,6 +215,7 @@ public abstract class ActivityManagerTestBase {
     private static Boolean sHasHomeScreen = null;
     private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;
     private static Boolean sSupportsInsecureLockScreen = null;
+    private static Boolean sIsAssistantOnTop = null;
     private static boolean sStackTaskLeakFound;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
@@ -1090,6 +1091,14 @@ public abstract class ActivityManagerTestBase {
             }
         }
         return sSupportsInsecureLockScreen;
+    }
+
+    protected boolean isAssistantOnTop() {
+        if (sIsAssistantOnTop == null) {
+            sIsAssistantOnTop = mContext.getResources().getBoolean(
+                    android.R.bool.config_assistantOnTopOfDream);
+        }
+        return sIsAssistantOnTop;
     }
 
     /**
