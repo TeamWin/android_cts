@@ -570,6 +570,10 @@ public class MediaUtils {
         return hasCodecsForResourceCombo(context, resourceId, ALL_AV_TRACKS, mimePrefix);
     }
 
+    public static boolean hasCodecForResourceAndDomain(String resource, String mimePrefix) {
+        return hasCodecsForResourceCombo(resource, ALL_AV_TRACKS, mimePrefix);
+    }
+
     /**
      * return true iff all audio and video tracks are supported
      */
