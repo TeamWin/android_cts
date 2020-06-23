@@ -2084,7 +2084,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * Sanity check of optical black regions.
+     * Correctness check of optical black regions.
      */
     @Test
     public void testOpticalBlackRegions() {

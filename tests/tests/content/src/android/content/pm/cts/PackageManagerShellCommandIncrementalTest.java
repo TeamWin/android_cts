@@ -38,7 +38,6 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -234,7 +233,6 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
-    @Ignore("Flaky, b/159368388 to reenable.")
     public void testInstallSysTrace() throws Exception {
         // Async atrace dump uses less resources but requires periodic pulls.
         // Overall timeout of 30secs in 100ms intervals should be enough.
@@ -270,8 +268,11 @@ public class PackageManagerShellCommandIncrementalTest {
         });
         readFromProcess.start();
 
-        installPackage(TEST_APK);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        for (int i = 0; i < 3; ++i) {
+            installPackage(TEST_APK);
+            assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+            uninstallPackageSilently(TEST_APP_PACKAGE);
+        }
 
         readFromProcess.join();
         assertNotEquals(0, result.size());
