@@ -249,17 +249,18 @@ class AppOpsTest {
             mAppOps.startWatchingActive(arrayOf(OPSTR_WRITE_CALENDAR), Executor { it.run() },
                 activeWatcher)
             try {
-                mAppOps.startOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "attribution1", null)
+                mAppOps.startOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "firstAttribution",
+                        null)
                 assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
                 gotActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
 
                 mAppOps.startOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
-                    "attribution2", null)
+                    "secondAttribution", null)
                 assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
                 assertFalse(gotInActive.isDone)
 
                 mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
-                    "attribution1")
+                    "firstAttribution")
 
                 // Allow some time for premature "watchingActive" callbacks to arrive
                 Thread.sleep(500)
@@ -268,7 +269,7 @@ class AppOpsTest {
                 assertFalse(gotInActive.isDone)
 
                 mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
-                    "attribution2")
+                    "secondAttribution")
                 assertFalse(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
                 gotInActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
             } finally {

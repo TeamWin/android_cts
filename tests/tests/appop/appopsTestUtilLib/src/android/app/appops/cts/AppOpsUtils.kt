@@ -176,3 +176,15 @@ fun getOpEntry(uid: Int, packageName: String, op: String): OpEntry? {
                 .getSystemService(AppOpsManager::class.java).getOpsForPackage(uid, packageName, op)
     }[0].ops[0]
 }
+
+/**
+ * Run a block with a compat change disabled
+ */
+fun withDisabledCompatChange(changeId: Long, packageName: String, wrapped: () -> Unit) {
+    runCommand("am compat disable $changeId $packageName")
+    try {
+        wrapped()
+    } finally {
+        runCommand("am compat reset $changeId $packageName")
+    }
+}
