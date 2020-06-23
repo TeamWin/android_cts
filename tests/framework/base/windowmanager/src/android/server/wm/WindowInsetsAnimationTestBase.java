@@ -35,9 +35,8 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
 
 import android.os.Bundle;
-import android.provider.Settings;
+import android.os.SystemClock;
 import android.server.wm.WindowInsetsAnimationTestBase.AnimCallback.AnimationStep;
-import android.server.wm.settings.SettingsSession;
 import android.util.ArraySet;
 import android.view.View;
 import android.view.WindowInsets;
@@ -45,6 +44,8 @@ import android.view.WindowInsetsAnimation;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import org.junit.Assert;
 import org.mockito.InOrder;
@@ -155,23 +156,6 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
             V next = getter.apply(list.get(i + 1));
             assertTrue(comparator.test(current, next));
         }
-    }
-
-    /**
-     * Workaround for b/158637229: force the keyboard to show even when there is a hardware keyboard
-     * during IME related insets tests to avoid issues when testing on devices that have a hardware
-     * keyboard.
-     *
-     * @param tracker the test's {@link ObjectTracker}, used to clean up the setting override after
-     *                the test finishes.
-     */
-    static void showImeWithHardKeyboardSetting(ObjectTracker tracker) {
-        final SettingsSession<Integer> showImeWithHardKeyboardSetting = new SettingsSession<>(
-                Settings.Secure.getUriFor(Settings.Secure.SHOW_IME_WITH_HARD_KEYBOARD),
-                Settings.Secure::getInt,
-                Settings.Secure::putInt);
-        tracker.manage(showImeWithHardKeyboardSetting);
-        showImeWithHardKeyboardSetting.set(1);
     }
 
     public static class AnimCallback extends WindowInsetsAnimation.Callback {
@@ -301,6 +285,10 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
 
     public static class TestActivity extends FocusableActivity {
 
+        private final String mEditTextMarker =
+                "android.server.wm.WindowInsetsAnimationTestBase.TestActivity"
+                        + SystemClock.elapsedRealtimeNanos();
+
         AnimCallback mCallback =
                 spy(new AnimCallback(WindowInsetsAnimation.Callback.DISPATCH_MODE_STOP));
         WindowInsets mLastWindowInsets;
@@ -319,6 +307,11 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
             }
         }
 
+        @NonNull
+        String getEditTextMarker() {
+            return mEditTextMarker;
+        }
+
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -328,6 +321,7 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
             mView.setOnApplyWindowInsetsListener(mListener);
             mChild = new TextView(this);
             mEditor = new EditText(this);
+            mEditor.setPrivateImeOptions(mEditTextMarker);
             mView.addView(mChild);
             mView.addView(mEditor);
 
