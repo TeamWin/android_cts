@@ -209,7 +209,7 @@ public class CameraTestUtils extends Assert {
             List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
             List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
             List<ImageReader> rawTargets, List<ImageReader> heicTargets,
-            List<OutputConfiguration> outputConfigs,
+            List<ImageReader> depth16Targets, List<OutputConfiguration> outputConfigs,
             int numBuffers, boolean substituteY8, boolean substituteHeic,
             String overridePhysicalCameraId, Handler handler) {
 
@@ -305,6 +305,18 @@ public class CameraTestUtils extends Assert {
                     }
                     outputConfigs.add(config);
                     heicTargets.add(target);
+                    break;
+                }
+                case ImageFormat.DEPTH16: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, handler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    depth16Targets.add(target);
                     break;
                 }
                 default:
