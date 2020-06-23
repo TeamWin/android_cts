@@ -623,12 +623,7 @@ public final class MockIme extends InputMethodService {
     @Override
     public void onStartInput(EditorInfo editorInfo, boolean restarting) {
         getTracer().onStartInput(editorInfo, restarting,
-                () -> {
-                    super.onStartInput(editorInfo, restarting);
-                    if (mSettings.getInlineSuggestionsEnabled()) {
-                        maybeClearExistingInlineSuggestions();
-                    }
-                });
+                () -> super.onStartInput(editorInfo, restarting));
     }
 
     @Override
@@ -737,13 +732,6 @@ public final class MockIme extends InputMethodService {
         final AtomicInteger mInflatedViewCount;
         final AtomicBoolean mValid = new AtomicBoolean(true);
 
-        PendingInlineSuggestions() {
-            mResponse = null;
-            mTotalCount = 0;
-            mViews = null;
-            mInflatedViewCount = null;
-        }
-
         PendingInlineSuggestions(InlineSuggestionsResponse response) {
             mResponse = response;
             mTotalCount = response.getInlineSuggestions().size();
@@ -790,7 +778,9 @@ public final class MockIme extends InputMethodService {
             }
             mPendingInlineSuggestions = pendingInlineSuggestions;
             if (pendingInlineSuggestions.mTotalCount == 0) {
-                mView.updateInlineSuggestions(pendingInlineSuggestions);
+                if (mView != null) {
+                    mView.updateInlineSuggestions(pendingInlineSuggestions);
+                }
                 return true;
             }
 
@@ -819,15 +809,6 @@ public final class MockIme extends InputMethodService {
             }
             return true;
         });
-    }
-
-    @MainThread
-    private void maybeClearExistingInlineSuggestions() {
-        if (mPendingInlineSuggestions != null
-                && mPendingInlineSuggestions.mTotalCount > 0) {
-            mView.updateInlineSuggestions(new PendingInlineSuggestions());
-            mPendingInlineSuggestions = null;
-        }
     }
 
     /**
