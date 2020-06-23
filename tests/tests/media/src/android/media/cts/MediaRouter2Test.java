@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import static android.content.Context.AUDIO_SERVICE;
+import static android.media.MediaRoute2Info.FEATURE_LIVE_AUDIO;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
 import static android.media.cts.StubMediaRoute2ProviderService.FEATURES_SPECIAL;
 import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SAMPLE;
@@ -90,6 +91,9 @@ public class MediaRouter2Test {
     private static final String TEST_VALUE = "test_value";
     private static final RouteDiscoveryPreference EMPTY_DISCOVERY_PREFERENCE =
             new RouteDiscoveryPreference.Builder(Collections.emptyList(), false).build();
+    private static final RouteDiscoveryPreference LIVE_AUDIO_DISCOVERY_PREFERENCE =
+            new RouteDiscoveryPreference.Builder(
+                    Collections.singletonList(FEATURE_LIVE_AUDIO), false).build();
 
     @Before
     public void setUp() throws Exception {
@@ -124,10 +128,16 @@ public class MediaRouter2Test {
 
     @Test
     public void testGetRoutesAfterCreation() {
-        List<MediaRoute2Info> initialRoutes = mRouter2.getRoutes();
-        assertFalse(initialRoutes.isEmpty());
-        for (MediaRoute2Info route : initialRoutes) {
-            assertTrue(route.isSystemRoute());
+        RouteCallback routeCallback = new RouteCallback() {};
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, LIVE_AUDIO_DISCOVERY_PREFERENCE);
+        try {
+            List<MediaRoute2Info> initialRoutes = mRouter2.getRoutes();
+            assertFalse(initialRoutes.isEmpty());
+            for (MediaRoute2Info route : initialRoutes) {
+                assertTrue(route.getFeatures().contains(FEATURE_LIVE_AUDIO));
+            }
+        } finally {
+            mRouter2.unregisterRouteCallback(routeCallback);
         }
     }
 
@@ -138,18 +148,13 @@ public class MediaRouter2Test {
     public void testGetRoutes() throws Exception {
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURES_SPECIAL);
 
-        int systemRouteCount = 0;
         int remoteRouteCount = 0;
         for (MediaRoute2Info route : routes.values()) {
-            if (route.isSystemRoute()) {
-                systemRouteCount++;
-            } else {
+            if (!route.isSystemRoute()) {
                 remoteRouteCount++;
             }
         }
 
-        // Can be greater than 1 if BT devices are connected.
-        assertTrue(systemRouteCount > 0);
         assertEquals(1, remoteRouteCount);
         assertNotNull(routes.get(ROUTE_ID_SPECIAL_FEATURE));
     }
@@ -996,8 +1001,7 @@ public class MediaRouter2Test {
             }
         };
 
-        mRouter2.registerRouteCallback(mExecutor, routeCallback,
-                new RouteDiscoveryPreference.Builder(new ArrayList<>(), true).build());
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, LIVE_AUDIO_DISCOVERY_PREFERENCE);
 
         try {
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0);
