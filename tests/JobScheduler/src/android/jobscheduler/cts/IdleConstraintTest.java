@@ -168,7 +168,8 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
     private boolean isCarModeSupported() {
         // TVs don't support car mode.
         return !getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_LEANBACK_ONLY);
+                PackageManager.FEATURE_LEANBACK_ONLY)
+                && !getContext().getSystemService(UiModeManager.class).isUiModeLocked();
     }
 
     /**
@@ -305,7 +306,6 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         if (!isCarModeSupported()) {
             return;
         }
-
         runIdleJobStartsOnlyWhenIdle();
 
         setCarMode(true);
@@ -314,6 +314,9 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
     }
 
     public void testIdleJobStartsOnlyWhenIdle_screenEndsIdle() throws Exception {
+        if (!isCarModeSupported()) {
+            return;
+        }
         runIdleJobStartsOnlyWhenIdle();
 
         toggleScreenOn(true);
