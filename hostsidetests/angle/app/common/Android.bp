@@ -20,6 +20,5 @@ java_test_helper_library {
     test_suites: [
         "gts",
         "ats",
-        "mts"
     ],
 }
