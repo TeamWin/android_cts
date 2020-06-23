@@ -55,6 +55,9 @@ import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.SearchCondition;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
+import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.text.Html;
 import android.text.Spanned;
@@ -1245,5 +1248,16 @@ public class UiBot {
         final URLSpan[] spans = ((Spanned) accessibilityTextWithSpan)
                 .getSpans(0, accessibilityTextWithSpan.length(), URLSpan.class);
         return spans[0];
+    }
+
+    public boolean scrollToTextObject(String text) {
+        UiScrollable scroller = new UiScrollable(new UiSelector().scrollable(true));
+        try {
+            // Swipe far away from the edges to avoid triggering navigation gestures
+            scroller.setSwipeDeadZonePercentage(0.25);
+            return scroller.scrollTextIntoView(text);
+        } catch (UiObjectNotFoundException e) {
+            return false;
+        }
     }
 }
