@@ -35,7 +35,6 @@ import static android.media.MediaFormat.MIMETYPE_VIDEO_VP8;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_VP9;
 import android.media.MediaPlayer;
 import android.os.Build;
-import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
@@ -697,6 +696,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     private int getActualMax(
             boolean isEncoder, String name, String mime, CodecCapabilities caps, int max) {
         int flag = isEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0;
+        boolean memory_limited = false;
         MediaFormat format = createMinFormat(mime, caps);
         Log.d(TAG, "Test format " + format);
         Vector<MediaCodec> codecs = new Vector<MediaCodec>();
@@ -716,6 +716,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
                 am.getMemoryInfo(outInfo);
                 if (outInfo.lowMemory) {
                     Log.d(TAG, "System is in low memory condition, stopping. max: " + i);
+                    memory_limited = true;
                     break;
                 }
             } catch (IllegalArgumentException e) {
@@ -745,6 +746,10 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             codecs.get(i).release();
         }
         codecs.clear();
+        // encode both actual max and whether we ran out of memory
+        if (memory_limited) {
+            actualMax = -actualMax;
+        }
         return actualMax;
     }
 
@@ -772,18 +777,20 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
             type.equalsIgnoreCase(MediaFormat.MIMETYPE_VIDEO_VP9      ));
     }
 
-    private boolean isLowRamDevice() {
-        return ((ActivityManager)mContext.getSystemService(Context.ACTIVITY_SERVICE)).
-            isLowRamDevice();
-    }
-
     public void testGetMaxSupportedInstances() {
-        final int MAX_INSTANCES = isLowRamDevice() ? 16 : 32;
         StringBuilder xmlOverrides = new StringBuilder();
         MediaCodecList allCodecs = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        final boolean isLowRam = ActivityManager.isLowRamDeviceStatic();
         for (MediaCodecInfo info : allCodecs.getCodecInfos()) {
             Log.d(TAG, "codec: " + info.getName());
             Log.d(TAG, "  isEncoder = " + info.isEncoder());
+
+            // don't bother testing aliases
+            if (info.isAlias()) {
+                Log.d(TAG, "skipping: " + info.getName() + " is an alias for " +
+                                info.getCanonicalName());
+                continue;
+            }
 
             String[] types = info.getSupportedTypes();
             for (int j = 0; j < types.length; ++j) {
@@ -793,14 +800,55 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
                 }
                 Log.d(TAG, "calling getCapabilitiesForType " + types[j]);
                 CodecCapabilities caps = info.getCapabilitiesForType(types[j]);
-                int max = caps.getMaxSupportedInstances();
-                Log.d(TAG, "getMaxSupportedInstances returns " + max);
-                assertTrue(max > 0);
+                int advertised = caps.getMaxSupportedInstances();
+                Log.d(TAG, "getMaxSupportedInstances returns " + advertised);
+                assertTrue(advertised > 0);
 
+                // see how well the declared max matches against reality
+
+                int tryMax = isLowRam ? 16 : 32;
+                int tryMin = isLowRam ? 4 : 16;
+
+                int trials = Math.min(advertised + 2, tryMax);
                 int actualMax = getActualMax(
-                        info.isEncoder(), info.getName(), types[j], caps, MAX_INSTANCES);
-                Log.d(TAG, "actualMax " + actualMax + " vs reported max " + max);
-                if (actualMax < (int)(max * 0.9) || actualMax > (int) Math.ceil(max * 1.1)) {
+                        info.isEncoder(), info.getName(), types[j], caps, trials);
+                Log.d(TAG, "actualMax " + actualMax + " vs advertised " + advertised
+                                + " tryMin " + tryMin + " tryMax " + tryMax);
+
+                boolean memory_limited = false;
+                if (actualMax < 0) {
+                    memory_limited = true;
+                    actualMax = -actualMax;
+                }
+
+                boolean compliant = true;
+                if (info.isHardwareAccelerated()) {
+                    // very specific bounds for HW codecs
+                    // so the adv+2 above is to see if the HW codec lets us go beyond adv
+                    // (it should not)
+                    if (actualMax != Math.min(advertised, tryMax)) {
+                        Log.d(TAG, "NO: hwcodec " + actualMax + " != min(" + advertised +
+                                            "," + tryMax + ")");
+                        compliant = false;
+                    }
+                } else {
+                    // sw codecs get a little more relaxation due to memory pressure
+                    if (actualMax >= Math.min(advertised, tryMax)) {
+                        // no memory issues, and we allocated them all
+                        Log.d(TAG, "OK: swcodec " + actualMax + " >= min(" + advertised +
+                                        "," + tryMax + ")");
+                    } else if (actualMax >= Math.min(advertised, tryMin) &&
+                                    memory_limited) {
+                        // memory issues, but we hit our floors
+                        Log.d(TAG, "OK: swcodec " + actualMax + " >= min(" + advertised +
+                                        "," + tryMin + ") + memory limited");
+                    } else {
+                        Log.d(TAG, "NO: swcodec didn't meet criteria");
+                        compliant = false;
+                    }
+                }
+
+                if (!compliant) {
                     String codec = "<MediaCodec name=\"" + info.getName() +
                             "\" type=\"" + types[j] + "\" >";
                     String limit = "    <Limit name=\"concurrent-instances\" max=\"" +
