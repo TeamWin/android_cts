@@ -2311,9 +2311,11 @@ public class WifiManagerTest extends AndroidTestCase {
         // assert that the country code is all uppercase
         assertEquals(wifiCountryCode.toUpperCase(Locale.US), wifiCountryCode);
 
-        String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
-                .getNetworkCountryIso();
-        assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
+        if (WifiFeature.isTelephonySupported(getContext())) {
+            String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
+                    .getNetworkCountryIso();
+            assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
+        }
     }
 
     /**
