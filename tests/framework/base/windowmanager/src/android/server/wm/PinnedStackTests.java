@@ -1049,7 +1049,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertEquals("onPause", 0, lifecycleCounts.getCount(ActivityCallback.ON_PAUSE));
     }
 
-    @FlakyTest(bugId = 156003518)
     @Test
     public void testPinnedStackWithDockedStack() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
