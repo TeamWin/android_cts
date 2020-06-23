@@ -29,4 +29,9 @@ public class WifiFeature {
         PackageManager packageManager = context.getPackageManager();
         return packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_DIRECT);
     }
+
+    public static boolean isTelephonySupported(Context context) {
+        final PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+    }
 }
