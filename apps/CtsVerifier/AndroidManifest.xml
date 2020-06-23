@@ -4374,4 +4374,8 @@
         </activity>
     </application>
 
+    <queries>
+         <!-- Rotation Vector CV Crosscheck (RVCVXCheckTestActivity) relies on OpenCV Manager -->
+         <package android:name="org.opencv.engine" />
+    </queries>
 </manifest>
