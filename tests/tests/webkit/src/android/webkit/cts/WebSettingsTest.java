@@ -736,17 +736,10 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         Thread.sleep(1000);
         assertEquals("Loaded", mOnUiThread.getTitle());
 
-        // Test that when AppCache is enabled and a valid path is provided, we
-        // get an AppCache callback of some kind.
-        mSettings.setAppCachePath(getActivity().getDir("appcache", 0).getPath());
-        mOnUiThread.loadUrlAndWaitForCompletion(url);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return mOnUiThread.getTitle() != null
-                        && mOnUiThread.getTitle().endsWith("Callback");
-            }
-        }.run();
+        // We used to test that when AppCache is enabled and a valid path is
+        // provided, we got an AppCache callback of some kind, but AppCache is
+        // deprecated on the web and will be removed from Chromium in the
+        // future, so this test has been removed.
     }
 
     // Ideally, we need a test case for the enabled case. However, it seems that
