@@ -76,6 +76,11 @@ public class FeatureTest extends AndroidTestCase {
             return;
         }
 
+        // Skip the tests for low-RAM devices
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         fail("Device should support managed profiles, but "
                 + PackageManager.FEATURE_MANAGED_USERS + " is not enabled");
     }
