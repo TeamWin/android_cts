@@ -95,25 +95,18 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mUiDevice.pressHome();
     }
 
-    @Test
-    public void testLockTaskIsActive() throws Exception {
-        Log.d(TAG, "testLockTaskIsActive on host-driven test");
-        waitAndCheckLockedActivityIsResumed();
-        checkLockedActivityIsRunning();
-    }
-
     /**
      * On low-RAM devices, this test can take too long to finish, so the test runner can incorrectly
      * assume it's finished. Therefore, only use it once in a given test.
+     *
+     * <p>Does not test that the locked activity is initially in the foreground, since running this
+     * test in instrumentation can immediately kill the locked activity (while maintaining lock task
+     * mode).
      */
     @Test
     public void testLockTaskIsActiveAndCantBeInterrupted() throws Exception {
         Log.d(TAG, "testLockTaskIsActiveAndCantBeInterrupted on host-driven test");
-        waitAndCheckLockedActivityIsResumed();
-        checkLockedActivityIsRunning();
-
-        mUiDevice.pressBack();
-        mUiDevice.waitForIdle();
+        waitAndEnsureLockTaskUtilityActivityIsRunning();
         checkLockedActivityIsRunning();
 
         mUiDevice.pressHome();
@@ -121,6 +114,10 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         checkLockedActivityIsRunning();
 
         mUiDevice.pressRecentApps();
+        mUiDevice.waitForIdle();
+        checkLockedActivityIsRunning();
+
+        mUiDevice.pressBack();
         mUiDevice.waitForIdle();
         checkLockedActivityIsRunning();
 
@@ -265,6 +262,19 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
                 ActivityManager.LOCK_TASK_MODE_LOCKED, mActivityManager.getLockTaskModeState());
     }
 
+    /**
+     * Ensures the locked activity is resumed or otherwise launches it but without starting lock
+     * task if it is not already in that mode.
+     */
+    private void waitAndEnsureLockTaskUtilityActivityIsRunning() throws Exception {
+        mUiDevice.waitForIdle();
+        final boolean lockedActivityIsResumed =
+                LockTaskUtilityActivity.waitUntilActivityResumed(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
+        if (!lockedActivityIsResumed) {
+            launchLockTaskUtilityActivityWithoutStartingLockTask();
+        }
+    }
+
     private void waitAndCheckLockedActivityIsResumed() throws Exception {
         mUiDevice.waitForIdle();
         assertTrue(
@@ -301,6 +311,12 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         Intent intent = new Intent(mContext, LockTaskUtilityActivityIfWhitelisted.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(LockTaskUtilityActivity.START_LOCK_TASK, true);
+        mContext.startActivity(intent);
+    }
+
+    private void launchLockTaskUtilityActivityWithoutStartingLockTask() {
+        final Intent intent = new Intent(mContext, LockTaskUtilityActivityIfWhitelisted.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
     }
 
