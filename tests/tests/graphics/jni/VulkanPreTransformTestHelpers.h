@@ -58,7 +58,8 @@ public:
     ~SwapchainInfo();
     VkTestResult init(bool setPreTransform, int* outPreTransformHint);
     VkFormat format() const { return mFormat; }
-    VkExtent2D displaySize() const { return mDisplaySize; }
+    VkExtent2D surfaceSize() const { return mSurfaceSize; }
+    VkExtent2D imageSize() const { return mImageSize; }
     VkSwapchainKHR swapchain() const { return mSwapchain; }
     uint32_t swapchainLength() const { return mSwapchainLength; }
 
@@ -66,7 +67,8 @@ private:
     const DeviceInfo* const mDeviceInfo;
 
     VkFormat mFormat;
-    VkExtent2D mDisplaySize;
+    VkExtent2D mSurfaceSize;
+    VkExtent2D mImageSize;
     VkSwapchainKHR mSwapchain;
     uint32_t mSwapchainLength;
 };
