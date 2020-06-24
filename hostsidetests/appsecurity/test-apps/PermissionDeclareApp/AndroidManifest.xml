@@ -32,6 +32,14 @@
 
     <permission android:name="com.android.cts.permissionNormal" />
 
+    <!-- To set package installer -->
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
+
+    <instrumentation
+        android:name="androidx.test.runner.AndroidJUnitRunner"
+        android:targetPackage="com.android.cts.permissiondeclareapp"
+        />
+
     <application>
         <provider android:name="UtilsProvider"
                 android:authorities="com.android.cts.permissiondeclareapp"

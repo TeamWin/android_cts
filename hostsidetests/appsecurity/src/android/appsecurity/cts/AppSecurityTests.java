@@ -26,11 +26,15 @@ import android.platform.test.annotations.AppModeInstant;
 import android.platform.test.annotations.SecurityTest;
 
 import com.android.ddmlib.Log;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Set of tests that verify various security checks involving multiple apps are
@@ -248,6 +252,51 @@ public class AppSecurityTests extends BaseAppSecurityTest {
             getDevice().uninstallPackage(DECLARE_PERMISSION_COMPAT_PKG);
             getDevice().uninstallPackage(PERMISSION_DIFF_CERT_PKG);
         }
+    }
+
+    /**
+     * Test that an app cannot set the installer package for an app with a different
+     * signature.
+     */
+    @Test
+    @AppModeFull(reason = "Only full apps can hold INSTALL_PACKAGES")
+    @SecurityTest
+    public void testCrossPackageDiffCertSetInstaller() throws Exception {
+        Log.i(LOG_TAG, "installing app that attempts to use permission of another app");
+        try {
+            // cleanup test app that might be installed from previous partial test run
+            getDevice().uninstallPackage(DECLARE_PERMISSION_PKG);
+            getDevice().uninstallPackage(DECLARE_PERMISSION_COMPAT_PKG);
+            getDevice().uninstallPackage(PERMISSION_DIFF_CERT_PKG);
+
+            new InstallMultiple().addApk(DECLARE_PERMISSION_APK).run();
+            new InstallMultiple().addApk(DECLARE_PERMISSION_COMPAT_APK).run();
+            new InstallMultiple().addApk(PERMISSION_DIFF_CERT_APK).run();
+
+            // Enable alert window permission so it can start activity in background
+            enableAlertWindowAppOp(DECLARE_PERMISSION_PKG);
+
+            runCrossPackageInstallerDeviceTest(PERMISSION_DIFF_CERT_PKG, "assertBefore");
+            runCrossPackageInstallerDeviceTest(DECLARE_PERMISSION_PKG, "takeInstaller");
+            runCrossPackageInstallerDeviceTest(PERMISSION_DIFF_CERT_PKG, "attemptTakeOver");
+            runCrossPackageInstallerDeviceTest(DECLARE_PERMISSION_PKG, "clearInstaller");
+            runCrossPackageInstallerDeviceTest(PERMISSION_DIFF_CERT_PKG, "assertAfter");
+        } finally {
+            getDevice().uninstallPackage(DECLARE_PERMISSION_PKG);
+            getDevice().uninstallPackage(DECLARE_PERMISSION_COMPAT_PKG);
+            getDevice().uninstallPackage(PERMISSION_DIFF_CERT_PKG);
+        }
+    }
+
+    /**
+     * Utility method to make actual test method easier to read.
+     */
+    private void runCrossPackageInstallerDeviceTest(String pkgName, String testMethodName)
+            throws DeviceNotAvailableException {
+        Map<String, String> arguments = new HashMap<>();
+        arguments.put("runExplicit", "true");
+        runDeviceTests(getDevice(), null, pkgName, pkgName + ".ModifyInstallerCrossPackageTest",
+                testMethodName, null, 10 * 60 * 1000L, 10 * 60 * 1000L, 0L, true, false, arguments);
     }
 
     /**
