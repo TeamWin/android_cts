@@ -99,8 +99,12 @@ public class BlobStoreManagerTest {
             "delete_on_last_lease_delay_ms";
     private static final String KEY_TOTAL_BYTES_PER_APP_LIMIT_FLOOR =
             "total_bytes_per_app_limit_floor";
-    public static final String KEY_TOTAL_BYTES_PER_APP_LIMIT_FRACTION =
+    private static final String KEY_TOTAL_BYTES_PER_APP_LIMIT_FRACTION =
             "total_bytes_per_app_limit_fraction";
+    private static final String KEY_MAX_ACTIVE_SESSIONS = "max_active_sessions";
+    private static final String KEY_MAX_COMMITTED_BLOBS = "max_committed_blobs";
+    private static final String KEY_MAX_LEASED_BLOBS = "max_leased_blobs";
+    private static final String KEY_MAX_BLOB_ACCESS_PERMITTED_PACKAGES = "max_permitted_pks";
 
     private static final String HELPER_PKG = "com.android.cts.blob.helper";
     private static final String HELPER_PKG2 = "com.android.cts.blob.helper2";
@@ -127,9 +131,8 @@ public class BlobStoreManagerTest {
 
     @After
     public void tearDown() throws Exception {
-        for (BlobHandle blobHandle : mBlobStoreManager.getLeasedBlobs()) {
-            mBlobStoreManager.releaseLease(blobHandle);
-        }
+        runShellCmd("cmd blob_store clear-all-sessions");
+        runShellCmd("cmd blob_store clear-all-blobs");
     }
 
     @Test
@@ -1357,6 +1360,64 @@ public class BlobStoreManagerTest {
         }, Pair.create(KEY_SESSION_EXPIRY_TIMEOUT_MS, String.valueOf(waitDurationMs)));
     }
 
+    @Test
+    public void testCreateSession_countLimitExceeded() throws Exception {
+        final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
+        blobData1.prepare();
+        final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
+        blobData2.prepare();
+        runWithKeyValues(() -> {
+            mBlobStoreManager.createSession(blobData1.getBlobHandle());
+            assertThrows(LimitExceededException.class,
+                    () -> mBlobStoreManager.createSession(blobData2.getBlobHandle()));
+        }, Pair.create(KEY_MAX_ACTIVE_SESSIONS, String.valueOf(1)));
+    }
+
+    @Test
+    public void testCommitSession_countLimitExceeded() throws Exception {
+        final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
+        blobData1.prepare();
+        final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
+        blobData2.prepare();
+        runWithKeyValues(() -> {
+            commitBlob(blobData1, null /* accessModifier */, 0 /* expectedResult */);
+            commitBlob(blobData2, null /* accessModifier */, 1 /* expectedResult */);
+        }, Pair.create(KEY_MAX_COMMITTED_BLOBS, String.valueOf(1)));
+    }
+
+    @Test
+    public void testLeaseBlob_countLimitExceeded() throws Exception {
+        final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
+        blobData1.prepare();
+        final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
+        blobData2.prepare();
+        runWithKeyValues(() -> {
+            commitBlob(blobData1);
+            commitBlob(blobData2);
+
+            acquireLease(mContext, blobData1.getBlobHandle(), "test desc");
+            assertThrows(LimitExceededException.class,
+                    () -> acquireLease(mContext, blobData2.getBlobHandle(), "test desc"));
+        }, Pair.create(KEY_MAX_LEASED_BLOBS, String.valueOf(1)));
+    }
+
+    @Test
+    public void testAllowPackageAccess_countLimitExceeded() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+        runWithKeyValues(() -> {
+            final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
+            assertThat(sessionId).isGreaterThan(0L);
+            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+                blobData.writeToSession(session);
+
+                session.allowPackageAccess(HELPER_PKG2, HELPER_PKG2_CERT_SHA256);
+                assertThrows(LimitExceededException.class,
+                        () -> session.allowPackageAccess(HELPER_PKG3, HELPER_PKG3_CERT_SHA256));
+            }
+        }, Pair.create(KEY_MAX_BLOB_ACCESS_PERMITTED_PACKAGES, String.valueOf(1)));
+    }
+
     private static void runWithKeyValues(ThrowingRunnable runnable,
             Pair<String, String>... keyValues) throws Exception {
         final Map<String, String> previousValues = new ArrayMap();
@@ -1407,6 +1468,11 @@ public class BlobStoreManagerTest {
 
     private long commitBlob(DummyBlobData blobData,
             AccessModifier accessModifier) throws Exception {
+        return commitBlob(blobData, accessModifier, 0 /* expectedResult */);
+    }
+
+    private long commitBlob(DummyBlobData blobData,
+            AccessModifier accessModifier, int expectedResult) throws Exception {
         final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
         assertThat(sessionId).isGreaterThan(0L);
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -1418,7 +1484,7 @@ public class BlobStoreManagerTest {
             final CompletableFuture<Integer> callback = new CompletableFuture<>();
             session.commit(mContext.getMainExecutor(), callback::complete);
             assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                    .isEqualTo(0);
+                    .isEqualTo(expectedResult);
         }
         return sessionId;
     }
