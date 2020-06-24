@@ -98,7 +98,7 @@ class SessionTest : PackageInstallerTestBase() {
     @Test
     fun confirmFrpInstallationFails() {
         try {
-            setSecureSetting("secure_frp_mode", 1)
+            setSecureFrp(true)
 
             try {
                 val installation = startInstallationViaSession()
@@ -111,7 +111,7 @@ class SessionTest : PackageInstallerTestBase() {
             // Install should never have started
             assertNotInstalled()
         } finally {
-            setSecureSetting("secure_frp_mode", 0)
+            setSecureFrp(false)
         }
     }
 }

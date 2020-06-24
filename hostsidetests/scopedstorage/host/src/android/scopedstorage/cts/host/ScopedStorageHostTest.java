@@ -22,6 +22,7 @@ import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,6 +45,19 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTests("android.scopedstorage.cts",
                 "android.scopedstorage.cts.ScopedStorageTest", phase));
 
+    }
+
+    /**
+     * Runs the given phase of ScopedStorageTest by calling into the device with {@code
+     * --no-isolated-storage} flag.
+     * Throws an exception if the test phase fails.
+     */
+    void runDeviceTestWithDisabledIsolatedStorage(String phase) throws Exception {
+        runDeviceTests(new DeviceTestRunOptions("android.scopedstorage.cts")
+            .setDevice(getDevice())
+            .setTestClassName("android.scopedstorage.cts.ScopedStorageTest")
+            .setTestMethodName(phase)
+            .setDisableIsolatedStorage(true));
     }
 
     String executeShellCommand(String cmd) throws Exception {
@@ -429,6 +443,20 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testWallpaperApisManageExternalStoragePrivileged() throws Exception {
         runDeviceTest("testWallpaperApisManageExternalStoragePrivileged");
+    }
+
+    @Test
+    public void testNoIsolatedStorageInstrumentationFlag() throws Exception {
+        runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageCanCreateFilesAnywhere");
+        runDeviceTestWithDisabledIsolatedStorage(
+                "testNoIsolatedStorageCantReadWriteOtherAppExternalDir");
+        runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageStorageReaddir");
+        runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageQueryOtherAppsFile");
+
+        // Check that appop is revoked after instrumentation is over.
+        runDeviceTest("testCreateFileInAppExternalDir");
+        runDeviceTest("testCreateFileInOtherAppExternalDir");
+        runDeviceTest("testReadWriteFilesInOtherAppExternalDir");
     }
 
     private void grantPermissions(String... perms) throws Exception {

@@ -64,6 +64,10 @@ public class AdbHostTest extends DeviceTestCase implements IDeviceTest {
             return;
         }
 
+        if (getDevice().isAdbTcp()) { // adb over WiFi, no point checking it
+            return;
+        }
+
         ProcessBuilder pb = new ProcessBuilder(check_ms_os_desc.getAbsolutePath());
         pb.environment().put("ANDROID_SERIAL", serial);
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);

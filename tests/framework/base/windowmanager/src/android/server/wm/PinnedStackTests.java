@@ -570,7 +570,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId=159062106)
     public void testDisallowMultipleTasksInPinnedStack() throws Exception {
         // Launch a test activity so that we have multiple fullscreen tasks
         launchActivity(TEST_ACTIVITY);
@@ -1048,7 +1047,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertEquals("onPause", 0, lifecycleCounts.getCount(ActivityCallback.ON_PAUSE));
     }
 
-    @FlakyTest(bugId = 156003518)
     @Test
     public void testPinnedStackWithDockedStack() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());

@@ -20,6 +20,7 @@ import static android.server.wm.ActivityManagerTestBase.executeShellCommand;
 import static android.server.wm.WindowInsetsAnimationUtils.requestControlThenTransitionToVisibility;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowInsets.Type.ime;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -43,6 +44,7 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
 import android.view.WindowInsetsAnimation.Callback;
 import android.view.WindowInsetsController;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -136,8 +138,10 @@ public class WindowInsetsAnimationSynchronicityTests {
             super.onCreate(savedInstanceState);
             getWindow().requestFeature(Window.FEATURE_NO_TITLE);
             getWindow().setDecorFitsSystemWindows(false);
+            getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
             mTestView = new TestView(this);
             mEditText = new EditText(this);
+            mEditText.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN);
             mTestView.addView(mEditText);
             mTestView.mEvaluator = () -> {
                 if (mEvaluator != null) {
