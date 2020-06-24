@@ -23,7 +23,7 @@ import static com.android.cts.usespermissiondiffcertapp.Asserts.assertReadingCli
 import static com.android.cts.usespermissiondiffcertapp.Asserts.assertReadingClipNotAllowed;
 import static com.android.cts.usespermissiondiffcertapp.Asserts.assertWritingClipAllowed;
 import static com.android.cts.usespermissiondiffcertapp.Asserts.assertWritingClipNotAllowed;
-import static com.android.cts.usespermissiondiffcertapp.Utils.grantClipUriPermission;
+import static com.android.cts.usespermissiondiffcertapp.Utils.grantClipUriPermissionViaActivity;
 import static com.android.cts.usespermissiondiffcertapp.Utils.grantClipUriPermissionViaContext;
 import static com.android.cts.usespermissiondiffcertapp.Utils.revokeClipUriPermissionViaContext;
 
@@ -104,8 +104,8 @@ public class UriGrantsTest {
 
         // Now, let's grant ourselves some access
         ReceiveUriActivity.clearStarted();
-        grantClipUriPermission(clip, Intent.FLAG_GRANT_READ_URI_PERMISSION
-                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION, false);
+        grantClipUriPermissionViaActivity(clip, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         ReceiveUriActivity.waitForStart();
 
         // We should now have reading access, even before taking the persistable
@@ -129,9 +129,9 @@ public class UriGrantsTest {
 
         // Launch again giving ourselves persistable read and write access
         ReceiveUriActivity.clearNewIntent();
-        grantClipUriPermission(clip, Intent.FLAG_GRANT_READ_URI_PERMISSION
+        grantClipUriPermissionViaActivity(clip, Intent.FLAG_GRANT_READ_URI_PERMISSION
                 | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION, false);
+                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         ReceiveUriActivity.waitForNewIntent();
 
         // Previous persisted grant should be unchanged
@@ -190,8 +190,8 @@ public class UriGrantsTest {
 
         // Give ourselves prefix read access
         ReceiveUriActivity.clearStarted();
-        grantClipUriPermission(clipMeow, Intent.FLAG_GRANT_READ_URI_PERMISSION
-                | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION, false);
+        grantClipUriPermissionViaActivity(clipMeow, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         ReceiveUriActivity.waitForStart();
 
         // Verify prefix read access
@@ -204,7 +204,7 @@ public class UriGrantsTest {
 
         // Now give ourselves exact write access
         ReceiveUriActivity.clearNewIntent();
-        grantClipUriPermission(clip, Intent.FLAG_GRANT_WRITE_URI_PERMISSION, false);
+        grantClipUriPermissionViaActivity(clip, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         ReceiveUriActivity.waitForNewIntent();
 
         // Verify we have exact write access, but not prefix write
@@ -233,9 +233,9 @@ public class UriGrantsTest {
 
         // Give ourselves prefix read access
         ReceiveUriActivity.clearStarted();
-        grantClipUriPermission(clip, Intent.FLAG_GRANT_READ_URI_PERMISSION
+        grantClipUriPermissionViaActivity(clip, Intent.FLAG_GRANT_READ_URI_PERMISSION
                 | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-                | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION, false);
+                | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
         ReceiveUriActivity.waitForStart();
 
         // Verify prefix read access
