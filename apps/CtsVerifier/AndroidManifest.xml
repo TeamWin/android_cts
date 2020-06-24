@@ -4368,7 +4368,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
         <activity android:name=".instantapps.RecentAppsTestActivity"
                  android:label="@string/ia_recents">
@@ -4377,7 +4377,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
         <activity android:name=".instantapps.AppInfoTestActivity"
                  android:label="@string/ia_app_info">
