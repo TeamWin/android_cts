@@ -105,14 +105,11 @@ public class UsageStatsTest {
     private static final String APPOPS_SET_SHELL_COMMAND = "appops set {0} " +
             AppOpsManager.OPSTR_GET_USAGE_STATS + " {1}";
 
-    private static final String USAGE_SOURCE_GET_SHELL_COMMAND = "settings get global " +
-            Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE;
+    private static final String GET_SHELL_COMMAND = "settings get global ";
 
-    private static final String USAGE_SOURCE_SET_SHELL_COMMAND = "settings put global " +
-            Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE + " {0}";
+    private static final String SET_SHELL_COMMAND = "settings put global ";
 
-    private static final String USAGE_SOURCE_DELETE_SHELL_COMMAND = "settings delete global " +
-            Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE;
+    private static final String DELETE_SHELL_COMMAND = "settings delete global ";
 
     private static final String TEST_APP_PKG = "android.app.usage.cts.test1";
     private static final String TEST_APP_CLASS = "android.app.usage.cts.test1.SomeActivity";
@@ -139,6 +136,7 @@ public class UsageStatsTest {
     private KeyguardManager mKeyguardManager;
     private String mTargetPackage;
     private String mCachedUsageSourceSetting;
+    private String mCachedEnableRestrictedBucketSetting;
 
     @Before
     public void setUp() throws Exception {
@@ -152,16 +150,18 @@ public class UsageStatsTest {
 
         assumeTrue("App Standby not enabled on device", AppStandbyUtils.isAppStandbyEnabled());
         setAppOpsMode("allow");
-        mCachedUsageSourceSetting = getUsageSourceSetting();
+        mCachedUsageSourceSetting = getSetting(Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE);
+        mCachedEnableRestrictedBucketSetting = getSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET);
     }
 
     @After
     public void cleanUp() throws Exception {
         if (mCachedUsageSourceSetting != null &&
-            !mCachedUsageSourceSetting.equals(getUsageSourceSetting())) {
+                !mCachedUsageSourceSetting.equals(
+                    getSetting(Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE))) {
             setUsageSourceSetting(mCachedUsageSourceSetting);
-            mUsageStatsManager.forceUsageSourceSettingRead();
         }
+        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, mCachedEnableRestrictedBucketSetting);
         // Force stop test package to avoid any running test code from carrying over to the next run
         SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
         mUiDevice.pressHome();
@@ -179,16 +179,20 @@ public class UsageStatsTest {
         executeShellCmd(MessageFormat.format(APPOPS_SET_SHELL_COMMAND, mTargetPackage, mode));
     }
 
-    private String getUsageSourceSetting() throws Exception {
-        return executeShellCmd(USAGE_SOURCE_GET_SHELL_COMMAND);
+    private String getSetting(String name) throws Exception {
+        return executeShellCmd(GET_SHELL_COMMAND + name);
     }
 
-    private void setUsageSourceSetting(String usageSource) throws Exception {
-        if (usageSource.equals("null")) {
-            executeShellCmd(USAGE_SOURCE_DELETE_SHELL_COMMAND);
+    private void setSetting(String name, String setting) throws Exception {
+        if (setting == null || setting.equals("null")) {
+            executeShellCmd(DELETE_SHELL_COMMAND + name);
         } else {
-            executeShellCmd(MessageFormat.format(USAGE_SOURCE_SET_SHELL_COMMAND, usageSource));
+            executeShellCmd(SET_SHELL_COMMAND + name + " " + setting);
         }
+    }
+
+    private void setUsageSourceSetting(String value) throws Exception {
+        setSetting(Settings.Global.APP_TIME_LIMIT_USAGE_SOURCE, value);
         mUsageStatsManager.forceUsageSourceSettingRead();
     }
 
@@ -683,7 +687,9 @@ public class UsageStatsTest {
     // TODO(148887416): get this test to work for instant apps
     @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
-    public void testUserForceIntoRestricted() throws IOException {
+    public void testUserForceIntoRestricted() throws Exception {
+        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
+
         launchSubActivity(TaskRootActivity.class);
         assertEquals("Activity launch didn't bring app up to ACTIVE bucket",
                 UsageStatsManager.STANDBY_BUCKET_ACTIVE,
@@ -700,7 +706,28 @@ public class UsageStatsTest {
     // TODO(148887416): get this test to work for instant apps
     @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
-    public void testUserLaunchRemovesFromRestricted() throws IOException {
+    public void testUserForceIntoRestricted_BucketDisabled() throws Exception {
+        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, "0");
+
+        launchSubActivity(TaskRootActivity.class);
+        assertEquals("Activity launch didn't bring app up to ACTIVE bucket",
+                UsageStatsManager.STANDBY_BUCKET_ACTIVE,
+                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+
+        // User force shouldn't have to deal with the timeout.
+        setStandByBucket(mTargetPackage, "restricted");
+        assertNotEquals("User was able to force into RESTRICTED bucket when bucket disabled",
+                UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
+                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+
+    }
+
+    // TODO(148887416): get this test to work for instant apps
+    @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
+    @Test
+    public void testUserLaunchRemovesFromRestricted() throws Exception {
+        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
+
         setStandByBucket(mTargetPackage, "restricted");
         assertEquals("User was unable to force an app into RESTRICTED bucket",
                 UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
@@ -710,6 +737,26 @@ public class UsageStatsTest {
         assertEquals("Activity launch didn't bring RESTRICTED app into ACTIVE bucket",
                 UsageStatsManager.STANDBY_BUCKET_ACTIVE,
                 mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+    }
+
+    /** Confirm the default value of {@link Settings.Global.ENABLE_RESTRICTED_BUCKET}. */
+    // TODO(148887416): get this test to work for instant apps
+    @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
+    @Test
+    public void testDefaultEnableRestrictedBucketOff() throws Exception {
+        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, null);
+
+        launchSubActivity(TaskRootActivity.class);
+        assertEquals("Activity launch didn't bring app up to ACTIVE bucket",
+                UsageStatsManager.STANDBY_BUCKET_ACTIVE,
+                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+
+        // User force shouldn't have to deal with the timeout.
+        setStandByBucket(mTargetPackage, "restricted");
+        assertNotEquals("User was able to force into RESTRICTED bucket when bucket disabled",
+                UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
+                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
+
     }
 
     // TODO(148887416): get this test to work for instant apps

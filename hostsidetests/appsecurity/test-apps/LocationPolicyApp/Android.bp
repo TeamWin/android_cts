@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test_helper_app {
-    name: "CtsAngleDriverTestCases",
-    defaults: ["cts_support_defaults"],
-    srcs: [
-        "src/**/*.java",
+android_test {
+    name: "CtsLocationPolicyApp",
+    defaults: ["cts_defaults"],
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
     ],
-    // tag this module as a cts test artifact
+    static_libs: [
+        "androidx.test.rules",
+        "telephony-common",
+    ],
+    srcs: ["src/**/*.java"],
+    platform_apis: true,
     test_suites: [
         "cts",
         "vts10",
+        "sts",
+        "general-tests",
     ],
-    compile_multilib: "both",
-    static_libs: [
-        "ctstestrunner-axt",
-        "androidx.test.rules",
-        "AngleIntegrationTestCommon",
-    ],
+    min_sdk_version: "27",
+    target_sdk_version: "28",
 }
