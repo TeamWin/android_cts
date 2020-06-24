@@ -632,10 +632,10 @@ public class WifiManagerTest extends AndroidTestCase {
         MacAddress lastBlockedClientMacAddress;
         int lastBlockedClientReason;
         boolean onStateChangedCalled = false;
-        boolean onSoftapInfoChangedCalled = false;
         boolean onSoftApCapabilityChangedCalled = false;
         boolean onConnectedClientCalled = false;
         boolean onBlockedClientConnectingCalled = false;
+        int onSoftapInfoChangedCalledCount = 0;
 
         TestSoftApCallback(Object lock) {
             softApLock = lock;
@@ -647,9 +647,9 @@ public class WifiManagerTest extends AndroidTestCase {
             }
         }
 
-        public boolean getOnSoftapInfoChangedCalled() {
+        public int getOnSoftapInfoChangedCalledCount() {
             synchronized(softApLock) {
-                return onSoftapInfoChangedCalled;
+                return onSoftapInfoChangedCalledCount;
             }
         }
 
@@ -734,7 +734,7 @@ public class WifiManagerTest extends AndroidTestCase {
         public void onInfoChanged(SoftApInfo softApInfo) {
             synchronized(softApLock) {
                 currentSoftApInfo = softApInfo;
-                onSoftapInfoChangedCalled = true;
+                onSoftapInfoChangedCalledCount++;
             }
         }
 
@@ -1472,7 +1472,7 @@ public class WifiManagerTest extends AndroidTestCase {
                     executor.runAll();
                     // Verify callback is run on the supplied executor and called
                     return callback.getOnStateChangedCalled() &&
-                            callback.getOnSoftapInfoChangedCalled() &&
+                            callback.getOnSoftapInfoChangedCalledCount() > 0 &&
                             callback.getOnSoftApCapabilityChangedCalled() &&
                             callback.getOnConnectedClientCalled();
                 });
@@ -1633,8 +1633,9 @@ public class WifiManagerTest extends AndroidTestCase {
                     "SoftAp channel and state mismatch!!!", 5_000,
                     () -> {
                         executor.runAll();
-                        return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState() &&
-                                2462 == callback.getCurrentSoftApInfo().getFrequency();
+                        return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState()
+                                && (callback.getOnSoftapInfoChangedCalledCount() > 1
+                                ? 2462 == callback.getCurrentSoftApInfo().getFrequency() : true);
                     });
 
             // stop tethering which used to verify stopSoftAp
@@ -2311,9 +2312,11 @@ public class WifiManagerTest extends AndroidTestCase {
         // assert that the country code is all uppercase
         assertEquals(wifiCountryCode.toUpperCase(Locale.US), wifiCountryCode);
 
-        String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
-                .getNetworkCountryIso();
-        assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
+        if (WifiFeature.isTelephonySupported(getContext())) {
+            String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
+                    .getNetworkCountryIso();
+            assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
+        }
     }
 
     /**
