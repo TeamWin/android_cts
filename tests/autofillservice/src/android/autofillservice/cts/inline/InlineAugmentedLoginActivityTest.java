@@ -43,6 +43,7 @@ import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 import java.util.List;
 
@@ -64,6 +65,11 @@ public class InlineAugmentedLoginActivityTest
                 mActivity = getActivity();
             }
         };
+    }
+
+    @Override
+    public TestRule getMainTestRule() {
+        return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
     @Test
