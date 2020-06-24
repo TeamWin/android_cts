@@ -161,7 +161,11 @@ class PermissionTest29 : BaseUsePermissionTest() {
         clickPermissionRequestSettingsLink()
         eventually {
             pressBack()
-            waitFindObject(By.res("com.android.permissioncontroller:id/grant_dialog"), 100)
+            if (isAutomotive) {
+                waitFindObject(By.textContains("Allow in settings."), 100)
+            } else {
+                waitFindObject(By.res("com.android.permissioncontroller:id/grant_dialog"), 100)
+            }
         }
     }
 
@@ -181,8 +185,9 @@ class PermissionTest29 : BaseUsePermissionTest() {
             android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
         ) {
             clickPermissionRequestSettingsLinkAndDeny()
+            waitForIdle()
+            pressBack()
         }
-        pressBack()
 
         assertAppHasPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, false)
         assertAppHasPermission(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION, false)
