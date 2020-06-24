@@ -124,6 +124,10 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     public void testNightModeAutoNotPersistedCarMode() {
+        if (mUiModeManager.isNightModeLocked()) {
+            return;
+        }
+
         // Reset the mode to no if it is set to another value
         setNightMode(UiModeManager.MODE_NIGHT_NO);
         mUiModeManager.enableCarMode(0);
