@@ -49,6 +49,7 @@ class PermissionTest30 : BaseUsePermissionTest() {
 
         requestAppPermissionsAndAssertResult(ACCESS_BACKGROUND_LOCATION to true) {
             clickAllowAlwaysInSettings()
+            waitForIdle()
             pressBack()
         }
     }
