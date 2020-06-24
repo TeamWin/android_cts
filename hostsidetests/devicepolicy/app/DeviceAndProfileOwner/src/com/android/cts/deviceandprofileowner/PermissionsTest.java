@@ -32,9 +32,12 @@ import android.support.test.uiautomator.UiWatcher;
 import android.support.test.uiautomator.Until;
 import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
+import android.os.SystemClock;
 
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -333,13 +336,36 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     private void assertSetPermissionGrantState(int value) throws Exception {
         assertSetPermissionGrantState(value, PERMISSION_NAME);
     }
+
     private void assertSetPermissionGrantState(int value, String permission) throws Exception {
         mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, permission,
-                value);
+                PERMISSION_APP_PACKAGE_NAME, permission, value);
+        // Because setPermissionGrantState is not synchronous, we should wait a while before
+        // checking.
+        waitUntil(value, new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                return mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+                        PERMISSION_APP_PACKAGE_NAME, permission);
+            }
+        });
         assertEquals(mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                PERMISSION_APP_PACKAGE_NAME, permission),
-                value);
+                PERMISSION_APP_PACKAGE_NAME, permission), value);
+    }
+
+    private <T> void waitUntil(T expected, Callable<T> c) throws Exception {
+        final long start = SystemClock.elapsedRealtime();
+        // setPermissionGrantState has 20 seconds timeout
+        final int TIMEOUT_MS = 20 * 1000;
+
+        T actual;
+        while (!Objects.equals(expected, actual = c.call())) {
+            if ((SystemClock.elapsedRealtime() - start) >= TIMEOUT_MS) {
+                fail(String.format("Timed out waiting the value to change to %s (actual=%s)",
+                        expected, actual));
+            }
+            Thread.sleep(200);
+        }
     }
 
     private void assertFailedToSetDevelopmentPermissionGrantState(int value) throws Exception {
@@ -357,6 +383,16 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         assertFalse(mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 SIMPLE_PRE_M_APP_PACKAGE_NAME, PERMISSION_NAME,
                 value));
+        // Because setPermissionGrantState is not synchronous, we should wait a while before
+        // checking.
+        waitUntil(value, new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                return mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+                        SIMPLE_PRE_M_APP_PACKAGE_NAME, PERMISSION_NAME);
+            }
+        });
+
         assertEquals(mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 SIMPLE_PRE_M_APP_PACKAGE_NAME, PERMISSION_NAME),
                 DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
