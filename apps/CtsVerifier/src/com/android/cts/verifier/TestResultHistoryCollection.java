@@ -3,7 +3,6 @@ package com.android.cts.verifier;
 import com.android.compatibility.common.util.TestResultHistory;
 
 import java.io.Serializable;
-import java.util.AbstractMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,7 @@ import java.util.Set;
 
 public class TestResultHistoryCollection implements Serializable {
 
+    private static final long serialVersionUID = 0L;
     private final Set<TestResultHistory> mHistoryCollection = new HashSet<>();
 
     /**
@@ -23,30 +23,32 @@ public class TestResultHistoryCollection implements Serializable {
     }
 
     /**
-     * Add a test result history with test name, start time and end time.
+     * Add a test result history with test name, start time, end time and isAutomated.
      *
      * @param test a string of test name.
      * @param start start time of a test.
      * @param end end time of a test.
+     * @param isAutomated whether test case was executed through automation.
      */
-    public void add(String test, long start, long end) {
-        Set<Map.Entry> duration = new HashSet<>();
-        duration.add(new AbstractMap.SimpleEntry<>(start, end));
-        mHistoryCollection.add(new TestResultHistory(test, duration));
+    public void add(String test, long start, long end, boolean isAutomated) {
+        Set<TestResultHistory.ExecutionRecord> executionRecords
+                = new HashSet<TestResultHistory.ExecutionRecord> ();
+        executionRecords.add(new TestResultHistory.ExecutionRecord(start, end, isAutomated));
+        mHistoryCollection.add(new TestResultHistory(test, executionRecords));
     }
 
     /**
-     * Add test result histories for tests containing test name and a set of execution time.
+     * Add test result histories for tests containing test name and a set of ExecutionRecords
      *
      * @param test test name.
-     * @param durations set of start and end time.
+     * @param executionRecords set of ExecutionRecords.
      */
-    public void addAll(String test, Set<Map.Entry> durations) {
-        TestResultHistory history = new TestResultHistory(test, durations);
+    public void addAll(String test, Set<TestResultHistory.ExecutionRecord> executionRecords) {
+        TestResultHistory history = new TestResultHistory(test, executionRecords);
         boolean match = false;
         for (TestResultHistory resultHistory: mHistoryCollection) {
             if (resultHistory.getTestName().equals(test)) {
-                resultHistory.getDurations().addAll(durations);
+                resultHistory.getExecutionRecords().addAll(executionRecords);
                 match = true;
                 break;
             }
@@ -63,10 +65,12 @@ public class TestResultHistoryCollection implements Serializable {
      * @param resultHistoryCollection a set of test result histories.
      */
     public void merge(String prefix, TestResultHistoryCollection resultHistoryCollection) {
-       if (resultHistoryCollection != null) {
+        if (resultHistoryCollection != null) {
             resultHistoryCollection.asSet().forEach(t-> addAll(
-                prefix != null ? prefix + ":" + t.getTestName() : t.getTestName(), t.getDurations()));
-       }
+                prefix != null
+                        ? prefix + ":" + t.getTestName()
+                        : t.getTestName(), t.getExecutionRecords()));
+        }
     }
 
     /**
