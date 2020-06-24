@@ -17,6 +17,7 @@
 package android.cts.install;
 
 import static com.android.cts.install.lib.InstallUtils.getPackageInfo;
+import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -122,7 +123,7 @@ public final class SamegradeTest {
 
     @Test
     public void action_systemApex_phase() throws Exception {
-        final PackageInfo shim = getPackageInfo(TestApp.Apex);
+        final PackageInfo shim = getPackageInfo(SHIM_APEX_PACKAGE_NAME);
         assertThat(shim).isNotNull();
         assertThat(shim.getLongVersionCode())
                 .isEqualTo(VERSION_CODE_SAMEGRADE_SYSTEM);
@@ -140,7 +141,7 @@ public final class SamegradeTest {
         final int INSTALLED_ON_DATA_PART = 0;
         assertThat(mSessionRule.retrieveSessionInfo().isStagedSessionApplied()).isTrue();
 
-        final PackageInfo shim = getPackageInfo(TestApp.Apex);
+        final PackageInfo shim = getPackageInfo(SHIM_APEX_PACKAGE_NAME);
         assertThat(shim).isNotNull();
         assertThat(shim.getLongVersionCode())
                 .isEqualTo(VERSION_CODE_SAMEGRADE_SYSTEM);
