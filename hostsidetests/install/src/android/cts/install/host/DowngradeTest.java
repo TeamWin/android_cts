@@ -53,6 +53,7 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
     private static final String ARRANGE_PHASE = "arrange_phase";
     private static final String ASSERT_POST_ARRANGE_PHASE = "assert_postArrange_phase";
     private static final String ACTION_PHASE = "action_phase";
+    private static final String ACTION_DOWNGRADE_FAIL_PHASE = "action_downgradeFail_phase";
     private static final String ASSERT_DOWNGRADE_SUCCESS_PHASE = "assert_downgradeSuccess_phase";
     private static final String ASSERT_DOWNGRADE_FAIL_PHASE = "assert_downgradeFail_phase";
     private static final String ASSERT_POST_REBOOT_PHASE = "assert_postReboot_phase";
@@ -141,7 +142,7 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
         getDevice().reboot();
         runStagedPhase(ASSERT_POST_ARRANGE_PHASE);
 
-        runStagedPhase(ACTION_PHASE);
+        runStagedPhase(ACTION_DOWNGRADE_FAIL_PHASE);
 
         runStagedPhase(ASSERT_DOWNGRADE_FAIL_PHASE);
     }
