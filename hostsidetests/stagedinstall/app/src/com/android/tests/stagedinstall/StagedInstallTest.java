@@ -63,12 +63,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -1200,20 +1200,14 @@ public class StagedInstallTest {
 
     private static StageSessionResult stageSingleApk(String apkFileName, String outputFileName)
             throws Exception {
-        Log.i(TAG, "Staging an install of " + apkFileName);
-        // this is a trick to open an empty install session so we can manually write the package
-        // using writeApk
-        TestApp empty = new TestApp(null, null, -1,
-                apkFileName.endsWith(".apex"));
-        int sessionId = Install.single(empty).setStaged().createSession();
-        try (PackageInstaller.Session session =
-                     InstallUtils.openPackageInstallerSession(sessionId)) {
-            writeApk(session, apkFileName, outputFileName);
-            // Commit the session (this will start the installation workflow).
-            Log.i(TAG, "Committing session for apk: " + apkFileName);
-            Intent result = commitSession(sessionId);
-            return new StageSessionResult(sessionId, result);
+        File tmpFile = File.createTempFile(outputFileName, null);
+        try (InputStream is =
+                     StagedInstallTest.class.getClassLoader().getResourceAsStream(apkFileName)) {
+            Files.copy(is, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
+        TestApp testApp = new TestApp(tmpFile.getName(), null, -1,
+                apkFileName.endsWith(".apex"), tmpFile);
+        return stageSingleApk(testApp);
     }
 
     private static StageSessionResult stageSingleApk(TestApp testApp) throws Exception {
@@ -1301,20 +1295,6 @@ public class StagedInstallTest {
                 result.add(Integer.parseInt(sessionIdStr));
             }
             return result;
-        }
-    }
-
-    private static void writeApk(PackageInstaller.Session session, String apkFileName,
-            String outputFileName)
-            throws Exception {
-        try (OutputStream packageInSession = session.openWrite(outputFileName, 0, -1);
-             InputStream is =
-                     StagedInstallTest.class.getClassLoader().getResourceAsStream(apkFileName)) {
-            byte[] buffer = new byte[4096];
-            int n;
-            while ((n = is.read(buffer)) >= 0) {
-                packageInSession.write(buffer, 0, n);
-            }
         }
     }
 
