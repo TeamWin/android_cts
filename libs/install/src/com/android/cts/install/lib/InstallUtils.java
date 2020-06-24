@@ -17,6 +17,7 @@
 package com.android.cts.install.lib;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
 
@@ -43,6 +44,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utilities to facilitate installation in tests.
@@ -92,10 +94,9 @@ public class InstallUtils {
     }
 
     /**
-     * Waits for the given session to be marked as ready.
-     * Throws an assertion if the session fails.
+     * Waits for the given session to be marked as ready or failed and returns it.
      */
-    public static void waitForSessionReady(int sessionId) {
+    public static PackageInstaller.SessionInfo waitForSession(int sessionId) {
         BlockingQueue<PackageInstaller.SessionInfo> sessionStatus = new LinkedBlockingQueue<>();
         BroadcastReceiver sessionUpdatedReceiver = new BroadcastReceiver() {
             @Override
@@ -126,14 +127,26 @@ public class InstallUtils {
             if (info.isStagedSessionReady() || info.isStagedSessionFailed()) {
                 sessionStatus.put(info);
             }
-
-            info = sessionStatus.take();
+            info = sessionStatus.poll(60, TimeUnit.SECONDS);
             context.unregisterReceiver(sessionUpdatedReceiver);
-            if (info.isStagedSessionFailed()) {
-                throw new AssertionError(info.getStagedSessionErrorMessage());
-            }
+            assertWithMessage("Timed out while waiting for session to get ready/failed")
+                    .that(info).isNotNull();
+            assertThat(info.getSessionId()).isEqualTo(sessionId);
+            return info;
         } catch (InterruptedException e) {
             throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * Waits for the given session to be marked as ready.
+     * Throws an assertion if the session fails.
+     */
+    public static void waitForSessionReady(int sessionId) {
+        PackageInstaller.SessionInfo info = waitForSession(sessionId);
+        // TODO: migrate to PackageInstallerSessionInfoSubject
+        if (info.isStagedSessionFailed()) {
+            throw new AssertionError(info.getStagedSessionErrorMessage());
         }
     }
 

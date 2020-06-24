@@ -1357,32 +1357,18 @@ public class StagedInstallTest {
 
     private void waitForIsFailedBroadcast(int sessionId) {
         Log.i(TAG, "Waiting for session " + sessionId + " to be marked as failed");
-        try {
-
-            PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
-            assertThat(info).isStagedSessionFailed();
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
+        PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
+        assertThat(info).isStagedSessionFailed();
     }
 
     private void waitForIsReadyBroadcast(int sessionId) {
         Log.i(TAG, "Waiting for session " + sessionId + " to be ready");
-        try {
-            PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
-            assertThat(info).isStagedSessionReady();
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
+        PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
+        assertThat(info).isStagedSessionReady();
     }
 
-    private PackageInstaller.SessionInfo waitForBroadcast(int sessionId) throws Exception {
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertWithMessage("Timed out while waiting for session to get ready")
-                .that(info).isNotNull();
-        assertThat(info.getSessionId()).isEqualTo(sessionId);
-        return info;
+    private PackageInstaller.SessionInfo waitForBroadcast(int sessionId) {
+        return InstallUtils.waitForSession(sessionId);
     }
 
     private void assertNoSessionCommitBroadcastSent() throws Exception {
