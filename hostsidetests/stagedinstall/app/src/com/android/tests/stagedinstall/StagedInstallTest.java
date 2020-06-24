@@ -16,6 +16,8 @@
 
 package com.android.tests.stagedinstall;
 
+import static com.android.cts.install.lib.InstallUtils.assertStatusSuccess;
+import static com.android.cts.install.lib.InstallUtils.getInstalledVersion;
 import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
 import static com.android.cts.shim.lib.ShimPackage.DIFFERENT_APEX_PACKAGE_NAME;
 import static com.android.cts.shim.lib.ShimPackage.NOT_PRE_INSTALL_APEX_PACKAGE_NAME;
@@ -835,7 +837,7 @@ public class StagedInstallTest {
 
     @Test
     public void testUpdateWithDifferentKey_VerifyPostReboot() throws Exception {
-        assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
     }
 
     // Once updated with a new rotated key (bob), further updates with old key (alice) should fail
@@ -863,7 +865,7 @@ public class StagedInstallTest {
 
     @Test
     public void testTrustedOldKeyIsAccepted_VerifyPostReboot() throws Exception {
-        assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
     }
 
     // Once updated with a new rotated key (bob), further updates with new key (bob) should pass
@@ -876,7 +878,7 @@ public class StagedInstallTest {
 
     @Test
     public void testAfterRotationNewKeyCanUpdateFurther_VerifyPostReboot() throws Exception {
-        assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
     }
 
     // Once updated with a new rotated key (bob), further updates can be done with key only
@@ -1174,17 +1176,6 @@ public class StagedInstallTest {
                 .contains("AVB footer verification failed");
     }
 
-    private static long getInstalledVersion(String packageName) {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        PackageManager pm = context.getPackageManager();
-        try {
-            PackageInfo info = pm.getPackageInfo(packageName, PackageManager.MATCH_APEX);
-            return info.getLongVersionCode();
-        } catch (PackageManager.NameNotFoundException e) {
-            return -1;
-        }
-    }
-
     // It becomes harder to maintain this variety of install-related helper methods.
     // TODO(ioffe): refactor install-related helper methods into a separate utility.
     private static int createStagedSession() throws Exception {
@@ -1382,17 +1373,6 @@ public class StagedInstallTest {
 
     private static PackageInstaller.SessionInfo getSessionInfo(int sessionId) {
         return getPackageInstaller().getSessionInfo(sessionId);
-    }
-
-    private static void assertStatusSuccess(Intent result) {
-        int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
-                PackageInstaller.STATUS_FAILURE);
-        if (status == -1) {
-            throw new AssertionError("PENDING USER ACTION");
-        } else if (status > 0) {
-            String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-            throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
-        }
     }
 
     private void waitForIsFailedBroadcast(int sessionId) {
