@@ -16,6 +16,10 @@
 
 package com.android.cts.usepermission;
 
+import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE;
+import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
+import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
+
 import static junit.framework.Assert.assertEquals;
 
 import static org.junit.Assert.assertNotNull;
@@ -27,11 +31,13 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.icu.text.CaseMap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -76,6 +82,7 @@ public abstract class BasePermissionsTest {
     private static Map<String, String> sPermissionToLabelResNameMap = new ArrayMap<>();
 
     private Context mContext;
+    private Resources mPermissionControllerResources;
     private Resources mPlatformResources;
     private boolean mWatch;
 
@@ -250,13 +257,21 @@ public abstract class BasePermissionsTest {
     }
 
     @Before
-    public void beforeTest() {
+    public void beforeTest() throws PackageManager.NameNotFoundException {
         mContext = InstrumentationRegistry.getTargetContext();
         try {
             Context platformContext = mContext.createPackageContext(PLATFORM_PACKAGE_NAME, 0);
             mPlatformResources = platformContext.getResources();
+
         } catch (PackageManager.NameNotFoundException e) {
             /* cannot happen */
+        }
+
+        if (isAutomotive()) {
+            Context permissionControllerContext = mContext.createPackageContext(
+                    getPermissionControllerPackageName(), 0);
+            mPermissionControllerResources = permissionControllerContext.getResources();
+            assertNotNull(mPermissionControllerResources);
         }
 
         PackageManager packageManager = mContext.getPackageManager();
@@ -266,6 +281,27 @@ public abstract class BasePermissionsTest {
         UiObject2 button = getUiDevice().findObject(By.text("Close"));
         if (button != null) {
             button.click();
+        }
+    }
+
+    private String getPermissionControllerPackageName() {
+        final Intent intent = new Intent("android.intent.action.MANAGE_PERMISSIONS");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+
+        PackageManager packageManager = mContext.getPackageManager();
+
+        final List<ResolveInfo> matches = packageManager.queryIntentActivities(intent,
+                MATCH_SYSTEM_ONLY | MATCH_DIRECT_BOOT_AWARE | MATCH_DIRECT_BOOT_UNAWARE);
+
+        if (matches.size() == 1) {
+            ResolveInfo resolveInfo = matches.get(0);
+            if (!resolveInfo.activityInfo.applicationInfo.isPrivilegedApp()) {
+                throw new RuntimeException("The permissions manager must be a privileged app");
+            }
+            return matches.get(0).activityInfo.packageName;
+        } else {
+            throw new RuntimeException("There must be exactly one permissions manager; found "
+                    + matches);
         }
     }
 
@@ -298,38 +334,60 @@ public abstract class BasePermissionsTest {
     protected void clickAllowButton() throws Exception {
         scrollToBottomIfWatch();
         waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
+        if (isAutomotive()) {
+            clickStringRes("grant_dialog_button_allow");
+        } else {
+            getUiDevice().wait(Until.findObject(By.res(
                 "com.android.permissioncontroller:id/permission_allow_button")),
                 GLOBAL_TIMEOUT_MILLIS).click();
+        }
     }
 
     protected void clickAllowAlwaysButton() throws Exception {
         waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_allow_always_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        if (isAutomotive()) {
+            clickStringRes("grant_dialog_button_allow_always");
+        } else {
+            getUiDevice().wait(Until.findObject(By.res(
+                    "com.android.permissioncontroller:id/permission_allow_always_button")),
+                    GLOBAL_TIMEOUT_MILLIS).click();
+        }
     }
 
     protected void clickAllowForegroundButton() throws Exception {
         waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_allow_foreground_only_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        if (isAutomotive()) {
+            clickStringRes("grant_dialog_button_allow_foreground");
+        } else {
+            getUiDevice().wait(Until.findObject(By.res(
+                    "com.android.permissioncontroller:id/permission_allow_foreground_only_button")),
+                    GLOBAL_TIMEOUT_MILLIS).click();
+        }
     }
 
     protected void clickDenyButton() throws Exception {
         scrollToBottomIfWatch();
         waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_deny_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        if (isAutomotive()) {
+            clickStringRes("grant_dialog_button_deny");
+            // or "Keep while-in-use access", but that's untested
+        } else {
+            getUiDevice().wait(Until.findObject(By.res(
+                    "com.android.permissioncontroller:id/permission_deny_button")),
+                    GLOBAL_TIMEOUT_MILLIS).click();
+        }
     }
 
     protected void clickDenyAndDontAskAgainButton() throws Exception {
         waitForIdle();
-        getUiDevice().wait(Until.findObject(By.res(
-                "com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button")),
-                GLOBAL_TIMEOUT_MILLIS).click();
+        if (isAutomotive()) {
+            clickStringRes("grant_dialog_button_deny_and_dont_ask_again");
+            // or "Keep and don't ask again", but that's untested
+        } else {
+            getUiDevice().wait(Until.findObject(By.res(
+                    "com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button")),
+                    GLOBAL_TIMEOUT_MILLIS).click();
+        }
     }
 
     protected void clickDontAskAgainButton() throws Exception {
@@ -337,6 +395,14 @@ public abstract class BasePermissionsTest {
         waitForIdle();
         getUiDevice().wait(Until.findObject(By.res(
                 "com.android.permissioncontroller:id/permission_deny_dont_ask_again_button")),
+                GLOBAL_TIMEOUT_MILLIS).click();
+    }
+
+    private void clickStringRes(String res) throws TimeoutException, UiObjectNotFoundException {
+        String s = mPermissionControllerResources.getString(mPermissionControllerResources
+                .getIdentifier(res, "string", "com.android.permissioncontroller"));
+        waitForIdle();
+        getUiDevice().wait(Until.findObject(By.text(s)),
                 GLOBAL_TIMEOUT_MILLIS).click();
     }
 
@@ -687,5 +753,10 @@ public abstract class BasePermissionsTest {
     private static boolean isTv() {
         return getInstrumentation().getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    protected static boolean isAutomotive() {
+        return getInstrumentation().getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
  }
