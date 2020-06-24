@@ -20,6 +20,7 @@ java_test_host {
 
     libs: [
         "cts-tradefed",
+        "cts-shim-host-lib",
         "tradefed",
         "truth-prebuilt",
         "hamcrest",

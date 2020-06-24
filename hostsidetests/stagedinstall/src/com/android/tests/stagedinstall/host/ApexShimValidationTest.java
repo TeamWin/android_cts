@@ -16,6 +16,10 @@
 
 package com.android.tests.stagedinstall.host;
 
+import static com.android.cts.shim.lib.ShimPackage.PRIVILEGED_SHIM_PACKAGE_NAME;
+import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
+import static com.android.cts.shim.lib.ShimPackage.SHIM_PACKAGE_NAME;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -63,7 +67,6 @@ import java.util.zip.ZipFile;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class ApexShimValidationTest extends BaseHostJUnit4Test {
 
-    private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
     private static final String SHIM_APK_CODE_PATH_PREFIX = "/apex/" + SHIM_APEX_PACKAGE_NAME + "/";
     private static final String STAGED_INSTALL_TEST_FILE_NAME = "StagedInstallTest.apk";
     private static final String APEX_FILE_SUFFIX = ".apex";
@@ -75,7 +78,7 @@ public class ApexShimValidationTest extends BaseHostJUnit4Test {
     private static final long DEFAULT_RUN_TIMEOUT_MS = 30 * 1000L;
 
     private static final List<String> ALLOWED_SHIM_PACKAGE_NAMES = Arrays.asList(
-            "com.android.cts.ctsshim", "com.android.cts.priv.ctsshim");
+            SHIM_PACKAGE_NAME, PRIVILEGED_SHIM_PACKAGE_NAME);
 
     private File mDeapexingDir;
     private File mDeapexerZip;

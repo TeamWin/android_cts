@@ -16,6 +16,7 @@
 
 package com.android.tests.stagedinstall;
 
+import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
 import static com.android.tests.stagedinstall.PackageInstallerSessionInfoSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -47,8 +48,6 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(JUnit4.class)
 public class ApexShimValidationTest {
-
-    private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
     @Before
     public void adoptShellPermissions() {
