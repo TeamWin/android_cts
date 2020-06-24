@@ -440,8 +440,8 @@ public class ReaderAuthTest {
         byte[] sessionTranscriptBytes = Util.buildSessionTranscript(ephemeralKeyPair);
 
         // Finally, create the structure that the reader signs, and sign it.
-        byte[] dataToBeSignedByReader = Util.buildReaderAuthenticationCbor(sessionTranscriptBytes,
-                requestMessage);
+        byte[] dataToBeSignedByReader =
+                Util.buildReaderAuthenticationBytesCbor(sessionTranscriptBytes, requestMessage);
         byte[] readerSignature = Util.coseSign1Sign(readerKeyToSignWith.getPrivate(),
                 null, // payload
                 dataToBeSignedByReader, // detached content

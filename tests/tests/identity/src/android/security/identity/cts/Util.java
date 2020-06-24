@@ -922,11 +922,11 @@ Certificate:
     }
 
     static byte[] buildDeviceAuthenticationCbor(String docType,
-            byte[] sessionTranscriptBytes,
+            byte[] encodedSessionTranscript,
             byte[] deviceNameSpacesBytes) {
         ByteArrayOutputStream daBaos = new ByteArrayOutputStream();
         try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(sessionTranscriptBytes);
+            ByteArrayInputStream bais = new ByteArrayInputStream(encodedSessionTranscript);
             List<DataItem> dataItems = null;
             dataItems = new CborDecoder(bais).decode();
             DataItem sessionTranscript = dataItems.get(0);
@@ -946,13 +946,13 @@ Certificate:
         return daBaos.toByteArray();
     }
 
-    static byte[] buildReaderAuthenticationCbor(
-            byte[] sessionTranscriptBytes,
+    static byte[] buildReaderAuthenticationBytesCbor(
+            byte[] encodedSessionTranscript,
             byte[] requestMessageBytes) {
 
         ByteArrayOutputStream daBaos = new ByteArrayOutputStream();
         try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(sessionTranscriptBytes);
+            ByteArrayInputStream bais = new ByteArrayInputStream(encodedSessionTranscript);
             List<DataItem> dataItems = null;
             dataItems = new CborDecoder(bais).decode();
             DataItem sessionTranscript = dataItems.get(0);
@@ -968,22 +968,49 @@ Certificate:
         } catch (CborException e) {
             throw new RuntimeException("Error encoding ReaderAuthentication", e);
         }
-        return daBaos.toByteArray();
+        byte[] readerAuthentication = daBaos.toByteArray();
+        return Util.prependSemanticTagForEncodedCbor(readerAuthentication);
+    }
+
+    static byte[] prependSemanticTagForEncodedCbor(byte[] encodedCbor) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            ByteString taggedBytestring = new ByteString(encodedCbor);
+            taggedBytestring.setTag(CBOR_SEMANTIC_TAG_ENCODED_CBOR);
+            new CborEncoder(baos).encode(taggedBytestring);
+        } catch (CborException e) {
+            throw new RuntimeException("Error encoding with semantic tag for CBOR encoding", e);
+        }
+        return baos.toByteArray();
+    }
+
+    static byte[] concatArrays(byte[] a, byte[] b) {
+        byte[] ret = new byte[a.length + b.length];
+        System.arraycopy(a, 0, ret, 0, a.length);
+        System.arraycopy(b, 0, ret, a.length, b.length);
+        return ret;
     }
 
     static SecretKey calcEMacKeyForReader(PublicKey authenticationPublicKey,
-            PrivateKey ephemeralReaderPrivateKey) {
+            PrivateKey ephemeralReaderPrivateKey,
+            byte[] encodedSessionTranscript) {
         try {
             KeyAgreement ka = KeyAgreement.getInstance("ECDH");
             ka.init(ephemeralReaderPrivateKey);
             ka.doPhase(authenticationPublicKey, true);
             byte[] sharedSecret = ka.generateSecret();
 
+            byte[] sessionTranscriptBytes =
+                    Util.prependSemanticTagForEncodedCbor(encodedSessionTranscript);
+            byte[] sharedSecretWithSessionTranscriptBytes =
+                    Util.concatArrays(sharedSecret, sessionTranscriptBytes);
+
             byte[] salt = new byte[1];
             byte[] info = new byte[0];
 
             salt[0] = 0x00;
-            byte[] derivedKey = Util.computeHkdf("HmacSha256", sharedSecret, salt, info, 32);
+            byte[] derivedKey = Util.computeHkdf("HmacSha256",
+                    sharedSecretWithSessionTranscriptBytes, salt, info, 32);
             SecretKey secretKey = new SecretKeySpec(derivedKey, "");
             return secretKey;
         } catch (InvalidKeyException
