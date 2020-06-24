@@ -27,6 +27,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "vts10",
+        "general-tests",
     ],
     optimize: {
         enabled: false,
