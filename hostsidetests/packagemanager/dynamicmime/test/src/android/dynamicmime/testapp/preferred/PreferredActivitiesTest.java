@@ -55,7 +55,7 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
     private static final BySelector BUTTON_ALWAYS = By.res("android:id/button_always");
     private static final BySelector RESOLVER_DIALOG = By.res("android:id/contentPanel");
 
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30L);
 
     private TestStrategy mTest;
 
@@ -281,7 +281,7 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
 
     private void chooseUseAlways() {
         getUiDevice()
-                .findObject(BUTTON_ALWAYS)
+                .wait(Until.findObject(BUTTON_ALWAYS), TIMEOUT)
                 .click();
     }
 
