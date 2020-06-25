@@ -496,6 +496,12 @@ public class AvailableIntentsTest extends AndroidTestCase {
 
     @CddTest(requirement = "7.4.2.6/C-1-1")
     public void testEasyConnectIntent() {
+        // Android only supports Initiator-... modes right now, which require the device to
+        // have a QR-code capture mechanism. Therefore this feature does not make sense on
+        // non-handheld devices.
+        if (!isHandheld()) {
+            return;
+        }
         WifiManager manager = mContext.getSystemService(WifiManager.class);
 
         if (manager.isEasyConnectSupported()) {
@@ -529,6 +535,11 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testVoiceInputSettingsIntent() {
+        // Non-handheld devices do not allow more than one VoiceInteractionService, and therefore do
+        // not have to support this Intent.
+        if (!isHandheld()) {
+            return;
+        }
         Intent intent = new Intent(Settings.ACTION_VOICE_INPUT_SETTINGS);
         assertCanBeHandled(intent);
     }
