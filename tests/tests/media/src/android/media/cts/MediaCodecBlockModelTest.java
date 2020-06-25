@@ -59,6 +59,7 @@ import java.util.function.BooleanSupplier;
 /**
  * MediaCodec tests with CONFIGURE_FLAG_USE_BLOCK_MODEL.
  */
+@NonMediaMainlineTest
 public class MediaCodecBlockModelTest extends AndroidTestCase {
     private static final String TAG = "MediaCodecBlockModelTest";
     private static final boolean VERBOSE = false;           // lots of logging
