@@ -1006,19 +1006,4 @@ public class MockImeSession implements AutoCloseable {
     public ImeCommand callSetInlineSuggestionsExtras(@NonNull Bundle bundle) {
         return callCommandInternal("setInlineSuggestionsExtras", bundle);
     }
-
-    @NonNull
-    public ImeCommand callVerifyGetDisplay() {
-        return callCommandInternal("verifyGetDisplay", new Bundle());
-    }
-
-    @NonNull
-    public ImeCommand callVerifyGetWindowManager() {
-        return callCommandInternal("verifyGetWindowManager", new Bundle());
-    }
-
-    @NonNull
-    public ImeCommand callVerifyGetViewConfiguration() {
-        return callCommandInternal("verifyGetViewConfiguration", new Bundle());
-    }
 }
