@@ -20,6 +20,7 @@ import static com.android.cts.permissiondeclareapp.UtilsProvider.ACTION_CLEAR_PR
 import static com.android.cts.permissiondeclareapp.UtilsProvider.ACTION_GRANT_URI;
 import static com.android.cts.permissiondeclareapp.UtilsProvider.ACTION_REVOKE_URI;
 import static com.android.cts.permissiondeclareapp.UtilsProvider.ACTION_SET_PRIMARY_CLIP;
+import static com.android.cts.permissiondeclareapp.UtilsProvider.ACTION_START_ACTIVITIES;
 import static com.android.cts.permissiondeclareapp.UtilsProvider.ACTION_START_ACTIVITY;
 import static com.android.cts.permissiondeclareapp.UtilsProvider.ACTION_START_SERVICE;
 import static com.android.cts.permissiondeclareapp.UtilsProvider.ACTION_VERIFY_OUTGOING_PERSISTED;
@@ -38,6 +39,8 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.cts.permissiondeclareapp.UtilsProvider;
 
+import java.util.Objects;
+
 public class Utils {
     private static Context getContext() {
         return InstrumentationRegistry.getTargetContext();
@@ -49,7 +52,19 @@ public class Utils {
         getContext().getContentResolver().call(UtilsProvider.URI, "", "", extras);
     }
 
-    static void grantClipUriPermission(ClipData clip, int mode, boolean service) {
+    static void grantClipUriPermissionViaActivity(ClipData clip, int mode) {
+        grantClipUriPermission(clip, mode, ACTION_START_ACTIVITY);
+    }
+
+    static void grantClipUriPermissionViaActivities(ClipData clip, int mode) {
+        grantClipUriPermission(clip, mode, ACTION_START_ACTIVITIES);
+    }
+
+    static void grantClipUriPermissionViaService(ClipData clip, int mode) {
+        grantClipUriPermission(clip, mode, ACTION_START_SERVICE);
+    }
+
+    private static void grantClipUriPermission(ClipData clip, int mode, String action) {
         Intent grantIntent = new Intent();
         if (clip.getItemCount() == 1) {
             grantIntent.setData(clip.getItemAt(0).getUri());
@@ -65,9 +80,10 @@ public class Utils {
         }
         grantIntent.addFlags(mode);
         grantIntent.setClass(getContext(),
-                service ? ReceiveUriService.class : ReceiveUriActivity.class);
+                Objects.equals(ACTION_START_SERVICE, action) ? ReceiveUriService.class
+                        : ReceiveUriActivity.class);
         Intent intent = new Intent();
-        intent.setAction(service ? ACTION_START_SERVICE : ACTION_START_ACTIVITY);
+        intent.setAction(action);
         intent.putExtra(EXTRA_INTENT, grantIntent);
         call(intent);
     }

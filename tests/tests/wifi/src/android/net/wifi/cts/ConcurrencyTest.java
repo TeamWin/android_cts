@@ -127,6 +127,8 @@ public class ConcurrencyTest extends AndroidTestCase {
                     mMySync.pendingSync.set(MySync.NETWORK_INFO);
                     mMySync.expectedNetworkInfo = (NetworkInfo) intent.getExtra(
                             WifiP2pManager.EXTRA_NETWORK_INFO, null);
+                    Log.d(TAG, "Get WIFI_P2P_CONNECTION_CHANGED_ACTION: "
+                            + mMySync.expectedNetworkInfo);
                     mMySync.notify();
                 }
             }
@@ -520,6 +522,10 @@ public class ConcurrencyTest extends AndroidTestCase {
         mWifiP2pManager.removeGroup(mWifiP2pChannel, mActionListener);
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
+        assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
+        assertNotNull(mMySync.expectedNetworkInfo);
+        assertEquals(NetworkInfo.DetailedState.DISCONNECTED,
+                mMySync.expectedNetworkInfo.getDetailedState());
     }
 
     private String getDeviceName() {
@@ -604,6 +610,10 @@ public class ConcurrencyTest extends AndroidTestCase {
         mWifiP2pManager.removeGroup(mWifiP2pChannel, mActionListener);
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
+        assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
+        assertNotNull(mMySync.expectedNetworkInfo);
+        assertEquals(NetworkInfo.DetailedState.DISCONNECTED,
+                mMySync.expectedNetworkInfo.getDetailedState());
 
         WifiP2pGroupList persistentGroups = getPersistentGroups();
         assertNotNull(persistentGroups);
@@ -636,6 +646,10 @@ public class ConcurrencyTest extends AndroidTestCase {
         mWifiP2pManager.removeGroup(mWifiP2pChannel, mActionListener);
         assertTrue(waitForServiceResponse(mMyResponse));
         assertTrue(mMyResponse.success);
+        assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
+        assertNotNull(mMySync.expectedNetworkInfo);
+        assertEquals(NetworkInfo.DetailedState.DISCONNECTED,
+                mMySync.expectedNetworkInfo.getDetailedState());
 
         resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {

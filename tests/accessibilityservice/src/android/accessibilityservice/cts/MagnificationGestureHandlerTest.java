@@ -51,6 +51,7 @@ import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
+import android.view.ViewConfiguration;
 import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
@@ -105,7 +106,6 @@ public class MagnificationGestureHandlerTest {
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-
         PackageManager pm = mInstrumentation.getContext().getPackageManager();
         mHasTouchscreen = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
                 || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
@@ -179,7 +179,11 @@ public class MagnificationGestureHandlerTest {
 
     @Test
     public void testPanning() {
-        if (!mHasTouchscreen) return;
+        //The minimum movement to transit to panningState.
+        final float minSwipeDistance = ViewConfiguration.get(
+                mInstrumentation.getContext()).getScaledTouchSlop();
+        final boolean screenBigEnough = mPan > minSwipeDistance;
+        if (!mHasTouchscreen || !screenBigEnough) return;
         assertFalse(isZoomed());
 
         setZoomByTripleTapping(true);
@@ -190,7 +194,8 @@ public class MagnificationGestureHandlerTest {
                 swipe(mTapLocation2, add(mTapLocation2, -mPan, 0)));
 
         waitOn(mZoomLock,
-                () -> (mCurrentZoomCenter.x - oldCenter.x >= mPan / mCurrentScale * 0.9));
+                () -> (mCurrentZoomCenter.x - oldCenter.x
+                        >= (mPan - minSwipeDistance) / mCurrentScale * 0.9));
 
         setZoomByTripleTapping(false);
     }
