@@ -32,6 +32,7 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -64,6 +65,9 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     private static final long USER_SWITCH_WAIT = TimeUnit.SECONDS.toMillis(10);
 
     private boolean mSupportsMultiUser;
+
+    @Rule
+    public NormalizeScreenStateRule mNoDozeRule = new NormalizeScreenStateRule(this);
 
     @Before
     public void setUp() throws Exception {
