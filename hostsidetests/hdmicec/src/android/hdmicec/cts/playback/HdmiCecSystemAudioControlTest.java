@@ -108,7 +108,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         hdmiCecClient.sendCecMessage(LogicalAddress.AUDIO_SYSTEM, LogicalAddress.BROADCAST,
                 CecOperand.SET_SYSTEM_AUDIO_MODE, CecMessage.formatParams(1));
-        device.executeShellCommand("input keyevent KEYCODE_MUTE");
+        device.executeShellCommand("input keyevent KEYCODE_VOLUME_MUTE");
         String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.AUDIO_SYSTEM,
                 CecOperand.USER_CONTROL_PRESSED);
         assertThat(CecMessage.getParams(message)).isEqualTo(HdmiCecConstants.CEC_CONTROL_MUTE);
