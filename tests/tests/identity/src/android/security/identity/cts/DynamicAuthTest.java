@@ -268,10 +268,13 @@ public class DynamicAuthTest {
         // Calculate the MAC by deriving the key using ECDH and HKDF.
         SecretKey eMacKey = Util.calcEMacKeyForReader(
             key0Cert.getPublicKey(),
-            readerEphemeralKeyPair.getPrivate());
+            readerEphemeralKeyPair.getPrivate(),
+            sessionTranscript);
+        byte[] deviceAuthenticationBytes =
+                Util.prependSemanticTagForEncodedCbor(deviceAuthenticationCbor);
         byte[] expectedMac = Util.coseMac0(eMacKey,
-                new byte[0],                // payload
-                deviceAuthenticationCbor);  // additionalData
+                new byte[0],                 // payload
+                deviceAuthenticationBytes);  // detached content
 
         // Then compare it with what the TA produced.
         assertArrayEquals(expectedMac, rd.getMessageAuthenticationCode());
@@ -304,10 +307,13 @@ public class DynamicAuthTest {
             resultCbor);
         eMacKey = Util.calcEMacKeyForReader(
             key4Cert.getPublicKey(),
-            readerEphemeralKeyPair.getPrivate());
+            readerEphemeralKeyPair.getPrivate(),
+            sessionTranscript);
+        deviceAuthenticationBytes =
+                Util.prependSemanticTagForEncodedCbor(deviceAuthenticationCbor);
         expectedMac = Util.coseMac0(eMacKey,
-                new byte[0],                // payload
-                deviceAuthenticationCbor);  // additionalData
+                new byte[0],                 // payload
+                deviceAuthenticationBytes);  // detached content
         assertArrayEquals(expectedMac, rd.getMessageAuthenticationCode());
 
         // And again.... this time key0 should have been used. Check it.
@@ -436,10 +442,13 @@ public class DynamicAuthTest {
             resultCbor);
         eMacKey = Util.calcEMacKeyForReader(
             keyNewCert.getPublicKey(),
-            readerEphemeralKeyPair.getPrivate());
+            readerEphemeralKeyPair.getPrivate(),
+            sessionTranscript);
+        deviceAuthenticationBytes =
+                Util.prependSemanticTagForEncodedCbor(deviceAuthenticationCbor);
         expectedMac = Util.coseMac0(eMacKey,
-                new byte[0],                // payload
-                deviceAuthenticationCbor);  // additionalData
+                new byte[0],                 // payload
+                deviceAuthenticationBytes);  // detached content
         assertArrayEquals(expectedMac, rd.getMessageAuthenticationCode());
 
         // ... and we're done. Clean up after ourselves.
