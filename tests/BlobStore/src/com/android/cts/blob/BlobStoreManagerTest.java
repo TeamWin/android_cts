@@ -133,6 +133,7 @@ public class BlobStoreManagerTest {
     public void tearDown() throws Exception {
         runShellCmd("cmd blob_store clear-all-sessions");
         runShellCmd("cmd blob_store clear-all-blobs");
+        mContext.getFilesDir().delete();
     }
 
     @Test
@@ -938,11 +939,30 @@ public class BlobStoreManagerTest {
     }
 
     @Test
-    public void testAcquireRelease_deleteAfterDelay() throws Exception {
+    public void testAcquireLease_leaseExpired() throws Exception {
         final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
+        final long waitDurationMs = TimeUnit.SECONDS.toMillis(2);
+        try {
+            commitBlob(blobData);
+
+            acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                    System.currentTimeMillis() + waitDurationMs);
+            assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+
+            waitForLeaseExpiration(waitDurationMs, blobData.getBlobHandle());
+            assertNoLeasedBlobs(mBlobStoreManager);
+        } finally {
+            blobData.delete();
+        }
+    }
+
+    @Test
+    public void testAcquireRelease_deleteAfterDelay() throws Exception {
         final long waitDurationMs = TimeUnit.SECONDS.toMillis(1);
         runWithKeyValues(() -> {
+            final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+            blobData.prepare();
             try {
                 commitBlob(blobData);
 
@@ -1163,6 +1183,64 @@ public class BlobStoreManagerTest {
     }
 
     @Test
+    public void testStorageAttribution_withExpiredLease() throws Exception {
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+        blobData.prepare();
+
+        final StorageStatsManager storageStatsManager = mContext.getSystemService(
+                StorageStatsManager.class);
+        StorageStats beforeStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        StorageStats beforeStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        commitBlob(blobData);
+
+        StorageStats afterStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        StorageStats afterStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        // No leases on the blob, so it should not be attributed.
+        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
+                .isEqualTo(0L);
+        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
+                .isEqualTo(0L);
+
+        final long leaseExpiryDurationMs = TimeUnit.SECONDS.toMillis(5);
+        acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                System.currentTimeMillis() + leaseExpiryDurationMs);
+
+        final long startTimeMs = System.currentTimeMillis();
+        afterStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        afterStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
+                .isEqualTo(blobData.getFileSize());
+        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
+                .isEqualTo(blobData.getFileSize());
+
+        waitForLeaseExpiration(
+                Math.abs(leaseExpiryDurationMs - (System.currentTimeMillis() - startTimeMs)),
+                blobData.getBlobHandle());
+
+        afterStatsForPkg = storageStatsManager
+                .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(), mContext.getUser());
+        afterStatsForUid = storageStatsManager
+                .queryStatsForUid(UUID_DEFAULT, Process.myUid());
+
+        // Lease is expired, so it should not be attributed anymore.
+        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
+                .isEqualTo(0L);
+        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
+                .isEqualTo(0L);
+
+        blobData.delete();
+    }
+
+    @Test
     public void testLeaseQuotaExceeded() throws Exception {
         final long totalBytes = Environment.getDataDirectory().getTotalSpace();
         final long limitBytes = 100 * Utils.MB_IN_BYTES;
@@ -1218,6 +1296,36 @@ public class BlobStoreManagerTest {
     }
 
     @Test
+    public void testLeaseQuotaExceeded_withExpiredLease() throws Exception {
+        final long totalBytes = Environment.getDataDirectory().getTotalSpace();
+        final long limitBytes = 50 * Utils.MB_IN_BYTES;
+        final long waitDurationMs = TimeUnit.SECONDS.toMillis(2);
+        runWithKeyValues(() -> {
+            final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext)
+                    .setFileSize(40 * Utils.MB_IN_BYTES)
+                    .build();
+            blobData1.prepare();
+            final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext)
+                    .setFileSize(30 * Utils.MB_IN_BYTES)
+                    .build();
+            blobData2.prepare();
+
+            commitBlob(blobData1);
+            commitBlob(blobData2);
+            acquireLease(mContext, blobData1.getBlobHandle(), R.string.test_desc,
+                    System.currentTimeMillis() + waitDurationMs);
+
+            assertThrows(LimitExceededException.class, () -> mBlobStoreManager.acquireLease(
+                    blobData2.getBlobHandle(), R.string.test_desc));
+
+            waitForLeaseExpiration(waitDurationMs, blobData1.getBlobHandle());
+            acquireLease(mContext, blobData2.getBlobHandle(), R.string.test_desc);
+        }, Pair.create(KEY_TOTAL_BYTES_PER_APP_LIMIT_FLOOR, String.valueOf(limitBytes)),
+                Pair.create(KEY_TOTAL_BYTES_PER_APP_LIMIT_FRACTION,
+                        String.valueOf((double) limitBytes / totalBytes)));
+    }
+
+    @Test
     public void testRemainingLeaseQuota() throws Exception {
         final long initialRemainingQuota = mBlobStoreManager.getRemainingLeaseQuotaBytes();
         final long blobSize = 100 * Utils.MB_IN_BYTES;
@@ -1235,6 +1343,31 @@ public class BlobStoreManagerTest {
                 .isEqualTo(initialRemainingQuota - blobSize);
 
         releaseLease(mContext, blobData.getBlobHandle());
+        assertNoLeasedBlobs(mBlobStoreManager);
+
+        assertThat(mBlobStoreManager.getRemainingLeaseQuotaBytes())
+                .isEqualTo(initialRemainingQuota);
+    }
+
+    @Test
+    public void testRemainingLeaseQuota_withExpiredLease() throws Exception {
+        final long initialRemainingQuota = mBlobStoreManager.getRemainingLeaseQuotaBytes();
+        final long blobSize = 100 * Utils.MB_IN_BYTES;
+        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+                .setFileSize(blobSize)
+                .build();
+        blobData.prepare();
+
+        final long waitDurationMs = TimeUnit.SECONDS.toMillis(2);
+        commitBlob(blobData);
+        acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                System.currentTimeMillis() + waitDurationMs);
+        assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+
+        assertThat(mBlobStoreManager.getRemainingLeaseQuotaBytes())
+                .isEqualTo(initialRemainingQuota - blobSize);
+
+        waitForLeaseExpiration(waitDurationMs, blobData.getBlobHandle());
         assertNoLeasedBlobs(mBlobStoreManager);
 
         assertThat(mBlobStoreManager.getRemainingLeaseQuotaBytes())
@@ -1293,6 +1426,40 @@ public class BlobStoreManagerTest {
     }
 
     @Test
+    public void testAccessBlob_withExpiredLease() throws Exception {
+        final long leaseExpiryDurationMs = TimeUnit.SECONDS.toMillis(2);
+        final long leaseAcquisitionWaitDurationMs = TimeUnit.SECONDS.toMillis(1);
+        runWithKeyValues(() -> {
+            final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+            blobData.prepare();
+            try {
+                final long blobId = commitBlob(blobData);
+                assertThat(runShellCmd("cmd blob_store query-blob-existence -b " + blobId))
+                        .isEqualTo("1");
+
+                acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
+                        System.currentTimeMillis() + leaseExpiryDurationMs);
+                assertLeasedBlobs(mBlobStoreManager, blobData.getBlobHandle());
+
+                waitForLeaseExpiration(leaseExpiryDurationMs, blobData.getBlobHandle());
+                assertNoLeasedBlobs(mBlobStoreManager);
+
+                triggerIdleMaintenance();
+                assertThat(runShellCmd("cmd blob_store query-blob-existence -b " + blobId))
+                        .isEqualTo("0");
+
+                assertThrows(SecurityException.class, () -> mBlobStoreManager.acquireLease(
+                        blobData.getBlobHandle(), R.string.test_desc,
+                        blobData.getExpiryTimeMillis()));
+                assertNoLeasedBlobs(mBlobStoreManager);
+            } finally {
+                blobData.delete();
+            }
+        }, Pair.create(KEY_LEASE_ACQUISITION_WAIT_DURATION_MS,
+                String.valueOf(leaseAcquisitionWaitDurationMs)));
+    }
+
+    @Test
     public void testCommitBlobAfterIdleMaintenance() throws Exception {
         final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
         blobData.prepare();
@@ -1322,10 +1489,11 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testExpiredSessionsDeleted() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
-        blobData.prepare();
         final long waitDurationMs = TimeUnit.SECONDS.toMillis(2);
         runWithKeyValues(() -> {
+            final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+            blobData.prepare();
+
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
@@ -1340,10 +1508,11 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testExpiredSessionsDeleted_withPartialData() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
-        blobData.prepare();
         final long waitDurationMs = TimeUnit.SECONDS.toMillis(2);
         runWithKeyValues(() -> {
+            final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+            blobData.prepare();
+
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
 
@@ -1362,11 +1531,12 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testCreateSession_countLimitExceeded() throws Exception {
-        final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
-        blobData1.prepare();
-        final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
-        blobData2.prepare();
         runWithKeyValues(() -> {
+            final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
+            blobData1.prepare();
+            final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
+            blobData2.prepare();
+
             mBlobStoreManager.createSession(blobData1.getBlobHandle());
             assertThrows(LimitExceededException.class,
                     () -> mBlobStoreManager.createSession(blobData2.getBlobHandle()));
@@ -1375,11 +1545,12 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testCommitSession_countLimitExceeded() throws Exception {
-        final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
-        blobData1.prepare();
-        final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
-        blobData2.prepare();
         runWithKeyValues(() -> {
+            final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
+            blobData1.prepare();
+            final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
+            blobData2.prepare();
+
             commitBlob(blobData1, null /* accessModifier */, 0 /* expectedResult */);
             commitBlob(blobData2, null /* accessModifier */, 1 /* expectedResult */);
         }, Pair.create(KEY_MAX_COMMITTED_BLOBS, String.valueOf(1)));
@@ -1387,11 +1558,12 @@ public class BlobStoreManagerTest {
 
     @Test
     public void testLeaseBlob_countLimitExceeded() throws Exception {
-        final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
-        blobData1.prepare();
-        final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
-        blobData2.prepare();
         runWithKeyValues(() -> {
+            final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
+            blobData1.prepare();
+            final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
+            blobData2.prepare();
+
             commitBlob(blobData1);
             commitBlob(blobData2);
 
@@ -1402,10 +1574,41 @@ public class BlobStoreManagerTest {
     }
 
     @Test
-    public void testAllowPackageAccess_countLimitExceeded() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
-        blobData.prepare();
+    public void testExpiredLease_countLimitExceeded() throws Exception {
         runWithKeyValues(() -> {
+            final DummyBlobData blobData1 = new DummyBlobData.Builder(mContext).build();
+            blobData1.prepare();
+            final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
+            blobData2.prepare();
+            final DummyBlobData blobData3 = new DummyBlobData.Builder(mContext).build();
+            blobData3.prepare();
+            final long waitDurationMs = TimeUnit.SECONDS.toMillis(2);
+
+            commitBlob(blobData1);
+            commitBlob(blobData2);
+            commitBlob(blobData3);
+
+            acquireLease(mContext, blobData1.getBlobHandle(), "test desc1",
+                    System.currentTimeMillis() + waitDurationMs);
+            assertThrows(LimitExceededException.class,
+                    () -> acquireLease(mContext, blobData2.getBlobHandle(), "test desc2",
+                            System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4)));
+
+            waitForLeaseExpiration(waitDurationMs, blobData1.getBlobHandle());
+
+            acquireLease(mContext, blobData2.getBlobHandle(), "test desc2",
+                    System.currentTimeMillis() + TimeUnit.HOURS.toMillis(4));
+            assertThrows(LimitExceededException.class,
+                    () -> acquireLease(mContext, blobData3.getBlobHandle(), "test desc3"));
+        }, Pair.create(KEY_MAX_LEASED_BLOBS, String.valueOf(1)));
+    }
+
+    @Test
+    public void testAllowPackageAccess_countLimitExceeded() throws Exception {
+        runWithKeyValues(() -> {
+            final DummyBlobData blobData = new DummyBlobData.Builder(mContext).build();
+            blobData.prepare();
+
             final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
             assertThat(sessionId).isGreaterThan(0L);
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -1553,6 +1756,12 @@ public class BlobStoreManagerTest {
                 () -> commandReceiver.acquireLease(blobData.getBlobHandle()));
         assertThrows(SecurityException.class,
                 () -> commandReceiver.openBlob(blobData.getBlobHandle()));
+    }
+
+    private void waitForLeaseExpiration(long waitDurationMs, BlobHandle leasedBlob)
+            throws Exception {
+        SystemClock.sleep(waitDurationMs);
+        assertThat(mBlobStoreManager.getLeaseInfo(leasedBlob)).isNull();
     }
 
     private TestServiceConnection bindToHelperService(String pkg) throws Exception {
