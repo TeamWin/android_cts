@@ -2114,6 +2114,7 @@ public class ScopedStorageTest {
     public void testAccess_directory() throws Exception {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
+        File topLevelDir = new File(getExternalStorageDir(), "Test");
         try {
             installApp(TEST_APP_A);
 
@@ -2145,13 +2146,18 @@ public class ScopedStorageTest {
                     getExternalFilesDir().getAbsolutePath())).isFalse();
             assertCanAccessMyAppFile(getExternalFilesDir());
 
-            assertDirectoryAccess(getDcimDir(), /* exists */ true);
-            assertDirectoryAccess(getExternalStorageDir(), true);
-            assertDirectoryAccess(new File(getExternalStorageDir(), "Android"), true);
-            assertDirectoryAccess(new File(getExternalStorageDir(), "doesnt/exist"), false);
+            assertDirectoryAccess(getDcimDir(), /* exists */ true, /* canWrite */ true);
+            assertDirectoryAccess(getExternalStorageDir(),true, false);
+            assertDirectoryAccess(new File(getExternalStorageDir(), "Android"), true, false);
+            assertDirectoryAccess(new File(getExternalStorageDir(), "doesnt/exist"), false, false);
+
+            executeShellCommand("mkdir " + topLevelDir.getAbsolutePath());
+            assertDirectoryAccess(topLevelDir, true, false);
+
             assertCannotReadOrWrite(new File("/storage/emulated"));
         } finally {
             uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
+            executeShellCommand("rmdir " + topLevelDir.getAbsolutePath());
         }
     }
 
@@ -3055,13 +3061,14 @@ public class ScopedStorageTest {
         assertAccess(file, true, true, true);
     }
 
-    private static void assertDirectoryAccess(File dir, boolean exists) throws Exception {
+    private static void assertDirectoryAccess(File dir, boolean exists, boolean canWrite)
+            throws Exception {
         // This util does not handle app data directories.
         assumeFalse(dir.getAbsolutePath().startsWith(getAndroidDir().getAbsolutePath())
                 && !dir.equals(getAndroidDir()));
         assertThat(dir.isDirectory()).isEqualTo(exists);
-        // For non-app data directories, exists => canRead() and canWrite().
-        assertAccess(dir, exists, exists, exists);
+        // For non-app data directories, exists => canRead().
+        assertAccess(dir, exists, exists, exists && canWrite);
     }
 
     private static void assertAccess(File file, boolean exists, boolean canRead, boolean canWrite)
