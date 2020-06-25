@@ -255,6 +255,10 @@ public class RoleManagerTest {
         requestRole(ROLE_NAME);
         findDontAskAgainCheck().click();
         clickButtonAndWaitForResult(true);
+        // Wait for the RequestRoleActivity inside the test app to be removed from our task so that
+        // when the test app is force stopped, our task isn't force finished and our
+        // WaitForResultActivity can survive.
+        Thread.sleep(5000);
 
         clearPackageData(APP_PACKAGE_NAME);
         // Wait for the don't ask again to be forgotten.
@@ -285,6 +289,10 @@ public class RoleManagerTest {
         requestRole(ROLE_NAME);
         findDontAskAgainCheck().click();
         clickButtonAndWaitForResult(true);
+        // Wait for the RequestRoleActivity inside the test app to be removed from our task so that
+        // when the test app is uninstalled, our task isn't force finished and our
+        // WaitForResultActivity can survive.
+        Thread.sleep(5000);
 
         uninstallPackage(APP_PACKAGE_NAME);
         // Wait for the don't ask again to be forgotten.
