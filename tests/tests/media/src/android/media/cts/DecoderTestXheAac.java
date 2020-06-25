@@ -559,6 +559,38 @@ public class DecoderTestXheAac {
         }
     }
 
+
+    /**
+     * Verify that seeking works correctly for USAC.
+     * Sync samples have to be taken into consideration.
+     */
+    @Test
+    public void testDecodeUsacSyncSampleSeekingM4a() throws Exception {
+        Log.v(TAG, "START testDecodeUsacSyncSampleSeekingM4a");
+
+        assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
+
+        for (String aacDecName : sAacDecoderNames) {
+            try {
+                runDecodeUsacSyncSampleSeekingM4a(aacDecName);
+            } catch (Error err) {
+                throw new Error(err.getMessage() + " [dec=" + aacDecName + "]" , err);
+            }
+        }
+    }
+
+    private void runDecodeUsacSyncSampleSeekingM4a(String aacDecName) throws Exception {
+        Log.v(TAG, "testDecodeUsacSyncSampleSeekingM4a running for dec=" + aacDecName);
+        // test usac seeking
+        try {
+            checkUsacSyncSampleSeeking(R.raw.sine_2ch_48khz_aot42_seek_mp4, aacDecName);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacSyncSampleSeekingM4a failed for dec=" + aacDecName);
+            throw new RuntimeException(e);
+        }
+        Log.v(TAG, "testDecodeUsacSyncSampleSeekingM4a running for dec=" + aacDecName);
+    }
+
     /**
      *  Internal utilities
      */
@@ -794,6 +826,17 @@ public class DecoderTestXheAac {
                     decParams, testInput, -1, null, drcParams_test,
                     decoderName, runtimeChange, expectedOutputLoudness);
         }
+    }
+
+    private void checkUsacSyncSampleSeeking(int testInput, String decoderName) throws Exception {
+
+        AudioParameter decParams = new AudioParameter();
+        DrcParams drcParams_def = new DrcParams();
+
+        short[] decSamples_seek_next_sync = decodeToMemory(decParams, testInput, -1, null,
+                drcParams_def, decoderName, false, -2, true, 1100000,
+                MediaExtractor.SEEK_TO_NEXT_SYNC);
+        float[] nrg_seek_next_sync = checkEnergyUSAC(decSamples_seek_next_sync, decParams, 2, 1);
     }
 
     /**
@@ -1172,11 +1215,16 @@ public class DecoderTestXheAac {
      *                      before starting to decode
      * @param expectedOutputLoudness value to check if the correct output loudness is returned
      *     by the decoder
+     * @param seek_enable defines whether there will be an initial seek
+     * @param seek_duration seeking duration in microseconds
+     * @param seek_mode seeking mode 
+     *
      * @throws RuntimeException
      */
     public short[] decodeToMemory(AudioParameter audioParams, int testinput, int eossample,
             List<Long> timestamps, DrcParams drcParams, String decoderName, boolean runtimeChange,
-            int expectedOutputLoudness) throws IOException {
+            int expectedOutputLoudness,
+            boolean seek_enable, int seek_duration, int seek_mode) throws IOException {
         // TODO: code is the same as in DecoderTest, differences are:
         //          - addition of application of DRC parameters
         //          - no need/use of resetMode, configMode
@@ -1284,6 +1332,12 @@ public class DecoderTestXheAac {
         }
 
         extractor.selectTrack(0);
+
+        // execute initial seeking if specified
+        if (seek_enable) {
+            codec.flush();
+            extractor.seekTo(seek_duration, seek_mode);
+        }
 
         // start decoding
         final long kTimeOutUs = 5000;
@@ -1436,7 +1490,7 @@ public class DecoderTestXheAac {
             throws IOException
     {
         final short[] decoded = decodeToMemory(audioParams, testinput, eossample, timestamps,
-                drcParams, decoderName, false, -2);
+                drcParams, decoderName, false, -2, false, 0, 0);
         return decoded;
     }
 
@@ -1446,9 +1500,18 @@ public class DecoderTestXheAac {
         throws IOException
     {
         final short[] decoded = decodeToMemory(audioParams, testinput, eossample, timestamps,
-                drcParams, decoderName, runtimeChange, -2);
+                drcParams, decoderName, runtimeChange, -2, false, 0, 0);
         return decoded;
     }
 
+    private short[] decodeToMemory(AudioParameter audioParams, int testinput,
+        int eossample, List<Long> timestamps, DrcParams drcParams, String decoderName,
+        boolean runtimeChange, int expectedOutputLoudness)
+        throws IOException
+    {
+        short [] decoded = decodeToMemory(audioParams, testinput, eossample, timestamps, drcParams,
+                decoderName, runtimeChange, expectedOutputLoudness, false, 0, 0);
+        return decoded;
+    }
 }
 
