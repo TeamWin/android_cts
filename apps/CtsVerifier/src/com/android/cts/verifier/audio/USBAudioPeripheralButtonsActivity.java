@@ -108,7 +108,14 @@ public class USBAudioPeripheralButtonsActivity extends USBAudioPeripheralActivit
 
     private void calculateMatch() {
         if (mIsPeripheralAttached) {
-            boolean match = mHasBtnA && mHasBtnB && mHasBtnC;
+            boolean match;
+            boolean interceptedVolume = getResources().getBoolean(Resources.getSystem()
+                .getIdentifier("config_handleVolumeKeysInWindowManager", "bool", "android"));
+            if (interceptedVolume) {
+                match = mHasBtnA;
+            } else {
+                match = mHasBtnA && mHasBtnB && mHasBtnC;
+            }
             Log.i(TAG, "match:" + match);
             getPassButton().setEnabled(match);
         } else {
