@@ -18,8 +18,11 @@ package android.cts.install;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.pm.PackageInstaller;
+
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
+import com.android.cts.install.lib.LocalIntentSender;
 import com.android.cts.install.lib.TestApp;
 
 import org.junit.Rule;
@@ -99,6 +102,19 @@ public final class DowngradeTest {
         mSessionRule.recordSessionId(sessionId);
     }
 
+    @Test
+    public void action_downgradeFail_phase() throws Exception {
+        Install install = getParameterizedInstall(VERSION_CODE_DOWNGRADE);
+        int sessionId = install.setRequestDowngrade().createSession();
+        InstallUtils.openPackageInstallerSession(sessionId)
+                .commit(LocalIntentSender.getIntentSender());
+        assertThat(LocalIntentSender.getIntentSenderResult(sessionId)
+                .getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE))
+                .isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        assertThat(mSessionRule.retrieveSessionInfo(sessionId).isStagedSessionFailed()).isTrue();
+        mSessionRule.recordSessionId(sessionId);
+    }
+
     /** Confirms target version of the apps installed. */
     @Test
     public void assert_downgradeSuccess_phase() {
@@ -107,8 +123,7 @@ public final class DowngradeTest {
 
     /** Confirms the staged downgrade failed. */
     @Test
-    public void assert_downgradeFail_phase() throws Exception {
-        assertThat(mSessionRule.retrieveSessionInfo().isStagedSessionFailed()).isTrue();
+    public void assert_downgradeFail_phase() {
         mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_CURRENT);
     }
 
