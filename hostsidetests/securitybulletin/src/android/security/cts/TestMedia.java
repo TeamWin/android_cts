@@ -289,6 +289,21 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/112662995
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @SecurityTest(minPatchLevel = "2019-09")
+    @Test
+    public void testPocCVE_2019_9357() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        String binaryName = "CVE-2019-9357";
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/109891727
      * Vulnerability Behaviour: SIGSEGV in media.codec
      */
