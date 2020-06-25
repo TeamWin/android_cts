@@ -33,6 +33,10 @@ android_test_helper_app {
     export_package_resources: true,
     aapt_include_all_resources: true,
     manifest: "AndroidManifestV1.xml",
+
+    // This flag allow the native lib to be compressed in the apk or associated split apk, and
+    // needs to be extracted by the installer instead of calling directly into the apk.
+    use_embedded_native_libs: false,
 }
 
 // v2 implementation of test app built with v1 manifest for zero version update test.
