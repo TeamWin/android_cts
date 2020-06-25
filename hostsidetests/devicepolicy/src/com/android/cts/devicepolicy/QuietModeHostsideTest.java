@@ -28,7 +28,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     private static final String ENABLED_TEST_APK = "CtsCrossProfileEnabledApp.apk";
     private static final String USER_ENABLED_TEST_APK = "CtsCrossProfileUserEnabledApp.apk";
     private static final String ENABLED_NO_PERMS_TEST_APK = "CtsCrossProfileEnabledNoPermsApp.apk";
-    private static final String QUIET_MODE_ENABLED_TEST_APK = "CtsQuietModeEnabledApp.apk";
+    private static final String QUIET_MODE_ENABLED_TEST_APK = "CtsModifyQuietModeEnabledApp.apk";
     private static final String NOT_ENABLED_TEST_APK = "CtsCrossProfileNotEnabledApp.apk";
     private static final String ENABLED_TEST_PACKAGE = "com.android.cts.crossprofileenabledapp";
     private static final String USER_ENABLED_TEST_PACKAGE =
@@ -38,7 +38,7 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     private static final String NOT_ENABLED_TEST_PACKAGE =
             "com.android.cts.crossprofilenotenabledapp";
     private static final String QUIET_MODE_ENABLED_TEST_PACKAGE =
-            "com.android.cts.quietmodeenabledapp";
+            "com.android.cts.modifyquietmodeenabledapp";
 
     private int mProfileId;
     private String mOriginalLauncher;
