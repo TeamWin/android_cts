@@ -29,6 +29,7 @@ import android.os.BugreportParams;
 import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -91,6 +92,7 @@ public class BugreportManagerTest {
         assertThat(screenshot).isNull();
     }
 
+    @LargeTest
     @Test
     public void testFullBugreport() throws Exception {
         Pair<String, String> brFiles = triggerBugreport(BugreportParams.BUGREPORT_MODE_FULL);
