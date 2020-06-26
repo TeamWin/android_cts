@@ -80,13 +80,7 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testNotPreferMinimalPostProcessingSimple() throws Exception {
-        launchMppActivity(MPP_ACTIVITY, NOT_PREFER_MPP);
-        assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, NOT_PREFER_MPP);
-    }
-
-    @Test
-    public void testAttrPreferMinimalPostProcessingDefault() throws Exception {
+    public void testPreferMinimalPostProcessingDefault() throws Exception {
         launchMppActivity(MPP_ACTIVITY, NOT_PREFER_MPP);
         assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, NOT_PREFER_MPP);
     }
