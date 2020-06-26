@@ -226,7 +226,8 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
         StatsdConfigProto.StatsdConfig.Builder configBuilder =
                 StatsdConfigProto.StatsdConfig.newBuilder()
                         .setId(configId)
-                        .addAllowedLogSource(pkgName);
+                        .addAllowedLogSource(pkgName)
+                        .addWhitelistedAtomIds(Atom.APP_COMPATIBILITY_CHANGE_REPORTED_FIELD_NUMBER);
         StatsdConfigProto.SimpleAtomMatcher.Builder simpleAtomMatcherBuilder =
                 StatsdConfigProto.SimpleAtomMatcher
                         .newBuilder().setAtomId(
