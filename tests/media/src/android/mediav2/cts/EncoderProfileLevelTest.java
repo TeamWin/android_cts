@@ -83,7 +83,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         }
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, bit-rate, sample rate, channel count
-                {MediaFormat.MIMETYPE_AUDIO_AAC, 64000, 8000, 1, -1},
+                {MediaFormat.MIMETYPE_AUDIO_AAC, 64000, 48000, 1, -1},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, 128000, 48000, 2, -1},
 
                 // Video - CodecMime, bit-rate, height, width, frame-rate
