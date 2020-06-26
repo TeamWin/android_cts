@@ -207,6 +207,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName POPUP_MPP_ACTIVITY =
             component("PopupMinimalPostProcessingActivity");
 
+    public static final ComponentName CRASHING_ACTIVITY =
+            component("CrashingActivity");
+
     public static final ComponentName TEST_DREAM_SERVICE =
             component("TestDream");
 
