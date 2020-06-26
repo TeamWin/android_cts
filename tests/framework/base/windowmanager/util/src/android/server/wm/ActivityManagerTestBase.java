@@ -1129,6 +1129,11 @@ public abstract class ActivityManagerTestBase {
                 .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
     }
 
+    protected static boolean remoteInsetsControllerControlsSystemBars() {
+        return getInstrumentation().getTargetContext().getResources()
+                .getBoolean(android.R.bool.config_remoteInsetsControllerControlsSystemBars);
+    }
+
     /** @see ObjectTracker#manage(AutoCloseable) */
     protected HomeActivitySession createManagedHomeActivitySession(ComponentName homeActivity) {
         return mObjectTracker.manage(new HomeActivitySession(homeActivity));
