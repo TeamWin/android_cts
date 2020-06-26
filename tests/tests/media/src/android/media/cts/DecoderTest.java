@@ -309,6 +309,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                                 sampleRate,
                                 channelCount);
                         codec.configure(desiredFormat, null, null, 0);
+                        codec.start();
 
                         Log.d(TAG, "codec: " + codecInfo.getName() +
                                 " sample rate: " + sampleRate +
