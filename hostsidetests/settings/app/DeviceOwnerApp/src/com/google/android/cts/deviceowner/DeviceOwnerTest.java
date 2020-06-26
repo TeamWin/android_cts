@@ -77,6 +77,13 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
         } catch (RemoteException e) {
             throw new RuntimeException("failed to freeze device orientation", e);
         }
+        wakeupDeviceAndPressHome();
+    }
+
+    private void wakeupDeviceAndPressHome() throws Exception {
+        mDevice.wakeUp();
+        mDevice.pressMenu();
+        mDevice.pressHome();
     }
 
     @Override
