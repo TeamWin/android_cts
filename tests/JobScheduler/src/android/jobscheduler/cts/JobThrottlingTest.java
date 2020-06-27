@@ -103,6 +103,7 @@ public class JobThrottlingTest {
     private boolean mInitialAirplaneModeState;
     private String mInitialJobSchedulerConstants;
     private String mInitialDisplayTimeout;
+    private String mInitialRestrictedBucketEnabled;
     private boolean mAutomotiveDevice;
 
     private TestAppInterface mTestAppInterface;
@@ -157,6 +158,8 @@ public class JobThrottlingTest {
         mInitialAirplaneModeState = isAirplaneModeOn();
         mInitialJobSchedulerConstants = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS);
+        mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET);
         // Make sure test jobs can run regardless of bucket.
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS, "min_ready_non_active_jobs_count=0");
@@ -294,6 +297,8 @@ public class JobThrottlingTest {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
 
+        setRestrictedBucketEnabled(true);
+
         // Disable coalescing
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
@@ -317,6 +322,8 @@ public class JobThrottlingTest {
     public void testJobsInRestrictedBucket_NoRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+
+        setRestrictedBucketEnabled(true);
 
         // Disable coalescing and the parole session
         Settings.Global.putString(mContext.getContentResolver(),
@@ -355,6 +362,8 @@ public class JobThrottlingTest {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeTrue(mHasWifi);
         ensureSavedWifiNetwork(mWifiManager);
+
+        setRestrictedBucketEnabled(true);
 
         // Disable coalescing and the parole session
         Settings.Global.putString(mContext.getContentResolver(),
@@ -502,6 +511,8 @@ public class JobThrottlingTest {
         }
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS, mInitialJobSchedulerConstants);
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
         if (isAirplaneModeOn() != mInitialAirplaneModeState) {
             setAirplaneMode(mInitialAirplaneModeState);
         }
@@ -516,6 +527,11 @@ public class JobThrottlingTest {
     private void setTestPackageRestricted(boolean restricted) throws Exception {
         AppOpsUtils.setOpMode(TEST_APP_PACKAGE, "RUN_ANY_IN_BACKGROUND",
                 restricted ? AppOpsManager.MODE_IGNORED : AppOpsManager.MODE_ALLOWED);
+    }
+
+    private void setRestrictedBucketEnabled(boolean enabled) {
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET, enabled ? "1" : "0");
     }
 
     private boolean isTestAppTempWhitelisted() throws Exception {
