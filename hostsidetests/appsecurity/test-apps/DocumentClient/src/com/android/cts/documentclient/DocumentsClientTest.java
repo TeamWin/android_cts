@@ -713,6 +713,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         final Uri rootsUri = DocumentsContract.buildRootsUri(PROVIDER_PACKAGE);
         final Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setPackage(getDocumentsUiPackageId());
         intent.setDataAndType(rootsUri, "vnd.android.document/root");
         mActivity.startActivity(intent);
         mDevice.waitForIdle();
