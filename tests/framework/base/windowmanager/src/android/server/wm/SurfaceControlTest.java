@@ -102,7 +102,7 @@ public class SurfaceControlTest {
     public void testSameSurface() {
         final SurfaceControl.Builder b = new SurfaceControl.Builder();
         final SurfaceControl sc = b.setName("CTS").build();
-        SurfaceControl copy = new SurfaceControl(sc);
+        SurfaceControl copy = new SurfaceControl(sc, "SurfaceControlTest.testSameSurface");
         assertTrue(copy.isSameSurface(sc));
         sc.release();
         copy.release();
