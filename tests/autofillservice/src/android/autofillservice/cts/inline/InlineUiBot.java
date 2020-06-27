@@ -21,13 +21,18 @@ import static android.autofillservice.cts.Timeouts.LONG_PRESS_MS;
 import static android.autofillservice.cts.Timeouts.UI_TIMEOUT;
 
 import android.autofillservice.cts.UiBot;
+import android.content.pm.PackageManager;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.UiObject2;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.Timeout;
 import com.android.cts.mockime.MockIme;
+
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 /**
  * UiBot for the inline suggestion.
@@ -39,12 +44,19 @@ public final class InlineUiBot extends UiBot {
 
     private static final BySelector SUGGESTION_STRIP_SELECTOR = By.desc(SUGGESTION_STRIP_DESC);
 
+    private static final RequiredFeatureRule REQUIRES_IME_RULE = new RequiredFeatureRule(
+            PackageManager.FEATURE_INPUT_METHODS);
+
     public InlineUiBot() {
         this(UI_TIMEOUT);
     }
 
     public InlineUiBot(Timeout defaultTimeout) {
         super(defaultTimeout);
+    }
+
+    public static RuleChain annotateRule(TestRule rule) {
+        return RuleChain.outerRule(REQUIRES_IME_RULE).around(rule);
     }
 
     @Override

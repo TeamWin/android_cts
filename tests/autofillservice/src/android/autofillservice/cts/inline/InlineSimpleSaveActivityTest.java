@@ -36,6 +36,7 @@ import android.support.test.uiautomator.UiObject2;
 import androidx.annotation.NonNull;
 
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 public class InlineSimpleSaveActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<SimpleSaveActivity> {
@@ -61,6 +62,11 @@ public class InlineSimpleSaveActivityTest
                 mActivity = getActivity();
             }
         };
+    }
+
+    @Override
+    public TestRule getMainTestRule() {
+        return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
     @Test
