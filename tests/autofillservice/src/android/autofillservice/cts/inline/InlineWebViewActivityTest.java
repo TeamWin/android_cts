@@ -40,6 +40,7 @@ import android.view.KeyEvent;
 import android.view.ViewStructure.HtmlInfo;
 
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 public class InlineWebViewActivityTest extends AbstractWebViewTestCase<WebViewActivity> {
 
@@ -75,6 +76,11 @@ public class InlineWebViewActivityTest extends AbstractWebViewTestCase<WebViewAc
     @Override
     protected boolean isInlineMode() {
         return true;
+    }
+
+    @Override
+    public TestRule getMainTestRule() {
+        return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
     @Test
