@@ -13,18 +13,13 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.libnativehelper.cts"
-    android:targetSandboxVersion="2">
-    <application android:usesCleartextTraffic="true">
-        <uses-library android:name="android.test.runner" />
-    </application>
-
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.libnativehelper.cts"
-                     android:label="CTS tests of android.libnativehelper">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
-    </instrumentation>
-</manifest>
+<configuration description="Config for CTS AdbManager host test cases">
+    <option name="test-suite-tag" value="cts" />
+    <option name="config-descriptor:metadata" key="component" value="framework" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
+    <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
+    <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
+        <option name="jar" value="CtsAdbManagerHostTestCases.jar" />
+    </test>
+</configuration>

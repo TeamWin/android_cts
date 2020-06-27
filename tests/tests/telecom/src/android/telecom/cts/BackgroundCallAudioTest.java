@@ -88,6 +88,37 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         verifySimulateRingAndUserPickup(call, connection);
     }
 
+    public void testHoldAfterAudioProcessingFromCallScreening() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        setupIncomingCallWithCallScreening();
+
+        final MockConnection connection = verifyConnectionForIncomingCall();
+
+        if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
+                TimeUnit.SECONDS)) {
+            fail("No call added to InCallService.");
+        }
+
+        Call call = mInCallCallbacks.getService().getLastCall();
+        assertCallState(call, Call.STATE_AUDIO_PROCESSING);
+        assertConnectionState(connection, Connection.STATE_ACTIVE);
+
+        AudioManager audioManager = mContext.getSystemService(AudioManager.class);
+        if (doesAudioManagerSupportCallScreening) {
+            assertAudioMode(audioManager, MODE_CALL_SCREENING);
+        }
+
+        verifySimulateRingAndUserPickup(call, connection);
+
+        call.hold();
+        assertCallState(call, Call.STATE_HOLDING);
+        call.unhold();
+        assertCallState(call, Call.STATE_ACTIVE);
+    }
+
     public void testAudioProcessingFromCallScreeningDisallow() throws Exception {
         if (!mShouldTestTelecom) {
             return;
@@ -520,8 +551,8 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             assertCallState(call, Call.STATE_DISCONNECTED);
             waitOnAllHandlers(getInstrumentation());
             assertConnectionState(connection, Connection.STATE_DISCONNECTED);
-            // Make sure that the dummy app never saw the call
-            assertEquals(0, controlInterface.getHistoricalCallCount());
+            // Under some rare circumstances, the dummy app might get a flash of the disconnection
+            // call, so we won't do the call count check again.
 
             tearDownControl();
         } finally {

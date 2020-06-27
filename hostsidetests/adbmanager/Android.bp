@@ -12,30 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsLibnativehelperTestCases",
+java_test_host {
+    name: "CtsAdbManagerHostTestCases",
     defaults: ["cts_defaults"],
-    compile_multilib: "both",
-    libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
-    ],
-    static_libs: [
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "nativetesthelper",
-    ],
-    jni_libs: [
-        "libnativehelper_test_jni",
-    ],
-    jni_uses_platform_apis: true,
-    sdk_version: "test_current",
     srcs: ["src/**/*.java"],
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "vts10",
-        "general-tests",
-        "mts",
+    test_suites: ["cts", "general-tests"],
+    libs: [
+        "compatibility-host-util",
+        "cts-tradefed",
+        "tradefed"
     ],
 }
