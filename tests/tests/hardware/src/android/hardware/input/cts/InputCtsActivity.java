@@ -18,13 +18,17 @@ package android.hardware.input.cts;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+
+import java.util.ArrayList;
 
 public class InputCtsActivity extends Activity {
     private static final String TAG = "InputCtsActivity";
 
     private InputCallback mInputCallback;
+    private final ArrayList<Integer> mUnhandledKeys = new ArrayList<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -60,10 +64,23 @@ public class InputCtsActivity extends Activity {
         if (mInputCallback != null) {
             mInputCallback.onKeyEvent(ev);
         }
+        // Do not handle keys in UnhandledKeys list, let it fallback
+        if (mUnhandledKeys.contains(ev.getKeyCode())) {
+            Log.i(TAG, "Unhandled keyEvent: "  + ev);
+            return false;
+        }
         return true;
     }
 
     public void setInputCallback(InputCallback callback) {
         mInputCallback = callback;
+    }
+
+    public void addUnhandleKeyCode(int keyCode) {
+        mUnhandledKeys.add(keyCode);
+    }
+
+    public void clearUnhandleKeyCode() {
+        mUnhandledKeys.clear();
     }
 }
