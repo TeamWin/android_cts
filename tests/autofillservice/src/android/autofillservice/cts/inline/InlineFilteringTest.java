@@ -26,6 +26,7 @@ import android.autofillservice.cts.CannedFillResponse;
 import android.autofillservice.cts.Helper;
 
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 // TODO: Move any tests needed from here into DatasetFilteringInlineTest.
 /**
@@ -43,6 +44,11 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
     @Override
     protected void enableService() {
         Helper.enableAutofillService(getContext(), SERVICE_NAME);
+    }
+
+    @Override
+    public TestRule getMainTestRule() {
+        return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
     @Test
