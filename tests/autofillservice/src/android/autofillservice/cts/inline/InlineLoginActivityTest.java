@@ -48,6 +48,7 @@ import android.support.test.uiautomator.Direction;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
 
@@ -65,6 +66,11 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
     @Override
     protected boolean isInlineMode() {
         return true;
+    }
+
+    @Override
+    public TestRule getMainTestRule() {
+        return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
     @Test

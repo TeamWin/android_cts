@@ -22,9 +22,17 @@ import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInli
 import android.autofillservice.cts.DatasetFilteringTest;
 import android.autofillservice.cts.Helper;
 
+import org.junit.rules.TestRule;
+
 public class DatasetFilteringInlineTest extends DatasetFilteringTest {
     public DatasetFilteringInlineTest() {
         super(getInlineUiBot());
+    }
+
+
+    @Override
+    public TestRule getMainTestRule() {
+        return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
     @Override

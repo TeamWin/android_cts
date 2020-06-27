@@ -38,6 +38,7 @@ import android.content.IntentSender;
 import android.platform.test.annotations.AppModeFull;
 
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 import java.util.regex.Pattern;
 
@@ -59,6 +60,11 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
     @Override
     protected void enableService() {
         Helper.enableAutofillService(getContext(), SERVICE_NAME);
+    }
+
+    @Override
+    public TestRule getMainTestRule() {
+        return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
     @Test
