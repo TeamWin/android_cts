@@ -2781,14 +2781,6 @@ public class WifiManagerTest extends AndroidTestCase {
             // Now trigger scan and ensure that the device does not connect to any networks.
             mWifiManager.startScan();
             ensureNotConnected();
-
-            // Toggle Wifi off/on should clean the state.
-            setWifiEnabled(false);
-            setWifiEnabled(true);
-
-            // Trigger a scan & wait for connection to one of the saved networks.
-            mWifiManager.startScan();
-            waitForConnection();
         } finally {
             uiAutomation.dropShellPermissionIdentity();
             setWifiEnabled(false);
