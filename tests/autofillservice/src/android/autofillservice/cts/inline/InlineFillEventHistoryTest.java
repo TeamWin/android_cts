@@ -39,6 +39,7 @@ import android.service.autofill.FillEventHistory.Event;
 import android.support.test.uiautomator.UiObject2;
 
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 import java.util.List;
 
@@ -60,6 +61,11 @@ public class InlineFillEventHistoryTest extends FillEventHistoryCommonTestCase {
     @Override
     protected void enableService() {
         Helper.enableAutofillService(getContext(), SERVICE_NAME);
+    }
+
+    @Override
+    public TestRule getMainTestRule() {
+        return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
     @Test
