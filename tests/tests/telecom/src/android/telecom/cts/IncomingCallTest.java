@@ -25,16 +25,20 @@ import static android.telephony.TelephonyManager.CALL_STATE_RINGING;
 import android.content.ComponentName;
 import android.media.AudioManager;
 import android.media.AudioPlaybackConfiguration;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.telecom.Call;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.PhoneStateListener;
+
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -130,6 +134,13 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
         if (!mShouldTestTelecom) {
             return;
         }
+        ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
+                (ShellIdentityUtils.StaticShellPermissionMethodHelper<Void>) () -> {
+                    RingtoneManager.setActualDefaultRingtoneUri(mContext,
+                            RingtoneManager.TYPE_RINGTONE,
+                            Settings.System.DEFAULT_RINGTONE_URI);
+                    return null;
+                });
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
@@ -152,6 +163,8 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
         verifyPhoneStateListenerCallbacksForCall(CALL_STATE_RINGING,
                 testNumber.getSchemeSpecificPart());
         Boolean ringing = queue.poll(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertNotNull("Telecom should have played a ringtone, timed out waiting for state change",
+                ringing);
         assertTrue("Telecom should have played a ringtone.", ringing);
         audioManager.unregisterAudioPlaybackCallback(callback);
     }
