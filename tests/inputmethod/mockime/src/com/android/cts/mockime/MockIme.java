@@ -60,9 +60,9 @@ import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import android.widget.inline.InlinePresentationSpec;
 
@@ -806,6 +806,13 @@ public final class MockIme extends InputMethodService {
                         suggestionView -> {
                             Log.d(TAG, "new inline suggestion view ready");
                             if (suggestionView != null) {
+                                suggestionView.setOnClickListener((v) -> {
+                                    getTracer().onInlineSuggestionClickedEvent(() -> { });
+                                });
+                                suggestionView.setOnLongClickListener((v) -> {
+                                    getTracer().onInlineSuggestionLongClickedEvent(() -> { });
+                                    return true;
+                                });
                                 pendingInlineSuggestions.mViews[index] = suggestionView;
                             }
                             if (pendingInlineSuggestions.mInflatedViewCount.incrementAndGet()
@@ -1068,6 +1075,16 @@ public final class MockIme extends InputMethodService {
             arguments.putParcelable("response", response);
             return recordEventInternal("onInlineSuggestionsResponse", supplier::getAsBoolean,
                     arguments);
+        }
+
+        void onInlineSuggestionClickedEvent(@NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            recordEventInternal("onInlineSuggestionClickedEvent", runnable, arguments);
+        }
+
+        void onInlineSuggestionLongClickedEvent(@NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            recordEventInternal("onInlineSuggestionLongClickedEvent", runnable, arguments);
         }
     }
 }
