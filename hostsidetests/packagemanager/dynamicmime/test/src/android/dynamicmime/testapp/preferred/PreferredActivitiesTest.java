@@ -28,8 +28,10 @@ import static android.dynamicmime.common.Constants.PACKAGE_PREFERRED_APP;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.dynamicmime.testapp.BaseDynamicMimeTest;
 import android.dynamicmime.testapp.assertions.MimeGroupAssertions;
 import android.dynamicmime.testapp.commands.MimeGroupCommands;
@@ -52,6 +54,9 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class PreferredActivitiesTest extends BaseDynamicMimeTest {
+    private static final String NAV_BAR_INTERACTION_MODE_RES_NAME = "config_navBarInteractionMode";
+    private static final int NAV_BAR_INTERACTION_MODE_GESTURAL = 2;
+
     private static final BySelector BUTTON_ALWAYS = By.res("android:id/button_always");
     private static final BySelector RESOLVER_DIALOG = By.res("android:id/contentPanel");
 
@@ -66,6 +71,17 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
     @Before
     public void setUp() {
         Utils.installApk(APK_PREFERRED_APP);
+        assumeNavigationMode();
+    }
+
+    private void assumeNavigationMode() {
+        Resources res = context().getResources();
+        int navModeResId = res.getIdentifier(NAV_BAR_INTERACTION_MODE_RES_NAME, "integer",
+                "android");
+        int navMode = res.getInteger(navModeResId);
+
+        assumeTrue("Non-gesture navigation mode required",
+                navMode != NAV_BAR_INTERACTION_MODE_GESTURAL);
     }
 
     @After
