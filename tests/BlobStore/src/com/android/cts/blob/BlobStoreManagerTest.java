@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
@@ -1619,6 +1620,72 @@ public class BlobStoreManagerTest {
                         () -> session.allowPackageAccess(HELPER_PKG3, HELPER_PKG3_CERT_SHA256));
             }
         }, Pair.create(KEY_MAX_BLOB_ACCESS_PERMITTED_PACKAGES, String.valueOf(1)));
+    }
+
+    @Test
+    public void testBlobHandleEquality() throws Exception {
+        // Check that BlobHandle objects are considered equal when digest, label, expiry time
+        // and tag are equal.
+        {
+            final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest".getBytes(),
+                    "Dummy blob", 1111L, "tag");
+            final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest".getBytes(),
+                    "Dummy blob", 1111L, "tag");
+            assertThat(blobHandle1).isEqualTo(blobHandle2);
+        }
+
+        // Check that BlobHandle objects are not equal if digests are not equal.
+        {
+            final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest1".getBytes(),
+                    "Dummy blob", 1111L, "tag");
+            final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest2".getBytes(),
+                    "Dummy blob", 1111L, "tag");
+            assertThat(blobHandle1).isNotEqualTo(blobHandle2);
+        }
+
+        // Check that BlobHandle objects are not equal if expiry times are not equal.
+        {
+            final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest".getBytes(),
+                    "Dummy blob", 1111L, "tag");
+            final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest".getBytes(),
+                    "Dummy blob", 1112L, "tag");
+            assertThat(blobHandle1).isNotEqualTo(blobHandle2);
+        }
+
+        // Check that BlobHandle objects are not equal if labels are not equal.
+        {
+            final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest".getBytes(),
+                    "Dummy blob1", 1111L, "tag");
+            final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest".getBytes(),
+                    "Dummy blob2", 1111L, "tag");
+            assertThat(blobHandle1).isNotEqualTo(blobHandle2);
+        }
+
+        // Check that BlobHandle objects are not equal if tags are not equal.
+        {
+            final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest".getBytes(),
+                    "Dummy blob", 1111L, "tag1");
+            final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest".getBytes(),
+                    "Dummy blob", 1111L, "tag2");
+            assertThat(blobHandle1).isNotEqualTo(blobHandle2);
+        }
+    }
+
+    @Test
+    public void testBlobHandleCreation() throws Exception {
+        // Creating a BlobHandle with label > 100 chars will fail
+        {
+            final CharSequence label = String.join("", Collections.nCopies(101, "a"));
+            assertThrows(IllegalArgumentException.class,
+                    () -> BlobHandle.createWithSha256("digest".getBytes(), label, 1111L, "tag"));
+        }
+
+        // Creating a BlobHandle with tag > 128 chars will fail
+        {
+            final String tag = String.join("", Collections.nCopies(129, "a"));
+            assertThrows(IllegalArgumentException.class,
+                    () -> BlobHandle.createWithSha256("digest".getBytes(), "label", 1111L, tag));
+        }
     }
 
     private static void runWithKeyValues(ThrowingRunnable runnable,
