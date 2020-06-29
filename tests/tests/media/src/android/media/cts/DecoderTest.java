@@ -35,6 +35,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Display;
@@ -49,6 +50,8 @@ import com.android.compatibility.common.util.MediaPerfUtils;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+
+import androidx.test.filters.SdkSuppress;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -3580,6 +3583,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         return pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
     public void testLowLatencyVp9At1280x720() throws Exception {
         testLowLatencyVideo(
                 R.raw.video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz, 300,
@@ -3589,6 +3593,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 true /* useNdk */);
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
     public void testLowLatencyVp9At1920x1080() throws Exception {
         testLowLatencyVideo(
                 R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz, 300,
@@ -3598,6 +3603,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 true /* useNdk */);
     }
 
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
     public void testLowLatencyVp9At3840x2160() throws Exception {
         testLowLatencyVideo(
                 R.raw.bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz, 300,
