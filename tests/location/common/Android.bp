@@ -19,6 +19,6 @@ java_library {
     ],
     libs: [
         "compatibility-device-util-axt",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
 }

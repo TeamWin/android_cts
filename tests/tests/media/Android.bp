@@ -69,8 +69,8 @@ android_test {
     jni_uses_sdk_apis: true,
     libs: [
         "org.apache.http.legacy",
-        "android.test.base.stubs",
-        "android.test.runner.stubs",
+        "android.test.base",
+        "android.test.runner",
     ],
     // Tag this module as a cts test artifact
     test_suites: [
