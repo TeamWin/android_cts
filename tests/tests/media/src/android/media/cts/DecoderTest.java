@@ -43,6 +43,7 @@ import android.view.Surface;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
@@ -73,6 +74,7 @@ import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 public class DecoderTest extends MediaPlayerTestBase {
     private static final String TAG = "DecoderTest";
     private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
+    private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     private static final int RESET_MODE_NONE = 0;
     private static final int RESET_MODE_RECONFIGURE = 1;
@@ -276,6 +278,8 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     private void verifyChannelsAndRates(String[] mimetypes, int[] sampleRates,
                                        int[] channelMasks) throws Exception {
+
+        if (!MediaUtils.check(mIsAtLeastR, "test invalid before Android 11")) return;
 
         for (String mimetype : mimetypes) {
             // ensure we find a codec for all listed mime/channel/rate combinations
