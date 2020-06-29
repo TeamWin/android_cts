@@ -241,6 +241,12 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         requireRunningOnPrimaryProfile();
 
         // Test the return cursor is correct when the all checks are met.
+        final String selection = "(" + CalendarContract.Calendars.ACCOUNT_TYPE  + "=? AND "
+                + CalendarContract.Events.TITLE  + " =? )";
+        final String[] selectionArgs = new String[] {
+                TEST_ACCOUNT_TYPE,
+                WORK_EVENT_TITLE
+        };
         final String[] projection = new String[]{
                 CalendarContract.Instances.TITLE,
                 CalendarContract.Instances.DTSTART,
@@ -250,7 +256,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
                 buildQueryInstancesUri(CalendarContract.Instances.ENTERPRISE_CONTENT_URI,
                         WORK_EVENT_DTSTART - DateUtils.YEAR_IN_MILLIS,
                         WORK_EVENT_DTEND + DateUtils.YEAR_IN_MILLIS, null),
-                projection, null, null, null);
+                projection, selection, selectionArgs, null);
 
         assertThat(cursor).isNotNull();
         assertThat(cursor.getCount()).isEqualTo(1);
@@ -266,6 +272,12 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         requireRunningOnPrimaryProfile();
 
         // Test the return cursor is correct when the all checks are met.
+        final String selection = "(" + CalendarContract.Calendars.ACCOUNT_TYPE  + "=? AND "
+                + CalendarContract.Events.TITLE  + " =? )";
+        final String[] selectionArgs = new String[] {
+                TEST_ACCOUNT_TYPE,
+                WORK_EVENT_TITLE
+        };
         final String[] projection = new String[]{
                 CalendarContract.Instances.TITLE,
                 CalendarContract.Instances.DTSTART,
@@ -275,7 +287,7 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
                 buildQueryInstancesUri(CalendarContract.Instances.ENTERPRISE_CONTENT_BY_DAY_URI,
                         WORK_EVENT_DTSTART_JULIAN_DAY - 1,
                         WORK_EVENT_DTEND_JULIAN_DAY + 1, null),
-                projection, null, null, null);
+                projection, selection, selectionArgs, null);
 
         assertThat(cursor).isNotNull();
         assertThat(cursor.getCount()).isEqualTo(1);
