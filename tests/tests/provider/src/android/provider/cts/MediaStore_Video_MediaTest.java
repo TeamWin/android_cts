@@ -109,18 +109,14 @@ public class MediaStore_Video_MediaTest {
 
     @Test
     public void testStoreVideoMediaExternal() throws Exception {
-        final String externalVideoPath = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testvideo.3gp").getAbsolutePath();
-        final String externalVideoPath2 = new File(ProviderTestUtils.stageDir(mVolumeName),
-                "testvideo1.3gp").getAbsolutePath();
+        final File dir = ProviderTestUtils.stageDir(mVolumeName);
+        final File videoFile = ProviderTestUtils.stageFile(R.raw.testvideo,
+                new File(dir, "cts" + System.nanoTime() + ".mp4"));
 
-        // clean up any potential left over entries from a previous aborted run
-        cleanExternalMediaFile(externalVideoPath);
-        cleanExternalMediaFile(externalVideoPath2);
+        final String externalVideoPath = videoFile.getAbsolutePath();
+        final long numBytes = videoFile.length();
 
-        int numBytes = 1337;
-        File videoFile = new File(externalVideoPath);
-        FileUtils.createFile(videoFile, numBytes);
+        ProviderTestUtils.waitUntilExists(videoFile);
 
         ContentValues values = new ContentValues();
         values.put(Media.ALBUM, "cts");
@@ -136,7 +132,7 @@ public class MediaStore_Video_MediaTest {
         values.put(Media.RESOLUTION, "176x144");
         values.put(Media.TAGS, "cts, test");
         values.put(Media.DATA, externalVideoPath);
-        values.put(Media.DISPLAY_NAME, "testvideo.3gp");
+        values.put(Media.DISPLAY_NAME, videoFile.getName());
         values.put(Media.MIME_TYPE, "video/3gpp");
         values.put(Media.SIZE, numBytes);
         values.put(Media.TITLE, "testvideo");
@@ -169,7 +165,7 @@ public class MediaStore_Video_MediaTest {
             assertEquals("176x144", c.getString(c.getColumnIndex(Media.RESOLUTION)));
             assertEquals("cts, test", c.getString(c.getColumnIndex(Media.TAGS)));
             assertEquals(externalVideoPath, c.getString(c.getColumnIndex(Media.DATA)));
-            assertEquals("testvideo.3gp", c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
+            assertEquals(videoFile.getName(), c.getString(c.getColumnIndex(Media.DISPLAY_NAME)));
             assertEquals("video/3gpp", c.getString(c.getColumnIndex(Media.MIME_TYPE)));
             assertEquals("testvideo", c.getString(c.getColumnIndex(Media.TITLE)));
             assertEquals(numBytes, c.getInt(c.getColumnIndex(Media.SIZE)));
