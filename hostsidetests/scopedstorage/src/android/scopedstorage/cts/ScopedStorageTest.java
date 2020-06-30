@@ -78,6 +78,7 @@ import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.openFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
+import static android.scopedstorage.cts.lib.TestUtils.pollForManageExternalStorageAllowed;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.queryFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryFileExcludingPending;
@@ -1635,28 +1636,26 @@ public class ScopedStorageTest {
 
     @Test
     public void testManageExternalStorageCanCreateFilesAnywhere() throws Exception {
+        pollForManageExternalStorageAllowed();
+
         final File topLevelPdf = new File(getExternalStorageDir(), NONMEDIA_FILE_NAME);
         final File musicFileInMovies = new File(getMoviesDir(), AUDIO_FILE_NAME);
         final File imageFileInDcim = new File(getDcimDir(), IMAGE_FILE_NAME);
-        try {
-            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
-            // Nothing special about this, anyone can create an image file in DCIM
-            assertCanCreateFile(imageFileInDcim);
-            // This is where we see the special powers of MANAGE_EXTERNAL_STORAGE, because it can
-            // create a top level file
-            assertCanCreateFile(topLevelPdf);
-            // It can even create a music file in Pictures
-            assertCanCreateFile(musicFileInMovies);
-        } finally {
-            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
-        }
+
+        // Nothing special about this, anyone can create an image file in DCIM
+        assertCanCreateFile(imageFileInDcim);
+        // This is where we see the special powers of MANAGE_EXTERNAL_STORAGE, because it can
+        // create a top level file
+        assertCanCreateFile(topLevelPdf);
+        // It can even create a music file in Pictures
+        assertCanCreateFile(musicFileInMovies);
     }
 
     @Test
     public void testManageExternalStorageCantReadWriteOtherAppExternalDir() throws Exception {
-        try {
-            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
+        pollForManageExternalStorageAllowed();
 
+        try {
             // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
             installAppWithStoragePermissions(TEST_APP_A);
 
@@ -1679,7 +1678,6 @@ public class ScopedStorageTest {
                     () -> { otherAppExternalDataFile.createNewFile(); });
 
         } finally {
-            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
             uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
         }
     }
@@ -2035,6 +2033,8 @@ public class ScopedStorageTest {
 
     @Test
     public void testManageExternalStorageCanDeleteOtherAppsContents() throws Exception {
+        pollForManageExternalStorageAllowed();
+
         final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
         final File otherAppImage = new File(getDcimDir(), "other" + IMAGE_FILE_NAME);
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
@@ -2046,8 +2046,6 @@ public class ScopedStorageTest {
             assertThat(createFileAs(TEST_APP_A, otherAppImage.getPath())).isTrue();
             assertThat(createFileAs(TEST_APP_A, otherAppMusic.getPath())).isTrue();
 
-            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
-
             assertThat(otherAppPdf.delete()).isTrue();
             assertThat(otherAppPdf.exists()).isFalse();
 
@@ -2057,7 +2055,6 @@ public class ScopedStorageTest {
             assertThat(otherAppMusic.delete()).isTrue();
             assertThat(otherAppMusic.exists()).isFalse();
         } finally {
-            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
             deleteFileAsNoThrow(TEST_APP_A, otherAppPdf.getAbsolutePath());
             deleteFileAsNoThrow(TEST_APP_A, otherAppImage.getAbsolutePath());
             deleteFileAsNoThrow(TEST_APP_A, otherAppMusic.getAbsolutePath());
@@ -2154,6 +2151,8 @@ public class ScopedStorageTest {
 
     @Test
     public void testManageExternalStorageCanRenameOtherAppsContents() throws Exception {
+        pollForManageExternalStorageAllowed();
+
         final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
         final File pdf = new File(getDownloadDir(), NONMEDIA_FILE_NAME);
         final File pdfInObviouslyWrongPlace = new File(getPicturesDir(), NONMEDIA_FILE_NAME);
@@ -2166,7 +2165,6 @@ public class ScopedStorageTest {
             assertThat(createFileAs(TEST_APP_A, otherAppPdf.getPath())).isTrue();
             assertThat(otherAppPdf.exists()).isTrue();
 
-            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
 
             // Write some data to the file
             try (final FileOutputStream fos = new FileOutputStream(otherAppPdf)) {
@@ -2193,7 +2191,6 @@ public class ScopedStorageTest {
             pdfInObviouslyWrongPlace.delete();
             topLevelPdf.delete();
             musicFile.delete();
-            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
             deleteFileAsNoThrow(TEST_APP_A, otherAppPdf.getAbsolutePath());
             uninstallApp(TEST_APP_A);
         }
@@ -2216,6 +2213,8 @@ public class ScopedStorageTest {
 
     @Test
     public void testManageExternalStorageReaddir() throws Exception {
+        pollForManageExternalStorageAllowed();
+
         final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
         final File otherAppImg = new File(getDcimDir(), "other" + IMAGE_FILE_NAME);
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
@@ -2225,8 +2224,6 @@ public class ScopedStorageTest {
             installApp(TEST_APP_A);
             assertCreateFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
             executeShellCommand("touch " + otherTopLevelFile);
-
-            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
 
             // We can list other apps' files
             assertDirectoryContains(otherAppPdf.getParentFile(), otherAppPdf);
@@ -2238,7 +2235,6 @@ public class ScopedStorageTest {
             // We can also list all top level directories
             assertDirectoryContains(getExternalStorageDir(), getDefaultTopLevelDirs());
         } finally {
-            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
             executeShellCommand("rm " + otherTopLevelFile);
             deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
             uninstallApp(TEST_APP_A);
@@ -2247,6 +2243,8 @@ public class ScopedStorageTest {
 
     @Test
     public void testManageExternalStorageQueryOtherAppsFile() throws Exception {
+        pollForManageExternalStorageAllowed();
+
         final File otherAppPdf = new File(getDownloadDir(), "other" + NONMEDIA_FILE_NAME);
         final File otherAppImg = new File(getDcimDir(), "other" + IMAGE_FILE_NAME);
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
@@ -2257,16 +2255,11 @@ public class ScopedStorageTest {
             assertCreatePublishedFilesAs(
                     TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
 
-            // Once the test has permission to manage external storage, it can query for other
-            // apps' files and open them for read and write
-            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
-
             assertCanQueryAndOpenFile(otherAppPdf, "rw");
             assertCanQueryAndOpenFile(otherAppImg, "rw");
             assertCanQueryAndOpenFile(otherAppMusic, "rw");
             assertCanQueryAndOpenFile(otherHiddenFile, "rw");
         } finally {
-            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
             deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
             uninstallApp(TEST_APP_A);
         }
@@ -2498,15 +2491,12 @@ public class ScopedStorageTest {
 
     @Test
     public void testWallpaperApisManageExternalStorageAppOp() throws Exception {
-        try {
-            allowAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
-            WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
-            wallpaperManager.getFastDrawable();
-            wallpaperManager.peekFastDrawable();
-            wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
-        } finally {
-            denyAppOpsToUid(Process.myUid(), OPSTR_MANAGE_EXTERNAL_STORAGE);
-        }
+        pollForManageExternalStorageAllowed();
+
+        WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+        wallpaperManager.getFastDrawable();
+        wallpaperManager.peekFastDrawable();
+        wallpaperManager.getWallpaperFile(WallpaperManager.FLAG_SYSTEM);
     }
 
     @Test
