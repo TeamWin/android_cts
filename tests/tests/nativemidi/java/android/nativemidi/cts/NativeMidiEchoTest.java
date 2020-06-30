@@ -230,7 +230,6 @@ public class NativeMidiEchoTest {
     @After
     public void tearDown() throws Exception {
         if (!hasMidiSupport()) {
-            Assert.assertTrue("FEATURE_MIDI Not Supported.", false);
             return; // Not supported so don't test it.
         }
         tearDownEchoServer();
@@ -241,9 +240,8 @@ public class NativeMidiEchoTest {
     @Test
     public void test_A_MidiManager() throws Exception {
         if (!hasMidiSupport()) {
-            return; // Nothing to test
+            return;
         }
-
         Assert.assertNotNull("MidiManager not supported.", mMidiManager);
 
         // There should be at least one device for the Echo server.
@@ -252,18 +250,16 @@ public class NativeMidiEchoTest {
         Assert.assertTrue("device list was empty", infos.length >= 1);
     }
 
-
     @Test
     public void test_AA_LibAMidiExists() throws Exception {
+        if (!hasMidiSupport()) {
+            return;
+        }
         Assert.assertTrue("libamidi.so not found.", hasLibAMidi());
     }
 
     @Test
     public void test_B_SendData() throws Exception {
-        if (!hasMidiSupport()) {
-            return; // Nothing to test
-        }
-
         if (!hasMidiSupport()) {
             return; // Nothing to test
         }
@@ -277,7 +273,6 @@ public class NativeMidiEchoTest {
         long timestamp = 0x0123765489ABFEDCL;
         writeMidi(mTestContext, buffer, 0, buffer.length);
 
-        Assert.assertTrue("Didn't get 1 send", getNumBytesSent(mTestContext) == buffer.length);
         Assert.assertEquals("Didn't get right number of bytes sent",
                 buffer.length, getNumBytesSent(mTestContext));
     }
@@ -285,9 +280,8 @@ public class NativeMidiEchoTest {
     @Test
     public void test_C_EchoSmallMessage() throws Exception {
         if (!hasMidiSupport()) {
-            return; // nothing to test
+            return;
         }
-
         final byte[] buffer = {
                 (byte) 0x93, 0x47, 0x52
         };
@@ -311,15 +305,14 @@ public class NativeMidiEchoTest {
     @Test
     public void test_D_EchoNMessages() throws Exception {
         if (!hasMidiSupport()) {
-            return; // nothing to test
+            return;
         }
-
         int numMessages = 100;
         byte[][] buffers = new byte[numMessages][];
         long timestamps[] = new long[numMessages];
         generateRandomBufers(buffers, timestamps, numMessages);
 
-        for(int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
+        for (int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
             writeMidiWithTimestamp(mTestContext, buffers[msgIndex], 0, buffers[msgIndex].length,
                     timestamps[msgIndex]);
         }
@@ -333,7 +326,7 @@ public class NativeMidiEchoTest {
                 numMessages, getNumReceivedMessages(mTestContext));
 
         // correct data & order?
-        for(int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
+        for (int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
             NativeMidiMessage message = getReceivedMessageAt(mTestContext, msgIndex);
             compareMessages(buffers[msgIndex], timestamps[msgIndex], message);
         }
@@ -342,17 +335,16 @@ public class NativeMidiEchoTest {
     @Test
     public void test_E_FlushMessages() throws Exception {
         if (!hasMidiSupport()) {
-            return; // nothing to test
+            return;
         }
-
         int numMessages = 7;
         byte[][] buffers = new byte[numMessages][];
         long timestamps[] = new long[numMessages];
         generateRandomBufers(buffers, timestamps, numMessages);
 
-        for(int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
+        for (int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
             writeMidiWithTimestamp(mTestContext, buffers[msgIndex], 0, buffers[msgIndex].length,
-              timestamps[msgIndex]);
+                    timestamps[msgIndex]);
         }
 
         // Wait for message to pass through echo service.
@@ -367,7 +359,7 @@ public class NativeMidiEchoTest {
                 numMessages, getNumReceivedMessages(mTestContext));
 
         // correct data & order?
-        for(int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
+        for (int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
             NativeMidiMessage message = getReceivedMessageAt(mTestContext, msgIndex);
             compareMessages(buffers[msgIndex], timestamps[msgIndex], message);
         }
@@ -376,9 +368,8 @@ public class NativeMidiEchoTest {
     @Test
     public void test_F_HugeMessage() throws Exception {
         if (!hasMidiSupport()) {
-            return; // nothing to test
+            return;
         }
-
         // Arbitrarily large message.
         int hugeMessageLen = 1024 * 10;
         byte[] buffer = generateRandomMessage(hugeMessageLen);
@@ -398,12 +389,11 @@ public class NativeMidiEchoTest {
     @Test
     public void test_G_NativeEchoTime() throws Exception {
         if (!hasMidiSupport()) {
-            return; // nothing to test
+            return;
         }
-
         final int numMessages = 10;
         final long maxLatencyNanos = 15 * NANOS_PER_MSEC; // generally < 3 msec on N6
-        byte[] buffer = { (byte) 0x93, 0, 64 };
+        byte[] buffer = {(byte) 0x93, 0, 64};
 
         // Send multiple messages in a burst.
         for (int index = 0; index < numMessages; index++) {
@@ -424,9 +414,10 @@ public class NativeMidiEchoTest {
             // If this test fails then there may be a problem with the thread scheduler
             // or there may be kernel activity that is blocking execution at the user level.
             Assert.assertTrue("MIDI round trip latency index:" + msgIndex
-                    + " too large, " + elapsedNanos
-                    + " nanoseconds " +
-                    "timestamp:" + message.timestamp + " received:" + message.timeReceived,
+                            + " too large, " + elapsedNanos
+                            + " nanoseconds " +
+                            "timestamp:" + message.timestamp +
+                            " received:" + message.timeReceived,
                     (elapsedNanos < maxLatencyNanos));
         }
     }
@@ -434,15 +425,14 @@ public class NativeMidiEchoTest {
     @Test
     public void test_H_EchoNMessages_PureNative() throws Exception {
         if (!hasMidiSupport()) {
-            return; // nothing to test
+            return;
         }
-
         int numMessages = 2;
         byte[][] buffers = new byte[numMessages][];
         long timestamps[] = new long[numMessages];
         generateRandomBufers(buffers, timestamps, numMessages);
 
-        for(int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
+        for (int msgIndex = 0; msgIndex < numMessages; msgIndex++) {
             writeMidiWithTimestamp(mTestContext, buffers[msgIndex], 0, buffers[msgIndex].length,
                     timestamps[msgIndex]);
         }
@@ -462,12 +452,11 @@ public class NativeMidiEchoTest {
     @Test
     public void test_I_NativeEchoTime_PureNative() throws Exception {
         if (!hasMidiSupport()) {
-            return; // nothing to test
+            return;
         }
-
         final int numMessages = 10;
         final long maxLatencyNanos = 15 * NANOS_PER_MSEC; // generally < 3 msec on N6
-        byte[] buffer = { (byte) 0x93, 0, 64 };
+        byte[] buffer = {(byte) 0x93, 0, 64};
 
         // Send multiple messages in a burst.
         for (int index = 0; index < numMessages; index++) {
