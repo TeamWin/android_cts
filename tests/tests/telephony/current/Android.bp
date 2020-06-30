@@ -30,8 +30,8 @@ android_test {
     defaults: ["cts_defaults"],
     libs: [
         "telephony-common",
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
         "framework-telephony-stubs",
         "voip-common",
     ],
