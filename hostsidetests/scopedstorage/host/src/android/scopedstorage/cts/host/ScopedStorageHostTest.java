@@ -246,27 +246,52 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void testManageExternalStorageCanCreateFilesAnywhere() throws Exception {
-        runDeviceTest("testManageExternalStorageCanCreateFilesAnywhere");
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testManageExternalStorageCanCreateFilesAnywhere");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
     }
 
     @Test
     public void testManageExternalStorageCanDeleteOtherAppsContents() throws Exception {
-        runDeviceTest("testManageExternalStorageCanDeleteOtherAppsContents");
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testManageExternalStorageCanDeleteOtherAppsContents");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
     }
 
     @Test
     public void testManageExternalStorageReaddir() throws Exception {
-        runDeviceTest("testManageExternalStorageReaddir");
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testManageExternalStorageReaddir");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
     }
 
     @Test
     public void testManageExternalStorageCanRenameOtherAppsContents() throws Exception {
-        runDeviceTest("testManageExternalStorageCanRenameOtherAppsContents");
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testManageExternalStorageCanRenameOtherAppsContents");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
     }
 
     @Test
     public void testManageExternalStorageCantReadWriteOtherAppExternalDir() throws Exception {
-        runDeviceTest("testManageExternalStorageCantReadWriteOtherAppExternalDir");
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testManageExternalStorageCantReadWriteOtherAppExternalDir");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
     }
 
     @Test
@@ -321,7 +346,12 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void testManageExternalStorageQueryOtherAppsFile() throws Exception {
-        runDeviceTest("testManageExternalStorageQueryOtherAppsFile");
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testManageExternalStorageQueryOtherAppsFile");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
     }
 
     @Test
@@ -423,7 +453,12 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void testWallpaperApisManageExternalStorageAppOp() throws Exception {
-        runDeviceTest("testWallpaperApisManageExternalStorageAppOp");
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testWallpaperApisManageExternalStorageAppOp");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
     }
 
     @Test
@@ -440,6 +475,18 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     private void revokePermissions(String... perms) throws Exception {
         for (String perm : perms) {
             executeShellCommand("pm revoke android.scopedstorage.cts " + perm);
+        }
+    }
+
+    private void allowAppOps(String... ops) throws Exception {
+        for (String op : ops) {
+            executeShellCommand("cmd appops set --uid android.scopedstorage.cts " + op + " allow");
+        }
+    }
+
+    private void denyAppOps(String... ops) throws Exception {
+        for (String op : ops) {
+            executeShellCommand("cmd appops set --uid android.scopedstorage.cts " + op + " deny");
         }
     }
 }
