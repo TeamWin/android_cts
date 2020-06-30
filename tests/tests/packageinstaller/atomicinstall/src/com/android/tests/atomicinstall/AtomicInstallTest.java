@@ -147,7 +147,8 @@ public class AtomicInstallTest {
                 try (PackageInstaller.Session childSession =
                              openPackageInstallerSession(childSessionId)) {
                     try {
-                        childSession.commit(LocalIntentSender.getIntentSender());
+                        LocalIntentSender sender = new LocalIntentSender();
+                        childSession.commit(sender.getIntentSender());
                         fail("Should not be able to commit a child session!");
                     } catch (IllegalStateException e) {
                         // ignore
@@ -172,8 +173,9 @@ public class AtomicInstallTest {
                 }
             }
 
-            parentSession.commit(LocalIntentSender.getIntentSender());
-            assertStatusSuccess(LocalIntentSender.getIntentSenderResult());
+            LocalIntentSender sender = new LocalIntentSender();
+            parentSession.commit(sender.getIntentSender());
+            assertStatusSuccess(sender.getResult());
         }
     }
 
