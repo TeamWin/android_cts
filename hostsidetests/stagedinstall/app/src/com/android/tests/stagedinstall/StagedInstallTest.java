@@ -1191,9 +1191,11 @@ public class StagedInstallTest {
         return Install.single(TestApp.A1).setStaged().createSession();
     }
 
-    private static void commitSession(int sessionId) throws IOException {
+    private static Intent commitSession(int sessionId) throws IOException, InterruptedException {
+        LocalIntentSender sender = new LocalIntentSender();
         InstallUtils.openPackageInstallerSession(sessionId)
-                .commit(LocalIntentSender.getIntentSender());
+                .commit(sender.getIntentSender());
+        return sender.getResult();
     }
 
     private static StageSessionResult stageDowngradeSingleApk(TestApp testApp) throws Exception {
@@ -1201,8 +1203,8 @@ public class StagedInstallTest {
         int sessionId = Install.single(testApp).setStaged().setRequestDowngrade().createSession();
         // Commit the session (this will start the installation workflow).
         Log.i(TAG, "Committing downgrade session for apk: " + testApp);
-        commitSession(sessionId);
-        return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
+        Intent result = commitSession(sessionId);
+        return new StageSessionResult(sessionId, result);
     }
 
     private static StageSessionResult stageSingleApk(String apkFileName, String outputFileName)
@@ -1218,8 +1220,8 @@ public class StagedInstallTest {
             writeApk(session, apkFileName, outputFileName);
             // Commit the session (this will start the installation workflow).
             Log.i(TAG, "Committing session for apk: " + apkFileName);
-            commitSession(sessionId);
-            return new StageSessionResult(sessionId, LocalIntentSender.getIntentSenderResult());
+            Intent result = commitSession(sessionId);
+            return new StageSessionResult(sessionId, result);
         }
     }
 
@@ -1228,17 +1230,15 @@ public class StagedInstallTest {
         int sessionId = Install.single(testApp).setStaged().createSession();
         // Commit the session (this will start the installation workflow).
         Log.i(TAG, "Committing session for apk: " + testApp);
-        commitSession(sessionId);
-        return new StageSessionResult(sessionId,
-                LocalIntentSender.getIntentSenderResult(sessionId));
+        Intent result = commitSession(sessionId);
+        return new StageSessionResult(sessionId, result);
     }
 
     private static StageSessionResult stageMultipleApks(TestApp... testApps) throws Exception {
         Log.i(TAG, "Staging an install of " + Arrays.toString(testApps));
         int multiPackageSessionId = Install.multi(testApps).setStaged().createSession();
-        commitSession(multiPackageSessionId);
-        return new StageSessionResult(
-                multiPackageSessionId, LocalIntentSender.getIntentSenderResult());
+        Intent result = commitSession(multiPackageSessionId);
+        return new StageSessionResult(multiPackageSessionId, result);
     }
 
     private static void assertSessionApplied(int sessionId) {

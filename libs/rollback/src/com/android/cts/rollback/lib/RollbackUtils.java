@@ -126,8 +126,9 @@ public class RollbackUtils {
         }
 
         RollbackManager rm = getRollbackManager();
-        rm.commitRollback(rollbackId, causes, LocalIntentSender.getIntentSender());
-        Intent result = LocalIntentSender.getIntentSenderResult();
+        LocalIntentSender sender = new LocalIntentSender();
+        rm.commitRollback(rollbackId, causes, sender.getIntentSender());
+        Intent result = sender.getResult();
         int status = result.getIntExtra(RollbackManager.EXTRA_STATUS,
                 RollbackManager.STATUS_FAILURE);
         if (status != RollbackManager.STATUS_SUCCESS) {
