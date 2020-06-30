@@ -1,4 +1,4 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,23 +16,26 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := CtsDevicePolicyManagerTestCases
+LOCAL_PACKAGE_NAME := CtsSeparateProfileChallengeApp
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 LOCAL_MODULE_TAGS := optional
 
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_JAVA_LIBRARIES := tools-common-prebuilt cts-tradefed tradefed compatibility-host-util
+LOCAL_JAVA_LIBRARIES := \
+    android.test.runner.stubs \
+    cts-junit \
+    android.test.base.stubs \
 
-LOCAL_CTS_TEST_PACKAGE := android.adminhostside
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    ctstestrunner-axt \
+    compatibility-device-util-axt \
+    ub-uiautomator
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts arcts vts general-tests sts
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts
 
-# Need the dependency to build/run the module solely by atest.
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_TESTCASES)/cts-current-api/current.api
-
-include $(BUILD_CTS_HOST_JAVA_LIBRARY)
-
-# Build the test APKs using their own makefiles
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(BUILD_CTS_PACKAGE)
