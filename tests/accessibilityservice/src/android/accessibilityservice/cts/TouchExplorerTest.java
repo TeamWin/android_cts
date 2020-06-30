@@ -291,28 +291,6 @@ public class TouchExplorerTest {
     }
 
     /**
-     * Test the case where we want to long click on the item that has accessibility focus. Note that
-     * this test does not request that double tap and hold be dispatched to the accessibility
-     * service, meaning that it will be handled by the framework and the view will be long clicked.
-     */
-    @Test
-    @AppModeFull
-    public void testDoubleTapAndHoldAccessibilityFocus_performsLongClick() {
-        if (!mHasTouchscreen || !mScreenBigEnough) return;
-        syncAccessibilityFocusToInputFocus();
-        dispatch(doubleTapAndHold(mTapLocation));
-        mHoverListener.assertNonePropagated();
-        // The click should not be delivered via touch events in this case.
-        mTouchListener.assertNonePropagated();
-        mService.assertPropagated(
-                TYPE_VIEW_ACCESSIBILITY_FOCUSED,
-                TYPE_TOUCH_INTERACTION_START,
-                TYPE_VIEW_LONG_CLICKED,
-                TYPE_TOUCH_INTERACTION_END);
-        mLongClickListener.assertLongClicked(mView);
-    }
-
-    /**
      * Test the case where we double tap and hold but there is no accessibility focus. Nothing
      * should happen.
      */
