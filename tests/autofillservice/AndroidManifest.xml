@@ -134,6 +134,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".augmented.AugmentedAuthActivity" />
         <activity android:name=".SimpleAfterLoginActivity" />
         <activity android:name=".SimpleBeforeLoginActivity" />
         <activity android:name=".NonAutofillableActivity" />
