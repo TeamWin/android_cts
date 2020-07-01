@@ -230,7 +230,6 @@ public class NativeMidiEchoTest {
     @After
     public void tearDown() throws Exception {
         if (!hasMidiSupport()) {
-            Assert.assertTrue("FEATURE_MIDI Not Supported.", false);
             return; // Not supported so don't test it.
         }
         tearDownEchoServer();
@@ -255,6 +254,9 @@ public class NativeMidiEchoTest {
 
     @Test
     public void test_AA_LibAMidiExists() throws Exception {
+        if (!hasMidiSupport()) {
+            return;
+        }
         Assert.assertTrue("libamidi.so not found.", hasLibAMidi());
     }
 
@@ -277,7 +279,6 @@ public class NativeMidiEchoTest {
         long timestamp = 0x0123765489ABFEDCL;
         writeMidi(mTestContext, buffer, 0, buffer.length);
 
-        Assert.assertTrue("Didn't get 1 send", getNumBytesSent(mTestContext) == buffer.length);
         Assert.assertEquals("Didn't get right number of bytes sent",
                 buffer.length, getNumBytesSent(mTestContext));
     }
