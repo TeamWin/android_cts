@@ -49,6 +49,9 @@ public class Constants {
     public static final String QUERIES_NOTHING_Q = PKG_BASE + "queries.nothing.q";
     /** A package that has no queries tag or permission to query any specific packages */
     public static final String QUERIES_NOTHING = PKG_BASE + "queries.nothing";
+    /** Another package that has no queries tag or permission to query any specific packages */
+    public static final String QUERIES_NOTHING_SEES_INSTALLER =
+            PKG_BASE + "queries.nothing.sees.installer";
     /** A package that queries nothing, but is part of a shared user */
     public static final String QUERIES_NOTHING_SHARED_USER = PKG_BASE + "queries.nothing.shareduid";
     /** A package that queries via wildcard action. */
@@ -84,6 +87,8 @@ public class Constants {
     private static final String BASE_PATH = "/data/local/tmp/cts/appenumeration/";
     public static final String TARGET_NO_API_APK = BASE_PATH + "CtsAppEnumerationNoApi.apk";
     public static final String TARGET_FILTERS_APK = BASE_PATH + "CtsAppEnumerationFilters.apk";
+    public static final String QUERIES_NOTHING_SEES_INSTALLER_APK =
+            BASE_PATH + "CtsAppEnumerationQueriesNothingSeesInstaller.apk";
 
     public static final String[] ALL_QUERIES_TARGETING_R_PACKAGES = {
             QUERIES_NOTHING,
