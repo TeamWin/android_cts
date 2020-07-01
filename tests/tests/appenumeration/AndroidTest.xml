@@ -66,6 +66,7 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAppEnumerationNoApi.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationNoApi.apk" />
         <option name="push" value="CtsAppEnumerationFilters.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationFilters.apk" />
+        <option name="push" value="CtsAppEnumerationQueriesNothingSeesInstaller.apk->/data/local/tmp/cts/appenumeration/CtsAppEnumerationQueriesNothingSeesInstaller.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
