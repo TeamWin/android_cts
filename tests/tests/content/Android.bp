@@ -26,8 +26,8 @@ android_test {
         "libnativehelper_compat_libc++",
     ],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
         "android.test.mock",
     ],
     static_libs: [

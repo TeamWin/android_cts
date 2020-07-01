@@ -26,5 +26,5 @@ android_test {
         "vts10",
         "general-tests",
     ],
-    libs: ["android.test.runner.stubs"] + ["android.test.base.stubs"],
+    libs: ["android.test.runner"] + ["android.test.base"],
 }

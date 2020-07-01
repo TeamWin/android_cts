@@ -26,7 +26,7 @@ java_library {
         "androidx.legacy_legacy-support-v4",
         "mockito-target",
         "compatibility-device-util-axt",
-        "android.test.runner.stubs",
+        "android.test.runner",
     ],
     sdk_version: "test_current",
 }

@@ -29,7 +29,7 @@ java_library {
         "testng",
     ],
 
-    libs: ["android.test.runner.stubs"],
+    libs: ["android.test.runner"],
     sdk_version: "test_current",
 
 }

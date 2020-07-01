@@ -15,8 +15,8 @@
 java_test_helper_library {
     name: "cts-location-gnss-tests",
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     static_libs: [
         "LocationCtsCommon",
@@ -48,8 +48,8 @@ android_test {
         "apache-commons-math",
     ],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     proto: {
         type: "nano",

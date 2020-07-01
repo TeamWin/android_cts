@@ -28,7 +28,7 @@ java_library {
         enabled: false,
     },
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "junit",
     ],
     static_libs: [

@@ -16,8 +16,8 @@ android_test {
     name: "CtsLocationPolicyApp",
     defaults: ["cts_defaults"],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     static_libs: [
         "androidx.test.rules",
