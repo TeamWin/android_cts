@@ -20,6 +20,7 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.pm.PackageManager
 import android.support.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 
@@ -35,6 +36,9 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
 
     @Test
     fun testTapjackGrantDialog() {
+        // PermissionController for television uses a floating window.
+        assumeFalse(isTv)
+
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
         requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {}
 
