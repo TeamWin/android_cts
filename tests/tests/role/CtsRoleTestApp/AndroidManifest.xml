@@ -18,12 +18,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      package="android.app.role.cts.app">
 
-    <uses-permission android:name="android.permission.SEND_SMS"/>
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application android:label="CtsRoleTestApp">
 
-        <activity android:name=".RequestRoleActivity"
-             android:exported="true"/>
+        <activity
+            android:name=".RequestRoleActivity"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST"/>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
 
         <activity android:name=".IsRoleHeldActivity"
              android:exported="true"/>
