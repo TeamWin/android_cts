@@ -15,7 +15,7 @@
 android_test {
     name: "CtsMockingDebuggableTestCases",
     defaults: ["cts_defaults"],
-    libs: ["android.test.runner.stubs"],
+    libs: ["android.test.runner"],
     static_libs: [
         "mockito-target",
         "androidx.test.rules",

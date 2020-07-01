@@ -20,6 +20,6 @@ java_library {
     libs: [
         "compatibility-device-util-axt",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
 }

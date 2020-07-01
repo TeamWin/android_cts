@@ -27,8 +27,8 @@ android_test {
     ],
     libs: [
         "org.apache.http.legacy",
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     srcs: ["src/**/*.java"],
     sdk_version: "current",

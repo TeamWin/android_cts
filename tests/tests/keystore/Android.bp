@@ -40,8 +40,8 @@ android_test {
     ],
     libs: [
         "bouncycastle-unbundled",
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     static_libs: [
         "androidx.test.rules",
