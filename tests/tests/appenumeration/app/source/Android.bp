@@ -32,6 +32,18 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsAppEnumerationQueriesNothingSeesInstaller",
+    manifest: "AndroidManifest-queriesNothing-seesInstaller.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
     name: "CtsAppEnumerationQueriesActivityViaAction",
     manifest: "AndroidManifest-queriesActivityAction.xml",
     defaults: ["CtsAppEnumerationQueriesDefaults"],
