@@ -25,7 +25,7 @@ android_test {
         "platform-test-annotations",
     ],
 
-    libs: ["android.test.runner.stubs"],
+    libs: ["android.test.runner"],
 
     srcs: ["src/**/*.java"],
 

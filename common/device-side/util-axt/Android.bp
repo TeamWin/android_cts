@@ -32,8 +32,8 @@ java_library_static {
     ],
 
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
 
     jarjar_rules: "protobuf-jarjar-rules.txt",
