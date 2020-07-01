@@ -86,19 +86,31 @@ public class TestApp {
         mGetResourceStream = (res) -> TestApp.class.getClassLoader().getResourceAsStream(res);
     }
 
-    public TestApp(String name, String packageName, long versionCode, boolean isApex, File path) {
+    public TestApp(String name, String packageName, long versionCode, boolean isApex,
+            File[] paths) {
         mName = name;
         mPackageName = packageName;
         mVersionCode = versionCode;
-        mResourceNames = new String[] { path.getName() };
+        mResourceNames = new String[paths.length];
+        for (int i = 0; i < paths.length; ++i) {
+            mResourceNames[i] = paths[i].getName();
+        }
         mIsApex = isApex;
         mGetResourceStream = (res) -> {
             try {
-                return new FileInputStream(path);
-            } catch (FileNotFoundException e) {
-                return null;
+                for (int i = 0; i < paths.length; ++i) {
+                    if (paths[i].getName().equals(res)) {
+                        return new FileInputStream(paths[i]);
+                    }
+                }
+            } catch (FileNotFoundException ignore) {
             }
+            return null;
         };
+    }
+
+    public TestApp(String name, String packageName, long versionCode, boolean isApex, File path) {
+        this(name, packageName, versionCode, isApex, new File[]{ path });
     }
 
     public String getPackageName() {

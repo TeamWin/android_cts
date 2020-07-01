@@ -385,11 +385,6 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testCantSetAttrOtherAppsFile() throws Exception {
-        runDeviceTest("testCantSetAttrOtherAppsFile");
-    }
-
-    @Test
     public void testAccess_file() throws Exception {
         grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
         try {

@@ -106,9 +106,10 @@ public final class DowngradeTest {
     public void action_downgradeFail_phase() throws Exception {
         Install install = getParameterizedInstall(VERSION_CODE_DOWNGRADE);
         int sessionId = install.setRequestDowngrade().createSession();
+        LocalIntentSender sender = new LocalIntentSender();
         InstallUtils.openPackageInstallerSession(sessionId)
-                .commit(LocalIntentSender.getIntentSender());
-        assertThat(LocalIntentSender.getIntentSenderResult(sessionId)
+                .commit(sender.getIntentSender());
+        assertThat(sender.getResult()
                 .getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE))
                 .isEqualTo(PackageInstaller.STATUS_SUCCESS);
         assertThat(mSessionRule.retrieveSessionInfo(sessionId).isStagedSessionFailed()).isTrue();

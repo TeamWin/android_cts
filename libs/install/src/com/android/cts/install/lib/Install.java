@@ -154,8 +154,9 @@ public class Install {
         int sessionId = createSession();
         try (PackageInstaller.Session session =
                      InstallUtils.openPackageInstallerSession(sessionId)) {
-            session.commit(LocalIntentSender.getIntentSender());
-            Intent result = LocalIntentSender.getIntentSenderResult();
+            LocalIntentSender sender = new LocalIntentSender();
+            session.commit(sender.getIntentSender());
+            Intent result = sender.getResult();
             int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
                     PackageInstaller.STATUS_FAILURE);
             if (status == -1) {
