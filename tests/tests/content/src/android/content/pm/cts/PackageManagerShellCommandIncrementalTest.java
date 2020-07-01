@@ -63,6 +63,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
     private static final String TEST_APK = "HelloWorld5.apk";
+    private static final String TEST_APK_PROFILEABLE = "HelloWorld5Profileable.apk";
     private static final String TEST_APK_SPLIT = "HelloWorld5_hdpi-v4.apk";
 
     private static UiAutomation getUiAutomation() {
@@ -233,7 +234,17 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
-    public void testInstallSysTrace() throws Exception {
+    public void testInstallSysTraceDebuggable() throws Exception {
+        doTestInstallSysTrace(TEST_APK);
+    }
+
+    @LargeTest
+    @Test
+    public void testInstallSysTraceProfileable() throws Exception {
+        doTestInstallSysTrace(TEST_APK_PROFILEABLE);
+    }
+
+    private void doTestInstallSysTrace(String testApk) throws Exception {
         // Async atrace dump uses less resources but requires periodic pulls.
         // Overall timeout of 30secs in 100ms intervals should be enough.
         final int atraceDumpIterations = 300;
@@ -250,7 +261,7 @@ public class PackageManagerShellCommandIncrementalTest {
                                 "atrace --async_dump");
                         try (InputStream inputStream =
                                      new ParcelFileDescriptor.AutoCloseInputStream(
-                                stdout)) {
+                                             stdout)) {
                             final String found = waitForSubstring(inputStream, expected);
                             if (!TextUtils.isEmpty(found)) {
                                 result.write(found.getBytes());
@@ -269,7 +280,7 @@ public class PackageManagerShellCommandIncrementalTest {
         readFromProcess.start();
 
         for (int i = 0; i < 3; ++i) {
-            installPackage(TEST_APK);
+            installPackage(testApk);
             assertTrue(isAppInstalled(TEST_APP_PACKAGE));
             uninstallPackageSilently(TEST_APP_PACKAGE);
         }
