@@ -51,7 +51,6 @@ public final class LogHelper {
             String line = in.nextLine();
             if (line.startsWith("I/" + tag)) {
                 testString = line.split(":")[1].trim();
-                break;
             }
         }
         device.executeAdbCommand("logcat", "-c");
@@ -90,7 +89,6 @@ public final class LogHelper {
                             Arrays.asList(in.nextLine().split(":")[1].trim().split(", "));
                     mSupportedAudioFormats =
                             Lists.transform(mFormatsLine, fl -> Integer.parseInt(fl));
-                    break;
                 }
             }
         }
