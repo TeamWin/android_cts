@@ -16,9 +16,9 @@ android_test {
     name: "CtsAppTestCases",
     defaults: ["cts_defaults"],
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",
@@ -47,9 +47,9 @@ android_test {
     name: "CtsDownloadManagerApi28",
     defaults: ["cts_defaults"],
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",
@@ -82,9 +82,9 @@ android_test {
     name: "CtsDownloadManagerLegacy",
     defaults: ["cts_defaults"],
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",

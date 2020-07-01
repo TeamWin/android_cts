@@ -22,8 +22,8 @@ android_test {
         "compatibility-device-util-axt",
     ],
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
     srcs: ["src/**/*.java"],
     // Using EGL_RECORDABLE_ANDROID requires latest

@@ -16,11 +16,11 @@ android_test_helper_app {
     name: "CtsAppTestStubs",
     defaults: ["cts_support_defaults"],
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "telephony-common",
         "voip-common",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",
@@ -46,11 +46,11 @@ android_test_helper_app {
     name: "CtsAppTestStubsApp1",
     defaults: ["cts_support_defaults"],
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "telephony-common",
         "voip-common",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",
@@ -79,11 +79,11 @@ android_test {
     name: "CtsAppTestStubsApp2",
     defaults: ["cts_support_defaults"],
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "telephony-common",
         "voip-common",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",
@@ -112,11 +112,11 @@ android_test_helper_app {
     name: "CtsAppTestStubsApp3",
     defaults: ["cts_support_defaults"],
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "telephony-common",
         "voip-common",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",

@@ -24,7 +24,7 @@ android_test_helper_app {
         "general-tests",
     ],
     srcs: ["src/**/*.java"],
-    libs: ["android.test.runner.stubs"],
+    libs: ["android.test.runner"],
     static_libs: [
         "compatibility-device-util-axt",
         "ctstestrunner-axt",

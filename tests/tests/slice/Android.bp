@@ -21,7 +21,7 @@ android_test {
         "vts10",
         "general-tests",
     ],
-    libs: ["android.test.runner.stubs"],
+    libs: ["android.test.runner"],
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
