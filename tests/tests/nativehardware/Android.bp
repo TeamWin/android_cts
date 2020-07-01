@@ -25,7 +25,7 @@ android_test {
     ],
     libs: [
         "platform-test-annotations",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",

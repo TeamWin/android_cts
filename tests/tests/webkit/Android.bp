@@ -16,9 +16,9 @@ android_test {
     name: "CtsWebkitTestCases",
     defaults: ["cts_defaults"],
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",

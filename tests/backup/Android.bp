@@ -17,9 +17,9 @@ android_test {
     defaults: ["cts_defaults"],
     compile_multilib: "both",
     libs: [
-        "android.test.runner.stubs",
+        "android.test.runner",
         "org.apache.http.legacy",
-        "android.test.base.stubs",
+        "android.test.base",
     ],
     static_libs: [
         "compatibility-device-util-axt",

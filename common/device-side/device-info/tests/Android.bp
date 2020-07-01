@@ -23,8 +23,8 @@ java_test {
     ],
 
     libs: [
-        "android.test.runner.stubs",
-        "android.test.base.stubs",
+        "android.test.runner",
+        "android.test.base",
     ],
 
     sdk_version: "test_current",
