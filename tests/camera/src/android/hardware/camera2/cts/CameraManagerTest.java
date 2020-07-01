@@ -190,7 +190,8 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
         }
 
         // Test an external camera is connected if FEATURE_CAMERA_EXTERNAL is advertised
-        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_EXTERNAL)) {
+        if (!mAdoptShellPerm &&
+                mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_EXTERNAL)) {
             assertTrue("External camera is not connected on device with FEATURE_CAMERA_EXTERNAL",
                     externalCameraConnected);
         }
