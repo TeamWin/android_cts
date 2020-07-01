@@ -64,6 +64,7 @@ public class PackageManagerShellCommandIncrementalTest {
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
     private static final String TEST_APK = "HelloWorld5.apk";
     private static final String TEST_APK_PROFILEABLE = "HelloWorld5Profileable.apk";
+    private static final String TEST_APK_SHELL = "HelloWorldShell.apk";
     private static final String TEST_APK_SPLIT = "HelloWorld5_hdpi-v4.apk";
 
     private static UiAutomation getUiAutomation() {
@@ -162,6 +163,16 @@ public class PackageManagerShellCommandIncrementalTest {
     public void testInstallWithIdSig() throws Exception {
         installPackage(TEST_APK);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testSystemInstallWithIdSig() throws Exception {
+        final String baseName = TEST_APK_SHELL;
+        final File file = new File(createApkPath(baseName));
+        assertEquals(
+                "Failure [INSTALL_FAILED_SESSION_INVALID: Incremental installation of this "
+                        + "package is not allowed.]\n",
+                executeShellCommand("pm install-incremental -t -g " + file.getPath()));
     }
 
     @Test

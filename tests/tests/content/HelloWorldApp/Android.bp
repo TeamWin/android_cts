@@ -73,3 +73,18 @@ android_test {
     ],
     v4_signature: true,
 }
+
+//-----------------------------------------------------------
+android_test {
+    name: "HelloWorldShell",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src_shell/**/*.java"],
+    manifest: "AndroidManifestShell.xml",
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+    v4_signature: true,
+}
