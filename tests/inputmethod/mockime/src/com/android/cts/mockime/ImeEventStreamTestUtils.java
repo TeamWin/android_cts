@@ -340,4 +340,21 @@ public final class ImeEventStreamTestUtils {
             throw new RuntimeException("notExpectEvent failed: " + stream.dump(), e);
         }
     }
+
+    /**
+     * Clear all events with {@code eventName} in given {@code stream} and returns a forked
+     * {@link ImeEventStream} without events with {@code eventName}.
+     * <p>It is used to make sure previous events influence the test. </p>
+     *
+     * @param stream {@link ImeEventStream} to be cleared
+     * @param eventName The targeted cleared event name
+     * @return A forked {@link ImeEventStream} without event with {@code eventName}
+     */
+    public static ImeEventStream clearAllEvents(@NonNull ImeEventStream stream,
+            @NonNull String eventName) {
+        while (stream.seekToFirst(event -> eventName.equals(event.getEventName())).isPresent()) {
+            stream.skip(1);
+        }
+        return stream.copy();
+    }
 }
