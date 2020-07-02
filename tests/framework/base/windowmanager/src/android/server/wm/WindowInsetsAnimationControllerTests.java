@@ -168,12 +168,21 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @After
     public void tearDown() throws Throwable {
+        runOnUiThread(() -> {});  // Fence to make sure we dispatched everything.
+        mCallbacks.forEach(VerifyingCallback::assertNoRunningAnimations);
+
+        // Unregistering VerifyingCallback as tearing down the MockIme also triggers UI events,
+        // which can trigger assertion failures in VerifyingCallback otherwise.
+        runOnUiThread(() -> {
+            mCallbacks.clear();
+            mRootView.setWindowInsetsAnimationCallback(null);
+        });
+
+        // Now it should be safe to reset the IME to the default one.
         if (mMockImeSession != null) {
             mMockImeSession.close();
             mMockImeSession = null;
         }
-        runOnUiThread(() -> {});  // Fence to make sure we dispatched everything.
-        mCallbacks.forEach(VerifyingCallback::assertNoRunningAnimations);
     }
 
     private void assumeTestCompatibility() {
