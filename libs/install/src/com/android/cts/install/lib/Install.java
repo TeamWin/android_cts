@@ -157,15 +157,7 @@ public class Install {
             LocalIntentSender sender = new LocalIntentSender();
             session.commit(sender.getIntentSender());
             Intent result = sender.getResult();
-            int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
-                    PackageInstaller.STATUS_FAILURE);
-            if (status == -1) {
-                throw new AssertionError("PENDING USER ACTION");
-            } else if (status > 0) {
-                String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-                throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
-            }
-
+            InstallUtils.assertStatusSuccess(result);
             if (mIsStaged) {
                 InstallUtils.waitForSessionReady(sessionId);
             }

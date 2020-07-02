@@ -38,8 +38,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * These tests use a similar structure to {@link StagedInstallTest}. See
  * {@link StagedInstallTest} documentation for reference.
@@ -67,53 +65,38 @@ public class ApexShimValidationTest {
                 .dropShellPermissionIdentity();
     }
 
-    @Before
-    public void clearBroadcastReceiver() {
-        SessionUpdateBroadcastReceiver.sessionBroadcasts.clear();
-    }
-
     @Test
     public void testRejectsApexWithAdditionalFile_Commit() throws Exception {
         int sessionId = stageApex("com.android.apex.cts.shim.v2_additional_file.apex");
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertThat(info.getSessionId()).isEqualTo(sessionId);
+        PackageInstaller.SessionInfo info = InstallUtils.waitForSession(sessionId);
         assertThat(info).isStagedSessionFailed();
     }
 
     @Test
     public void testRejectsApexWithAdditionalFolder_Commit() throws Exception {
         int sessionId = stageApex("com.android.apex.cts.shim.v2_additional_folder.apex");
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertThat(info.getSessionId()).isEqualTo(sessionId);
+        PackageInstaller.SessionInfo info = InstallUtils.waitForSession(sessionId);
         assertThat(info).isStagedSessionFailed();
     }
 
     @Test
     public void testRejectsApexWithPostInstallHook_Commit() throws Exception {
         int sessionId = stageApex("com.android.apex.cts.shim.v2_with_post_install_hook.apex");
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertThat(info.getSessionId()).isEqualTo(sessionId);
+        PackageInstaller.SessionInfo info = InstallUtils.waitForSession(sessionId);
         assertThat(info).isStagedSessionFailed();
     }
 
     @Test
     public void testRejectsApexWithPreInstallHook_Commit() throws Exception {
         int sessionId = stageApex("com.android.apex.cts.shim.v2_with_pre_install_hook.apex");
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertThat(info.getSessionId()).isEqualTo(sessionId);
+        PackageInstaller.SessionInfo info = InstallUtils.waitForSession(sessionId);
         assertThat(info).isStagedSessionFailed();
     }
 
     @Test
     public void testRejectsApexWrongSHA_Commit() throws Exception {
         int sessionId = stageApex("com.android.apex.cts.shim.v2_wrong_sha.apex");
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertThat(info.getSessionId()).isEqualTo(sessionId);
+        PackageInstaller.SessionInfo info = InstallUtils.waitForSession(sessionId);
         assertThat(info).isStagedSessionFailed();
     }
 
