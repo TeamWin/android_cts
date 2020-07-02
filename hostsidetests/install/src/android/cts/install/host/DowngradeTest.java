@@ -53,13 +53,13 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
     private static final String ARRANGE_PHASE = "arrange_phase";
     private static final String ASSERT_POST_ARRANGE_PHASE = "assert_postArrange_phase";
     private static final String ACTION_PHASE = "action_phase";
-    private static final String ACTION_DOWNGRADE_FAIL_PHASE = "action_downgradeFail_phase";
     private static final String ASSERT_DOWNGRADE_SUCCESS_PHASE = "assert_downgradeSuccess_phase";
-    private static final String ASSERT_DOWNGRADE_FAIL_PHASE = "assert_downgradeFail_phase";
     private static final String ASSERT_POST_REBOOT_PHASE = "assert_postReboot_phase";
     private static final String ASSERT_PRE_REBOOT_PHASE = "assert_preReboot_phase";
-    private static final String ASSERT_COMMIT_NOT_REQUESTED_DOWNGRADE =
-            "assert_commitNotRequestedDowngrade_phase";
+    private static final String ASSERT_DOWNGRADE_NOT_ALLOWED_PHASE =
+            "assert_downgradeNotAllowed_phase";
+    private static final String ASSERT_DOWNGRADE_NOT_REQUESTED_PHASE =
+            "assert_downgradeNotRequested_phase";
 
     @Rule
     public TestAppRule mTestAppRule = new TestAppRule(this);
@@ -97,10 +97,20 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testNonStagedDowngrade() throws Exception {
+    public void testNonStagedDowngrade_downgradeNotRequested_fails() throws Exception {
         // Apex should not be committed in non-staged install, such logic covered in InstallTest.
         assumeFalse(mInstallType.containsApex());
+        runPhase(ARRANGE_PHASE);
+        runPhase(ASSERT_POST_ARRANGE_PHASE);
 
+        runPhase(ASSERT_DOWNGRADE_NOT_REQUESTED_PHASE);
+    }
+
+    @Test
+    public void testNonStagedDowngrade_debugBuild() throws Exception {
+        // Apex should not be committed in non-staged install, such logic covered in InstallTest.
+        assumeFalse(mInstallType.containsApex());
+        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
         runPhase(ARRANGE_PHASE);
         runPhase(ASSERT_POST_ARRANGE_PHASE);
 
@@ -110,13 +120,24 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testNonStagedDowngrade_userBuild_fail() throws Exception {
+        // Apex should not be committed in non-staged install, such logic covered in InstallTest.
+        assumeFalse(mInstallType.containsApex());
+        assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+        runPhase(ARRANGE_PHASE);
+        runPhase(ASSERT_POST_ARRANGE_PHASE);
+
+        runPhase(ASSERT_DOWNGRADE_NOT_ALLOWED_PHASE);
+    }
+
+    @Test
     @LargeTest
     public void testStagedDowngrade_downgradeNotRequested_fails() throws Exception {
         runStagedPhase(ARRANGE_PHASE);
         getDevice().reboot();
         runStagedPhase(ASSERT_POST_ARRANGE_PHASE);
 
-        runStagedPhase(ASSERT_COMMIT_NOT_REQUESTED_DOWNGRADE);
+        runStagedPhase(ASSERT_DOWNGRADE_NOT_REQUESTED_PHASE);
     }
 
     @Test
@@ -136,15 +157,13 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
 
     @Test
     @LargeTest
-    public void testStagedDowngrade_userBuild_fails() throws Exception {
+    public void testStagedDowngrade_userBuild_fail() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
         runStagedPhase(ARRANGE_PHASE);
         getDevice().reboot();
         runStagedPhase(ASSERT_POST_ARRANGE_PHASE);
 
-        runStagedPhase(ACTION_DOWNGRADE_FAIL_PHASE);
-
-        runStagedPhase(ASSERT_DOWNGRADE_FAIL_PHASE);
+        runStagedPhase(ASSERT_DOWNGRADE_NOT_ALLOWED_PHASE);
     }
 
     private void runPhase(String phase) throws DeviceNotAvailableException {
