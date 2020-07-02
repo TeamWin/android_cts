@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,10 +11,9 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ * limitations under the License
  */
-
-package com.android.cts.verifier.tv.display;
+package com.android.cts.verifier.tv.audio;
 
 import android.view.View;
 
@@ -24,42 +23,31 @@ import com.android.cts.verifier.tv.TestStepBase;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /** Test step containing instruction to the user and a button. */
-public abstract class OneButtonTestStep extends TestStepBase {
-
+public abstract class TestStep extends TestStepBase {
     protected View mButtonView;
 
     @StringRes private int mButtonStringId;
-
-    @StringRes private int mStepNameStringId;
 
     /**
      * Constructs a test step containing instruction to the user and a button.
      *
      * @param context The test activity which this test step is part of.
-     * @param instructionText The text of the test instruction visible to the user.
-     * @param stepNameStringId Id of a string resource containing human readable name of this step
-     *     to be used in logs.
-     * @param buttonStringId Id of a string resource containing the text of the button.
+     * @param instructionText Text of the test instruction visible to the user.
+     * @param buttonTextId Id of a string resource containing the text of the button.
      */
-    public OneButtonTestStep(
-            TvAppVerifierActivity context,
-            @StringRes int stepNameStringId,
-            String instructionText,
-            @StringRes int buttonStringId) {
+    public TestStep(
+            TvAppVerifierActivity context, String instructionText, @StringRes int buttonStringId) {
         super(context, instructionText);
-        mStepNameStringId = stepNameStringId;
         mButtonStringId = buttonStringId;
     }
 
-    @Override
+    /** Creates the View for this test step in the context {@link TvAppVerifierActivity}. */
     public void createUiElements() {
         super.createUiElements();
         mButtonView =
                 mContext.createButtonItem(
                         mButtonStringId,
                         (View view) -> {
-                            String stepName = mContext.getString(mStepNameStringId);
-                            appendInfoDetails("Running test step %s...", stepName);
                             onButtonClickRunTest();
                         });
     }
@@ -74,6 +62,10 @@ public abstract class OneButtonTestStep extends TestStepBase {
         TvAppVerifierActivity.setButtonEnabled(mButtonView, false);
     }
 
-    /** Test logic to be executed when the button is pressed. */
-    protected abstract void onButtonClickRunTest();
+    public abstract boolean runTest();
+
+    private void onButtonClickRunTest() {
+        disableInteractivity();
+        super.done();
+    }
 }
