@@ -1134,4 +1134,13 @@ public class TestUtils {
         }
         throw new TimeoutException(errorMessage);
     }
+
+    /**
+     * Polls for all files access to be allowed.
+     */
+    public static void pollForManageExternalStorageAllowed() throws Exception {
+        pollForCondition(
+                () -> Environment.isExternalStorageManager(),
+                "Timed out while waiting for MANAGE_EXTERNAL_STORAGE");
+    }
 }
