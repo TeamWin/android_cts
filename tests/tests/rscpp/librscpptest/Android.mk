@@ -40,12 +40,12 @@ LOCAL_SRC_FILES += \
     noroot.rscript \
     vector.rscript
 
-LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 LOCAL_C_INCLUDES += frameworks/rs/cpp
 LOCAL_C_INCLUDES += frameworks/rs
 
 LOCAL_CFLAGS := -Wall -Werror -Wno-unused-parameter
 
+LOCAL_HEADER_LIBRARIES := jni_headers
 LOCAL_SHARED_LIBRARIES := libdl liblog
 LOCAL_STATIC_LIBRARIES := libRScpp_static
 
