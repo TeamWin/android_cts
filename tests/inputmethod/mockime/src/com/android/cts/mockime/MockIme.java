@@ -36,6 +36,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Process;
 import android.os.ResultReceiver;
+import android.os.StrictMode;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
@@ -44,6 +45,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
@@ -59,9 +61,9 @@ import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.TextView;
 import android.widget.inline.InlinePresentationSpec;
 
@@ -288,8 +290,7 @@ public final class MockIme extends InputMethodService {
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "getDisplayId":
-                        return getSystemService(WindowManager.class)
-                                .getDefaultDisplay().getDisplayId();
+                        return getDisplay().getDisplayId();
                     case "verifyLayoutInflaterContext":
                         return getLayoutInflater().getContext() == this;
                     case "setHeight":
@@ -299,6 +300,17 @@ public final class MockIme extends InputMethodService {
                     case "setInlineSuggestionsExtras":
                         mInlineSuggestionsExtras = command.getExtras();
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    case "verifyGetDisplay":
+                        Context configContext = createConfigurationContext(new Configuration());
+                        return getDisplay() != null && configContext.getDisplay() != null;
+                    case "verifyGetWindowManager":
+                        configContext = createConfigurationContext(new Configuration());
+                        return getSystemService(WindowManager.class) != null
+                                && configContext.getSystemService(WindowManager.class) != null;
+                    case "verifyGetViewConfiguration":
+                            configContext = createConfigurationContext(new Configuration());
+                            return ViewConfiguration.get(this) != null
+                                    && ViewConfiguration.get(configContext) != null;
                 }
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;
@@ -367,6 +379,17 @@ public final class MockIme extends InputMethodService {
         }
         mClientPackageName.set(mSettings.getClientPackageName());
         mImeEventActionName.set(mSettings.getEventCallbackActionName());
+
+        // TODO(b/159593676): consider to detect more violations
+        if (mSettings.isStrictModeEnabled()) {
+            StrictMode.setVmPolicy(
+                    new StrictMode.VmPolicy.Builder()
+                            .detectIncorrectContextUse()
+                            .penaltyLog()
+                            .penaltyListener(Runnable::run,
+                                    v -> getTracer().onStrictModeViolated(() -> {}))
+                            .build());
+        }
 
         getTracer().onCreate(() -> {
             super.onCreate();
@@ -1026,6 +1049,11 @@ public final class MockIme extends InputMethodService {
             final Bundle arguments = new Bundle();
             imeLayoutInfo.writeToBundle(arguments);
             recordEventInternal("onInputViewLayoutChanged", runnable, arguments);
+        }
+
+        void onStrictModeViolated(@NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            recordEventInternal("onStrictModeViolated", runnable, arguments);
         }
 
         InlineSuggestionsRequest onCreateInlineSuggestionsRequest(
