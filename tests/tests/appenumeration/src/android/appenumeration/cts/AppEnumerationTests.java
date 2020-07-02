@@ -29,7 +29,6 @@ import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
-import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
@@ -39,6 +38,8 @@ import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PROVIDER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_Q;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
 import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
 import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_ACTION;
@@ -79,6 +80,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
@@ -96,6 +98,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.core.IsNull;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -104,6 +107,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
@@ -309,6 +313,21 @@ public class AppEnumerationTests {
     public void queriesPackage_canSeeTarget() throws Exception {
         assertVisible(QUERIES_PACKAGE, TARGET_NO_API);
     }
+
+    @Test
+    public void queriesNothing_canSeeInstaller() throws Exception {
+        runShellCommand("pm uninstall " + QUERIES_NOTHING_SEES_INSTALLER);
+        runShellCommand("pm install"
+                + " -i " + TARGET_NO_API
+                + " --pkg " + QUERIES_NOTHING_SEES_INSTALLER
+                + " " + QUERIES_NOTHING_SEES_INSTALLER_APK);
+        try {
+            assertVisible(QUERIES_NOTHING_SEES_INSTALLER, TARGET_NO_API);
+        } finally {
+            runShellCommand("pm uninstall " + QUERIES_NOTHING_SEES_INSTALLER);
+        }
+    }
+
 
     @Test
     public void whenStarted_canSeeCaller() throws Exception {

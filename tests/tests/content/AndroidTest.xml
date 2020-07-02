@@ -54,6 +54,8 @@
         <option name="push-file" key="HelloWorld5_xxhdpi-v4.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld5_xxhdpi-v4.apk.idsig" />
         <option name="push-file" key="HelloWorld5_xxxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld5_xxxhdpi-v4.apk" />
         <option name="push-file" key="HelloWorld5_xxxhdpi-v4.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld5_xxxhdpi-v4.apk.idsig" />
+        <option name="push-file" key="HelloWorld5Profileable.apk" value="/data/local/tmp/cts/content/HelloWorld5Profileable.apk" />
+        <option name="push-file" key="HelloWorld5Profileable.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld5Profileable.apk.idsig" />
         <option name="push-file" key="HelloWorld7.apk" value="/data/local/tmp/cts/content/HelloWorld7.apk" />
         <option name="push-file" key="HelloWorld7.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld7.apk.idsig" />
         <option name="push-file" key="HelloWorld7_hdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_hdpi-v4.apk" />
@@ -66,6 +68,8 @@
         <option name="push-file" key="HelloWorld7_xxhdpi-v4.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld7_xxhdpi-v4.apk.idsig" />
         <option name="push-file" key="HelloWorld7_xxxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld7_xxxhdpi-v4.apk" />
         <option name="push-file" key="HelloWorld7_xxxhdpi-v4.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld7_xxxhdpi-v4.apk.idsig" />
+        <option name="push-file" key="HelloWorldShell.apk" value="/data/local/tmp/cts/content/HelloWorldShell.apk" />
+        <option name="push-file" key="HelloWorldShell.apk.idsig" value="/data/local/tmp/cts/content/HelloWorldShell.apk.idsig" />
       </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
