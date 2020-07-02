@@ -78,6 +78,7 @@ public abstract class InputTestCase {
     public void setUp() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivityRule.getActivity().setInputCallback(mInputListener);
+        mActivityRule.getActivity().clearUnhandleKeyCode();
         mDecorView = mActivityRule.getActivity().getWindow().getDecorView();
         mParser = new HidJsonParser(mInstrumentation.getTargetContext());
         int hidDeviceId = mParser.readDeviceId(mRegisterResourceId);
@@ -212,31 +213,33 @@ public abstract class InputTestCase {
 
     private InputEvent waitForEvent() {
         try {
-            return mEvents.poll(5, TimeUnit.SECONDS);
+            return mEvents.poll(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             failWithMessage("unexpectedly interrupted while waiting for InputEvent");
             return null;
         }
     }
 
+    // Ignore Motion event received during the 5 seconds timeout period. Return on the first Key
+    // event received.
     private KeyEvent waitForKey() {
-        InputEvent event = waitForEvent();
-        if (event instanceof KeyEvent) {
-            return (KeyEvent) event;
-        }
-        if (event instanceof MotionEvent) {
-            failWithMessage("Instead of a key event, received " + event);
+        for (int i = 0; i < 5; i++) {
+            InputEvent event = waitForEvent();
+            if (event instanceof KeyEvent) {
+                return (KeyEvent) event;
+            }
         }
         return null;
     }
 
+    // Ignore Key event received during the 5 seconds timeout period. Return on the first Motion
+    // event received.
     private MotionEvent waitForMotion() {
-        InputEvent event = waitForEvent();
-        if (event instanceof MotionEvent) {
-            return (MotionEvent) event;
-        }
-        if (event instanceof KeyEvent) {
-            failWithMessage("Instead of a motion event, received " + event);
+        for (int i = 0; i < 5; i++) {
+            InputEvent event = waitForEvent();
+            if (event instanceof MotionEvent) {
+                return (MotionEvent) event;
+            }
         }
         return null;
     }
