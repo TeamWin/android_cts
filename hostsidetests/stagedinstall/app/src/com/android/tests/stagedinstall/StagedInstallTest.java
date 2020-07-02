@@ -16,6 +16,8 @@
 
 package com.android.tests.stagedinstall;
 
+import static com.android.cts.install.lib.InstallUtils.assertStatusSuccess;
+import static com.android.cts.install.lib.InstallUtils.getInstalledVersion;
 import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
 import static com.android.cts.shim.lib.ShimPackage.DIFFERENT_APEX_PACKAGE_NAME;
 import static com.android.cts.shim.lib.ShimPackage.NOT_PRE_INSTALL_APEX_PACKAGE_NAME;
@@ -61,12 +63,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -835,7 +837,7 @@ public class StagedInstallTest {
 
     @Test
     public void testUpdateWithDifferentKey_VerifyPostReboot() throws Exception {
-        assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
     }
 
     // Once updated with a new rotated key (bob), further updates with old key (alice) should fail
@@ -863,7 +865,7 @@ public class StagedInstallTest {
 
     @Test
     public void testTrustedOldKeyIsAccepted_VerifyPostReboot() throws Exception {
-        assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
     }
 
     // Once updated with a new rotated key (bob), further updates with new key (bob) should pass
@@ -876,7 +878,7 @@ public class StagedInstallTest {
 
     @Test
     public void testAfterRotationNewKeyCanUpdateFurther_VerifyPostReboot() throws Exception {
-        assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
     }
 
     // Once updated with a new rotated key (bob), further updates can be done with key only
@@ -1174,17 +1176,6 @@ public class StagedInstallTest {
                 .contains("AVB footer verification failed");
     }
 
-    private static long getInstalledVersion(String packageName) {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        PackageManager pm = context.getPackageManager();
-        try {
-            PackageInfo info = pm.getPackageInfo(packageName, PackageManager.MATCH_APEX);
-            return info.getLongVersionCode();
-        } catch (PackageManager.NameNotFoundException e) {
-            return -1;
-        }
-    }
-
     // It becomes harder to maintain this variety of install-related helper methods.
     // TODO(ioffe): refactor install-related helper methods into a separate utility.
     private static int createStagedSession() throws Exception {
@@ -1209,20 +1200,14 @@ public class StagedInstallTest {
 
     private static StageSessionResult stageSingleApk(String apkFileName, String outputFileName)
             throws Exception {
-        Log.i(TAG, "Staging an install of " + apkFileName);
-        // this is a trick to open an empty install session so we can manually write the package
-        // using writeApk
-        TestApp empty = new TestApp(null, null, -1,
-                apkFileName.endsWith(".apex"));
-        int sessionId = Install.single(empty).setStaged().createSession();
-        try (PackageInstaller.Session session =
-                     InstallUtils.openPackageInstallerSession(sessionId)) {
-            writeApk(session, apkFileName, outputFileName);
-            // Commit the session (this will start the installation workflow).
-            Log.i(TAG, "Committing session for apk: " + apkFileName);
-            Intent result = commitSession(sessionId);
-            return new StageSessionResult(sessionId, result);
+        File tmpFile = File.createTempFile(outputFileName, null);
+        try (InputStream is =
+                     StagedInstallTest.class.getClassLoader().getResourceAsStream(apkFileName)) {
+            Files.copy(is, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
+        TestApp testApp = new TestApp(tmpFile.getName(), null, -1,
+                apkFileName.endsWith(".apex"), tmpFile);
+        return stageSingleApk(testApp);
     }
 
     private static StageSessionResult stageSingleApk(TestApp testApp) throws Exception {
@@ -1313,20 +1298,6 @@ public class StagedInstallTest {
         }
     }
 
-    private static void writeApk(PackageInstaller.Session session, String apkFileName,
-            String outputFileName)
-            throws Exception {
-        try (OutputStream packageInSession = session.openWrite(outputFileName, 0, -1);
-             InputStream is =
-                     StagedInstallTest.class.getClassLoader().getResourceAsStream(apkFileName)) {
-            byte[] buffer = new byte[4096];
-            int n;
-            while ((n = is.read(buffer)) >= 0) {
-                packageInSession.write(buffer, 0, n);
-            }
-        }
-    }
-
     // TODO(ioffe): not really-tailored to staged install, rename to InstallResult?
     private static final class StageSessionResult {
         private final int sessionId;
@@ -1384,45 +1355,20 @@ public class StagedInstallTest {
         return getPackageInstaller().getSessionInfo(sessionId);
     }
 
-    private static void assertStatusSuccess(Intent result) {
-        int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
-                PackageInstaller.STATUS_FAILURE);
-        if (status == -1) {
-            throw new AssertionError("PENDING USER ACTION");
-        } else if (status > 0) {
-            String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-            throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
-        }
-    }
-
     private void waitForIsFailedBroadcast(int sessionId) {
         Log.i(TAG, "Waiting for session " + sessionId + " to be marked as failed");
-        try {
-
-            PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
-            assertThat(info).isStagedSessionFailed();
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
+        PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
+        assertThat(info).isStagedSessionFailed();
     }
 
     private void waitForIsReadyBroadcast(int sessionId) {
         Log.i(TAG, "Waiting for session " + sessionId + " to be ready");
-        try {
-            PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
-            assertThat(info).isStagedSessionReady();
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
+        PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
+        assertThat(info).isStagedSessionReady();
     }
 
-    private PackageInstaller.SessionInfo waitForBroadcast(int sessionId) throws Exception {
-        PackageInstaller.SessionInfo info =
-                SessionUpdateBroadcastReceiver.sessionBroadcasts.poll(60, TimeUnit.SECONDS);
-        assertWithMessage("Timed out while waiting for session to get ready")
-                .that(info).isNotNull();
-        assertThat(info.getSessionId()).isEqualTo(sessionId);
-        return info;
+    private PackageInstaller.SessionInfo waitForBroadcast(int sessionId) {
+        return InstallUtils.waitForSession(sessionId);
     }
 
     private void assertNoSessionCommitBroadcastSent() throws Exception {
