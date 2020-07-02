@@ -52,6 +52,7 @@ public class ImeSettings {
     private static final String INLINE_SUGGESTIONS_ENABLED = "InlineSuggestionsEnabled";
     private static final String INLINE_SUGGESTION_VIEW_CONTENT_DESC =
             "InlineSuggestionViewContentDesc";
+    private static final String STRICT_MODE_ENABLED = "StrictModeEnabled";
 
     @NonNull
     private final PersistableBundle mBundle;
@@ -125,6 +126,10 @@ public class ImeSettings {
     @Nullable
     public String getInlineSuggestionViewContentDesc(@Nullable String defaultValue) {
         return mBundle.getString(INLINE_SUGGESTION_VIEW_CONTENT_DESC, defaultValue);
+    }
+
+    public boolean isStrictModeEnabled() {
+        return mBundle.getBoolean(STRICT_MODE_ENABLED, false);
     }
 
     static Bundle serializeToBundle(@NonNull String eventCallbackActionName,
@@ -280,5 +285,10 @@ public class ImeSettings {
             return this;
         }
 
+        /** Sets whether to enable {@link android.os.StrictMode} or not. */
+        public Builder setStrictModeEnabled(boolean enabled) {
+            mBundle.putBoolean(STRICT_MODE_ENABLED, enabled);
+            return this;
+        }
     }
 }
