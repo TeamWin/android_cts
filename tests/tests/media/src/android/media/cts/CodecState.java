@@ -20,6 +20,7 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Surface;
 import java.nio.ByteBuffer;
@@ -32,7 +33,8 @@ import java.util.LinkedList;
 public class CodecState {
     private static final String TAG = CodecState.class.getSimpleName();
 
-    private boolean mSawInputEOS, mSawOutputEOS;
+    private boolean mSawInputEOS;
+    private volatile boolean mSawOutputEOS;
     private boolean mLimitQueueDepth;
     private boolean mTunneled;
     private boolean mIsAudio;
@@ -43,7 +45,7 @@ public class CodecState {
     private LinkedList<Integer> mAvailableInputBufferIndices;
     private LinkedList<Integer> mAvailableOutputBufferIndices;
     private LinkedList<MediaCodec.BufferInfo> mAvailableOutputBufferInfos;
-    private long mPresentationTimeUs;
+    private volatile long mPresentationTimeUs;
     private long mSampleBaseTimeUs;
     private MediaCodec mCodec;
     private MediaTimeProvider mMediaTimeProvider;
@@ -51,7 +53,7 @@ public class CodecState {
     private MediaFormat mFormat;
     private MediaFormat mOutputFormat;
     private NonBlockingAudioTrack mAudioTrack;
-    private OnFrameRenderedListener mOnFrameRenderedListener;
+    private volatile OnFrameRenderedListener mOnFrameRenderedListener;
 
     /**
      * Manages audio and video playback using MediaCodec and AudioTrack.
@@ -89,7 +91,8 @@ public class CodecState {
 
         if (mTunneled && !mIsAudio) {
             mOnFrameRenderedListener = new OnFrameRenderedListener();
-            codec.setOnFrameRenderedListener(mOnFrameRenderedListener, new Handler());
+            codec.setOnFrameRenderedListener(mOnFrameRenderedListener,
+                                             new Handler(Looper.getMainLooper()));
         }
     }
 
