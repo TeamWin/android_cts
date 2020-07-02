@@ -35,15 +35,6 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
-        <receiver android:name="com.android.tests.stagedinstall.SessionUpdateBroadcastReceiver"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="android.content.pm.action.SESSION_UPDATED"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.content.pm.action.SESSION_COMMITTED"/>
-            </intent-filter>
-        </receiver>
         <uses-library android:name="android.test.runner"/>
     </application>
 
