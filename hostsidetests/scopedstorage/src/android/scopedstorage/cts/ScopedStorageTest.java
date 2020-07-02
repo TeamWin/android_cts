@@ -2000,6 +2000,8 @@ public class ScopedStorageTest {
 
         final File downloadDir = getDownloadDir();
         final File otherAppPdf = new File(downloadDir, "other-" + NONMEDIA_FILE_NAME);
+        final File shellPdfAtRoot = new File(getExternalStorageDir(),
+                "shell-" + NONMEDIA_FILE_NAME);
         final File otherAppImage = new File(getDcimDir(), "other-" + IMAGE_FILE_NAME);
         final File myAppPdf = new File(downloadDir, "my-" + NONMEDIA_FILE_NAME);
         final File doesntExistPdf = new File(downloadDir, "nada-" + NONMEDIA_FILE_NAME);
@@ -2014,14 +2016,21 @@ public class ScopedStorageTest {
             assertThat(myAppPdf.createNewFile()).isTrue();
             assertFileAccess_readWrite(myAppPdf);
 
-            // We can read the other app's image file because we hold R_E_S, but we can only
-            // check exists for the pdf file.
+            // We can read the other app's image file because we hold R_E_S, but we can
+            // check only exists for the pdf files.
             assertFileAccess_readOnly(otherAppImage);
             assertFileAccess_existsOnly(otherAppPdf);
             assertAccess(doesntExistPdf, false, false, false);
+
+            // We can check only exists for another app's files on root.
+            // Use shell to create root file because TEST_APP_A is in
+            // scoped storage.
+            executeShellCommand("touch " + shellPdfAtRoot.getAbsolutePath());
+            assertFileAccess_existsOnly(shellPdfAtRoot);
         } finally {
             deleteFileAsNoThrow(TEST_APP_A, otherAppPdf.getAbsolutePath());
             deleteFileAsNoThrow(TEST_APP_A, otherAppImage.getAbsolutePath());
+            executeShellCommand("rm " + shellPdfAtRoot.getAbsolutePath());
             myAppPdf.delete();
             uninstallApp(TEST_APP_A);
         }
@@ -2045,17 +2054,17 @@ public class ScopedStorageTest {
             // We cannot read or write the file, but app A can.
             assertThat(canReadAndWriteAs(TEST_APP_A,
                     otherAppExternalDataFile.getAbsolutePath())).isTrue();
-            assertCannotAccessOtherAppFile(otherAppExternalDataFile);
+            assertCannotReadOrWrite(otherAppExternalDataFile);
 
             // We cannot read or write the dir, but app A can.
             assertThat(canReadAndWriteAs(TEST_APP_A,
                     otherAppExternalDataDir.getAbsolutePath())).isTrue();
-            assertCannotAccessOtherAppFile(otherAppExternalDataDir);
+            assertCannotReadOrWrite(otherAppExternalDataDir);
 
             // We cannot read or write the sub dir, but app A can.
             assertThat(canReadAndWriteAs(TEST_APP_A,
                     otherAppExternalDataSubDir.getAbsolutePath())).isTrue();
-            assertCannotAccessOtherAppFile(otherAppExternalDataSubDir);
+            assertCannotReadOrWrite(otherAppExternalDataSubDir);
 
             // We can read and write our own app dir, but app A cannot.
             assertThat(canReadAndWriteAs(TEST_APP_A,
@@ -2066,6 +2075,7 @@ public class ScopedStorageTest {
             assertDirectoryAccess(getExternalStorageDir(), true);
             assertDirectoryAccess(new File(getExternalStorageDir(), "Android"), true);
             assertDirectoryAccess(new File(getExternalStorageDir(), "doesnt/exist"), false);
+            assertCannotReadOrWrite(new File("/storage/emulated"));
         } finally {
             uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
         }
@@ -2768,7 +2778,7 @@ public class ScopedStorageTest {
         assertAccess(file, exists, canRead, canWrite, true /* checkExists */);
     }
 
-    private static void assertCannotAccessOtherAppFile(File file)
+    private static void assertCannotReadOrWrite(File file)
             throws Exception {
         // App data directories have different 'x' bits on upgrading vs new devices. Let's not
         // check 'exists', by passing checkExists=false. But assert this app cannot read or write
