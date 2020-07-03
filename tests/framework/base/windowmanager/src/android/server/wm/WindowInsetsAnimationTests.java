@@ -38,7 +38,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.withSettings;
 
-import android.graphics.Insets;
 import android.platform.test.annotations.Presubmit;
 import android.view.View;
 import android.view.WindowInsets;
@@ -67,10 +66,6 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
         mActivity = startActivity(TestActivity.class);
         mRootView = mActivity.getWindow().getDecorView();
         assumeTrue(hasWindowInsets(systemBars()));
-    }
-
-    private boolean hasWindowInsets(int types) {
-        return Insets.NONE != mRootView.getRootWindowInsets().getInsetsIgnoringVisibility(types);
     }
 
     @Test
