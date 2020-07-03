@@ -47,8 +47,7 @@ public class UsesLibraryTest extends InstrumentationTestCase {
     }
 
     /**
-     * Verify that the test apk is backed by an oat file when the shared libraries are missing
-     * from the class path.
+     * Verify that we punt to run from apk when the shared libraries are missing.
      */
     public void testMissingLibrary() throws Exception {
         ClassLoader loader = getClass().getClassLoader();
@@ -60,7 +59,7 @@ public class UsesLibraryTest extends InstrumentationTestCase {
             assertTrue(testDexElements != null && testDexElements.length == 1);
 
             DexFile testDexFile = getDexFileFromDexElement(testDexElements[0]);
-            assertTrue(isDexFileBackedByOatFile(testDexFile));
+            assertFalse(isDexFileBackedByOatFile(testDexFile));
         }
     }
 
