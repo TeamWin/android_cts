@@ -28,40 +28,29 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import org.junit.rules.ExternalResource;
 
 /**
- * Clears test APKs and APEXs if needed before and after each test to prevent flaky and reduce
+ * Clears shim Apex if needed before and after each test to prevent flaky and reduce
  * reboot time.
  */
-final class TestAppRule extends ExternalResource {
-    private static final String TAG = TestAppRule.class.getSimpleName();
+final class ShimApexRule extends ExternalResource {
+    private static final String TAG = ShimApexRule.class.getSimpleName();
     private final BaseHostJUnit4Test mHostTest;
 
-    TestAppRule(BaseHostJUnit4Test hostTest) {
+    ShimApexRule(BaseHostJUnit4Test hostTest) {
         mHostTest = hostTest;
     }
 
     @Override
     protected void before() throws Throwable {
-        cleanUpTestPackages();
+        uninstallShimApexIfNecessary();
     }
 
     @Override
     protected void after() {
         try {
-            cleanUpTestPackages();
+            uninstallShimApexIfNecessary();
         } catch (DeviceNotAvailableException e) {
             e.printStackTrace();
         }
-    }
-
-    private void cleanUpTestPackages() throws DeviceNotAvailableException {
-        mHostTest.getDevice().executeShellCommand(
-                "pm uninstall com.android.cts.install.lib.testapp.A");
-        mHostTest.getDevice().executeShellCommand(
-                "pm uninstall com.android.cts.install.lib.testapp.B");
-        mHostTest.getDevice().executeShellCommand(
-                "for i in $(pm list staged-sessions --only-sessionid --only-parent); "
-                        + "do pm install-abandon $i; done");
-        uninstallShimApexIfNecessary();
     }
 
     /**
