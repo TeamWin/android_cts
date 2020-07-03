@@ -36,6 +36,7 @@ import java.util.Optional;
 
 /** Utils for recording session state and retrieving recorded session info. */
 final class SessionRule extends ExternalResource {
+    private static final String TAG = SessionRule.class.getSimpleName();
     private static final String STATE_FILENAME = "ctsstagedinstall_state";
 
     private final Context mContext;
@@ -52,8 +53,9 @@ final class SessionRule extends ExternalResource {
     }
 
     /**
-     * Performs cleanup phase for this rule. Actual purpose of this method is to be called before
-     * and after each host-side test to reduce tests flakiness.
+     * Performs cleanup phase for session rule. Actual purpose of this method is to be called
+     * before and after each test case of {@link android.cts.install.host.InstallTest} to reduce
+     * tests flakiness.
      */
     void cleanUp() throws IOException {
         Files.deleteIfExists(mTestStateFile.toPath());
