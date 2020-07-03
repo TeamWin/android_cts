@@ -18,11 +18,8 @@ package android.cts.install;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.pm.PackageInstaller;
-
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
-import com.android.cts.install.lib.LocalIntentSender;
 import com.android.cts.install.lib.TestApp;
 
 import org.junit.Rule;
@@ -102,30 +99,10 @@ public final class DowngradeTest {
         mSessionRule.recordSessionId(sessionId);
     }
 
-    @Test
-    public void action_downgradeFail_phase() throws Exception {
-        Install install = getParameterizedInstall(VERSION_CODE_DOWNGRADE);
-        int sessionId = install.setRequestDowngrade().createSession();
-        LocalIntentSender sender = new LocalIntentSender();
-        InstallUtils.openPackageInstallerSession(sessionId)
-                .commit(sender.getIntentSender());
-        assertThat(sender.getResult()
-                .getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE))
-                .isEqualTo(PackageInstaller.STATUS_SUCCESS);
-        assertThat(mSessionRule.retrieveSessionInfo(sessionId).isStagedSessionFailed()).isTrue();
-        mSessionRule.recordSessionId(sessionId);
-    }
-
     /** Confirms target version of the apps installed. */
     @Test
     public void assert_downgradeSuccess_phase() {
         mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_DOWNGRADE);
-    }
-
-    /** Confirms the staged downgrade failed. */
-    @Test
-    public void assert_downgradeFail_phase() {
-        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_CURRENT);
     }
 
     /** Confirms versions before staged downgrades applied. */
@@ -142,8 +119,21 @@ public final class DowngradeTest {
         mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_DOWNGRADE);
     }
 
+    /** Confirms the downgrade commit not allowed. */
     @Test
-    public void assert_commitNotRequestedDowngrade_phase() {
+    public void assert_downgradeNotAllowed_phase() {
+        Install install = getParameterizedInstall(VERSION_CODE_DOWNGRADE).setRequestDowngrade();
+        InstallUtils.commitExpectingFailure(AssertionError.class,
+                "INSTALL_FAILED_VERSION_DOWNGRADE" + "|"
+                        + "Downgrade of APEX package com\\.android\\.apex\\.cts\\.shim is not "
+                        + "allowed",
+                install);
+        mInstallRule.assertPackageVersion(mInstallType, VERSION_CODE_CURRENT);
+    }
+
+    /** Confirms the downgrade commit not allowed without requesting downgrade. */
+    @Test
+    public void assert_downgradeNotRequested_phase() {
         Install install = getParameterizedInstall(VERSION_CODE_DOWNGRADE);
         InstallUtils.commitExpectingFailure(AssertionError.class,
                 "INSTALL_FAILED_VERSION_DOWNGRADE" + "|"
