@@ -57,7 +57,7 @@ public final class SamegradeTest extends BaseHostJUnit4Test {
     private static final String CLEAN_UP_PHASE = "cleanUp_phase";
 
     @Rule
-    public TestAppRule mTestAppRule = new TestAppRule(this);
+    public ShimApexRule mShimApexRule = new ShimApexRule(this);
 
     @Parameter(0)
     public INSTALL_TYPE mInstallType;
@@ -87,7 +87,7 @@ public final class SamegradeTest extends BaseHostJUnit4Test {
     public void assumeApexSupported() throws DeviceNotAvailableException {
         if (mInstallType.containsApex()) {
             assumeTrue("Device does not support updating APEX",
-                    mTestAppRule.isUpdatingApexSupported());
+                    mShimApexRule.isUpdatingApexSupported());
         }
     }
 
