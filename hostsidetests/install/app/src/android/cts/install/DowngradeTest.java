@@ -76,6 +76,7 @@ public final class DowngradeTest {
      */
     @Test
     public void cleanUp_phase() throws Exception {
+        mInstallRule.cleanUp();
         mSessionRule.cleanUp();
     }
 
