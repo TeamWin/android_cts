@@ -81,7 +81,6 @@ public final class SamegradeTest {
      */
     @Test
     public void cleanUp_phase() throws Exception {
-        mInstallRule.cleanUp();
         mSessionRule.cleanUp();
     }
 

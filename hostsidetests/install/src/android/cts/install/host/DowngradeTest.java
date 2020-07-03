@@ -62,7 +62,7 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
             "assert_downgradeNotRequested_phase";
 
     @Rule
-    public ShimApexRule mShimApexRule = new ShimApexRule(this);
+    public TestAppRule mTestAppRule = new TestAppRule(this);
 
     @Parameter(0)
     public INSTALL_TYPE mInstallType;
@@ -92,7 +92,7 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
     public void assumeApexSupported() throws DeviceNotAvailableException {
         if (mInstallType.containsApex()) {
             assumeTrue("Device does not support updating APEX",
-                    mShimApexRule.isUpdatingApexSupported());
+                    mTestAppRule.isUpdatingApexSupported());
         }
     }
 

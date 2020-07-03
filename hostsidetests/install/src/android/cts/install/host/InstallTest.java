@@ -57,7 +57,7 @@ public final class InstallTest extends BaseHostJUnit4Test {
     private static final String ASSERT_ABANDON_SESSION = "assert_abandonSession_phase";
 
     @Rule
-    public ShimApexRule mShimApexRule = new ShimApexRule(this);
+    public TestAppRule mTestAppRule = new TestAppRule(this);
 
     @Rule
     public LauncherRule mLauncherRule = new LauncherRule(this, CUSTOMIZED_LAUNCHER_COMPONENT);
