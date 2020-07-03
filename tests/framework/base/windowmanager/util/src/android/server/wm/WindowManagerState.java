@@ -1079,6 +1079,10 @@ public class WindowManagerState {
 
         }
 
+        public String getName() {
+            return mName;
+        }
+
         private void addRootTasks() {
             // TODO(b/149338177): figure out how CTS tests deal with organizer. For now,
             //                    don't treat them as regular stacks
@@ -1123,10 +1127,6 @@ public class WindowManagerState {
 
         Rect getStableBounds() {
             return mStableBounds;
-        }
-
-        String getName() {
-            return mName;
         }
 
         int getFlags() {
@@ -1473,6 +1473,8 @@ public class WindowManagerState {
 
     static abstract class WindowContainer extends ConfigurationContainer {
 
+        protected String mName;
+        protected final String mAppToken;
         protected boolean mFullscreen;
         protected Rect mBounds;
         protected int mOrientation;
@@ -1482,6 +1484,9 @@ public class WindowManagerState {
 
         WindowContainer(WindowContainerProto proto) {
             super(proto.configurationContainer);
+            IdentifierProto identifierProto = proto.identifier;
+            mName = identifierProto.title;
+            mAppToken = Integer.toHexString(identifierProto.hashCode);
             mOrientation = proto.orientation;
             for (int i = 0; i < proto.children.length; i++) {
                 final WindowContainer child = getWindowContainer(proto.children[i], this);
@@ -1490,6 +1495,15 @@ public class WindowManagerState {
                 }
             }
             mVisible = proto.visible;
+        }
+
+        @NonNull
+        public String getName() {
+            return mName;
+        }
+
+        String getToken() {
+            return mAppToken;
         }
 
         Rect getBounds() {
@@ -1516,8 +1530,6 @@ public class WindowManagerState {
         private static final int WINDOW_TYPE_EXITING = 2;
         private static final int WINDOW_TYPE_DEBUGGER = 3;
 
-        private String mName;
-        private final String mAppToken;
         private final int mWindowType;
         private int mType = 0;
         private int mDisplayId;
@@ -1535,9 +1547,6 @@ public class WindowManagerState {
 
         WindowState(WindowStateProto proto) {
             super(proto.windowContainer);
-            IdentifierProto identifierProto = proto.identifier;
-            mName = identifierProto.title;
-            mAppToken = Integer.toHexString(identifierProto.hashCode);
             mDisplayId = proto.displayId;
             mStackId = proto.stackId;
             if (proto.attributes != null) {
@@ -1575,15 +1584,6 @@ public class WindowManagerState {
                 mWindowType = 0;
             }
             collectDescendantsOfType(WindowState.class, this, mSubWindows);
-        }
-
-        @NonNull
-        public String getName() {
-            return mName;
-        }
-
-        String getToken() {
-            return mAppToken;
         }
 
         boolean isStartingWindow() {
