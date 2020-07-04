@@ -1002,10 +1002,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId=156314330)
     public void testFinishPipActivityWithTaskOverlay() throws Exception {
-        // Trigger PiP menu activity to properly lose focuse when going home
-        launchActivity(TEST_ACTIVITY);
         // Launch PiP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
