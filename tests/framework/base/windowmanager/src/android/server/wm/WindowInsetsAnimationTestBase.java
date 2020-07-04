@@ -34,6 +34,7 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
 
+import android.graphics.Insets;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.server.wm.WindowInsetsAnimationTestBase.AnimCallback.AnimationStep;
@@ -101,6 +102,10 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
             WindowInsets after) {
         assertEquals(before, steps.get(0).insets);
         assertEquals(after, steps.get(steps.size() - 1).insets);
+    }
+
+    protected boolean hasWindowInsets(int types) {
+        return Insets.NONE != mRootView.getRootWindowInsets().getInsetsIgnoringVisibility(types);
     }
 
     protected void assertAnimationSteps(ArrayList<AnimationStep> steps, boolean showAnimation) {
