@@ -400,6 +400,11 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testRenameWithSpecialChars() throws Exception {
+        runDeviceTest("testRenameWithSpecialChars");
+    }
+
+    @Test
     public void testPendingFromFuse() throws Exception {
         runDeviceTest("testPendingFromFuse");
     }
