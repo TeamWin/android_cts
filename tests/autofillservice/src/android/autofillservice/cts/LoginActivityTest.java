@@ -2727,7 +2727,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         final ViewNode password = findNodeByResourceId(request.structure, ID_PASSWORD);
         assertThat(password.getMinTextEms()).isEqualTo(-1);
         assertThat(password.getMaxTextEms()).isEqualTo(-1);
-        assertThat(password.getMaxTextLength()).isEqualTo(-1);
+        assertThat(password.getMaxTextLength()).isEqualTo(5000);
     }
 
     @Test
