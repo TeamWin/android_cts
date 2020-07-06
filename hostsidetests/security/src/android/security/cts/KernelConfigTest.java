@@ -286,6 +286,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         final Set<String> ALLOWED_PATH_PREFIXES = new HashSet<String>();
         ALLOWED_PATH_PREFIXES.add("/vendor/");
         ALLOWED_PATH_PREFIXES.add("/system/");
+        ALLOWED_PATH_PREFIXES.add("/system_ext/");
 
         assertTrue("Linux kernel must enable static usermodehelper: " + ENABLE_CONFIG,
             configSet.contains(ENABLE_CONFIG));
