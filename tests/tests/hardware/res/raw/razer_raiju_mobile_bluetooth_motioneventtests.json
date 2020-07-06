@@ -190,9 +190,9 @@
     ],
     "source": "JOYSTICK",
     "events": [
-      {"action": "MOVE", "axes": { "AXIS_BRAKE": 0.5}},
-      {"action": "MOVE", "axes": { "AXIS_BRAKE": 1.0}},
-      {"action": "MOVE", "axes": { "AXIS_BRAKE": 0.0}}
+      {"action": "MOVE", "axes": { "AXIS_LTRIGGER": 0.5, "AXIS_BRAKE": 0.5}},
+      {"action": "MOVE", "axes": { "AXIS_LTRIGGER": 1.0, "AXIS_BRAKE": 1.0}},
+      {"action": "MOVE", "axes": { "AXIS_LTRIGGER": 0.0, "AXIS_BRAKE": 0.0}}
     ]
   },
 
@@ -205,9 +205,9 @@
     ],
     "source": "JOYSTICK",
     "events": [
-      {"action": "MOVE", "axes": { "AXIS_GAS": 0.5}},
-      {"action": "MOVE", "axes": { "AXIS_GAS": 1.0}},
-      {"action": "MOVE", "axes": { "AXIS_BRAKE": 0.0}}
+      {"action": "MOVE", "axes": { "AXIS_RTRIGGER": 0.5, "AXIS_GAS": 0.5}},
+      {"action": "MOVE", "axes": { "AXIS_RTRIGGER": 1.0, "AXIS_GAS": 1.0}},
+      {"action": "MOVE", "axes": { "AXIS_RTRIGGER": 0.0, "AXIS_GAS": 0.0}}
     ]
   }
 
