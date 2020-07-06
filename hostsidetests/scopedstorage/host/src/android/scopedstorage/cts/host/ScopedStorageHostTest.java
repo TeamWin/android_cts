@@ -267,6 +267,11 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    public void testRenameWithSpecialChars() throws Exception {
+        runDeviceTest("testRenameWithSpecialChars");
+    }
+
+    @Test
     public void testPendingFromFuse() throws Exception {
         runDeviceTest("testPendingFromFuse");
     }
