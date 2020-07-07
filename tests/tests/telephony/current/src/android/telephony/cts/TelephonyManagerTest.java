@@ -501,9 +501,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testCreateForPhoneAccountHandle() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
-            return;
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) || 
+            !mPackageManager.hasSystemFeature(PackageManager.FEATURE_CONNECTION_SERVICE)) {
+                Log.d(TAG, "Skipping test that requires TELEPHONY and CONNECTION_SERVICE");
+                return;
         }
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
         PhoneAccountHandle handle =
