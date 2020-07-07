@@ -199,9 +199,10 @@ public final class SettingsUtils {
     }
 
     /**
-     * Get a global setting for the system user. Trims ending new line.
+     * Get a global setting for the given user. Trims ending new line.
      */
-    public static String getSecureSettingAsSystemUser(String key) {
-        return SystemUtil.runShellCommand("settings --user 0 get secure " + key).trim();
+    public static String getSecureSettingAsUser(int userId, String key) {
+        return SystemUtil.runShellCommand(
+                String.format("settings --user %d get secure %s", userId, key)).trim();
     }
 }
