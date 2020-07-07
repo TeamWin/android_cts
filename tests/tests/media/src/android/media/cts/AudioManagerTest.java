@@ -38,6 +38,7 @@ import static android.media.AudioManager.VIBRATE_TYPE_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
 import android.app.ActivityManager;
+import android.app.INotificationManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
@@ -51,6 +52,7 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MicrophoneInfo;
+import android.os.ServiceManager;
 import android.os.Vibrator;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
@@ -94,6 +96,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private NotificationManager.Policy mOriginalNotificationPolicy;
     private int mOriginalZen;
     private boolean mDoNotCheckUnmute;
+    private boolean mAppsBypassingDnd;
 
     @Override
     protected void setUp() throws Exception {
@@ -103,6 +106,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         Vibrator vibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
         mNm = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        mAppsBypassingDnd = NotificationManager.getService().areChannelsBypassingDnd();
         mHasVibrator = (vibrator != null) && vibrator.hasVibrator();
         mUseFixedVolume = mContext.getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_useFixedVolume", "bool", "android"));
@@ -1218,9 +1222,15 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertTrue("Alarm stream should be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
-            // Test requires that the phone's default state has no channels that can bypass dnd
-            assertTrue("Ringer stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            // if channels cannot bypass DND, the Ringer stream should be muted, else it
+            // shouldn't be muted
+            if (!mAppsBypassingDnd) {
+                assertTrue("Ringer stream should be muted",
+                        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            } else {
+                assertFalse("Ringer stream shouldn't be muted b/c channels can bypass DND",
+                        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            }
         } finally {
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
         }
@@ -1253,9 +1263,15 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertTrue("Alarm stream should be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
-            // Test requires that the phone's default state has no channels that can bypass dnd
-            assertTrue("Ringer stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            // if channels cannot bypass DND, the Ringer stream should be muted, else it
+            // shouldn't be muted
+            if (!mAppsBypassingDnd) {
+                assertTrue("Ringer stream should be muted",
+                        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            } else {
+                assertFalse("Ringer stream shouldn't be muted b/c channels can bypass DND",
+                        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            }
         } finally {
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
         }
@@ -1288,10 +1304,6 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
             assertTrue("Alarm stream should be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
-
-            // Test requires that the phone's default state has no channels that can bypass dnd
-            assertTrue("Ringer stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
         } finally {
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
         }
@@ -1325,9 +1337,15 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertFalse("Alarm stream should not be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
-            // Test requires that the phone's default state has no channels that can bypass dnd
-            assertTrue("Ringer stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            // if channels cannot bypass DND, the Ringer stream should be muted, else it
+            // shouldn't be muted
+            if (!mAppsBypassingDnd) {
+                assertTrue("Ringer stream should be muted",
+                        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            } else {
+                assertFalse("Ringer stream shouldn't be muted b/c channels can bypass DND",
+                        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            }
         } finally {
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
         }
@@ -1403,7 +1421,6 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
             assertFalse("Ringer stream should not be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_RING));
-
         } finally {
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
             mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
