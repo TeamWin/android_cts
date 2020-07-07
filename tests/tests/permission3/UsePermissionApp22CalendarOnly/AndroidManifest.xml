@@ -30,6 +30,7 @@
         <activity android:name=".CheckCalendarAccessActivity" android:exported="true" />
         <activity android:name=".FinishOnCreateActivity" android:exported="true" />
         <activity android:name=".RequestPermissionsActivity" android:exported="true" />
+        <activity android:name=".StartCheckPermissionServiceActivity" android:exported="true" />
         <service android:name=".CheckPermissionService" android:exported="true" />
     </application>
 </manifest>
