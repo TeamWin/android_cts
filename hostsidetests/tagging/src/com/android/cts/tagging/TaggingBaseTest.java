@@ -27,11 +27,11 @@ public class TaggingBaseTest extends CompatChangeGatingTestCase {
     protected boolean supportsTaggedPointers = false;
 
     private boolean supportsTaggedPointers() throws Exception {
-        if (runCommand("grep 'Processor.*aarch64' /proc/cpuinfo").isEmpty()) {
+        String kernelVersion = runCommand("uname -rm");
+        if (!kernelVersion.contains("aarch64")) {
             return false;
         }
 
-        String kernelVersion = runCommand("uname -r");
         String kernelVersionSplit[] = kernelVersion.split("\\.");
         if (kernelVersionSplit.length < 2) {
             return false;
