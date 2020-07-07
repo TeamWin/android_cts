@@ -53,7 +53,7 @@ LOCAL_SRC_FILES := \
     jni/android_hardware_cts_SensorNativeTest.cpp \
     jni/nativeTestHelper.cpp
 
-LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
+LOCAL_HEADER_LIBRARIES := jni_headers
 
 LOCAL_SHARED_LIBRARIES := libandroid liblog
 
