@@ -331,33 +331,16 @@ extern "C" JNIEXPORT jstring JNICALL
         JNIEnv* env,
         jclass clazz,
         jobjectArray java_system_public_libraries,
-        jobjectArray java_runtime_public_libraries,
-        jobjectArray java_vendor_public_libraries,
-        jobjectArray java_product_public_libraries) {
+        jobjectArray java_runtime_public_libraries) {
   bool success = true;
   std::vector<std::string> errors;
   std::string error_msg;
-  std::unordered_set<std::string> vendor_public_libraries;
-  if (!jobject_array_to_set(env, java_vendor_public_libraries, &vendor_public_libraries,
-                            &error_msg)) {
-    success = false;
-    errors.push_back("Errors in vendor public library file:" + error_msg);
-  }
-
   std::unordered_set<std::string> system_public_libraries;
   if (!jobject_array_to_set(env, java_system_public_libraries, &system_public_libraries,
                             &error_msg)) {
     success = false;
     errors.push_back("Errors in system public library file:" + error_msg);
   }
-
-  std::unordered_set<std::string> product_public_libraries;
-  if (!jobject_array_to_set(env, java_product_public_libraries, &product_public_libraries,
-                            &error_msg)) {
-    success = false;
-    errors.push_back("Errors in product public library file:" + error_msg);
-  }
-
   std::unordered_set<std::string> runtime_public_libraries;
   if (!jobject_array_to_set(env, java_runtime_public_libraries, &runtime_public_libraries,
                             &error_msg)) {
@@ -408,21 +391,6 @@ extern "C" JNIEXPORT jstring JNICALL
                   runtime_public_libraries,
                   /*test_system_load_library=*/true,
                   check_absence, &errors)) {
-    success = false;
-  }
-
-  // Check the product libraries, if /product/lib exists.
-  if (is_directory(kProductLibraryPath.c_str())) {
-    if (!check_path(env, clazz, kProductLibraryPath, {kProductLibraryPath},
-                    product_public_libraries,
-                    /*test_system_load_library=*/false, /*check_absence=*/true, &errors)) {
-      success = false;
-    }
-  }
-
-  // Check the vendor libraries.
-  if (!check_path(env, clazz, kVendorLibraryPath, {kVendorLibraryPath}, vendor_public_libraries,
-                  /*test_system_load_library=*/false, /*check_absence=*/true, &errors)) {
     success = false;
   }
 
