@@ -222,10 +222,7 @@ public class BlobStoreManagerTest {
                 blobData.readFromSessionAndVerifyBytes(session,
                         202 /* offset */, 2002 /* length */);
 
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
+                commitSession(sessionId, session, blobData.getBlobHandle());
             }
         } finally {
             blobData.delete();
@@ -597,10 +594,7 @@ public class BlobStoreManagerTest {
                 assertThat(pfd).isNotNull();
                 blobData.writeToFd(pfd.getFileDescriptor(), 0 /* offset */, 100 /* length */);
 
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
+                commitSession(sessionId, session, blobData.getBlobHandle());
 
                 // Verify that writing to the session after commit will throw.
                 assertThrows(IOException.class, () -> blobData.writeToFd(
@@ -623,10 +617,7 @@ public class BlobStoreManagerTest {
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
                 blobData.writeToSession(session, 0, blobData.getFileSize() - 2);
 
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(1);
+                commitSession(sessionId, session, blobData.getBlobHandle(), 1 /* expectedResult */);
             }
         } finally {
             blobData.delete();
@@ -648,10 +639,7 @@ public class BlobStoreManagerTest {
                     out.write("wrong_data".getBytes(StandardCharsets.UTF_8));
                 }
 
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(1);
+                commitSession(sessionId, session, blobData.getBlobHandle(), 1 /* expectedResult */);
             }
         } finally {
             blobData.delete();
@@ -723,6 +711,8 @@ public class BlobStoreManagerTest {
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
                 blobData.writeToSession(session);
 
+                Log.d(TAG, "Committing session: " + sessionId
+                        + "; blob: " + blobData.getBlobHandle());
                 final CompletableFuture<Integer> callback = new CompletableFuture<>();
                 session.commit(mContext.getMainExecutor(), callback::complete);
                 assertThat(callback.get(commitTimeoutSec, TimeUnit.SECONDS))
@@ -804,10 +794,7 @@ public class BlobStoreManagerTest {
                         blobData.readFromSessionAndVerifyBytes(session, partialFileSizeBytes,
                                 (int) (blobData.getFileSize() - partialFileSizeBytes));
 
-                        final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                        session.commit(mContext.getMainExecutor(), callback::complete);
-                        assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                                .isEqualTo(0);
+                        commitSession(sessionId, session, blobData.getBlobHandle());
                     }
 
                     // Verify that blob can be accessed after committing.
@@ -849,10 +836,7 @@ public class BlobStoreManagerTest {
                 assertThrows(SecurityException.class,
                         () -> mBlobStoreManager.openBlob(blobData.getBlobHandle()));
 
-                final CompletableFuture<Integer> callback = new CompletableFuture<>();
-                session.commit(mContext.getMainExecutor(), callback::complete);
-                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                        .isEqualTo(0);
+                commitSession(sessionId, session, blobData.getBlobHandle());
             }
 
             // Verify that blob can be accessed after committing.
@@ -1066,10 +1050,7 @@ public class BlobStoreManagerTest {
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
             blobData.writeToSession(session, partialFileSize,
                     session.getSize() - partialFileSize, blobData.getFileSize());
-            final CompletableFuture<Integer> callback = new CompletableFuture<>();
-            session.commit(mContext.getMainExecutor(), callback::complete);
-            assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                    .isEqualTo(0);
+            commitSession(sessionId, session, blobData.getBlobHandle());
         }
 
         acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc);
@@ -1119,10 +1100,7 @@ public class BlobStoreManagerTest {
             blobData.writeToSession(session);
             session.allowPublicAccess();
 
-            final CompletableFuture<Integer> callback = new CompletableFuture<>();
-            session.commit(mContext.getMainExecutor(), callback::complete);
-            assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                    .isEqualTo(0);
+            commitSession(sessionId, session, blobData.getBlobHandle());
         }
 
         StorageStats afterStatsForPkg = storageStatsManager
@@ -1481,10 +1459,7 @@ public class BlobStoreManagerTest {
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
             blobData.writeToSession(session, partialFileSize,
                     blobData.getFileSize() - partialFileSize, blobData.getFileSize());
-            final CompletableFuture<Integer> callback = new CompletableFuture<>();
-            session.commit(mContext.getMainExecutor(), callback::complete);
-            assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                    .isEqualTo(0);
+            commitSession(sessionId, session, blobData.getBlobHandle());
         }
     }
 
@@ -1751,12 +1726,23 @@ public class BlobStoreManagerTest {
             if (accessModifier != null) {
                 accessModifier.modify(session);
             }
-            final CompletableFuture<Integer> callback = new CompletableFuture<>();
-            session.commit(mContext.getMainExecutor(), callback::complete);
-            assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                    .isEqualTo(expectedResult);
+            commitSession(sessionId, session, blobData.getBlobHandle(), expectedResult);
         }
         return sessionId;
+    }
+
+    private void commitSession(long sessionId, BlobStoreManager.Session session,
+            BlobHandle blobHandle) throws Exception {
+        commitSession(sessionId, session, blobHandle, 0 /* expectedResult */);
+    }
+
+    private void commitSession(long sessionId, BlobStoreManager.Session session,
+            BlobHandle blobHandle, int expectedResult) throws Exception {
+        Log.d(TAG, "Committing session: " + sessionId + "; blob: " + blobHandle);
+        final CompletableFuture<Integer> callback = new CompletableFuture<>();
+        session.commit(mContext.getMainExecutor(), callback::complete);
+        assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
+                .isEqualTo(expectedResult);
     }
 
     private interface AccessModifier {
