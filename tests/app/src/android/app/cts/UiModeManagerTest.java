@@ -108,6 +108,11 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     public void testNightModeYesPersisted() throws InterruptedException {
+        if (mUiModeManager.isNightModeLocked()) {
+            Log.i(TAG, "testNightModeYesPersisted skipped: night mode is locked");
+            return;
+        }
+
         // Reset the mode to no if it is set to another value
         setNightMode(UiModeManager.MODE_NIGHT_NO);
 
@@ -116,6 +121,11 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     public void testNightModeAutoPersisted() throws InterruptedException {
+        if (mUiModeManager.isNightModeLocked()) {
+            Log.i(TAG, "testNightModeAutoPersisted skipped: night mode is locked");
+            return;
+        }
+
         // Reset the mode to no if it is set to another value
         setNightMode(UiModeManager.MODE_NIGHT_NO);
 
@@ -125,6 +135,7 @@ public class UiModeManagerTest extends AndroidTestCase {
 
     public void testNightModeAutoNotPersistedCarMode() {
         if (mUiModeManager.isNightModeLocked()) {
+            Log.i(TAG, "testNightModeAutoNotPersistedCarMode skipped: night mode is locked");
             return;
         }
 
@@ -139,6 +150,7 @@ public class UiModeManagerTest extends AndroidTestCase {
 
     public void testNightModeInCarModeIsTransient() {
         if (mUiModeManager.isNightModeLocked()) {
+            Log.i(TAG, "testNightModeInCarModeIsTransient skipped: night mode is locked");
             return;
         }
 
@@ -156,6 +168,8 @@ public class UiModeManagerTest extends AndroidTestCase {
 
     public void testNightModeToggleInCarModeDoesNotChangeSetting() {
         if (mUiModeManager.isNightModeLocked()) {
+            Log.i(TAG, "testNightModeToggleInCarModeDoesNotChangeSetting skipped: "
+                    + "night mode is locked");
             return;
         }
 
@@ -174,6 +188,8 @@ public class UiModeManagerTest extends AndroidTestCase {
 
     public void testNightModeInCarModeOnPowerSaveIsTransient() throws Throwable {
         if (mUiModeManager.isNightModeLocked() || !BatteryUtils.isBatterySaverSupported()) {
+            Log.i(TAG, "testNightModeInCarModeOnPowerSaveIsTransient skipped: "
+                    + "night mode is locked or battery saver is not supported");
             return;
         }
 
@@ -347,7 +363,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         int storedModeInt = -1;
         // Settings.Secure.UI_NIGHT_MODE
         for (int i = 0; i < MAX_WAIT_TIME; i += WAIT_TIME_INCR) {
-            String storedMode = SettingsUtils.getSecureSetting("ui_night_mode");
+            String storedMode = getUiNightModeFromSetting();
             storedModeInt = Integer.parseInt(storedMode);
             if (mode == storedModeInt) break;
             try {
@@ -404,4 +420,9 @@ public class UiModeManagerTest extends AndroidTestCase {
         }
     }
 
+    private String getUiNightModeFromSetting() {
+        String key = "ui_night_mode";
+        return isAutomotive() ? SettingsUtils.getSecureSettingAsSystemUser(key)
+                : SettingsUtils.getSecureSetting(key);
+    }
 }
