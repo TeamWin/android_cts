@@ -16,17 +16,21 @@
 
 package android.cts.install;
 
+import static com.android.cts.install.lib.InstallUtils.getPackageInstaller;
 import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.Manifest;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.TestApp;
+import com.android.cts.install.lib.Uninstall;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
@@ -42,6 +46,7 @@ import java.util.stream.Collectors;
  * corresponding to {@link INSTALL_TYPE}.
  */
 final class InstallRule extends ExternalResource {
+    private static final String TAG = InstallRule.class.getSimpleName();
 
     static final int VERSION_CODE_INVALID = -1;
     static final int VERSION_CODE_DEFAULT = 1;
@@ -65,6 +70,25 @@ final class InstallRule extends ExternalResource {
                 .getInstrumentation()
                 .getUiAutomation()
                 .dropShellPermissionIdentity();
+    }
+
+    /**
+     * Performs cleanup phase for test installations. Actual purpose of this method is to be called
+     * before and after each host-side test to reduce tests flakiness.
+     */
+    void cleanUp() throws Exception {
+        PackageInstaller packageInstaller = getPackageInstaller();
+        packageInstaller.getStagedSessions().stream()
+                .filter(sessionInfo -> !sessionInfo.hasParentSessionId())
+                .forEach(sessionInfo -> {
+                    try {
+                        Log.i(TAG, "abandoning session " + sessionInfo.getSessionId());
+                        packageInstaller.abandonSession(sessionInfo.getSessionId());
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to abandon session " + sessionInfo.getSessionId(), e);
+                    }
+                });
+        Uninstall.packages(TestApp.A, TestApp.B);
     }
 
     /** Resolves corresponding test apps with specific install type and version. */
