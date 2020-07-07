@@ -57,7 +57,7 @@ public final class InstallTest extends BaseHostJUnit4Test {
     private static final String ASSERT_ABANDON_SESSION = "assert_abandonSession_phase";
 
     @Rule
-    public TestAppRule mTestAppRule = new TestAppRule(this);
+    public ShimApexRule mShimApexRule = new ShimApexRule(this);
 
     @Rule
     public LauncherRule mLauncherRule = new LauncherRule(this, CUSTOMIZED_LAUNCHER_COMPONENT);
@@ -92,7 +92,7 @@ public final class InstallTest extends BaseHostJUnit4Test {
     public void assumeApexSupported() throws DeviceNotAvailableException {
         if (mInstallType.containsApex()) {
             assumeTrue("Device does not support updating APEX",
-                    mTestAppRule.isUpdatingApexSupported());
+                    mShimApexRule.isUpdatingApexSupported());
         }
     }
 

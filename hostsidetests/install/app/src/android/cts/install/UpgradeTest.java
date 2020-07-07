@@ -68,6 +68,7 @@ public final class UpgradeTest {
 
     @Test
     public void cleanUp_phase() throws Exception {
+        mInstallRule.cleanUp();
         mSessionRule.cleanUp();
     }
 
