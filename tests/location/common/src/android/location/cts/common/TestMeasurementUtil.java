@@ -423,6 +423,14 @@ public final class TestMeasurementUtil {
                         String.valueOf(svid),
                         svid >= 1 && svid <= 36);
                 break;
+            case GnssStatus.CONSTELLATION_IRNSS:
+                softAssert.assertTrue("svid: Space Vehicle ID. Constellation type " +
+                                "= CONSTELLATION_IRNSS",
+                        timeInNs,
+                        "1 <= X <= 14",
+                        String.valueOf(svid),
+                        svid >= 1 && svid <= 14);
+                break;
             default:
                 // Explicit fail if did not receive valid constellation type.
                 softAssert.assertTrue("svid: Space Vehicle ID. Did not receive any valid " +
