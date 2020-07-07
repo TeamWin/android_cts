@@ -109,10 +109,14 @@ class PermissionReviewTest : BaseUsePermissionTest() {
     @Test
     fun testReviewPermissionWhenServiceIsBound() {
         val results = LinkedBlockingQueue<Int>()
-        activityRule.launchActivity(null).startService(
+        // We are starting a activity instead of the service directly, because
+        // the service comes from a different app than the CTS tests.
+        // This app will be considered idle on devices that have idling enabled (automotive),
+        // and the service wouldn't be allowed to be started without the activity.
+        activityRule.launchActivity(null).startActivity(
             Intent().apply {
                 component = ComponentName(
-                    APP_PACKAGE_NAME, "$APP_PACKAGE_NAME.CheckPermissionService"
+                    APP_PACKAGE_NAME, "$APP_PACKAGE_NAME.StartCheckPermissionServiceActivity"
                 )
                 putExtra(
                     "$APP_PACKAGE_NAME.RESULT",
