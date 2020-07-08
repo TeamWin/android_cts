@@ -124,7 +124,6 @@ public class WindowFocusHandleService extends Service {
             }
             return false;
         });
-        editText.setText("Popup");
         editText.setBackground(new ColorDrawable(Color.CYAN));
 
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
