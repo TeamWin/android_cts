@@ -34,6 +34,8 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.autofill.AutofillManager;
+import android.widget.Button;
+import android.widget.EditText;
 
 import com.google.common.base.Preconditions;
 
@@ -58,6 +60,7 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
 
 
     private static final int MSG_WAIT_FOR_LATCH = 1;
+    private static final int MSG_REQUEST_AUTOFILL = 2;
 
     private static Bundle sData;
     private static final SparseArray<CannedDataset> sDatasets = new SparseArray<>();
@@ -73,10 +76,18 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
     // Used to block response until it's counted down.
     private static CountDownLatch sResponseLatch;
 
+    // Guarded by sLock
+    // Used to request autofill for a autofillable view in AuthenticationActivity
+    private static boolean sRequestAutofill;
+
     private Handler mHandler;
 
+    private EditText mPasswordEditText;
+    private Button mYesButton;
+
     static void resetStaticState() {
-        setResultCode(RESULT_OK);
+        setResultCode(null, RESULT_OK);
+        setRequestAutofillForAuthenticationActivity(/* requestAutofill */ false);
         sDatasets.clear();
         sResponses.clear();
         for (int i = 0; i < sPendingIntents.size(); i++) {
@@ -168,14 +179,29 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         }
     }
 
+    public static void setRequestAutofillForAuthenticationActivity(boolean requestAutofill) {
+        synchronized (sLock) {
+            sRequestAutofill = requestAutofill;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.authentication_activity);
+
+        mPasswordEditText = findViewById(R.id.password);
+        mYesButton = findViewById(R.id.yes);
+        mYesButton.setOnClickListener(view -> doIt());
 
         mHandler = new Handler(Looper.getMainLooper(), (m) -> {
             switch (m.what) {
                 case MSG_WAIT_FOR_LATCH:
                     waitForLatchAndDoIt();
+                    break;
+                case MSG_REQUEST_AUTOFILL:
+                    requestFocusOnPassword();
                     break;
                 default:
                     throw new IllegalArgumentException("invalid message: " + m);
@@ -186,9 +212,15 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         if (sResponseLatch != null) {
             Log.d(TAG, "Delaying message until latch is counted down");
             mHandler.dispatchMessage(mHandler.obtainMessage(MSG_WAIT_FOR_LATCH));
+        } else if (sRequestAutofill) {
+            mHandler.dispatchMessage(mHandler.obtainMessage(MSG_REQUEST_AUTOFILL));
         } else {
             doIt();
         }
+    }
+
+    private void requestFocusOnPassword() {
+        syncRunOnUiThread(() -> mPasswordEditText.requestFocus());
     }
 
     private void waitForLatchAndDoIt() {
