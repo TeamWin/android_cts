@@ -452,6 +452,7 @@ public abstract class BasePermissionsTest {
         // Open the app details settings
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setData(Uri.parse("package:" + mContext.getPackageName()));
         startActivity(intent);
