@@ -27,6 +27,7 @@ import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
+import android.text.TextUtils;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
@@ -113,6 +114,10 @@ public class PhoneAccountOperationsTest extends InstrumentationTestCase {
         if (!TestUtils.shouldTestTelecom(mContext)) {
             return;
         }
+        // We do not expect CTS to be the default dialer, since it confers some permissions that we
+        // explicitly assume that we don't hold during testing.
+        TestUtils.setDefaultDialer(getInstrumentation(), "");
+
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
         mPhoneAccountRegisteredLatch = new TestUtils.InvokeCounter("registerPhoneAcct");
         mPhoneAccountUnRegisteredLatch = new TestUtils.InvokeCounter("unRegisterPhoneAcct");
@@ -127,6 +132,7 @@ public class PhoneAccountOperationsTest extends InstrumentationTestCase {
         PhoneAccount retrievedPhoneAccount = mTelecomManager.getPhoneAccount(
                 TEST_PHONE_ACCOUNT_HANDLE);
         assertNull("Test account not deregistered.", retrievedPhoneAccount);
+
         super.tearDown();
     }
 
