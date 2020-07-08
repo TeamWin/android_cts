@@ -1140,7 +1140,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testLockTask_defaultDialer() throws Exception {
-        if (!mHasFeature || !mHasTelephony) {
+        if (!mHasFeature || !mHasTelephony || !mHasConnectionService) {
             return;
         }
         try {
