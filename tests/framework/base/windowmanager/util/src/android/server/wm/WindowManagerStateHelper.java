@@ -591,12 +591,26 @@ public class WindowManagerStateHelper extends WindowManagerState {
     /**
      * Asserts that the device default display minimim width is larger than the minimum task width.
      */
-    void assertDeviceDefaultDisplaySize(String errorMessage) {
+    void assertDeviceDefaultDisplaySizeForMultiWindow(String errorMessage) {
         computeState();
         final int minTaskSizePx = defaultMinimalTaskSize(DEFAULT_DISPLAY);
         final WindowManagerState.DisplayContent display = getDisplay(DEFAULT_DISPLAY);
         final Rect displayRect = display.getDisplayRect();
         if (Math.min(displayRect.width(), displayRect.height()) < minTaskSizePx) {
+            fail(errorMessage);
+        }
+    }
+
+    /**
+     * Asserts that the device default display minimum width is not smaller than the minimum width
+     * for split-screen required by CDD.
+     */
+    void assertDeviceDefaultDisplaySizeForSplitScreen(String errorMessage) {
+        computeState();
+        final int minDisplaySizePx = defaultMinimalDisplaySizeForSplitScreen(DEFAULT_DISPLAY);
+        final WindowManagerState.DisplayContent display = getDisplay(DEFAULT_DISPLAY);
+        final Rect displayRect = display.getDisplayRect();
+        if (Math.max(displayRect.width(), displayRect.height()) < minDisplaySizePx) {
             fail(errorMessage);
         }
     }
