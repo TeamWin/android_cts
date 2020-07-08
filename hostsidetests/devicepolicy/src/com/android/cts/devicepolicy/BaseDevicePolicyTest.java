@@ -167,6 +167,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     /** Whether the device supports telephony. */
     protected boolean mHasTelephony;
+    protected boolean mHasConnectionService;
 
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
@@ -185,6 +186,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         mHasManagedUserFeature = hasDeviceFeature("android.software.managed_users");
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mHasTelephony = hasDeviceFeature("android.hardware.telephony");
+        mHasConnectionService = hasDeviceFeature("android.software.connectionservice");
         mFixedPackages = getDevice().getInstalledPackageNames();
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
 
