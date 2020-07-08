@@ -617,7 +617,8 @@ public class BlobStoreManagerTest {
             try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
                 blobData.writeToSession(session, 0, blobData.getFileSize() - 2);
 
-                commitSession(sessionId, session, blobData.getBlobHandle(), 1 /* expectedResult */);
+                commitSession(sessionId, session, blobData.getBlobHandle(),
+                        false /* expectSuccess */);
             }
         } finally {
             blobData.delete();
@@ -639,7 +640,8 @@ public class BlobStoreManagerTest {
                     out.write("wrong_data".getBytes(StandardCharsets.UTF_8));
                 }
 
-                commitSession(sessionId, session, blobData.getBlobHandle(), 1 /* expectedResult */);
+                commitSession(sessionId, session, blobData.getBlobHandle(),
+                        false /* expectSuccess */);
             }
         } finally {
             blobData.delete();
@@ -1527,8 +1529,8 @@ public class BlobStoreManagerTest {
             final DummyBlobData blobData2 = new DummyBlobData.Builder(mContext).build();
             blobData2.prepare();
 
-            commitBlob(blobData1, null /* accessModifier */, 0 /* expectedResult */);
-            commitBlob(blobData2, null /* accessModifier */, 1 /* expectedResult */);
+            commitBlob(blobData1, null /* accessModifier */, true /* expectSuccess */);
+            commitBlob(blobData2, null /* accessModifier */, false /* expectSuccess */);
         }, Pair.create(KEY_MAX_COMMITTED_BLOBS, String.valueOf(1)));
     }
 
@@ -1713,11 +1715,11 @@ public class BlobStoreManagerTest {
 
     private long commitBlob(DummyBlobData blobData,
             AccessModifier accessModifier) throws Exception {
-        return commitBlob(blobData, accessModifier, 0 /* expectedResult */);
+        return commitBlob(blobData, accessModifier, true /* expectSuccess */);
     }
 
     private long commitBlob(DummyBlobData blobData,
-            AccessModifier accessModifier, int expectedResult) throws Exception {
+            AccessModifier accessModifier, boolean expectSuccess) throws Exception {
         final long sessionId = mBlobStoreManager.createSession(blobData.getBlobHandle());
         assertThat(sessionId).isGreaterThan(0L);
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -1726,23 +1728,27 @@ public class BlobStoreManagerTest {
             if (accessModifier != null) {
                 accessModifier.modify(session);
             }
-            commitSession(sessionId, session, blobData.getBlobHandle(), expectedResult);
+            commitSession(sessionId, session, blobData.getBlobHandle(), expectSuccess);
         }
         return sessionId;
     }
 
     private void commitSession(long sessionId, BlobStoreManager.Session session,
             BlobHandle blobHandle) throws Exception {
-        commitSession(sessionId, session, blobHandle, 0 /* expectedResult */);
+        commitSession(sessionId, session, blobHandle, true /* expectSuccess */);
     }
 
     private void commitSession(long sessionId, BlobStoreManager.Session session,
-            BlobHandle blobHandle, int expectedResult) throws Exception {
+            BlobHandle blobHandle, boolean expectSuccess) throws Exception {
         Log.d(TAG, "Committing session: " + sessionId + "; blob: " + blobHandle);
         final CompletableFuture<Integer> callback = new CompletableFuture<>();
         session.commit(mContext.getMainExecutor(), callback::complete);
-        assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS))
-                .isEqualTo(expectedResult);
+        final int result = callback.get(TIMEOUT_COMMIT_CALLBACK_SEC, TimeUnit.SECONDS);
+        if (expectSuccess) {
+            assertThat(result).isEqualTo(0);
+        } else {
+            assertThat(result).isNotEqualTo(0);
+        }
     }
 
     private interface AccessModifier {
