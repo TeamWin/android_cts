@@ -380,6 +380,31 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 mRetriever.getEmbeddedPicture());
     }
 
+    public void testMp4Metadata() {
+        setDataSourceFd(R.raw.tags);
+        assertEquals("Wrong title",
+                "the title",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
+        assertEquals("Wrong artist",
+                "the artist",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST));
+        assertEquals("Wrong album",
+                "the album",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM));
+        assertEquals("Wrong album artist",
+                "the album artist",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST));
+        assertEquals("Wrong composer",
+                "the composer",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPOSER));
+        assertEquals("Wrong genre",
+                "custom genre",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE));
+        assertEquals("Wrong year",
+                "2020",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_YEAR));
+    }
+
     public void testMp4AlbumArt() {
         setDataSourceFd(R.raw.swirl_128x128_h264_albumart);
         assertEquals("Mime type was other than expected",
