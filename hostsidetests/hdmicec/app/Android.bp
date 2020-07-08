@@ -21,4 +21,5 @@ android_test_helper_app {
         "guava",
         "androidx.test.runner",
     ],
+    min_sdk_version: "28",
 }
