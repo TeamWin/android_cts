@@ -269,3 +269,16 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
+android_test_helper_app {
+    name: "CtsAppEnumerationWildcardBrowserActivitySource",
+    manifest: "AndroidManifest-queriesWildcard-browserActivity.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+}
+
