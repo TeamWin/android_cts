@@ -93,9 +93,9 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
     @Test
     @FlakyTest(detail = "Promote once confirmed non-flaky")
     public void testAnimationCallbacks_overlapping_opposite() throws Exception {
-        assumeTrue(hasWindowInsets(navigationBars()));
-
         initActivity(false /* useFloating */);
+        assumeTrue(hasWindowInsets(mRootView, navigationBars()));
+
         WindowInsets before = mActivity.mLastWindowInsets;
 
         MultiAnimCallback callbackInner = new MultiAnimCallback();
