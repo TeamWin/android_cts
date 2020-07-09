@@ -66,6 +66,8 @@ public class Constants {
     public static final String QUERIES_WILDCARD_SHARE = PKG_BASE + "queries.wildcard.share";
     /** A package that queries for all web intent browsable targets. */
     public static final String QUERIES_WILDCARD_WEB = PKG_BASE + "queries.wildcard.web";
+    /** A package that queries for only browser intent targets. */
+    public static final String QUERIES_WILDCARD_BROWSER = PKG_BASE + "queries.wildcard.browser";
 
     /** A package that queries for {@link #TARGET_NO_API} package */
     public static final String TARGET_SHARED_USER = PKG_BASE + "noapi.shareduid";
@@ -83,6 +85,10 @@ public class Constants {
     public static final String TARGET_SHARE = PKG_BASE + "share.activity";
     /** A package that offers an activity that handles browsable web intents for a specific host */
     public static final String TARGET_WEB = PKG_BASE + "web.activity";
+    /** A package that offers an activity acts as a browser with host undefined */
+    public static final String TARGET_BROWSER = PKG_BASE + "browser.activity";
+    /** A package that offers an activity acts as a browser, but uses a wildcard for host */
+    public static final String TARGET_BROWSER_WILDCARD = PKG_BASE + "browser.wildcard.activity";
 
     private static final String BASE_PATH = "/data/local/tmp/cts/appenumeration/";
     public static final String TARGET_NO_API_APK = BASE_PATH + "CtsAppEnumerationNoApi.apk";
