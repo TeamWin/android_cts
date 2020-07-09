@@ -17,6 +17,7 @@ package com.android.cts.blob.helper;
 
 import static android.os.storage.StorageManager.UUID_DEFAULT;
 
+import static com.android.utils.blob.Utils.TAG;
 import static com.android.utils.blob.Utils.writeToSession;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -34,6 +35,7 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
+import android.util.Log;
 
 import com.android.cts.blob.ICommandReceiver;
 import com.android.utils.blob.Utils;
@@ -64,6 +66,7 @@ public class BlobStoreTestService extends Service {
                         session.allowPublicAccess();
                     }
 
+                    Log.d(TAG, "Committing session: " + sessionId + "; blob: " + blobHandle);
                     final CompletableFuture<Integer> callback = new CompletableFuture<>();
                     session.commit(getMainExecutor(), callback::complete);
                     return callback.get(timeoutSec, TimeUnit.SECONDS);

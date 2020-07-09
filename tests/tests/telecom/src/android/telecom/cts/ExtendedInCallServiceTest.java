@@ -382,6 +382,7 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         Uri blockedUri = null;
 
         try {
+            TestUtils.executeShellCommand(getInstrumentation(), "telecom stop-block-suppression");
             Uri testNumberUri = createTestNumber();
             blockedUri = blockNumber(testNumberUri);
 
