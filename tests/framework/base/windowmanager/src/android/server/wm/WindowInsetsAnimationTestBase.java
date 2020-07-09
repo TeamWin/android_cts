@@ -104,8 +104,8 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
         assertEquals(after, steps.get(steps.size() - 1).insets);
     }
 
-    protected boolean hasWindowInsets(int types) {
-        return Insets.NONE != mRootView.getRootWindowInsets().getInsetsIgnoringVisibility(types);
+    protected static boolean hasWindowInsets(View rootView, int types) {
+        return Insets.NONE != rootView.getRootWindowInsets().getInsetsIgnoringVisibility(types);
     }
 
     protected void assertAnimationSteps(ArrayList<AnimationStep> steps, boolean showAnimation) {
