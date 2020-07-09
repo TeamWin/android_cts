@@ -65,7 +65,7 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
         super.setUp();
         mActivity = startActivity(TestActivity.class);
         mRootView = mActivity.getWindow().getDecorView();
-        assumeTrue(hasWindowInsets(systemBars()));
+        assumeTrue(hasWindowInsets(mRootView, systemBars()));
     }
 
     @Test
@@ -219,11 +219,11 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
 
         waitForOrFail("Waiting until animation done", () -> done[0]);
 
-        if (hasWindowInsets(statusBars())) {
+        if (hasWindowInsets(mRootView, statusBars())) {
             verify(childCallback).onStart(any(), argThat(
                     bounds -> bounds.getUpperBound().equals(before.getInsets(statusBars()))));
         }
-        if (hasWindowInsets(navigationBars())) {
+        if (hasWindowInsets(mRootView, navigationBars())) {
             verify(childCallback, atLeastOnce()).onProgress(argThat(
                     insets -> NONE.equals(insets.getInsets(navigationBars()))), any());
         }
