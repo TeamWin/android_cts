@@ -35,4 +35,9 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.cts.blob" />
     </test>
+
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="directory-keys" value="/sdcard/CtsBlobStoreTestCases" />
+        <option name="collect-on-run-ended-only" value="true" />
+    </metrics_collector>
 </configuration>

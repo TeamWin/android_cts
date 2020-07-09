@@ -76,12 +76,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.common.io.BaseEncoding;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(BlobStoreTestRunner.class)
 public class BlobStoreManagerTest {
 
     private static final long TIMEOUT_COMMIT_CALLBACK_SEC = 5;
