@@ -253,10 +253,6 @@ public class CarrierApiTest extends AndroidTestCase {
         assertEquals(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_SUCCESS, value);
     }
 
-    private static void assertUpdateAvailableNetworkInvalidArguments(int value) {
-        assertEquals(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS, value);
-    }
-
     private static void assertUpdateAvailableNetworkNoOpportunisticSubAvailable(int value) {
         assertEquals(
                 TelephonyManager.UPDATE_AVAILABLE_NETWORKS_NO_OPPORTUNISTIC_SUB_AVAILABLE, value);
@@ -313,8 +309,6 @@ public class CarrierApiTest extends AndroidTestCase {
         List<AvailableNetworkInfo> availableNetworkInfos = new ArrayList<AvailableNetworkInfo>();
         Consumer<Integer> callbackSuccess =
                 CarrierApiTest::assertUpdateAvailableNetworkSuccess;
-        Consumer<Integer> callbackFailure =
-                CarrierApiTest::assertUpdateAvailableNetworkInvalidArguments;
         Consumer<Integer> callbackNoOpportunisticSubAvailable =
                 CarrierApiTest::assertUpdateAvailableNetworkNoOpportunisticSubAvailable;
         Consumer<Integer> setOpCallbackSuccess = CarrierApiTest::assertSetOpportunisticSubSuccess;
@@ -336,7 +330,7 @@ public class CarrierApiTest extends AndroidTestCase {
                 // clear all the operations at the end of test.
                 availableNetworkInfos.clear();
                 mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
-                        AsyncTask.SERIAL_EXECUTOR, callbackFailure);
+                        AsyncTask.SERIAL_EXECUTOR, callbackNoOpportunisticSubAvailable);
             }
         } else {
             // This is case of DSDS phone, one active opportunistic subscription and one

@@ -1974,10 +1974,6 @@ public class TelephonyManagerTest {
         assertThat(value).isEqualTo(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_SUCCESS);
     }
 
-    private static void assertUpdateAvailableNetworkInvalidArguments(int value) {
-        assertThat(value).isEqualTo(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS);
-    }
-
     private static void assertUpdateAvailableNetworkNoOpportunisticSub(int value) {
         assertThat(value).isEqualTo(
                 TelephonyManager.UPDATE_AVAILABLE_NETWORKS_NO_OPPORTUNISTIC_SUB_AVAILABLE);
@@ -2067,8 +2063,6 @@ public class TelephonyManagerTest {
         List<AvailableNetworkInfo> availableNetworkInfos = new ArrayList<AvailableNetworkInfo>();
         Consumer<Integer> callbackSuccess =
                 TelephonyManagerTest::assertUpdateAvailableNetworkSuccess;
-        Consumer<Integer> callbackFailure =
-                TelephonyManagerTest::assertUpdateAvailableNetworkInvalidArguments;
         Consumer<Integer> callbackNoOpSub =
                 TelephonyManagerTest::assertUpdateAvailableNetworkNoOpportunisticSub;
         if (subscriptionInfoList == null || subscriptionInfoList.size() == 0
@@ -2086,7 +2080,7 @@ public class TelephonyManagerTest {
             availableNetworkInfos.clear();
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.updateAvailableNetworks(availableNetworkInfos,
-                            AsyncTask.SERIAL_EXECUTOR, callbackFailure));
+                            AsyncTask.SERIAL_EXECUTOR, callbackNoOpSub));
         } else {
             AvailableNetworkInfo availableNetworkInfo = new AvailableNetworkInfo(
                     subscriptionInfoList.get(0).getSubscriptionId(),
