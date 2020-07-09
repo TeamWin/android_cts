@@ -30,6 +30,7 @@ android_test_helper_app {
         "truth-prebuilt",
         "testng",
         "androidx.legacy_legacy-support-v4",
+        "devicepolicy-deviceside-common",
     ],
     min_sdk_version: "27",
     // tag this module as a cts test artifact
