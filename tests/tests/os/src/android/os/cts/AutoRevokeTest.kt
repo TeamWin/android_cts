@@ -322,6 +322,8 @@ class AutoRevokeTest : InstrumentationTestCase() {
     ) {
         installApp(apk)
         try {
+            // Try to reduce flakiness caused by new package update not propagating in time
+            Thread.sleep(1000)
             action()
         } finally {
             uninstallApp(packageName)
