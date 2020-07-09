@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import android.app.Activity;
+import android.graphics.Insets;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -68,6 +69,16 @@ public class WindowCtsActivity extends Activity {
 
     public View getContentView() {
         return findViewById(R.id.listview_window);
+    }
+
+    public Insets getAppliedInsets() {
+        View view = (View) getContentView().getParent();
+        int[] location = new int[2];
+        view.getLocationInWindow(location);
+        View decorView = getWindow().getDecorView();
+        return Insets.of(location[0], location[1],
+                decorView.getWidth() - (location[0] + view.getWidth()),
+                decorView.getHeight() - (location[1] + view.getHeight()));
     }
 
     public WindowInsets getLastInsets() {
