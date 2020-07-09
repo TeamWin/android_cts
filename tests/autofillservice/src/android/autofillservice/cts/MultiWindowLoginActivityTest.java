@@ -68,7 +68,7 @@ public class MultiWindowLoginActivityTest
     @Before
     public void setup() {
         assumeTrue("Skipping test: no split multi-window support",
-                ActivityTaskManager.supportsSplitScreenMultiWindow(mContext));
+                ActivityTaskManager.supportsSplitScreenMultiWindow(mActivity));
     }
 
     /**

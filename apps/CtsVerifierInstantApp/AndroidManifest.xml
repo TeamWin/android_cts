@@ -17,13 +17,11 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:host="source.android.com/compatibility/cts/verifier-instant-apps"
-                     android:scheme="http"/>
-                <data android:host="source.android.com/compatibility/cts/verifier-instant-apps"
-                     android:scheme="https"/>
+                <data android:host="instantapp.cts.android.com" android:scheme="http"/>
+                <data android:host="instantapp.cts.android.com" android:scheme="https"/>
             </intent-filter>
             <meta-data android:name="default-url"
-                 android:value="https://source.android.com/compatibility/cts/verifier-instant-apps" />
+                 android:value="http://instantapp.cts.android.com" />
         </activity>
     </application>
 </manifest>

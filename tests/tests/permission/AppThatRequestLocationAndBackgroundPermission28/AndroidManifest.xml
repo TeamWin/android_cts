@@ -17,22 +17,16 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.permission.cts.appthatrequestpermission"
-    android:versionCode="2">
+    android:versionCode="3">
 
-    <permission
-        android:name="android.permission.cts.appthatrequestpermission.TEST"
-        android:protectionLevel="dangerous"
-        android:permissionGroup="android.permission-group.UNDEFINED" />
+    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="28" />
 
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.cts.appthatrequestpermission.TEST" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <application android:label="CtsPermissionUnknownGroup">
-        <activity
-            android:name=".RequestPermissions"
-            android:exported="true"
-            android:visibleToInstantApps="true"/>
-    </application>
+    <!-- The ACCESS_BACKGROUND_LOCATION was added for API 29. But apps targeting lower APK levels
+    can still request it to signal that they are aware of this new behavior -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <application />
 </manifest>
 

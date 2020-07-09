@@ -154,7 +154,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testMinimumDeviceSize() throws Exception {
-        mWmState.assertDeviceDefaultDisplaySize(
+        mWmState.assertDeviceDefaultDisplaySizeForMultiWindow(
                 "Devices supporting picture-in-picture must be larger than the default minimum"
                         + " task size");
     }

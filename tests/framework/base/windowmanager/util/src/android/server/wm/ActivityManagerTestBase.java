@@ -1062,8 +1062,18 @@ public abstract class ActivityManagerTestBase {
         return uiModeLockedToVrHeadset;
     }
 
+    /** Returns true if the default display supports split screen multi-window. */
     protected boolean supportsSplitScreenMultiWindow() {
-        return ActivityTaskManager.supportsSplitScreenMultiWindow(mContext);
+        Display defaultDisplay = mDm.getDisplay(DEFAULT_DISPLAY);
+        return supportsSplitScreenMultiWindow(mContext.createDisplayContext(defaultDisplay));
+    }
+
+    /**
+     * Returns true if the display associated with the supplied {@code context} supports split
+     * screen multi-window.
+     */
+    protected boolean supportsSplitScreenMultiWindow(Context context) {
+        return ActivityTaskManager.supportsSplitScreenMultiWindow(context);
     }
 
     protected boolean hasHomeScreen() {
@@ -1127,6 +1137,11 @@ public abstract class ActivityManagerTestBase {
     protected static boolean perDisplayFocusEnabled() {
         return getInstrumentation().getTargetContext().getResources()
                 .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
+    }
+
+    protected static boolean remoteInsetsControllerControlsSystemBars() {
+        return getInstrumentation().getTargetContext().getResources()
+                .getBoolean(android.R.bool.config_remoteInsetsControllerControlsSystemBars);
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */

@@ -90,9 +90,12 @@ public class SplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testMinimumDeviceSize() throws Exception {
-        mWmState.assertDeviceDefaultDisplaySize(
+        mWmState.assertDeviceDefaultDisplaySizeForMultiWindow(
                 "Devices supporting multi-window must be larger than the default minimum"
                         + " task size");
+        mWmState.assertDeviceDefaultDisplaySizeForSplitScreen(
+                "Devices supporting split-screen multi-window must be larger than the"
+                        + " default minimum display size.");
     }
 
 

@@ -23,11 +23,13 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SettingsUtils;
+import com.android.compatibility.common.util.UserUtils;
 
 import junit.framework.Assert;
 
@@ -422,7 +424,8 @@ public class UiModeManagerTest extends AndroidTestCase {
 
     private String getUiNightModeFromSetting() {
         String key = "ui_night_mode";
-        return isAutomotive() ? SettingsUtils.getSecureSettingAsSystemUser(key)
+        return UserUtils.isHeadlessSystemUserMode()
+                ? SettingsUtils.getSecureSettingAsUser(UserHandle.USER_SYSTEM, key)
                 : SettingsUtils.getSecureSetting(key);
     }
 }

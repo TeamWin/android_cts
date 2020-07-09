@@ -587,7 +587,7 @@ public class AccessibilityWindowQueryTest {
     @MediumTest
     @Test
     public void testWindowDockAndUndock_dividerWindowAppearsAndDisappears() throws Exception {
-        if (!ActivityTaskManager.supportsSplitScreenMultiWindow(sInstrumentation.getContext())) {
+        if (!ActivityTaskManager.supportsSplitScreenMultiWindow(mActivity)) {
             // Skipping test: no multi-window support
             return;
         }
