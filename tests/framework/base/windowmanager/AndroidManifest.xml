@@ -380,6 +380,7 @@
                   android:screenOrientation="locked"
                   android:turnScreenOn="true"
                   android:showWhenLocked="true"
+                  android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
                   android:label="WindowCtsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
