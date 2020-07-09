@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.verify;
 import android.app.Instrumentation;
 import android.app.Presentation;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -658,6 +660,21 @@ public class WindowTest {
         mInstrumentation.waitForIdleSync();
         assertEquals(mActivity.getContentView().getRootWindowInsets().getSystemWindowInsets(),
                 mActivity.getLastInsets().getSystemWindowInsets());
+    }
+
+    @Test
+    public void testSetFitsContentForInsets_displayCutoutInsets_areApplied()
+            throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            mWindow.setDecorFitsSystemWindows(true);
+            WindowManager.LayoutParams attrs = mWindow.getAttributes();
+            attrs.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            mWindow.setAttributes(attrs);
+        });
+        mInstrumentation.waitForIdleSync();
+        assertEquals(mActivity.getContentView().getRootWindowInsets().getSystemWindowInsets(),
+                mActivity.getAppliedInsets());
     }
 
     @Test
