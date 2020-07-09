@@ -360,6 +360,9 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     public void testRestrictStorageAccessFrameworkEnabled_blockFromTree() throws Exception {
         if (!supportedHardware()) return;
 
+        // Clear DocsUI's storage to avoid it opening stored last location.
+        clearDocumentsUi();
+
         final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
@@ -368,11 +371,15 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         // save button is disabled for the storage root
         assertFalse(findSaveButton().isEnabled());
 
-        findDocument("Download").click();
-        mDevice.waitForIdle();
+        try {
+            findDocument("Download").click();
+            mDevice.waitForIdle();
 
-        // save button is disabled for Download folder
-        assertFalse(findSaveButton().isEnabled());
+            // save button is disabled for Download folder
+            assertFalse(findSaveButton().isEnabled());
+        } catch(UiObjectNotFoundException e) {
+            // It might be possible that Download directory does not exist.
+        }
 
         findRoot("CtsCreate").click();
         mDevice.waitForIdle();
@@ -388,7 +395,11 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     }
 
     public void testRestrictStorageAccessFrameworkDisabled_notBlockFromTree() throws Exception {
-        if (!supportedHardware()) return;
+        if (!supportedHardware())
+            return;
+
+        // Clear DocsUI's storage to avoid it opening stored last location.
+        clearDocumentsUi();
 
         final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
@@ -398,11 +409,15 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         // save button is enabled for for the storage root
         assertTrue(findSaveButton().isEnabled());
 
-        findDocument("Download").click();
-        mDevice.waitForIdle();
+        try {
+            findDocument("Download").click();
+            mDevice.waitForIdle();
 
-        // save button is enabled for Download folder
-        assertTrue(findSaveButton().isEnabled());
+            // save button is enabled for Download folder
+            assertTrue(findSaveButton().isEnabled());
+        } catch (UiObjectNotFoundException e) {
+            // It might be possible that Download directory does not exist.
+        }
 
         findRoot("CtsCreate").click();
         mDevice.waitForIdle();
@@ -646,8 +661,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     public void testOpenDocumentAtInitialLocation() throws Exception {
         if (!supportedHardware()) return;
 
-        // Clear DocsUI's storage to avoid it opening stored last location
-        // which may make this test pass "luckily".
+        // Clear DocsUI's storage to avoid it opening stored last location.
         clearDocumentsUi();
 
         final Uri docUri = DocumentsContract.buildDocumentUri(PROVIDER_PACKAGE, "doc:file1");
@@ -665,8 +679,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     public void testOpenDocumentTreeAtInitialLocation() throws Exception {
         if (!supportedHardware()) return;
 
-        // Clear DocsUI's storage to avoid it opening stored last location
-        // which may make this test pass "luckily".
+        // Clear DocsUI's storage to avoid it opening stored last location.
         clearDocumentsUi();
 
         final Uri docUri = DocumentsContract.buildDocumentUri(PROVIDER_PACKAGE, "doc:dir2");
@@ -682,8 +695,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     public void testOpenDocumentTreeWithScopedStorage() throws Exception {
         if (!supportedHardware()) return;
 
-        // Clear DocsUI's storage to avoid it opening stored last location
-        // which may make this test pass "luckily".
+        // Clear DocsUI's storage to avoid it opening stored last location.
         clearDocumentsUi();
 
         final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
@@ -707,8 +719,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     public void testOpenRootWithoutRootIdAtInitialLocation() throws Exception {
         if (!supportedHardware()) return;
 
-        // Clear DocsUI's storage to avoid it opening stored last location
-        // which may make this test pass "luckily".
+        // Clear DocsUI's storage to avoid it opening stored last location.
         clearDocumentsUi();
 
         final Uri rootsUri = DocumentsContract.buildRootsUri(PROVIDER_PACKAGE);
@@ -724,8 +735,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     public void testCreateDocumentAtInitialLocation() throws Exception {
         if (!supportedHardware()) return;
 
-        // Clear DocsUI's storage to avoid it opening stored last location
-        // which may make this test pass "luckily".
+        // Clear DocsUI's storage to avoid it opening stored last location.
         clearDocumentsUi();
 
         final Uri treeUri = DocumentsContract.buildTreeDocumentUri(PROVIDER_PACKAGE, "doc:local");
