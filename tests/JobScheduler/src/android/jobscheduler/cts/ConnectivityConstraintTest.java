@@ -80,10 +80,12 @@ public class ConnectivityConstraintTest extends ConstraintTest {
         mBuilder =
                 new JobInfo.Builder(CONNECTIVITY_JOB_ID, kJobServiceComponent);
 
-        mInitialWiFiState = mWifiManager.isWifiEnabled();
         mInitialRestrictBackground = SystemUtil
                 .runShellCommand(getInstrumentation(), RESTRICT_BACKGROUND_GET_CMD)
                 .contains("enabled");
+        if (mHasWifi) {
+            mInitialWiFiState = mWifiManager.isWifiEnabled();
+        }
     }
 
     @Override
@@ -94,26 +96,24 @@ public class ConnectivityConstraintTest extends ConstraintTest {
         if (mInitialRestrictBackground) {
             SystemUtil.runShellCommand(getInstrumentation(), RESTRICT_BACKGROUND_ON_CMD);
         }
-
         // Ensure that we leave WiFi in its previous state.
-        if (mWifiManager.isWifiEnabled() == mInitialWiFiState) {
-            return;
-        }
-        NetworkInfo.State expectedState = mInitialWiFiState ?
-                NetworkInfo.State.CONNECTED : NetworkInfo.State.DISCONNECTED;
-        ConnectivityActionReceiver receiver =
-                new ConnectivityActionReceiver(ConnectivityManager.TYPE_WIFI,
-                        expectedState);
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        mContext.registerReceiver(receiver, filter);
+        if (mHasWifi && (mWifiManager.isWifiEnabled() != mInitialWiFiState)) {
+            NetworkInfo.State expectedState = mInitialWiFiState ?
+                    NetworkInfo.State.CONNECTED : NetworkInfo.State.DISCONNECTED;
+            ConnectivityActionReceiver receiver =
+                    new ConnectivityActionReceiver(ConnectivityManager.TYPE_WIFI,
+                            expectedState);
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+            mContext.registerReceiver(receiver, filter);
 
-        assertTrue(mWifiManager.setWifiEnabled(mInitialWiFiState));
-        receiver.waitForStateChange();
-        assertTrue("Failure to restore previous WiFi state",
+            assertTrue(mWifiManager.setWifiEnabled(mInitialWiFiState));
+            receiver.waitForStateChange();
+            assertTrue("Failure to restore previous WiFi state",
                 mWifiManager.isWifiEnabled() == mInitialWiFiState);
 
-        mContext.unregisterReceiver(receiver);
+            mContext.unregisterReceiver(receiver);
+        }
 
         super.tearDown();
     }
