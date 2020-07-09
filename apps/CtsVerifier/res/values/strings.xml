@@ -4648,6 +4648,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="tv_audio_capabilities_test_info">This test checks if AudioDeviceInfo and
     AudioTrack#isDirectPlaybackSupported APIs correctly report the Audio capabilities
     of the connected audio devices.</string>
+    <string name="tv_audio_capabilities_no_receiver_connected">Disconnect all receivers or
+    soundbars which are connected. </string>
+    <string name="tv_audio_capabilities_receiver_connected">Connect a receiver or
+    soundbar which can play Dolby Atmos. </string>
 
     <!-- HDR Capabilities test -->
     <string name="tv_hdr_capabilities_test">HDR Capabilities Test</string>
