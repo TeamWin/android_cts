@@ -16,9 +16,11 @@
 
 package android.content.cts;
 
+import static android.content.IntentFilter.MATCH_ADJUSTMENT_NORMAL;
 import static android.content.IntentFilter.MATCH_CATEGORY_HOST;
 import static android.content.IntentFilter.MATCH_CATEGORY_SCHEME_SPECIFIC_PART;
 import static android.content.IntentFilter.MATCH_CATEGORY_TYPE;
+import static android.content.IntentFilter.NO_MATCH_DATA;
 import static android.os.PatternMatcher.PATTERN_LITERAL;
 import static android.os.PatternMatcher.PATTERN_PREFIX;
 import static android.os.PatternMatcher.PATTERN_SIMPLE_GLOB;
@@ -935,6 +937,54 @@ public class IntentFilterTest extends AndroidTestCase {
                         null,
                         "https://something",
                         true));
+    }
+
+    public void testAppEnumerationBrowser() throws Exception {
+        IntentFilter appWithWebLink = new Match(
+                new String[]{Intent.ACTION_VIEW},
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                new String[]{"http", "https"},
+                new String[]{"some.app.domain"},
+                null);
+
+        IntentFilter browserFilterWithWildcard = new Match(
+                new String[]{Intent.ACTION_VIEW},
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                new String[]{"http", "https"},
+                new String[]{"*"},
+                null);
+
+        IntentFilter browserFilterWithoutWildcard = new Match(
+                new String[]{Intent.ACTION_VIEW},
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                new String[]{"http", "https"},
+                null,
+                null);
+
+        checkMatches(browserFilterWithWildcard,
+                new MatchCondition(MATCH_CATEGORY_HOST,
+                Intent.ACTION_VIEW,
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                "https://",
+                true));
+        checkMatches(browserFilterWithoutWildcard,
+                new MatchCondition(IntentFilter.MATCH_CATEGORY_SCHEME | MATCH_ADJUSTMENT_NORMAL,
+                Intent.ACTION_VIEW,
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                "https://",
+                true));
+        checkMatches(appWithWebLink,
+                new MatchCondition(NO_MATCH_DATA,
+                Intent.ACTION_VIEW,
+                new String[]{Intent.CATEGORY_BROWSABLE},
+                null,
+                "https://",
+                true));
     }
 
     public void testWriteToXml() throws IllegalArgumentException, IllegalStateException,
