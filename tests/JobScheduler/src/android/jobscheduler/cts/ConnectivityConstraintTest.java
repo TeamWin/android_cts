@@ -82,10 +82,12 @@ public class ConnectivityConstraintTest extends ConstraintTest {
         mBuilder =
                 new JobInfo.Builder(CONNECTIVITY_JOB_ID, kJobServiceComponent);
 
-        mInitialWiFiState = mWifiManager.isWifiEnabled();
         mInitialRestrictBackground = SystemUtil
                 .runShellCommand(getInstrumentation(), RESTRICT_BACKGROUND_GET_CMD)
                 .contains("enabled");
+        if (mHasWifi) {
+            mInitialWiFiState = mWifiManager.isWifiEnabled();
+        }
     }
 
     @Override
@@ -99,7 +101,7 @@ public class ConnectivityConstraintTest extends ConstraintTest {
         setDataSaverEnabled(mInitialRestrictBackground);
 
         // Ensure that we leave WiFi in its previous state.
-        if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
+        if (mHasWifi && (mWifiManager.isWifiEnabled() != mInitialWiFiState)) {
             setWifiState(mInitialWiFiState, mContext, mCm, mWifiManager);
         }
 
