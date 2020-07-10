@@ -18,15 +18,14 @@ package android.hdmicec.cts.audio;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-import static org.junit.Assume.assumeTrue;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Range;
 
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.LogHelper;
 import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
@@ -42,10 +41,7 @@ import org.junit.runner.RunWith;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -59,9 +55,6 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     /** The class name of the main activity in the APK. */
     private static final String CLASS = "HdmiCecAudioManager";
 
-    /** The tag of the SadConfigurationReaderTest launched by the APK. */
-    private static final String SAD_READER = "SadConfigurationReaderTest";
-
     /** The command to launch the main activity. */
     private static final String START_COMMAND = String.format(
             "am start -n %s/%s.%s -a ", PACKAGE, PACKAGE, CLASS);
@@ -69,13 +62,11 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     /** The command to clear the main activity. */
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
-    private static final int WAIT_TIME = 10;
     private static final LogicalAddress AUDIO_DEVICE = LogicalAddress.AUDIO_SYSTEM;
     private static final int ON = 0x1;
     private static final int OFF = 0x0;
     private static final int MAX_AUDIO_FORMATS = 4;
     private static final int MAX_VALID_AUDIO_FORMATS = 2;
-    private static final String SAD_CONFIGURATION_MARKER = "Supported Audio Formats";
 
     private List<Integer> mSupportedAudioFormats = null;
 
@@ -92,51 +83,6 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
                 AUDIO_DEVICE.getDeviceType()))
             .around(hdmiCecClient);
 
-    private void lookForLogFromHdmiCecAudioManager(String expectedOut) throws Exception {
-        ITestDevice device = getDevice();
-        TimeUnit.SECONDS.sleep(WAIT_TIME);
-        String logs = device.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
-        // Search for string.
-        String testString = "";
-        Scanner in = new Scanner(logs);
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
-            if(line.startsWith("I/" + CLASS)) {
-                testString = line.split(":")[1].trim();
-                break;
-            }
-        }
-        device.executeAdbCommand("logcat", "-c");
-        assertThat(testString).isEqualTo(expectedOut);
-    }
-
-    private void lookForLogFromSadConfigurationReaderTest(String expectedOut) throws Exception {
-        ITestDevice device = getDevice();
-        TimeUnit.SECONDS.sleep(WAIT_TIME);
-        String logs =
-                device.executeAdbCommand("logcat", "-v", "brief", "-d", SAD_READER + ":I", "*:S");
-        // Search for string.
-        String testString = "";
-        Scanner in = new Scanner(logs);
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
-            if (line.startsWith("I/" + SAD_READER)) {
-                testString = line.split(":")[1].trim();
-                if (testString.equals(SAD_CONFIGURATION_MARKER)) {
-                    List<String> mFormatsLine =
-                            Arrays.asList(in.nextLine().split(":")[1].trim().split(", "));
-                    List<String> mCodecSADsLine =
-                            Arrays.asList(in.nextLine().split(":")[1].trim().split(", "));
-                    mSupportedAudioFormats =
-                            Lists.transform(mFormatsLine, fl -> Integer.parseInt(fl));
-                    break;
-                }
-            }
-        }
-        device.executeAdbCommand("logcat", "-c");
-        assumeTrue(testString.equals(expectedOut));
-    }
-
     private String getRequestSadFormatsParams(boolean sendValidFormats) throws Exception {
         ITestDevice device = getDevice();
         // Clear activity
@@ -145,7 +91,7 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         device.executeAdbCommand("logcat", "-c");
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.GET_SUPPORTED_SAD_FORMATS");
-        lookForLogFromSadConfigurationReaderTest(SAD_CONFIGURATION_MARKER);
+        mSupportedAudioFormats = LogHelper.getSupportedAudioFormats(getDevice());
 
         // Create a list of all the audio format codes according to CEA-861-D. Remove the supported
         // audio format codes from it, to get the unsupported audio format codes.
@@ -202,7 +148,7 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.REPORT_VOLUME");
         try {
-            lookForLogFromHdmiCecAudioManager("Device muted.");
+            LogHelper.assertLog(getDevice(), CLASS, "Device muted.");
             return true;
         } catch(Exception e) {
             return false;
