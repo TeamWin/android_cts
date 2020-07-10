@@ -33,6 +33,8 @@ public class TelephonyUtils {
     private static final String COMMAND_REMOVE_TEST_EMERGENCY_NUMBER =
             "cmd phone emergency-number-test-mode -r ";
 
+    private static final String COMMAND_END_BLOCK_SUPPRESSION = "cmd phone end-block-suppression";
+
     public static void addTestEmergencyNumber(Instrumentation instr, String testNumber)
             throws Exception {
         executeShellCommand(instr, COMMAND_ADD_TEST_EMERGENCY_NUMBER + testNumber);
@@ -41,6 +43,10 @@ public class TelephonyUtils {
     public static void removeTestEmergencyNumber(Instrumentation instr, String testNumber)
             throws Exception {
         executeShellCommand(instr, COMMAND_REMOVE_TEST_EMERGENCY_NUMBER + testNumber);
+    }
+
+    public static void endBlockSuppression(Instrumentation instr) throws Exception {
+        executeShellCommand(instr, COMMAND_END_BLOCK_SUPPRESSION);
     }
 
     public static boolean isSkt(TelephonyManager telephonyManager) {
