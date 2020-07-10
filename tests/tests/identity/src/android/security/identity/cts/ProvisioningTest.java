@@ -107,12 +107,26 @@ public class ProvisioningTest {
 
     static Collection<X509Certificate> createCredential(IdentityCredentialStore store,
             String credentialName) throws IdentityCredentialException {
-        return createCredentialWithChallenge(store, credentialName, "SomeChallenge".getBytes());
+        return createCredentialWithChallengeAndAcpId(store, credentialName, "SomeChallenge".getBytes(), 0);
+    }
+
+    static Collection<X509Certificate> createCredentialWithAcpId(IdentityCredentialStore store,
+            String credentialName,
+            int accessControlProfileId) throws IdentityCredentialException {
+        return createCredentialWithChallengeAndAcpId(store, credentialName, "SomeChallenge".getBytes(),
+                                                     accessControlProfileId);
     }
 
     static Collection<X509Certificate> createCredentialWithChallenge(IdentityCredentialStore store,
             String credentialName,
             byte[] challenge) throws IdentityCredentialException {
+        return createCredentialWithChallengeAndAcpId(store, credentialName, challenge, 0);
+    }
+
+    static Collection<X509Certificate> createCredentialWithChallengeAndAcpId(IdentityCredentialStore store,
+            String credentialName,
+            byte[] challenge,
+            int id) throws IdentityCredentialException {
         WritableIdentityCredential wc = null;
         wc = store.createCredential(credentialName, "org.iso.18013-5.2019.mdl");
 
@@ -120,16 +134,16 @@ public class ProvisioningTest {
                 wc.getCredentialKeyCertificateChain(challenge);
         // TODO: inspect cert-chain
 
-        // Profile 0 (no authentication)
+        // Profile X (no authentication)
         AccessControlProfile noAuthProfile =
-                new AccessControlProfile.Builder(new AccessControlProfileId(0))
+                new AccessControlProfile.Builder(new AccessControlProfileId(id))
                         .setUserAuthenticationRequired(false)
                         .build();
 
         byte[] drivingPrivileges = getExampleDrivingPrivilegesCbor();
 
         Collection<AccessControlProfileId> idsNoAuth = new ArrayList<AccessControlProfileId>();
-        idsNoAuth.add(new AccessControlProfileId(0));
+        idsNoAuth.add(new AccessControlProfileId(id));
         Collection<AccessControlProfileId> idsNoAcp = new ArrayList<AccessControlProfileId>();
         String mdlNs = "org.iso.18013-5.2019";
         PersonalizationData personalizationData =
@@ -170,7 +184,7 @@ public class ProvisioningTest {
                 + "  'org.iso.18013-5.2019.mdl',\n"
                 + "  [\n"
                 + "    {\n"
-                + "      'id' : 0\n"
+                + "      'id' : " + id + "\n"
                 + "    }\n"
                 + "  ],\n"
                 + "  {\n"
@@ -178,57 +192,57 @@ public class ProvisioningTest {
                 + "      {\n"
                 + "        'name' : 'First name',\n"
                 + "        'value' : 'Alan',\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Last name',\n"
                 + "        'value' : 'Turing',\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Home address',\n"
                 + "        'value' : 'Maida Vale, London, England',\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Birth date',\n"
                 + "        'value' : '19120623',\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Cryptanalyst',\n"
                 + "        'value' : true,\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Portrait image',\n"
                 + "        'value' : [0x01, 0x02],\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Height',\n"
                 + "        'value' : 180,\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Neg Item',\n"
                 + "        'value' : -42,\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Int Two Bytes',\n"
                 + "        'value' : 257,\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Int Four Bytes',\n"
                 + "        'value' : 65537,\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'Int Eight Bytes',\n"
                 + "        'value' : 4294967297,\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'driving_privileges',\n"
@@ -238,7 +252,7 @@ public class ProvisioningTest {
                 + "            'vehicle_category_code' : 'TODO'\n"
                 + "          }\n"
                 + "        ],\n"
-                + "        'accessControlProfiles' : [0]\n"
+                + "        'accessControlProfiles' : [" + id + "]\n"
                 + "      },\n"
                 + "      {\n"
                 + "        'name' : 'No Access',\n"
@@ -910,6 +924,96 @@ public class ProvisioningTest {
         } catch (Exception e) {
             // This is the expected path...
         }
+    }
+
+    @Test
+    public void testProvisionAcpIdNotStartingAtZero() throws
+            IdentityCredentialException, CborException {
+        assumeTrue("IC HAL is not implemented", Util.isHalImplemented());
+
+        Context appContext = InstrumentationRegistry.getTargetContext();
+        IdentityCredentialStore store = IdentityCredentialStore.getInstance(appContext);
+
+        store.deleteCredentialByName("test");
+        Collection<X509Certificate> certChain = createCredentialWithAcpId(store, "test", 1);
+
+        IdentityCredential credential = store.getCredentialByName("test",
+                IdentityCredentialStore.CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256);
+
+        // Check that the read-back certChain matches the created one.
+        Collection<X509Certificate> readBackCertChain =
+                credential.getCredentialKeyCertificateChain();
+        assertEquals(certChain.size(), readBackCertChain.size());
+        Iterator<X509Certificate> it = readBackCertChain.iterator();
+        for (X509Certificate expectedCert : certChain) {
+            X509Certificate readBackCert = it.next();
+            assertEquals(expectedCert, readBackCert);
+        }
+
+        Map<String, Collection<String>> entriesToRequest = new LinkedHashMap<>();
+        entriesToRequest.put("org.iso.18013-5.2019",
+                Arrays.asList("First name",
+                        "Last name",
+                        "Home address",
+                        "Birth date",
+                        "Cryptanalyst",
+                        "Portrait image",
+                        "Height",
+                        "Neg Item",
+                        "Int Two Bytes",
+                        "Int Eight Bytes",
+                        "Int Four Bytes",
+                        "driving_privileges"));
+        ResultData rd = credential.getEntries(
+                Util.createItemsRequest(entriesToRequest, null),
+                entriesToRequest,
+                null,
+                null);
+
+        Collection<String> resultNamespaces = rd.getNamespaces();
+        assertEquals(resultNamespaces.size(), 1);
+        assertEquals("org.iso.18013-5.2019", resultNamespaces.iterator().next());
+        assertEquals(12, rd.getEntryNames("org.iso.18013-5.2019").size());
+
+        String ns = "org.iso.18013-5.2019";
+        assertEquals("Alan", Util.getStringEntry(rd, ns, "First name"));
+        assertEquals("Turing", Util.getStringEntry(rd, ns, "Last name"));
+        assertEquals("Maida Vale, London, England", Util.getStringEntry(rd, ns, "Home address"));
+        assertEquals("19120623", Util.getStringEntry(rd, ns, "Birth date"));
+        assertEquals(true, Util.getBooleanEntry(rd, ns, "Cryptanalyst"));
+        assertArrayEquals(new byte[]{0x01, 0x02},
+                Util.getBytestringEntry(rd, ns, "Portrait image"));
+        assertEquals(180, Util.getIntegerEntry(rd, ns, "Height"));
+        assertEquals(-42, Util.getIntegerEntry(rd, ns, "Neg Item"));
+        assertEquals(0x101, Util.getIntegerEntry(rd, ns, "Int Two Bytes"));
+        assertEquals(0x10001, Util.getIntegerEntry(rd, ns, "Int Four Bytes"));
+        assertEquals(0x100000001L, Util.getIntegerEntry(rd, ns, "Int Eight Bytes"));
+        byte[] drivingPrivileges = getExampleDrivingPrivilegesCbor();
+        assertArrayEquals(drivingPrivileges, rd.getEntry(ns, "driving_privileges"));
+
+        assertEquals("{\n"
+                + "  'org.iso.18013-5.2019' : {\n"
+                + "    'Height' : 180,\n"
+                + "    'Neg Item' : -42,\n"
+                + "    'Last name' : 'Turing',\n"
+                + "    'Birth date' : '19120623',\n"
+                + "    'First name' : 'Alan',\n"
+                + "    'Cryptanalyst' : true,\n"
+                + "    'Home address' : 'Maida Vale, London, England',\n"
+                + "    'Int Two Bytes' : 257,\n"
+                + "    'Int Four Bytes' : 65537,\n"
+                + "    'Portrait image' : [0x01, 0x02],\n"
+                + "    'Int Eight Bytes' : 4294967297,\n"
+                + "    'driving_privileges' : [\n"
+                + "      {\n"
+                + "        'value' : 42,\n"
+                + "        'vehicle_category_code' : 'TODO'\n"
+                + "      }\n"
+                + "    ]\n"
+                + "  }\n"
+                + "}", Util.cborPrettyPrint(Util.canonicalizeCbor(rd.getAuthenticatedData())));
+
+        store.deleteCredentialByName("test");
     }
 
 }
