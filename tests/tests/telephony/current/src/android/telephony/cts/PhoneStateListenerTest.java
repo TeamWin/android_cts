@@ -682,12 +682,8 @@ public class PhoneStateListenerTest {
         // Deprecated in R
         assertEquals(mPreciseDataConnectionState.getDataConnectionState(),
                 mPreciseDataConnectionState.getState());
-        assertEquals(mPreciseDataConnectionState.getDataConnectionNetworkType(),
-                mPreciseDataConnectionState.getNetworkType());
         assertEquals(mPreciseDataConnectionState.getDataConnectionFailCause(),
                 mPreciseDataConnectionState.getLastCauseCode());
-        assertEquals(mPreciseDataConnectionState.getDataConnectionLinkProperties(),
-                mPreciseDataConnectionState.getLinkProperties());
 
         // Superseded in R by getApnSetting()
         mPreciseDataConnectionState.getDataConnectionApnTypeBitMask();
