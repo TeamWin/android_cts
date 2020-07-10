@@ -88,7 +88,9 @@ public final class HidDevice implements InputManager.InputDeviceListener {
         // Even though the device has been added, it still may not be ready to process the events
         // right away. This seems to be a kernel bug.
         // Add a small delay here to ensure device is "ready".
-        SystemClock.sleep(500);
+        // Some kernel drivers will enumrate multiple input device interfaces and needs longer
+        // wait before device is responsive to HID reports.
+        SystemClock.sleep(20000);
     }
 
     /**
