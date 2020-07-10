@@ -54,11 +54,9 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class PreferredActivitiesTest extends BaseDynamicMimeTest {
-    private static final String NAV_BAR_INTERACTION_MODE_RES_NAME = "config_navBarInteractionMode";
-    private static final int NAV_BAR_INTERACTION_MODE_GESTURAL = 2;
+    private static final String ACTION = "android.dynamicmime.preferred.TEST_ACTION";
 
     private static final BySelector BUTTON_ALWAYS = By.res("android:id/button_always");
-    private static final BySelector RESOLVER_DIALOG = By.res("android:id/contentPanel");
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30L);
 
@@ -71,17 +69,6 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
     @Before
     public void setUp() {
         Utils.installApk(APK_PREFERRED_APP);
-        assumeNavigationMode();
-    }
-
-    private void assumeNavigationMode() {
-        Resources res = context().getResources();
-        int navModeResId = res.getIdentifier(NAV_BAR_INTERACTION_MODE_RES_NAME, "integer",
-                "android");
-        int navMode = res.getInteger(navModeResId);
-
-        assumeTrue("Non-gesture navigation mode required",
-                navMode != NAV_BAR_INTERACTION_MODE_GESTURAL);
     }
 
     @After
@@ -288,10 +275,6 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
     }
 
     private UiObject2 findActivityInDialog(String label) {
-        getUiDevice()
-                .wait(Until.findObject(RESOLVER_DIALOG), TIMEOUT)
-                .swipe(Direction.UP, 1f);
-
         return getUiDevice().findObject(By.text(label));
     }
 
@@ -331,7 +314,7 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
 
     private static void sendIntent(String mimeType) {
         Intent sendIntent = new Intent();
-        sendIntent.setAction(Intent.ACTION_SEND);
+        sendIntent.setAction(ACTION);
         sendIntent.setType(mimeType);
         sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         targetContext().startActivity(sendIntent, null);

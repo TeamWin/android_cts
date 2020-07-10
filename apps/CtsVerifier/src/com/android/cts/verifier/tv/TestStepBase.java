@@ -14,13 +14,12 @@
  * limitations under the License
  */
 
-package com.android.cts.verifier.tv.display;
+package com.android.cts.verifier.tv;
 
 import android.view.View;
 import android.widget.TextView;
 
 import com.android.cts.verifier.R;
-import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 import com.google.common.truth.FailureStrategy;
 import com.google.common.truth.StandardSubjectBuilder;

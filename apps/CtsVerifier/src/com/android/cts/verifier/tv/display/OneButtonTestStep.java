@@ -20,6 +20,7 @@ import android.view.View;
 
 import androidx.annotation.StringRes;
 
+import com.android.cts.verifier.tv.TestStepBase;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /** Test step containing instruction to the user and a button. */
@@ -27,11 +28,9 @@ public abstract class OneButtonTestStep extends TestStepBase {
 
     protected View mButtonView;
 
-    @StringRes
-    private int mButtonStringId;
+    @StringRes private int mButtonStringId;
 
-    @StringRes
-    private int mStepNameStringId;
+    @StringRes private int mStepNameStringId;
 
     /**
      * Constructs a test step containing instruction to the user and a button.
@@ -39,11 +38,14 @@ public abstract class OneButtonTestStep extends TestStepBase {
      * @param context The test activity which this test step is part of.
      * @param instructionText The text of the test instruction visible to the user.
      * @param stepNameStringId Id of a string resource containing human readable name of this step
-     *                         to be used  in logs.
+     *     to be used in logs.
      * @param buttonStringId Id of a string resource containing the text of the button.
      */
-    public OneButtonTestStep(TvAppVerifierActivity context, @StringRes int stepNameStringId,
-            String instructionText, @StringRes int buttonStringId) {
+    public OneButtonTestStep(
+            TvAppVerifierActivity context,
+            @StringRes int stepNameStringId,
+            String instructionText,
+            @StringRes int buttonStringId) {
         super(context, instructionText);
         mStepNameStringId = stepNameStringId;
         mButtonStringId = buttonStringId;

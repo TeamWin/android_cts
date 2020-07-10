@@ -347,6 +347,7 @@
              android:turnScreenOn="true"
              android:showWhenLocked="true"
              android:label="WindowCtsActivity"
+             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -373,6 +374,9 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <activity android:name="android.server.wm.WindowInputTests$TestActivity" />
+
         <service android:name="android.view.cts.surfacevalidator.LocalMediaProjectionService"
              android:foregroundServiceType="mediaProjection"
              android:enabled="true">
