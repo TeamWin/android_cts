@@ -513,7 +513,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     @Test
     public void testMultiWindowFocusHandleOnDifferentUiThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        try (ServiceSession session = new ServiceSession(instrumentation.getContext());
+        try (CloseOnce session = CloseOnce.of(new ServiceSession(instrumentation.getContext()));
              MockImeSession imeSession = MockImeSession.create(
                      instrumentation.getContext(), instrumentation.getUiAutomation(),
                      new ImeSettings.Builder())) {
@@ -537,10 +537,11 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
 
             // Create a popupTextView which from Service with different UI thread.
-            final TextView popupTextView = session.getService().getPopupTextView(
+            final ServiceSession serviceSession = (ServiceSession) session.mAutoCloseable;
+            final EditText popupTextView = serviceSession.getService().getPopupTextView(
                     popupTextHasWindowFocus);
             assertTrue(popupTextView.getHandler().getLooper()
-                    != session.getService().getMainLooper());
+                    != serviceSession.getService().getMainLooper());
 
             // Verify popupTextView will also receive window focus change and soft keyboard shown
             // after tapping the view.
@@ -562,10 +563,17 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText);
             TestUtils.waitOnMainUntil(() -> editTextHasWindowFocus.get()
                     && !popupTextHasWindowFocus.get(), TIMEOUT);
-            // Expect there is no "onStartInput" when window focus back to activity's EditText.
-            // Since the EditText still has view focus and served by InputMethodManager.
-            notExpectEvent(stream, editorMatcher("onStartInput", marker), NOT_EXPECT_TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+
+            // Remove the popTextView window and back to test activity, and then verify if
+            // commitText is still workable.
+            session.close();
+            TestUtils.waitOnMainUntil(() -> editText.hasWindowFocus(), TIMEOUT);
+            final ImeCommand commit = imeSession.callCommitText("test commit", 1);
+            expectCommand(stream, commit, TIMEOUT);
+            TestUtils.waitOnMainUntil(
+                    () -> TextUtils.equals(editText.getText(), "test commit"), TIMEOUT);
         }
     }
 
@@ -656,6 +664,24 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
+        }
+    }
+
+    private static final class CloseOnce implements AutoCloseable {
+        final AtomicBoolean mClosed = new AtomicBoolean(false);
+        final AutoCloseable mAutoCloseable;
+        private CloseOnce(@NonNull AutoCloseable autoCloseable) {
+            mAutoCloseable = autoCloseable;
+        }
+        @Override
+        public void close() throws Exception {
+            if (!mClosed.getAndSet(true)) {
+                mAutoCloseable.close();
+            }
+        }
+        @NonNull
+        static CloseOnce of(@NonNull AutoCloseable autoCloseable) {
+            return new CloseOnce(autoCloseable);
         }
     }
 }
