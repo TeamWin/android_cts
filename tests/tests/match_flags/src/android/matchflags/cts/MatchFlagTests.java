@@ -52,7 +52,7 @@ public class MatchFlagTests {
                 .addCategory(Intent.CATEGORY_BROWSABLE)
                 .setData(Uri.parse(ONLY_BROWSER_URI));
 
-        if (isBrowserPresent()) {
+        if (isBrowserPresent(true)) {
             startActivity(onlyBrowserIntent);
         } else {
             try {
@@ -110,7 +110,7 @@ public class MatchFlagTests {
                 .addFlags(Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER)
                 .addFlags(Intent.FLAG_ACTIVITY_REQUIRE_DEFAULT);
 
-        if (isBrowserPresent()) {
+        if (isBrowserPresent(false)) {
             // with non-browser, we'd expect the resolver
             // with require default, we'll get activity not found
             try {
@@ -126,12 +126,14 @@ public class MatchFlagTests {
         }
     }
 
-    private static boolean isBrowserPresent() {
+    private static boolean isBrowserPresent(boolean includeFallback) {
         return InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager()
                 .queryIntentActivities(new Intent(Intent.ACTION_VIEW).addCategory(
                         Intent.CATEGORY_BROWSABLE).setData(Uri.parse(ONLY_BROWSER_URI)),
                         0 /* flags */)
-                .stream().anyMatch(resolveInfo -> resolveInfo.handleAllWebDataURI);
+                .stream().anyMatch(resolveInfo ->
+                        resolveInfo.handleAllWebDataURI
+                        && (includeFallback || resolveInfo.priority >= 0));
     }
 
     private static void startActivity(Intent onlyBrowserIntent) {
