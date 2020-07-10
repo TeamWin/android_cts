@@ -51,10 +51,13 @@ import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_PROVIDER_A
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_SERVICE_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_BROWSABLE;
+import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_BROWSER;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_CONTACTS;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_EDITOR;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_SHARE;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_WEB;
+import static android.appenumeration.cts.Constants.TARGET_BROWSER;
+import static android.appenumeration.cts.Constants.TARGET_BROWSER_WILDCARD;
 import static android.appenumeration.cts.Constants.TARGET_CONTACTS;
 import static android.appenumeration.cts.Constants.TARGET_EDITOR;
 import static android.appenumeration.cts.Constants.TARGET_FILTERS;
@@ -382,6 +385,15 @@ public class AppEnumerationTests {
         assertVisible(QUERIES_WILDCARD_BROWSABLE, TARGET_WEB);
         assertVisible(QUERIES_WILDCARD_WEB, TARGET_WEB);
     }
+
+    @Test
+    public void queriesWildcardBrowser() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_BROWSER);
+        assertNotVisible(QUERIES_WILDCARD_BROWSER, TARGET_WEB);
+        assertVisible(QUERIES_WILDCARD_BROWSER, TARGET_BROWSER);
+        assertVisible(QUERIES_WILDCARD_BROWSER, TARGET_BROWSER_WILDCARD);
+    }
+
 
     @Test
     public void queriesWildcardEditor() throws Exception {
