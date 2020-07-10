@@ -33,6 +33,8 @@
         <option name="test-file-name" value="CtsAppEnumerationDocumentsActivityTarget.apk" />
         <option name="test-file-name" value="CtsAppEnumerationShareActivityTarget.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWebActivityTarget.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationBrowserActivityTarget.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationBrowserWildcardActivityTarget.apk" />
         <option name="test-file-name" value="CtsAppEnumerationSharedUidSource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationSharedUidTarget.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothing.apk" />
@@ -54,6 +56,7 @@
         <option name="test-file-name" value="CtsAppEnumerationWildcardDocumentEditorActivitySource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWildcardShareActivitySource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWildcardWebActivitySource.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationWildcardBrowserActivitySource.apk" />
     </target_preparer>
 
     <!-- Create place to store apks -->
