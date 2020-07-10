@@ -137,6 +137,18 @@ bool VkInit::init() {
       ASSERT(hasExtension(extension, supportedDeviceExtensions));
   }
 
+  const VkPhysicalDeviceExternalSemaphoreInfo externalSemaphoreInfo = {
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO,
+          nullptr,
+          VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT,
+  };
+  VkExternalSemaphoreProperties externalSemaphoreProperties;
+  vkGetPhysicalDeviceExternalSemaphoreProperties(mGpu, &externalSemaphoreInfo,
+                                                 &externalSemaphoreProperties);
+
+  ASSERT(externalSemaphoreProperties.externalSemaphoreFeatures &
+         VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT);
+
   uint32_t queueFamilyCount = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(mGpu, &queueFamilyCount, nullptr);
   ASSERT(queueFamilyCount != 0);
