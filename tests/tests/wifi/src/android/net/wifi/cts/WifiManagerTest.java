@@ -814,7 +814,13 @@ public class WifiManagerTest extends AndroidTestCase {
 
             SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
             assertNotNull(softApConfig);
-            assertNotNull(softApConfig.toWifiConfiguration());
+            int securityType = softApConfig.getSecurityType();
+            if (securityType == SoftApConfiguration.SECURITY_TYPE_OPEN
+                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK) {
+                 assertNotNull(softApConfig.toWifiConfiguration());
+            } else {
+                assertNull(softApConfig.toWifiConfiguration());
+            }
             if (!hasAutomotiveFeature()) {
                 assertEquals(
                         SoftApConfiguration.BAND_2GHZ,
