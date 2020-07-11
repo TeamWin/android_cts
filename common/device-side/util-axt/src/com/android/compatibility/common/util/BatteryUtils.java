@@ -76,6 +76,12 @@ public class BatteryUtils {
         Log.d(TAG, "Battery RESET");
     }
 
+    public static void enableAdaptiveBatterySaver(boolean enabled) {
+        final String setting = enabled ? "true" : "false";
+        SystemUtil.runShellCommandForNoOutput(
+                "cmd power set-adaptive-power-saver-enabled " + setting);
+    }
+
     /**
      * Enable / disable battery saver. Note {@link #runDumpsysBatteryUnplug} must have been
      * executed before enabling BS.
