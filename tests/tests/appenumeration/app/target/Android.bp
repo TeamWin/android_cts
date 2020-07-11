@@ -123,3 +123,31 @@ android_test_helper_app {
     ],
     sdk_version: "test_current",
 }
+
+android_test_helper_app {
+    name: "CtsAppEnumerationBrowserActivityTarget",
+    manifest: "AndroidManifest-browserActivity.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationBrowserWildcardActivityTarget",
+    manifest: "AndroidManifest-browserWildcardActivity.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
