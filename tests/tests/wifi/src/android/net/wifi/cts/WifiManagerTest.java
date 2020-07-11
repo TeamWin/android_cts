@@ -513,6 +513,7 @@ public class WifiManagerTest extends AndroidTestCase {
      * To run this test in cts-tradefed:
      * run cts --class android.net.wifi.cts.WifiManagerTest --method testWifiScanTimestamp
      */
+    @VirtualDeviceNotSupported
     public void testWifiScanTimestamp() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             Log.d(TAG, "Skipping test as WiFi is not supported");
@@ -1917,6 +1918,7 @@ public class WifiManagerTest extends AndroidTestCase {
     /**
      * Tests {@link WifiManager#getFactoryMacAddresses()} returns at least one valid MAC address.
      */
+    @VirtualDeviceNotSupported
     public void testGetFactoryMacAddresses() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
