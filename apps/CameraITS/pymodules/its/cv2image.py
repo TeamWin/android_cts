@@ -284,11 +284,11 @@ def get_angle(input_img):
     # Find all contours
     contours = []
     cv2_version = cv2.__version__
-    if cv2_version.startswith('2.4.'):
-        contours, _ = cv2.findContours(
-                thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    elif cv2_version.startswith('3.2.'):
+    if cv2_version.startswith('3.'): # OpenCV 3.x
         _, contours, _ = cv2.findContours(
+                thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    else: # OpenCV 2.x and 4.x
+        contours, _ = cv2.findContours(
                 thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # Filter contours to squares only.
