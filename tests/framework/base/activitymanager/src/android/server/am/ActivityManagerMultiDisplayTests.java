@@ -803,6 +803,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testStackFocusSwitchOnStackEmptied() throws Exception {
+        if (!supportsSecureLock()) {
+            return;
+        }
+
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
             // Create new virtual display.
@@ -1656,6 +1660,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testStackFocusSwitchOnTouchEventAfterKeyguard() throws Exception {
+        if (!supportsSecureLock()) {
+            return;
+        }
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY);
         waitAndAssertActivityResumed(RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,
@@ -1728,6 +1735,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testSecondaryDisplayShowWhenLocked() throws Exception {
+        if (!supportsSecureLock()) {
+            return;
+        }
+
         try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession();
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
