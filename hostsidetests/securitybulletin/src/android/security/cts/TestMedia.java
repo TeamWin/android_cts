@@ -45,6 +45,16 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/132082342
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2019-08")
+    @Test
+    public void testPocCVE_2019_2133() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2133", null, getDevice());
+    }
+
+    /**
      * b/132083376
      * Vulnerability Behaviour: SIGSEGV in self
      */
