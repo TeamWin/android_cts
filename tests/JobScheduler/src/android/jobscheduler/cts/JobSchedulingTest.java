@@ -73,7 +73,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
         Settings.Global.putString(getContext().getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS,
                 "enable_api_quotas=true,aq_schedule_count=300,aq_schedule_window_ms=300000,"
-                        + "aq_schedule_throw_exception=false");
+                        + "aq_schedule_throw_exception=false,aq_schedule_return_failure=true");
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setMinimumLatency(60 * 60 * 1000L)
@@ -89,13 +89,33 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
     }
 
     /**
+     * Test that scheduling succeeds even after an app hits the schedule quota limit.
+     */
+    public void testContinuingScheduleOnQuotaExceeded() {
+        Settings.Global.putString(getContext().getContentResolver(),
+                Settings.Global.JOB_SCHEDULER_CONSTANTS,
+                "enable_api_quotas=true,aq_schedule_count=300,aq_schedule_window_ms=300000,"
+                        + "aq_schedule_throw_exception=false,aq_schedule_return_failure=false");
+
+        JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setMinimumLatency(60 * 60 * 1000L)
+                .setPersisted(true)
+                .build();
+
+        for (int i = 0; i < 500; ++i) {
+            assertEquals("Got unexpected result for schedule #" + (i + 1),
+                    JobScheduler.RESULT_SUCCESS, mJobScheduler.schedule(jobInfo));
+        }
+    }
+
+    /**
      * Test that non-persisted jobs aren't limited by quota.
      */
     public void testNonPersistedJobsNotLimited() {
         Settings.Global.putString(getContext().getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS,
                 "enable_api_quotas=true,aq_schedule_count=300,aq_schedule_window_ms=60000,"
-                        + "aq_schedule_throw_exception=false");
+                        + "aq_schedule_throw_exception=false,aq_schedule_return_failure=true");
 
         JobInfo jobInfo = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setMinimumLatency(60 * 60 * 1000L)
