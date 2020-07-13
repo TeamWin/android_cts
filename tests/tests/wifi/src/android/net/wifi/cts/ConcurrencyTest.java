@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class ConcurrencyTest extends AndroidTestCase {
+public class ConcurrencyTest extends WifiJUnit3TestBase {
     private class MySync {
         static final int WIFI_STATE = 0;
         static final int P2P_STATE = 1;
