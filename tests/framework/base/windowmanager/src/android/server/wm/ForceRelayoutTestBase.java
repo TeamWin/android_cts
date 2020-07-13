@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsets.Type.systemBars;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -83,6 +84,7 @@ public class ForceRelayoutTestBase {
             super.onCreate(savedInstanceState);
             getWindow().requestFeature(Window.FEATURE_NO_TITLE);
             getWindow().setDecorFitsSystemWindows(false);
+            getWindow().getAttributes().layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
             View view = new View(this) {
                 @Override
                 protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
