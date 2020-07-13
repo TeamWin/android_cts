@@ -39,7 +39,7 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class ScanResultTest extends AndroidTestCase {
+public class ScanResultTest extends WifiJUnit3TestBase {
     private static class MySync {
         int expectedState = STATE_NULL;
     }
