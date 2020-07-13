@@ -132,7 +132,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             }
             track.registerStreamEventCallback(mExec, mCallback);
 
-            int bufferSizeInBytes3sec = bitRateInkbps * 1000 * 3 / 8;
+            int bufferSizeInBytes3sec = bitRateInkbps * 1000 * BUFFER_SIZE_SEC / 8;
             final byte[] data = new byte[bufferSizeInBytes3sec];
             final int read = audioInputStream.read(data);
             assertEquals("Could not read enough audio from the resource file",
@@ -143,6 +143,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             while (written < read) {
                 int wrote = track.write(data, written, read - written,
                         AudioTrack.WRITE_BLOCKING);
+                Log.i(TAG, String.format("wrote %d bytes (%d out of %d)", wrote, written, read));
                 if (wrote < 0) {
                     fail("Unable to write all read data, wrote " + written + " bytes");
                 }
@@ -150,7 +151,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             }
 
             try {
-                Thread.sleep(1 * 1000);
+                Thread.sleep(BUFFER_SIZE_SEC * 1000);
                 synchronized (mPresEndLock) {
                     track.setOffloadEndOfStream();
 
