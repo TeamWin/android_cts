@@ -35,7 +35,6 @@ java_library_host {
         // dependencies of all of the tests must be on its classpath. This is
         // super fragile.
         "tradefed",
-        "hosttestlib",
         "platformprotos",
     ],
 }

@@ -35,7 +35,6 @@ java_library_host {
     // super fragile.
     static_libs: [
         "compatibility-host-util",
-        "hosttestlib",
         "dexlib2",
         "jsonlib",
         "tradefed",
