@@ -1,4 +1,5 @@
-// Copyright (C) 2014 The Android Open Source Project
+//
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,36 +12,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-java_test_host {
-    name: "CtsStatsdHostTestCases",
-
+android_test_helper_app {
+    name: "CtsHostEnvironmentTestApp",
+    defaults: ["cts_support_defaults"],
+    sdk_version: "current",
+    static_libs: ["androidx.test.rules"],
     srcs: ["src/**/*.java"],
-
-    // tag this module as a cts test artifact
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "general-tests",
-        "mts",
         "vts10",
-    ],
-
-    libs: [
-        "compatibility-host-util",
-        "cts-tradefed",
-        "host-libprotobuf-java-full",
-        "platformprotos",
-        "tradefed",
-        "truth-prebuilt",
-    ],
-    static_libs: [
-        "core_cts_test_resources",
-        "perfetto_config-full",
-    ],
-    data: [
-        "**/*.pbtxt",
-        ":CtsStatsdApp",
-        ":CtsStatsdEmptyApp",
-        ":CtsStatsdEmptySplitApp",
+        "general-tests",
     ],
 }

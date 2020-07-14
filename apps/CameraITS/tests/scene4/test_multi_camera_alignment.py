@@ -250,12 +250,12 @@ def find_circle(gray, name):
 
     # connected component
     cv2_version = cv2.__version__
-    if cv2_version.startswith('2.4.'):
-        contours, hierarchy = cv2.findContours(255-img_bw, cv2.RETR_TREE,
-                                               cv2.CHAIN_APPROX_SIMPLE)
-    elif cv2_version.startswith('3.2.'):
-        _, contours, hierarchy = cv2.findContours(255-img_bw, cv2.RETR_TREE,
-                                                  cv2.CHAIN_APPROX_SIMPLE)
+    if cv2_version.startswith('3.'): # OpenCV 3.x
+        _, contours, hierarchy = cv2.findContours(
+                255-img_bw, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    else: # OpenCV 2.x and 4.x
+        contours, hierarchy = cv2.findContours(
+                255-img_bw, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # Check each component and find the black circle
     min_cmpt = size[0] * size[1] * 0.005

@@ -32,6 +32,9 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.net.Uri;
 import android.util.Log;
+
+import androidx.test.InstrumentationRegistry;
+
 import android.view.Surface;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -326,7 +329,17 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                     if (!Arrays.equals(sCasPrivateInfo, casInfo.getPrivateData())) {
                         throw new Error("Cas private data mismatch");
                     }
-                    mMediaCas = new MediaCas(casInfo.getSystemId());
+                    // Need MANAGE_USERS or CREATE_USERS permission to access
+                    // ActivityManager#getCurrentUse in MediaCas, then adopt it from shell.
+                    InstrumentationRegistry
+                        .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+                    try {
+                        mMediaCas = new MediaCas(casInfo.getSystemId());
+                    } finally {
+                        InstrumentationRegistry
+                            .getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+                    }
+
                     mMediaCas.provision(sProvisionStr);
                     extractor.setMediaCas(mMediaCas);
                     break;
