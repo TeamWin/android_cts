@@ -335,7 +335,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickAllowAlwaysInSettings() {
-        if (isAutomotive) {
+        if (isAutomotive || isTv) {
             click(By.text(getPermissionControllerString("app_permission_button_allow_always")))
         } else {
             click(By.res("com.android.permissioncontroller:id/allow_always_radio_button"))
@@ -461,12 +461,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         for (permission in permissions) {
             // Find the permission screen
             val permissionLabel = getPermissionLabel(permission)
-            if (!isTv) {
-                click(By.text(permissionLabel))
-            }
-            val wasGranted = if (isTv) {
-                false
-            } else if (isAutomotive) {
+            click(By.text(permissionLabel))
+            val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
                 // won't show an "Ask every time" message
                 !waitFindObject(byTextRes(R.string.deny)).isChecked
@@ -476,46 +472,42 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                         waitFindObject(byTextRes(R.string.ask)).isChecked))
             }
             var alreadyChecked = false
-            if (isTv) {
-                click(By.text(permissionLabel))
-            } else {
-                val button = waitFindObject(
-                    byTextRes(
-                        if (isAutomotive) {
-                            // Automotive doesn't support one time permissions, and thus
-                            // won't show an "Ask every time" message
-                            when (state) {
-                                PermissionState.ALLOWED -> R.string.allow
-                                PermissionState.DENIED -> R.string.deny
-                                PermissionState.DENIED_WITH_PREJUDICE -> R.string.deny
-                            }
-                        } else {
-                            when (state) {
-                                PermissionState.ALLOWED ->
-                                    if (showsForegroundOnlyButton(permission)) {
-                                        R.string.allow_foreground
-                                    } else if (isMediaStorageButton(permission, targetSdk)) {
-                                        R.string.allow_media_storage
-                                    } else if (isAllStorageButton(permission, targetSdk)) {
-                                        R.string.allow_external_storage
-                                    } else {
-                                        R.string.allow
-                                    }
-                                PermissionState.DENIED ->
-                                    if (!isLegacyApp && hasAskButton(permission)) {
-                                        R.string.ask
-                                    } else {
-                                        R.string.deny
-                                    }
-                                PermissionState.DENIED_WITH_PREJUDICE -> R.string.deny
-                            }
+            val button = waitFindObject(
+                byTextRes(
+                    if (isAutomotive) {
+                        // Automotive doesn't support one time permissions, and thus
+                        // won't show an "Ask every time" message
+                        when (state) {
+                            PermissionState.ALLOWED -> R.string.allow
+                            PermissionState.DENIED -> R.string.deny
+                            PermissionState.DENIED_WITH_PREJUDICE -> R.string.deny
                         }
-                    )
+                    } else {
+                        when (state) {
+                            PermissionState.ALLOWED ->
+                                if (showsForegroundOnlyButton(permission)) {
+                                    R.string.allow_foreground
+                                } else if (isMediaStorageButton(permission, targetSdk)) {
+                                    R.string.allow_media_storage
+                                } else if (isAllStorageButton(permission, targetSdk)) {
+                                    R.string.allow_external_storage
+                                } else {
+                                    R.string.allow
+                                }
+                            PermissionState.DENIED ->
+                                if (!isLegacyApp && hasAskButton(permission)) {
+                                    R.string.ask
+                                } else {
+                                    R.string.deny
+                                }
+                            PermissionState.DENIED_WITH_PREJUDICE -> R.string.deny
+                        }
+                    }
                 )
-                alreadyChecked = button.isChecked
-                if (!alreadyChecked) {
-                    button.click()
-                }
+            )
+            alreadyChecked = button.isChecked
+            if (!alreadyChecked) {
+                button.click()
             }
             if (!alreadyChecked && isLegacyApp && wasGranted) {
                 scrollToBottom()
@@ -529,9 +521,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 val confirmText = resources.getString(confirmTextRes)
                 click(byTextStartsWithCaseInsensitive(confirmText))
             }
-            if (!isTv) {
-                pressBack()
-            }
+            pressBack()
         }
         pressBack()
         pressBack()
@@ -562,24 +552,32 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
 
     private fun isMediaStorageButton(permission: String, targetSdk: Int): Boolean =
-            when (permission) {
-                android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                android.Manifest.permission.ACCESS_MEDIA_LOCATION ->
-                    // Default behavior, can cause issues if OPSTR_LEGACY_STORAGE is set
-                    targetSdk >= Build.VERSION_CODES.P
-                else -> false
+            if (isTv) {
+                false
+            } else {
+                when (permission) {
+                    android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    android.Manifest.permission.ACCESS_MEDIA_LOCATION ->
+                        // Default behavior, can cause issues if OPSTR_LEGACY_STORAGE is set
+                        targetSdk >= Build.VERSION_CODES.P
+                    else -> false
+                }
             }
 
     private fun isAllStorageButton(permission: String, targetSdk: Int): Boolean =
-            when (permission) {
-                android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                android.Manifest.permission.ACCESS_MEDIA_LOCATION ->
-                    // Default behavior, can cause issues if OPSTR_LEGACY_STORAGE is set
-                    targetSdk < Build.VERSION_CODES.P
-                android.Manifest.permission.MANAGE_EXTERNAL_STORAGE -> true
-                else -> false
+            if (isTv) {
+                false
+            } else {
+                when (permission) {
+                    android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    android.Manifest.permission.ACCESS_MEDIA_LOCATION ->
+                        // Default behavior, can cause issues if OPSTR_LEGACY_STORAGE is set
+                        targetSdk < Build.VERSION_CODES.P
+                    android.Manifest.permission.MANAGE_EXTERNAL_STORAGE -> true
+                    else -> false
+                }
             }
 
     private fun scrollToBottom() {
