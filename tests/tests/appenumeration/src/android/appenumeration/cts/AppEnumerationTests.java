@@ -178,20 +178,10 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void startExplicitly_cannotStartNonVisible() throws Exception {
+    public void startExplicitly_canStartNonVisible() throws Exception {
         assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
-        try {
-            startExplicitIntentViaComponent(QUERIES_NOTHING, TARGET_FILTERS);
-            fail("Package cannot start a package it cannot see via component name");
-        } catch (ActivityNotFoundException e) {
-            // hooray!
-        }
-        try {
-            startExplicitIntentViaPackageName(QUERIES_NOTHING, TARGET_FILTERS);
-            fail("Package cannot start a package it cannot see via package name");
-        } catch (ActivityNotFoundException e) {
-            // hooray!
-        }
+        startExplicitIntentViaComponent(QUERIES_NOTHING, TARGET_FILTERS);
+        startExplicitIntentViaPackageName(QUERIES_NOTHING, TARGET_FILTERS);
     }
 
     @Test
