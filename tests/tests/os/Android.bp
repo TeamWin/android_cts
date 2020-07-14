@@ -59,4 +59,5 @@ android_test {
     ],
     // Do not compress minijail policy files.
     aaptflags: ["-0 .policy"],
+    min_sdk_version : "29"
 }
