@@ -38,7 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class WifiInfoTest extends AndroidTestCase {
+public class WifiInfoTest extends WifiJUnit3TestBase {
     private static class MySync {
         int expectedState = STATE_NULL;
     }
