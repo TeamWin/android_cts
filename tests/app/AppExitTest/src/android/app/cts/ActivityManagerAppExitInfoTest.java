@@ -1095,7 +1095,20 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         mOtherUidWatcher.finish();
         mOtherUserId = 0;
 
-        // Removing user is going take a while, wait for a while before continuing the test.
+        // Poll userInfo to check if the user has been removed, wait up to 10 mins
+        for (int i = 0; i < 600; i++) {
+            if (ShellIdentityUtils.invokeMethodWithShellPermissions(otherUserId,
+                    mUserManager::getUserInfo,
+                    android.Manifest.permission.CREATE_USERS) != null) {
+                // We can still get the userInfo, sleep 1 second and try again
+                sleep(1000);
+            } else {
+                Log.d(TAG, "User " + otherUserId + " has been removed");
+                break;
+            }
+        }
+        // For now the ACTION_USER_REMOVED should have been sent to all receives,
+        // we take an extra nap to make sure we've had the broadcast handling settled.
         sleep(15 * 1000);
 
         // Now query the other userId, and it should return nothing.
