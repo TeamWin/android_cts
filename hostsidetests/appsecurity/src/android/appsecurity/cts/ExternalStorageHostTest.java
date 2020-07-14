@@ -122,6 +122,9 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             getDevice().uninstallPackage(WRITE_PKG);
             installPackage(WRITE_APK);
 
+            // Make sure user initialization is complete before testing
+            waitForBroadcastIdle();
+
             for (int user : mUsers) {
                 runDeviceTests(WRITE_PKG, WRITE_CLASS, "testExternalStorageRename", user);
             }
