@@ -28,8 +28,6 @@ import android.platform.test.annotations.Presubmit;
 import android.util.Base64;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
-
 import android.view.Surface;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -118,10 +116,6 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         if (false == deviceHasMediaDrm()) {
             tearDown();
         }
-        // Need MANAGE_USERS or CREATE_USERS permission to access ActivityManager#getCurrentUse in
-        // MediaCas, then adopt it from shell.
-        InstrumentationRegistry
-            .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
     }
 
     @Override
