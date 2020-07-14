@@ -54,7 +54,7 @@ public class BaseMultiUserTest implements IDeviceTest {
 
 
     protected static final long LOGCAT_POLL_INTERVAL_MS = 1000;
-    protected static final long USER_SWITCH_COMPLETE_TIMEOUT_MS = 180_000;
+    protected static final long USER_SWITCH_COMPLETE_TIMEOUT_MS = 360_000;
 
     /** Whether multi-user is supported. */
     protected boolean mSupportsMultiUser;
