@@ -1285,22 +1285,22 @@ public class DecoderTestXheAac {
         if (drcParams != null && sIsAndroidRAndAbove) { // querying output format requires R
             if(!runtimeChange) {
                 if (drcParams.mAlbumMode != 0) {
-                    int albumModeFromCodec = codec.getOutputFormat()
-                            .getInteger(MediaFormat.KEY_AAC_DRC_ALBUM_MODE);
+                    int albumModeFromCodec = DecoderTest.getOutputFormatInteger(codec,
+                            MediaFormat.KEY_AAC_DRC_ALBUM_MODE);
                     if (albumModeFromCodec != drcParams.mAlbumMode) {
                         fail("Drc AlbumMode received from MediaCodec is not the Album Mode set");
                     }
                 }
                 if (drcParams.mEffectType != 0) {
-                    final int effectTypeFromCodec = codec.getOutputFormat()
-                            .getInteger(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE);
+                    final int effectTypeFromCodec = DecoderTest.getOutputFormatInteger(codec,
+                            MediaFormat.KEY_AAC_DRC_EFFECT_TYPE);
                     if (effectTypeFromCodec != drcParams.mEffectType) {
                         fail("Drc Effect Type received from MediaCodec is not the Effect Type set");
                     }
                 }
                 if (drcParams.mDecoderTargetLevel != 0) {
-                    final int targetLevelFromCodec = codec.getOutputFormat()
-                            .getInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
+                    final int targetLevelFromCodec = DecoderTest.getOutputFormatInteger(codec,
+                            MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
                     if (targetLevelFromCodec != drcParams.mDecoderTargetLevel) {
                         fail("Drc Target Reference Level received from MediaCodec is not the Target Reference Level set");
                     }
@@ -1441,31 +1441,30 @@ public class DecoderTestXheAac {
         // check if MediaCodec gives back correct drc parameters
         if (drcParams != null && sIsAndroidRAndAbove) {
             if (drcParams.mAlbumMode != 0) {
-                final int albumModeFromCodec = codec.getOutputFormat()
-                        .getInteger(MediaFormat.KEY_AAC_DRC_ALBUM_MODE);
+                final int albumModeFromCodec = DecoderTest.getOutputFormatInteger(codec,
+                        MediaFormat.KEY_AAC_DRC_ALBUM_MODE);
                 assertEquals("DRC AlbumMode received from MediaCodec is not the Album Mode set"
                         + " runtime:" + runtimeChange, drcParams.mAlbumMode, albumModeFromCodec);
             }
             if (drcParams.mEffectType != 0) {
-                final int effectTypeFromCodec = codec.getOutputFormat()
-                        .getInteger(MediaFormat.KEY_AAC_DRC_EFFECT_TYPE);
+                final int effectTypeFromCodec = DecoderTest.getOutputFormatInteger(codec,
+                        MediaFormat.KEY_AAC_DRC_EFFECT_TYPE);
                 assertEquals("DRC Effect Type received from MediaCodec is not the Effect Type set"
                         + " runtime:" + runtimeChange, drcParams.mEffectType, effectTypeFromCodec);
             }
             if (drcParams.mDecoderTargetLevel != 0) {
-                final int targetLevelFromCodec = codec.getOutputFormat()
-                        .getInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
+                final int targetLevelFromCodec = DecoderTest.getOutputFormatInteger(codec,
+                        MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL);
                 assertEquals("DRC Target Ref Level received from MediaCodec is not the level set"
                         + " runtime:" + runtimeChange,
                         drcParams.mDecoderTargetLevel, targetLevelFromCodec);
             }
 
-            final MediaFormat outputFormat = codec.getOutputFormat();
-            final int cutFromCodec = outputFormat.getInteger(
+            final int cutFromCodec = DecoderTest.getOutputFormatInteger(codec,
                     MediaFormat.KEY_AAC_DRC_ATTENUATION_FACTOR);
             assertEquals("Attenuation factor received from MediaCodec differs from set:",
                     drcParams.mCut, cutFromCodec);
-            final int boostFromCodec = outputFormat.getInteger(
+            final int boostFromCodec = DecoderTest.getOutputFormatInteger(codec,
                     MediaFormat.KEY_AAC_DRC_BOOST_FACTOR);
             assertEquals("Boost factor received from MediaCodec differs from set:",
                     drcParams.mBoost, boostFromCodec);
@@ -1473,8 +1472,8 @@ public class DecoderTestXheAac {
 
         // expectedOutputLoudness == -2 indicates that output loudness is not tested
         if (expectedOutputLoudness != -2 && sIsAndroidRAndAbove) {
-            final int outputLoudnessFromCodec = codec.getOutputFormat()
-                    .getInteger(MediaFormat.KEY_AAC_DRC_OUTPUT_LOUDNESS);
+            final int outputLoudnessFromCodec = DecoderTest.getOutputFormatInteger(codec,
+                    MediaFormat.KEY_AAC_DRC_OUTPUT_LOUDNESS);
             if (outputLoudnessFromCodec != expectedOutputLoudness) {
                 fail("Received decoder output loudness is not the expected value");
             }

@@ -1794,6 +1794,32 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    protected static int getOutputFormatInteger(MediaCodec codec, String key) {
+        if (codec == null) {
+            fail("Null MediaCodec before attempting to retrieve output format key " + key);
+        }
+        MediaFormat format = null;
+        try {
+            format = codec.getOutputFormat();
+        } catch (Exception e) {
+            fail("Exception " + e + " when attempting to obtain output format");
+        }
+        if (format == null) {
+            fail("Null output format returned from MediaCodec");
+        }
+        try {
+            return format.getInteger(key);
+        } catch (NullPointerException e) {
+            fail("Key " + key + " not present in output format");
+        } catch (ClassCastException e) {
+            fail("Key " + key + " not stored as integer in output format");
+        } catch (Exception e) {
+            fail("Exception " + e + " when attempting to retrieve output format key " + key);
+        }
+        // never used
+        return Integer.MIN_VALUE;
+    }
+
     // Class handling all audio parameters relevant for testing
     protected static class AudioParameter {
 
