@@ -25,7 +25,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class WifiConfigurationTest extends AndroidTestCase {
+public class WifiConfigurationTest extends WifiJUnit3TestBase {
     private  WifiManager mWifiManager;
     @Override
     protected void setUp() throws Exception {

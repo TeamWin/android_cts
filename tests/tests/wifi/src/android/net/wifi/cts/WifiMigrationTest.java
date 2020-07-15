@@ -22,7 +22,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.test.AndroidTestCase;
 
-public class WifiMigrationTest extends AndroidTestCase {
+public class WifiMigrationTest extends WifiJUnit3TestBase {
     private static final String TEST_SSID_UNQUOTED = "testSsid1";
 
     @Override
