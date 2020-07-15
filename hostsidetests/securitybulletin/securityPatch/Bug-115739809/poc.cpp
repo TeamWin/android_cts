@@ -43,12 +43,11 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
 
     // Write the header
     outMsg->header.type = msg.header.type;
+    outMsg->header.seq = msg.header.seq;
 
     // Write the body
     switch(msg.header.type) {
         case InputMessage::Type::KEY: {
-            // uint32_t seq
-            outMsg->body.key.seq = msg.body.key.seq;
             // int32_t eventId
             outMsg->body.key.eventId = msg.body.key.eventId;
             // nsecs_t eventTime
@@ -78,8 +77,6 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             break;
         }
         case InputMessage::Type::MOTION: {
-            // uint32_t seq
-            outMsg->body.motion.seq = msg.body.motion.seq;
             // int32_t eventId
             outMsg->body.motion.eventId = msg.body.key.eventId;
             // nsecs_t eventTime
@@ -144,12 +141,10 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             break;
         }
         case InputMessage::Type::FINISHED: {
-            outMsg->body.finished.seq = msg.body.finished.seq;
             outMsg->body.finished.handled = msg.body.finished.handled;
             break;
         }
         case InputMessage::Type::FOCUS: {
-            outMsg->body.focus.seq = msg.body.focus.seq;
             outMsg->body.focus.eventId = msg.body.focus.eventId;
             outMsg->body.focus.hasFocus = msg.body.focus.hasFocus;
             outMsg->body.focus.inTouchMode = msg.body.focus.inTouchMode;
@@ -184,11 +179,6 @@ static bool checkMessage(sp<InputChannel> server, sp<InputChannel> client, Input
     }
     if (serverMsg.header.type != clientMsg.header.type) {
         ALOGE("Types do not match");
-        return false;
-    }
-
-    if (clientMsg.header.padding != 0) {
-        ALOGE("Found padding to be uninitialized");
         return false;
     }
 
