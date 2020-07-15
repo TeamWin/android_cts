@@ -411,7 +411,8 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         }
         installAppPermissionAppAsUser();
         configureNotificationListener();
-        executeDeviceTestMethod(".PermissionsTest", "testUserNotifiedOfLocationPermissionGrant");
+        executeDeviceTestMethod(".PermissionsTest",
+                "testPermissionGrantStateGranted_userNotifiedOfLocationPermission");
     }
 
     private void configureNotificationListener() throws DeviceNotAvailableException {

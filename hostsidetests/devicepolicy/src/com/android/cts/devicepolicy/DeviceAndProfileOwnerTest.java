@@ -439,7 +439,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState");
+        executeDeviceTestMethod(".PermissionsTest",
+                "testPermissionGrantStateDenied_permissionRemainsDenied");
+        executeDeviceTestMethod(".PermissionsTest",
+                "testPermissionGrantStateGranted_permissionRemainsGranted");
     }
 
     @Test
@@ -593,7 +596,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionPolicy");
+        executeDeviceTestMethod(".PermissionsTest",
+                "testPermissionPolicyAutoDeny_permissionLocked");
+        executeDeviceTestMethod(".PermissionsTest",
+                "testPermissionPolicyAutoGrant_permissionLocked");
     }
 
     @Test
@@ -602,7 +608,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testAutoGrantMultiplePermissionsInGroup");
+        executeDeviceTestMethod(".PermissionsTest",
+                "testPermissionPolicyAutoGrant_multiplePermissionsInGroup");
     }
 
     @Test
@@ -611,7 +618,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionMixedPolicies");
+        executeDeviceTestMethod(".PermissionsTest",
+                "testPermissionGrantStateDenied_mixedPolicies");
+        executeDeviceTestMethod(".PermissionsTest",
+                "testPermissionGrantStateGranted_mixedPolicies");
     }
 
     @Test
@@ -622,7 +632,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
         installAppPermissionAppAsUser();
         executeDeviceTestMethod(".PermissionsTest",
-                "testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted");
+                "testPermissionGrantStateDenied_otherPermissionIsGranted");
     }
 
     // Test flakey; suppressed.
@@ -641,31 +651,27 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_setDeniedState");
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkDenied");
+        executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantStateDenied");
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkDenied");
+        executeDeviceTestMethod(".PermissionsTest", "testCannotRequestPermission");
 
         assertNull(getDevice().uninstallPackage(PERMISSIONS_APP_PKG));
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_setGrantedState");
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkGranted");
+        executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantStateGranted");
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkGranted");
+        executeDeviceTestMethod(".PermissionsTest", "testCanRequestPermission");
 
         assertNull(getDevice().uninstallPackage(PERMISSIONS_APP_PKG));
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_setAutoDeniedPolicy");
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkDenied");
+        executeDeviceTestMethod(".PermissionsTest", "testPermissionPolicyAutoDeny");
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkDenied");
+        executeDeviceTestMethod(".PermissionsTest", "testCannotRequestPermission");
 
         assertNull(getDevice().uninstallPackage(PERMISSIONS_APP_PKG));
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_setAutoGrantedPolicy");
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkGranted");
+        executeDeviceTestMethod(".PermissionsTest", "testPermissionPolicyAutoGrant");
         installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionUpdate_checkGranted");
+        executeDeviceTestMethod(".PermissionsTest", "testCanRequestPermission");
     }
 
     @Test
@@ -674,7 +680,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         installAppAsUser(SIMPLE_PRE_M_APP_APK, mUserId);
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantStatePreMApp");
+        executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState_preMApp");
     }
 
     @Test
