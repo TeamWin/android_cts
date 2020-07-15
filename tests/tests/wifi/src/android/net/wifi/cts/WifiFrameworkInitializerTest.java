@@ -19,7 +19,7 @@ package android.net.wifi.cts;
 import android.net.wifi.WifiFrameworkInitializer;
 import android.test.AndroidTestCase;
 
-public class WifiFrameworkInitializerTest extends AndroidTestCase {
+public class WifiFrameworkInitializerTest extends WifiJUnit3TestBase {
     /**
      * WifiFrameworkInitializer.registerServiceWrappers() should only be called by
      * SystemServiceRegistry during boot up when Wifi is first initialized. Calling this API at
