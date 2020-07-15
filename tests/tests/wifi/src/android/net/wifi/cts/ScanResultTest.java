@@ -39,7 +39,7 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class ScanResultTest extends AndroidTestCase {
+public class ScanResultTest extends WifiJUnit3TestBase {
     private static class MySync {
         int expectedState = STATE_NULL;
     }
@@ -242,6 +242,7 @@ public class ScanResultTest extends AndroidTestCase {
         }
    }
 
+    @VirtualDeviceNotSupported
     public void testScanResultTimeStamp() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported

@@ -106,7 +106,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class WifiManagerTest extends AndroidTestCase {
+public class WifiManagerTest extends WifiJUnit3TestBase {
     private static class MySync {
         int expectedState = STATE_NULL;
     }
@@ -513,6 +513,7 @@ public class WifiManagerTest extends AndroidTestCase {
      * To run this test in cts-tradefed:
      * run cts --class android.net.wifi.cts.WifiManagerTest --method testWifiScanTimestamp
      */
+    @VirtualDeviceNotSupported
     public void testWifiScanTimestamp() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             Log.d(TAG, "Skipping test as WiFi is not supported");
@@ -814,7 +815,13 @@ public class WifiManagerTest extends AndroidTestCase {
 
             SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
             assertNotNull(softApConfig);
-            assertNotNull(softApConfig.toWifiConfiguration());
+            int securityType = softApConfig.getSecurityType();
+            if (securityType == SoftApConfiguration.SECURITY_TYPE_OPEN
+                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK) {
+                 assertNotNull(softApConfig.toWifiConfiguration());
+            } else {
+                assertNull(softApConfig.toWifiConfiguration());
+            }
             if (!hasAutomotiveFeature()) {
                 assertEquals(
                         SoftApConfiguration.BAND_2GHZ,
@@ -1043,23 +1050,28 @@ public class WifiManagerTest extends AndroidTestCase {
         String configStr = loadResourceFile(PASSPOINT_INSTALLATION_FILE_WITH_CA_CERT);
         PasspointConfiguration config =
                 ConfigParser.parsePasspointConfig(TYPE_WIFI_CONFIG, configStr.getBytes());
+        String fqdn = config.getHomeSp().getFqdn();
+        String uniqueId = config.getUniqueId();
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
 
             mWifiManager.addOrUpdatePasspointConfiguration(config);
-            List<PasspointConfiguration> passpointConfigs =
-                    mWifiManager.getPasspointConfigurations();
-            PasspointConfiguration passpointConfig = passpointConfigs.get(0);
-            assertEquals(1, passpointConfigs.size());
+            PasspointConfiguration passpointConfig = getTargetPasspointConfiguration(
+                    mWifiManager.getPasspointConfigurations(), uniqueId);
+            assertNotNull("The installed passpoint profile is missing", passpointConfig);
             assertTrue("Mac randomization should be enabled for passpoint networks by default.",
                     passpointConfig.isMacRandomizationEnabled());
 
-            String fqdn = passpointConfig.getHomeSp().getFqdn();
             mWifiManager.setMacRandomizationSettingPasspointEnabled(fqdn, false);
+            passpointConfig = getTargetPasspointConfiguration(
+                    mWifiManager.getPasspointConfigurations(), uniqueId);
+            assertNotNull("The installed passpoint profile is missing", passpointConfig);
             assertFalse("Mac randomization should be disabled by the API call.",
-                    mWifiManager.getPasspointConfigurations().get(0).isMacRandomizationEnabled());
+                    passpointConfig.isMacRandomizationEnabled());
         } finally {
+            // Clean up
+            mWifiManager.removePasspointConfiguration(fqdn);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -1917,6 +1929,7 @@ public class WifiManagerTest extends AndroidTestCase {
     /**
      * Tests {@link WifiManager#getFactoryMacAddresses()} returns at least one valid MAC address.
      */
+    @VirtualDeviceNotSupported
     public void testGetFactoryMacAddresses() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -2571,8 +2584,9 @@ public class WifiManagerTest extends AndroidTestCase {
 
             // Compare configurations
             List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
-            assertNotNull(configurations);
-            assertEquals(passpointConfiguration, configurations.get(0));
+            assertNotNull("The installed passpoint profile is missing", configurations);
+            assertEquals(passpointConfiguration, getTargetPasspointConfiguration(configurations,
+                    passpointConfiguration.getUniqueId()));
         } finally {
             // Clean up
             mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
@@ -2593,24 +2607,30 @@ public class WifiManagerTest extends AndroidTestCase {
         // Create and install a Passpoint configuration
         PasspointConfiguration passpointConfiguration = createPasspointConfiguration();
         String fqdn = passpointConfiguration.getHomeSp().getFqdn();
+        String uniqueId = passpointConfiguration.getUniqueId();
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
         try {
             uiAutomation.adoptShellPermissionIdentity();
             mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
-
+            PasspointConfiguration saved = getTargetPasspointConfiguration(
+                    mWifiManager.getPasspointConfigurations(), uniqueId);
+            assertNotNull("The installed passpoint profile is missing", saved);
             // Verify meter override setting.
-            assertEquals(WifiConfiguration.METERED_OVERRIDE_NONE,
-                    mWifiManager.getPasspointConfigurations().get(0).getMeteredOverride());
+            assertEquals("Metered overrider default should be none",
+                    WifiConfiguration.METERED_OVERRIDE_NONE, saved.getMeteredOverride());
             // Change the meter override setting.
             mWifiManager.setPasspointMeteredOverride(fqdn,
                     WifiConfiguration.METERED_OVERRIDE_METERED);
             // Verify passpoint config change with the new setting.
-            assertEquals(WifiConfiguration.METERED_OVERRIDE_METERED,
-                    mWifiManager.getPasspointConfigurations().get(0).getMeteredOverride());
+            saved = getTargetPasspointConfiguration(
+                    mWifiManager.getPasspointConfigurations(), uniqueId);
+            assertNotNull("The installed passpoint profile is missing", saved);
+            assertEquals("Metered override should be metered",
+                    WifiConfiguration.METERED_OVERRIDE_METERED, saved.getMeteredOverride());
         } finally {
             // Clean up
-            mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+            mWifiManager.removePasspointConfiguration(fqdn);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -2929,5 +2949,18 @@ public class WifiManagerTest extends AndroidTestCase {
             mWifiManager.isP2pSupported();
         }
 
+    }
+
+    private PasspointConfiguration getTargetPasspointConfiguration(
+            List<PasspointConfiguration> configurationList, String uniqueId) {
+        if (configurationList == null || configurationList.isEmpty()) {
+            return null;
+        }
+        for (PasspointConfiguration config : configurationList) {
+            if (TextUtils.equals(config.getUniqueId(), uniqueId)) {
+                return config;
+            }
+        }
+        return null;
     }
 }

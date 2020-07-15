@@ -92,12 +92,12 @@ def find_center_circle(img, name, color, min_area, debug):
 
     # use OpenCV to find contours (connected components)
     cv2_version = cv2.__version__
-    if cv2_version.startswith('2.4.'):
-        contours, _ = cv2.findContours(255-img_bw, cv2.RETR_TREE,
-                                       cv2.CHAIN_APPROX_SIMPLE)
-    elif cv2_version.startswith('3.2.'):
-        _, contours, _ = cv2.findContours(255-img_bw, cv2.RETR_TREE,
-                                          cv2.CHAIN_APPROX_SIMPLE)
+    if cv2_version.startswith('3.'): # OpenCV 3.x
+        _, contours, _ = cv2.findContours(
+                255-img_bw, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    else: # OpenCV 2.x and 4.x
+        contours, _ = cv2.findContours(
+                255-img_bw, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # check contours and find the best circle candidates
     circles = []

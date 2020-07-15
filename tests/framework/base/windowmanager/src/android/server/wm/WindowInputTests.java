@@ -254,9 +254,13 @@ public class WindowInputTests {
     @Test
     public void testInjectFromThread() throws InterruptedException {
         // Continually inject event to activity from thread.
+        final Point displaySize = new Point();
+        mActivity.getDisplay().getSize(displaySize);
+        final Point testPoint = new Point(displaySize.x / 2, displaySize.y / 2);
+
         final long downTime = SystemClock.uptimeMillis();
         final MotionEvent eventDown = MotionEvent.obtain(
-                downTime, downTime, MotionEvent.ACTION_DOWN, 100, 100, 1);
+                downTime, downTime, MotionEvent.ACTION_DOWN, testPoint.x, testPoint.y, 1);
         mInstrumentation.sendPointerSync(eventDown);
 
         final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -265,7 +269,7 @@ public class WindowInputTests {
             for (int i = 0; i < 20; i++) {
                 final long eventTime = SystemClock.uptimeMillis();
                 final MotionEvent eventMove = MotionEvent.obtain(
-                        downTime, eventTime, MotionEvent.ACTION_MOVE, 100, 100, 1);
+                        downTime, eventTime, MotionEvent.ACTION_MOVE, testPoint.x, testPoint.y, 1);
                 try {
                     mInstrumentation.sendPointerSync(eventMove);
                 } catch (SecurityException e) {

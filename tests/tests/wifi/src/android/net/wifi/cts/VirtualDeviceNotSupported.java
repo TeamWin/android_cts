@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
- * Copyright (C) 2019 The Android Open Source Project
+/*
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
+ */
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission.cts.revokepermissionwhenremoved.installtimepermissionuserapp">
+package android.net.wifi.cts;
 
-    <uses-permission android:name="android.permission.cts.revokepermissionwhenremoved.TestInstalltimePermission" />
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    <application>
-    </application>
-</manifest>
+/** Annotation for tests that don't pass on virtual devices (i.e. in presubmit). */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface VirtualDeviceNotSupported {}
