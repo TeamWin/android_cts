@@ -477,7 +477,7 @@ public class MediaStorageTest {
 
         // Some dialogs may have granted access automatically, so we're willing
         // to keep rolling forward if we can't find our grant button
-        final UiSelector grant = new UiSelector().textMatches("Allow");
+        final UiSelector grant = new UiSelector().textMatches("(?i)Allow");
         if (new UiObject(grant).waitForExists(2_000)) {
             device.findObject(grant).click();
         }
