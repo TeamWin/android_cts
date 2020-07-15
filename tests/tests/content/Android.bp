@@ -72,4 +72,5 @@ android_test {
         "vts10",
         "general-tests",
     ],
+    min_sdk_version: "29",
 }
