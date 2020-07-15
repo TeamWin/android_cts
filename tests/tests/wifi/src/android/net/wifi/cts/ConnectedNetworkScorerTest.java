@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class ConnectedNetworkScorerTest {
+public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
     private Context mContext;
     private WifiManager mWifiManager;
     private UiDevice mUiDevice;
