@@ -275,7 +275,7 @@ public class MediaCasTest extends AndroidTestCase {
 
         try {
             if (mIsAtLeastR) {
-                mediaCas = new MediaCas(getContext(), sClearKeySystemId, "TIS_Session_1",
+                mediaCas = new MediaCas(getContext(), sClearKeySystemId, null,
                     android.media.tv.TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
             } else {
                 mediaCas = new MediaCas(sClearKeySystemId);
@@ -537,7 +537,7 @@ public class MediaCasTest extends AndroidTestCase {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
 
         try {
-            mediaCas = new MediaCas(getContext(), sClearKeySystemId, "TIS_Session_1",
+            mediaCas = new MediaCas(getContext(), sClearKeySystemId, null,
                 android.media.tv.TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE);
 
             mediaCas.provision(sProvisionStr);
