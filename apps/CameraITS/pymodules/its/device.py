@@ -92,6 +92,8 @@ class ItsSession(object):
     adb = "adb -d"
     device_id = ""
 
+    CAMERA_ID_TOKENIZER = '.'
+
     # Definitions for some of the common output format options for do_capture().
     # Each gets images of full resolution for each requested format.
     CAP_RAW = {"format":"raw"}
@@ -1116,7 +1118,7 @@ def parse_camera_ids(ids):
     CameraIdCombo = namedtuple('CameraIdCombo', ['id', 'sub_id'])
     id_combos = []
     for one_id in ids:
-        one_combo = one_id.split(':')
+        one_combo = one_id.split(ItsSession.CAMERA_ID_TOKENIZER)
         if len(one_combo) == 1:
             id_combos.append(CameraIdCombo(one_combo[0], None))
         elif len(one_combo) == 2:
