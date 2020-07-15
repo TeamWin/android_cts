@@ -129,7 +129,7 @@ public class WindowManagerState {
     // Stacks in z-order with the top most at the front of the list, starting with primary display.
     private final List<ActivityTask> mRootTasks = new ArrayList<>();
     // Windows in z-order with the top most at the front of the list.
-    private List<WindowState> mWindowStates = new ArrayList();
+    private final List<WindowState> mWindowStates = new ArrayList<>();
     private KeyguardControllerState mKeyguardControllerState;
     private final List<String> mPendingActivities = new ArrayList<>();
     private int mTopFocusedTaskId = -1;
@@ -472,11 +472,11 @@ public class WindowManagerState {
         return getDisplay(displayId).mRootTasks.get(0).mRootTaskId;
     }
 
-    int getFrontStackActivityType(int displayId) {
+    public int getFrontStackActivityType(int displayId) {
         return getDisplay(displayId).mRootTasks.get(0).getActivityType();
     }
 
-    int getFrontStackWindowingMode(int displayId) {
+    public int getFrontStackWindowingMode(int displayId) {
         return getDisplay(displayId).mRootTasks.get(0).getWindowingMode();
     }
 
@@ -495,25 +495,25 @@ public class WindowManagerState {
         return mTopFocusedTaskId;
     }
 
-    int getFocusedStackActivityType() {
+    public int getFocusedStackActivityType() {
         final ActivityTask stack = getRootTask(mTopFocusedTaskId);
         return stack != null ? stack.getActivityType() : ACTIVITY_TYPE_UNDEFINED;
     }
 
-    int getFocusedStackWindowingMode() {
+    public int getFocusedStackWindowingMode() {
         final ActivityTask stack = getRootTask(mTopFocusedTaskId);
         return stack != null ? stack.getWindowingMode() : WINDOWING_MODE_UNDEFINED;
     }
 
-    String getFocusedActivity() {
+    public String getFocusedActivity() {
         return mTopResumedActivityRecord;
     }
 
-    int getResumedActivitiesCount() {
+    public int getResumedActivitiesCount() {
         return mResumedActivitiesInStacks.size();
     }
 
-    int getResumedActivitiesCountInPackage(String packageName) {
+    public int getResumedActivitiesCountInPackage(String packageName) {
         final String componentPrefix = packageName + "/";
         int count = 0;
         for (int i = mDisplays.size() - 1; i >= 0; --i) {
@@ -528,7 +528,7 @@ public class WindowManagerState {
         return count;
     }
 
-    String getResumedActivityOnDisplay(int displayId) {
+    public String getResumedActivityOnDisplay(int displayId) {
         return getDisplay(displayId).mResumedActivity;
     }
 
@@ -536,11 +536,11 @@ public class WindowManagerState {
         return mKeyguardControllerState;
     }
 
-    boolean containsStack(int windowingMode, int activityType) {
+    public boolean containsStack(int windowingMode, int activityType) {
         return countStacks(windowingMode, activityType) > 0;
     }
 
-    int countStacks(int windowingMode, int activityType) {
+    public int countStacks(int windowingMode, int activityType) {
         int count = 0;
         for (ActivityTask stack : mRootTasks) {
             if (activityType != ACTIVITY_TYPE_UNDEFINED
@@ -556,7 +556,7 @@ public class WindowManagerState {
         return count;
     }
 
-    ActivityTask getRootTask(int taskId) {
+    public ActivityTask getRootTask(int taskId) {
         for (ActivityTask stack : mRootTasks) {
             if (taskId == stack.mRootTaskId) {
                 return stack;
@@ -565,7 +565,7 @@ public class WindowManagerState {
         return null;
     }
 
-    ActivityTask getStackByActivityType(int activityType) {
+    public ActivityTask getStackByActivityType(int activityType) {
         for (ActivityTask stack : mRootTasks) {
             if (activityType == stack.getActivityType()) {
                 return stack;
@@ -574,7 +574,7 @@ public class WindowManagerState {
         return null;
     }
 
-    ActivityTask getStandardStackByWindowingMode(int windowingMode) {
+    public ActivityTask getStandardStackByWindowingMode(int windowingMode) {
         for (ActivityTask stack : mRootTasks) {
             if (stack.getActivityType() != ACTIVITY_TYPE_STANDARD) {
                 continue;
@@ -623,7 +623,7 @@ public class WindowManagerState {
     }
 
     /** Get display id by activity on it. */
-    int getDisplayByActivity(ComponentName activityComponent) {
+    public int getDisplayByActivity(ComponentName activityComponent) {
         final ActivityTask task = getTaskByActivity(activityComponent);
         if (task == null) {
             return -1;
@@ -639,11 +639,11 @@ public class WindowManagerState {
         return new ArrayList<>(mRootTasks);
     }
 
-    int getStackCount() {
+    public int getStackCount() {
         return mRootTasks.size();
     }
 
-    int getDisplayCount() {
+    public int getDisplayCount() {
         return mDisplays.size();
     }
 
@@ -663,7 +663,7 @@ public class WindowManagerState {
         return true;
     }
 
-    boolean containsActivityInWindowingMode(ComponentName activityName, int windowingMode) {
+    public boolean containsActivityInWindowingMode(ComponentName activityName, int windowingMode) {
         for (ActivityTask stack : mRootTasks) {
             final Activity activity = stack.getActivity(activityName);
             if (activity != null && activity.getWindowingMode() == windowingMode) {
@@ -673,7 +673,7 @@ public class WindowManagerState {
         return false;
     }
 
-    boolean isActivityVisible(ComponentName activityName) {
+    public boolean isActivityVisible(ComponentName activityName) {
         for (ActivityTask stack : mRootTasks) {
             final Activity activity = stack.getActivity(activityName);
             if (activity != null) return activity.visible;
@@ -681,7 +681,7 @@ public class WindowManagerState {
         return false;
     }
 
-    boolean isActivityTranslucent(ComponentName activityName) {
+    public boolean isActivityTranslucent(ComponentName activityName) {
         for (ActivityTask stack : mRootTasks) {
             final Activity activity = stack.getActivity(activityName);
             if (activity != null) return activity.translucent;
@@ -689,7 +689,7 @@ public class WindowManagerState {
         return false;
     }
 
-    boolean isBehindOpaqueActivities(ComponentName activityName) {
+    public boolean isBehindOpaqueActivities(ComponentName activityName) {
         final String fullName = getActivityName(activityName);
         for (ActivityTask stack : mRootTasks) {
             final Activity activity =
@@ -707,7 +707,7 @@ public class WindowManagerState {
         return false;
     }
 
-    boolean containsStartedActivities() {
+    public boolean containsStartedActivities() {
         for (ActivityTask stack : mRootTasks) {
             final Activity activity = stack.getActivity(
                     (a) -> !a.state.equals(STATE_STOPPED) && !a.state.equals(STATE_DESTROYED));
@@ -781,7 +781,7 @@ public class WindowManagerState {
         return getTaskByActivity(activityName, WINDOWING_MODE_UNDEFINED);
     }
 
-    ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode) {
+    public ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode) {
         for (ActivityTask stack : mRootTasks) {
             if (windowingMode == WINDOWING_MODE_UNDEFINED
                     || windowingMode == stack.getWindowingMode()) {
@@ -920,7 +920,7 @@ public class WindowManagerState {
     }
 
     /** Check if at least one window which matches the specified name has shown it's surface. */
-    boolean isWindowSurfaceShown(String windowName) {
+    public boolean isWindowSurfaceShown(String windowName) {
         for (WindowState window : mWindowStates) {
             if (window.getName().equals(windowName)) {
                 if (window.isSurfaceShown()) {
@@ -932,7 +932,7 @@ public class WindowManagerState {
     }
 
     /** Check if at least one window which matches provided window name is visible. */
-    boolean isWindowVisible(String windowName) {
+    public boolean isWindowVisible(String windowName) {
         for (WindowState window : mWindowStates) {
             if (window.getName().equals(windowName)) {
                 if (window.isVisible()) {
@@ -943,7 +943,7 @@ public class WindowManagerState {
         return false;
     }
 
-    boolean allWindowSurfacesShown(String windowName) {
+    public boolean allWindowSurfacesShown(String windowName) {
         boolean allShown = false;
         for (WindowState window : mWindowStates) {
             if (window.getName().equals(windowName)) {
@@ -993,7 +993,7 @@ public class WindowManagerState {
         return null;
     }
 
-    Rect getStableBounds() {
+    public Rect getStableBounds() {
         return getDisplay(DEFAULT_DISPLAY).mStableBounds;
     }
 
@@ -1009,11 +1009,11 @@ public class WindowManagerState {
         return mRotation;
     }
 
-    int getLastOrientation() {
+    public int getLastOrientation() {
         return mLastOrientation;
     }
 
-    int getFocusedDisplayId() {
+    public int getFocusedDisplayId() {
         return mFocusedDisplayId;
     }
 
