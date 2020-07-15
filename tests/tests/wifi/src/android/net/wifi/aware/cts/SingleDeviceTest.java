@@ -44,6 +44,7 @@ import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
+import android.net.wifi.cts.WifiJUnit3TestBase;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
@@ -65,7 +66,7 @@ import java.util.concurrent.TimeUnit;
  * device to validate Wi-Fi Aware.
  */
 @AppModeFull(reason = "Cannot get WifiAwareManager in instant app mode")
-public class SingleDeviceTest extends AndroidTestCase {
+public class SingleDeviceTest extends WifiJUnit3TestBase {
     private static final String TAG = "WifiAwareCtsTests";
 
     // wait for Wi-Fi Aware state changes & network requests callbacks
