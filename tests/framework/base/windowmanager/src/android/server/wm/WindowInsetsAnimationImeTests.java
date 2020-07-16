@@ -39,7 +39,6 @@ import android.graphics.Color;
 import android.platform.test.annotations.Presubmit;
 import android.view.WindowInsets;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.cts.mockime.ImeSettings;
@@ -91,7 +90,6 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
     }
 
     @Test
-    @FlakyTest(detail = "Promote once confirmed non-flaky")
     public void testAnimationCallbacks_overlapping_opposite() throws Exception {
         initActivity(false /* useFloating */);
         assumeTrue(hasWindowInsets(mRootView, navigationBars()));
@@ -111,35 +109,40 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
         getInstrumentation().runOnMainSync(
                 () -> mRootView.getWindowInsetsController().show(ime()));
 
-        waitForOrFail("Waiting until animation done", () -> callback.animationDone);
+        waitForOrFail("Waiting until IME animation starts", () -> callback.imeAnim != null);
+        waitForOrFail("Waiting until animation done", () -> callback.runningAnims.isEmpty());
 
         WindowInsets after = mActivity.mLastWindowInsets;
 
-        InOrder inOrder = inOrder(callback, mActivity.mListener);
+        // When system bar and IME are animated together, order of events cannot be predicted
+        // relative to one another: especially the end since animation durations are different.
+        // Use individual inOrder for each.
+        InOrder inOrderBar = inOrder(callback, mActivity.mListener);
+        InOrder inOrderIme = inOrder(callback, mActivity.mListener);
 
-        inOrder.verify(callback).onPrepare(eq(callback.navBarAnim));
+        inOrderBar.verify(callback).onPrepare(eq(callback.navBarAnim));
 
-        inOrder.verify(mActivity.mListener).onApplyWindowInsets(any(), argThat(
+        inOrderIme.verify(mActivity.mListener).onApplyWindowInsets(any(), argThat(
                 argument -> NONE.equals(argument.getInsets(navigationBars()))
                         && NONE.equals(argument.getInsets(ime()))));
 
-        inOrder.verify(callback).onStart(eq(callback.navBarAnim), argThat(
+        inOrderBar.verify(callback).onStart(eq(callback.navBarAnim), argThat(
                 argument -> argument.getLowerBound().equals(NONE)
                         && argument.getUpperBound().equals(before.getInsets(navigationBars()))));
 
-        inOrder.verify(callback).onPrepare(eq(callback.imeAnim));
-        inOrder.verify(mActivity.mListener).onApplyWindowInsets(
+        inOrderIme.verify(callback).onPrepare(eq(callback.imeAnim));
+        inOrderIme.verify(mActivity.mListener).onApplyWindowInsets(
                 any(), eq(mActivity.mLastWindowInsets));
 
-        inOrder.verify(callback).onStart(eq(callback.imeAnim), argThat(
+        inOrderIme.verify(callback).onStart(eq(callback.imeAnim), argThat(
                 argument -> argument.getLowerBound().equals(NONE)
                         && !argument.getUpperBound().equals(NONE)));
 
-        inOrder.verify(callback).onEnd(eq(callback.navBarAnim));
-        inOrder.verify(callback).onEnd(eq(callback.imeAnim));
+        inOrderBar.verify(callback).onEnd(eq(callback.navBarAnim));
+        inOrderIme.verify(callback).onEnd(eq(callback.imeAnim));
 
         assertAnimationSteps(callback.navAnimSteps, false /* showAnimation */);
-        assertAnimationSteps(callback.imeAnimSteps, false /* showAnimation */);
+        assertAnimationSteps(callback.imeAnimSteps, true /* showAnimation */, ime());
 
         assertEquals(before.getInsets(navigationBars()),
                 callback.navAnimSteps.get(0).insets.getInsets(navigationBars()));
