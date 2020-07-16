@@ -736,7 +736,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
             }
         }
         //Remove all previously added shared outputs in one call
-        updateRepeatingRequest(cameraId, outputConfigurations, resultListener);
+        updateRepeatingRequest(cameraId, outputConfigurations, new SimpleCaptureCallback());
         long lastSequenceFrameNumber = resultListener.getCaptureSequenceLastFrameNumber(
                 sequenceId, PREVIEW_TIME_MS);
         checkForLastFrameInSequence(lastSequenceFrameNumber, resultListener);
@@ -830,7 +830,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
 
             //Wait for all pending requests to arrive and remove the shared output during active
             //streaming
-            updateRepeatingRequest(cameraId, outputConfigurations, resultListener);
+            updateRepeatingRequest(cameraId, outputConfigurations, new SimpleCaptureCallback());
             long lastSequenceFrameNumber = resultListener.getCaptureSequenceLastFrameNumber(
                     sequenceId, PREVIEW_TIME_MS);
             checkForLastFrameInSequence(lastSequenceFrameNumber, resultListener);

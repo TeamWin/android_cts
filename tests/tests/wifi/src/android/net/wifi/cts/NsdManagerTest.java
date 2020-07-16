@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 @AppModeFull(reason = "Socket cannot bind in instant app mode")
-public class NsdManagerTest extends AndroidTestCase {
+public class NsdManagerTest extends WifiJUnit3TestBase {
 
     private static final String TAG = "NsdManagerTest";
     private static final String SERVICE_TYPE = "_nmt._tcp";
@@ -243,7 +243,8 @@ public class NsdManagerTest extends AndroidTestCase {
     private String mServiceName;
 
     @Override
-    public void setUp() {
+    public void setUp() throws Exception {
+        super.setUp();
         if (DBG) Log.d(TAG, "Setup test ...");
         mNsdManager = (NsdManager) getContext().getSystemService(Context.NSD_SERVICE);
 
@@ -255,8 +256,9 @@ public class NsdManagerTest extends AndroidTestCase {
     }
 
     @Override
-    public void tearDown() {
+    public void tearDown() throws Exception {
         if (DBG) Log.d(TAG, "Tear down test ...");
+        super.tearDown();
     }
 
     public void testNDSManager() throws Exception {

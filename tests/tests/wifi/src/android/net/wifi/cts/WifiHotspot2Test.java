@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class WifiHotspot2Test extends AndroidTestCase {
+public class WifiHotspot2Test extends WifiJUnit3TestBase {
     static final int SIM_CREDENTIAL = 0;
     static final int USER_CREDENTIAL = 1;
     static final int CERT_CREDENTIAL = 2;
