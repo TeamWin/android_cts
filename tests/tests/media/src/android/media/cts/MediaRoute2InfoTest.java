@@ -43,6 +43,7 @@ import androidx.test.runner.AndroidJUnit4;
  */
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@NonMediaMainlineTest
 public class MediaRoute2InfoTest {
 
     public static final String TEST_ID = "test_id";

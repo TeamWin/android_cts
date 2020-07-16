@@ -268,8 +268,11 @@ public class PackageManagerShellCommandIncrementalTest {
         });
         readFromProcess.start();
 
-        installPackage(TEST_APK);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        for (int i = 0; i < 3; ++i) {
+            installPackage(TEST_APK);
+            assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+            uninstallPackageSilently(TEST_APP_PACKAGE);
+        }
 
         readFromProcess.join();
         assertNotEquals(0, result.size());

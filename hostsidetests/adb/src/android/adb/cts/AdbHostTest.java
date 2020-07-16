@@ -43,12 +43,33 @@ public class AdbHostTest extends DeviceTestCase implements IDeviceTest {
         return tf;
     }
 
+    // *** READ THIS IF YOUR DEVICE IS FAILING THIS TEST ***
+    // This test checks to see that Microsoft OS Descriptors are enabled on the adb USB interface,
+    // so that users don't have to install a specific driver for their device in order to use adb
+    // with it (and OEMs don't have to sign and host that driver).
+    //
+    // adbd exports Microsoft OS descriptors when setting up its endpoint descriptors, but the
+    // kernel requires that the OS descriptor functionality be enabled separately by writing "1" to
+    // the gadget's configfs file at /config/usb_gadget/g<N>/os_desc/use (where <N> is probably 1).
+    // To pass this test, you need to modify your USB HAL implementation to do this.
+    //
+    // See https://android.googlesource.com/platform/hardware/google/pixel/+/5c7c6d5edcbe04454eb9a40f947ac0a3045f64eb
+    // for the patch that enabled this on Pixel devices.
     public void testHasMsOsDescriptors() throws Exception {
         File check_ms_os_desc = copyResourceToTempFile("/check_ms_os_desc");
         check_ms_os_desc.setExecutable(true);
 
+        String serial = getDevice().getSerialNumber();
+        if (serial.startsWith("emulator-")) {
+            return;
+        }
+
+        if (getDevice().isAdbTcp()) { // adb over WiFi, no point checking it
+            return;
+        }
+
         ProcessBuilder pb = new ProcessBuilder(check_ms_os_desc.getAbsolutePath());
-        pb.environment().put("ANDROID_SERIAL", getDevice().getSerialNumber());
+        pb.environment().put("ANDROID_SERIAL", serial);
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();

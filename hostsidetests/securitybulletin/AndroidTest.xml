@@ -43,7 +43,6 @@
         <option name="push" value="CVE-2016-8431->/data/local/tmp/CVE-2016-8431" />
         <option name="push" value="CVE-2016-8432->/data/local/tmp/CVE-2016-8432" />
         <option name="push" value="CVE-2016-8434->/data/local/tmp/CVE-2016-8434" />
-        <option name="push" value="Bug-137282168->/data/local/tmp/Bug-137282168" />
         <option name="push" value="Bug-137878930->/data/local/tmp/Bug-137878930" />
 
         <!--__________________-->
@@ -196,6 +195,11 @@
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="Bug-115739809->/data/local/tmp/Bug-115739809" />
         <option name="push" value="CVE-2019-2025->/data/local/tmp/CVE-2019-2025" />
+
+        <!--__________________-->
+        <!-- Bulletin 2020-03 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2020-0069->/data/local/tmp/CVE-2020-0069" />
 
         <option name="append-bitness" value="true" />
     </target_preparer>

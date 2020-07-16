@@ -18,6 +18,8 @@ package android.appsecurity.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
+
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -26,6 +28,7 @@ import com.google.common.collect.ImmutableSet;
  */
 public class DocumentsTest extends DocumentsTestCase {
     private static final String PROVIDER_PKG = "com.android.cts.documentprovider";
+    private static final String DUMMYIME_PKG = "com.android.cts.dummyime";
     private static final String PROVIDER_APK = "CtsDocumentProvider.apk";
     private static final String DUMMYIME_APK = "CtsDummyIme.apk";
 
@@ -46,7 +49,7 @@ public class DocumentsTest extends DocumentsTestCase {
         super.tearDown();
 
         getDevice().uninstallPackage(PROVIDER_PKG);
-        getDevice().uninstallPackage(DUMMYIME_APK);
+        getDevice().uninstallPackage(DUMMYIME_PKG);
     }
 
     public void testOpenSimple() throws Exception {
@@ -124,7 +127,7 @@ public class DocumentsTest extends DocumentsTestCase {
     }
 
     public void testRestrictStorageAccessFrameworkEnabled_blockFromTree() throws Exception {
-        if (isAtLeastR()) {
+        if (isAtLeastR() && isSupportedHardware()) {
             runDeviceCompatTest(CLIENT_PKG, ".DocumentsClientTest",
                 "testRestrictStorageAccessFrameworkEnabled_blockFromTree",
                 /* enabledChanges */ ImmutableSet.of(RESTRICT_STORAGE_ACCESS_FRAMEWORK),
@@ -133,7 +136,7 @@ public class DocumentsTest extends DocumentsTestCase {
     }
 
     public void testRestrictStorageAccessFrameworkDisabled_notBlockFromTree() throws Exception {
-        if (isAtLeastR()) {
+        if (isAtLeastR() && isSupportedHardware()) {
             runDeviceCompatTest(CLIENT_PKG, ".DocumentsClientTest",
                 "testRestrictStorageAccessFrameworkDisabled_notBlockFromTree",
                 /* enabledChanges */ ImmutableSet.of(),
@@ -152,5 +155,18 @@ public class DocumentsTest extends DocumentsTestCase {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private boolean isSupportedHardware() {
+        try {
+            if (getDevice().hasFeature("feature:android.hardware.type.television")
+                    || getDevice().hasFeature("feature:android.hardware.type.watch")
+                    || getDevice().hasFeature("feature:android.hardware.type.automotive")) {
+                return false;
+            }
+        } catch (DeviceNotAvailableException e) {
+            return true;
+        }
+        return true;
     }
 }

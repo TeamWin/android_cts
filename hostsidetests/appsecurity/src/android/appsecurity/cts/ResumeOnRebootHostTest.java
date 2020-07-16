@@ -25,7 +25,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import com.android.compatibility.common.util.HostSideTestUtils;
-import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -33,6 +32,7 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,6 +65,9 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     private static final long USER_SWITCH_WAIT = TimeUnit.SECONDS.toMillis(10);
 
     private boolean mSupportsMultiUser;
+
+    @Rule
+    public NormalizeScreenStateRule mNoDozeRule = new NormalizeScreenStateRule(this);
 
     @Before
     public void setUp() throws Exception {
@@ -311,7 +314,23 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     private void deviceLock(int userId) throws Exception {
-        runDeviceTestsAsUser("testLockScreen", userId);
+        int retriesLeft = 3;
+        boolean retry = false;
+        do {
+            if (retry) {
+                CLog.i("Retrying to summon lockscreen...");
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ignored) {}
+            }
+            runDeviceTestsAsUser("testLockScreen", userId);
+            retry = !LockScreenInspector.newInstance(getDevice()).isDisplayedAndNotOccluded();
+        } while (retriesLeft-- > 0 && retry);
+
+        if (retry) {
+            CLog.e("Could not summon lockscreen...");
+            fail("Device could not be locked");
+        }
     }
 
     private void deviceEnterLskf(int userId) throws Exception {

@@ -23,6 +23,7 @@ import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
+import static android.appenumeration.cts.Constants.ACTION_QUERY_RESOLVER;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
@@ -35,7 +36,10 @@ import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.QUERIES_ACTIVITY_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PROVIDER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_Q;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
 import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
 import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_ACTION;
@@ -47,10 +51,13 @@ import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_PROVIDER_A
 import static android.appenumeration.cts.Constants.QUERIES_UNEXPORTED_SERVICE_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_BROWSABLE;
+import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_BROWSER;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_CONTACTS;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_EDITOR;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_SHARE;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_WEB;
+import static android.appenumeration.cts.Constants.TARGET_BROWSER;
+import static android.appenumeration.cts.Constants.TARGET_BROWSER_WILDCARD;
 import static android.appenumeration.cts.Constants.TARGET_CONTACTS;
 import static android.appenumeration.cts.Constants.TARGET_EDITOR;
 import static android.appenumeration.cts.Constants.TARGET_FILTERS;
@@ -65,6 +72,7 @@ import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -75,6 +83,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
@@ -92,6 +101,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.core.IsNull;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -100,6 +110,8 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -166,20 +178,10 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void startExplicitly_cannotStartNonVisible() throws Exception {
+    public void startExplicitly_canStartNonVisible() throws Exception {
         assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
-        try {
-            startExplicitIntentViaComponent(QUERIES_NOTHING, TARGET_FILTERS);
-            fail("Package cannot start a package it cannot see via component name");
-        } catch (ActivityNotFoundException e) {
-            // hooray!
-        }
-        try {
-            startExplicitIntentViaPackageName(QUERIES_NOTHING, TARGET_FILTERS);
-            fail("Package cannot start a package it cannot see via package name");
-        } catch (ActivityNotFoundException e) {
-            // hooray!
-        }
+        startExplicitIntentViaComponent(QUERIES_NOTHING, TARGET_FILTERS);
+        startExplicitIntentViaPackageName(QUERIES_NOTHING, TARGET_FILTERS);
     }
 
     @Test
@@ -306,6 +308,21 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void queriesNothing_canSeeInstaller() throws Exception {
+        runShellCommand("pm uninstall " + QUERIES_NOTHING_SEES_INSTALLER);
+        runShellCommand("pm install"
+                + " -i " + TARGET_NO_API
+                + " --pkg " + QUERIES_NOTHING_SEES_INSTALLER
+                + " " + QUERIES_NOTHING_SEES_INSTALLER_APK);
+        try {
+            assertVisible(QUERIES_NOTHING_SEES_INSTALLER, TARGET_NO_API);
+        } finally {
+            runShellCommand("pm uninstall " + QUERIES_NOTHING_SEES_INSTALLER);
+        }
+    }
+
+
+    @Test
     public void whenStarted_canSeeCaller() throws Exception {
         // let's first make sure that the target cannot see the caller.
         assertNotVisible(QUERIES_NOTHING, QUERIES_NOTHING_PERM);
@@ -358,6 +375,15 @@ public class AppEnumerationTests {
         assertVisible(QUERIES_WILDCARD_BROWSABLE, TARGET_WEB);
         assertVisible(QUERIES_WILDCARD_WEB, TARGET_WEB);
     }
+
+    @Test
+    public void queriesWildcardBrowser() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_BROWSER);
+        assertNotVisible(QUERIES_WILDCARD_BROWSER, TARGET_WEB);
+        assertVisible(QUERIES_WILDCARD_BROWSER, TARGET_BROWSER);
+        assertVisible(QUERIES_WILDCARD_BROWSER, TARGET_BROWSER_WILDCARD);
+    }
+
 
     @Test
     public void queriesWildcardEditor() throws Exception {
@@ -428,6 +454,22 @@ public class AppEnumerationTests {
         } catch (MissingBroadcastException e) {
             fail();
         }
+    }
+
+    @Test
+    public void queriesResolver_grantsVisibilityToProvider() throws Exception {
+        assertNotVisible(QUERIES_NOTHING_PROVIDER, QUERIES_NOTHING_PERM);
+
+        String[] result = sendCommandBlocking(
+                QUERIES_NOTHING_PERM, QUERIES_NOTHING_PROVIDER, null, ACTION_QUERY_RESOLVER)
+                .getStringArray(Intent.EXTRA_RETURN_RESULT);
+        Arrays.sort(result);
+        assertThat(QUERIES_NOTHING_PERM + " not visible to " + QUERIES_NOTHING_PROVIDER
+                        + " during resolver interaction",
+                Arrays.binarySearch(result, QUERIES_NOTHING_PERM),
+                greaterThanOrEqualTo(0));
+
+        assertVisible(QUERIES_NOTHING_PROVIDER, QUERIES_NOTHING_PERM);
     }
 
     private void assertNotVisible(String sourcePackageName, String targetPackageName)

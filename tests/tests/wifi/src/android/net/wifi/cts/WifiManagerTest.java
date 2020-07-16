@@ -142,6 +142,7 @@ public class WifiManagerTest extends AndroidTestCase {
     // duration of roughly 8 seconds. So we set scan timeout as 9 seconds here.
     private static final int SCAN_TEST_WAIT_DURATION_MS = 9000;
     private static final int TEST_WAIT_DURATION_MS = 10_000;
+    private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
     private static final int WAIT_MSEC = 60;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
     private static final int DURATION_SETTINGS_TOGGLE = 1_000;
@@ -384,10 +385,11 @@ public class WifiManagerTest extends AndroidTestCase {
         }
     }
 
-    private void waitForNetworkInfoState(NetworkInfo.State state) throws Exception {
+    private void waitForNetworkInfoState(NetworkInfo.State state, int timeoutMillis)
+            throws Exception {
         synchronized (mMySync) {
             if (mNetworkInfo.getState() == state) return;
-            long timeout = System.currentTimeMillis() + TEST_WAIT_DURATION_MS;
+            long timeout = System.currentTimeMillis() + timeoutMillis;
             while (System.currentTimeMillis() < timeout
                     && mNetworkInfo.getState() != state)
                 mMySync.wait(WAIT_MSEC);
@@ -396,11 +398,11 @@ public class WifiManagerTest extends AndroidTestCase {
     }
 
     private void waitForConnection() throws Exception {
-        waitForNetworkInfoState(NetworkInfo.State.CONNECTED);
+        waitForNetworkInfoState(NetworkInfo.State.CONNECTED, WIFI_CONNECT_TIMEOUT_MILLIS);
     }
 
     private void waitForDisconnection() throws Exception {
-        waitForNetworkInfoState(NetworkInfo.State.DISCONNECTED);
+        waitForNetworkInfoState(NetworkInfo.State.DISCONNECTED, TEST_WAIT_DURATION_MS);
     }
 
     private void ensureNotNetworkInfoState(NetworkInfo.State state) throws Exception {
@@ -630,10 +632,10 @@ public class WifiManagerTest extends AndroidTestCase {
         MacAddress lastBlockedClientMacAddress;
         int lastBlockedClientReason;
         boolean onStateChangedCalled = false;
-        boolean onSoftapInfoChangedCalled = false;
         boolean onSoftApCapabilityChangedCalled = false;
         boolean onConnectedClientCalled = false;
         boolean onBlockedClientConnectingCalled = false;
+        int onSoftapInfoChangedCalledCount = 0;
 
         TestSoftApCallback(Object lock) {
             softApLock = lock;
@@ -645,9 +647,9 @@ public class WifiManagerTest extends AndroidTestCase {
             }
         }
 
-        public boolean getOnSoftapInfoChangedCalled() {
+        public int getOnSoftapInfoChangedCalledCount() {
             synchronized(softApLock) {
-                return onSoftapInfoChangedCalled;
+                return onSoftapInfoChangedCalledCount;
             }
         }
 
@@ -732,7 +734,7 @@ public class WifiManagerTest extends AndroidTestCase {
         public void onInfoChanged(SoftApInfo softApInfo) {
             synchronized(softApLock) {
                 currentSoftApInfo = softApInfo;
-                onSoftapInfoChangedCalled = true;
+                onSoftapInfoChangedCalledCount++;
             }
         }
 
@@ -812,7 +814,13 @@ public class WifiManagerTest extends AndroidTestCase {
 
             SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
             assertNotNull(softApConfig);
-            assertNotNull(softApConfig.toWifiConfiguration());
+            int securityType = softApConfig.getSecurityType();
+            if (securityType == SoftApConfiguration.SECURITY_TYPE_OPEN
+                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK) {
+                 assertNotNull(softApConfig.toWifiConfiguration());
+            } else {
+                assertNull(softApConfig.toWifiConfiguration());
+            }
             if (!hasAutomotiveFeature()) {
                 assertEquals(
                         SoftApConfiguration.BAND_2GHZ,
@@ -1041,23 +1049,28 @@ public class WifiManagerTest extends AndroidTestCase {
         String configStr = loadResourceFile(PASSPOINT_INSTALLATION_FILE_WITH_CA_CERT);
         PasspointConfiguration config =
                 ConfigParser.parsePasspointConfig(TYPE_WIFI_CONFIG, configStr.getBytes());
+        String fqdn = config.getHomeSp().getFqdn();
+        String uniqueId = config.getUniqueId();
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
 
             mWifiManager.addOrUpdatePasspointConfiguration(config);
-            List<PasspointConfiguration> passpointConfigs =
-                    mWifiManager.getPasspointConfigurations();
-            PasspointConfiguration passpointConfig = passpointConfigs.get(0);
-            assertEquals(1, passpointConfigs.size());
+            PasspointConfiguration passpointConfig = getTargetPasspointConfiguration(
+                    mWifiManager.getPasspointConfigurations(), uniqueId);
+            assertNotNull("The installed passpoint profile is missing", passpointConfig);
             assertTrue("Mac randomization should be enabled for passpoint networks by default.",
                     passpointConfig.isMacRandomizationEnabled());
 
-            String fqdn = passpointConfig.getHomeSp().getFqdn();
             mWifiManager.setMacRandomizationSettingPasspointEnabled(fqdn, false);
+            passpointConfig = getTargetPasspointConfiguration(
+                    mWifiManager.getPasspointConfigurations(), uniqueId);
+            assertNotNull("The installed passpoint profile is missing", passpointConfig);
             assertFalse("Mac randomization should be disabled by the API call.",
-                    mWifiManager.getPasspointConfigurations().get(0).isMacRandomizationEnabled());
+                    passpointConfig.isMacRandomizationEnabled());
         } finally {
+            // Clean up
+            mWifiManager.removePasspointConfiguration(fqdn);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -1470,7 +1483,7 @@ public class WifiManagerTest extends AndroidTestCase {
                     executor.runAll();
                     // Verify callback is run on the supplied executor and called
                     return callback.getOnStateChangedCalled() &&
-                            callback.getOnSoftapInfoChangedCalled() &&
+                            callback.getOnSoftapInfoChangedCalledCount() > 0 &&
                             callback.getOnSoftApCapabilityChangedCalled() &&
                             callback.getOnConnectedClientCalled();
                 });
@@ -1631,8 +1644,9 @@ public class WifiManagerTest extends AndroidTestCase {
                     "SoftAp channel and state mismatch!!!", 5_000,
                     () -> {
                         executor.runAll();
-                        return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState() &&
-                                2462 == callback.getCurrentSoftApInfo().getFrequency();
+                        return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState()
+                                && (callback.getOnSoftapInfoChangedCalledCount() > 1
+                                ? 2462 == callback.getCurrentSoftApInfo().getFrequency() : true);
                     });
 
             // stop tethering which used to verify stopSoftAp
@@ -2309,9 +2323,11 @@ public class WifiManagerTest extends AndroidTestCase {
         // assert that the country code is all uppercase
         assertEquals(wifiCountryCode.toUpperCase(Locale.US), wifiCountryCode);
 
-        String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
-                .getNetworkCountryIso();
-        assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
+        if (WifiFeature.isTelephonySupported(getContext())) {
+            String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
+                    .getNetworkCountryIso();
+            assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
+        }
     }
 
     /**
@@ -2330,7 +2346,7 @@ public class WifiManagerTest extends AndroidTestCase {
         PollingCheck.check(
                 "Wifi not connected - Please ensure there is a saved network in range of this "
                         + "device",
-                20000,
+                WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
 
         Network wifiCurrentNetwork = ShellIdentityUtils.invokeWithShellPermissions(
@@ -2566,8 +2582,9 @@ public class WifiManagerTest extends AndroidTestCase {
 
             // Compare configurations
             List<PasspointConfiguration> configurations = mWifiManager.getPasspointConfigurations();
-            assertNotNull(configurations);
-            assertEquals(passpointConfiguration, configurations.get(0));
+            assertNotNull("The installed passpoint profile is missing", configurations);
+            assertEquals(passpointConfiguration, getTargetPasspointConfiguration(configurations,
+                    passpointConfiguration.getUniqueId()));
         } finally {
             // Clean up
             mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
@@ -2588,24 +2605,30 @@ public class WifiManagerTest extends AndroidTestCase {
         // Create and install a Passpoint configuration
         PasspointConfiguration passpointConfiguration = createPasspointConfiguration();
         String fqdn = passpointConfiguration.getHomeSp().getFqdn();
+        String uniqueId = passpointConfiguration.getUniqueId();
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
         try {
             uiAutomation.adoptShellPermissionIdentity();
             mWifiManager.addOrUpdatePasspointConfiguration(passpointConfiguration);
-
+            PasspointConfiguration saved = getTargetPasspointConfiguration(
+                    mWifiManager.getPasspointConfigurations(), uniqueId);
+            assertNotNull("The installed passpoint profile is missing", saved);
             // Verify meter override setting.
-            assertEquals(WifiConfiguration.METERED_OVERRIDE_NONE,
-                    mWifiManager.getPasspointConfigurations().get(0).getMeteredOverride());
+            assertEquals("Metered overrider default should be none",
+                    WifiConfiguration.METERED_OVERRIDE_NONE, saved.getMeteredOverride());
             // Change the meter override setting.
             mWifiManager.setPasspointMeteredOverride(fqdn,
                     WifiConfiguration.METERED_OVERRIDE_METERED);
             // Verify passpoint config change with the new setting.
-            assertEquals(WifiConfiguration.METERED_OVERRIDE_METERED,
-                    mWifiManager.getPasspointConfigurations().get(0).getMeteredOverride());
+            saved = getTargetPasspointConfiguration(
+                    mWifiManager.getPasspointConfigurations(), uniqueId);
+            assertNotNull("The installed passpoint profile is missing", saved);
+            assertEquals("Metered override should be metered",
+                    WifiConfiguration.METERED_OVERRIDE_METERED, saved.getMeteredOverride());
         } finally {
             // Clean up
-            mWifiManager.removePasspointConfiguration(passpointConfiguration.getHomeSp().getFqdn());
+            mWifiManager.removePasspointConfiguration(fqdn);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -2776,14 +2799,6 @@ public class WifiManagerTest extends AndroidTestCase {
             // Now trigger scan and ensure that the device does not connect to any networks.
             mWifiManager.startScan();
             ensureNotConnected();
-
-            // Toggle Wifi off/on should clean the state.
-            setWifiEnabled(false);
-            setWifiEnabled(true);
-
-            // Trigger a scan & wait for connection to one of the saved networks.
-            mWifiManager.startScan();
-            waitForConnection();
         } finally {
             uiAutomation.dropShellPermissionIdentity();
             setWifiEnabled(false);
@@ -2932,5 +2947,18 @@ public class WifiManagerTest extends AndroidTestCase {
             mWifiManager.isP2pSupported();
         }
 
+    }
+
+    private PasspointConfiguration getTargetPasspointConfiguration(
+            List<PasspointConfiguration> configurationList, String uniqueId) {
+        if (configurationList == null || configurationList.isEmpty()) {
+            return null;
+        }
+        for (PasspointConfiguration config : configurationList) {
+            if (TextUtils.equals(config.getUniqueId(), uniqueId)) {
+                return config;
+            }
+        }
+        return null;
     }
 }

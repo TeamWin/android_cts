@@ -133,12 +133,19 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testStageAnotherSessionImmediatelyAfterAbandon() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
         runPhase("testStageAnotherSessionImmediatelyAfterAbandon");
     }
 
     @Test
+    public void testStageAnotherSessionImmediatelyAfterAbandonMultiPackage() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        runPhase("testStageAnotherSessionImmediatelyAfterAbandonMultiPackage");
+    }
+
+    @Test
     public void testNoSessionUpdatedBroadcastSentForStagedSessionAbandon() throws Exception {
-        assumeTrue(isUpdatingApexSupported());
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
         runPhase("testNoSessionUpdatedBroadcastSentForStagedSessionAbandon");
     }
 
@@ -226,6 +233,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    // Don't mark as @LargeTest since we want at least one test to install apex during pre-submit.
     public void testInstallStagedApexAndApk() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
@@ -520,6 +528,26 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_VerifyPostReboot");
     }
 
+    // Failure reason of staged install should be be persisted for single sessions
+    @Test
+    @LargeTest
+    public void testFailureReasonPersists_SingleSession() throws Exception {
+        assumeTrue(isCheckpointSupported());
+        runPhase("testFailureReasonPersists_SingleSession_Commit");
+        getDevice().reboot();
+        runPhase("testFailureReasonPersists_SingleSession_VerifyPostReboot");
+    }
+
+    // Failure reason of staged install should be be persisted for multi session staged install
+    @Test
+    @LargeTest
+    public void testFailureReasonPersists_MultiSession() throws Exception {
+        assumeTrue(isCheckpointSupported());
+        runPhase("testFailureReasonPersists_MultipleSession_Commit");
+        getDevice().reboot();
+        runPhase("testFailureReasonPersists_MultipleSession_VerifyPostReboot");
+    }
+
     @Test
     @LargeTest
     public void testSamegradeSystemApex() throws Exception {
@@ -531,6 +559,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testInstallApkChangingFingerprint() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
 

@@ -314,7 +314,12 @@ public class CtsSharesheetDeviceTest {
      */
     public void showsExtraChooserTargets() {
         // Should show chooser targets but must limit them, can't test limit here
-        waitAndAssertTextContains(mExtraChooserTargetsLabelBase);
+        if (mActivityManager.isLowRamDevice()) {
+            // The direct share row and EXTRA_CHOOSER_TARGETS should be hidden on low-ram devices
+            waitAndAssertNoTextContains(mExtraChooserTargetsLabelBase);
+        } else {
+            waitAndAssertTextContains(mExtraChooserTargetsLabelBase);
+        }
     }
 
     /**

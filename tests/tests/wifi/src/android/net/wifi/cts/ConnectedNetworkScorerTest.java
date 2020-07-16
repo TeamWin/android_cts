@@ -65,6 +65,7 @@ public class ConnectedNetworkScorerTest {
     private UiDevice mUiDevice;
     private boolean mWasVerboseLoggingEnabled;
 
+    private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
     private static final int DURATION = 10_000;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
 
@@ -101,7 +102,7 @@ public class ConnectedNetworkScorerTest {
         ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected",
-                DURATION,
+                WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
     }
 
@@ -362,7 +363,7 @@ public class ConnectedNetworkScorerTest {
                 // Wait for it to be reconnected.
                 PollingCheck.check(
                         "Wifi not reconnected",
-                        DURATION,
+                        WIFI_CONNECT_TIMEOUT_MILLIS,
                         () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
             }
 

@@ -94,8 +94,12 @@ public class BlockedNumberService extends IntentService {
 
         // Wait for the content provider to be updated.
         try {
-            blockedNumberLatch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+            if (!blockedNumberLatch.await(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS)) {
+                Log.e(TAG, "Timed out waiting for blocked number update");
+                bundle.putBoolean(FAIL_EXTRA, true);
+            }
         } catch (InterruptedException e) {
+            Log.e(TAG, "Interrupted while waiting for blocked number update");
             bundle.putBoolean(FAIL_EXTRA, true);
         }
         return bundle;

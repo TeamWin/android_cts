@@ -16,42 +16,20 @@
 
 package android.matchflags.cts;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Bundle;
-import android.os.ConditionVariable;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.RemoteCallback;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SystemUtil;
-
-import org.hamcrest.core.IsNull;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
-
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(AndroidJUnit4.class)
 public class MatchFlagTests {
@@ -74,7 +52,16 @@ public class MatchFlagTests {
                 .addCategory(Intent.CATEGORY_BROWSABLE)
                 .setData(Uri.parse(ONLY_BROWSER_URI));
 
-        startActivity(onlyBrowserIntent);
+        if (isBrowserPresent()) {
+            startActivity(onlyBrowserIntent);
+        } else {
+            try {
+                startActivity(onlyBrowserIntent);
+                fail("Device without browser should not launch browser only intent");
+            } catch (ActivityNotFoundException e) {
+                // hooray
+            }
+        }
 
         Intent noBrowserWithBrowserOnlyIntent = new Intent(onlyBrowserIntent)
                 .addFlags(Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER);
@@ -123,14 +110,28 @@ public class MatchFlagTests {
                 .addFlags(Intent.FLAG_ACTIVITY_REQUIRE_NON_BROWSER)
                 .addFlags(Intent.FLAG_ACTIVITY_REQUIRE_DEFAULT);
 
-        // with non-browser, we'd expect the resolver
-        // with require default, we'll get activity not found
-        try {
+        if (isBrowserPresent()) {
+            // with non-browser, we'd expect the resolver
+            // with require default, we'll get activity not found
+            try {
+                startActivity(uniqueUriIntentNoBrowserRequireDefault);
+                fail("Should fail to launch when started with non-browser and require default");
+            } catch (ActivityNotFoundException e) {
+                // hooray!
+            }
+        } else {
+            // with non-browser, but no browser present, we'd get a single result
+            // with require default, we'll resolve to that single result
             startActivity(uniqueUriIntentNoBrowserRequireDefault);
-            fail("Should fail to launch when started with non-browser and require default");
-        } catch (ActivityNotFoundException e) {
-            // hooray!
         }
+    }
+
+    private static boolean isBrowserPresent() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager()
+                .queryIntentActivities(new Intent(Intent.ACTION_VIEW).addCategory(
+                        Intent.CATEGORY_BROWSABLE).setData(Uri.parse(ONLY_BROWSER_URI)),
+                        0 /* flags */)
+                .stream().anyMatch(resolveInfo -> resolveInfo.handleAllWebDataURI);
     }
 
     private static void startActivity(Intent onlyBrowserIntent) {

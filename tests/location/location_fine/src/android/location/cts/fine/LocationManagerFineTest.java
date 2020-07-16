@@ -32,6 +32,7 @@ import static com.android.compatibility.common.util.LocationUtils.createLocation
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -555,6 +556,8 @@ public class LocationManagerFineTest {
     @Test
     @AppModeFull(reason = "Instant apps can't hold ACCESS_LOCATION_EXTRA_COMMANDS permission")
     public void testRequestGpsUpdates_B9758659() throws Exception {
+        assumeTrue(hasGpsFeature());
+
         // test for b/9758659, where the gps provider may reuse network provider positions creating
         // an unnatural feedback loop
         assertThat(mManager.isProviderEnabled(GPS_PROVIDER)).isTrue();
@@ -1101,11 +1104,14 @@ public class LocationManagerFineTest {
 
     @Test
     public void testGetGnssYearOfHardware() {
+        assumeTrue(hasGpsFeature());
         mManager.getGnssYearOfHardware();
     }
 
     @Test
     public void testGetGnssHardwareModelName() {
+        assumeTrue(hasGpsFeature());
+
         // model name should be longer than 4 characters
         String gnssHardwareModelName = mManager.getGnssHardwareModelName();
 

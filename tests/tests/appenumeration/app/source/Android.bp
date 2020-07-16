@@ -32,6 +32,18 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsAppEnumerationQueriesNothingSeesInstaller",
+    manifest: "AndroidManifest-queriesNothing-seesInstaller.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
     name: "CtsAppEnumerationQueriesActivityViaAction",
     manifest: "AndroidManifest-queriesActivityAction.xml",
     defaults: ["CtsAppEnumerationQueriesDefaults"],
@@ -164,6 +176,18 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsAppEnumerationQueriesNothingHasProvider",
+    manifest: "AndroidManifest-queriesNothing-hasProvider.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
     name: "CtsAppEnumerationSharedUidSource",
     manifest: "AndroidManifest-queriesNothing-sharedUser.xml",
     defaults: ["CtsAppEnumerationQueriesDefaults"],
@@ -245,3 +269,16 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
+android_test_helper_app {
+    name: "CtsAppEnumerationWildcardBrowserActivitySource",
+    manifest: "AndroidManifest-queriesWildcard-browserActivity.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+}
+

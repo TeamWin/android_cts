@@ -24,6 +24,10 @@
 
     <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
+        <service android:name="android.app.cts.MemoryConsumerService"
+                android:exported="true"
+                android:isolatedProcess="true">
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -254,8 +254,9 @@ public class CarrierApiTest extends AndroidTestCase {
         assertEquals(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_SUCCESS, value);
     }
 
-    private static void assertUpdateAvailableNetworkInvalidArguments(int value) {
-        assertEquals(TelephonyManager.UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS, value);
+    private static void assertUpdateAvailableNetworkNoOpportunisticSubAvailable(int value) {
+        assertEquals(
+                TelephonyManager.UPDATE_AVAILABLE_NETWORKS_NO_OPPORTUNISTIC_SUB_AVAILABLE, value);
     }
 
     private static void assertSetOpportunisticSubSuccess(int value) {
@@ -309,8 +310,8 @@ public class CarrierApiTest extends AndroidTestCase {
         List<AvailableNetworkInfo> availableNetworkInfos = new ArrayList<AvailableNetworkInfo>();
         Consumer<Integer> callbackSuccess =
                 CarrierApiTest::assertUpdateAvailableNetworkSuccess;
-        Consumer<Integer> callbackFailure =
-                CarrierApiTest::assertUpdateAvailableNetworkInvalidArguments;
+        Consumer<Integer> callbackNoOpportunisticSubAvailable =
+                CarrierApiTest::assertUpdateAvailableNetworkNoOpportunisticSubAvailable;
         Consumer<Integer> setOpCallbackSuccess = CarrierApiTest::assertSetOpportunisticSubSuccess;
         if (subscriptionInfoList == null || subscriptionInfoList.size() == 0
                 || !mSubscriptionManager.isActiveSubscriptionId(
@@ -321,15 +322,16 @@ public class CarrierApiTest extends AndroidTestCase {
                         bands);
                 availableNetworkInfos.add(availableNetworkInfo);
                 // Call updateAvailableNetworks without opportunistic subscription.
-                // callbackFailure is expected to be triggered and the return value will be checked
-                // against UPDATE_AVAILABLE_NETWORKS_INVALID_ARGUMENTS
+                // callbackNoOpportunisticSubAvailable is expected to be triggered
+                // and the return value will be checked against
+                // UPDATE_AVAILABLE_NETWORKS_NO_OPPORTUNISTIC_SUB_AVAILABLE
                 mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
-                        AsyncTask.SERIAL_EXECUTOR, callbackFailure);
+                        AsyncTask.SERIAL_EXECUTOR, callbackNoOpportunisticSubAvailable);
             } finally {
                 // clear all the operations at the end of test.
                 availableNetworkInfos.clear();
                 mTelephonyManager.updateAvailableNetworks(availableNetworkInfos,
-                        AsyncTask.SERIAL_EXECUTOR, callbackFailure);
+                        AsyncTask.SERIAL_EXECUTOR, callbackNoOpportunisticSubAvailable);
             }
         } else {
             // This is case of DSDS phone, one active opportunistic subscription and one
@@ -655,6 +657,8 @@ public class CarrierApiTest extends AndroidTestCase {
     }
 
     public void testIccOpenLogicalChannelWithValidP2() {
+        if (!hasCellular) return;
+
         // {@link TelephonyManager#iccOpenLogicalChannel} sends a Manage Channel (open) APDU
         // followed by a Select APDU with the given AID and p2 values. See Open Mobile API
         // Specification v3.2 Section 6.2.7.h and TS 102 221 for details.
@@ -669,6 +673,8 @@ public class CarrierApiTest extends AndroidTestCase {
     }
 
     public void testIccOpenLogicalChannelWithInvalidP2() {
+        if (!hasCellular) return;
+
         // Valid p2 values are defined in TS 102 221 Table 11.2. Per Table 11.2, 0xF0 should be
         // invalid. Any p2 values that produce non '9000'/'62xx'/'63xx' status words are treated as
         // an error and the channel is not opened. Due to compatibility issues with older devices,

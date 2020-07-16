@@ -169,6 +169,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_other" />
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".forcestop.RecentTaskRemovalTestActivity"
@@ -179,6 +180,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_required_configs" android:value="config_has_recents"/>
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".companion.CompanionDeviceTestActivity"
@@ -209,7 +211,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_device_admin" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive:android.software.lockscreen_disabled" />
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive:android.hardware.type.television:android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.device_admin" />
         </activity>
@@ -2209,6 +2211,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_camera" />
 
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
 
         <activity android:name=".camera.intents.CameraIntentsActivity"
@@ -2220,6 +2224,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_camera" />
 
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
 
         <service android:name=".camera.intents.CameraContentJobService"
@@ -2235,6 +2241,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_camera" />
 
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
 
         <activity
@@ -2248,16 +2256,22 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_camera" />
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
         <activity
             android:name=".camera.fov.DetermineFovActivity"
             android:label="@string/camera_fov_calibration"
             android:screenOrientation="landscape"
             android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" >
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
         <activity
             android:name=".camera.fov.CalibrationPreferenceActivity"
             android:label="@string/camera_fov_label_options" >
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
 
 
@@ -2271,6 +2285,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_camera" />
             <meta-data android:name="test_required_features"
                     android:value="android.hardware.camera.any"/>
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
 
         <activity android:name=".camera.its.ItsTestActivity"
@@ -2284,6 +2300,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_camera" />
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
 
         <activity android:name=".camera.flashlight.CameraFlashlightActivity"
@@ -2295,6 +2313,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_camera" />
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.flash" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
 
         <activity android:name=".camera.performance.CameraPerformanceActivity"
@@ -2306,6 +2326,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_camera" />
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
 
         <activity android:name=".camera.bokeh.CameraBokehActivity"
@@ -2318,6 +2340,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_camera" />
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.automotive"/>
         </activity>
 
         <activity android:name=".usb.accessory.UsbAccessoryTestActivity"
@@ -2551,7 +2575,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_tiles" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
         <service android:name=".qstiles.MockTileService"
@@ -3850,8 +3874,8 @@
         <!-- ProAudio test invokes the "Loopback" App -->
         <activity android:name="org.drrickorang.loopback"/>
 
-        <activity android:name=".audio.AudioLoopbackActivity"
-                  android:label="@string/audio_loopback_test">
+        <activity android:name=".audio.AudioLoopbackLatencyActivity"
+                  android:label="@string/audio_loopback_latency_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
@@ -4329,7 +4353,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback" />
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
         <activity android:name=".instantapps.RecentAppsTestActivity"
                  android:label="@string/ia_recents">
@@ -4338,7 +4362,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
-            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback" />
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
         <activity android:name=".instantapps.AppInfoTestActivity"
                  android:label="@string/ia_app_info">
@@ -4348,7 +4372,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback" />
+                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".displaycutout.DisplayCutoutTestActivity"
@@ -4361,4 +4385,8 @@
         </activity>
     </application>
 
+    <queries>
+         <!-- Rotation Vector CV Crosscheck (RVCVXCheckTestActivity) relies on OpenCV Manager -->
+         <package android:name="org.opencv.engine" />
+    </queries>
 </manifest>

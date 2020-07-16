@@ -21,6 +21,13 @@ import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static junit.framework.TestCase.assertFalse;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import android.app.UiAutomation;
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -40,14 +47,22 @@ import android.os.PatternMatcher;
 import android.os.WorkSource;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
-import android.test.AndroidTestCase;
 import android.text.TextUtils;
 
+import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -61,9 +76,15 @@ import java.util.concurrent.Executors;
  * TODO(b/150716005): Use assumeTrue for wifi support check.
  */
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class WifiNetworkSpecifierTest extends AndroidTestCase {
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class WifiNetworkSpecifierTest {
     private static final String TAG = "WifiNetworkSpecifierTest";
 
+    private static boolean sWasVerboseLoggingEnabled;
+    private static boolean sWasScanThrottleEnabled;
+
+    private Context mContext;
     private WifiManager mWifiManager;
     private ConnectivityManager mConnectivityManager;
     private UiDevice mUiDevice;
@@ -71,8 +92,6 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
     private final Object mUiLock = new Object();
     private WifiConfiguration mTestNetwork;
     private TestNetworkCallback mNetworkCallback;
-    private boolean mWasVerboseLoggingEnabled;
-    private boolean mWasScanThrottleEnabled;
 
     private static final int DURATION = 10_000;
     private static final int DURATION_UI_INTERACTION = 25_000;
@@ -80,77 +99,100 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
     private static final int DURATION_SCREEN_TOGGLE = 2000;
     private static final int SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID = 3;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-        mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
-        mConnectivityManager = getContext().getSystemService(ConnectivityManager.class);
-        assertNotNull(mWifiManager);
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        // skip the test if WiFi is not supported
+        assumeTrue(WifiFeature.isWifiSupported(context));
+
+        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        assertNotNull(wifiManager);
 
         // turn on verbose logging for tests
-        mWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.isVerboseLoggingEnabled());
+        sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.isVerboseLoggingEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(true));
+                () -> wifiManager.setVerboseLoggingEnabled(true));
         // Disable scan throttling for tests.
-        mWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.isScanThrottleEnabled());
+        sWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.isScanThrottleEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScanThrottleEnabled(false));
+                () -> wifiManager.setScanThrottleEnabled(false));
 
         // enable Wifi
-        if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
-        PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
-
-        // turn screen on
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        turnScreenOn();
+        if (!wifiManager.isWifiEnabled()) setWifiEnabled(true);
+        PollingCheck.check("Wifi not enabled", DURATION, () -> wifiManager.isWifiEnabled());
 
         // check we have >= 1 saved network
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.getPrivilegedConfiguredNetworks());
+                () -> wifiManager.getPrivilegedConfiguredNetworks());
         assertFalse("Need at least one saved network", savedNetworks.isEmpty());
 
-        // Pick any one of the saved networks on the device (assumes that it is in range)
-        mTestNetwork = savedNetworks.get(0);
         // Disconnect & disable auto-join on the saved network to prevent auto-connect from
         // interfering with the test.
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.disableNetwork(mTestNetwork.networkId));
-        // wait for Wifi to be disconnected
+                () -> {
+                    for (WifiConfiguration savedNetwork : savedNetworks) {
+                        wifiManager.disableNetwork(savedNetwork.networkId);
+                    }
+                });
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        if (!WifiFeature.isWifiSupported(context)) return;
+
+        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        assertNotNull(wifiManager);
+
+        if (!wifiManager.isWifiEnabled()) setWifiEnabled(true);
+
+        // Re-enable networks.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> {
+                    for (WifiConfiguration savedNetwork : wifiManager.getConfiguredNetworks()) {
+                        wifiManager.enableNetwork(savedNetwork.networkId, false);
+                    }
+                });
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+        mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
+        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+
+        // turn screen on
+        turnScreenOn();
+
+        List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.getPrivilegedConfiguredNetworks());
+        // Pick any one of the saved networks on the device (assumes that it is in range)
+        mTestNetwork = savedNetworks.get(0);
+
+        // Wait for Wifi to be disconnected.
         PollingCheck.check(
                 "Wifi not disconnected",
                 20000,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            super.tearDown();
-            return;
-        }
-        if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
-        turnScreenOff();
+    @After
+    public void tearDown() throws Exception {
         // If there is failure, ensure we unregister the previous request.
         if (mNetworkCallback != null) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
         }
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.enableNetwork(mTestNetwork.networkId, true));
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScanThrottleEnabled(mWasScanThrottleEnabled));
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
-        super.tearDown();
+        turnScreenOff();
     }
 
-    private void setWifiEnabled(boolean enable) throws Exception {
+    private static void setWifiEnabled(boolean enable) throws Exception {
         // now trigger the change using shell commands.
         SystemUtil.runShellCommand("svc wifi " + (enable ? "enable" : "disable"));
     }
@@ -398,11 +440,8 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
     /**
      * Tests the entire connection flow using a specific SSID in the specifier.
      */
+    @Test
     public void testConnectionWithSpecificSsid() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiNetworkSpecifier specifier = createSpecifierBuilderWithCredentialFromSavedNetwork()
                 .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
                 .build();
@@ -412,11 +451,8 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
     /**
      * Tests the entire connection flow using a SSID pattern in the specifier.
      */
+    @Test
     public void testConnectionWithSsidPattern() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         // Creates a ssid pattern by dropping the last char in the saved network & pass that
         // as a prefix match pattern in the request.
         String ssidUnquoted = removeDoubleQuotes(mTestNetwork.SSID);
@@ -486,11 +522,8 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
     /**
      * Tests the entire connection flow using a specific BSSID in the specifier.
      */
+    @Test
     public void testConnectionWithSpecificBssid() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         ScanResult scanResult = findScanResultMatchingSavedNetwork();
         WifiNetworkSpecifier specifier = createSpecifierBuilderWithCredentialFromSavedNetwork()
                 .setBssid(MacAddress.fromString(scanResult.BSSID))
@@ -501,11 +534,8 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
     /**
      * Tests the entire connection flow using a BSSID pattern in the specifier.
      */
+    @Test
     public void testConnectionWithBssidPattern() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         ScanResult scanResult = findScanResultMatchingSavedNetwork();
         // Note: The match may return more than 1 network in this case since we use a prefix match,
         // But, we will still ensure that the UI interactions in the test still selects the
@@ -520,11 +550,8 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
     /**
      * Tests the entire connection flow using a BSSID pattern in the specifier.
      */
+    @Test
     public void testUserRejectionWithSpecificSsid() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiNetworkSpecifier specifier = createSpecifierBuilderWithCredentialFromSavedNetwork()
                 .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
                 .build();
@@ -535,11 +562,8 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
      * Tests the builder for WPA2 enterprise networks.
      * Note: Can't do end to end tests for such networks in CTS environment.
      */
+    @Test
     public void testBuilderForWpa2Enterprise() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
                 .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
                 .setWpa2EnterpriseConfig(new WifiEnterpriseConfig())
@@ -555,11 +579,8 @@ public class WifiNetworkSpecifierTest extends AndroidTestCase {
      * Tests the builder for WPA3 enterprise networks.
      * Note: Can't do end to end tests for such networks in CTS environment.
      */
+    @Test
     public void testBuilderForWpa3Enterprise() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
                 .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())

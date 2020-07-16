@@ -34,6 +34,8 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
+import androidx.test.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.PropertyUtil;
@@ -151,6 +153,21 @@ public class MediaCasTest extends AndroidTestCase {
             "65 79 69 6e 74 5f 6d 69  6e 3d 32 35 20 73 63 65" +
             "6e 65                                           " ;
 
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        // Need MANAGE_USERS or CREATE_USERS permission to access ActivityManager#getCurrentUser in
+        // MediaCas. It is used by all tests, then adopt it from shell in setup
+        InstrumentationRegistry
+            .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        InstrumentationRegistry
+            .getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        super.tearDown();
+    }
     /**
      * Test that all enumerated CA systems can be instantiated.
      *

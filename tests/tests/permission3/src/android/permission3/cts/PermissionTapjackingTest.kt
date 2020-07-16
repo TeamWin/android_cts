@@ -20,6 +20,7 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.pm.PackageManager
 import android.support.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 
@@ -35,6 +36,9 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
 
     @Test
     fun testTapjackGrantDialog() {
+        // PermissionController for television uses a floating window.
+        assumeFalse(isTv)
+
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
         requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {}
 
@@ -45,7 +49,7 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
             SystemUtil.eventually({
                 if (packageManager.checkPermission(ACCESS_FINE_LOCATION, APP_PACKAGE_NAME) ==
                         PackageManager.PERMISSION_DENIED) {
-                    waitFindObject(By.res(ALLOW_FOREGROUND_BUTTON), 100).click()
+                    clickPermissionRequestAllowForegroundButton(100)
                 }
                 assertAppHasPermission(ACCESS_FINE_LOCATION, true)
             }, 10000)
@@ -54,6 +58,10 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
         }
         // Permission should not be granted and dialog should still be showing
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
-        waitFindObject(By.res(ALLOW_FOREGROUND_BUTTON), 1000)
+
+        // On Automotive the dialog gets closed by the tapjacking activity popping up
+        if (!isAutomotive) {
+            clickPermissionRequestAllowForegroundButton()
+        }
     }
 }

@@ -80,6 +80,11 @@ public:
     double getLatencyMillis();
 
     /**
+     * @return the sample rate (in Hz) used for the measurement signal
+     */
+    int getSampleRate();
+
+    /**
      * The confidence is based on a normalized correlation.
      * It ranges from 0.0 to 1.0. Higher is better.
      *
@@ -96,6 +101,7 @@ public:
     aaudio_format_t    mActualInputFormat = AAUDIO_FORMAT_INVALID;
     int16_t           *mInputShortData = nullptr;
     float             *mInputFloatData = nullptr;
+    int32_t            mOutputSampleRate = 0;
 
     aaudio_result_t    mInputError = AAUDIO_OK;
     aaudio_result_t    mOutputError = AAUDIO_OK;

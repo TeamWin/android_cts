@@ -78,6 +78,9 @@ public class MediaStorageTest {
     private ContentResolver mContentResolver;
     private int mUserId;
 
+    private static int currentAttempt = 0;
+    private static final int MAX_NUMBER_OF_ATTEMPT = 10;
+
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
@@ -533,9 +536,19 @@ public class MediaStorageTest {
         runShellCommand(InstrumentationRegistry.getInstrumentation(), cmd);
     }
 
-    static File stageFile(File file) throws IOException {
-        file.getParentFile().mkdirs();
-        file.createNewFile();
+    static File stageFile(File file) throws Exception {
+        // Sometimes file creation fails due to slow permission update, try more times 
+        while(currentAttempt < MAX_NUMBER_OF_ATTEMPT) {
+            try {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+                return file;
+            } catch(IOException e) {
+                currentAttempt++;
+                // wait 500ms
+                Thread.sleep(500);
+            }
+        } 
         return file;
     }
 }

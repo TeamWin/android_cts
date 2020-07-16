@@ -528,10 +528,11 @@ bool CodecTestBase::waitForAllOutputs() {
 
 int CodecTestBase::getWidth(AMediaFormat* format) {
     int width = -1;
-    int cropLeft, cropRight;
+    int cropLeft, cropRight, cropTop, cropBottom;
     AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_WIDTH, &width);
-    if (AMediaFormat_getInt32(format, "crop-left", &cropLeft) &&
-        AMediaFormat_getInt32(format, "crop-right", &cropRight)) {
+    if (AMediaFormat_getRect(format, "crop", &cropLeft, &cropTop, &cropRight, &cropBottom) ||
+        (AMediaFormat_getInt32(format, "crop-left", &cropLeft) &&
+        AMediaFormat_getInt32(format, "crop-right", &cropRight))) {
         width = cropRight + 1 - cropLeft;
     }
     return width;
@@ -539,10 +540,11 @@ int CodecTestBase::getWidth(AMediaFormat* format) {
 
 int CodecTestBase::getHeight(AMediaFormat* format) {
     int height = -1;
-    int cropTop, cropBottom;
+    int cropLeft, cropRight, cropTop, cropBottom;
     AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_HEIGHT, &height);
-    if (AMediaFormat_getInt32(format, "crop-top", &cropTop) &&
-        AMediaFormat_getInt32(format, "crop-bottom", &cropBottom)) {
+    if (AMediaFormat_getRect(format, "crop", &cropLeft, &cropTop, &cropRight, &cropBottom) ||
+        (AMediaFormat_getInt32(format, "crop-top", &cropTop) &&
+        AMediaFormat_getInt32(format, "crop-bottom", &cropBottom))) {
         height = cropBottom + 1 - cropTop;
     }
     return height;

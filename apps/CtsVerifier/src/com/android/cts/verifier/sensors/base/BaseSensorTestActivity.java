@@ -602,7 +602,12 @@ public abstract class BaseSensorTestActivity
                 nextButtonText = R.string.next_button_text;
                 break;
         }
-        mNextButton.setText(nextButtonText);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mNextButton.setText(nextButtonText);
+            }
+        });
     }
 
     /**

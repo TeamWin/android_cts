@@ -21,6 +21,7 @@ import android.app.UiAutomation
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
@@ -52,6 +53,8 @@ abstract class BasePermissionTest {
     protected val uiAutomation: UiAutomation = instrumentation.uiAutomation
     protected val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
     protected val packageManager: PackageManager = context.packageManager
+    private val mPermissionControllerResources: Resources = context.createPackageContext(
+            context.packageManager.permissionControllerPackageName, 0).resources
 
     @get:Rule
     val activityRule = ActivityTestRule(StartForFutureActivity::class.java, false, false)
@@ -87,6 +90,10 @@ abstract class BasePermissionTest {
         pressHome()
     }
 
+    protected fun getPermissionControllerString(res: String): String =
+            mPermissionControllerResources.getString(mPermissionControllerResources
+                    .getIdentifier(res, "string", "com.android.permissioncontroller"))
+
     protected fun installPackage(
         apkPath: String,
         reinstall: Boolean = false,
@@ -117,8 +124,8 @@ abstract class BasePermissionTest {
         return UiAutomatorUtils.waitFindObject(selector, timeoutMillis)
     }
 
-    protected fun click(selector: BySelector) {
-        waitFindObject(selector).click()
+    protected fun click(selector: BySelector, timeoutMillis: Long = 10_000) {
+        waitFindObject(selector, timeoutMillis).click()
         waitForIdle()
     }
 

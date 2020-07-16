@@ -103,6 +103,7 @@ class AppOpsUserService : Service() {
                     client.noteSyncOp()
 
                     assertThat(asyncNoted).isEmpty()
+                    assertThat(noted).isEmpty()
 
                     setNotedAppOpsCollector()
 

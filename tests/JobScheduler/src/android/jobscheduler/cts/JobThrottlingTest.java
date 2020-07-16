@@ -24,6 +24,7 @@ import static android.os.PowerManager.ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.AppOpsManager;
@@ -102,6 +103,8 @@ public class JobThrottlingTest {
     private boolean mInitialAirplaneModeState;
     private String mInitialJobSchedulerConstants;
     private String mInitialDisplayTimeout;
+    private String mInitialRestrictedBucketEnabled;
+    private boolean mAutomotiveDevice;
 
     private TestAppInterface mTestAppInterface;
 
@@ -155,6 +158,8 @@ public class JobThrottlingTest {
         mInitialAirplaneModeState = isAirplaneModeOn();
         mInitialJobSchedulerConstants = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS);
+        mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET);
         // Make sure test jobs can run regardless of bucket.
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS, "min_ready_non_active_jobs_count=0");
@@ -162,6 +167,15 @@ public class JobThrottlingTest {
         mInitialDisplayTimeout =
                 Settings.System.getString(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT);
         Settings.System.putString(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT, "300000");
+
+        // In automotive device, always-on screen and endless battery charging are assumed.
+        mAutomotiveDevice =
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+        if (mAutomotiveDevice) {
+            setScreenState(true);
+            // TODO(b/159176758): make sure that initial power supply is on.
+            BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        }
     }
 
     @Test
@@ -281,6 +295,9 @@ public class JobThrottlingTest {
     @Test
     public void testJobsInRestrictedBucket_ParoleSession() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+
+        setRestrictedBucketEnabled(true);
 
         // Disable coalescing
         Settings.Global.putString(mContext.getContentResolver(),
@@ -304,6 +321,9 @@ public class JobThrottlingTest {
     @Test
     public void testJobsInRestrictedBucket_NoRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+
+        setRestrictedBucketEnabled(true);
 
         // Disable coalescing and the parole session
         Settings.Global.putString(mContext.getContentResolver(),
@@ -339,8 +359,11 @@ public class JobThrottlingTest {
     @Test
     public void testJobsInRestrictedBucket_WithRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
         assumeTrue(mHasWifi);
         ensureSavedWifiNetwork(mWifiManager);
+
+        setRestrictedBucketEnabled(true);
 
         // Disable coalescing and the parole session
         Settings.Global.putString(mContext.getContentResolver(),
@@ -386,6 +409,7 @@ public class JobThrottlingTest {
     @Test
     public void testJobsInNeverApp() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
 
         BatteryUtils.runDumpsysBatteryUnplug();
         setTestPackageStandbyBucket(Bucket.NEVER);
@@ -396,6 +420,8 @@ public class JobThrottlingTest {
 
     @Test
     public void testUidActiveBypassesStandby() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+
         BatteryUtils.runDumpsysBatteryUnplug();
         setTestPackageStandbyBucket(Bucket.NEVER);
         tempWhitelistTestApp(6_000);
@@ -407,6 +433,7 @@ public class JobThrottlingTest {
 
     @Test
     public void testBatterySaverOff() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
         BatteryUtils.assumeBatterySaverFeature();
 
         BatteryUtils.runDumpsysBatteryUnplug();
@@ -418,6 +445,7 @@ public class JobThrottlingTest {
 
     @Test
     public void testBatterySaverOn() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
         BatteryUtils.assumeBatterySaverFeature();
 
         BatteryUtils.runDumpsysBatteryUnplug();
@@ -429,6 +457,7 @@ public class JobThrottlingTest {
 
     @Test
     public void testUidActiveBypassesBatterySaverOn() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
         BatteryUtils.assumeBatterySaverFeature();
 
         BatteryUtils.runDumpsysBatteryUnplug();
@@ -441,6 +470,7 @@ public class JobThrottlingTest {
 
     @Test
     public void testBatterySaverOnThenUidActive() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
         BatteryUtils.assumeBatterySaverFeature();
 
         // Enable battery saver, and schedule a job. It shouldn't run.
@@ -481,6 +511,8 @@ public class JobThrottlingTest {
         }
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.JOB_SCHEDULER_CONSTANTS, mInitialJobSchedulerConstants);
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
         if (isAirplaneModeOn() != mInitialAirplaneModeState) {
             setAirplaneMode(mInitialAirplaneModeState);
         }
@@ -495,6 +527,11 @@ public class JobThrottlingTest {
     private void setTestPackageRestricted(boolean restricted) throws Exception {
         AppOpsUtils.setOpMode(TEST_APP_PACKAGE, "RUN_ANY_IN_BACKGROUND",
                 restricted ? AppOpsManager.MODE_IGNORED : AppOpsManager.MODE_ALLOWED);
+    }
+
+    private void setRestrictedBucketEnabled(boolean enabled) {
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET, enabled ? "1" : "0");
     }
 
     private boolean isTestAppTempWhitelisted() throws Exception {

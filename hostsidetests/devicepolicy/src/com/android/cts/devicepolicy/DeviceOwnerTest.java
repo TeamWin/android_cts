@@ -913,7 +913,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testDefaultSmsApplication() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasTelephony) {
             return;
         }
 

@@ -70,7 +70,9 @@ public class SingleDeviceTest extends AndroidTestCase {
 
     // wait for Wi-Fi Aware state changes & network requests callbacks
     private static final int WAIT_FOR_AWARE_CHANGE_SECS = 15; // 15 seconds
+    private static final int WAIT_FOR_NETWORK_STATE_CHANGE_SECS = 25; // 25 seconds
     private static final int INTERVAL_BETWEEN_TESTS_SECS = 3; // 3 seconds
+    private static final int WAIT_FOR_AWARE_INTERFACE_CREATION_SEC = 3; // 3 seconds
     private static final int MIN_DISTANCE_MM = 1 * 1000;
     private static final int MAX_DISTANCE_MM = 3 * 1000;
     private static final byte[] PMK_VALID = "01234567890123456789012345678901".getBytes();
@@ -351,7 +353,7 @@ public class SingleDeviceTest extends AndroidTestCase {
          */
         boolean waitForOnUnavailable() {
             try {
-                return mBlocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
+                return mBlocker.await(WAIT_FOR_NETWORK_STATE_CHANGE_SECS, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 return false;
             }
@@ -723,7 +725,7 @@ public class SingleDeviceTest extends AndroidTestCase {
      * Request an Aware data-path (open) as a Responder with an arbitrary peer MAC address. Validate
      * that receive an onUnavailable() callback.
      */
-    public void testDataPathOpenOutOfBandFail() {
+    public void testDataPathOpenOutOfBandFail() throws InterruptedException {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
@@ -738,6 +740,7 @@ public class SingleDeviceTest extends AndroidTestCase {
         session.publish(publishConfig, discoveryCb, mHandler);
         assertTrue("Publish started",
                 discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+        Thread.sleep(WAIT_FOR_AWARE_INTERFACE_CREATION_SEC * 1000);
 
         // 2. request an AWARE network
         NetworkCallbackTest networkCb = new NetworkCallbackTest();
@@ -757,7 +760,7 @@ public class SingleDeviceTest extends AndroidTestCase {
      * MAC address.
      * Validate that receive an onUnavailable() callback.
      */
-    public void testDataPathPassphraseOutOfBandFail() {
+    public void testDataPathPassphraseOutOfBandFail() throws InterruptedException {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
@@ -772,6 +775,7 @@ public class SingleDeviceTest extends AndroidTestCase {
         session.publish(publishConfig, discoveryCb, mHandler);
         assertTrue("Publish started",
                 discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+        Thread.sleep(WAIT_FOR_AWARE_INTERFACE_CREATION_SEC * 1000);
 
         // 2. request an AWARE network
         NetworkCallbackTest networkCb = new NetworkCallbackTest();
@@ -791,7 +795,7 @@ public class SingleDeviceTest extends AndroidTestCase {
      * address.
      * Validate that receive an onUnavailable() callback.
      */
-    public void testDataPathPmkOutOfBandFail() {
+    public void testDataPathPmkOutOfBandFail() throws InterruptedException {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
@@ -806,6 +810,7 @@ public class SingleDeviceTest extends AndroidTestCase {
         session.publish(publishConfig, discoveryCb, mHandler);
         assertTrue("Publish started",
                 discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+        Thread.sleep(WAIT_FOR_AWARE_INTERFACE_CREATION_SEC * 1000);
 
         // 2. request an AWARE network
         NetworkCallbackTest networkCb = new NetworkCallbackTest();

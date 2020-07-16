@@ -52,10 +52,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
-private const val APK_WHITELISTED_PATH =
-        "/data/local/tmp/cts/os/CtsAutoRevokeWhitelistedDummyApp.apk"
 private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
-private const val APK_WHITELISTED_PACKAGE_NAME = "android.os.cts.autorevokewhitelisteddummyapp"
 private const val APK_PATH_2 = "/data/local/tmp/cts/os/CtsAutoRevokePreRApp.apk"
 private const val APK_PACKAGE_NAME_2 = "android.os.cts.autorevokeprerapp"
 private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
@@ -204,28 +201,6 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
-    fun testAutoRevoke_manifestWhitelisting() {
-        wakeUpScreen()
-        withUnusedThresholdMs(5L) {
-            withDummyApp(APK_WHITELISTED_PATH, APK_WHITELISTED_PACKAGE_NAME) {
-                // Setup
-                startApp(APK_WHITELISTED_PACKAGE_NAME)
-                clickPermissionAllow()
-                assertWhitelistState(true)
-
-                // Run
-                goHome()
-                Thread.sleep(20L)
-                runAutoRevoke()
-                Thread.sleep(500L)
-
-                // Verify
-                assertPermission(PERMISSION_GRANTED, APK_WHITELISTED_PACKAGE_NAME)
-            }
-        }
-    }
-
-    @AppModeFull(reason = "Uses separate apps for testing")
     fun testInstallGrants_notRevokedImmediately() {
         wakeUpScreen()
         withUnusedThresholdMs(TimeUnit.DAYS.toMillis(30)) {
@@ -347,6 +322,8 @@ class AutoRevokeTest : InstrumentationTestCase() {
     ) {
         installApp(apk)
         try {
+            // Try to reduce flakiness caused by new package update not propagating in time
+            Thread.sleep(1000)
             action()
         } finally {
             uninstallApp(packageName)

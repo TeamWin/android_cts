@@ -43,23 +43,39 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.PatternMatcher;
 import android.os.RemoteCallback;
 import android.util.SparseArray;
+
+import java.util.ArrayList;
 
 public class TestActivity extends Activity {
 
     SparseArray<RemoteCallback> callbacks = new SparseArray<>();
 
     private Handler mainHandler;
+    private Handler backgroundHandler;
+    private HandlerThread backgroundThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mainHandler = new Handler(getMainLooper());
+        backgroundThread = new HandlerThread("testBackground");
+        backgroundThread.start();
+        backgroundHandler = new Handler(backgroundThread.getLooper());
         super.onCreate(savedInstanceState);
         handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onDestroy() {
+        backgroundThread.quitSafely();
+        super.onDestroy();
     }
 
     private void handleIntent(Intent intent) {
@@ -123,6 +139,9 @@ public class TestActivity extends Activity {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 awaitPackageBroadcast(
                         remoteCallback, packageName, Intent.ACTION_PACKAGE_ADDED, 3000);
+            } else if (Constants.ACTION_QUERY_RESOLVER.equals(action)) {
+                final String authority = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                queryResolverForVisiblePackages(remoteCallback, authority);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -197,6 +216,33 @@ public class TestActivity extends Activity {
         result.putStringArray(EXTRA_RETURN_RESULT, resolveInfos);
         remoteCallback.sendResult(result);
         finish();
+    }
+
+    private void queryResolverForVisiblePackages(RemoteCallback remoteCallback, String authority) {
+        backgroundHandler.post(() -> {
+            Uri queryUri = Uri.parse("content://" + authority + "/test");
+            Cursor query = getContentResolver().query(queryUri, null, null, null, null);
+            if (query == null || !query.moveToFirst()) {
+                sendError(remoteCallback,
+                        new IllegalStateException(
+                                "Query of " + queryUri + " could not be completed"));
+                return;
+            }
+            ArrayList<String> visiblePackages = new ArrayList<>();
+            while (!query.isAfterLast()) {
+                visiblePackages.add(query.getString(0));
+                query.moveToNext();
+            }
+            query.close();
+
+            mainHandler.post(() -> {
+                Bundle result = new Bundle();
+                result.putStringArray(EXTRA_RETURN_RESULT, visiblePackages.toArray(new String[]{}));
+                remoteCallback.sendResult(result);
+                finish();
+            });
+
+        });
     }
 
     private void sendError(RemoteCallback remoteCallback, Exception failure) {

@@ -158,7 +158,7 @@ public class CaCertManagementTest extends BaseDeviceAdminTest {
         // a trusted certificate isn't even installed we should fail now, loudly.
         assertEquals(installed, listed);
         int numTries = 0;
-        while (numTries < (maxWaitForCertificateTrustedSec * 10) && (installed != trusted)) {
+        while (numTries < (maxWaitForCertificateTrustedSec * 20) && (installed != trusted)) {
             try {
                 Thread.sleep(100);
                 trusted = Arrays.asList(tm.getAcceptedIssuers()).contains(caCert);

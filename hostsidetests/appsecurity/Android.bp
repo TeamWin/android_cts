@@ -17,7 +17,7 @@ java_test_host {
     defaults: ["cts_defaults"],
 
     // Only compile source java files in this apk.
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.java", "src/**/*.kt"],
 
     libs: [
         "cts-tradefed",
@@ -27,7 +27,11 @@ java_test_host {
         "hamcrest-library",
     ],
 
-    static_libs: ["CompatChangeGatingTestBase"],
+    static_libs: [
+        "CompatChangeGatingTestBase",
+        "CtsPkgInstallerConstants",
+        "cts-host-utils",
+    ],
 
     java_resource_dirs: ["res"],
 

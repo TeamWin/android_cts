@@ -18,7 +18,7 @@ android_test {
         "signature-api-check-defaults",
     ],
     java_resources: [
-        ":cts-apache-http-legacy-current-txt",
+        ":cts-apache-http-legacy-current-api-gz",
     ],
 
     use_embedded_native_libs: false,

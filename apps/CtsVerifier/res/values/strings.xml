@@ -1307,6 +1307,8 @@
     <string name="snsr_mag_calibration_complete">When done, leave the device in a flat surface, far
         from all metallic objects (if the test does not pass, try re-running it outdoors).</string>
     <string name="snsr_mag_measurement">-&gt; (%1$.2f, %2$.2f, %3$.2f) : %4$.2f uT</string>
+    <string name="snsr_mag_move_outside">Unable to acquire location. Please move outside to allow a location fix.</string>
+    <string name="snsr_mag_no_location">Failed to acquire location. Using default magnetic field of %1$.2f uT.</string>
 
     <!-- Sensor Value Accuracy -->
     <string name="snsr_rot_vec_test">Rotation Vector Accuracy Test</string>
@@ -1717,7 +1719,7 @@
     <!-- Strings for TestListActivity -->
     <string name="wifi_test">Wi-Fi Test</string>
     <string name="wifi_test_info">
-        The Wi-Fi tests requires an open (no security) access point in the environment along with the DUT.
+        The Wi-Fi tests requires an open or PSK access point in the environment along with the DUT.
         \nPlease perform a network settings reset between each test to reset platform\'s internal state which
         might interfere with the test flow.\nNavigate to \"Settings -> System -> Reset Options -> Reset Wi-Fi,
         mobile &amp; Bluetooth\" to perform a network settings reset.
@@ -1736,7 +1738,7 @@
 
     <string name="wifi_status_need_psk">Need a psk network for this test.</string>
     <string name="wifi_status_initiating_scan">Initiating scan.</string>
-    <string name="wifi_status_scan_failure">Unable to initiate scan or find any open network in scan results.</string>
+    <string name="wifi_status_scan_failure">Unable to initiate scan or find matching network in scan results.</string>
     <string name="wifi_status_connected_to_other_network">Connected to some other network on the device. Please ensure that there is no saved networks on the device.</string>
     <string name="wifi_status_initiating_network_request">Initiating network request.</string>
     <string name="wifi_status_network_wait_for_available">Waiting for network connection. Please click the network in the dialog that pops up for approving the request.</string>
@@ -2354,7 +2356,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <!-- Strings for CA cert installation via intent test -->
     <string name="cacert_install_via_intent">CA Cert install via intent</string>
     <string name="cacert_install_via_intent_title">This test attempts to install a CA certificate via an intent.</string>
-    <string name="cacert_install_via_intent_info">Attempt installing a CA certificate via an intent, which should fail. If you see a dialog redirecting the user to Settings for installing the certificate, the test passed. If a any other dialog comes up, the test failed.</string>
+    <string name="cacert_install_via_intent_info">Attempt installing a CA certificate via an intent, which should not be possible. Tapping Go should show a dialog telling the user that CA certificates can put their privacy at risk and must be installed via Settings. If a any other dialog comes up, the test failed.</string>
 
     <!-- Strings for Widget -->
     <string name="widget_framework_test">Widget Framework Test</string>
@@ -3981,7 +3983,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Please press \'Create uninitialized user\' to create a user that is not set up. Then press the
         \'Set restriction\' button to set the user restriction.
         Then press \'Go\' to open \'Multiple users\' setting. \n
-        Click the Settings icon adjacent to the managed user.\n\n
+        Click the managed user to open settings.\n\n
 
         Mark this test as passed if:\n\n
         - \"Delete User\" is disabled.\n
@@ -4834,10 +4836,8 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="proAudioHasProAudiolbl">Has Pro Audio</string>
     <string name="proAudioHasLLAlbl">Has Low-Latency Audio</string>
-    <string name="proAudioInputLbl">Audio Input:</string>
-    <string name="proAudioOutputLbl">Audio Output:</string>
-    <string name="proAudioRoundTripLbl">Round Trip Latency:</string>
-    <string name="proAudioConfidenceLbl">Confidence:</string>
+    <string name="audioLoopbackInputLbl">Audio Input:</string>
+    <string name="audioLoopbackOutputLbl">Audio Output:</string>
 
     <string name="proAudioMidiHasMIDILbl">Has MIDI Support</string>
     <string name="proAudioMIDIInputLbl">MIDI Input:</string>
@@ -4847,8 +4847,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="proAudioHDMISupportLbl">HDMI Support:</string>
     <string name="proAudioHasHDMICheckBox">Has HDMI Support</string>
 
-    <string name="audio_proaudio_loopbackbtn">Start Loopback</string>
-    <string name="audio_proaudio_loopbackInfoBtn">Loopback Instructions</string>
     <string name="audio_proaudio_roundtrip">Round-Trip Test</string>
     <string name="audio_proaudio_NA">N/A</string>
     <string name="audio_proaudio_pending">pending...</string>
@@ -4908,15 +4906,23 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_default_false_string">false</string>
     <string name="audio_general_default_true_string">true</string>
     <string name="audio_general_warning">Warning</string>
-    <string name="audio_general_ok">Ok</string>
     <string name="audio_general_level_not_max">Audio Level is not maximum. Please check your device
           is set to max level for audio playback.</string>
 
+    <string name="audio_general_no">No</string>
+    <string name="audio_general_yes">Yes</string>
+    <string name="audio_general_info">Info</string>
+    <string name="audio_general_ok">Ok</string>
+
     <!-- Audio Loopback Latency Test -->
-    <string name="audio_loopback_test">Audio Loopback Latency Test</string>
+    <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
      <string name="audio_loopback_info">
-          This test requires the Loopback Plug. Please connect a Loopback Plug into the headset
-          connector, and proceed with the instructions on the screen.
+          This test requires some form of audio loopback. This can be either:\n
+          - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a 3.5mm headset jack.\n
+          - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a USB audio adapter.\n
+          - a USB interface with patch cords connecting the input and output jaccks.
+          Please connect one of these Loopback mechanisms, and proceed with the instructions
+          on the screen.
           The system will measure the input-output audio latency by injecting a pulse on the output,
           and computing the distance between replicas of the pulse.
           You can vary the Audio Level slider to ensure the pulse will feed back at adequate levels.
@@ -5336,11 +5342,13 @@ Follow the instructions on the screen to measure the frequency response for the 
        This test requires that you have connected a supported USB Audio Peripheral device
        (not a headset) and that peripheral\'s audio outputs are connected to the peripherals\'s
        audio inputs. Alternatively, for devices with an analog audio jack or USB-c Digital
-       to Analog dongle, a Loopback Plug can be used. Also, any if there is an input level
+       to Analog dongle, a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>
+       can be used. Also, if there is an input level
        control on the peripheral, it must be set to a non-zero value. When the test has
        verified support for a valid audio peripheral, press the \"Round-Trip Test\" button
-       to complete the test. Note that it may be necessary to run the latency test more than
-       once to get a sufficient confidence value.
+       to complete the test.
+       The latency measurement is generally accurate even when the volume is low. But you may
+       need to increase the volume to bring the confidence number above the threshold.
     </string>
     <string name="proaudio_hdmi_infotitle">HDMI Support</string>
     <string name="proaudio_hdmi_message">Please connect an HDMI peripheral to validate
@@ -5614,5 +5622,14 @@ Follow the instructions on the screen to measure the frequency response for the 
     Please check the below items: \n
     1. All buttons are fully visible \n
     2. All buttons are clickable. \n
+    </string>
+
+    <string name="loopback_test_question">Does this device allow for the connection of a loopback audio peripheral?</string>
+    <string name="loopback_dlg_caption">Loopback Peripheral Required</string>
+    <string name="loopback_dlg_text">This test requires an Audio Loopback Peripheral to be connected to the device.\n
+        This can be done in one of three ways:\n
+        1. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to the 3.5mm headset jack.\n
+        2. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to a USB-C headset adapter.\n
+        3. Connect a USB audio interface peripheral and connect the outputs to the inputs with an audio patch cable.
     </string>
 </resources>

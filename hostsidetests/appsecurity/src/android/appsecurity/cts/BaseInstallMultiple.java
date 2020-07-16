@@ -51,10 +51,17 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
     private boolean mUseNaturalAbi;
 
     public BaseInstallMultiple(ITestDevice device, IBuildInfo buildInfo, IAbi abi) {
+        this(device, buildInfo, abi, true);
+    }
+
+    public BaseInstallMultiple(ITestDevice device, IBuildInfo buildInfo, IAbi abi,
+            boolean grantPermissions) {
         mDevice = device;
         mBuild = buildInfo;
         mAbi = abi;
-        addArg("-g");
+        if (grantPermissions) {
+            addArg("-g");
+        }
     }
 
     T addArg(String arg) {
@@ -111,6 +118,11 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
 
     T forUser(int userId) {
         addArg("--user " + userId);
+        return (T) this;
+    }
+
+    T restrictPermissions() {
+        addArg("--restrict-permissions");
         return (T) this;
     }
 

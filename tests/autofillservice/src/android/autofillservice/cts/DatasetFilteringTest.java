@@ -38,9 +38,9 @@ import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 import java.util.regex.Pattern;
 
@@ -53,15 +53,12 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         super(inlineUiBot);
     }
 
-    @BeforeClass
-    public static void setMaxDatasets() throws Exception {
-        Helper.setMaxVisibleDatasets(4);
+    @Override
+    protected TestRule getMainTestRule() {
+        return RuleChain.outerRule(new MaxVisibleDatasetsRule(4))
+                        .around(super.getMainTestRule());
     }
 
-    @AfterClass
-    public static void restoreMaxDatasets() throws Exception {
-        Helper.setMaxVisibleDatasets(0);
-    }
 
     private void changeUsername(CharSequence username) {
         mActivity.onUsername((v) -> v.setText(username));
@@ -108,22 +105,19 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         changeUsername("aa");
         mUiBot.assertDatasets(aa);
 
-        // Only two datasets start with 'a'
-        changeUsername("a");
-        mUiBot.assertDatasets(aa, ab);
-
-        // With no filter text all datasets should be shown
-        changeUsername("");
-        mUiBot.assertDatasets(aa, ab, b);
-
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
+
+        // Delete some text to bring back 2 datasets
+        changeUsername("a");
+        mUiBot.assertDatasets(aa, ab);
+
+        // With no filter text all datasets should be shown again
+        changeUsername("");
+        mUiBot.assertDatasets(aa, ab, b);
     }
 
     @Test
@@ -179,10 +173,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         sendKeyEvent("KEYCODE_A");
         sendKeyEvent("KEYCODE_A");
         sendKeyEvent("KEYCODE_A");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
@@ -253,10 +244,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         final MyAutofillCallback callback = mActivity.registerCallback();
         final ImeCommand cmd5 = mockImeSession.callCommitText("aaa", 1);
         expectCommand(stream, cmd5, MOCK_IME_TIMEOUT_MS);
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
@@ -413,10 +401,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
@@ -483,10 +468,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
         changeUsername("aaa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(mActivity.getUsername());
-        }
+        callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
 
@@ -616,6 +598,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         resetFilterTest(3);
     }
 
+    // Tests that datasets are re-shown and filtering still works after clearing a selected value.
     private void resetFilterTest(int number) throws Exception {
         final String aa = "Two A's";
         final String ab = "A and B";
@@ -669,38 +652,6 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         // With no filter text all datasets should be shown
         mUiBot.assertDatasets(aa, ab, b);
 
-        // Only two datasets start with 'a'
-        changeUsername("a");
-        mUiBot.assertDatasets(aa, ab);
-
-        // One dataset starts with 'aa'
-        changeUsername("aa");
-        mUiBot.assertDatasets(aa);
-
-        // Filter all out
-        changeUsername("aaa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiHiddenEvent(username);
-        }
-        mUiBot.assertNoDatasets();
-
-        // Now delete the char and assert aa is showing again
-        changeUsername("aa");
-        // TODO(b/157762527): Fix this for the inline case.
-        if (!isInlineMode()) {
-            callback.assertUiShownEvent(username);
-        }
-        mUiBot.assertDatasets(aa);
-
-        // Delete one more and assert two datasets showing
-        changeUsername("a");
-        mUiBot.assertDatasets(aa, ab);
-
-        // Reset back to all choices
-        changeUsername("");
-        mUiBot.assertDatasets(aa, ab, b);
-
         // select the choice
         mUiBot.selectDataset(chosenOne);
         callback.assertUiHiddenEvent(username);
@@ -708,6 +659,10 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
 
         // Check the results.
         mActivity.assertAutoFilled();
+
+        // Change the filled text and check that filtering still works.
+        changeUsername("a");
+        mUiBot.assertDatasets(aa, ab);
 
         // Reset back to all choices
         changeUsername("");

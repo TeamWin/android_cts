@@ -28,8 +28,8 @@
         <option name="package" value="android.signature.cts.api.current" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
         <option name="class" value="android.signature.cts.api.current.SignatureTest" />
-        <option name="instrumentation-arg" key="expected-api-files" value="current.txt" />
-        <option name="instrumentation-arg" key="unexpected-api-files" value="android-test-base-current.txt,android-test-mock-current.txt,android-test-runner-current.txt" />
+        <option name="instrumentation-arg" key="expected-api-files" value="current.api.gz" />
+        <option name="instrumentation-arg" key="unexpected-api-files" value="android-test-base-current.api.gz,android-test-mock-current.api.gz,android-test-runner-current.api.gz" />
         <option name="runtime-hint" value="30s" />
     </test>
 </configuration>

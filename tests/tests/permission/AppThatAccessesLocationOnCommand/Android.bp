@@ -24,5 +24,8 @@ android_test_helper_app {
         "vts10",
         "general-tests",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.aidl"
+    ],
 }

@@ -18,7 +18,7 @@ android_test {
         "signature-api-check-defaults",
     ],
     java_resources: [
-        ":cts-android-test-base-current-txt",
+        ":cts-android-test-base-current-api-gz",
     ],
     min_sdk_version: "27",
 

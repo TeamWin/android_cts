@@ -29,11 +29,13 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
 import android.autofillservice.cts.Helper;
+import android.autofillservice.cts.MyAutofillCallback;
 import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
 import android.autofillservice.cts.augmented.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.view.autofill.AutofillId;
@@ -41,6 +43,7 @@ import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 import java.util.List;
 
@@ -62,6 +65,11 @@ public class InlineAugmentedLoginActivityTest
                 mActivity = getActivity();
             }
         };
+    }
+
+    @Override
+    public TestRule getMainTestRule() {
+        return InlineUiBot.annotateRule(super.getMainTestRule());
     }
 
     @Test
@@ -174,6 +182,8 @@ public class InlineAugmentedLoginActivityTest
     }
 
     private void testBasicLoginAutofill() throws Exception {
+
+        final MyAutofillCallback callback = mActivity.registerCallback();
         // Set expectations
         final EditText username = mActivity.getUsername();
         final EditText password = mActivity.getPassword();
@@ -201,6 +211,7 @@ public class InlineAugmentedLoginActivityTest
 
         // Confirm two suggestion
         mUiBot.assertDatasets("dude");
+        callback.assertUiShownEvent(username);
 
         mActivity.expectAutoFill("dude", "sweet");
 
@@ -209,6 +220,8 @@ public class InlineAugmentedLoginActivityTest
         mUiBot.waitForIdle();
 
         mActivity.assertAutoFilled();
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiHiddenEvent(username);
     }
 
     @Test
@@ -284,6 +297,7 @@ public class InlineAugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "WRITE_SECURE_SETTING permission can't be grant to instant apps")
     public void testSwitchInputMethod() throws Exception {
         // Set services
         enableService();
@@ -313,6 +327,8 @@ public class InlineAugmentedLoginActivityTest
         Helper.mockSwitchInputMethod(sContext);
         mUiBot.waitForIdleSync();
 
+        // Set new expectations
+        sReplier.addResponse(NO_RESPONSE);
         sAugmentedReplier.addResponse(new CannedAugmentedFillResponse.Builder()
                 .addInlineSuggestion(new CannedAugmentedFillResponse.Dataset.Builder("Augment Me 2")
                         .setField(usernameId, "dude2", createInlinePresentation("dude2"))
@@ -324,8 +340,7 @@ public class InlineAugmentedLoginActivityTest
         // Trigger auto-fill
         mUiBot.selectByRelativeId(ID_USERNAME);
         mUiBot.waitForIdle();
-
-        // Confirm new fill request
+        sReplier.getNextFillRequest();
         sAugmentedReplier.getNextFillRequest();
 
         // Confirm new suggestion
@@ -333,6 +348,7 @@ public class InlineAugmentedLoginActivityTest
     }
 
     @Test
+    @AppModeFull(reason = "WRITE_SECURE_SETTING permission can't be grant to instant apps")
     public void testSwitchInputMethod_mainServiceDisabled() throws Exception {
         // Set services
         Helper.disableAutofillService(sContext);

@@ -37,6 +37,7 @@ import static android.server.wm.app.Components.NIGHT_MODE_ACTIVITY;
 import static android.server.wm.app.Components.PORTRAIT_ORIENTATION_ACTIVITY;
 import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
+import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_APP_CONFIG_INFO;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_CONFIG_INFO_IN_ON_CREATE;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_DISPLAY_REAL_SIZE;
 import static android.server.wm.translucentapp26.Components.SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY;
@@ -63,12 +64,10 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.provider.Settings;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ConfigInfo;
 import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
-import android.server.wm.settings.SettingsSession;
 import android.view.Display;
 
 import org.junit.Test;
@@ -451,10 +450,9 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     public void testRotatedInfoWithFixedRotationTransform() {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
-        // TODO(b/143053092): Remove the settings if it becomes stable.
-        mObjectTracker.manage(new SettingsSession<>(
-                Settings.Global.getUriFor("fixed_rotation_transform"),
-                Settings.Global::getInt, Settings.Global::putInt)).set(1);
+        // Start a portrait activity first to ensure that the orientation will change.
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        mWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
 
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
@@ -467,6 +465,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         final SizeInfo reportedSizes = getActivityDisplaySize(LANDSCAPE_ORIENTATION_ACTIVITY);
         final Bundle extras = TestJournalContainer.get(LANDSCAPE_ORIENTATION_ACTIVITY).extras;
+        final ConfigInfo appConfigInfo = extras.getParcelable(EXTRA_APP_CONFIG_INFO);
         final Point onCreateRealDisplaySize = extras.getParcelable(EXTRA_DISPLAY_REAL_SIZE);
         final ConfigInfo onCreateConfigInfo = extras.getParcelable(EXTRA_CONFIG_INFO_IN_ON_CREATE);
         final SizeInfo onCreateSize = onCreateConfigInfo.sizeInfo;
@@ -478,13 +477,19 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         final Point expectedRealDisplaySize = new Point();
         display.getRealSize(expectedRealDisplaySize);
 
+        final int expectedRotation = display.getRotation();
         assertEquals("The activity should get the final display rotation in onCreate",
-                display.getRotation(), onCreateConfigInfo.rotation);
+                expectedRotation, onCreateConfigInfo.rotation);
+        assertEquals("The application should get the final display rotation in onCreate",
+                expectedRotation, appConfigInfo.rotation);
         assertEquals("The activity should get the final display size in onCreate",
                 expectedRealDisplaySize, onCreateRealDisplaySize);
-        assertEquals("The app size of activity should have the same orientation",
-                expectedRealDisplaySize.x > expectedRealDisplaySize.y,
+
+        final boolean isLandscape = expectedRealDisplaySize.x > expectedRealDisplaySize.y;
+        assertEquals("The app size of activity should have the same orientation", isLandscape,
                 onCreateSize.displayWidth > onCreateSize.displayHeight);
+        assertEquals("The application should get the same orientation", isLandscape,
+                appConfigInfo.sizeInfo.displayWidth > appConfigInfo.sizeInfo.displayHeight);
     }
 
     @Test

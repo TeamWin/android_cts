@@ -17,6 +17,7 @@
 package android.media.cts;
 
 import static android.content.Context.AUDIO_SERVICE;
+import static android.media.MediaRoute2Info.FEATURE_LIVE_AUDIO;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
 import static android.media.cts.StubMediaRoute2ProviderService.FEATURES_SPECIAL;
 import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SAMPLE;
@@ -74,6 +75,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "The system should be able to bind to StubMediaRoute2ProviderService")
 @LargeTest
+@NonMediaMainlineTest
 public class MediaRouter2Test {
     private static final String TAG = "MR2Test";
     Context mContext;
@@ -89,6 +91,9 @@ public class MediaRouter2Test {
     private static final String TEST_VALUE = "test_value";
     private static final RouteDiscoveryPreference EMPTY_DISCOVERY_PREFERENCE =
             new RouteDiscoveryPreference.Builder(Collections.emptyList(), false).build();
+    private static final RouteDiscoveryPreference LIVE_AUDIO_DISCOVERY_PREFERENCE =
+            new RouteDiscoveryPreference.Builder(
+                    Collections.singletonList(FEATURE_LIVE_AUDIO), false).build();
 
     @Before
     public void setUp() throws Exception {
@@ -123,10 +128,16 @@ public class MediaRouter2Test {
 
     @Test
     public void testGetRoutesAfterCreation() {
-        List<MediaRoute2Info> initialRoutes = mRouter2.getRoutes();
-        assertFalse(initialRoutes.isEmpty());
-        for (MediaRoute2Info route : initialRoutes) {
-            assertTrue(route.isSystemRoute());
+        RouteCallback routeCallback = new RouteCallback() {};
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, LIVE_AUDIO_DISCOVERY_PREFERENCE);
+        try {
+            List<MediaRoute2Info> initialRoutes = mRouter2.getRoutes();
+            assertFalse(initialRoutes.isEmpty());
+            for (MediaRoute2Info route : initialRoutes) {
+                assertTrue(route.getFeatures().contains(FEATURE_LIVE_AUDIO));
+            }
+        } finally {
+            mRouter2.unregisterRouteCallback(routeCallback);
         }
     }
 
@@ -137,18 +148,13 @@ public class MediaRouter2Test {
     public void testGetRoutes() throws Exception {
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURES_SPECIAL);
 
-        int systemRouteCount = 0;
         int remoteRouteCount = 0;
         for (MediaRoute2Info route : routes.values()) {
-            if (route.isSystemRoute()) {
-                systemRouteCount++;
-            } else {
+            if (!route.isSystemRoute()) {
                 remoteRouteCount++;
             }
         }
 
-        // Can be greater than 1 if BT devices are connected.
-        assertTrue(systemRouteCount > 0);
         assertEquals(1, remoteRouteCount);
         assertNotNull(routes.get(ROUTE_ID_SPECIAL_FEATURE));
     }
@@ -279,6 +285,8 @@ public class MediaRouter2Test {
         final CountDownLatch successLatch2 = new CountDownLatch(1);
         final CountDownLatch failureLatch = new CountDownLatch(1);
         final CountDownLatch stopLatch = new CountDownLatch(1);
+        final CountDownLatch onReleaseSessionLatch = new CountDownLatch(1);
+
         final List<RoutingController> createdControllers = new ArrayList<>();
 
         // Create session with this route
@@ -304,6 +312,16 @@ public class MediaRouter2Test {
                 stopLatch.countDown();
             }
         };
+
+        StubMediaRoute2ProviderService service = mService;
+        if (service != null) {
+            service.setProxy(new StubMediaRoute2ProviderService.Proxy() {
+                @Override
+                public void onReleaseSession(long requestId, String sessionId) {
+                    onReleaseSessionLatch.countDown();
+                }
+            });
+        }
 
         Map<String, MediaRoute2Info> routes = waitAndGetRoutes(sampleRouteType);
         MediaRoute2Info route1 = routes.get(ROUTE_ID1);
@@ -331,15 +349,19 @@ public class MediaRouter2Test {
             RoutingController controller1 = createdControllers.get(0);
             RoutingController controller2 = createdControllers.get(1);
 
-            // The first controller is expected to be released.
-            assertTrue(controller1.isReleased());
-
             assertNotEquals(controller1.getId(), controller2.getId());
             assertTrue(createRouteMap(controller1.getSelectedRoutes()).containsKey(
                     ROUTE_ID1));
             assertTrue(createRouteMap(controller2.getSelectedRoutes()).containsKey(
                     ROUTE_ID2));
 
+            // Transferred controllers shouldn't be obtainable.
+            assertFalse(mRouter2.getControllers().contains(controller1));
+            assertTrue(mRouter2.getControllers().contains(controller2));
+
+            // Should be able to release transferred controllers.
+            controller1.release();
+            assertTrue(onReleaseSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
         } finally {
             releaseControllers(createdControllers);
             mRouter2.unregisterRouteCallback(routeCallback);
@@ -995,8 +1017,7 @@ public class MediaRouter2Test {
             }
         };
 
-        mRouter2.registerRouteCallback(mExecutor, routeCallback,
-                new RouteDiscoveryPreference.Builder(new ArrayList<>(), true).build());
+        mRouter2.registerRouteCallback(mExecutor, routeCallback, LIVE_AUDIO_DISCOVERY_PREFERENCE);
 
         try {
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0);

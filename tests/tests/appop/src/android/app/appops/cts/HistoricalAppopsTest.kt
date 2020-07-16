@@ -34,6 +34,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
@@ -63,22 +64,24 @@ class HistoricalAppopsTest {
     fun setUpTest() {
         appOpsManager = context.getSystemService(AppOpsManager::class.java)!!
         packageName = context.packageName!!
-        uiAutomation.adoptShellPermissionIdentity()
-        wasPermissionsHubEnabled = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
-                PROPERTY_PERMISSIONS_HUB_ENABLED, false)
-        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, PROPERTY_PERMISSIONS_HUB_ENABLED,
-                true.toString(), false)
-        appOpsManager.clearHistory()
-        appOpsManager.resetHistoryParameters()
+        runWithShellPermissionIdentity {
+            wasPermissionsHubEnabled = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_PERMISSIONS_HUB_ENABLED, false)
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_PERMISSIONS_HUB_ENABLED, true.toString(), false)
+            appOpsManager.clearHistory()
+            appOpsManager.resetHistoryParameters()
+        }
     }
 
     @After
     fun tearDownTest() {
-        appOpsManager.clearHistory()
-        appOpsManager.resetHistoryParameters()
-        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, PROPERTY_PERMISSIONS_HUB_ENABLED,
-                wasPermissionsHubEnabled.toString(), false)
-        uiAutomation.dropShellPermissionIdentity()
+        runWithShellPermissionIdentity {
+            appOpsManager.clearHistory()
+            appOpsManager.resetHistoryParameters()
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
+                    PROPERTY_PERMISSIONS_HUB_ENABLED, wasPermissionsHubEnabled.toString(), false)
+        }
     }
 
     @Test
@@ -102,9 +105,9 @@ class HistoricalAppopsTest {
     }
 
     @Test
-    fun testHistoricalAggregationOverflow() {
+    fun testRebootHistory() {
         // Configure historical registry behavior.
-        appOpsManager.setHistoryParameters(
+        setHistoryParameters(
                 AppOpsManager.HISTORICAL_MODE_ENABLED_PASSIVE,
                 SNAPSHOT_INTERVAL_MILLIS,
                 INTERVAL_COMPRESSION_MULTIPLIER)
@@ -113,7 +116,84 @@ class HistoricalAppopsTest {
         val chunk = createDataChunk()
         val chunkCount = (INTERVAL_COMPRESSION_MULTIPLIER * 2) + 3
         for (i in 0 until chunkCount) {
-            appOpsManager.addHistoricalOps(chunk)
+            addHistoricalOps(chunk)
+        }
+
+        // Validate the data for the first interval
+        val firstIntervalBeginMillis = computeIntervalBeginRawMillis(0)
+        val firstIntervalEndMillis = computeIntervalBeginRawMillis(1)
+        var firstOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                firstIntervalBeginMillis, firstIntervalEndMillis)
+        assertHasCounts(firstOps!!, 197)
+
+        // Validate the data for the second interval
+        val secondIntervalBeginMillis = computeIntervalBeginRawMillis(1)
+        val secondIntervalEndMillis = computeIntervalBeginRawMillis(2)
+        var secondOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                secondIntervalBeginMillis, secondIntervalEndMillis)
+        assertHasCounts(secondOps!!, 33)
+
+        // Validate the data for all intervals
+        val everythingIntervalBeginMillis = Instant.EPOCH.toEpochMilli()
+        val everythingIntervalEndMillis = Long.MAX_VALUE
+        var allOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                everythingIntervalBeginMillis, everythingIntervalEndMillis)
+        assertHasCounts(allOps!!, 230)
+
+        // Now reboot the history
+        runWithShellPermissionIdentity {
+            appOpsManager.rebootHistory(firstIntervalEndMillis)
+        }
+
+        // Validate the data for the first interval
+        firstOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                firstIntervalBeginMillis, firstIntervalEndMillis)
+        assertHasCounts(firstOps!!, 0)
+
+        // Validate the data for the second interval
+        secondOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                secondIntervalBeginMillis, secondIntervalEndMillis)
+        assertHasCounts(secondOps!!, 230)
+
+        // Validate the data for all intervals
+        allOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                everythingIntervalBeginMillis, everythingIntervalEndMillis)
+        assertHasCounts(allOps!!, 230)
+
+        // Write some more ops to the first interval
+        for (i in 0 until chunkCount) {
+            addHistoricalOps(chunk)
+        }
+
+        // Validate the data for the first interval
+        firstOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                firstIntervalBeginMillis, firstIntervalEndMillis)
+        assertHasCounts(firstOps!!, 197)
+
+        // Validate the data for the second interval
+        secondOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                secondIntervalBeginMillis, secondIntervalEndMillis)
+        assertHasCounts(secondOps!!, 263)
+
+        // Validate the data for all intervals
+        allOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
+                everythingIntervalBeginMillis, everythingIntervalEndMillis)
+        assertHasCounts(allOps!!, 460)
+    }
+
+    @Test
+    fun testHistoricalAggregationOverflow() {
+        // Configure historical registry behavior.
+        setHistoryParameters(
+                AppOpsManager.HISTORICAL_MODE_ENABLED_PASSIVE,
+                SNAPSHOT_INTERVAL_MILLIS,
+                INTERVAL_COMPRESSION_MULTIPLIER)
+
+        // Add the data to the history
+        val chunk = createDataChunk()
+        val chunkCount = (INTERVAL_COMPRESSION_MULTIPLIER * 2) + 3
+        for (i in 0 until chunkCount) {
+            addHistoricalOps(chunk)
         }
 
         // Validate the data for the first interval
@@ -141,7 +221,7 @@ class HistoricalAppopsTest {
     @Test
     fun testHistoryTimeTravel() {
         // Configure historical registry behavior.
-        appOpsManager.setHistoryParameters(
+        setHistoryParameters(
                 AppOpsManager.HISTORICAL_MODE_ENABLED_PASSIVE,
                 SNAPSHOT_INTERVAL_MILLIS,
                 INTERVAL_COMPRESSION_MULTIPLIER)
@@ -150,12 +230,14 @@ class HistoricalAppopsTest {
         val chunk = createDataChunk()
         val chunkCount = computeSlotCount(2) * SNAPSHOT_INTERVAL_MILLIS / chunk.endTimeMillis
         for (i in 0 until chunkCount) {
-            appOpsManager.addHistoricalOps(chunk)
+            addHistoricalOps(chunk)
         }
 
         // Move history in past with the first interval duration
         val firstIntervalDurationMillis = computeIntervalDurationMillis(0)
-        appOpsManager.offsetHistory(firstIntervalDurationMillis)
+        runWithShellPermissionIdentity {
+            appOpsManager.offsetHistory(firstIntervalDurationMillis)
+        }
 
         // Validate the data for the first interval
         val firstIntervalBeginMillis = computeIntervalBeginRawMillis(0)
@@ -185,7 +267,9 @@ class HistoricalAppopsTest {
         assertHasCounts(thirdOps!!, 10 * thirdChunkCount)
 
         // Move history in future with the first interval duration
-        appOpsManager.offsetHistory(- (2.5f * firstIntervalDurationMillis).toLong())
+        runWithShellPermissionIdentity {
+            appOpsManager.offsetHistory(-(2.5f * firstIntervalDurationMillis).toLong())
+        }
 
         // Validate the data for the first interval
         val fourthOps = getHistoricalOpsFromDiskRaw(uid, packageName, null /*opNames*/,
@@ -203,12 +287,12 @@ class HistoricalAppopsTest {
     @Test
     fun testGetHistoricalAggregationOverAttributions() {
         // Configure historical registry behavior.
-        appOpsManager.setHistoryParameters(
+        setHistoryParameters(
                 AppOpsManager.HISTORICAL_MODE_ENABLED_ACTIVE,
                 SNAPSHOT_INTERVAL_MILLIS,
                 INTERVAL_COMPRESSION_MULTIPLIER)
 
-        appOpsManager.setUidMode(OPSTR_REQUEST_DELETE_PACKAGES, uid, AppOpsManager.MODE_ALLOWED)
+        setUidMode(OPSTR_REQUEST_DELETE_PACKAGES, uid, AppOpsManager.MODE_ALLOWED)
 
         UidStateForceActivity.waitForResumed()
 
@@ -216,28 +300,31 @@ class HistoricalAppopsTest {
                 null)
         appOpsManager.noteOp(OPSTR_REQUEST_DELETE_PACKAGES, uid, packageName, "secondAttribution",
                 null)
+        var memOps: AppOpsManager.HistoricalOps? = null
+        eventually(SNAPSHOT_INTERVAL_MILLIS / 2) {
+            memOps = getHistoricalOps(appOpsManager, uid = uid)!!
 
-        val memOps = getHistoricalOps(appOpsManager, uid = uid)!!
-
-        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!
-                .getForegroundAccessCount(OP_FLAGS_ALL)).isEqualTo(2)
-        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getAttributedOps("firstAttribution")!!
-                .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
-                .isEqualTo(1)
-        assertThat(memOps.getUidOpsAt(0).getPackageOpsAt(0).getAttributedOps("secondAttribution")!!
-                .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
-                .isEqualTo(1)
+            assertThat(memOps!!.getUidOpsAt(0).getPackageOpsAt(0)
+                    .getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!.getForegroundAccessCount(OP_FLAGS_ALL))
+                    .isEqualTo(2)
+            assertThat(memOps!!.getUidOpsAt(0).getPackageOpsAt(0)
+                    .getAttributedOps("firstAttribution")!!.getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!
+                    .getForegroundAccessCount(OP_FLAGS_ALL)).isEqualTo(1)
+            assertThat(memOps!!.getUidOpsAt(0).getPackageOpsAt(0)
+                    .getAttributedOps("secondAttribution")!!.getOp(OPSTR_REQUEST_DELETE_PACKAGES)!!
+                    .getForegroundAccessCount(OP_FLAGS_ALL)).isEqualTo(1)
+        }
 
         // Wait until data is on disk and verify no entry got lost
         Thread.sleep(SNAPSHOT_INTERVAL_MILLIS)
 
         val diskOps = getHistoricalOps(appOpsManager, uid = uid)!!
-        assertThat(diskOps.getUidOpsAt(0)).isEqualTo(memOps.getUidOpsAt(0))
+        assertThat(diskOps.getUidOpsAt(0)).isEqualTo(memOps?.getUidOpsAt(0))
     }
 
     private fun testHistoricalAggregationSomeLevelsDeep(depth: Int) {
         // Configure historical registry behavior.
-        appOpsManager.setHistoryParameters(
+        setHistoryParameters(
                 AppOpsManager.HISTORICAL_MODE_ENABLED_PASSIVE,
                 SNAPSHOT_INTERVAL_MILLIS,
                 INTERVAL_COMPRESSION_MULTIPLIER)
@@ -247,7 +334,7 @@ class HistoricalAppopsTest {
         val chunkCount = (computeSlotCount(depth + 1)
             .times(SNAPSHOT_INTERVAL_MILLIS) / chunk.endTimeMillis)
         for (i in 0 until chunkCount) {
-            appOpsManager.addHistoricalOps(chunk)
+            addHistoricalOps(chunk)
         }
 
         // Validate the data for the full interval
@@ -262,14 +349,14 @@ class HistoricalAppopsTest {
 
     private fun testGetHistoricalPackageOpsForegroundAtDepth(depth: Int) {
         // Configure historical registry behavior.
-        appOpsManager.setHistoryParameters(
+        setHistoryParameters(
                 AppOpsManager.HISTORICAL_MODE_ENABLED_ACTIVE,
                 SNAPSHOT_INTERVAL_MILLIS,
                 INTERVAL_COMPRESSION_MULTIPLIER)
 
-        appOpsManager.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, uid,
+        setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, uid,
                 AppOpsManager.MODE_ALLOWED)
-        appOpsManager.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, 2000,
+        setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, 2000,
                 AppOpsManager.MODE_ALLOWED)
 
         UidStateForceActivity.waitForResumed()
@@ -373,10 +460,8 @@ class HistoricalAppopsTest {
             assertThat(getRejectCount(op, AppOpsManager.UID_STATE_BACKGROUND)).isEqualTo(0)
             assertThat(getRejectCount(op, AppOpsManager.UID_STATE_CACHED)).isEqualTo(0)
         } finally {
-            appOpsManager.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, uid,
-                    AppOpsManager.MODE_FOREGROUND)
-            appOpsManager.setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, 2000,
-                    AppOpsManager.MODE_FOREGROUND)
+            setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, uid, AppOpsManager.MODE_FOREGROUND)
+            setUidMode(AppOpsManager.OPSTR_START_FOREGROUND, 2000, AppOpsManager.MODE_FOREGROUND)
         }
     }
 
@@ -398,6 +483,28 @@ class HistoricalAppopsTest {
         return chunk
     }
 
+    private fun setHistoryParameters(
+        mode: Int,
+        baseSnapshotInterval: Long,
+        compressionStep: Int
+    ) {
+        runWithShellPermissionIdentity {
+            appOpsManager.setHistoryParameters(mode, baseSnapshotInterval, compressionStep)
+        }
+    }
+
+    private fun setUidMode(appOp: String, uid: Int, mode: Int) {
+        runWithShellPermissionIdentity {
+            appOpsManager.setUidMode(appOp, uid, mode)
+        }
+    }
+
+    private fun addHistoricalOps(ops: AppOpsManager.HistoricalOps) {
+        runWithShellPermissionIdentity {
+            appOpsManager.addHistoricalOps(ops)
+        }
+    }
+
     private fun getHistoricalOps(
         appOpsManager: AppOpsManager,
         uid: Int = Process.INVALID_UID,
@@ -406,6 +513,7 @@ class HistoricalAppopsTest {
         beginTimeMillis: Long = 0,
         endTimeMillis: Long = Long.MAX_VALUE
     ): HistoricalOps? {
+        uiAutomation.adoptShellPermissionIdentity()
         val array = arrayOfNulls<HistoricalOps>(1)
         val lock = ReentrantLock()
         val condition = lock.newCondition()
@@ -430,11 +538,18 @@ class HistoricalAppopsTest {
             return array[0]
         } finally {
             lock.unlock()
+            uiAutomation.dropShellPermissionIdentity()
         }
     }
 
     private fun assertHasCounts(ops: HistoricalOps, count: Long) {
         assertThat(ops).isNotNull()
+
+        if (count <= 0) {
+            assertThat(ops.uidCount).isEqualTo(0)
+            return
+        }
+
         assertThat(ops.uidCount).isEqualTo(1)
 
         val uidOps = ops.getUidOpsAt(0)
@@ -473,6 +588,7 @@ class HistoricalAppopsTest {
         beginTimeMillis: Long,
         endTimeMillis: Long
     ): HistoricalOps? {
+        uiAutomation.adoptShellPermissionIdentity()
         val array = arrayOfNulls<HistoricalOps>(1)
         val lock = ReentrantLock()
         val condition = lock.newCondition()
@@ -498,6 +614,7 @@ class HistoricalAppopsTest {
             return array[0]
         } finally {
             lock.unlock()
+            uiAutomation.dropShellPermissionIdentity()
         }
     }
 

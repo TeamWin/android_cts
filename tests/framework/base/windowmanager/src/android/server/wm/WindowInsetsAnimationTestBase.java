@@ -22,6 +22,7 @@ import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsets.Type.systemBars;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -33,15 +34,19 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
 
+import android.graphics.Insets;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.server.wm.WindowInsetsAnimationTestBase.AnimCallback.AnimationStep;
 import android.util.ArraySet;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
-import android.server.wm.WindowInsetsAnimationTestBase.AnimCallback.AnimationStep;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import org.junit.Assert;
 import org.mockito.InOrder;
@@ -97,6 +102,10 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
             WindowInsets after) {
         assertEquals(before, steps.get(0).insets);
         assertEquals(after, steps.get(steps.size() - 1).insets);
+    }
+
+    protected static boolean hasWindowInsets(View rootView, int types) {
+        return Insets.NONE != rootView.getRootWindowInsets().getInsetsIgnoringVisibility(types);
     }
 
     protected void assertAnimationSteps(ArrayList<AnimationStep> steps, boolean showAnimation) {
@@ -281,6 +290,10 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
 
     public static class TestActivity extends FocusableActivity {
 
+        private final String mEditTextMarker =
+                "android.server.wm.WindowInsetsAnimationTestBase.TestActivity"
+                        + SystemClock.elapsedRealtimeNanos();
+
         AnimCallback mCallback =
                 spy(new AnimCallback(WindowInsetsAnimation.Callback.DISPATCH_MODE_STOP));
         WindowInsets mLastWindowInsets;
@@ -299,6 +312,11 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
             }
         }
 
+        @NonNull
+        String getEditTextMarker() {
+            return mEditTextMarker;
+        }
+
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -308,12 +326,14 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
             mView.setOnApplyWindowInsetsListener(mListener);
             mChild = new TextView(this);
             mEditor = new EditText(this);
+            mEditor.setPrivateImeOptions(mEditTextMarker);
             mView.addView(mChild);
             mView.addView(mEditor);
 
             getWindow().setDecorFitsSystemWindows(false);
             getWindow().getAttributes().layoutInDisplayCutoutMode =
                     LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
             setContentView(mView);
             mEditor.requestFocus();
         }

@@ -82,8 +82,8 @@ public class CellInfoTest {
     private static final int MAX_RSRQ = -3;
     private static final int MIN_RSRQ = -35;
     // Maximum and minimum possible RSSNR values.
-    private static final int MAX_RSSNR = 50;
-    private static final int MIN_RSSNR = 0;
+    private static final int MAX_RSSNR = 30;
+    private static final int MIN_RSSNR = -20;
     // Maximum and minimum possible CQI values.
     private static final int MAX_CQI = 30;
     private static final int MIN_CQI = 0;

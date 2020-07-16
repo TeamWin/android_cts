@@ -57,8 +57,11 @@ import android.net.TetheringManager.TetheringInterfaceRegexps;
 import android.net.TetheringManager.TetheringRequest;
 import android.net.cts.util.CtsNetUtils;
 import android.net.cts.util.CtsNetUtils.TestNetworkCallback;
+import android.net.wifi.WifiClient;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.SoftApCallback;
 import android.os.Bundle;
+import android.os.ConditionVariable;
 import android.os.PersistableBundle;
 import android.os.ResultReceiver;
 import android.telephony.CarrierConfigManager;
@@ -133,6 +136,40 @@ public class TetheringManagerTest {
         mTM.stopAllTethering();
         mContext.unregisterReceiver(mTetherChangeReceiver);
         dropShellPermissionIdentity();
+    }
+
+    private static class StopSoftApCallback implements SoftApCallback {
+        private final ConditionVariable mWaiting = new ConditionVariable();
+        @Override
+        public void onStateChanged(int state, int failureReason) {
+            if (state == WifiManager.WIFI_AP_STATE_DISABLED) mWaiting.open();
+        }
+
+        @Override
+        public void onConnectedClientsChanged(List<WifiClient> clients) { }
+
+        public void waitForSoftApStopped() {
+            if (!mWaiting.block(DEFAULT_TIMEOUT_MS)) {
+                fail("stopSoftAp Timeout");
+            }
+        }
+    }
+
+    // Wait for softAp to be disabled. This is necessary on devices where stopping softAp
+    // deletes the interface. On these devices, tethering immediately stops when the softAp
+    // interface is removed, but softAp is not yet fully disabled. Wait for softAp to be
+    // fully disabled, because otherwise the next test might fail because it attempts to
+    // start softAp before it's fully stopped.
+    private void expectSoftApDisabled() {
+        final StopSoftApCallback callback = new StopSoftApCallback();
+        try {
+            mWm.registerSoftApCallback(c -> c.run(), callback);
+            // registerSoftApCallback will immediately call the callback with the current state, so
+            // this callback will fire even if softAp is already disabled.
+            callback.waitForSoftApStopped();
+        } finally {
+            mWm.unregisterSoftApCallback(callback);
+        }
     }
 
     private class TetherChangeReceiver extends BroadcastReceiver {
@@ -286,13 +323,15 @@ public class TetheringManagerTest {
         assertTrue(tetheredIfaces.length == 0);
 
         final StartTetheringCallback startTetheringCallback = new StartTetheringCallback();
-        mTM.startTethering(new TetheringRequest.Builder(TETHERING_WIFI).build(),
-                c -> c.run() /* executor */, startTetheringCallback);
+        final TetheringRequest request = new TetheringRequest.Builder(TETHERING_WIFI)
+                .setShouldShowEntitlementUi(false).build();
+        mTM.startTethering(request, c -> c.run() /* executor */, startTetheringCallback);
         startTetheringCallback.verifyTetheringStarted();
 
         mTetherChangeReceiver.expectTethering(true /* active */, wifiRegexs);
 
         mTM.stopTethering(TETHERING_WIFI);
+        expectSoftApDisabled();
         mTetherChangeReceiver.expectTethering(false /* active */, wifiRegexs);
     }
 
@@ -529,8 +568,9 @@ public class TetheringManagerTest {
         assertFalse(isIfaceMatch(wifiRegexs, callback.getTetheredInterfaces()));
 
         final StartTetheringCallback startTetheringCallback = new StartTetheringCallback();
-        mTM.startTethering(new TetheringRequest.Builder(TETHERING_WIFI).build(),
-                c -> c.run() /* executor */, startTetheringCallback);
+        final TetheringRequest request = new TetheringRequest.Builder(TETHERING_WIFI)
+                .setShouldShowEntitlementUi(false).build();
+        mTM.startTethering(request, c -> c.run() /* executor */, startTetheringCallback);
         startTetheringCallback.verifyTetheringStarted();
 
         callback.expectTetheredInterfacesChanged(wifiRegexs);
@@ -542,6 +582,7 @@ public class TetheringManagerTest {
 
     private void stopWifiTethering(final TestTetheringEventCallback callback) {
         mTM.stopTethering(TETHERING_WIFI);
+        expectSoftApDisabled();
         callback.expectTetheredInterfacesChanged(null);
         callback.expectOneOfOffloadStatusChanged(TETHER_HARDWARE_OFFLOAD_STOPPED);
     }
@@ -656,6 +697,7 @@ public class TetheringManagerTest {
 
     @Test
     public void testRequestLatestEntitlementResult() throws Exception {
+        assumeTrue(mTM.isTetheringSupported());
         // Verify that requestLatestTetheringEntitlementResult() can get entitlement
         // result(TETHER_ERROR_ENTITLEMENT_UNKNOWN due to invalid downstream type) via listener.
         assertEntitlementResult(listener -> mTM.requestLatestTetheringEntitlementResult(
@@ -673,6 +715,9 @@ public class TetheringManagerTest {
                     }
                 }, false),
                 TETHER_ERROR_ENTITLEMENT_UNKNOWN);
+
+        // Do not request TETHERING_WIFI entitlement result if TETHERING_WIFI is not available.
+        assumeTrue(mTM.getTetherableWifiRegexs().length > 0);
 
         // Verify that null listener will cause IllegalArgumentException.
         try {

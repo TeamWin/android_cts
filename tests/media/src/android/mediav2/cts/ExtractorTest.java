@@ -864,6 +864,10 @@ public class ExtractorTest {
         public void testExtract() throws IOException {
             assumeTrue(shouldRunTest(mMime));
             assertTrue(mSrcFiles.length > 1);
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_MPEG));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC));
             MediaExtractor refExtractor = new MediaExtractor();
             refExtractor.setDataSource(mInpPrefix + mSrcFiles[0]);
             boolean isOk = true;
@@ -952,6 +956,9 @@ public class ExtractorTest {
         @Test
         public void testSeekToZero() throws IOException {
             assumeTrue(shouldRunTest(mMime));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_MPEG));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
                 MediaExtractor extractor = new MediaExtractor();
@@ -1033,6 +1040,10 @@ public class ExtractorTest {
         public void testExtractNative() {
             assumeTrue(shouldRunTest(mMime));
             assertTrue(mSrcFiles.length > 1);
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_MPEG));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC));
             boolean isOk = true;
             for (int i = 1; i < mSrcFiles.length; i++) {
                 if (!nativeTestExtract(mInpPrefix + mSrcFiles[0], mInpPrefix + mSrcFiles[i],
@@ -1085,6 +1096,9 @@ public class ExtractorTest {
         @Test
         public void testSeekToZeroNative() {
             assumeTrue(shouldRunTest(mMime));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_MPEG));
+            assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
                 if (!nativeTestSeekToZero(mInpPrefix + srcFile, mMime)) {

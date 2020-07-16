@@ -21,6 +21,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -45,6 +46,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.AssumptionViolatedException;
 
@@ -1026,5 +1028,20 @@ public class MockImeSession implements AutoCloseable {
     @NonNull
     public ImeCommand callSetInlineSuggestionsExtras(@NonNull Bundle bundle) {
         return callCommandInternal("setInlineSuggestionsExtras", bundle);
+    }
+
+    @NonNull
+    public ImeCommand callVerifyGetDisplay() {
+        return callCommandInternal("verifyGetDisplay", new Bundle());
+    }
+
+    @NonNull
+    public ImeCommand callVerifyGetWindowManager() {
+        return callCommandInternal("verifyGetWindowManager", new Bundle());
+    }
+
+    @NonNull
+    public ImeCommand callVerifyGetViewConfiguration() {
+        return callCommandInternal("verifyGetViewConfiguration", new Bundle());
     }
 }

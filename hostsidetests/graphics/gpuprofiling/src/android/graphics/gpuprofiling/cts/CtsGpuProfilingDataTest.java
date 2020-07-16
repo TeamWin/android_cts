@@ -17,6 +17,7 @@
 package android.graphics.gpuprofiling.cts;
 
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.CommandResult;
@@ -46,11 +47,16 @@ public class CtsGpuProfilingDataTest extends BaseHostJUnit4Test {
     // Positive tests
     // - Ensure the perfetto producers for render stages, counters, and ftrace gpu frequency are available
 
-    private static final String BIN_NAME = "ctsgraphicsgpuprofilinginit";
+    private static final String BIN_NAME = "ctsgraphicsgpucountersinit";
     private static final String DEVICE_BIN_PATH = "/data/local/tmp/" + BIN_NAME;
+    private static final String APP = "android.graphics.gpuprofiling.app";
+    private static final String APK = "CtsGraphicsProfilingDataApp.apk";
+    private static final String ACTIVITY = "GpuRenderStagesDeviceActivity";
     private static final String COUNTERS_SOURCE_NAME = "gpu.counters";
     private static final String STAGES_SOURCE_NAME = "gpu.renderstages";
-    private static final String PROFILING_PROPERTY = "ro.hardware.gpu.profiler.support";
+    private static final String PROFILING_PROPERTY = "graphics.gpu.profiler.support";
+    private static final String LAYER_PACKAGE_PROPERTY = "graphics.gpu.profiler.vulkan_layer_apk";
+    private static final String LAYER_NAME = "VkRenderStagesProducer";
     private static int MAX_RETRIES = 5;
 
     private class ShellThread extends Thread {
@@ -65,28 +71,40 @@ public class CtsGpuProfilingDataTest extends BaseHostJUnit4Test {
         @Override
         public void run() {
             try {
-                CommandResult activityStatus = getDevice().executeShellV2Command(mCmd);
+                getDevice().executeShellV2Command(mCmd);
             } catch (Exception e) {
-                // TODO Do something here?
+                CLog.e("Failed to start counters producer" + e.getMessage());
             }
         }
     }
 
     /**
-     * Kill the native process after each test
+     * Kill the native process and remove the layer related settings after each test
      */
     @After
     public void cleanup() throws Exception {
-        // TODO figure out how to unregister the producers
         getDevice().executeShellV2Command("killall " + BIN_NAME);
+        getDevice().executeShellV2Command("am force-stop " + APP);
+        getDevice().executeShellV2Command("settings delete global gpu_debug_layers");
+        getDevice().executeShellV2Command("settings delete global enable_gpu_debug_layers");
+        getDevice().executeShellV2Command("settings delete global gpu_debug_app");
+        getDevice().executeShellV2Command("settings delete global gpu_debug_layer_app");
     }
 
     /**
-     * Clean up before starting any tests.
+     * Clean up before starting any tests. Apply the necessary layer settings if we need them
      */
     @Before
     public void init() throws Exception {
         cleanup();
+        String layerApp = getDevice().getProperty(LAYER_PACKAGE_PROPERTY);
+        if (layerApp != null && !layerApp.isEmpty()) {
+            getDevice().executeShellV2Command("settings put global enable_gpu_debug_layers 1");
+            getDevice().executeShellV2Command("settings put global gpu_debug_app " + APP);
+            getDevice().executeShellV2Command("settings put global gpu_debug_layer_app " + layerApp);
+            getDevice().executeShellV2Command("settings put global gpu_debug_layers " + LAYER_NAME);
+        }
+        installPackage(APK);
     }
 
     /**
@@ -100,6 +118,7 @@ public class CtsGpuProfilingDataTest extends BaseHostJUnit4Test {
             // Spin up a new thread to avoid blocking the main thread while the native process waits to be killed.
             ShellThread shellThread = new ShellThread(DEVICE_BIN_PATH);
             shellThread.start();
+            CommandResult activityStatus = getDevice().executeShellV2Command("am start -n " + APP + "/." + ACTIVITY);
             boolean countersSourceFound = false;
             boolean stagesSourceFound = false;
             for(int i = 0; i < MAX_RETRIES; i++) {

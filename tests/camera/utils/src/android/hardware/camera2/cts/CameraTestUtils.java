@@ -209,7 +209,7 @@ public class CameraTestUtils extends Assert {
             List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
             List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
             List<ImageReader> rawTargets, List<ImageReader> heicTargets,
-            List<OutputConfiguration> outputConfigs,
+            List<ImageReader> depth16Targets, List<OutputConfiguration> outputConfigs,
             int numBuffers, boolean substituteY8, boolean substituteHeic,
             String overridePhysicalCameraId, Handler handler) {
 
@@ -307,6 +307,18 @@ public class CameraTestUtils extends Assert {
                     heicTargets.add(target);
                     break;
                 }
+                case ImageFormat.DEPTH16: {
+                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                            targetSize.getHeight(), format, numBuffers);
+                    target.setOnImageAvailableListener(imageDropperListener, handler);
+                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                    if (overridePhysicalCameraId != null) {
+                        config.setPhysicalCameraId(overridePhysicalCameraId);
+                    }
+                    outputConfigs.add(config);
+                    depth16Targets.add(target);
+                    break;
+                }
                 default:
                     fail("Unknown output format " + format);
             }
@@ -395,7 +407,7 @@ public class CameraTestUtils extends Assert {
                 image = reader.acquireNextImage();
             } finally {
                 if (image != null) {
-                    // Should only do some quick sanity check in callback, as the ImageReader
+                    // Should only do some quick validity checks in callback, as the ImageReader
                     // could be closed asynchronously, which will close all images acquired from
                     // this ImageReader.
                     checkImage(image, mSize.getWidth(), mSize.getHeight(), mFormat);
@@ -2443,7 +2455,7 @@ public class CameraTestUtils extends Assert {
     /**
      * Simple validation of JPEG image size and format.
      * <p>
-     * Only validate the image object sanity. It is fast, but doesn't actually
+     * Only validate the image object basic correctness. It is fast, but doesn't actually
      * check the buffer data. Assert is used here as it make no sense to
      * continue the test if the jpeg image captured has some serious failures.
      * </p>

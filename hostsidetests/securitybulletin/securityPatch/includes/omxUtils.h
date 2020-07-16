@@ -34,7 +34,7 @@
 #include <android/IOMXBufferSource.h>
 #include <media/omx/1.0/WOmx.h>
 #include <binder/MemoryDealer.h>
-#include "HardwareAPI.h"
+#include "media/hardware/HardwareAPI.h"
 #include "OMX_Component.h"
 #include <binder/ProcessState.h>
 #include <media/stagefright/foundation/ALooper.h>

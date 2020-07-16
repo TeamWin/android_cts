@@ -99,9 +99,6 @@ public class SubscriptionManagerTest {
     public static void setUpClass() throws Exception {
         if (!isSupported()) return;
 
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("svc wifi disable");
-
         final TestNetworkCallback callback = new TestNetworkCallback();
         final ConnectivityManager cm = InstrumentationRegistry.getContext()
                 .getSystemService(ConnectivityManager.class);
@@ -122,9 +119,6 @@ public class SubscriptionManagerTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
         if (!isSupported()) return;
-
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("svc wifi enable");
     }
 
     @Before

@@ -31,6 +31,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION;
 import android.media.cts.R;
+import android.os.Build;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
@@ -39,6 +40,7 @@ import android.webkit.cts.CtsTestServer;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.BufferedReader;
@@ -61,6 +63,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     private static final String TAG = "MediaExtractorTest";
     private static final UUID UUID_WIDEVINE = new UUID(0xEDEF8BA979D64ACEL, 0xA3C827DCD51D21EDL);
     private static final UUID UUID_PLAYREADY = new UUID(0x9A04F07998404286L, 0xAB92E65BE0885F95L);
+    private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
 
     protected Resources mResources;
     protected MediaExtractor mExtractor;
@@ -376,6 +379,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     public void testGetDrmInitData() throws Exception {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         setDataSource(R.raw.psshtest);
         DrmInitData drmInitData = mExtractor.getDrmInitData();
         assertEquals(drmInitData.getSchemeInitDataCount(), 2);

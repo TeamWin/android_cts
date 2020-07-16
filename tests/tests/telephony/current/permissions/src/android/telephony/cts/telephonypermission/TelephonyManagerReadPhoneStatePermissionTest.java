@@ -19,8 +19,10 @@ package android.telephony.cts.telephonypermission;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.AppModeFull;
 import android.telephony.TelephonyManager;
 
 import androidx.test.InstrumentationRegistry;
@@ -34,6 +36,7 @@ import org.junit.runner.RunWith;
  * Test TelephonyManager APIs with READ_PHONE_STATE Permission.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Cannot grant the runtime permission in instant app mode")
 public class TelephonyManagerReadPhoneStatePermissionTest {
 
     private boolean mHasTelephony;
@@ -46,6 +49,12 @@ public class TelephonyManagerReadPhoneStatePermissionTest {
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         assertNotNull(mTelephonyManager);
+    }
+
+    public static void grantUserReadPhoneStatePermission() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.grantRuntimePermission(getContext().getPackageName(),
+                android.Manifest.permission.READ_PHONE_STATE);
     }
 
     /**
@@ -63,6 +72,8 @@ public class TelephonyManagerReadPhoneStatePermissionTest {
         if (!mHasTelephony) {
             return;
         }
+
+        grantUserReadPhoneStatePermission();
 
         try {
             mTelephonyManager.getNetworkType();

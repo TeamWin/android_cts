@@ -25,17 +25,13 @@ import static android.content.Context.WIFI_AWARE_SERVICE;
 import static android.content.Context.WIFI_P2P_SERVICE;
 import static android.content.Context.WIFI_SERVICE;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
-import android.app.WallpaperManager;
 import android.content.Context;
 import android.platform.test.annotations.AppModeInstant;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
-
-import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -72,14 +68,8 @@ public class ServicesInstantAppsCannotAccessTests {
 
     @Test
     public void cannotGetWallpaperManager() {
-        WallpaperManager mgr  = (WallpaperManager) InstrumentationRegistry.getTargetContext()
-                .getSystemService(WALLPAPER_SERVICE);
-        boolean supported = RequiredServiceRule.hasService("wallpaper");
-        if (supported) {
-            assertNull(mgr);
-        } else {
-            assertFalse(mgr.isWallpaperSupported());
-        }
+        assertNull(InstrumentationRegistry.getTargetContext().getSystemService(
+                WALLPAPER_SERVICE));
     }
 
     @Test

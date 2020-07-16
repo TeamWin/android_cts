@@ -46,7 +46,6 @@ cc_test_library {
         "native-media-jni.cpp",
         "native_media_utils.cpp",
         "native_media_decoder_source.cpp",
-        "native_media_encoder_jni.cpp",
     ],
     include_dirs: ["system/core/include"],
     shared_libs: [

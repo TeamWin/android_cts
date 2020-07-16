@@ -31,15 +31,20 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
+import android.os.IBinder;
 import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.cts.appdataisolation.common.FileUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -54,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 public class AppATests {
 
-    private static final String APPB_PKG = "com.android.cts.appdataisolation.appb";
+    private static final long BIND_SERVICE_TIMEOUT_MS = 5000;
 
     private Context mContext;
     private UiDevice mDevice;
@@ -62,6 +67,21 @@ public class AppATests {
     private String mDePath;
     private String mExternalDataPath;
     private String mObbPath;
+
+    private volatile CountDownLatch mServiceConnectedLatch;
+    private IIsolatedService mService;
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mService = IIsolatedService.Stub.asInterface(service);
+            mServiceConnectedLatch.countDown();
+        }
+    };
 
     @Before
     public void setUp() throws Exception {
@@ -161,12 +181,12 @@ public class AppATests {
 
     @Test
     public void testCannotAccessAppBDataDir() throws Exception {
-        ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(APPB_PKG,
-                0);
+        ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(
+                FileUtils.APPB_PKG,0);
         assertDirDoesNotExist(applicationInfo.dataDir);
         assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
-        assertDirDoesNotExist("/data/data/" + APPB_PKG);
-        assertDirDoesNotExist("/data/misc/profiles/cur/0/" + APPB_PKG);
+        assertDirDoesNotExist("/data/data/" + FileUtils.APPB_PKG);
+        assertDirDoesNotExist("/data/misc/profiles/cur/0/" + FileUtils.APPB_PKG);
         assertDirIsNotAccessible("/data/misc/profiles/ref");
     }
 
@@ -188,14 +208,11 @@ public class AppATests {
         mDevice.waitForIdle();
     }
 
-    private String replacePackageAWithPackageB(String path) {
-        return path.replace(mContext.getPackageName(), APPB_PKG);
-    }
-
     private void testCanNotAccessAppBExternalDirs() {
-        String appBExternalDir = replacePackageAWithPackageB(
+        String appBExternalDir = FileUtils.replacePackageAWithPackageB(
                 mContext.getExternalFilesDir("").getParentFile().getAbsolutePath());
-        String appBObbDir = replacePackageAWithPackageB(mContext.getObbDir().getAbsolutePath());
+        String appBObbDir = FileUtils.replacePackageAWithPackageB(
+                mContext.getObbDir().getAbsolutePath());
         assertDirDoesNotExist(appBExternalDir);
         assertDirDoesNotExist(appBObbDir);
     }
@@ -208,7 +225,7 @@ public class AppATests {
         final BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                switch(intent.getAction()) {
+                switch (intent.getAction()) {
                     case Intent.ACTION_USER_UNLOCKED:
                         unlocked.countDown();
                         break;
@@ -237,5 +254,33 @@ public class AppATests {
         // Verify after unlocking device, app a has still no access to app b dir.
         testCannotAccessAppBDataDir();
         testCanNotAccessAppBExternalDirs();
+    }
+
+    @Test
+    public void testIsolatedProcess() throws Exception {
+        mServiceConnectedLatch = new CountDownLatch(1);
+        Intent serviceIntent = new Intent(mContext, IsolatedService.class);
+        try {
+            mContext.bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+            assertTrue("Timed out while waiting to bind to isolated service",
+                    mServiceConnectedLatch.await(BIND_SERVICE_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            mService.assertDataIsolated();
+        } finally {
+            mContext.unbindService(mServiceConnection);
+        }
+    }
+
+    @Test
+    public void testAppZygoteIsolatedProcess() throws Exception {
+        mServiceConnectedLatch = new CountDownLatch(1);
+        Intent serviceIntent = new Intent(mContext, AppZygoteIsolatedService.class);
+        try {
+            mContext.bindService(serviceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
+            assertTrue("Timed out while waiting to bind to isolated service",
+                    mServiceConnectedLatch.await(BIND_SERVICE_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            mService.assertDataIsolated();
+        } finally {
+            mContext.unbindService(mServiceConnection);
+        }
     }
 }

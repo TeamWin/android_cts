@@ -327,10 +327,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         List<ImageReader> y8Targets = new ArrayList<ImageReader>();
         List<ImageReader> rawTargets = new ArrayList<ImageReader>();
         List<ImageReader> heicTargets = new ArrayList<ImageReader>();
+        List<ImageReader> depth16Targets = new ArrayList<ImageReader>();
 
         CameraTestUtils.setupConfigurationTargets(combination.getStreamsInformation(), privTargets,
-                jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets, outputConfigs,
-                MIN_RESULT_COUNT, substituteY8, substituteHeic, physicalCameraId, mHandler);
+                jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets, depth16Targets,
+                outputConfigs, MIN_RESULT_COUNT, substituteY8, substituteHeic, physicalCameraId,
+                mHandler);
 
         boolean haveSession = false;
         try {
@@ -416,6 +418,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         for (ImageReader target : heicTargets) {
             target.close();
         }
+        for (ImageReader target : depth16Targets) {
+            target.close();
+        }
     }
 
     /**
@@ -498,6 +503,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         List<ImageReader> y8Targets = new ArrayList<>();
         List<ImageReader> rawTargets = new ArrayList<>();
         List<ImageReader> heicTargets = new ArrayList<>();
+        List<ImageReader> depth16Targets = new ArrayList<>();
         ArrayList<Surface> outputSurfaces = new ArrayList<>();
         List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
         ImageReader inputReader = null;
@@ -527,7 +533,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             // separately.
             CameraTestUtils.setupConfigurationTargets(streamInfo.subList(2, streamInfo.size()),
                     privTargets, jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets,
-                    outputConfigs, NUM_REPROCESS_CAPTURES_PER_CONFIG, substituteY8,
+                    depth16Targets, outputConfigs, NUM_REPROCESS_CAPTURES_PER_CONFIG, substituteY8,
                     substituteHeic, null/*overridePhysicalCameraId*/, mHandler);
 
             outputSurfaces.ensureCapacity(outputConfigs.size());
@@ -646,6 +652,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             }
 
             for (ImageReader target : heicTargets) {
+                target.close();
+            }
+
+            for (ImageReader target : depth16Targets) {
                 target.close();
             }
 
@@ -1829,7 +1839,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 { LEGACY_COMBINATIONS, LIMITED_COMBINATIONS, BURST_COMBINATIONS, FULL_COMBINATIONS,
                   RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
 
-        sanityCheckConfigurationTables(TABLES);
+        validityCheckConfigurationTables(TABLES);
 
         for (String id : mCameraIdsUnderTest) {
             openDevice(id);
@@ -1965,7 +1975,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         final int[][][] TABLES =
                 { LIMITED_COMBINATIONS, FULL_COMBINATIONS, RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
 
-        sanityCheckConfigurationTables(TABLES);
+        validityCheckConfigurationTables(TABLES);
 
         for (String id : mCameraIdsUnderTest) {
             openDevice(id);
@@ -2091,9 +2101,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * Sanity check the configuration tables.
+     * Verify correctness of the configuration tables.
      */
-    private void sanityCheckConfigurationTables(final int[][][] tables) throws Exception {
+    private void validityCheckConfigurationTables(final int[][][] tables) throws Exception {
         int tableIdx = 0;
         for (int[][] table : tables) {
             int rowIdx = 0;

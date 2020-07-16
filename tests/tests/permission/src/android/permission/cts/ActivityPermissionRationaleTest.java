@@ -84,7 +84,8 @@ public class ActivityPermissionRationaleTest {
 
     @Before
     public void clearData() {
-        runShellCommand("pm clear android.permission.cts.appthatrunsrationaletests");
+        runShellCommand("pm clear --user " + sContext.getUserId()
+                + " android.permission.cts.appthatrunsrationaletests");
         PermissionUtils.setPermissionFlags(PACKAGE_NAME, PERMISSION_NAME,
                 PackageManager.FLAG_PERMISSION_POLICY_FIXED, 0);
     }

@@ -22,9 +22,11 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -77,6 +79,9 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
     private static final String CHECK_IF_FUSE_DATA_ISOLATION_IS_ENABLED_COMMANDLINE =
             "getprop persist.sys.vold_app_data_isolation_enabled";
     private static final String APPA_METHOD_CREATE_EXTERNAL_DIRS = "testCreateExternalDirs";
+    private static final String APPA_METHOD_TEST_ISOLATED_PROCESS = "testIsolatedProcess";
+    private static final String APPA_METHOD_TEST_APP_ZYGOTE_ISOLATED_PROCESS =
+            "testAppZygoteIsolatedProcess";
     private static final String APPB_METHOD_CAN_NOT_ACCESS_APPA_EXTERNAL_DIRS =
             "testCanNotAccessAppAExternalDirs";
     private static final String APPB_METHOD_CAN_ACCESS_APPA_EXTERNAL_DIRS =
@@ -184,6 +189,8 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
 
     @Test
     public void testDirectBootModeWorks() throws Exception {
+        assumeTrue("Screen lock is not supported so skip direct boot test",
+                hasDeviceFeature("android.software.secure_lock_screen"));
         // Install AppA and verify no data stored
         new InstallMultiple().addFile(APP_DIRECT_BOOT_A_APK).run();
         new InstallMultiple().addFile(APPB_APK).run();
@@ -215,7 +222,10 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             // Follow DirectBootHostTest, reboot system into known state with keys ejected
             if (isFbeModeEmulated()) {
                 final String res = getDevice().executeShellCommand("sm set-emulate-fbe true");
-                assertThat(res).contains("Emulation not supported");
+                if (res != null && res.contains("Emulation not supported")) {
+                    LogUtil.CLog.i("FBE emulation is not supported, skipping test");
+                    return;
+                }
                 getDevice().waitForDeviceNotAvailable(30000);
                 getDevice().waitForDeviceOnline(120000);
             } else {
@@ -327,5 +337,19 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
         Assume.assumeThat(device.executeShellCommand(
                 CHECK_IF_FUSE_DATA_ISOLATION_IS_ENABLED_COMMANDLINE).trim(),
                 is("true"));
+    }
+
+    @Test
+    public void testIsolatedProcess() throws Exception {
+        new InstallMultiple().addFile(APPA_APK).run();
+        new InstallMultiple().addFile(APPB_APK).run();
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_TEST_ISOLATED_PROCESS);
+    }
+
+    @Test
+    public void testAppZygoteIsolatedProcess() throws Exception {
+        new InstallMultiple().addFile(APPA_APK).run();
+        new InstallMultiple().addFile(APPB_APK).run();
+        runDeviceTests(APPA_PKG, APPA_CLASS, APPA_METHOD_TEST_APP_ZYGOTE_ISOLATED_PROCESS);
     }
 }

@@ -67,7 +67,6 @@ import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
@@ -212,7 +211,6 @@ class AppOpsLoggingTest {
         }
     }
 
-    @Ignore("b/154775996")
     @Test
     fun disableCollectedAndNoteSyncOpAndCheckLog() {
         rethrowThrowableFrom {
@@ -660,6 +658,8 @@ class AppOpsLoggingTest {
     fun getWallpaper() {
         val wallpaperManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
                 .getSystemService(WallpaperManager::class.java)
+        assumeTrue("Device does not support wallpaper",
+                wallpaperManager.isWallpaperSupported())
 
         wallpaperManager.getWallpaperFile(FLAG_SYSTEM)
 

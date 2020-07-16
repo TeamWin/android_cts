@@ -30,7 +30,6 @@ import android.content.Context;
 import android.content.ContentResolver;
 import android.net.ConnectivityManager;
 import android.net.ConnectivityManager.NetworkCallback;
-import android.net.DnsPacket;
 import android.net.DnsResolver;
 import android.net.LinkProperties;
 import android.net.Network;
@@ -46,6 +45,9 @@ import android.provider.Settings;
 import android.system.ErrnoException;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.net.module.util.DnsPacket;
+import com.android.testutils.SkipPresubmit;
 
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -584,6 +586,7 @@ public class DnsResolverTest extends AndroidTestCase {
         doTestContinuousQueries(mExecutor);
     }
 
+    @SkipPresubmit(reason = "Flaky: b/159762682; add to presubmit after fixing")
     public void testContinuousQueriesInline() throws Exception {
         doTestContinuousQueries(mExecutorInline);
     }

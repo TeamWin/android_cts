@@ -18,6 +18,7 @@ package android.server.wm.app;
 
 import android.app.Activity;
 import android.app.Presentation;
+import android.content.Intent;
 import android.graphics.Color;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
@@ -30,31 +31,39 @@ import android.widget.TextView;
 public class PresentationActivity extends Activity {
 
     private static final String TAG = PresentationActivity.class.getSimpleName();
+    private Presentation mPresentation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        createPresentationWindow(getIntent());
+    }
 
-        int displayId = getIntent().getExtras().getInt(
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        createPresentationWindow(intent);
+    }
+
+    private void createPresentationWindow(Intent intent) {
+        int displayId = intent.getExtras().getInt(
                 Components.PresentationActivity.KEY_DISPLAY_ID);
 
         Display presentationDisplay =
                 getSystemService(DisplayManager.class).getDisplay(displayId);
 
-        createPresentationWindow(presentationDisplay);
-    }
-
-    private void createPresentationWindow(Display display) {
         final TextView view = new TextView(this);
         view.setText("I'm a presentation");
         view.setGravity(Gravity.CENTER);
         view.setBackgroundColor(Color.RED);
-
-        final Presentation presentation = new Presentation(this, display);
-        presentation.setContentView(view);
-        presentation.setTitle(getPackageName());
+        if (mPresentation != null) {
+            mPresentation.dismiss();
+        }
+        mPresentation = new Presentation(this, presentationDisplay);
+        mPresentation.setContentView(view);
+        mPresentation.setTitle(getPackageName());
         try {
-            presentation.show();
+            mPresentation.show();
         } catch (WindowManager.InvalidDisplayException e) {
             Log.w(TAG, "Presentation blocked", e);
         }

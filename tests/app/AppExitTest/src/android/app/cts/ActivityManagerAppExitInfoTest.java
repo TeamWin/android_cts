@@ -32,6 +32,7 @@ import android.content.ServiceConnection;
 import android.externalservice.common.RunningServiceInfo;
 import android.externalservice.common.ServiceMessages;
 import android.os.AsyncTask;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.DropBoxManager;
 import android.os.Handler;
@@ -46,12 +47,12 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
-import android.system.Os;
 import android.system.OsConstants;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.DebugUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -60,9 +61,7 @@ import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.MemInfoReader;
 
 import java.io.BufferedInputStream;
-import java.io.FileDescriptor;
 import java.io.IOException;
-import java.nio.DirectByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -133,6 +132,8 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     private UserHandle mOtherUserHandle;
     private DropBoxManager.Entry mAnrEntry;
     private SettingsSession<String> mDataAnrSettings;
+    private SettingsSession<String> mHiddenApiSettings;
+    private int mProcSeqNum;
 
     @Override
     protected void setUp() throws Exception {
@@ -156,6 +157,11 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
                         Settings.Global.DROPBOX_TAG_PREFIX + "data_app_anr"),
                 Settings.Global::getString, Settings.Global::putString);
         mDataAnrSettings.set("enabled");
+        mHiddenApiSettings = new SettingsSession<>(
+                Settings.Global.getUriFor(
+                        Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS),
+                Settings.Global::getString, Settings.Global::putString);
+        mHiddenApiSettings.set("*");
     }
 
     private void handleMessagePid(Message msg) {
@@ -218,6 +224,9 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         mHandlerThread.quitSafely();
         if (mDataAnrSettings != null) {
             mDataAnrSettings.close();
+        }
+        if (mHiddenApiSettings != null) {
+            mHiddenApiSettings.close();
         }
     }
 
@@ -393,47 +402,37 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
                 ApplicationExitInfo.REASON_EXIT_SELF, EXIT_CODE, null, now, now2);
     }
 
-    private List<ApplicationExitInfo> fillUpMemoryAndCheck(ArrayList<Long> addresses)
-            throws Exception {
-        List<ApplicationExitInfo> list = null;
-        // Get the meminfo firstly
-        MemInfoReader reader = new MemInfoReader();
-        reader.readMemInfo();
+    private List<ServiceConnection> fillUpMemoryAndCheck(
+            final MemoryConsumerService.TestFuncInterface testFunc,
+            final List<ApplicationExitInfo> list) throws Exception {
+        final String procNamePrefix = "memconsumer_";
+        final ArrayList<ServiceConnection> memConsumers = new ArrayList<>();
+        Pair<IBinder, ServiceConnection> p = MemoryConsumerService.bindToService(
+                mContext, testFunc, procNamePrefix + mProcSeqNum++);
+        IBinder consumer = p.first;
+        memConsumers.add(p.second);
 
-        long totalMb = (reader.getFreeSizeKb() + reader.getCachedSizeKb()) >> 10;
-        final int pageSize = 4096;
-        final int oneMb = 1024 * 1024;
+        while (list.size() == 0) {
+            // Get the meminfo firstly
+            MemInfoReader reader = new MemInfoReader();
+            reader.readMemInfo();
 
-        // Create an empty fd -1
-        FileDescriptor fd = new FileDescriptor();
-
-        // Okay now start a loop to allocate 1MB each time and check if our process is gone.
-        for (long i = 0; i < totalMb; i++) {
-            long addr = Os.mmap(0, oneMb, OsConstants.PROT_WRITE,
-                    OsConstants.MAP_PRIVATE | OsConstants.MAP_ANONYMOUS, fd, 0);
-            if (addr == 0) {
-                break;
+            long totalMb = (reader.getFreeSizeKb() + reader.getCachedSizeKb()) >> 10;
+            if (!MemoryConsumerService.runOnce(consumer, totalMb) && list.size() == 0) {
+                // Need to create a new consumer (the present one might be running out of space)
+                p = MemoryConsumerService.bindToService(mContext, testFunc,
+                        procNamePrefix + mProcSeqNum++);
+                consumer = p.first;
+                memConsumers.add(p.second);
             }
-            addresses.add(addr);
-
-            // We don't have direct access to Memory.pokeByte() though
-            DirectByteBuffer buf = new DirectByteBuffer(oneMb, addr, fd, null, false);
-
-            // Dirt the buffer
-            for (int j = 0; j < oneMb; j += pageSize) {
-                buf.put(j, (byte) 0xf);
-            }
-
-            // Check if we could get the report
-            list = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                    STUB_PACKAGE_NAME, mStubPackagePid, 1,
-                    mActivityManager::getHistoricalProcessExitReasons,
-                    android.Manifest.permission.DUMP);
-            if (list != null && list.size() == 1) {
+            // make sure we have cached process killed
+            String output = executeShellCmd("dumpsys activity lru");
+            if (output == null && output.indexOf(" cch+") == -1) {
                 break;
             }
         }
-        return list;
+
+        return memConsumers;
     }
 
     public void testLmkdKill() throws Exception {
@@ -446,23 +445,32 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         // Start a process and do nothing
         startService(ACTION_FINISH, STUB_SERVICE_NAME, false, false);
 
-        final int oneMb = 1024 * 1024;
-        ArrayList<Long> addresses = new ArrayList<Long>();
-        List<ApplicationExitInfo> list = fillUpMemoryAndCheck(addresses);
+        final ArrayList<IBinder> memConsumers = new ArrayList<>();
+        List<ApplicationExitInfo> list = new ArrayList<>();
+        final MemoryConsumerService.TestFuncInterface testFunc =
+                new MemoryConsumerService.TestFuncInterface(() -> {
+                    final long token = Binder.clearCallingIdentity();
+                    try {
+                        List<ApplicationExitInfo> result =
+                                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                                        STUB_PACKAGE_NAME, mStubPackagePid, 1,
+                                        mActivityManager::getHistoricalProcessExitReasons,
+                                        android.Manifest.permission.DUMP);
+                        if (result != null && result.size() == 1) {
+                            list.add(result.get(0));
+                            return true;
+                        }
+                    } finally {
+                        Binder.restoreCallingIdentity(token);
+                    }
+                    return false;
+                });
 
-        while (list == null || list.size() == 0) {
-            // make sure we have cached process killed
-            String output = executeShellCmd("dumpsys activity lru");
-            if (output == null && output.indexOf(" cch+") == -1) {
-                break;
-            }
-            // try again since the system might have reclaimed some ram
-            list = fillUpMemoryAndCheck(addresses);
-        }
+        List<ServiceConnection> services = fillUpMemoryAndCheck(testFunc, list);
 
-        // Free all the buffers firstly
-        for (int i = addresses.size() - 1; i >= 0; i--) {
-            Os.munmap(addresses.get(i), oneMb);
+        // Unbind all the service connections firstly
+        for (int i = services.size() - 1; i >= 0; i--) {
+            mContext.unbindService(services.get(i));
         }
 
         long now2 = System.currentTimeMillis();
@@ -1143,7 +1151,20 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         mOtherUidWatcher.finish();
         mOtherUserId = 0;
 
-        // Removing user is going take a while, wait for a while before continuing the test.
+        // Poll userInfo to check if the user has been removed, wait up to 10 mins
+        for (int i = 0; i < 600; i++) {
+            if (ShellIdentityUtils.invokeMethodWithShellPermissions(otherUserId,
+                    mUserManager::getUserInfo,
+                    android.Manifest.permission.CREATE_USERS) != null) {
+                // We can still get the userInfo, sleep 1 second and try again
+                sleep(1000);
+            } else {
+                Log.d(TAG, "User " + otherUserId + " has been removed");
+                break;
+            }
+        }
+        // For now the ACTION_USER_REMOVED should have been sent to all receives,
+        // we take an extra nap to make sure we've had the broadcast handling settled.
         sleep(15 * 1000);
 
         // Now query the other userId, and it should return nothing.

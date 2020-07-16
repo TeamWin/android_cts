@@ -89,4 +89,12 @@ public class WifiNl80211ManagerTest {
             manager.getTxPacketCounters("wlan0");
         } catch (Exception ignore) {}
     }
+
+    @Test
+    public void testSetOnServiceDeadCallback() {
+        try {
+            WifiNl80211Manager manager = mContext.getSystemService(WifiNl80211Manager.class);
+            manager.setOnServiceDeadCallback(() -> {});
+        } catch (Exception ignore) {}
+    }
 }

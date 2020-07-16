@@ -57,7 +57,6 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     private int mTrackID = -1;
 
     private ArrayList<MediaCodec.BufferInfo> mInfoList = new ArrayList<>();
-    private int mTotalSize;
 
     private ArrayList<String> mCheckESList = new ArrayList<>();
 
@@ -100,8 +99,8 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 mMuxer.writeSampleData(mTrackID, buf, info);
             }
             MediaCodec.BufferInfo copy = new MediaCodec.BufferInfo();
-            copy.set(mTotalSize + info.offset, info.size, info.presentationTimeUs, info.flags);
-            mTotalSize += info.size;
+            copy.set(mOutputBuff.getOutStreamSize(), info.size, info.presentationTimeUs,
+                    info.flags);
             mInfoList.add(copy);
         }
         super.dequeueOutput(bufferIndex, info);
@@ -166,7 +165,6 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             mCodec = MediaCodec.createByCodecName(encoder);
             mOutputBuff.reset();
             mInfoList.clear();
-            mTotalSize = 0;
             /* TODO(b/157523045) */
             if (mRange <= UNSPECIFIED || mStandard <= UNSPECIFIED ||
                     mTransferCurve <= UNSPECIFIED) {

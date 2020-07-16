@@ -111,8 +111,10 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
         device.uninstallPackage("com.android.appsecurity.b71360999");
         device.uninstallPackage("com.android.appsecurity.b71361168");
         device.uninstallPackage("com.android.appsecurity.b79488511");
-        device.uninstallPackage(CORRUPT_APK_PACKAGE_NAME);
+        // WARNING: PlatformCompat overrides for package parsing changes must be reset before the
+        // package is uninstalled because overrides cannot be reset if the package is not present.
         device.executeShellCommand("am compat reset-all " + CORRUPT_APK_PACKAGE_NAME);
+        device.uninstallPackage(CORRUPT_APK_PACKAGE_NAME);
     }
 
     @Before
@@ -132,7 +134,7 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
     private String install(String apk) throws DeviceNotAvailableException, FileNotFoundException  {
         return getDevice().installPackage(
                 new CompatibilityBuildHelper(mBuildInfo).getTestFile(apk),
-                false /*reinstall*/);
+                true /* reinstall */);
     }
 
     /**
@@ -167,12 +169,13 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
         assertInstallDoesNotCrashSystem("CtsCorruptApkTests_b79488511.apk");
     }
 
-    /** APKs that target pre-Q and have a compressed resources.arsc can be installed. */
+    /** APKs that target pre-R and have a compressed resources.arsc can be installed. */
     public void testFailInstallCompressedARSC_Q() throws Exception {
         assertNull(install(COMPRESSED_ARSC_Q));
     }
 
     public void testFailInstallCompressedARSC_Q_PlatformConfig_enabled() throws Exception {
+        assertNull(install(COMPRESSED_ARSC_Q));
         getDevice().executeShellCommand(String.format("am compat enable %s %s",
                 FAIL_COMPRESSED_ARSC_PLATFORM_CONFIG_ID, CORRUPT_APK_PACKAGE_NAME));
         assertNotNull(install(COMPRESSED_ARSC_Q));
@@ -183,18 +186,13 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
         assertNotNull(install(COMPRESSED_ARSC_R));
     }
 
-    public void testFailInstallCompressedARSC_R_PlatformConfig_disabled() throws Exception {
-        getDevice().executeShellCommand(String.format("am compat disable %s %s",
-                FAIL_COMPRESSED_ARSC_PLATFORM_CONFIG_ID, CORRUPT_APK_PACKAGE_NAME));
-        assertNull(install(COMPRESSED_ARSC_R));
-    }
-
-    /** APKs that target pre-Q and have a unaligned resources.arsc can be installed. */
+    /** APKs that target pre-R and have a unaligned resources.arsc can be installed. */
     public void testFailInstallUnalignedARSC_Q() throws Exception {
         assertNull(install(UNALIGNED_ARSC_Q));
     }
 
     public void testFailInstallUnalignedARSC_Q_PlatformConfig_enabled() throws Exception {
+        assertNull(install(UNALIGNED_ARSC_Q));
         getDevice().executeShellCommand(String.format("am compat enable %s %s",
                 FAIL_COMPRESSED_ARSC_PLATFORM_CONFIG_ID, CORRUPT_APK_PACKAGE_NAME));
         assertNotNull(install(UNALIGNED_ARSC_Q));
@@ -203,11 +201,5 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
     /** APKs that target R+ and have a unaligned resources.arsc must not be installed. */
     public void testFailInstallUnalignedARSC_R() throws Exception {
         assertNotNull(install(UNALIGNED_ARSC_R));
-    }
-
-    public void testFailInstallUnalignedARSC_R_PlatformConfig_disabled() throws Exception {
-        getDevice().executeShellCommand(String.format("am compat disable %s %s",
-                FAIL_COMPRESSED_ARSC_PLATFORM_CONFIG_ID, CORRUPT_APK_PACKAGE_NAME));
-        assertNull(install(UNALIGNED_ARSC_R));
     }
 }

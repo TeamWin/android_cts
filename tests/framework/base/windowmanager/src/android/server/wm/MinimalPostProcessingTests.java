@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.MPP_ACTIVITY;
 import static android.server.wm.app.Components.MPP_ACTIVITY2;
 import static android.server.wm.app.Components.MPP_ACTIVITY3;
@@ -145,7 +146,7 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
         launchMppActivity(MPP_ACTIVITY, PREFER_MPP);
         launchMppActivity(MPP_ACTIVITY2, NOT_PREFER_MPP);
 
-        mWmState.assertVisibility(MPP_ACTIVITY, false);
+        mWmState.waitAndAssertVisibilityGone(MPP_ACTIVITY);
         mWmState.assertVisibility(MPP_ACTIVITY2, true);
 
         assertDisplayRequestedMinimalPostProcessing(MPP_ACTIVITY, NOT_PREFER_MPP);

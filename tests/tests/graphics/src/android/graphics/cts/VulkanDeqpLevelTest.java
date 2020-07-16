@@ -71,7 +71,8 @@ public class VulkanDeqpLevelTest {
     @CddTest(requirement = "7.1.4.2/C-1-8,C-1-9")
     @Test
     public void testVulkanDeqpLevel() {
-        if (mVulkanHardwareVersion.version >= VULKAN_1_0) {
+        if (mVulkanHardwareVersion != null
+                && mVulkanHardwareVersion.version >= VULKAN_1_0) {
             if (DEBUG) {
                 Log.d(TAG, "Checking whether " + PackageManager.FEATURE_VULKAN_DEQP_LEVEL
                         + " has an acceptable value");

@@ -253,9 +253,12 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         try {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceFeatureUtils",
                     "testHasFactoryResetProtectionPolicy", mUserId);
-        } catch (Exception e) {
+        } catch (AssertionError e) {
             // Unable to continue running tests because factory reset protection policy is not
             // supported on the device
+            return;
+        } catch (Exception e) {
+            // Also skip test in case of other exceptions
             return;
         }
 

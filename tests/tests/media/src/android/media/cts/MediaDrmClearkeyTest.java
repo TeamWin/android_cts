@@ -27,6 +27,7 @@ import android.os.Looper;
 import android.platform.test.annotations.Presubmit;
 import android.util.Base64;
 import android.util.Log;
+
 import android.view.Surface;
 
 import com.android.compatibility.common.util.ApiLevelUtil;

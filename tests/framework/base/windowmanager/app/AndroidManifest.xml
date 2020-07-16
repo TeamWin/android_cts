@@ -591,6 +591,7 @@
             android:exported="true" />
         <activity
             android:name=".PresentationActivity"
+            android:launchMode="singleTop"
             android:exported="true" />
     </application>
 </manifest>

@@ -37,6 +37,7 @@ import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
@@ -134,6 +135,7 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot rely on ACTION_CLOSE_SYSTEM_DIALOGS")
     @Test
     public void testEditTextPositionAndPersistWhenAboveImeWindowShown() throws Exception {
         final InputMethodManager imm = InstrumentationRegistry.getInstrumentation().getContext()
@@ -227,7 +229,7 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
                 TextView textView = new TextView(activity);
                 textView.setText("I'm a TextView");
                 textView.setHeight(activity.getWindowManager().getMaximumWindowMetrics()
-                        .getBounds().height() / 2);
+                        .getBounds().height() / 3);
                 layout.addView(textView);
             }
 

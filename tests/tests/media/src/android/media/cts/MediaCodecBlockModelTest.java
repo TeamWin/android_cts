@@ -30,6 +30,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.R;
 import android.net.Uri;
+import android.os.Build;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
@@ -38,6 +39,7 @@ import android.view.Surface;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
@@ -57,6 +59,7 @@ import java.util.function.BooleanSupplier;
 /**
  * MediaCodec tests with CONFIGURE_FLAG_USE_BLOCK_MODEL.
  */
+@NonMediaMainlineTest
 public class MediaCodecBlockModelTest extends AndroidTestCase {
     private static final String TAG = "MediaCodecBlockModelTest";
     private static final boolean VERBOSE = false;           // lots of logging
@@ -76,6 +79,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     // Time out processing, as we have no way to query whether the decoder will produce output.
     private static final int TIMEOUT_MS = 60000;  // 1 minute
 
+    private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
     /**
      * Tests whether decoding a short group-of-pictures succeeds. The test queues a few video frames
      * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
@@ -84,6 +88,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testDecodeShortVideo() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runDecodeShortVideo(
                 INPUT_RESOURCE_ID,
                 LAST_BUFFER_TIMESTAMP_US,
@@ -100,6 +105,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
      * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
      */
     public void testDecodeShortEncryptedVideo() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runDecodeShortEncryptedVideo(
                 true /* obtainBlockForEachBuffer */));
         runThread(() -> runDecodeShortEncryptedVideo(
@@ -114,6 +120,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testDecodeShortAudio() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runDecodeShortAudio(
                 INPUT_RESOURCE_ID,
                 LAST_BUFFER_TIMESTAMP_US,
@@ -132,6 +139,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testEncodeShortAudio() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runEncodeShortAudio());
     }
 
@@ -143,6 +151,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testEncodeShortVideo() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runEncodeShortVideo());
     }
 
@@ -153,6 +162,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     @SmallTest
     @RequiresDevice
     public void testFormatChange() throws InterruptedException {
+        if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         List<FormatChangeEvent> events = new ArrayList<>();
         runThread(() -> runDecodeShortVideo(
                 getMediaExtractorForMimeType(INPUT_RESOURCE_ID, "video/"),
@@ -712,6 +722,9 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, kFrameRate);
             mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, 1000000);
             mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+            mediaFormat.setInteger(
+                    MediaFormat.KEY_COLOR_FORMAT,
+                    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
             // TODO: b/147748978
             String[] codecs = MediaUtils.getEncoderNames(true /* isGoog */, mediaFormat);
             if (codecs.length == 0) {

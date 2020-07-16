@@ -448,7 +448,15 @@ public class MediaParserTest {
 
     @Test
     public void testTsBigBuckBunny() throws IOException {
-        testAssetExtraction("ts/bbb_2500ms.ts");
+        // This file is too big to run a full extraction with multiple seeks like other tests do.
+        MockMediaParserOutputConsumer outputConsumer = new MockMediaParserOutputConsumer();
+        MockMediaParserInputReader inputReader = getInputReader("ts/bbb_2500ms.ts");
+        MediaParser mediaParser = MediaParser.create(outputConsumer);
+        advanceUntilSample(outputConsumer, inputReader, mediaParser, /* sampleNumber= */ 100);
+        assertThat(outputConsumer.getSeekMap().getDurationMicros()).isEqualTo(2_500_000);
+        mediaParser.seek(MediaParser.SeekPoint.START);
+        inputReader.setPosition(0);
+        advanceUntilSample(outputConsumer, inputReader, mediaParser, /* sampleNumber= */ 101);
     }
 
     @Test

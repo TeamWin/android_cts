@@ -30,6 +30,7 @@ import android.stats.devicepolicy.EventId;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IBuildReceiver;
 
@@ -73,7 +74,10 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
         assumeTrue(mSupportsMultiUser);
 
         mParentUserId = getDevice().getCurrentUser();
-        assertEquals(USER_SYSTEM, mParentUserId);
+        // Automotive uses non-system user as current user always
+        if (!getDevice().hasFeature("feature:android.hardware.type.automotive")) {
+            assertEquals(USER_SYSTEM, mParentUserId);
+        }
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         mApkFile = buildHelper.getTestFile(TEST_WITH_PERMISSION_APK);
@@ -99,6 +103,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_differentUser_bindsServiceToCorrectUser()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -126,6 +131,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_sameProfileGroup_samePackage_withAcrossUsersPermission_bindsService()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -153,6 +159,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_sameProfileGroup_differentPackage_withAcrossUsersPermission_bindsService()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -180,6 +187,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_sameProfileGroup_samePackage_withAcrossProfilesPermission_bindsService()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -207,6 +215,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_sameProfileGroup_differentPackage_withAcrossProfilesPermission_throwsException()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -234,6 +243,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_sameProfileGroup_samePackage_withAcrossProfilesAppOp_bindsService()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -261,6 +271,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_sameProfileGroup_differentPackage_withAcrossProfilesAppOp_throwsException()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -375,6 +386,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_sameProfileGroup_withNoPermissions_throwsException()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -402,9 +414,8 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_sameProfileGroup_reportsMetric()
             throws Exception {
-        if (!isStatsdEnabled(getDevice())) {
-            return;
-        }
+        assumeTrue(isStatsdEnabled(getDevice()));
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */ true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -444,9 +455,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_differentProfileGroup_doesNotReportMetric()
             throws Exception {
-        if (!isStatsdEnabled(getDevice())) {
-            return;
-        }
+        assumeTrue(isStatsdEnabled(getDevice()));
         int userInDifferentProfileGroup = createUser();
         getDevice().startUser(userInDifferentProfileGroup, /* waitFlag= */ true);
         mTestArgs.put("testUser", Integer.toString(userInDifferentProfileGroup));
@@ -483,9 +492,8 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testBindServiceAsUser_sameUser_doesNotReportMetric()
             throws Exception {
-        if (!isStatsdEnabled(getDevice())) {
-            return;
-        }
+        assumeTrue(isStatsdEnabled(getDevice()));
+
         mTestArgs.put("testUser", Integer.toString(mParentUserId));
 
         assertMetricsNotLogged(getDevice(), () -> {
@@ -506,6 +514,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testCreateContextAsUser_sameProfileGroup_withInteractAcrossProfilesPermission_throwsException()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -533,6 +542,7 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
     @Test
     public void testCreateContextAsUser_sameProfileGroup_withInteractAcrossUsersPermission_createsContext()
             throws Exception {
+        assumeTrue(supportsManagedUsers());
         int userInSameProfileGroup = createProfile(mParentUserId);
         getDevice().startUser(userInSameProfileGroup, /* waitFlag= */true);
         mTestArgs.put("testUser", Integer.toString(userInSameProfileGroup));
@@ -555,5 +565,13 @@ public class ContextCrossProfileHostTest extends BaseContextCrossProfileTest
                 mTestArgs,
                 /* timeout= */60L,
                 TimeUnit.SECONDS);
+    }
+
+    boolean supportsManagedUsers() {
+        try {
+            return getDevice().hasFeature("feature:android.software.managed_users");
+        } catch (DeviceNotAvailableException e) {
+            return false;
+        }
     }
 }

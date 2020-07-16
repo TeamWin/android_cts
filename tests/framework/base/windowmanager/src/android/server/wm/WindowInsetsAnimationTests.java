@@ -26,6 +26,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -50,8 +51,6 @@ import org.mockito.InOrder;
 
 import java.util.List;
 
-import androidx.test.filters.FlakyTest;
-
 /**
  * Test whether {@link WindowInsetsAnimation.Callback} are properly dispatched to views.
  *
@@ -66,6 +65,7 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
         super.setUp();
         mActivity = startActivity(TestActivity.class);
         mRootView = mActivity.getWindow().getDecorView();
+        assumeTrue(hasWindowInsets(mRootView, systemBars()));
     }
 
     @Test
@@ -99,7 +99,6 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
     }
 
     @Test
-    @FlakyTest(detail = "Promote once confirmed non-flaky")
     public void testAnimationCallbacks_overlapping() {
         WindowInsets before = mActivity.mLastWindowInsets;
 
@@ -220,10 +219,14 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
 
         waitForOrFail("Waiting until animation done", () -> done[0]);
 
-        verify(childCallback).onStart(any(), argThat(
-                bounds -> bounds.getUpperBound().equals(before.getInsets(statusBars()))));
-        verify(childCallback, atLeastOnce()).onProgress(argThat(
-                insets -> NONE.equals(insets.getInsets(navigationBars()))), any());
+        if (hasWindowInsets(mRootView, statusBars())) {
+            verify(childCallback).onStart(any(), argThat(
+                    bounds -> bounds.getUpperBound().equals(before.getInsets(statusBars()))));
+        }
+        if (hasWindowInsets(mRootView, navigationBars())) {
+            verify(childCallback, atLeastOnce()).onProgress(argThat(
+                    insets -> NONE.equals(insets.getInsets(navigationBars()))), any());
+        }
     }
 
     @Test
@@ -239,14 +242,12 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
             });
         });
 
-        getWmState().waitFor(state -> !state.isWindowVisible("StatusBar"),
-                "Waiting for status bar to be hidden");
-        assertFalse(getWmState().isWindowVisible("StatusBar"));
+        waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
 
+        assertFalse(getWmState().isWindowVisible("StatusBar"));
         verify(mActivity.mCallback).onPrepare(any());
         verify(mActivity.mCallback).onStart(any(), any());
         verify(mActivity.mCallback, atLeastOnce()).onProgress(any(), any());
         verify(mActivity.mCallback).onEnd(any());
     }
-
 }

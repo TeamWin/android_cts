@@ -65,6 +65,7 @@ public class ScanResultTest extends AndroidTestCase {
     private static final int SCAN_MAX_RETRY_COUNT = 6;
     private static final int SCAN_FIND_BSSID_MAX_RETRY_COUNT = 5;
     private static final long SCAN_FIND_BSSID_WAIT_MSEC = 5_000L;
+    private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
 
     private static final String TEST_SSID = "TEST_SSID";
     public static final String TEST_BSSID = "04:ac:fe:45:34:10";
@@ -306,7 +307,7 @@ public class ScanResultTest extends AndroidTestCase {
         ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected",
-                ENABLE_WAIT_MSEC,
+                WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
 
         final WifiInfo wifiInfo = mWifiManager.getConnectionInfo();

@@ -29,17 +29,26 @@ import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Instrumentation;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -53,10 +62,14 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeSettings;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -77,6 +90,9 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     private final static long TIMEOUT = 1000; // milliseconds
     private final static long TIME_SLICE = 50; // milliseconds
     private final static AnimationCallback ANIMATION_CALLBACK = new AnimationCallback();
+
+    private static final String AM_BROADCAST_CLOSE_SYSTEM_DIALOGS =
+            "am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS";
 
     @Rule
     public final ErrorCollector mErrorCollector = new ErrorCollector();
@@ -174,17 +190,27 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
-    public void testImeShowAndHide() {
-        final TestActivity activity = startActivity(TestActivity.class);
-        final View rootView = activity.getWindow().getDecorView();
-        getInstrumentation().runOnMainSync(() -> {
-            rootView.getWindowInsetsController().show(ime());
-        });
-        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
-        getInstrumentation().runOnMainSync(() -> {
-            rootView.getWindowInsetsController().hide(ime());
-        });
-        PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(ime()));
+    public void testImeShowAndHide() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
+                nullValue());
+        try (MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
+                instrumentation.getUiAutomation(), new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final TestActivity activity = startActivity(TestActivity.class);
+            expectEvent(stream, editorMatcher("onStartInput", activity.mEditTextMarker), TIMEOUT);
+
+            final View rootView = activity.getWindow().getDecorView();
+            getInstrumentation().runOnMainSync(() -> {
+                rootView.getWindowInsetsController().show(ime());
+            });
+            PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
+            getInstrumentation().runOnMainSync(() -> {
+                rootView.getWindowInsetsController().hide(ime());
+            });
+            PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(ime()));
+        }
     }
 
     @Test
@@ -394,6 +420,12 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         // Swiping from top of display can show bars.
         dragFromTopToCenter(rootView);
         PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
+
+        // The swipe action brings down the notification shade which causes subsequent tests to
+        // fail.
+        if (isAutomotive(mContext)) {
+            broadcastCloseSystemDialogs();
+        }
     }
 
     @Test
@@ -448,11 +480,17 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Test
     public void testShowImeOnCreate() throws Exception {
-        final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
-        final View rootView = activity.getWindow().getDecorView();
-        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
-        PollingCheck.waitFor(TIMEOUT,
-                () -> rootView.getRootWindowInsets().isVisible(ime()));
+        final Instrumentation instrumentation = getInstrumentation();
+        assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
+                nullValue());
+        try (MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
+                instrumentation.getUiAutomation(), new ImeSettings.Builder())) {
+            final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
+            final View rootView = activity.getWindow().getDecorView();
+            ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+            PollingCheck.waitFor(TIMEOUT,
+                    () -> rootView.getRootWindowInsets().isVisible(ime()));
+        }
     }
 
     @Test
@@ -507,6 +545,14 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             activity.getWindowManager().removeView(childWindow);
         });
 
+    }
+
+    private static void broadcastCloseSystemDialogs() {
+        executeShellCommand(AM_BROADCAST_CLOSE_SYSTEM_DIALOGS);
+    }
+
+    private static boolean isAutomotive(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     private static void hideInsets(View view, int types) throws InterruptedException {
@@ -592,10 +638,11 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         }
     }
 
-    private static View setViews(Activity activity) {
+    private static View setViews(Activity activity, @Nullable String privateImeOptions) {
         LinearLayout layout = new LinearLayout(activity);
         View text = new TextView(activity);
         EditText editor = new EditText(activity);
+        editor.setPrivateImeOptions(privateImeOptions);
         layout.addView(text);
         layout.addView(editor);
         activity.setContentView(layout);
@@ -604,11 +651,14 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     public static class TestActivity extends FocusableActivity {
+        final String mEditTextMarker =
+                getClass().getName() + "/" + SystemClock.elapsedRealtimeNanos();
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            setViews(this);
+            setViews(this, mEditTextMarker);
+            getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
         }
     }
 
@@ -617,7 +667,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            View layout = setViews(this);
+            View layout = setViews(this, null /* privateImeOptions */);
             ANIMATION_CALLBACK.reset();
             getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
             getWindow().getInsetsController().hide(statusBars());
@@ -626,11 +676,10 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     public static class TestShowOnCreateActivity extends FocusableActivity {
-
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            View layout = setViews(this);
+            setViews(this, null /* privateImeOptions */);
             ANIMATION_CALLBACK.reset();
             getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
             getWindow().getInsetsController().show(ime());

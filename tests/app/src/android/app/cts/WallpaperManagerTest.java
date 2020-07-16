@@ -78,10 +78,11 @@ public class WallpaperManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
         mContext = InstrumentationRegistry.getTargetContext();
         mWallpaperManager = WallpaperManager.getInstance(mContext);
         assumeTrue("Device does not support wallpapers", mWallpaperManager.isWallpaperSupported());
+
+        MockitoAnnotations.initMocks(this);
         final HandlerThread handlerThread = new HandlerThread("TestCallbacks");
         handlerThread.start();
         mHandler = new Handler(handlerThread.getLooper());
@@ -102,7 +103,9 @@ public class WallpaperManagerTest {
 
     @After
     public void tearDown() throws Exception {
-        mContext.unregisterReceiver(mBroadcastReceiver);
+        if (mBroadcastReceiver != null) {
+            mContext.unregisterReceiver(mBroadcastReceiver);
+        }
     }
 
     @Test

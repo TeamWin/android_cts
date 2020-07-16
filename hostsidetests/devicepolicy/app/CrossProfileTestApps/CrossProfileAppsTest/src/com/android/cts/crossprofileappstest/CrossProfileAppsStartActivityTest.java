@@ -60,8 +60,8 @@ public class CrossProfileAppsStartActivityTest {
     private static final String PARAM_TARGET_USER = "TARGET_USER";
     private static final String ID_USER_TEXTVIEW =
             "com.android.cts.crossprofileappstest:id/user_textview";
-    private static final String ID_USER_TEXTVIEW2 =
-            "com.android.cts.crossprofileappstest:id/user_textview2";
+    private static final String ID_USER_TEXTVIEW_NONMAIN =
+            "com.android.cts.crossprofileappstest:id/user_textview_nonmain";
     private static final long TIMEOUT_WAIT_UI = TimeUnit.SECONDS.toMillis(10);
 
     private CrossProfileApps mCrossProfileApps;
@@ -240,7 +240,7 @@ public class CrossProfileAppsStartActivityTest {
                             nonMainActivityIntent, mTargetUser, /* callingActivity= */ null));
 
             // Look for the text view to verify that NonMainActivity is started.
-            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW2)),
+            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW_NONMAIN)),
                     TIMEOUT_WAIT_UI);
             assertNotNull("Failed to start non-main activity in target user", textView);
             assertEquals("Non-Main Activity is started in wrong user",
@@ -266,7 +266,7 @@ public class CrossProfileAppsStartActivityTest {
             mContext.startActivity(crossProfileSameTaskCheckerIntent);
 
             // Look for the text view to verify that NonMainActivity is started.
-            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW2)),
+            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW_NONMAIN)),
                     TIMEOUT_WAIT_UI);
             assertNotNull("Failed to start non-main activity in target user", textView);
             assertEquals("Non-Main Activity is started in wrong user",
@@ -317,7 +317,7 @@ public class CrossProfileAppsStartActivityTest {
                             NonMainActivity.getComponentName(mContext), mTargetUser));
 
             // Look for the text view to verify that NonMainActivity is started.
-            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW2)),
+            UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW_NONMAIN)),
                     TIMEOUT_WAIT_UI);
             assertNotNull("Failed to start non-main activity in target user", textView);
             assertEquals("Non-Main Activity is started in wrong user",
@@ -338,7 +338,7 @@ public class CrossProfileAppsStartActivityTest {
                         nonExportedActivityIntent, mTargetUser, /* callingActivity= */ null));
 
         // Look for the text view to verify that NonExportedActivity is started.
-        UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW2)),
+        UiObject2 textView = mDevice.wait(Until.findObject(By.res(ID_USER_TEXTVIEW_NONMAIN)),
                 TIMEOUT_WAIT_UI);
         assertNotNull("Failed to start not exported activity in target user", textView);
         assertEquals("Not exported Activity is started in wrong user",

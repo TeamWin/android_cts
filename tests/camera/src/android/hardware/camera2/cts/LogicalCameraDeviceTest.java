@@ -92,7 +92,6 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
     private static final double FRAME_DURATION_THRESHOLD = 0.03;
     private static final double FOV_THRESHOLD = 0.03;
-    private static final double ASPECT_RATIO_THRESHOLD = 0.03;
     private static final long MAX_TIMESTAMP_DIFFERENCE_THRESHOLD = 10000000; // 10ms
 
     private StateWaiter mSessionWaiter;
@@ -994,51 +993,56 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     }
 
     /**
-     * Validate that physical cameras' crop region are compensated based on focal length.
+     * Validate that physical cameras are not cropping too much.
      *
-     * This is to make sure physical processed streams have the same field of view as long as
-     * the physical cameras supports it.
+     * This is to make sure physical processed streams have at least the same field of view as
+     * the logical stream, or the maximum field of view of the physical camera, whichever is
+     * smaller.
+     *
+     * Note that the FOV is calculated in the directio of sensor width.
      */
     private void validatePhysicalCamerasFov(TotalCaptureResult totalCaptureResult,
             List<String> physicalCameraIds) {
         Rect cropRegion = totalCaptureResult.get(CaptureResult.SCALER_CROP_REGION);
         Float focalLength = totalCaptureResult.get(CaptureResult.LENS_FOCAL_LENGTH);
-        float cropAspectRatio = (float)cropRegion.width() / cropRegion.height();
+        Float zoomRatio = totalCaptureResult.get(CaptureResult.CONTROL_ZOOM_RATIO);
+        Rect activeArraySize = mStaticInfo.getActiveArraySizeChecked();
+        SizeF sensorSize = mStaticInfo.getValueFromKeyNonNull(
+                CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
 
         // Assume subject distance >> focal length, and subject distance >> camera baseline.
-        float fov = cropRegion.width() / (2 * focalLength);
+        double fov = 2 * Math.toDegrees(Math.atan2(sensorSize.getWidth() * cropRegion.width() /
+                (2 * zoomRatio * activeArraySize.width()),  focalLength));
+
         Map<String, CaptureResult> physicalResultsDual =
                     totalCaptureResult.getPhysicalCameraResults();
         for (String physicalId : physicalCameraIds) {
+            StaticMetadata physicalStaticInfo = mAllStaticInfo.get(physicalId);
             CaptureResult physicalResult = physicalResultsDual.get(physicalId);
             Rect physicalCropRegion = physicalResult.get(CaptureResult.SCALER_CROP_REGION);
-            final Float physicalFocalLength = physicalResult.get(CaptureResult.LENS_FOCAL_LENGTH);
+            Float physicalFocalLength = physicalResult.get(CaptureResult.LENS_FOCAL_LENGTH);
+            Float physicalZoomRatio = physicalResult.get(CaptureResult.CONTROL_ZOOM_RATIO);
+            Rect physicalActiveArraySize = physicalStaticInfo.getActiveArraySizeChecked();
+            SizeF physicalSensorSize = mStaticInfo.getValueFromKeyNonNull(
+                    CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
 
-            StaticMetadata staticInfo = mAllStaticInfo.get(physicalId);
-            final Rect activeArraySize = staticInfo.getActiveArraySizeChecked();
-            final Float maxDigitalZoom = staticInfo.getAvailableMaxDigitalZoomChecked();
-            int maxWidth = activeArraySize.width();
-            int minWidth = (int)(activeArraySize.width() / maxDigitalZoom);
-            int expectedCropWidth = Math.max(Math.min(Math.round(fov * 2 * physicalFocalLength),
-                    maxWidth), minWidth);
+            double physicalFov = 2 * Math.toDegrees(Math.atan2(
+                    physicalSensorSize.getWidth() * physicalCropRegion.width() /
+                    (2 * physicalZoomRatio * physicalActiveArraySize.width()), physicalFocalLength));
 
-            // Makes sure FOV matches to the maximum extent.
-            assertTrue("Physical stream FOV (Field of view) should match logical stream to most "
-                    + "extent. Crop region actual width " + physicalCropRegion.width() +
-                    " vs expected width " + expectedCropWidth,
-                    Math.abs((float)physicalCropRegion.width() - expectedCropWidth) /
-                    expectedCropWidth < FOV_THRESHOLD);
+            double maxPhysicalFov = 2 * Math.toDegrees(Math.atan2(physicalSensorSize.getWidth() / 2,
+                    physicalFocalLength));
+            double expectedPhysicalFov = Math.min(maxPhysicalFov, fov);
 
-            // Makes sure aspect ratio matches.
-            float physicalCropAspectRatio =
-                    (float)physicalCropRegion.width() / physicalCropRegion.height();
-            assertTrue("Physical stream for camera " + physicalId + " aspect ratio " +
-                    physicalCropAspectRatio + " should match logical streams aspect ratio " +
-                    cropAspectRatio, Math.abs(physicalCropAspectRatio - cropAspectRatio) <
-                    ASPECT_RATIO_THRESHOLD);
+            if (VERBOSE) {
+                Log.v(TAG, "Logical camera Fov: " + fov + ", maxPhyiscalFov: " + maxPhysicalFov +
+                        ", physicalFov: " + physicalFov);
+            }
+            assertTrue("Physical stream FOV (Field of view) should be greater or equal to"
+                    + " min(logical stream FOV, max physical stream FOV). Physical FOV: "
+                    + physicalFov + " vs min(" + fov + ", " + maxPhysicalFov,
+                    physicalFov - expectedPhysicalFov > -FOV_THRESHOLD);
         }
-
-
     }
 
     /**

@@ -218,6 +218,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("Kirin970", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("Kirin810", null);
         put("Kirin710", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("SDMMAGPIE", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM6150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM7150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("LITO", null);
@@ -227,6 +228,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("SDM429", null);
         put("SDM439", null);
         put("QM215", null);
+        put("BENGAL", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("DEFAULT", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y",
             "CONFIG_UNMAP_KERNEL_AT_EL0=y"});
     }};
@@ -281,6 +283,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         final Set<String> ALLOWED_PATH_PREFIXES = new HashSet<String>();
         ALLOWED_PATH_PREFIXES.add("/vendor/");
         ALLOWED_PATH_PREFIXES.add("/system/");
+        ALLOWED_PATH_PREFIXES.add("/system_ext/");
 
         assertTrue("Linux kernel must enable static usermodehelper: " + ENABLE_CONFIG,
             configSet.contains(ENABLE_CONFIG));

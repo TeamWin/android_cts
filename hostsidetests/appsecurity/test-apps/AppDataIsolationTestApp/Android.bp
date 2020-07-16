@@ -15,7 +15,7 @@
 android_test_helper_app {
     name: "CtsAppDataIsolationAppA",
     defaults: ["cts_support_defaults"],
-    srcs: ["common/src/**/*.java", "AppA/src/**/*.java"],
+    srcs: ["common/src/**/*.java", "AppA/src/**/*.java", "AppA/aidl/**/*.aidl"],
     sdk_version: "current",
     static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "ub-uiautomator"],
     libs: ["android.test.base.stubs"],
@@ -35,7 +35,7 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsAppDataIsolationAppSharedA",
     defaults: ["cts_support_defaults"],
-    srcs: ["common/src/**/*.java", "AppA/src/**/*.java"],
+    srcs: ["common/src/**/*.java", "AppA/src/**/*.java", "AppA/aidl/**/*.aidl"],
     sdk_version: "current",
     static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "ub-uiautomator"],
     libs: ["android.test.base.stubs"],
@@ -55,7 +55,7 @@ android_test_helper_app {
 android_test_helper_app {
     name: "CtsAppDataIsolationAppDirectBootA",
     defaults: ["cts_support_defaults"],
-    srcs: ["common/src/**/*.java", "AppA/src/**/*.java"],
+    srcs: ["common/src/**/*.java", "AppA/src/**/*.java", "AppA/aidl/**/*.aidl"],
     sdk_version: "current",
     static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "ub-uiautomator"],
     libs: ["android.test.base.stubs"],

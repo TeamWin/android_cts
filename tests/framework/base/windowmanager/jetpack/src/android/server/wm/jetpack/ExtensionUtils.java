@@ -21,9 +21,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeFalse;
 
 import android.content.Context;
+import android.server.wm.jetpack.wrapper.TestDeviceState;
 import android.server.wm.jetpack.wrapper.extensionwrapperimpl.TestExtensionCompat;
 import android.server.wm.jetpack.wrapper.sidecarwrapperimpl.TestSidecarCompat;
 import android.server.wm.jetpack.wrapper.TestInterfaceCompat;
+import android.server.wm.jetpack.wrapper.sidecarwrapperimpl.TestSidecarDeviceState;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -53,15 +55,22 @@ final class ExtensionUtils {
         }
     }
 
+    static void assertEqualsState(TestDeviceState left, TestDeviceState right) {
+        if (left instanceof TestSidecarDeviceState && right instanceof TestSidecarDeviceState) {
+            assertThat(left.getPosture()).isEqualTo(right.getPosture());
+        } else {
+            assertThat(left).isEqualTo(right);
+        }
+    }
+
     /**
      * Gets the vendor provided Extension implementation if available. If not available, gets the
      * Sidecar implementation (deprecated). If neither is available, returns {@code null}.
      */
     @Nullable
     static TestInterfaceCompat getInterfaceCompat(Context context) {
-        if (!TextUtils.isEmpty(getExtensionVersion())) {
-            return getExtensionInterfaceCompat(context);
-        } else if (!TextUtils.isEmpty(getSidecarVersion())) {
+        // TODO(b/158876142) Reinstate android.window.extension
+        if (!TextUtils.isEmpty(getSidecarVersion())) {
             return getSidecarInterfaceCompat(context);
         }
         return null;

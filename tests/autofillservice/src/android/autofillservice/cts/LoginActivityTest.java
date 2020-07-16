@@ -501,7 +501,12 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
                 "Username1 at " + usernameBoundaries1 + "; picker at " + usernamePickerBoundaries1);
         // TODO(b/37566627): assertions below might be too aggressive - use range instead?
         if (pickerAndViewBoundsMatches) {
-            assertThat(usernamePickerBoundaries1.top).isEqualTo(usernameBoundaries1.bottom);
+            if (usernamePickerBoundaries1.top < usernameBoundaries1.bottom) {
+                assertThat(usernamePickerBoundaries1.bottom).isEqualTo(usernameBoundaries1.top);
+            } else {
+                assertThat(usernamePickerBoundaries1.top).isEqualTo(usernameBoundaries1.bottom);
+            }
+
             assertThat(usernamePickerBoundaries1.left).isEqualTo(usernameBoundaries1.left);
         }
 
@@ -514,7 +519,11 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
                 "Password1 at " + passwordBoundaries1 + "; picker at " + passwordPickerBoundaries1);
         // TODO(b/37566627): assertions below might be too aggressive - use range instead?
         if (pickerAndViewBoundsMatches) {
-            assertThat(passwordPickerBoundaries1.top).isEqualTo(passwordBoundaries1.bottom);
+            if (passwordPickerBoundaries1.top < passwordBoundaries1.bottom) {
+                assertThat(passwordPickerBoundaries1.bottom).isEqualTo(passwordBoundaries1.top);
+            } else {
+                assertThat(passwordPickerBoundaries1.top).isEqualTo(passwordBoundaries1.bottom);
+            }
             assertThat(passwordPickerBoundaries1.left).isEqualTo(passwordBoundaries1.left);
         }
 
@@ -2860,6 +2869,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
     }
 
     @Test
+    @AppModeFull(reason = "WRITE_SECURE_SETTING permission can't be grant to instant apps")
     public void testSwitchInputMethod_noNewFillRequest() throws Exception {
         // Set service
         enableService();

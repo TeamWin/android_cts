@@ -67,4 +67,15 @@ public enum CecMessage {
     private CecMessage(int messageId) {
         this.messageId = messageId;
     }
+
+    public static String formatParams(long rawParam) {
+        StringBuilder params = new StringBuilder("");
+
+        do {
+            params.insert(0, ":" + String.format("%02x", rawParam % 256));
+            rawParam >>= 8;
+        } while (rawParam > 0);
+
+        return params.toString();
+    }
 }

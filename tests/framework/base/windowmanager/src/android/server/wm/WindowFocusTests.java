@@ -135,7 +135,10 @@ public class WindowFocusTests extends WindowManagerTestBase {
         sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_1, DEFAULT_DISPLAY);
 
         assumeTrue(supportsMultiDisplay());
-        final InvisibleVirtualDisplaySession session = createManagedInvisibleDisplaySession();
+
+        // VirtualDisplay can't maintain perDisplayFocus because it is not trusted,
+        // so uses SimulatedDisplay instead.
+        final SimulatedDisplaySession session = createManagedSimulatedDisplaySession();
         final int secondaryDisplayId = session.getDisplayId();
         final SecondaryActivity secondaryActivity = session.startActivityAndFocus();
         sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_2, INVALID_DISPLAY);
@@ -497,13 +500,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
         }
 
         SecondaryActivity startActivityAndFocus() {
-            final int displayId = getDisplayId();
-            // An untrusted virtual display won't have focus until the display is touched.
-            final SecondaryActivity activity = WindowManagerTestBase.startActivity(
-                    SecondaryActivity.class, displayId, false /* hasFocus */);
-            tapOnCenterOfDisplay(displayId);
-            activity.waitAndAssertWindowFocusState(true);
-            return activity;
+            return WindowFocusTests.startActivityAndFocus(getDisplayId(), false /* hasFocus */);
         }
 
         @Override
@@ -515,5 +512,41 @@ public class WindowFocusTests extends WindowManagerTestBase {
                 mReader.close();
             }
         }
+    }
+
+    private SimulatedDisplaySession createManagedSimulatedDisplaySession() {
+        return mObjectTracker.manage(new SimulatedDisplaySession());
+    }
+
+    private class SimulatedDisplaySession implements AutoCloseable {
+        private final VirtualDisplaySession mVirtualDisplaySession;
+        private final WindowManagerState.DisplayContent mVirtualDisplay;
+
+        SimulatedDisplaySession() {
+            mVirtualDisplaySession = new VirtualDisplaySession();
+            mVirtualDisplay = mVirtualDisplaySession.setSimulateDisplay(true).createDisplay();
+        }
+
+        int getDisplayId() {
+            return mVirtualDisplay.mId;
+        }
+
+        SecondaryActivity startActivityAndFocus() {
+            return WindowFocusTests.startActivityAndFocus(getDisplayId(), true /* hasFocus */);
+        }
+
+        @Override
+        public void close() {
+            mVirtualDisplaySession.close();
+        }
+    }
+
+    private static SecondaryActivity startActivityAndFocus(int displayId, boolean hasFocus) {
+        // An untrusted virtual display won't have focus until the display is touched.
+        final SecondaryActivity activity = WindowManagerTestBase.startActivity(
+                SecondaryActivity.class, displayId, hasFocus);
+        tapOnCenterOfDisplay(displayId);
+        activity.waitAndAssertWindowFocusState(true);
+        return activity;
     }
 }

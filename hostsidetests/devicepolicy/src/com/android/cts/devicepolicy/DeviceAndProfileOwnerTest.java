@@ -726,6 +726,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             // Install and enable assistant, notice that profile can't have assistant.
             installAppAsUser(ASSIST_APP_APK, mPrimaryUserId);
+            waitForBroadcastIdle();
             setVoiceInteractionService(ASSIST_INTERACTION_SERVICE);
             setScreenCaptureDisabled_assist(mUserId, true /* disabled */);
         } finally {
@@ -1223,8 +1224,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // Reboot while in kiosk mode and then unlock the device
             rebootAndWaitUntilReady();
 
-            // Make sure that the LockTaskUtilityActivityIfWhitelisted was started.
-            executeDeviceTestMethod(".LockTaskHostDrivenTest", "testLockTaskIsActive");
+            // Wait for the LockTask starting
+            waitForBroadcastIdle();
 
             // Try to open settings via adb
             executeShellCommand("am start -a android.settings.SETTINGS");
@@ -2222,13 +2223,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 ? "testScreenCaptureImpossible"
                 : "testScreenCapturePossible";
 
-        if (userId == mPrimaryUserId) {
-            // If testing for user-0, also make sure the existing screen can't be captured.
-            executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
-        }
-
         startSimpleActivityAsUser(userId);
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
+        forceStopPackageForUser(TEST_APP_PKG, userId);
     }
 
     protected void setScreenCaptureDisabled_assist(int userId, boolean disabled) throws Exception {

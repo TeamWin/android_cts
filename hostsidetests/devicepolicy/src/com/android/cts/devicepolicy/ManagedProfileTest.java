@@ -57,17 +57,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
             DEVICE_OWNER_PKG + ".BaseDeviceOwnerTest$BasicAdminReceiver";
 
     @Test
-    public void testManagedProfilesSupportedWithLockScreenOnly() throws Exception {
-        if (!mHasFeature || hasDeviceFeature("android.software.leanback")) {
-            return;
-        }
-        // Managed profiles should be only supported if the device supports the secure lock
-        // screen feature.
-        // Exception is Android TV which does not support lock screen feature.
-        assertTrue(mHasSecureLockScreen);
-    }
-
-    @Test
     public void testManagedProfileSetup() throws Exception {
         if (!mHasFeature) {
             return;

@@ -29,6 +29,10 @@ import org.junit.Test;
 
 import java.util.List;
 
+/**
+ * Build/Install/Run:
+ *     atest CtsWindowManagerDeviceTestCases:PresentationTest
+ */
 @Presubmit
 public class PresentationTest extends MultiDisplayTestBase {
 
@@ -68,6 +72,7 @@ public class PresentationTest extends MultiDisplayTestBase {
         WindowManagerState.DisplayContent display = virtualDisplaySession
                         .setPresentationDisplay(true)
                         .setPublicDisplay(true)
+                        .setResizeDisplay(false) // resize only through resizeDisplay call
                         .createDisplay();
 
         assertThat(display.getFlags() & Display.FLAG_PRESENTATION)
