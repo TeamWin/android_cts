@@ -16,6 +16,7 @@
 
 package android.systemui.tv.cts
 
+import android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.annotation.Group2
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
@@ -24,11 +25,16 @@ import android.systemui.tv.cts.Components.activityName
 import android.systemui.tv.cts.Components.windowName
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
+import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_FULLSCREEN_BUTTON
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.Until
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Tests most basic picture in picture (PiP) behavior.
@@ -77,14 +83,26 @@ class BasicPipTests : PipTestBase() {
     fun pipMenu_openThenClose() {
         launchPipThenEnterMenu()
 
-        val closeButton = uiDevice.wait(
-            Until.findObject(By.res(ID_PIP_MENU_CLOSE_BUTTON)),
-            defaultTimeout
-        )
+        val closeButton = locateByResourceName(ID_PIP_MENU_CLOSE_BUTTON)
         closeButton.click()
 
         wmState.waitFor("The PiP app and its menu must be closed!") {
             it.containsNoneOf(listOf(PIP_ACTIVITY, PIP_MENU_ACTIVITY))
+        }
+    }
+
+    /** Open an app's pip menu then press its fullscreen button and ensure the app is fullscreen. */
+    @Test
+    fun pipMenu_openThenFullscreen() {
+        launchPipThenEnterMenu()
+
+        val fullscreenButton = locateByResourceName(ID_PIP_MENU_FULLSCREEN_BUTTON)
+        fullscreenButton.click()
+
+        wmState.waitAndAssertActivityRemoved(PIP_MENU_ACTIVITY)
+        wmState.assertFocusedActivity("The PiP app must be focused!", PIP_ACTIVITY)
+        assertTrue("The PiP app must be in fullscreen mode!") {
+            wmState.containsActivityInWindowingMode(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN)
         }
     }
 
@@ -96,4 +114,8 @@ class BasicPipTests : PipTestBase() {
         sendBroadcast(PipMenu.ACTION_MENU)
         wmState.waitForValidState(PIP_MENU_ACTIVITY)
     }
+
+    private fun locateByResourceName(resourceName: String): UiObject2 =
+        uiDevice.wait(Until.findObject(By.res(resourceName)), defaultTimeout)
+            ?: error("Could not locate $resourceName")
 }
