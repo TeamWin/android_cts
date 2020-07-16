@@ -16,16 +16,14 @@
 
 package android.systemui.tv.cts
 
-import android.content.Intent
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.annotation.Group2
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
 import android.systemui.tv.cts.Components.PIP_MENU_ACTIVITY
 import android.systemui.tv.cts.Components.activityName
+import android.systemui.tv.cts.Components.windowName
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.uiautomator.By
-import androidx.test.uiautomator.Until
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,13 +45,26 @@ class BasicPipTests : PipTestBase() {
         stopPackage(PIP_ACTIVITY)
     }
 
+    /** Open an app in pip mode and ensure it has a window but is not focused. */
+    @Test
+    fun openPip_launchedNotFocused() {
+        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+        wmState.waitForValidState(PIP_ACTIVITY)
+
+        wmState.assertActivityDisplayed(PIP_ACTIVITY)
+        wmState.assertNotFocusedWindow(
+            "PiP Window must not be focused!",
+            PIP_ACTIVITY.windowName()
+        )
+    }
+
     /** Open an app in pip mode and ensure its pip menu can be opened. */
     @Test
     fun pipMenu_open() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
         wmState.waitForValidState(PIP_ACTIVITY)
         // enter pip menu
-        sendBroadcast(PipMenu.ACTION_MENU, setOf(Intent.FLAG_ACTIVITY_NEW_TASK))
+        sendBroadcast(PipMenu.ACTION_MENU)
         wmState.waitForValidState(PIP_MENU_ACTIVITY)
 
         wmState.assertActivityDisplayed(PIP_ACTIVITY)
