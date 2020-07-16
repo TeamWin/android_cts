@@ -23,6 +23,7 @@ import android.systemui.tv.cts.Components.PIP_MENU_ACTIVITY
 import android.systemui.tv.cts.Components.activityName
 import android.systemui.tv.cts.Components.windowName
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
+import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.After
 import org.junit.Test
@@ -61,11 +62,7 @@ class BasicPipTests : PipTestBase() {
     /** Open an app in pip mode and ensure its pip menu can be opened. */
     @Test
     fun pipMenu_open() {
-        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        wmState.waitForValidState(PIP_ACTIVITY)
-        // enter pip menu
-        sendBroadcast(PipMenu.ACTION_MENU)
-        wmState.waitForValidState(PIP_MENU_ACTIVITY)
+        launchPipThenEnterMenu()
 
         wmState.assertActivityDisplayed(PIP_ACTIVITY)
         assertEquals(
@@ -73,5 +70,30 @@ class BasicPipTests : PipTestBase() {
             actual = wmState.focusedActivity,
             message = "The PiP Menu activity must be focused!"
         )
+    }
+
+    /** Open an app's pip menu then press its close button and ensure the app is closed. */
+    @Test
+    fun pipMenu_openThenClose() {
+        launchPipThenEnterMenu()
+
+        val closeButton = uiDevice.wait(
+            Until.findObject(By.res(ID_PIP_MENU_CLOSE_BUTTON)),
+            defaultTimeout
+        )
+        closeButton.click()
+
+        wmState.waitFor("The PiP app and its menu must be closed!") {
+            it.containsNoneOf(listOf(PIP_ACTIVITY, PIP_MENU_ACTIVITY))
+        }
+    }
+
+    /** Launches an app into pip mode then opens the pip menu. */
+    private fun launchPipThenEnterMenu() {
+        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+        wmState.waitForValidState(PIP_ACTIVITY)
+        // enter pip menu
+        sendBroadcast(PipMenu.ACTION_MENU)
+        wmState.waitForValidState(PIP_MENU_ACTIVITY)
     }
 }
