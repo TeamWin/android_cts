@@ -16,12 +16,15 @@
 
 package android.app.appops.cts
 
+import android.Manifest.permission.READ_LOGS
 import android.app.AppOpsManager
+import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
 import android.app.AppOpsManager.OPSTR_CAMERA
 import android.app.AppOpsManager.OPSTR_COARSE_LOCATION
 import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
+import android.app.AppOpsManager.OPSTR_GET_USAGE_STATS
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
 import android.app.AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE
 import android.app.AppOpsManager.OPSTR_WRITE_CONTACTS
@@ -33,8 +36,6 @@ import android.app.SyncNotedAppOp
 import android.app.WallpaperManager
 import android.app.WallpaperManager.FLAG_SYSTEM
 import android.bluetooth.BluetoothManager
-import android.bluetooth.cts.BTAdapterUtils.enableAdapter as enableBTAdapter
-import android.bluetooth.cts.BTAdapterUtils.disableAdapter as disableBTAdapter
 import android.bluetooth.le.ScanCallback
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -55,9 +56,11 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.net.wifi.WifiManager
 import android.os.Bundle
+import android.os.DropBoxManager
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.Process.myUserHandle
 import android.platform.test.annotations.AppModeFull
 import android.provider.ContactsContract
 import android.telephony.TelephonyManager
@@ -73,6 +76,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeoutException
+import android.bluetooth.cts.BTAdapterUtils.disableAdapter as disableBTAdapter
+import android.bluetooth.cts.BTAdapterUtils.enableAdapter as enableBTAdapter
 
 private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatusesappops"
 private const val TIMEOUT_MILLIS = 10000L
@@ -689,6 +694,27 @@ class AppOpsLoggingTest {
         assertThat(noted[0].first.op).isEqualTo(OPSTR_FINE_LOCATION)
         assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("startActivity")
+    }
+
+    /**
+     * Realistic end-to-end test for starting a permission protected activity
+     */
+    @Test
+    fun getNextDropBoxEntry() {
+        runWithShellPermissionIdentity {
+            context.packageManager.grantRuntimePermission(myPackage, READ_LOGS, myUserHandle())
+            appOpsManager.setMode(OPSTR_GET_USAGE_STATS, myUid, myPackage, MODE_ALLOWED)
+        }
+
+        val dropBoxManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
+                .getSystemService(DropBoxManager::class.java)
+
+        val entry = dropBoxManager.getNextEntry("foo", 100)
+        entry?.close()
+
+        assertThat(noted[0].first.op).isEqualTo(OPSTR_GET_USAGE_STATS)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+        assertThat(noted[0].second.map { it.methodName }).contains("getNextDropBoxEntry")
     }
 
     @After
