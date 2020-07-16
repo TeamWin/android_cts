@@ -62,6 +62,7 @@ import android.util.Log;
 import android.view.SoundEffectConstants;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.MediaUtils;
 import com.android.internal.annotations.GuardedBy;
 
 import java.util.Arrays;
@@ -603,6 +604,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testVolume() throws Exception {
+        if (MediaUtils.check(mIsTelevision, "No volume test due to fixed/full vol devices"))
+            return;
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
         int volume, volumeDelta;
@@ -668,7 +671,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
             volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
             mAudioManager.adjustSuggestedStreamVolume(ADJUST_LOWER, stream, 0);
             Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-            assertEquals(maxVolume - volumeDelta, mAudioManager.getStreamVolume(stream));
+            assertEquals("Vol ADJUST_LOWER suggested stream:" + stream + " maxVol:" + maxVolume
+                    + " volDelta:" + volumeDelta,
+                    maxVolume - volumeDelta, mAudioManager.getStreamVolume(stream));
 
             // volume lower
             mAudioManager.setStreamVolume(stream, maxVolume, 0);
@@ -676,7 +681,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
             while (volume > minVolume) {
                 volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
                 mAudioManager.adjustStreamVolume(stream, ADJUST_LOWER, 0);
-                assertEquals(Math.max(0, volume - volumeDelta),
+                assertEquals("Vol ADJUST_LOWER on stream:" + stream + " vol:" + volume
+                                + " minVol:" + minVolume + " volDelta:" + volumeDelta,
+                        Math.max(0, volume - volumeDelta),
                         mAudioManager.getStreamVolume(stream));
                 volume = mAudioManager.getStreamVolume(stream);
             }
@@ -689,7 +696,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
             while (volume < maxVolume) {
                 volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
                 mAudioManager.adjustStreamVolume(stream, ADJUST_RAISE, 0);
-                assertEquals(Math.min(volume + volumeDelta, maxVolume),
+                assertEquals("Vol ADJUST_RAISE on stream:" + stream + " vol:" + volume
+                                + " maxVol:" + maxVolume + " volDelta:" + volumeDelta,
+                        Math.min(volume + volumeDelta, maxVolume),
                         mAudioManager.getStreamVolume(stream));
                 volume = mAudioManager.getStreamVolume(stream);
             }
@@ -698,7 +707,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
             mAudioManager.setStreamVolume(stream, maxVolume, 0);
             for (int k = 0; k < maxVolume; k++) {
                 mAudioManager.adjustStreamVolume(stream, ADJUST_SAME, 0);
-                assertEquals(maxVolume, mAudioManager.getStreamVolume(stream));
+                assertEquals("Vol ADJUST_RAISE onADJUST_SAME stream:" + stream,
+                        maxVolume, mAudioManager.getStreamVolume(stream));
             }
 
             mAudioManager.setStreamVolume(stream, maxVolume, 0);
