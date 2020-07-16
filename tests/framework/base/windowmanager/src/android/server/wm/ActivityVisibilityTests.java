@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
@@ -44,6 +45,7 @@ import static android.server.wm.app.Components.MoveTaskToBackActivity.EXTRA_FINI
 import static android.server.wm.app.Components.MoveTaskToBackActivity.FINISH_POINT_ON_PAUSE;
 import static android.server.wm.app.Components.MoveTaskToBackActivity.FINISH_POINT_ON_STOP;
 import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY;
+import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_DIALOG_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TOP_ACTIVITY;
@@ -239,6 +241,32 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 1000 /* sleepMsInOnCreate */);
     }
 
+    @Test
+    public void testTurnScreenOnActivity_DismissSplitScreen() {
+        assumeTrue(supportsLockScreen());
+        assumeTrue(supportsSplitScreenMultiWindow());
+
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY));
+
+        mWmState.assertContainsStack("Must contain split screen secondary stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mWmState.assertContainsStack("Must contain split screen primary stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final ActivitySessionClient activityClient = createManagedActivityClientSession();
+        testTurnScreenOnActivity(lockScreenSession, activityClient, true /* useWindowFlags */);
+        testTurnScreenOnActivity(lockScreenSession, activityClient, false/* useWindowFlags */);
+
+        lockScreenSession.unlockDevice();
+        mWmState.assertDoesNotContainStack("Must not contain split screen secondary stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mWmState.assertDoesNotContainStack("Must not contain split screen primary stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+    }
+
     private void testTurnScreenOnActivity(LockScreenSession lockScreenSession,
             ActivitySessionClient activitySessionClient, boolean useWindowFlags) {
         testTurnScreenOnActivity(lockScreenSession, activitySessionClient, useWindowFlags,
@@ -248,21 +276,63 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     private void testTurnScreenOnActivity(LockScreenSession lockScreenSession,
             ActivitySessionClient activitySessionClient, boolean useWindowFlags,
             int sleepMsInOnCreate) {
-        lockScreenSession.sleepDevice();
-
-        final ActivitySession activity = activitySessionClient.startActivity(
-                getLaunchActivityBuilder().setUseInstrumentation().setIntentExtra(extra -> {
-                    extra.putBoolean(Components.TurnScreenOnActivity.EXTRA_USE_WINDOW_FLAGS,
-                            useWindowFlags);
-                    extra.putLong(Components.TurnScreenOnActivity.EXTRA_SLEEP_MS_IN_ON_CREATE,
-                            sleepMsInOnCreate);
-                }).setTargetActivity(TURN_SCREEN_ON_ACTIVITY));
+        ActivitySession activity = sleepDeviceAndLaunchTurnScreenOnActivity(lockScreenSession,
+                activitySessionClient, useWindowFlags, sleepMsInOnCreate,
+                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
 
         mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
         assertTrue("Display turns on by " + (useWindowFlags ? "flags" : "APIs"),
                 isDisplayOn(DEFAULT_DISPLAY));
 
         activity.finish();
+    }
+
+    @Test
+    public void testFreeformWindowToTurnScreenOn() {
+        assumeTrue(supportsLockScreen());
+        assumeTrue(supportsFreeform());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        final ActivitySessionClient activityClient = createManagedActivityClientSession();
+
+        ActivitySession activity = sleepDeviceAndLaunchTurnScreenOnActivity(lockScreenSession,
+                activityClient, true /* useWindowFlags */, 0 /* sleepInMsOnCreate */,
+                WINDOWING_MODE_FREEFORM);
+        mWmState.waitForValidState(
+                new WaitForValidActivityState.Builder(TURN_SCREEN_ON_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
+                        .build());
+        assertTrue(mWmState.containsActivityInWindowingMode(
+                TURN_SCREEN_ON_ACTIVITY, WINDOWING_MODE_FULLSCREEN));
+        mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
+        assertTrue("Display should be turned on by flags.", isDisplayOn(DEFAULT_DISPLAY));
+        activity.finish();
+
+        activity = sleepDeviceAndLaunchTurnScreenOnActivity(lockScreenSession, activityClient,
+                false /* useWindowFlags */, 0 /* sleepInMsOnCreate */, WINDOWING_MODE_FREEFORM);
+        mWmState.waitForValidState(
+                new WaitForValidActivityState.Builder(TURN_SCREEN_ON_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
+                        .build());
+        assertTrue(mWmState.containsActivityInWindowingMode(
+                TURN_SCREEN_ON_ACTIVITY, WINDOWING_MODE_FULLSCREEN));
+        mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
+        assertTrue("Display should be turned on by API.", isDisplayOn(DEFAULT_DISPLAY));
+        activity.finish();
+    }
+
+    private ActivitySession sleepDeviceAndLaunchTurnScreenOnActivity(
+            LockScreenSession lockScreenSession, ActivitySessionClient activitySessionClient,
+            boolean useWindowFlags, int sleepMsInOnCreate, int windowingMode) {
+        lockScreenSession.sleepDevice();
+
+        return activitySessionClient.startActivity(
+                getLaunchActivityBuilder().setUseInstrumentation().setIntentExtra(extra -> {
+                    extra.putBoolean(Components.TurnScreenOnActivity.EXTRA_USE_WINDOW_FLAGS,
+                            useWindowFlags);
+                    extra.putLong(Components.TurnScreenOnActivity.EXTRA_SLEEP_MS_IN_ON_CREATE,
+                            sleepMsInOnCreate);
+                }).setTargetActivity(TURN_SCREEN_ON_ACTIVITY).setWindowingMode(windowingMode));
     }
 
     @Test
@@ -489,10 +559,40 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.disableLockScreen().sleepDevice();
         separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
+        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
         assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
         assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY);
+    }
+
+    @Test
+    public void testTurnScreenOnAttrNoLockScreen_SplitScreen() {
+        assumeTrue(supportsLockScreen());
+        assumeTrue(supportsSplitScreenMultiWindow());
+
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY));
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.disableLockScreen().sleepDevice();
+        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY,
+                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+        mWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
+        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
+    }
+
+    @Test
+    public void testTurnScreenOnWithAttr_Freeform() {
+        assumeTrue(supportsLockScreen());
+        assumeTrue(supportsFreeform());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.disableLockScreen().sleepDevice();
+
+        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY, WINDOWING_MODE_FREEFORM);
+        mWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
+        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
     }
 
     @Test
@@ -502,7 +602,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.setLockCredential().sleepDevice();
         separateTestJournal();
-        launchActivityNoWait(TURN_SCREEN_ON_ATTR_ACTIVITY);
+        launchActivityNoWait(TURN_SCREEN_ON_ATTR_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         // Wait for the activity stopped because lock screen prevent showing the activity.
         mWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_ACTIVITY, STATE_STOPPED);
         assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
@@ -517,10 +617,60 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         lockScreenSession.sleepDevice();
         mWmState.waitForAllStoppedActivities();
         separateTestJournal();
-        launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
+        launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
         assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
         assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
+    }
+
+    @Test
+    public void testTurnScreenOnShowOnLockAttrDismissSplitScreen() {
+        assumeTrue(supportsLockScreen());
+        assumeTrue(supportsSplitScreenMultiWindow());
+
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY));
+
+        mWmState.assertContainsStack("Must contain split screen secondary stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mWmState.assertContainsStack("Must contain split screen primary stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.sleepDevice();
+        mWmState.waitForAllStoppedActivities();
+
+        launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY,
+                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+        mWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
+        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
+
+        lockScreenSession.unlockDevice();
+        mWmState.assertDoesNotContainStack("Must not contain split screen secondary stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
+        mWmState.assertDoesNotContainStack("Must not contain split screen primary stack.",
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+    }
+
+    @Test
+    public void testChangeToFullscrenWhenLockWithAttrInFreeform() {
+        assumeTrue(supportsLockScreen());
+        assumeTrue(supportsFreeform());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.sleepDevice();
+        mWmState.waitForAllStoppedActivities();
+
+        launchActivityNoWait(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, WINDOWING_MODE_FREEFORM);
+        mWmState.waitForValidState(
+                new WaitForValidActivityState.Builder(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
+                        .build());
+        assertTrue(mWmState.containsActivityInWindowingMode(
+                TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, WINDOWING_MODE_FULLSCREEN));
+        mWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
+        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
     }
 
     @Test

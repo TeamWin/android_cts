@@ -743,10 +743,15 @@ public abstract class ActivityManagerTestBase {
         mWmState.waitForHomeActivityVisible();
     }
 
-    protected void launchActivity(ComponentName activityName, int windowingMode,
+    protected void launchActivityNoWait(ComponentName activityName, int windowingMode,
             final String... keyValuePairs) {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
                 + " --windowingMode " + windowingMode);
+    }
+
+    protected void launchActivity(ComponentName activityName, int windowingMode,
+            final String... keyValuePairs) {
+        launchActivityNoWait(activityName, windowingMode, keyValuePairs);
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setWindowingMode(windowingMode)
                 .build());
