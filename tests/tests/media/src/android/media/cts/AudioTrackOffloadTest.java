@@ -84,13 +84,13 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     private void testAudioTrackOffload(@RawRes int audioRes, int bitRateInkbps,
                                        AudioFormat audioFormat) throws Exception {
         AudioTrack track = null;
-        int bufferSizeInBytes3sec = bitRateInkbps * 1024 * 3 / 8;
+        int bufferSizeInBytes3sec = bitRateInkbps * 1024 * BUFFER_SIZE_SEC / 8;
         try (AssetFileDescriptor audioToOffload = getContext().getResources()
                 .openRawResourceFd(audioRes);
              InputStream audioInputStream = audioToOffload.createInputStream()) {
 
             if (!AudioManager.isOffloadedPlaybackSupported(audioFormat, DEFAULT_ATTR)) {
-                Log.i(TAG, "skipping testAudioTrackOffload as offload encoding "
+                Log.i(TAG, "skipping testAudioTrackOffload as offload for encoding "
                            + audioFormat.getEncoding() + " is not supported");
                 // cannot test if offloading is not supported
                 return;
@@ -124,13 +124,14 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             while (written < read) {
                 int wrote = track.write(data, written, read - written,
                         AudioTrack.WRITE_BLOCKING);
+                Log.i(TAG, String.format("wrote %dbytes (%d out of %d)", wrote, written, read));
                 if (wrote < 0) {
                     fail("Unable to write all read data, wrote " + written + " bytes");
                 }
                 written += wrote;
             }
             try {
-                Thread.sleep(1 * 1000);
+                Thread.sleep(BUFFER_SIZE_SEC * 1000);
                 synchronized(mPresEndLock) {
                     track.stop();
                     mPresEndLock.safeWait(PRESENTATION_END_TIMEOUT_MS);
