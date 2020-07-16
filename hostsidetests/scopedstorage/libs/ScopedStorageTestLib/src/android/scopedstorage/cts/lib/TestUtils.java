@@ -1082,19 +1082,11 @@ public class TestUtils {
     /**
      * Creates a new virtual public volume and returns the volume's name.
      */
-    public static String createNewPublicVolume() throws Exception {
+    public static void createNewPublicVolume() throws Exception {
         executeShellCommand("sm set-force-adoptable on");
         executeShellCommand("sm set-virtual-disk true");
         Thread.sleep(2000);
         pollForCondition(TestUtils::partitionDisk, "Timed out while waiting for disk partitioning");
-
-        final String[] res = new String[1];
-        pollForCondition(() -> {
-            res[0] = getPublicVolumeName();
-            return res[0] != null;
-        }, "Timed out while waiting for public volume to be created");
-
-        return res[0];
     }
 
     private static boolean partitionDisk() {
@@ -1110,7 +1102,17 @@ public class TestUtils {
     /**
      * Gets the name of the public volume.
      */
-    public static String getPublicVolumeName() {
+    public static String getPublicVolumeName() throws Exception {
+        final String[] volName = new String[1];
+        pollForCondition(() -> {
+            volName[0] = getPublicVolumeNameInternal();
+            return volName[0] != null;
+        }, "Timed out while waiting for public volume to be ready");
+
+        return volName[0];
+    }
+
+    private static String getPublicVolumeNameInternal() {
         final String[] allVolumeDetails;
         try {
             allVolumeDetails = executeShellCommand("sm list-volumes")
@@ -1122,7 +1124,11 @@ public class TestUtils {
         for (String volDetails : allVolumeDetails) {
             if (volDetails.startsWith("public")) {
                 final String[] publicVolumeDetails = volDetails.trim().split(" ");
-                return publicVolumeDetails[publicVolumeDetails.length - 1];
+                String res = publicVolumeDetails[publicVolumeDetails.length - 1];
+                if ("null".equals(res)) {
+                    continue;
+                }
+                return res;
             }
         }
         return null;
