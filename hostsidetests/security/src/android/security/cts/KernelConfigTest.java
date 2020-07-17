@@ -181,14 +181,28 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
 
     private String getHardware() throws Exception {
         String hardware = "DEFAULT";
-        String cpuInfo = mDevice.pullFileContents("/proc/cpuinfo");
+        String[] pathList = new String[]{"/proc/cpuinfo", "/sys/devices/soc0/soc_id"};
 
-        for (String line : cpuInfo.split("\n")) {
-            /* Qualcomm SoCs */
-            if (line.startsWith("Hardware")) {
-                String[] hardwareLine = line.split(" ");
-                hardware = hardwareLine[hardwareLine.length - 1];
-                break;
+        for (String nodeInfo : pathList) {
+            if (!mDevice.doesFileExist(nodeInfo))
+                continue;
+
+            String nodeContent = mDevice.pullFileContents(nodeInfo);
+            if (nodeContent == null)
+                continue;
+
+            for (String line : nodeContent.split("\n")) {
+                /* Qualcomm SoCs */
+                if (line.startsWith("Hardware")) {
+                    String[] hardwareLine = line.split(" ");
+                    hardware = hardwareLine[hardwareLine.length - 1];
+                    break;
+                }
+                /* Samsung Exynos SoCs */
+                else if (line.startsWith("EXYNOS")) {
+                    hardware = line;
+                    break;
+                }
             }
         }
         /* TODO lookup other hardware as we get exemption requests. */
