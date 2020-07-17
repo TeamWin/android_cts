@@ -18,6 +18,7 @@ package android.autofillservice.cts.inline;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
+import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
@@ -34,6 +35,7 @@ import android.autofillservice.cts.CannedFillResponse;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.UiBot;
 import android.content.IntentSender;
 import android.platform.test.annotations.AppModeFull;
 
@@ -65,6 +67,101 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
     @Override
     public TestRule getMainTestRule() {
         return InlineUiBot.annotateRule(super.getMainTestRule());
+    }
+
+    /**
+     * This test verifies the behavior that user starts a new AutofillSession in Authentication
+     * Activity during the FillResponse authentication flow, we will fallback to dropdown when
+     * authentication done and then back to original Activity.
+     */
+    @Test
+    public void testFillResponseAuth_withNewAutofillSessionStartByActivity()
+            throws Exception {
+        // Set service.
+        enableService();
+
+        // Prepare the authenticated response
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                new CannedFillResponse.Builder().addDataset(
+                        new CannedDataset.Builder()
+                                .setField(ID_USERNAME, "dude")
+                                .setField(ID_PASSWORD, "sweet")
+                                .setId("name")
+                                .setInlinePresentation(createInlinePresentation("Dataset"))
+                                .setPresentation(createPresentation("Dataset"))
+                                .build()).build());
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
+                .setPresentation(createPresentation("Tap to auth!"))
+                .setInlinePresentation(createInlinePresentation("Tap to auth!"))
+                .build());
+
+        // Trigger auto-fill.
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "Tap to auth!");
+        sReplier.getNextFillRequest();
+
+        // Need to trigger autofill on AuthenticationActivity
+        // Set expected response for autofill on AuthenticationActivity
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        AuthenticationActivity.setRequestAutofillForAuthenticationActivity(true);
+        sReplier.addResponse(NO_RESPONSE);
+        // Select the dataset to start authentication
+        mUiBot.selectDataset("Tap to auth!");
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        // Select yes button in AuthenticationActivity to finish authentication
+        mUiBot.selectByRelativeId("yes");
+        mUiBot.waitForIdle();
+
+        // Check fallback to dropdown
+        final UiBot dropDownUiBot = getDropdownUiBot();
+        dropDownUiBot.assertDatasets("Dataset");
+    }
+
+    @Test
+    public void testFillResponseAuth() throws Exception {
+        // Set service.
+        enableService();
+
+        // Prepare the authenticated response
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                new CannedFillResponse.Builder().addDataset(
+                        new CannedDataset.Builder()
+                                .setField(ID_USERNAME, "dude")
+                                .setField(ID_PASSWORD, "sweet")
+                                .setId("name")
+                                .setInlinePresentation(createInlinePresentation("Dataset"))
+                                .setPresentation(createPresentation("Dataset"))
+                                .build()).build());
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
+                .setPresentation(createPresentation("Tap to auth!"))
+                .setInlinePresentation(createInlinePresentation("Tap to auth!"))
+                .build());
+
+        // Set expectation for the activity
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "Tap to auth!");
+
+        sReplier.getNextFillRequest();
+
+        // Set AuthenticationActivity result code
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        // Select the dataset to start authentication
+        mUiBot.selectDataset("Tap to auth!");
+        mUiBot.waitForIdle();
+        // Authentication done, show real dataset
+        mUiBot.assertDatasets("Dataset");
+
+        // Select the dataset and check the result is autofilled.
+        mUiBot.selectDataset("Dataset");
+        mUiBot.waitForIdle();
+        mUiBot.assertNoDatasets();
+        mActivity.assertAutoFilled();
     }
 
     @Test
