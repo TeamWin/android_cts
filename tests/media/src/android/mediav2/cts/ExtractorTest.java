@@ -27,6 +27,7 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.util.Log;
+import android.webkit.cts.CtsTestServer;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
@@ -391,9 +392,9 @@ public class ExtractorTest {
         public TestName testName = new TestName();
 
         private static final String mInpMedia = "ForBiggerEscapes.mp4";
-        private static final String mInpMediaUrl =
-                "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4";
-
+        private static final String mResString = "raw/forbiggerescapes";
+        private CtsTestServer mWebServer;
+        private String mInpMediaUrl;
         private MediaExtractor mRefExtractor;
 
         static {
@@ -404,12 +405,20 @@ public class ExtractorTest {
         public void setUp() throws IOException {
             mRefExtractor = new MediaExtractor();
             mRefExtractor.setDataSource(mInpPrefix + mInpMedia);
+            try {
+                Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+                mWebServer = new CtsTestServer(context);
+                mInpMediaUrl = mWebServer.getAssetUrl(mResString);
+            } catch (Exception e) {
+                fail(e.getMessage());
+            }
         }
 
         @After
         public void tearDown() {
             mRefExtractor.release();
             mRefExtractor = null;
+            mWebServer.shutdown();
         }
 
         private static boolean areMetricsIdentical(MediaExtractor refExtractor,
@@ -559,7 +568,7 @@ public class ExtractorTest {
         @Test
         public void testContextUri() throws IOException {
             Context context = InstrumentationRegistry.getInstrumentation().getContext();
-            String path = "android.resource://android.mediav2.cts/" + R.raw.forbiggerescapes;
+            String path = "android.resource://android.mediav2.cts/" + mResString;
             MediaExtractor testExtractor = new MediaExtractor();
             testExtractor.setDataSource(context, Uri.parse(path), null);
             assertTrue(testExtractor.getCachedDuration() < 0);
