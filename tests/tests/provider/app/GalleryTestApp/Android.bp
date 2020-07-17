@@ -25,4 +25,5 @@ android_test_helper_app {
     optimize: {
         enabled: false,
     },
+    min_sdk_version : "29",
 }
