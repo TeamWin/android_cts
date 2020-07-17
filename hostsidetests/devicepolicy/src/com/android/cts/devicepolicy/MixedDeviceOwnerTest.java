@@ -426,7 +426,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         }
     }
     private int createSecondaryUserAsProfileOwner() throws Exception {
-        final int userId = createUser();
+        final int userId = createUserAndWaitStart();
         installAppAsUser(INTENT_RECEIVER_APK, userId);
         installAppAsUser(DEVICE_ADMIN_APK, userId);
         setProfileOwnerOrFail(DEVICE_ADMIN_COMPONENT_FLATTENED, userId);
