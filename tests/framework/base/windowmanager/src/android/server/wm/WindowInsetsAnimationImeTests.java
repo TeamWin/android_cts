@@ -142,7 +142,7 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
         inOrderIme.verify(callback).onEnd(eq(callback.imeAnim));
 
         assertAnimationSteps(callback.navAnimSteps, false /* showAnimation */);
-        assertAnimationSteps(callback.imeAnimSteps, true /* showAnimation */);
+        assertAnimationSteps(callback.imeAnimSteps, true /* showAnimation */, ime());
 
         assertEquals(before.getInsets(navigationBars()),
                 callback.navAnimSteps.get(0).insets.getInsets(navigationBars()));
