@@ -26,4 +26,5 @@ android_test_helper_app {
         "mts"
     ],
     srcs: ["src/**/*.java"],
+    min_sdk_version: "29",
 }
