@@ -26,7 +26,10 @@ import android.server.wm.UiDeviceUtils
 import android.server.wm.WindowManagerStateHelper
 import android.systemui.tv.cts.ResourceNames.STRING_PIP_MENU_BOUNDS
 import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE
+import android.util.DisplayMetrics
 import android.util.Log
+import android.util.TypedValue
+import android.view.WindowManager
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.SystemUtil
@@ -42,8 +45,12 @@ abstract class PipTestBase {
     protected val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     protected val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
     protected val context: Context = instrumentation.context
+    protected val resources: Resources = context.resources
     protected val packageManager: PackageManager = context.packageManager
         ?: error("Could not get a PackageManager")
+    protected val windowManager: WindowManager =
+        context.getSystemService(WindowManager::class.java)
+            ?: error("Could not get a WindowManager")
     protected val wmState: WindowManagerStateHelper = WindowManagerStateHelper()
     protected val systemuiResources: Resources =
         packageManager.getResourcesForApplication(SYSTEM_UI_PACKAGE)
@@ -154,5 +161,10 @@ abstract class PipTestBase {
             Log.e(TAG, "Error running shell command: $cmd")
             throw e
         }
+    }
+
+    /** @return the number of pixels for a given dip value. */
+    protected fun dipToPx(dpValue: Int, dm: DisplayMetrics): Int {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dpValue.toFloat(), dm).toInt()
     }
 }
