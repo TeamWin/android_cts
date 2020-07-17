@@ -383,16 +383,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         assertFalse(mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 SIMPLE_PRE_M_APP_PACKAGE_NAME, PERMISSION_NAME,
                 value));
-        // Because setPermissionGrantState is not synchronous, we should wait a while before
-        // checking.
-        waitUntil(value, new Callable<Integer>() {
-            @Override
-            public Integer call() throws Exception {
-                return mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
-                        SIMPLE_PRE_M_APP_PACKAGE_NAME, PERMISSION_NAME);
-            }
-        });
-
         assertEquals(mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 SIMPLE_PRE_M_APP_PACKAGE_NAME, PERMISSION_NAME),
                 DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
