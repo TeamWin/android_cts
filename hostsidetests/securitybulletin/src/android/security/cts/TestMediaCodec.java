@@ -185,6 +185,7 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2017-12")
     public void testPocCVE_2017_13150() throws Exception {
+        getOomCatcher().setHighMemoryTest();
         String inputFiles[] = {"cve_2017_13150.m2v"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13150",
                 AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
