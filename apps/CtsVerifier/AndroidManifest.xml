@@ -168,6 +168,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_required_configs" android:value="config_has_recents"/>
+            <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".companion.CompanionDeviceTestActivity"
@@ -2157,7 +2158,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_tiles" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
 
         <service android:name=".qstiles.MockTileService"
@@ -3802,7 +3803,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback" />
+                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
         <activity android:name=".instantapps.RecentAppsTestActivity"
                  android:label="@string/ia_recents">
@@ -3812,7 +3813,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback" />
+                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
         <activity android:name=".instantapps.AppInfoTestActivity"
                  android:label="@string/ia_app_info">
@@ -3822,7 +3823,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback" />
+                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
         <activity android:name=".multiuser.HeadlessSystemUserTestActivity"
                 android:label="@string/multiuser_headless_sys_user_test">
