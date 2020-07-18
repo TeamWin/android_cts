@@ -55,6 +55,7 @@
         <option name="push" value="CtsVictimPermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsVictimPermissionDefinerApp.apk" />
         <option name="push" value="CtsRuntimePermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsRuntimePermissionDefinerApp.apk" />
         <option name="push" value="CtsRuntimePermissionUserApp.apk->/data/local/tmp/cts/permissions/CtsRuntimePermissionUserApp.apk" />
+        <option name="push" value="AppThatDefinesUndefinedPermissionGroupElement.apk->/data/local/tmp/cts/permissions/AppThatDefinesUndefinedPermissionGroupElement.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->

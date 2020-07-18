@@ -28,7 +28,7 @@
     <uses-permission android:name="android.permission.cts.B" />
 
     <application>
-        <activity android:name=".RequestPermission" android:exported="true"
+        <activity android:name=".RequestPermissions" android:exported="true"
                   android:visibleToInstantApps="true" />
     </application>
 </manifest>
