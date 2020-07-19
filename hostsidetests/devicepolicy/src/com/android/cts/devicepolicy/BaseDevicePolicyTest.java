@@ -155,6 +155,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     /** Whether the device supports telephony. */
     protected boolean mHasTelephony;
+    protected boolean mHasConnectionService;
 
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
@@ -177,6 +178,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mHasTelephony = hasDeviceFeature("android.hardware.telephony");
+        mHasConnectionService = hasDeviceFeature("android.software.connectionservice");
         mFixedPackages = getDevice().getInstalledPackageNames();
         mBuildHelper = new CompatibilityBuildHelper(mCtsBuild);
 
