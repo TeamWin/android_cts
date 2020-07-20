@@ -149,7 +149,7 @@ public class UndefinedGroupPermissionTest {
                 mUiDevice.findObject(new UiSelector().resourceId(
                         "com.android.permissioncontroller:id/permission_allow_button"))
                         .getClassName();
-            } catch (UiObjectNotFoundException e) {
+            } catch (UiObjectNotFoundException tolerated) {
                 assertEquals("grant dialog never showed.",
                         mPm.checkPermission(targetPermission,
                                 APP_PKG_NAME), PERMISSION_GRANTED);
