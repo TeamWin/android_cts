@@ -1948,4 +1948,17 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
                 + patchLevel, patchLevel >= EXPECTED_MIN_PATCH_LEVEL);
     }
 
+    // http://b/147928666
+    public void testDefaultLegacyAlterTableEnabled() {
+        mDatabase.beginTransaction();
+        mDatabase.execSQL("CREATE TABLE \"t1\" (\"c1\" INTEGER, PRIMARY KEY(\"c1\"));");
+        mDatabase.execSQL("CREATE TABLE \"t2\" (\"c1\" INTEGER);");
+        mDatabase.execSQL("CREATE VIEW \"v1\" AS SELECT c1 from t1;");
+        mDatabase.execSQL("DROP TABLE t1;");
+        // The following statement will fail to execute without the legacy flag because
+        // we have a view in the schema with a dangling reference to a table that doesn't
+        // exist any more.
+        mDatabase.execSQL("ALTER TABLE \"t2\" RENAME TO \"t1\";");
+        mDatabase.endTransaction();
+    }
 }
