@@ -39,11 +39,8 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
 
     private static final int ON = 0x0;
     private static final int OFF = 0x1;
-    private static final int IN_TRANSITION_TO_STANDBY = 0x3;
 
-    private static final int SLEEP_TIMESTEP_SECONDS = 1;
     private static final int WAIT_TIME = 5;
-    private static final int MAX_SLEEP_TIME = 8;
 
     @Rule
     public HdmiCecClientWrapper hdmiCecClient =
@@ -78,16 +75,10 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
             device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             TimeUnit.SECONDS.sleep(WAIT_TIME);
-            int waitTimeSeconds = WAIT_TIME;
-            int powerStatus;
-            do {
-                TimeUnit.SECONDS.sleep(SLEEP_TIMESTEP_SECONDS);
-                waitTimeSeconds += SLEEP_TIMESTEP_SECONDS;
-                hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
-                powerStatus = CecMessage.getParams(hdmiCecClient.checkExpectedOutput(
-                        LogicalAddress.TV, CecOperand.REPORT_POWER_STATUS));
-            } while (powerStatus == IN_TRANSITION_TO_STANDBY && waitTimeSeconds <= MAX_SLEEP_TIME);
-            assertThat(powerStatus).isEqualTo(OFF);
+            hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GIVE_POWER_STATUS);
+            String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
+                                                              CecMessage.REPORT_POWER_STATUS);
+            assertEquals(OFF, hdmiCecClient.getParamsFromMessage(message));
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
