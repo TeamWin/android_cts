@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageInstaller;
 import android.content.rollback.RollbackInfo;
 import android.content.rollback.RollbackManager;
 import android.os.storage.StorageManager;
@@ -648,6 +649,61 @@ public class HostTestHelper {
     @Test
     public void testFingerprintChange_Phase2() throws Exception {
         assertThat(RollbackUtils.getRollbackManager().getAvailableRollbacks()).isEmpty();
+    }
+
+    @Test
+    public void testRollbackFailsBlockingSessions_Phase1() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(-1);
+        Install.single(TestApp.A1).commit();
+        Install.single(TestApp.A2).setStaged().setEnableRollback().commit();
+    }
+
+    @Test
+    public void testRollbackFailsBlockingSessions_Phase2() throws Exception {
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        InstallUtils.processUserData(TestApp.A);
+        // Stage session for package A to check if it can block rollback of A
+        final int sessionIdA = Install.single(TestApp.A3).setStaged().setEnableRollback().commit();
+
+        // Stage another package not related to the rollback
+        Install.single(TestApp.B1).commit();
+        Install.single(TestApp.B2).setStaged().setEnableRollback().commit();
+
+        final RollbackInfo available = RollbackUtils.getAvailableRollback(TestApp.A);
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
+        final RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).hasRollbackId(available.getRollbackId());
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+
+        // Assert that blocking staged session is failed
+        final PackageInstaller.SessionInfo sessionA = InstallUtils.getStagedSessionInfo(sessionIdA);
+        assertThat(sessionA).isNotNull();
+        assertThat(sessionA.isStagedSessionFailed()).isTrue();
+
+        // Note: The app is not rolled back until after the rollback is staged
+        // and the device has been rebooted.
+        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+    }
+
+    @Test
+    public void testRollbackFailsBlockingSessions_Phase3() throws Exception {
+        // Process TestApp.A
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        InstallUtils.processUserData(TestApp.A);
+        final RollbackInfo committed = RollbackUtils.getCommittedRollback(TestApp.A);
+        assertThat(committed).isStaged();
+        assertThat(committed).packagesContainsExactly(
+                Rollback.from(TestApp.A2).to(TestApp.A1));
+        assertThat(committed).causePackagesContainsExactly(TestApp.A2);
+        assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
+
+        // Assert that unrelated package were not effected
+        assertThat(InstallUtils.getInstalledVersion(TestApp.B)).isEqualTo(2);
     }
 
     /**
