@@ -24,6 +24,8 @@ import static com.android.cts.delegate.DelegateTestUtils.assertExpectException;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.os.SystemClock;
+import android.util.Log;;
 import android.test.InstrumentationTestCase;
 import android.test.MoreAsserts;
 
@@ -35,6 +37,7 @@ import java.util.List;
  * state.
  */
 public class PermissionGrantDelegateTest extends InstrumentationTestCase {
+    private static final String TAG = "PermissionGrantDelegateTest";
 
     private static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
     private static final String TEST_PERMISSION = "android.permission.READ_CONTACTS";
@@ -85,13 +88,24 @@ public class PermissionGrantDelegateTest extends InstrumentationTestCase {
                 PERMISSION_POLICY_AUTO_DENY == mDpm.getPermissionPolicy(null));
 
         // Exercise setPermissionGrantState.
-        assertTrue("Permission grant state was not set successfully",
-                mDpm.setPermissionGrantState(null, TEST_APP_PKG, TEST_PERMISSION,
-                    PERMISSION_GRANT_STATE_DENIED));
+        mDpm.setPermissionGrantState(null, TEST_APP_PKG, TEST_PERMISSION,
+                PERMISSION_GRANT_STATE_DENIED);
 
         // Exercise getPermissionGrantState.
-        assertEquals("Permission grant state is not denied", PERMISSION_GRANT_STATE_DENIED,
-                mDpm.getPermissionGrantState(null, TEST_APP_PKG, TEST_PERMISSION));
+        final int TIMEOUT_MS = 20 * 1000;
+        long waitUntil = SystemClock.elapsedRealtime() + TIMEOUT_MS;
+        int grantState = mDpm.getPermissionGrantState(null, TEST_APP_PKG, TEST_PERMISSION);
+        while (SystemClock.elapsedRealtime() < waitUntil
+                && grantState != PERMISSION_GRANT_STATE_DENIED) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                fail("InterruptedException was thrown.");
+            }
+            grantState = mDpm.getPermissionGrantState(null, TEST_APP_PKG, TEST_PERMISSION);
+        }
+        assertEquals("Timed out waiting for setPermissionGrantState", grantState,
+                PERMISSION_GRANT_STATE_DENIED);
     }
 
     private boolean amIPermissionGrantDelegate() {
