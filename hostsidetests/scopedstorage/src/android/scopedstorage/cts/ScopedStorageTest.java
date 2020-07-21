@@ -2184,18 +2184,18 @@ public class ScopedStorageTest {
             assertFileContent(otherAppPdf, BYTES_DATA1);
 
             // Assert we can rename the file and ensure the file has the same content
-            assertCanRenameFile(otherAppPdf, pdf);
+            assertCanRenameFile(otherAppPdf, pdf, /* checkDatabase */ false);
             assertFileContent(pdf, BYTES_DATA1);
             // We can even move it to the top level directory
-            assertCanRenameFile(pdf, topLevelPdf);
+            assertCanRenameFile(pdf, topLevelPdf, /* checkDatabase */ false);
             assertFileContent(topLevelPdf, BYTES_DATA1);
             // And even rename to a place where PDFs don't belong, because we're an omnipotent
             // external storage manager
-            assertCanRenameFile(topLevelPdf, pdfInObviouslyWrongPlace);
+            assertCanRenameFile(topLevelPdf, pdfInObviouslyWrongPlace, /* checkDatabase */ false);
             assertFileContent(pdfInObviouslyWrongPlace, BYTES_DATA1);
 
             // And we can even convert it into a music file, because why not?
-            assertCanRenameFile(pdfInObviouslyWrongPlace, musicFile);
+            assertCanRenameFile(pdfInObviouslyWrongPlace, musicFile, /* checkDatabase */ false);
             assertFileContent(musicFile, BYTES_DATA1);
         } finally {
             pdf.delete();
