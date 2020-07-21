@@ -67,6 +67,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 /**
  * This test case must run with hardware. It can't be tested in emulator
  */
@@ -136,6 +138,10 @@ public class CameraTest extends Assert {
 
     @Before
     public void setUp() throws Exception {
+        // Some of the tests run on the UI thread. In case some of the operations take a long time to complete,
+        // wait for window to receive focus. This ensure that the focus event from input flinger has been handled,
+        // and avoids getting ANR.
+        PollingCheck.waitFor(mActivityRule.getActivity()::hasWindowFocus);
         mCameraIds = CameraUtils.deriveCameraIdsUnderTest();
     }
 

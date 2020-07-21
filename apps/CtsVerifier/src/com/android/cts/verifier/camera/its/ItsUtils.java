@@ -403,7 +403,8 @@ public class ItsUtils {
                             CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
                     if (defaultFocalLength != physicalFocalLengths[0]) {
                         outList.mCameraIds.add(physicalId);
-                        outList.mCameraIdCombos.add(id + ":" + physicalId);
+                        // The tokenizer must be the same as CAMERA_ID_TOKENIZER in device.py
+                        outList.mCameraIdCombos.add(id + "." + physicalId);
                     }
                 }
 

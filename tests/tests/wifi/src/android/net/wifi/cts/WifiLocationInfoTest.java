@@ -54,7 +54,7 @@ import java.util.List;
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class WifiLocationInfoTest {
+public class WifiLocationInfoTest extends WifiJUnit4TestBase {
     private static final String TAG = "WifiLocationInfoTest";
 
     private static final String WIFI_LOCATION_TEST_APP_APK_PATH =

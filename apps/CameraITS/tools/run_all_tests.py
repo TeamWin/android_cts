@@ -517,14 +517,10 @@ def main():
             results[s] = {result_key: ItsSession.RESULT_NOT_EXECUTED}
 
         camera_fov = calc_camera_fov(id_combo.id, id_combo.sub_id)
-        # Id combo used to store test results in file system
         id_combo_string = id_combo.id
-        # Id string used for testing
-        id_test_string = id_combo.id
         has_hidden_sub_camera = id_combo.sub_id is not None
         if has_hidden_sub_camera:
-            id_combo_string += "." + id_combo.sub_id
-            id_test_string += ":" + id_combo.sub_id
+            id_combo_string += ItsSession.CAMERA_ID_TOKENIZER + id_combo.sub_id
             scenes = [scene for scene in scenes if HIDDEN_PHYSICAL_CAMERA_TESTS[scene]]
         # Loop capturing images until user confirm test scene is correct
         camera_id_arg = "camera=" + id_combo.id
@@ -647,7 +643,7 @@ def main():
                             test_code = skip_code
                     if skip_code is not SKIP_RET_CODE:
                         cmd = ['python', os.path.join(os.getcwd(), testpath)]
-                        cmd += one_camera_argv + ["camera="+id_test_string] + [chart_loc_arg]
+                        cmd += one_camera_argv + ["camera="+id_combo_string] + [chart_loc_arg]
                         cmd += [chart_dist_arg]
                         with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
                             test_code = run_subprocess_with_timeout(

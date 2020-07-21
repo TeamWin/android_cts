@@ -2615,6 +2615,34 @@ public class ScopedStorageTest {
         }
     }
 
+    /**
+     * Test that apps can't set attributes on another app's files.
+     */
+    @Test
+    public void testCantSetAttrOtherAppsFile() throws Exception {
+        // This path's permission is checked in MediaProvider (directory/external media dir)
+        final File externalMediaPath = new File(getExternalMediaDir(), VIDEO_FILE_NAME);
+
+        try {
+            // Create the files
+            if (!externalMediaPath.exists()) {
+                assertThat(externalMediaPath.createNewFile()).isTrue();
+            }
+
+            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
+            installAppWithStoragePermissions(TEST_APP_A);
+
+            // TEST_APP_A should not be able to setattr to other app's files.
+            assertWithMessage(
+                "setattr on directory/external media path [%s]", externalMediaPath.getPath())
+                .that(setAttrAs(TEST_APP_A, externalMediaPath.getPath()))
+                .isFalse();
+        } finally {
+            externalMediaPath.delete();
+            uninstallAppNoThrow(TEST_APP_A);
+        }
+    }
+
     @Test
     public void testNoIsolatedStorageCanCreateFilesAnywhere() throws Exception {
         final File topLevelPdf = new File(getExternalStorageDir(), NONMEDIA_FILE_NAME);

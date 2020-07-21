@@ -33,7 +33,7 @@ import androidx.test.filters.SmallTest;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
-public class WifiNetworkSuggestionTest extends AndroidTestCase {
+public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     private static final String TEST_SSID = "testSsid";
     private static final String TEST_BSSID = "00:df:aa:bc:12:23";
     private static final String TEST_PASSPHRASE = "testPassword";

@@ -25,14 +25,6 @@
         <option name="test-file-name" value="CtsWifiTestCases.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="content insert --uri content://com.google.settings/partner
-         --bind name:s:network_location_opt_in --bind value:s:1" />
-        <option name="run-command" value="content insert --uri content://com.google.settings/partner
-         --bind name:s:use_location_for_services --bind value:s:1" />
-        <option name="run-command" value="settings put secure location_mode 3" />
-        <option name="teardown-command" value="settings put secure location_mode 0" />
-    </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/wifi" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts/wifi"/>
     </target_preparer>

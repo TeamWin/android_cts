@@ -38,7 +38,7 @@ import java.util.concurrent.Executor;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
-public class EasyConnectStatusCallbackTest extends AndroidTestCase {
+public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
     private static final String TEST_SSID = "\"testSsid\"";
     private static final String TEST_PASSPHRASE = "\"testPassword\"";
     private static final int TEST_WAIT_DURATION_MS = 12_000; // Long delay is necessary, see below

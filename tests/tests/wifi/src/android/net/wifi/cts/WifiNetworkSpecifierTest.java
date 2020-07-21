@@ -78,7 +78,7 @@ import java.util.concurrent.Executors;
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class WifiNetworkSpecifierTest {
+public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     private static final String TAG = "WifiNetworkSpecifierTest";
 
     private static boolean sWasVerboseLoggingEnabled;

@@ -24,7 +24,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class WifiLockTest extends AndroidTestCase {
+public class WifiLockTest extends WifiJUnit3TestBase {
 
     private static final String WIFI_TAG = "WifiLockTest";
 

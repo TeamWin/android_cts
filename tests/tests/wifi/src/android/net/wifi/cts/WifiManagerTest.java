@@ -106,7 +106,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class WifiManagerTest extends AndroidTestCase {
+public class WifiManagerTest extends WifiJUnit3TestBase {
     private static class MySync {
         int expectedState = STATE_NULL;
     }

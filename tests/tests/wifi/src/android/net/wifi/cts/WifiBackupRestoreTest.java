@@ -72,7 +72,7 @@ import java.util.stream.Collectors;
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class WifiBackupRestoreTest {
+public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     private static final String TAG = "WifiBackupRestoreTest";
     private static final String LEGACY_SUPP_CONF_FILE =
             "assets/BackupLegacyFormatSupplicantConf.txt";

@@ -24,6 +24,7 @@ import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.net.wifi.cts.WifiJUnit3TestBase;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.RangingResultCallback;
 import android.net.wifi.rtt.WifiRttManager;
@@ -43,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * Base class for Wi-Fi RTT CTS test cases. Provides a uniform configuration and event management
  * facility.
  */
-public class TestBase extends AndroidTestCase {
+public class TestBase extends WifiJUnit3TestBase {
     protected static final String TAG = "WifiRttCtsTests";
 
     // wait for Wi-Fi RTT to become available

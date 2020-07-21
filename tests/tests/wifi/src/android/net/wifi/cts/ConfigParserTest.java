@@ -36,7 +36,7 @@ import java.util.Arrays;
  */
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
-public class ConfigParserTest extends AndroidTestCase {
+public class ConfigParserTest extends WifiJUnit3TestBase {
     /**
      * Hotspot 2.0 Release 1 installation file that contains a Passpoint profile and a
      * CA (Certificate Authority) X.509 certificate {@link FakeKeys#CA_CERT0}.

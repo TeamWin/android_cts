@@ -109,6 +109,10 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
     }
 
     protected void assertAnimationSteps(ArrayList<AnimationStep> steps, boolean showAnimation) {
+        assertAnimationSteps(steps, showAnimation, systemBars());
+    }
+    protected void assertAnimationSteps(ArrayList<AnimationStep> steps, boolean showAnimation,
+            final int types) {
         assertTrue(steps.size() >= 2);
         assertEquals(0f, steps.get(0).fraction, 0f);
         assertEquals(0f, steps.get(0).interpolatedFraction, 0f);
@@ -125,7 +129,7 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
         assertListElements(steps, step -> step.interpolatedFraction,
                 (current, next) -> next >= current);
         assertListElements(steps, step -> step.alpha, alpha -> alpha >= 0f);
-        assertListElements(steps, step -> step.insets, compareInsets(systemBars(), showAnimation));
+        assertListElements(steps, step -> step.insets, compareInsets(types, showAnimation));
     }
 
     private BiPredicate<WindowInsets, WindowInsets> compareInsets(int types,

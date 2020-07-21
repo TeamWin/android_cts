@@ -33,7 +33,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class WifiEnterpriseConfigTest extends AndroidTestCase {
+public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
 
     private static final String IDENTITY = "identity";
     private static final String PASSWORD = "password";
