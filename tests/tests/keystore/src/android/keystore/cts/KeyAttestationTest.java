@@ -228,6 +228,7 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     @RestrictedBuildTest
+    @RequiresDevice
     public void testEcAttestation_DeviceLocked() throws Exception {
         String keystoreAlias = "test_key";
         Date now = new Date();
