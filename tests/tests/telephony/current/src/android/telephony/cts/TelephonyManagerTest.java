@@ -1866,6 +1866,8 @@ public class TelephonyManagerTest {
             Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
             return;
         }
+        if (mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_GSM) return;
+
         assertTrue(ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.isManualNetworkSelectionAllowed()));
     }
