@@ -345,7 +345,7 @@
 
         <activity android:name="android.widget.cts.TextViewCtsActivity"
                   android:label="TextViewCtsActivity"
-                  android:screenOrientation="nosensor"
+                  android:screenOrientation="locked"
                   android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
