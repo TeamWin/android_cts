@@ -1,4 +1,5 @@
-// Copyright (C) 2015 The Android Open Source Project
+//
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,35 +12,27 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-android_test {
-    name: "CtsSystemUiTestCases",
+android_test_helper_app {
+    name: "PipTestApp",
     defaults: ["cts_defaults"],
+
+    sdk_version: "test_current",
+    min_sdk_version: "26",
+
+    manifest: "AndroidManifest.xml",
+    srcs: ["src/**/*.kt"],
+
+    static_libs: [
+        "kotlin-stdlib",
+        "systemui-cts-common",
+    ],
+
+    // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts10",
         "general-tests",
     ],
-
-    libs: [
-        "android.test.runner",
-    ],
-
-    static_libs: [
-        "kotlin-stdlib",
-        "kotlin-test",
-        "systemui-cts-common",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "androidx.test.rules",
-        "androidx.test.ext.junit",
-        "androidx.test.uiautomator",
-        "cts-wm-util",
-        "ub-uiautomator",
-    ],
-    srcs: [
-        "src/**/*.java",
-        "src/**/*.kt",
-    ],
-    platform_apis: true,
 }
