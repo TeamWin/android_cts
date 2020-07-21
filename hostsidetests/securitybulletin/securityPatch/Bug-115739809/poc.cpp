@@ -156,7 +156,8 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
 /**
  * Return false if vulnerability is found for a given message type
  */
-static bool checkMessage(sp<InputChannel> server, sp<InputChannel> client, InputMessage::Type type) {
+static bool checkMessage(std::shared_ptr<InputChannel> server, std::shared_ptr<InputChannel> client,
+                         InputMessage::Type type) {
     InputMessage serverMsg;
     // Set all potentially uninitialized bytes to 1, for easier comparison
 
@@ -203,7 +204,7 @@ static bool checkMessage(sp<InputChannel> server, sp<InputChannel> client, Input
  * Do this for all message types
  */
 int main() {
-    sp<InputChannel> server, client;
+    std::shared_ptr<InputChannel> server, client;
 
     status_t result = InputChannel::openInputChannelPair("channel name", server, client);
     if (result != OK) {
