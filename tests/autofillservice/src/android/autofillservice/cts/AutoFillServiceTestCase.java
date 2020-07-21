@@ -101,6 +101,10 @@ public final class AutoFillServiceTestCase {
             return sDefaultUiBot2;
         }
 
+        protected static UiBot getDropdownUiBot() {
+            return sDefaultUiBot;
+        }
+
         @ClassRule
         public static final SettingsStateKeeperRule sPublicServiceSettingsKeeper =
                 sTheRealServiceSettingsKeeper;
