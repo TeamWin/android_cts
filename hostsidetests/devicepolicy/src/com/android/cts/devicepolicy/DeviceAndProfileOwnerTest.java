@@ -17,7 +17,6 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -228,7 +227,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testInstallCaCertLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -296,15 +295,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // The DPC should still be able to manage app restrictions normally.
             executeDeviceTestClass(".ApplicationRestrictionsTest");
 
-            if (isStatsdEnabled(getDevice())) {
-                assertMetricsLogged(getDevice(), () -> {
-                    executeDeviceTestMethod(".ApplicationRestrictionsTest",
-                            "testSetApplicationRestrictions");
-                }, new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_RESTRICTIONS_VALUE)
-                        .setAdminPackageName(DEVICE_ADMIN_PKG)
-                        .setStrings(APP_RESTRICTIONS_TARGET_APP_PKG)
-                        .build());
-            }
+            assertMetricsLogged(getDevice(), () -> {
+                executeDeviceTestMethod(".ApplicationRestrictionsTest",
+                        "testSetApplicationRestrictions");
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_RESTRICTIONS_VALUE)
+                    .setAdminPackageName(DEVICE_ADMIN_PKG)
+                    .setStrings(APP_RESTRICTIONS_TARGET_APP_PKG)
+                    .build());
         } finally {
             changeApplicationRestrictionsManagingPackage(null);
         }
@@ -572,7 +569,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnPackageLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         // Will be uninstalled in tearDown().
@@ -683,16 +680,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceTestClass(".PersistentIntentResolvingTest");
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".PersistentIntentResolvingTest",
-                        "testAddPersistentPreferredActivityYieldsReceptionAtTarget");
-            }, new DevicePolicyEventWrapper.Builder(EventId.ADD_PERSISTENT_PREFERRED_ACTIVITY_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(DEVICE_ADMIN_PKG,
-                            "com.android.cts.deviceandprofileowner.EXAMPLE_ACTION")
-                    .build());
-        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".PersistentIntentResolvingTest",
+                    "testAddPersistentPreferredActivityYieldsReceptionAtTarget");
+        }, new DevicePolicyEventWrapper.Builder(EventId.ADD_PERSISTENT_PREFERRED_ACTIVITY_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setStrings(DEVICE_ADMIN_PKG,
+                        "com.android.cts.deviceandprofileowner.EXAMPLE_ACTION")
+                .build());
     }
 
     @Test
@@ -741,20 +736,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceTestClass(".SupportMessageTest");
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(
-                        ".SupportMessageTest", "testShortSupportMessageSetGetAndClear");
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_SHORT_SUPPORT_MESSAGE_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .build());
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".SupportMessageTest",
-                        "testLongSupportMessageSetGetAndClear");
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_LONG_SUPPORT_MESSAGE_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .build());
-        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".SupportMessageTest", "testShortSupportMessageSetGetAndClear");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_SHORT_SUPPORT_MESSAGE_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .build());
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".SupportMessageTest", "testLongSupportMessageSetGetAndClear");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_LONG_SUPPORT_MESSAGE_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .build());
     }
 
     @Test
@@ -764,22 +755,19 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
         installAppPermissionAppAsUser();
         executeDeviceTestClass(".ApplicationHiddenTest");
-        if (isStatsdEnabled(getDevice())) {
-            installAppAsUser(PERMISSIONS_APP_APK, mUserId);
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".ApplicationHiddenTest",
-                        "testSetApplicationHidden");
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_HIDDEN_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(false)
-                    .setStrings(PERMISSIONS_APP_PKG, "hidden", NOT_CALLED_FROM_PARENT)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_HIDDEN_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(false)
-                    .setStrings(PERMISSIONS_APP_PKG, "not_hidden", NOT_CALLED_FROM_PARENT)
-                    .build());
-        }
+        installAppAsUser(PERMISSIONS_APP_APK, mUserId);
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".ApplicationHiddenTest","testSetApplicationHidden");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_HIDDEN_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .setStrings(PERMISSIONS_APP_PKG, "hidden", NOT_CALLED_FROM_PARENT)
+                .build(),
+        new DevicePolicyEventWrapper.Builder(EventId.SET_APPLICATION_HIDDEN_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .setStrings(PERMISSIONS_APP_PKG, "not_hidden", NOT_CALLED_FROM_PARENT)
+                .build());
     }
 
     @Test
@@ -872,15 +860,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest", mUserId);
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest",
-                        "testInstallKeyPair", mUserId);
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_CERT_INSTALLER_PACKAGE_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings(CERT_INSTALLER_PKG)
-                    .build());
-        }
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest",
+                    "testInstallKeyPair", mUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_CERT_INSTALLER_PACKAGE_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setStrings(CERT_INSTALLER_PKG)
+                .build());
     }
 
     public interface DelegatedCertInstallerTestAction {
@@ -1139,7 +1125,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testDisallowAdjustVolumeMutedLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -1164,17 +1150,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             installAppAsUser(INTENT_RECEIVER_APK, mUserId);
             executeDeviceTestClass(".LockTaskTest");
-            if (isStatsdEnabled(getDevice())) {
-                assertMetricsLogged(
-                        getDevice(),
-                        () -> executeDeviceTestMethod(".LockTaskTest", "testStartLockTask"),
-                        new DevicePolicyEventWrapper.Builder(
-                                EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
-                                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                                .setBoolean(true)
-                                .setStrings(DEVICE_ADMIN_PKG)
-                                .build());
-            }
+            assertMetricsLogged(
+                    getDevice(),
+                    () -> executeDeviceTestMethod(".LockTaskTest", "testStartLockTask"),
+                    new DevicePolicyEventWrapper.Builder(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
+                            .setAdminPackageName(DEVICE_ADMIN_PKG)
+                            .setBoolean(true)
+                            .setStrings(DEVICE_ADMIN_PKG)
+                            .build());
         } catch (AssertionError ex) {
             // STOPSHIP(b/32771855), remove this once we fixed the bug.
             executeShellCommand("dumpsys activity activities");
@@ -1396,7 +1379,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetCameraDisabledLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -1599,7 +1582,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testInstallKeyPairLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
 
@@ -1617,7 +1600,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testGenerateKeyPairLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
 
@@ -1641,7 +1624,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetKeyPairCertificateLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
 
@@ -1660,26 +1643,24 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
 
         executeDeviceTestClass(".AccessibilityServicesTest");
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".AccessibilityServicesTest",
-                        "testPermittedAccessibilityServices");
-            }, new DevicePolicyEventWrapper
-                    .Builder(EventId.SET_PERMITTED_ACCESSIBILITY_SERVICES_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings((String[]) null)
-                    .build(),
-            new DevicePolicyEventWrapper
-                    .Builder(EventId.SET_PERMITTED_ACCESSIBILITY_SERVICES_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings((String[]) null)
-                    .build(),
-            new DevicePolicyEventWrapper
-                    .Builder(EventId.SET_PERMITTED_ACCESSIBILITY_SERVICES_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings("com.google.pkg.one", "com.google.pkg.two")
-                    .build());
-        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".AccessibilityServicesTest",
+                    "testPermittedAccessibilityServices");
+        }, new DevicePolicyEventWrapper
+                .Builder(EventId.SET_PERMITTED_ACCESSIBILITY_SERVICES_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setStrings((String[]) null)
+                .build(),
+        new DevicePolicyEventWrapper
+                .Builder(EventId.SET_PERMITTED_ACCESSIBILITY_SERVICES_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setStrings((String[]) null)
+                .build(),
+        new DevicePolicyEventWrapper
+                .Builder(EventId.SET_PERMITTED_ACCESSIBILITY_SERVICES_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setStrings("com.google.pkg.one", "com.google.pkg.two")
+                .build());
     }
 
     @Test
@@ -1689,22 +1670,20 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
 
         executeDeviceTestClass(".InputMethodsTest");
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".InputMethodsTest", "testPermittedInputMethods");
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings((String[]) null)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings((String[]) null)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setStrings("com.google.pkg.one", "com.google.pkg.two")
-                    .build());
-        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".InputMethodsTest", "testPermittedInputMethods");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setStrings((String[]) null)
+                .build(),
+        new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setStrings((String[]) null)
+                .build(),
+        new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setStrings("com.google.pkg.one", "com.google.pkg.two")
+                .build());
     }
 
     @Test
@@ -1720,7 +1699,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPasswordMethodsLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
 
@@ -1763,7 +1742,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testLockNowLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -1776,7 +1755,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetKeyguardDisabledFeaturesLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -1806,7 +1785,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetKeyguardDisabledSecureCameraLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -1830,7 +1809,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetUserRestrictionLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -1865,7 +1844,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetSecureSettingLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -1892,7 +1871,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetPermissionPolicyLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -1917,7 +1896,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetPermissionGrantStateLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         installAppPermissionAppAsUser();
@@ -1997,7 +1976,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testEnableSystemAppLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         final List<String> enabledSystemPackageNames = getEnabledSystemPackageNames();
@@ -2017,7 +1996,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testEnableSystemAppWithIntentLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         final String systemPackageToEnable = getLaunchableSystemPackage();
@@ -2038,7 +2017,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetUninstallBlockedLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         installAppAsUser(PERMISSIONS_APP_APK, mUserId);

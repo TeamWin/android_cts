@@ -24,7 +24,6 @@ import static android.stats.devicepolicy.EventId.SET_CROSS_PROFILE_PACKAGES_VALU
 import static android.stats.devicepolicy.EventId.SET_INTERACT_ACROSS_PROFILES_APP_OP_VALUE;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -87,17 +86,15 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG,
                 MANAGED_PROFILE_PKG + ".CrossProfileIntentFilterTest", mProfileUserId);
 
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                runDeviceTestsAsUser(
-                        MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".CrossProfileIntentFilterTest",
-                        "testAddCrossProfileIntentFilter_all", mProfileUserId);
-            }, new DevicePolicyEventWrapper.Builder(ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
-                    .setAdminPackageName(MANAGED_PROFILE_PKG)
-                    .setInt(1)
-                    .setStrings("com.android.cts.managedprofile.ACTION_TEST_ALL_ACTIVITY")
-                    .build());
-        }
+        assertMetricsLogged(getDevice(), () -> {
+            runDeviceTestsAsUser(
+                    MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".CrossProfileIntentFilterTest",
+                    "testAddCrossProfileIntentFilter_all", mProfileUserId);
+        }, new DevicePolicyEventWrapper.Builder(ADD_CROSS_PROFILE_INTENT_FILTER_VALUE)
+                .setAdminPackageName(MANAGED_PROFILE_PKG)
+                .setInt(1)
+                .setStrings("com.android.cts.managedprofile.ACTION_TEST_ALL_ACTIVITY")
+                .build());
 
         // Set up filters from primary to managed profile
         String command = "am start -W --user " + mProfileUserId + " " + MANAGED_PROFILE_PKG
@@ -297,7 +294,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testCrossProfileWidgetsLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
 

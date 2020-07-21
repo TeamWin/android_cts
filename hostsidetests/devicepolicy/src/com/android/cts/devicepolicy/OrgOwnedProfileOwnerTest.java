@@ -18,7 +18,6 @@ package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.DEVICE_ADMIN_COMPONENT_FLATTENED;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -167,7 +166,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictionSetOnParentLogged() throws Exception {
-        if (!mHasFeature|| !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -246,7 +245,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testCameraDisabledOnParentLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -617,7 +616,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetPersonalAppsSuspendedLogged() throws Exception {
-        if (!mHasFeature|| !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -635,7 +634,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetManagedProfileMaximumTimeOffLogged() throws Exception {
-        if (!mHasFeature|| !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {

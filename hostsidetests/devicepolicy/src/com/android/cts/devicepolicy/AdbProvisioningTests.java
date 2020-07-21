@@ -19,7 +19,6 @@ import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.ADMIN_RECEI
 import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.DEVICE_ADMIN_APK;
 import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.DEVICE_ADMIN_PKG;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -51,7 +50,7 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
 
     @Test
     public void testAdbDeviceOwnerLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -66,7 +65,7 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
 
     @Test
     public void testAdbProfileOwnerLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {

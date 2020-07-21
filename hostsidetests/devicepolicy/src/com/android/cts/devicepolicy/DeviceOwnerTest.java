@@ -17,7 +17,6 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -518,7 +517,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     @Test
     @Ignore("b/145932189")
     public void testSetSystemUpdatePolicyLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -651,22 +650,19 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("AdminActionBookkeepingTest");
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRetrieveSecurityLogs");
-            }, new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_SECURITY_LOGS_VALUE)
-                    .setAdminPackageName(DEVICE_OWNER_PKG)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(
-                    EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
-                    .setAdminPackageName(DEVICE_OWNER_PKG)
-                    .build());
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRequestBugreport");
-            }, new DevicePolicyEventWrapper.Builder(EventId.REQUEST_BUGREPORT_VALUE)
-                    .setAdminPackageName(DEVICE_OWNER_PKG)
-                    .build());
-        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRetrieveSecurityLogs");
+        }, new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_SECURITY_LOGS_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .build(),
+        new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .build());
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRequestBugreport");
+        }, new DevicePolicyEventWrapper.Builder(EventId.REQUEST_BUGREPORT_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .build());
     }
 
     @Test
@@ -884,7 +880,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetKeyguardDisabledLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
@@ -896,7 +892,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetStatusBarDisabledLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {

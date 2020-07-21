@@ -17,7 +17,6 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
@@ -223,7 +222,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
 
     @Test
     public void testCreateSeparateChallengeChangedLogged() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {

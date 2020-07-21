@@ -17,7 +17,6 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -217,7 +216,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testWipeData_secondaryUserLogged() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
         }
         int secondaryUserId = setupManagedSecondaryUser();
