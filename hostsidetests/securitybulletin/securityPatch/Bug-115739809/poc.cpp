@@ -156,8 +156,7 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
 /**
  * Return false if vulnerability is found for a given message type
  */
-static bool checkMessage(std::shared_ptr<InputChannel> server, std::shared_ptr<InputChannel> client,
-                         InputMessage::Type type) {
+static bool checkMessage(InputChannel& server, InputChannel& client, InputMessage::Type type) {
     InputMessage serverMsg;
     // Set all potentially uninitialized bytes to 1, for easier comparison
 
@@ -166,14 +165,14 @@ static bool checkMessage(std::shared_ptr<InputChannel> server, std::shared_ptr<I
     if (type == InputMessage::Type::MOTION) {
         serverMsg.body.motion.pointerCount = MAX_POINTERS;
     }
-    status_t result = server->sendMessage(&serverMsg);
+    status_t result = server.sendMessage(&serverMsg);
     if (result != OK) {
         ALOGE("Could not send message to the input channel");
         return false;
     }
 
     InputMessage clientMsg;
-    result = client->receiveMessage(&clientMsg);
+    result = client.receiveMessage(&clientMsg);
     if (result != OK) {
         ALOGE("Could not receive message from the input channel");
         return false;
@@ -204,7 +203,7 @@ static bool checkMessage(std::shared_ptr<InputChannel> server, std::shared_ptr<I
  * Do this for all message types
  */
 int main() {
-    std::shared_ptr<InputChannel> server, client;
+    std::unique_ptr<InputChannel> server, client;
 
     status_t result = InputChannel::openInputChannelPair("channel name", server, client);
     if (result != OK) {
@@ -219,7 +218,7 @@ int main() {
         InputMessage::Type::FOCUS,
     };
     for (InputMessage::Type type : types) {
-        bool success = checkMessage(server, client, type);
+        bool success = checkMessage(*server, *client, type);
         if (!success) {
             ALOGE("Check message failed for type %i", type);
             return EXIT_VULNERABLE;
