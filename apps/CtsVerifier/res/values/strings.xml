@@ -4645,6 +4645,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <!-- Common strings for the TV Display tests -->
     <string name="tv_start_test">Start Test</string>
 
+    <!-- Audio Capabilities test -->
+    <string name="tv_audio_capabilities_test">Audio Capabilities Test</string>
+    <string name="tv_audio_capabilities_test_info">This test checks if AudioDeviceInfo and
+    AudioTrack#isDirectPlaybackSupported APIs correctly report the Audio capabilities
+    of the connected audio devices.</string>
+
     <!-- HDR Capabilities test -->
     <string name="tv_hdr_capabilities_test">HDR Capabilities Test</string>
     <string name="tv_hdr_capabilities_test_step_hdr_display">HDR Display</string>

@@ -19,6 +19,7 @@ package android.accessibilityservice.cts;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangeTypesAndWindowTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.view.accessibility.AccessibilityEvent.WINDOWS_CHANGE_ADDED;
@@ -101,7 +102,7 @@ public class AccessibilityEmbeddedDisplayTest {
     @Before
     public void setUp() throws Exception {
         mContext = sInstrumentation.getContext();
-        assumeTrue(supportsMultiDisplay());
+        assumeTrue(supportsMultiDisplay(mContext));
 
         mParentActivityTitle = mContext.getString(
                 R.string.accessibility_embedded_display_test_parent_activity);
@@ -244,11 +245,6 @@ public class AccessibilityEmbeddedDisplayTest {
         mEmbeddedDisplayActivity = (EmbeddedDisplayActivity)
                 am.waitForActivityWithTimeout(DEFAULT_TIMEOUT_MS);
         assertNotNull(mEmbeddedDisplayActivity);
-    }
-
-    private boolean supportsMultiDisplay() {
-        return mContext.getPackageManager().hasSystemFeature(
-                FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 
     public static class EmbeddedDisplayParentActivity extends Activity {
