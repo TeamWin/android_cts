@@ -340,7 +340,28 @@ public class InstallUtils {
             }
         }
         return true;
+    }
 
+    /**
+     * Returns the session by session Id, or null if no session is found.
+     */
+    public static PackageInstaller.SessionInfo getStagedSessionInfo(int sessionId) {
+        PackageInstaller packageInstaller = getPackageInstaller();
+        for (PackageInstaller.SessionInfo session : packageInstaller.getStagedSessions()) {
+            if (session.getSessionId() == sessionId) {
+                return session;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Assert that the given staged session is abandoned. The method assumes that the given session
+     * is staged.
+     * @param sessionId of the staged session
+     */
+    public static void assertStagedSessionIsAbandoned(int sessionId) {
+        assertThat(getStagedSessionInfo(sessionId)).isNull();
     }
 
     /**

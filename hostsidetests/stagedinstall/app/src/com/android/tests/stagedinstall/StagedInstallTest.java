@@ -278,10 +278,10 @@ public class StagedInstallTest {
         int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
-        PackageInstaller.SessionInfo session = getStagedSessionInfo(sessionId);
+        PackageInstaller.SessionInfo session = InstallUtils.getStagedSessionInfo(sessionId);
         assertSessionReady(sessionId);
         abandonSession(sessionId);
-        assertThat(getStagedSessionInfo(sessionId)).isNull();
+        InstallUtils.assertStagedSessionIsAbandoned(sessionId);
         // Allow the session to be removed from PackageInstaller
         Duration spentWaiting = Duration.ZERO;
         while (spentWaiting.compareTo(WAIT_FOR_SESSION_REMOVED_TTL) < 0) {
@@ -311,7 +311,7 @@ public class StagedInstallTest {
         int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         abandonSession(sessionId);
-        assertThat(getStagedSessionInfo(sessionId)).isNull();
+        InstallUtils.assertStagedSessionIsAbandoned(sessionId);
     }
 
     @Test
@@ -345,7 +345,7 @@ public class StagedInstallTest {
         int sessionId = stageMultipleApks(TestApp.A1, TestApp.Apex2).assertSuccessful()
                 .getSessionId();
         abandonSession(sessionId);
-        assertThat(getStagedSessionInfo(sessionId)).isNull();
+        InstallUtils.assertStagedSessionIsAbandoned(sessionId);
         assertNoSessionUpdatedBroadcastSent();
     }
 
@@ -1364,19 +1364,6 @@ public class StagedInstallTest {
 
     private static void abandonSession(int sessionId) {
         getPackageInstaller().abandonSession(sessionId);
-    }
-
-    /**
-     * Returns the session by session Id, or null if no session is found.
-     */
-    private static PackageInstaller.SessionInfo getStagedSessionInfo(int sessionId) {
-        PackageInstaller packageInstaller = getPackageInstaller();
-        for (PackageInstaller.SessionInfo session : packageInstaller.getStagedSessions()) {
-            if (session.getSessionId() == sessionId) {
-                return session;
-            }
-        }
-        return null;
     }
 
     private static PackageInstaller.SessionInfo getSessionInfo(int sessionId) {
