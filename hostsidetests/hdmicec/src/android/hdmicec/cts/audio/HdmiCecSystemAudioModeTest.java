@@ -41,6 +41,7 @@ import org.junit.runner.RunWith;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -128,6 +129,8 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
         device.executeAdbCommand("logcat", "-c");
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.MUTE");
+        // The audio device should send <Report Audio Status> message after mute.
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.REPORT_AUDIO_STATUS);
     }
 
     private void unmuteDevice() throws Exception {
@@ -136,6 +139,8 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
         device.executeShellCommand(CLEAR_COMMAND);
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.UNMUTE");
+        // The audio device should send <Report Audio Status> message after unmute.
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.REPORT_AUDIO_STATUS);
     }
 
     public boolean isDeviceMuted() throws Exception {
@@ -176,6 +181,8 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
     }
 
     private int getDutAudioStatus() throws Exception {
+        // Give a couple of seconds for the HdmiCecAudioManager intent to complete.
+        TimeUnit.SECONDS.sleep(2);
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, AUDIO_DEVICE, CecOperand.GIVE_AUDIO_STATUS);
         String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                 CecOperand.REPORT_AUDIO_STATUS);
