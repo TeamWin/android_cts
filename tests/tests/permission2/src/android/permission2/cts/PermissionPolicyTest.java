@@ -117,6 +117,11 @@ public class PermissionPolicyTest {
         for (ExpectedPermissionInfo expectedPermission : expectedPermissions) {
             String expectedPermissionName = expectedPermission.name;
             if (shouldSkipPermission(expectedPermissionName)) {
+                // This permission doesn't need to exist yet, but will exist in
+                // a future SPL. It is acceptable to declare the permission
+                // even in an earlier SPL, so we remove it here so it doesn't
+                // trigger a failure after the loop.
+                declaredPermissionsMap.remove(expectedPermissionName);
                 continue;
             }
 
