@@ -505,8 +505,9 @@ public class SystemFeaturesTest {
      */
     @Test
     public void testTelephonyFeatures() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return;
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) ||
+            !mPackageManager.hasSystemFeature(PackageManager.FEATURE_CONNECTION_SERVICE)) {
+                return;
         }
 
         int phoneType = mTelephonyManager.getPhoneType();
