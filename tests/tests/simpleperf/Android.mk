@@ -38,6 +38,7 @@ LOCAL_STATIC_LIBRARIES += \
   libprotobuf-cpp-lite \
   libevent \
   libopencsd_decoder \
+  libc++fs \
 
 simpleperf_testdata_files := $(shell cd $(simpleperf_src_path); find testdata -type f)
 
