@@ -1,0 +1,58 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.systemui.tv.cts
+
+import android.content.ComponentName
+
+private const val pkg = "android.systemui.cts.tv.pip"
+
+object Components {
+
+    @JvmStatic
+    fun ComponentName.activityName(): String = flattenToShortString()
+
+    @JvmStatic
+    fun ComponentName.windowName(): String = flattenToString()
+
+    @JvmField
+    val PIP_ACTIVITY: ComponentName = ComponentName.createRelative(pkg, ".PipTestActivity")
+
+    @JvmField
+    val PIP_MENU_ACTIVITY: ComponentName = ComponentName.createRelative(
+            "com.android.systemui",
+            ".pip.tv.PipMenuActivity"
+    )
+}
+
+object PipActivity {
+    /** Instruct the app to go into pip mode */
+    const val ACTION_ENTER_PIP = "$pkg.PipTestActivity.enter_pip"
+
+    /** Instruct the app to go into pip mode when set to true */
+    const val EXTRA_ENTER_PIP = "enter_pip"
+
+    /** Provide a rect hint for entering pip in the form "left top right bottom" */
+    const val EXTRA_SOURCE_RECT_HINT = "source_rect_hint"
+
+    const val EXTRA_ASPECT_RATIO_DENOMINATOR = "aspect_ratio_denominator"
+    const val EXTRA_ASPECT_RATIO_NUMERATOR = "aspect_ratio_numerator"
+}
+
+object PipMenu {
+    const val ACTION_MENU = "PipNotification.menu"
+    const val ACTION_CLOSE = "PipNotification.close"
+}

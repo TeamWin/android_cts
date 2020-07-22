@@ -37,14 +37,12 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Ignore
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class TvMicrophoneCaptureIndicatorTest extends BaseHostJUnit4Test {
     private static final String SHELL_AM_START_FG_SERVICE =
