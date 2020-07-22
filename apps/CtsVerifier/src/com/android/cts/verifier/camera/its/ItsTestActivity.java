@@ -396,7 +396,8 @@ public class ItsTestActivity extends DialogTestListActivity {
 
     protected void setupItsTests(ArrayTestListAdapter adapter) {
         for (String cam : mToBeTestedCameraIds) {
-            List<String> scenes = cam.contains(":") ? mHiddenPhysicalCameraSceneIds : mSceneIds;
+            List<String> scenes = cam.contains(ItsUtils.CAMERA_ID_TOKENIZER) ?
+                    mHiddenPhysicalCameraSceneIds : mSceneIds;
             for (String scene : scenes) {
                 adapter.add(new DialogTestListItem(this,
                 testTitle(cam, scene),
