@@ -227,6 +227,7 @@
         <option name="cleanup" value="true" />
 
         <!-- Please add 32-bit binary tests below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-1324132->/data/local/tmp/CVE-2017-13241" />
 
         <!-- Please add 64-bit binary tests below to avoid merge conflict -->
 
