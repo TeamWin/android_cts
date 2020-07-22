@@ -393,6 +393,9 @@ public class UidAtomTests extends DeviceAtomTestCase {
             return;
         }
         if (!hasFeature(FEATURE_LEANBACK_ONLY, false)) return;
+        if (!hasBattery()) {
+            return;
+        }
 
         StatsdConfig.Builder config = getPulledConfig();
         addGaugeAtomWithDimensions(config,
