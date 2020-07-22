@@ -524,6 +524,8 @@
         <activity android:name=".PopupMinimalPostProcessingActivity"
              android:theme="@android:style/Theme.Holo.Dialog.NoActionBar"
              android:exported="true"/>
+        <activity android:name=".CrashingActivity"
+            android:exported="true" />
         <activity android:name=".PresentationActivity"
              android:launchMode="singleTop"
              android:exported="true"/>
