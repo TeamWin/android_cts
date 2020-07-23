@@ -18,6 +18,7 @@ package android.appenumeration.cts.query;
 
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_SERVICES;
@@ -118,6 +119,8 @@ public class TestActivity extends Activity {
                 } catch (ActivityNotFoundException e) {
                     sendError(remoteCallback, e);
                 }
+                finish();
+            } else if (ACTION_JUST_FINISH.equals(action)) {
                 finish();
             } else if (ACTION_GET_INSTALLED_PACKAGES.equals(action)) {
                 sendGetInstalledPackages(remoteCallback, queryIntent.getIntExtra(EXTRA_FLAGS, 0));
