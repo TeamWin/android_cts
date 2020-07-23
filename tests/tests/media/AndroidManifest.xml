@@ -163,6 +163,10 @@
         </service>
         <service android:name="android.media.cts.MediaButtonReceiverService"
              android:exported="true"/>
+        <service android:name=".MediaBrowserServiceTestService"
+             android:process=":mediaBrowserServiceTestService"/>
+        <service android:name=".MediaSessionTestService"
+             android:process=":mediaSessionTestService"/>
         <receiver android:name="android.media.cts.MediaButtonBroadcastReceiver"/>
     </application>
 
