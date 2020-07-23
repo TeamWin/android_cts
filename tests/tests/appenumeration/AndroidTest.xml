@@ -38,6 +38,8 @@
         <option name="test-file-name" value="CtsAppEnumerationSharedUidSource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationSharedUidTarget.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothing.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesNothingReceivesUri.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesNothingReceivesPermissionProtectedUri.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWildcardActionSource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesActivityViaAction.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesServiceViaAction.apk" />
