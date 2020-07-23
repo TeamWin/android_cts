@@ -18,6 +18,7 @@ package android.appenumeration.cts;
 
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
@@ -38,6 +39,8 @@ import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PROVIDER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_Q;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_PERM_URI;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_URI;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
@@ -79,11 +82,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.Uri;
@@ -101,7 +102,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.core.IsNull;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -110,7 +110,6 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
@@ -195,6 +194,49 @@ public class AppEnumerationTests {
     public void startImplicitly_canStartNonVisible() throws Exception {
         assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
         startImplicitIntent(QUERIES_NOTHING);
+    }
+
+    @Test
+    public void startActivityWithNoPermissionUri_canSeeProvider() throws Exception {
+        assertNotVisible(QUERIES_NOTHING_RECEIVES_URI, QUERIES_NOTHING_PERM);
+
+        // send with uri but no grant flags; shouldn't be visible
+        startExplicitActivityWithIntent(QUERIES_NOTHING_PERM, QUERIES_NOTHING_RECEIVES_URI,
+                new Intent(ACTION_JUST_FINISH)
+                        .setData(Uri.parse("content://" + QUERIES_NOTHING_PERM + "/test")));
+        assertNotVisible(QUERIES_NOTHING_RECEIVES_URI, QUERIES_NOTHING_PERM);
+
+        // send again with uri bug grant flags now set; should be visible
+        startExplicitActivityWithIntent(QUERIES_NOTHING_PERM, QUERIES_NOTHING_RECEIVES_URI,
+                new Intent(ACTION_JUST_FINISH)
+                        .setData(Uri.parse("content://" + QUERIES_NOTHING_PERM + "/test"))
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        assertVisible(QUERIES_NOTHING_RECEIVES_URI, QUERIES_NOTHING_PERM);
+    }
+
+    @Test
+    public void startActivityWithUri_canSeePermissionProtectedProvider() throws Exception {
+        assertNotVisible(QUERIES_NOTHING_RECEIVES_PERM_URI, QUERIES_NOTHING_PERM);
+
+        // send with uri but no grant flags; shouldn't be visible
+        startExplicitActivityWithIntent(QUERIES_NOTHING_PERM, QUERIES_NOTHING_RECEIVES_PERM_URI,
+                new Intent(ACTION_JUST_FINISH)
+                        .setData(Uri.parse("content://" + QUERIES_NOTHING_PERM + "2/test")));
+        assertNotVisible(QUERIES_NOTHING_RECEIVES_PERM_URI, QUERIES_NOTHING_PERM);
+
+        // send again with uri bug grant flags now set; should be visible
+        startExplicitActivityWithIntent(QUERIES_NOTHING_PERM, QUERIES_NOTHING_RECEIVES_PERM_URI,
+                new Intent(ACTION_JUST_FINISH)
+                        .setData(Uri.parse("content://" + QUERIES_NOTHING_PERM + "2/test"))
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+        assertVisible(QUERIES_NOTHING_RECEIVES_PERM_URI, QUERIES_NOTHING_PERM);
+    }
+
+    private void startExplicitActivityWithIntent(
+            String sourcePackageName, String targetPackageName, Intent intent) throws Exception {
+        sendCommandBlocking(sourcePackageName, targetPackageName,
+                intent.setClassName(targetPackageName, ACTIVITY_CLASS_TEST),
+                ACTION_START_DIRECTLY);
     }
 
     @Test
