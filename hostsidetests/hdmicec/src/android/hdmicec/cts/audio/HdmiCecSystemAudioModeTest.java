@@ -365,15 +365,15 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
     /**
      * Test 11.2.15-9
      * Tests that the DUT responds with a <Report Audio Status> message with correct parameters
-     * to a <Give Audio Status> message when volume is set to 0% and not muted.
+     * to a <Give Audio Status> message when volume is set to 0%.
      */
     @Test
-    public void cect_11_2_15_9_ReportAudioStatus_0_unmuted() throws Exception {
+    public void cect_11_2_15_9_ReportAudioStatus_0() throws Exception {
         sendSystemAudioModeInitiation();
         unmuteDevice();
         setDeviceVolume(0);
         int reportedVolume = getDutAudioStatus();
-        assertThat(reportedVolume).isEqualTo(0);
+        assertThat(reportedVolume).isAnyOf(0, 128);
     }
 
     /**
