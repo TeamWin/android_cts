@@ -105,14 +105,18 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.motion.edgeFlags = msg.body.motion.edgeFlags;
             // nsecs_t downTime
             outMsg->body.motion.downTime = msg.body.motion.downTime;
-            // float xScale
-            outMsg->body.motion.xScale = msg.body.motion.xScale;
-            // float yScale
-            outMsg->body.motion.yScale = msg.body.motion.yScale;
-            // float xOffset
-            outMsg->body.motion.xOffset = msg.body.motion.xOffset;
-            // float yOffset
-            outMsg->body.motion.yOffset = msg.body.motion.yOffset;
+            // float dsdx
+            outMsg->body.motion.dsdx = msg.body.motion.dsdx;
+            // float dtdx
+            outMsg->body.motion.dtdx = msg.body.motion.dtdx;
+            // float dtdy
+            outMsg->body.motion.dtdy = msg.body.motion.dtdy;
+            // float dsdy
+            outMsg->body.motion.dsdy = msg.body.motion.dsdy;
+            // float tx
+            outMsg->body.motion.tx = msg.body.motion.tx;
+            // float ty
+            outMsg->body.motion.ty = msg.body.motion.ty;
             // float xPrecision
             outMsg->body.motion.xPrecision = msg.body.motion.xPrecision;
             // float yPrecision
