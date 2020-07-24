@@ -21,10 +21,12 @@ import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -39,6 +41,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
+import android.util.ArraySet;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -56,6 +59,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -234,6 +238,61 @@ public class WindowInputTests {
 
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         assertEquals(1, mClickCount);
+    }
+
+    @Test
+    public void testTapInsideUntouchableWindowResultInOutsideTouches() throws Throwable {
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+
+        final Set<MotionEvent> events = new ArraySet<>();
+        mActivityRule.runOnUiThread(() -> {
+            mView = new View(mActivity);
+            p.width = 20;
+            p.height = 20;
+            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.flags = FLAG_NOT_TOUCHABLE | FLAG_WATCH_OUTSIDE_TOUCH;
+            mView.setOnTouchListener((v, e) -> {
+                // Copying to make sure we are not dealing with a reused object
+                events.add(MotionEvent.obtain(e));
+                return false;
+            });
+            mActivity.addWindow(mView, p);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+
+        assertEquals(1, events.size());
+        MotionEvent event = events.iterator().next();
+        assertEquals(MotionEvent.ACTION_OUTSIDE, event.getAction());
+    }
+
+    @Test
+    public void testTapOutsideUntouchableWindowResultInOutsideTouches() throws Throwable {
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+
+        Set<MotionEvent> events = new ArraySet<>();
+        int size = 20;
+        mActivityRule.runOnUiThread(() -> {
+            mView = new View(mActivity);
+            p.width = size;
+            p.height = size;
+            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.flags = FLAG_NOT_TOUCHABLE | FLAG_WATCH_OUTSIDE_TOUCH;
+            mView.setOnTouchListener((v, e) -> {
+                // Copying to make sure we are not dealing with a reused object
+                events.add(MotionEvent.obtain(e));
+                return false;
+            });
+            mActivity.addWindow(mView, p);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        CtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mView, size + 5, size + 5);
+
+        assertEquals(1, events.size());
+        MotionEvent event = events.iterator().next();
+        assertEquals(MotionEvent.ACTION_OUTSIDE, event.getAction());
     }
 
     @Test
