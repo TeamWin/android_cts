@@ -1358,7 +1358,7 @@ public class PaintTest {
     public void testHasGlyph() {
         Paint p = new Paint();
 
-        // This method tests both the logic of hasGlyph and the sanity of fonts present
+        // This method tests both the logic of hasGlyph and the validity of fonts present
         // on the device.
         assertTrue(p.hasGlyph("A"));
         assertFalse(p.hasGlyph("\uFFFE"));  // U+FFFE is guaranteed to be a noncharacter
