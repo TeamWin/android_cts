@@ -1,0 +1,131 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.systemui.tv.cts
+
+import android.app.NotificationManager
+import android.content.Intent
+import android.platform.test.annotations.Postsubmit
+import android.server.wm.annotation.Group2
+import android.systemui.tv.cts.Components.PIP_ACTIVITY
+import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
+import android.systemui.tv.cts.ShellCommands.CMD_TEMPLATE_NOTIFICATION_ALLOW_LISTENER
+import android.systemui.tv.cts.ShellCommands.CMD_TEMPLATE_NOTIFICATION_DISALLOW_LISTENER
+import android.systemui.tv.cts.TVNotificationExtender.EXTRA_CONTENT_INTENT
+import android.systemui.tv.cts.TVNotificationExtender.EXTRA_DELETE_INTENT
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+
+/**
+ * Tests notification-related (PiP) behavior.
+ *
+ * Build/Install/Run:
+ * atest CtsSystemUiTestCases:PipNotificationTests
+ */
+@Postsubmit
+@Group2
+@RunWith(AndroidJUnit4::class)
+class PipNotificationTests : PipTestBase() {
+    private val notificationManager: NotificationManager =
+        context.getSystemService(NotificationManager::class.java)
+            ?: error("Could not find a NotificationManager!")
+
+    init {
+        val intent = Intent(context, PipNotificationListenerService::class.java)
+        context.startService(intent)
+    }
+
+    @Before
+    override fun setUp() {
+        super.setUp()
+        toggleListenerAccess(allow = true)
+        notificationListener.clearNotifications()
+    }
+
+    @After
+    fun tearDown() {
+        stopPackage(PIP_ACTIVITY)
+        toggleListenerAccess(allow = false)
+    }
+
+    /** Ensure a notification is posted when an app is in pip mode. */
+    @Test
+    fun pipNotification_isPosted() {
+        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+        wmState.waitForValidState(PIP_ACTIVITY)
+
+        assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
+    }
+
+    /** Ensure the pip notification has a functional pending intent to show the pip menu. */
+    @Test
+    fun pipNotification_detailsButton() {
+        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+        wmState.waitForValidState(PIP_ACTIVITY)
+
+        val notification =
+            assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
+
+        val contentIntent = notification.pendingTvIntent(EXTRA_CONTENT_INTENT)
+
+        contentIntent.send()
+        assertPipMenuOpen()
+    }
+
+    /** Ensure the pip notification has a functional pending intent to dismiss the app. */
+    @Test
+    fun pipNotification_dismissButton() {
+        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+        wmState.waitForValidState(PIP_ACTIVITY)
+
+        val notification =
+            assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
+
+        val deleteIntent = notification.pendingTvIntent(EXTRA_DELETE_INTENT)
+
+        deleteIntent.send()
+        wmState.waitFor("The PiP app must be closed!") {
+            !it.containsActivity(PIP_ACTIVITY)
+        }
+
+        // Also make sure the pip notification was removed
+        assertNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
+    }
+
+    /** Enable/disable the [PipNotificationListenerService] listening to notifications. */
+    private fun toggleListenerAccess(allow: Boolean) {
+        val listenerName = PipNotificationListenerService.componentName
+        val cmd = if (allow) {
+            CMD_TEMPLATE_NOTIFICATION_ALLOW_LISTENER
+        } else {
+            CMD_TEMPLATE_NOTIFICATION_DISALLOW_LISTENER
+        }
+        executeShellCommand(cmd.format(listenerName.flattenToShortString()))
+
+        // Ensure we were successful
+        assertEquals(allow, notificationManager.isNotificationListenerAccessGranted(listenerName))
+    }
+
+    private val notificationListener: PipNotificationListenerService
+        get() = PipNotificationListenerService.instance
+            ?: error("PipNotificationListenerService not connected!")
+}

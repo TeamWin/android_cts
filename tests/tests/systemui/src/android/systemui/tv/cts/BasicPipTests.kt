@@ -31,7 +31,6 @@ import android.service.dreams.DreamService
 import android.service.dreams.IDreamManager
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
 import android.systemui.tv.cts.Components.PIP_MENU_ACTIVITY
-import android.systemui.tv.cts.Components.activityName
 import android.systemui.tv.cts.Components.windowName
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_DENOMINATOR
@@ -269,17 +268,6 @@ class BasicPipTests : PipTestBase() {
         // enter pip menu
         sendBroadcast(PipMenu.ACTION_MENU)
         wmState.waitForValidState(PIP_MENU_ACTIVITY)
-    }
-
-    /** Ensure the pip detail menu is open. */
-    private fun assertPipMenuOpen() {
-        wmState.waitForValidState(PIP_MENU_ACTIVITY)
-        wmState.assertActivityDisplayed(PIP_MENU_ACTIVITY)
-        assertEquals(
-            expected = PIP_MENU_ACTIVITY.activityName(),
-            actual = wmState.focusedActivity,
-            message = "The PiP Menu activity must be focused!"
-        )
     }
 
     /** Ensure the pip window has the correct dimensions and position for a given [aspectRatio]. */
