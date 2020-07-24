@@ -210,8 +210,7 @@ public class CarrierApiTest extends AndroidTestCase {
     }
 
     private boolean isSimCardPresent() {
-        return mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_NONE &&
-                mTelephonyManager.getSimState() != TelephonyManager.SIM_STATE_ABSENT;
+        return mTelephonyManager.getSimState() != TelephonyManager.SIM_STATE_ABSENT;
     }
 
     private String getCertHash(String pkgName) {
