@@ -526,7 +526,7 @@ public class FontTest {
 
     @Test
     public void testBuilder_fd_subdata() throws IOException {
-        byte[] dummy = { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef };
+        byte[] placeHolderData = { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef };
         AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
@@ -536,12 +536,12 @@ public class FontTest {
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
-                assertTrue(copyToFile(file, is, dummy, dummy));
+                assertTrue(copyToFile(file, is, placeHolderData, placeHolderData));
 
                 try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
                         ParcelFileDescriptor.MODE_READ_ONLY)) {
-                    Font font = new Font.Builder(
-                            fd, dummy.length, file.length() - dummy.length * 2).build();
+                    Font font = new Font.Builder(fd, placeHolderData.length,
+                            file.length() - placeHolderData.length * 2).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
@@ -557,7 +557,7 @@ public class FontTest {
 
     @Test
     public void testBuilder_fd_subdata_ttc() throws IOException {
-        byte[] dummy = { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef };
+        byte[] placeHolderData = { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef };
         AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
@@ -568,12 +568,12 @@ public class FontTest {
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
-                assertTrue(copyToFile(file, is, dummy, dummy));
+                assertTrue(copyToFile(file, is, placeHolderData, placeHolderData));
 
                 try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
                         ParcelFileDescriptor.MODE_READ_ONLY)) {
                     Font font = new Font.Builder(
-                            fd, dummy.length, file.length() - dummy.length * 2)
+                            fd, placeHolderData.length, file.length() - placeHolderData.length * 2)
                             .setTtcIndex(ttcIndex).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
@@ -590,7 +590,7 @@ public class FontTest {
 
     @Test
     public void testBuilder_fd_subdata_vf() throws IOException {
-        byte[] dummy = { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef };
+        byte[] placeHolderData = { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef };
         AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
@@ -602,12 +602,12 @@ public class FontTest {
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
-                assertTrue(copyToFile(file, is, dummy, dummy));
+                assertTrue(copyToFile(file, is, placeHolderData, placeHolderData));
 
                 try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
                         ParcelFileDescriptor.MODE_READ_ONLY)) {
                     Font font = new Font.Builder(
-                            fd, dummy.length, file.length() - dummy.length * 2)
+                            fd, placeHolderData.length, file.length() - placeHolderData.length * 2)
                             .setFontVariationSettings(axes).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
@@ -625,7 +625,7 @@ public class FontTest {
     @Test
     public void testBuilder_fd_subdata_override() throws IOException {
         int customWeight = 350;
-        byte[] dummy = { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef };
+        byte[] placeHolderData = { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef };
         AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
@@ -635,12 +635,12 @@ public class FontTest {
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
-                assertTrue(copyToFile(file, is, dummy, dummy));
+                assertTrue(copyToFile(file, is, placeHolderData, placeHolderData));
 
                 try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
                         ParcelFileDescriptor.MODE_READ_ONLY)) {
                     Font font = new Font.Builder(
-                            fd, dummy.length, file.length() - dummy.length * 2)
+                            fd, placeHolderData.length, file.length() - placeHolderData.length * 2)
                             .setWeight(customWeight).build();
                     assertEquals(path, customWeight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
@@ -661,12 +661,12 @@ public class FontTest {
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
-                assertTrue(copyToFile(file, is, dummy, dummy));
+                assertTrue(copyToFile(file, is, placeHolderData, placeHolderData));
 
                 try (ParcelFileDescriptor fd = ParcelFileDescriptor.open(file,
                         ParcelFileDescriptor.MODE_READ_ONLY)) {
                     Font font = new Font.Builder(
-                            fd, dummy.length, file.length() - dummy.length * 2)
+                            fd, placeHolderData.length, file.length() - placeHolderData.length * 2)
                             .setSlant(FontStyle.FONT_SLANT_ITALIC).build();
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getStyle().getSlant());
