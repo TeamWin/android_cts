@@ -593,6 +593,7 @@ public class CarrierApiTest extends AndroidTestCase {
 
     public void testIsManualNetworkSelectionAllowed() throws Exception {
         if (!hasCellular) return;
+        if (mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_GSM) return;
 
         try {
             assertTrue(mTelephonyManager.isManualNetworkSelectionAllowed());
