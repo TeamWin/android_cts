@@ -9,6 +9,7 @@ android_test {
         "cts",
         "vts10",
         "general-tests",
+	"mts",
     ],
 
     libs: [
