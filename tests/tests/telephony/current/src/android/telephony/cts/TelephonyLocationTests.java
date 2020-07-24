@@ -1,5 +1,7 @@
 package android.telephony.cts;
 
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -135,6 +137,28 @@ public class TelephonyLocationTests {
     }
 
     @Test
+    public void testSdk28ServiceStateListeningWithoutPermissions() {
+        if (!mShouldTest) return;
+
+        withRevokedPermission(LOCATION_ACCESS_APP_SDK28_PACKAGE, () -> {
+                    ServiceState ss = (ServiceState) performLocationAccessCommand(
+                            CtsLocationAccessService.COMMAND_GET_SERVICE_STATE_FROM_LISTENER);
+                    assertNotNull(ss);
+                    assertNotEquals(ss, ss.sanitizeLocationInfo(false));
+
+                    withRevokedPermission(LOCATION_ACCESS_APP_SDK28_PACKAGE, () -> {
+                                ServiceState ss1 = (ServiceState) performLocationAccessCommand(
+                                        CtsLocationAccessService
+                                                .COMMAND_GET_SERVICE_STATE_FROM_LISTENER);
+                                assertNotNull(ss1);
+                                assertNotEquals(ss1, ss1.sanitizeLocationInfo(true));
+                            },
+                            Manifest.permission.ACCESS_COARSE_LOCATION);
+                },
+                Manifest.permission.ACCESS_FINE_LOCATION);
+    }
+
+    @Test
     public void testRegistryPermissionsForCellLocation() {
         if (!mShouldTest) return;
 
@@ -154,6 +178,18 @@ public class TelephonyLocationTests {
     }
 
     @Test
+    public void testSdk28RegistryPermissionsForCellLocation() {
+        if (!mShouldTest) return;
+
+        withRevokedPermission(LOCATION_ACCESS_APP_SDK28_PACKAGE, () -> {
+                    CellLocation cellLocation = (CellLocation) performLocationAccessCommand(
+                            CtsLocationAccessService.COMMAND_LISTEN_CELL_LOCATION);
+                    assertNull(cellLocation);
+                },
+                Manifest.permission.ACCESS_COARSE_LOCATION);
+    }
+
+    @Test
     public void testRegistryPermissionsForCellInfo() {
         if (!mShouldTest) return;
 
@@ -170,6 +206,18 @@ public class TelephonyLocationTests {
                     assertNull(cellLocation);
                 },
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+    }
+
+    @Test
+    public void testSdk28RegistryPermissionsForCellInfo() {
+        if (!mShouldTest) return;
+
+        withRevokedPermission(LOCATION_ACCESS_APP_SDK28_PACKAGE, () -> {
+                    List<CellInfo> cis = (List<CellInfo>) performLocationAccessCommand(
+                            CtsLocationAccessService.COMMAND_LISTEN_CELL_INFO);
+                    assertTrue(cis == null || cis.isEmpty());
+                },
+                Manifest.permission.ACCESS_COARSE_LOCATION);
     }
 
     @Test
