@@ -42,6 +42,7 @@ public abstract class TestStep extends TestStepBase {
     }
 
     /** Creates the View for this test step in the context {@link TvAppVerifierActivity}. */
+    @Override
     public void createUiElements() {
         super.createUiElements();
         mButtonView =
@@ -62,10 +63,12 @@ public abstract class TestStep extends TestStepBase {
         TvAppVerifierActivity.setButtonEnabled(mButtonView, false);
     }
 
-    public abstract boolean runTest();
+
+    public abstract void runTest();
 
     private void onButtonClickRunTest() {
         disableInteractivity();
-        super.done();
+        runTest();
+        done();
     }
 }
