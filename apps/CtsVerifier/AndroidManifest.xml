@@ -3664,6 +3664,17 @@
                        android:value="android.software.leanback" />
         </activity>
 
+        <activity android:name=".tv.audio.AudioCapabilitiesTestActivity"
+                  android:label="@string/tv_audio_capabilities_test"
+                  android:configChanges="orientation|screenSize|density|smallestScreenSize|screenLayout">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_tv" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.software.leanback" />
+        </activity>
         <activity android:name=".tv.display.DisplayHdrCapabilitiesTestActivity"
                   android:label="@string/tv_hdr_capabilities_test"
                   android:configChanges="orientation|screenSize|density|smallestScreenSize|screenLayout">
