@@ -19,6 +19,7 @@ import static android.autofillservice.cts.augmented.AugmentedHelper.getContentDe
 
 import android.autofillservice.cts.R;
 import android.content.Context;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.service.autofill.InlinePresentation;
 import android.service.autofill.augmented.FillCallback;
@@ -189,6 +190,7 @@ public final class CannedAugmentedFillResponse {
                     final AutofillId id = pair.first;
                     datasetBuilder.setFieldInlinePresentation(id, pair.second, null,
                             dataset.mFieldPresentationById.get(id));
+                    datasetBuilder.setAuthentication(dataset.mAuthentication);
                 }
                 list.add(datasetBuilder.build());
             }
@@ -279,12 +281,14 @@ public final class CannedAugmentedFillResponse {
         private final Map<AutofillId, InlinePresentation> mFieldPresentationById;
         private final String mPresentation;
         private final AutofillValue mOnlyFieldValue;
+        private final IntentSender mAuthentication;
 
         private Dataset(@NonNull Builder builder) {
             mFieldValuesById = builder.mFieldValuesById;
             mPresentation = builder.mPresentation;
             mOnlyFieldValue = builder.mOnlyFieldValue;
             mFieldPresentationById = builder.mFieldPresentationById;
+            this.mAuthentication = builder.mAuthentication;
         }
 
         @NonNull
@@ -304,6 +308,7 @@ public final class CannedAugmentedFillResponse {
             return "Dataset: [presentation=" + mPresentation
                     + ", onlyField=" + mOnlyFieldValue
                     + ", fields=" + mFieldValuesById
+                    + ", auth=" + mAuthentication
                     + "]";
         }
 
@@ -314,6 +319,7 @@ public final class CannedAugmentedFillResponse {
 
             private final String mPresentation;
             private AutofillValue mOnlyFieldValue;
+            private IntentSender mAuthentication;
 
             public Builder(@NonNull String presentation) {
                 mPresentation = Objects.requireNonNull(presentation);
@@ -356,6 +362,13 @@ public final class CannedAugmentedFillResponse {
                 return this;
             }
 
+            /**
+             * Sets the authentication intent for this dataset.
+             */
+            public Builder setAuthentication(IntentSender authentication) {
+                mAuthentication = authentication;
+                return this;
+            }
 
             public Dataset build() {
                 return new Dataset(this);

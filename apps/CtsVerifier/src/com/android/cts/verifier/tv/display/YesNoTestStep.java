@@ -19,6 +19,7 @@ package com.android.cts.verifier.tv.display;
 import android.view.View;
 
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.tv.TestStepBase;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /**
@@ -30,8 +31,8 @@ public abstract class YesNoTestStep extends TestStepBase {
     private View noButton;
 
     /**
-     * Constructs a test step containing human instructions for a manual test and two buttons -
-     * Yes and No.
+     * Constructs a test step containing human instructions for a manual test and two buttons - Yes
+     * and No.
      *
      * @param context The test activity which this test step is part of.
      * @param instructionText The text of the test instruction visible to the user.

@@ -23,6 +23,7 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWin
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
@@ -41,6 +42,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
@@ -242,6 +244,8 @@ public class AccessibilityWindowReportingTest {
 
     @Test
     public void moveFocusToAnotherDisplay_movesActiveAndFocusWindow() throws Exception {
+        assumeTrue(supportsMultiDisplay(sInstrumentation.getContext()));
+
         // Makes sure activityWindow on default display is focused
         AccessibilityWindowInfo activityWindow = findWindowByTitle(sUiAutomation, mActivityTitle);
         assertTrue(activityWindow.isActive());
