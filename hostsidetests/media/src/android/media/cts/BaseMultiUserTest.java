@@ -227,6 +227,7 @@ public class BaseMultiUserTest extends DeviceTestCase implements IBuildReceiver 
     protected void removeUser(int userId) throws Exception  {
         if (getDevice().listUsers().contains(userId) && userId != USER_SYSTEM
                 && !mExistingUsers.contains(userId)) {
+            getDevice().executeShellCommand("am wait-for-broadcast-idle");
             // Don't log output, as tests sometimes set no debug user restriction, which
             // causes this to fail, we should still continue and remove the user.
             String stopUserCommand = "am stop-user -w -f " + userId;

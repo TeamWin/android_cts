@@ -24,6 +24,8 @@ import android.view.Display;
 import androidx.annotation.StringRes;
 
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.tv.TestSequence;
+import com.android.cts.verifier.tv.TestStepBase;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 import com.android.cts.verifier.tv.TvUtil;
 
@@ -102,8 +104,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
 
         @Override
         public void runTest() {
-            DisplayManager displayManager =
-                    (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+            DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
             Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
             getAsserter().withMessage("Display.isHdr()").that(display.isHdr()).isFalse();
             getAsserter()
@@ -134,8 +135,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
 
         @Override
         public void runTest() {
-            DisplayManager displayManager =
-                    (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+            DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
             Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
 
             getAsserter().withMessage("Display.isHdr()").that(display.isHdr()).isTrue();
@@ -206,8 +206,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         private void runTest() {
             try {
                 // Verify the display APIs do not crash when the display is disconnected
-                DisplayManager displayManager =
-                        (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+                DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
                 Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
                 display.isHdr();
                 display.getHdrCapabilities();
@@ -224,8 +223,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
         }
 
         private static String getInstructionText(Context context) {
-            DisplayManager displayManager =
-                    (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
+            DisplayManager displayManager = context.getSystemService(DisplayManager.class);
             Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
 
             int[] hdrTypes = display.getHdrCapabilities().getSupportedHdrTypes();

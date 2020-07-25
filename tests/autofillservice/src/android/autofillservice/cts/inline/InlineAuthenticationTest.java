@@ -133,6 +133,79 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    public void testDatasetAuthPinnedPresentationSelectedAndAutofilled() throws Exception {
+        // Set service.
+        enableService();
+
+        // Prepare the authenticated dataset
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .build());
+
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE, null,
+                                Helper.createPinnedInlinePresentation("auth-pinned"))
+                        .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE, null,
+                                Helper.createInlinePresentation("auth-unpinned"))
+                        .setPresentation(createPresentation("auth"))
+                        .setAuthentication(authentication)
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill, verify seeing dataset.
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth-pinned");
+        sReplier.getNextFillRequest();
+
+        // ...and select the dataset, then check the authentication result is autofilled.
+        mActivity.expectAutoFill("dude", "sweet");
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        mUiBot.selectDataset("auth-pinned");
+        mUiBot.waitForIdle();
+        mActivity.assertAutoFilled();
+
+        // Clear the username field, and expect to see the pinned suggestion again, rather than
+        // the one returned from auth intent.
+        mActivity.onUsername((v) -> v.setText(""));
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth-pinned");
+
+        // Now select the dataset again and verify that the same authentication flow happens.
+        mActivity.expectAutoFill("dude", "sweet");
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        mUiBot.selectDataset("auth-pinned");
+        mUiBot.waitForIdle();
+        mActivity.assertAutoFilled();
+
+        // Clear the username field, put focus on password field, and then clear the password field,
+        // Expect to see unpinned suggestion.
+        mActivity.onUsername((v) -> v.setText(""));
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mActivity.onPassword((v) -> v.setText(""));
+        assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth-unpinned");
+
+        // Now select the dataset again and verify that the same authentication flow happens.
+        mActivity.expectAutoFill("dude", "sweet");
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        mUiBot.selectDataset("auth-unpinned");
+        mUiBot.waitForIdle();
+        mActivity.assertAutoFilled();
+
+        // Clear the password field, and expect to see the unpinned suggestion again, rather than
+        // the one returned from auth intent.
+        mActivity.onPassword((v) -> v.setText(""));
+        assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth-unpinned");
+
+        // Now select the dataset again and verify that the same authentication flow happens.
+        mActivity.expectAutoFill("dude", "sweet");
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        mUiBot.selectDataset("auth-unpinned");
+        mUiBot.waitForIdle();
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
     public void testDatasetAuthFilteringUsingRegex() throws Exception {
         // Set service.
         enableService();
