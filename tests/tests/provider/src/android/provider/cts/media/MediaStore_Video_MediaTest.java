@@ -89,6 +89,7 @@ public class MediaStore_Video_MediaTest {
         Log.d(TAG, "Using volume " + mVolumeName);
         mExternalVideo = MediaStore.Video.Media.getContentUri(mVolumeName);
         mExternalFiles = MediaStore.Files.getContentUri(mVolumeName);
+        mContext.getExternalMediaDirs();
     }
 
     @Test

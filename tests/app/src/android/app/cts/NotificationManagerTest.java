@@ -2975,7 +2975,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubble_checkActivityFlagsDocumentLaunchMode()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                || mActivityManager.isLowRamDevice()) {
             // These do not support bubbles.
             return;
         }
@@ -3224,7 +3225,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationManagerBubblePolicy_noFlag_shortcutRemoved()
             throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                    || mActivityManager.isLowRamDevice()) {
             // These do not support bubbles.
             return;
         }
@@ -3251,7 +3253,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationManagerBubbleNotificationSuppression() throws Exception {
-        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()) {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                || mActivityManager.isLowRamDevice()) {
             // These do not support bubbles.
             return;
         }
