@@ -716,10 +716,10 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
             getLifecycleLog().clear();
         }
 
-        // Lock screen removed, but nothing should change.
-        // Wait for something here, but don't expect anything to happen.
-        waitAndAssertActivityStates(state(showWhenLockedActivity, ON_DESTROY));
-        LifecycleVerifier.assertResumeToDestroySequence(
+        // When the lock screen is removed, the ShowWhenLocked activity will be dismissed using the
+        // back button, which should send it to the stopped state.
+        waitAndAssertActivityStates(state(showWhenLockedActivity, ON_STOP));
+        LifecycleVerifier.assertResumeToStopSequence(
                 ShowWhenLockedCallbackTrackingActivity.class, getLifecycleLog());
     }
 
