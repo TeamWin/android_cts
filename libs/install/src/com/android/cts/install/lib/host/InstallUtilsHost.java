@@ -16,7 +16,11 @@
 
 package com.android.cts.install.lib.host;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.util.CommandResult;
+import com.android.tradefed.util.CommandStatus;
 
 /**
  * Utilities to facilitate installation in tests on host side.
@@ -34,5 +38,15 @@ public class InstallUtilsHost {
      */
     public boolean isApexUpdateSupported() throws Exception {
         return mTest.getDevice().getBooleanProperty("ro.apex.updatable", false);
+    }
+
+    /**
+     * Return {@code true} if and only if device supports file system checkpoint.
+     */
+    public boolean isCheckpointSupported() throws Exception {
+        CommandResult result = mTest.getDevice().executeShellV2Command("sm supports-checkpoint");
+        assertWithMessage("Failed to check if fs checkpointing is supported : %s",
+                result.getStderr()).that(result.getStatus()).isEqualTo(CommandStatus.SUCCESS);
+        return "true".equals(result.getStdout().trim());
     }
 }
