@@ -589,6 +589,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(expected.getGroup(), actual.getGroup());
         assertEquals(expected.getConversationId(), actual.getConversationId());
         assertEquals(expected.getParentChannelId(), actual.getParentChannelId());
+        assertEquals(expected.isDemoted(), actual.isDemoted());
     }
 
     private void toggleNotificationPolicyAccess(String packageName,
@@ -3338,5 +3339,29 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         compareChannels(conversationChannel,
                 mNotificationManager.getNotificationChannel(channel.getId(), conversationId));
+    }
+
+    public void testDemoteConversationChannel() {
+        final NotificationChannel channel =
+                new NotificationChannel(mId, "Messages", IMPORTANCE_DEFAULT);
+
+        String conversationId = "person a";
+
+        final NotificationChannel conversationChannel =
+                new NotificationChannel(mId + "child",
+                        "Messages from " + conversationId, IMPORTANCE_DEFAULT);
+        conversationChannel.setConversationId(channel.getId(), conversationId);
+
+        mNotificationManager.createNotificationChannel(channel);
+        mNotificationManager.createNotificationChannel(conversationChannel);
+
+        conversationChannel.setDemoted(true);
+
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                mNotificationManager.updateNotificationChannel(
+                        mContext.getPackageName(), android.os.Process.myUid(), channel));
+
+        assertEquals(false, mNotificationManager.getNotificationChannel(
+                channel.getId(), conversationId).isDemoted());
     }
 }
