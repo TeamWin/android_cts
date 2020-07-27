@@ -87,14 +87,14 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Before
     public void setUp() throws Exception {
         cleanUp();
-        uninstallShimApexIfNecessary();
+        mHostUtils.uninstallShimApexIfNecessary();
         storeDefaultLauncher();
     }
 
     @After
     public void tearDown() throws Exception {
         cleanUp();
-        uninstallShimApexIfNecessary();
+        mHostUtils.uninstallShimApexIfNecessary();
         setDefaultLauncher(mDefaultLauncher);
     }
 
@@ -224,7 +224,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testShimApexShouldPreInstalledIfUpdatingApexIsSupported() throws Exception {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
-        final ITestDevice.ApexInfo shimApex = getShimApex();
+        final ITestDevice.ApexInfo shimApex = mHostUtils.getShimApex().orElseThrow(
+                () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME)
+        );
         assertThat(shimApex.versionCode).isEqualTo(1);
     }
 
@@ -652,42 +654,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
         runPhase("testApexWithUnsignedPayloadFailsVerification");
-    }
-
-    /**
-     * Uninstalls a shim apex only if it's latest version is installed on /data partition (i.e.
-     * it has a version higher than {@code 1}).
-     *
-     * <p>This is purely to optimize tests run time. Since uninstalling an apex requires a reboot,
-     * and only a small subset of tests successfully install an apex, this code avoids ~10
-     * unnecessary reboots.
-     */
-    private void uninstallShimApexIfNecessary() throws Exception {
-        if (!mHostUtils.isApexUpdateSupported()) {
-            // Device doesn't support updating apex. Nothing to uninstall.
-            return;
-        }
-        if (getShimApex().sourceDir.startsWith("/system")) {
-            // System version is active, nothing to uninstall.
-            return;
-        }
-        // Non system version is active, need to uninstall it and reboot the device.
-        Log.i(TAG, "Uninstalling shim apex");
-        final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
-        if (errorMessage != null) {
-            Log.e(TAG, "Failed to uninstall " + SHIM_APEX_PACKAGE_NAME + " : " + errorMessage);
-        } else {
-            getDevice().reboot();
-            final ITestDevice.ApexInfo shim = getShimApex();
-            assertThat(shim.versionCode).isEqualTo(1L);
-            assertThat(shim.sourceDir).startsWith("/system");
-        }
-    }
-
-    private ITestDevice.ApexInfo getShimApex() throws DeviceNotAvailableException {
-        return getDevice().getActiveApexes().stream().filter(
-                apex -> apex.name.equals(SHIM_APEX_PACKAGE_NAME)).findAny().orElseThrow(
-                () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME));
     }
 
     /**
