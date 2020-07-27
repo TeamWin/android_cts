@@ -203,7 +203,7 @@ public class ReflectorVpnService extends VpnService {
             || SystemProperties.getInt("service.adb.tcp.port", -1) > -1)) {
             try {
                 // If adb TCP port opened the test may be running by adb over network.
-                // Add com.android.shell application into blacklist to exclude adb socket
+                // Add com.android.shell application into disallowed list to exclude adb socket
                 // for VPN tests.
                 builder.addDisallowedApplication("com.android.shell");
             } catch(NameNotFoundException e) {
