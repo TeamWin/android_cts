@@ -186,11 +186,11 @@ public class UsesNativeLibraryTestCase extends BaseHostJUnit4Test {
                 flatMap(lines -> Arrays.stream(lines.split("\n"))).
                 filter(line -> {
                     // filter-out empty lines or comment lines that start with #
-                    String strip = line.strip();
+                    String strip = line.trim();
                     return !strip.isEmpty() && !strip.startsWith("#");
                 }).
                 // line format is "name [bitness]". Extract the name part.
-                map(line -> line.strip().split("\\s+")[0]).
+                map(line -> line.trim().split("\\s+")[0]).
                 collect(Collectors.toSet());
 
         assertEquals(mPublicLibraries, libraryNamesFromTxt);
