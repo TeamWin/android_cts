@@ -69,39 +69,6 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Uninstalls a shim apex only if it's latest version is installed on /data partition (i.e.
-     * it has a version higher than {@code 1}).
-     *
-     * <p>This is purely to optimize tests run time, since uninstalling an apex requires a reboot.
-     */
-    private void uninstallShimApexIfNecessary() throws Exception {
-        if (!mHostUtils.isApexUpdateSupported()) {
-            // Device doesn't support updating apex. Nothing to uninstall.
-            return;
-        }
-
-        if (getShimApex().sourceDir.startsWith("/data")) {
-            final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
-            if (errorMessage == null) {
-                Log.i(TAG, "Uninstalling shim apex");
-                getDevice().reboot();
-            } else {
-                Log.e(TAG, "Failed to uninstall shim APEX : " + errorMessage);
-            }
-        }
-        assertThat(getShimApex().versionCode).isEqualTo(1L);
-    }
-
-    /**
-     * Get {@link ITestDevice.ApexInfo} for the installed shim apex.
-     */
-    private ITestDevice.ApexInfo getShimApex() throws DeviceNotAvailableException {
-        return getDevice().getActiveApexes().stream().filter(
-                apex -> apex.name.equals(SHIM_APEX_PACKAGE_NAME)).findAny().orElseThrow(
-                () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME));
-    }
-
-    /**
      * Uninstalls any version greater than 1 of shim apex and reboots the device if necessary
      * to complete the uninstall.
      *
@@ -117,7 +84,7 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("pm uninstall com.android.cts.install.lib.testapp.A");
         getDevice().executeShellCommand("pm uninstall com.android.cts.install.lib.testapp.B");
         run("cleanUp");
-        uninstallShimApexIfNecessary();
+        mHostUtils.uninstallShimApexIfNecessary();
     }
 
     /**
