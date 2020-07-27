@@ -75,6 +75,9 @@ public class PreferenceActivityLegacyFlowTest {
 
         recreate();
 
+        // Wait for prefs list to be shown after recreate()
+        assertTextShown(LEGACY_SCREEN_TEXT);
+
         // Compare screenshots
         Bitmap after = mTestUtils.takeScreenshot();
         assertScreenshotsAreEqual(before, after);
