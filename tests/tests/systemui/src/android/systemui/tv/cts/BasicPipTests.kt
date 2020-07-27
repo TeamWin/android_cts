@@ -18,6 +18,7 @@ package android.systemui.tv.cts
 
 import android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN
 import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
+import android.content.ComponentName
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.annotation.Group2
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
@@ -113,10 +114,24 @@ class BasicPipTests : PipTestBase() {
         launchPipThenEnterMenu()
         uiDevice.pressBack()
 
+        assertActivityInPip(PIP_ACTIVITY)
+    }
+
+    /** Open an app's pip menu then press home and ensure the app is back in pip. */
+    @Test
+    fun pipMenu_openThenHome() {
+        launchPipThenEnterMenu()
+        uiDevice.pressHome()
+
+        assertActivityInPip(PIP_ACTIVITY)
+    }
+
+    /** Assert that the given activity is in pip mode and the pip menu is gone. */
+    private fun assertActivityInPip(activity: ComponentName) {
         wmState.waitAndAssertActivityRemoved(PIP_MENU_ACTIVITY)
-        wmState.assertNotFocusedActivity("The PiP app must not be focused!", PIP_ACTIVITY)
+        wmState.assertNotFocusedActivity("The PiP app must not be focused!", activity)
         assertTrue("The PiP app must be back in pip mode after dismissing the pip menu!") {
-            wmState.containsActivityInWindowingMode(PIP_ACTIVITY, WINDOWING_MODE_PINNED)
+            wmState.containsActivityInWindowingMode(activity, WINDOWING_MODE_PINNED)
         }
     }
 
