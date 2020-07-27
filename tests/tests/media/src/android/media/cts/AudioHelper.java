@@ -254,7 +254,7 @@ public class AudioHelper {
     public static class TimestampVerifier {
 
         // CDD 5.6 1ms timestamp accuracy
-        private static final double TEST_MAX_JITTER_MS_ALLOWED = 6.; // a sanity check
+        private static final double TEST_MAX_JITTER_MS_ALLOWED = 6.; // a validity check
         private static final double TEST_STD_JITTER_MS_ALLOWED = 3.; // flaky tolerance 3x
         private static final double TEST_STD_JITTER_MS_WARN = 1.;    // CDD requirement warning
 

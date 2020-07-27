@@ -51,7 +51,7 @@ import java.util.zip.CRC32;
 @AppModeFull
 public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     private static final String TAG = "AdaptivePlaybackTest";
-    private boolean sanity = false;
+    private boolean verify = false;
     private static final int MIN_FRAMES_BEFORE_DRC = 2;
 
     public Iterable<Codec> H264(CodecFactory factory) {
@@ -195,9 +195,9 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void runSW()  { ex(SWCodecs(),  allTests); }
     public void runHW()  { ex(HWCodecs(),  allTests); }
 
-    public void sanityAll() { sanity = true; try { runAll(); } finally { sanity = false; } }
-    public void sanitySW()  { sanity = true; try { runSW();  } finally { sanity = false; } }
-    public void sanityHW()  { sanity = true; try { runHW();  } finally { sanity = false; } }
+    public void verifyAll() { verify = true; try { runAll(); } finally { verify = false; } }
+    public void verifySW()  { verify = true; try { runSW();  } finally { verify = false; } }
+    public void verifyHW()  { verify = true; try { runHW();  } finally { verify = false; } }
 
     public void runH264()  { ex(H264(),  allTests); }
     public void runHEVC()  { ex(HEVC(),  allTests); }
@@ -435,7 +435,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             }
                         }
                     });
-                if (sanity) {
+                if (verify) {
                     i >>= 1;
                 }
             }
@@ -481,7 +481,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             mDecoder.flush();
                         }
                     });
-                if (sanity) {
+                if (verify) {
                     i >>= 1;
                 }
             }
@@ -542,7 +542,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             }
                         }
                     });
-                if (sanity) {
+                if (verify) {
                     i >>= 1;
                 }
             }
@@ -599,7 +599,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                         public void run() throws Throwable {
                             mQueuedFrames += segmentSize;
                             boolean lastSequence = segmentSize == MIN_FRAMES_BEFORE_DRC;
-                            if (sanity) {
+                            if (verify) {
                                 lastSequence = (segmentSize >> 1) <= MIN_FRAMES_BEFORE_DRC;
                             }
                             int frames = mDecoder.queueInputBufferRange(
@@ -621,7 +621,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             mAdjustTimeUs += 1 + stepMedia().getTimestampRangeValue(
                                     0, segmentSize, Media.RANGE_END);
                         }});
-                if (sanity) {
+                if (verify) {
                     i >>= 1;
                 }
             }
@@ -747,7 +747,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 final int mediaIx = ix % c.mediaList.length;
                 final int segmentSize = i;
                 final boolean lastSequence;
-                if (sanity) {
+                if (verify) {
                     lastSequence = (segmentSize << 1) + 1 > NUM_FRAMES;
                 } else {
                     lastSequence = segmentSize >= NUM_FRAMES;
@@ -778,7 +778,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                                         0, segmentSize, Media.RANGE_DURATION);
                             }
                         }});
-                if (sanity) {
+                if (verify) {
                     i <<= 1;
                 }
             }

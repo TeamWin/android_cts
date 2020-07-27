@@ -289,9 +289,9 @@ public class CodecState {
 
             Log.d(TAG, "CodecState::onOutputFormatChanged Audio" +
                     " sampleRate:" + sampleRate + " channels:" + channelCount);
-            // We do sanity check here after we receive data from MediaExtractor and before
+            // We do a check here after we receive data from MediaExtractor and before
             // we pass them down to AudioTrack. If MediaExtractor works properly, this
-            // sanity-check is not necessary, however, in our tests, we found that there
+            // check is not necessary, however, in our tests, we found that there
             // are a few cases where ch=0 and samplerate=0 were returned by MediaExtractor.
             if (channelCount < 1 || channelCount > 8 ||
                     sampleRate < 8000 || sampleRate > 128000) {
