@@ -41,7 +41,6 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.storage.StorageManager;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -1407,12 +1406,5 @@ public class StagedInstallTest {
 
     private PackageInstaller.SessionInfo waitForBroadcast(int sessionId) {
         return InstallUtils.waitForSession(sessionId);
-    }
-
-    @Test
-    public void isCheckpointSupported() {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
-        assertThat(sm.isCheckpointSupported()).isTrue();
     }
 }
