@@ -3889,17 +3889,17 @@
                        android:value="multi_display_mode" />
         </activity>
 
-        <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$DummyInputMethod"
-                android:label="@string/dummy_input_method_label"
+        <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$TestInputMethod"
+                android:label="@string/test_input_method_label"
                 android:permission="android.permission.BIND_INPUT_METHOD">
             <intent-filter>
                 <action android:name="android.view.InputMethod" />
             </intent-filter>
-            <meta-data android:name="android.view.im" android:resource="@xml/dummy_method" />
+            <meta-data android:name="android.view.im" android:resource="@xml/test_method" />
         </service>
 
-        <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$DummyAccessibilityService"
-                android:label="@string/dummy_accessibility_service_label"
+        <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$TestAccessibilityService"
+                android:label="@string/test_accessibility_service_label"
                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

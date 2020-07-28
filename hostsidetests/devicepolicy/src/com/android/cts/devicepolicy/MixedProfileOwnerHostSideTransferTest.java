@@ -16,7 +16,7 @@
 package com.android.cts.devicepolicy;
 
 /**
- * Tests the DPC transfer functionality for profile owner. Testing is done by having two dummy DPCs,
+ * Tests the DPC transfer functionality for profile owner. Testing is done by having two test DPCs,
  * CtsTransferOwnerOutgoingApp and CtsTransferOwnerIncomingApp. The former is the current DPC
  * and the latter will be the new DPC after transfer. In order to run the tests from the correct
  * process, first we setup some policies in the client side in CtsTransferOwnerOutgoingApp and then
