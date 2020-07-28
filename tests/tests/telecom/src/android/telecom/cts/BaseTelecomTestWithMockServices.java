@@ -42,6 +42,7 @@ import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Conference;
 import android.telecom.Connection;
+import android.telecom.ConnectionRequest;
 import android.telecom.InCallService;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
@@ -787,6 +788,19 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         MockConference conference = connectionService.conferences.get(0);
         setAndVerifyConferenceForOutgoingCall(conference);
         return conference;
+    }
+
+    Pair<Conference, ConnectionRequest> verifyAdhocConferenceCall() {
+        try {
+            if (!connectionService.lock.tryAcquire(2, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                    TimeUnit.MILLISECONDS)) {
+                fail("No conference requested by Telecom");
+            }
+        } catch (InterruptedException e) {
+            Log.i(TAG, "Test interrupted!");
+        }
+        return new Pair<>(connectionService.conferences.get(0),
+                connectionService.connectionRequest);
     }
 
     void setAndVerifyConferenceForOutgoingCall(MockConference conference) {
