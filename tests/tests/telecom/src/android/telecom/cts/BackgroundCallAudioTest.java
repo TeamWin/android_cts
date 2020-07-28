@@ -469,14 +469,14 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             Call call = mInCallCallbacks.getService().getLastCall();
             assertCallState(call, Call.STATE_AUDIO_PROCESSING);
             assertConnectionState(connection, Connection.STATE_ACTIVE);
-            // Make sure that the dummy app never got any calls
+            // Make sure that the test app never got any calls
             assertEquals(0, controlInterface.getHistoricalCallCount());
 
             call.exitBackgroundAudioProcessing(true);
             assertCallState(call, Call.STATE_SIMULATED_RINGING);
             waitOnAllHandlers(getInstrumentation());
             assertConnectionState(connection, Connection.STATE_ACTIVE);
-            // Make sure that the dummy app sees a ringing call.
+            // Make sure that the test app sees a ringing call.
             assertEquals(Call.STATE_RINGING,
                     controlInterface.getCallState(call.getDetails().getTelecomCallId()));
 
@@ -484,7 +484,7 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             assertCallState(call, Call.STATE_ACTIVE);
             waitOnAllHandlers(getInstrumentation());
             assertConnectionState(connection, Connection.STATE_ACTIVE);
-            // Make sure that the dummy app sees an active call.
+            // Make sure that the test app sees an active call.
             assertEquals(Call.STATE_ACTIVE,
                     controlInterface.getCallState(call.getDetails().getTelecomCallId()));
 
@@ -516,14 +516,14 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             Call call = mInCallCallbacks.getService().getLastCall();
             assertCallState(call, Call.STATE_AUDIO_PROCESSING);
             assertConnectionState(connection, Connection.STATE_ACTIVE);
-            // Make sure that the dummy app never got any calls
+            // Make sure that the test app never got any calls
             assertEquals(0, controlInterface.getHistoricalCallCount());
 
             call.disconnect();
             assertCallState(call, Call.STATE_DISCONNECTED);
             waitOnAllHandlers(getInstrumentation());
             assertConnectionState(connection, Connection.STATE_DISCONNECTED);
-            // Under some rare circumstances, the dummy app might get a flash of the disconnection
+            // Under some rare circumstances, the test app might get a flash of the disconnection
             // call, so we won't do the call count check again.
 
             tearDownControl();
