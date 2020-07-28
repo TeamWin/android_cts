@@ -95,8 +95,8 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     @FlakyTest(bugId = 140932104)
     @Test
-    public void testLockTask_exitIfNoLongerWhitelisted() throws Exception {
-        super.testLockTask_exitIfNoLongerWhitelisted();
+    public void testLockTask_exitIfNoLongerAllowed() throws Exception {
+        super.testLockTask_exitIfNoLongerAllowed();
     }
 
     @Override

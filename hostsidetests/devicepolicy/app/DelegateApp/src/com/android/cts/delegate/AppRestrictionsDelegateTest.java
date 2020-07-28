@@ -122,27 +122,27 @@ public class AppRestrictionsDelegateTest extends InstrumentationTestCase {
     // Should be consistent with assertBundle0
     private static Bundle createBundle0() {
         Bundle result = new Bundle();
-        result.putString("dummyString", "value");
+        result.putString("placeholderString", "value");
         return result;
     }
 
     // Should be consistent with createBundle0
     private void assertBundle0(Bundle bundle) {
         assertEquals(1, bundle.size());
-        assertEquals("value", bundle.getString("dummyString"));
+        assertEquals("value", bundle.getString("placeholderString"));
     }
 
     // Should be consistent with assertBundle1
     private static Bundle createBundle1() {
         Bundle result = new Bundle();
-        result.putInt("dummyInt", 1);
+        result.putInt("placeholderInt", 1);
         return result;
     }
 
     // Should be consistent with createBundle1
     private void assertBundle1(Bundle bundle) {
         assertEquals(1, bundle.size());
-        assertEquals(1, bundle.getInt("dummyInt"));
+        assertEquals(1, bundle.getInt("placeholderInt"));
     }
 
     private void startTestActivity() {

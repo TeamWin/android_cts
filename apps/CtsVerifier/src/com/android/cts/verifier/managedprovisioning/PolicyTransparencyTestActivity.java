@@ -270,7 +270,7 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
         return mTestId;
     }
 
-    public static class DummyAccessibilityService extends AccessibilityService {
+    public static class TestAccessibilityService extends AccessibilityService {
 
         @Override
         public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -283,7 +283,7 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
         }
     }
 
-    public static class DummyInputMethod extends InputMethodService {
+    public static class TestInputMethod extends InputMethodService {
         @Override
         public boolean onEvaluateFullscreenMode() {
             return false;
