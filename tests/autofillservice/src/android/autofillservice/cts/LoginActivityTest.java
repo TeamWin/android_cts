@@ -298,7 +298,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 .build());
         mActivity.syncRunOnUiThread(() -> child.requestFocus());
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
@@ -465,7 +465,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Check the results.
         mActivity.assertAutoFilled();
 
-        // Sanity checks.
+        // Validation checks.
 
         // Make sure input was sanitized.
         final FillRequest request = sReplier.getNextFillRequest();
@@ -599,7 +599,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
             Helper.assertBitmapsAreSame("password", passwordScreenshot1, passwordScreenshot2);
         }
 
-        // Final sanity check
+        // Final validation check
         callback.assertNumberUnhandledEvents(0);
     }
 
@@ -1449,7 +1449,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
             mActivity.onUsername(View::requestFocus);
         }
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
@@ -1510,7 +1510,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
@@ -1577,7 +1577,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
             mActivity.onUsername(View::requestFocus);
         }
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
@@ -1672,7 +1672,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
@@ -1737,7 +1737,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
@@ -1832,7 +1832,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
@@ -1869,7 +1869,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
@@ -2370,7 +2370,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
                 sReplier.getNextFillRequest();
 
-                // Sanity check.
+                // Validation check.
                 mUiBot.assertNoDatasetsEver();
 
                 // Set credentials...
@@ -2520,7 +2520,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     public void testSetupComplete() throws Exception {
         enableService();
 
-        // Sanity check.
+        // Validation check.
         final AutofillManager afm = mActivity.getAutofillManager();
         Helper.assertAutofillEnabled(afm, true);
 
