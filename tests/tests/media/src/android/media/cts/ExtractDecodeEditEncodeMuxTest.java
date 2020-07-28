@@ -1179,7 +1179,7 @@ public class ExtractDecodeEditEncodeMuxTest
             }
         }
 
-        // Basic sanity checks.
+        // Basic validation checks.
         if (mCopyVideo) {
             assertEquals("encoded and decoded video frame counts should match",
                     videoDecodedFrameCount, videoEncodedFrameCount);
