@@ -2402,7 +2402,7 @@ public class AudioTrackTest {
                 { {1.0f, 0.5f}, {1.0f, 2.0f} },  // pitch by SR conversion (chirp)
         };
 
-        // sanity test that playback params works as expected
+        // test that playback params works as expected
         PlaybackParams params = new PlaybackParams().allowDefaults();
         assertEquals("default speed not correct", 1.0f, params.getSpeed(), 0.f /* delta */);
         assertEquals("default pitch not correct", 1.0f, params.getPitch(), 0.f /* delta */);

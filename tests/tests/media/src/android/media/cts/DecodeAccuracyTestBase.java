@@ -546,7 +546,7 @@ public class DecodeAccuracyTestBase {
             }
 
             public PlayerResult() {
-                // Dummy PlayerResult.
+                // Fake PlayerResult.
                 this(false, false, false, UNSET);
             }
 

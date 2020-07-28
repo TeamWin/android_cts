@@ -196,7 +196,7 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        // TODO: dummy values for headers/cookies till we find a server that actually needs them
+        // TODO: fake values for headers/cookies till we find a server that actually needs them
         HashMap<String, String> headers = new HashMap<>();
         headers.put("header0", "value0");
         headers.put("header1", "value1");

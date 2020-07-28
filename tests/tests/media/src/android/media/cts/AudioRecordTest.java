@@ -800,7 +800,7 @@ public class AudioRecordTest {
                     firstSampleTime = System.currentTimeMillis();
                 }
                 samplesRead += ret;
-                // sanity check: elapsed time cannot be more than a second
+                // validity check: elapsed time cannot be more than a second
                 // than what we expect.
                 assertTrue(System.currentTimeMillis() - startTime <=
                         PLAYBACK_TIME_IN_MS + RECORD_TIME_IN_MS + 1000);
