@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
+import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -221,13 +222,21 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         TestUtils.enablePhoneAccount(getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
         mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT_2);
         TestUtils.enablePhoneAccount(getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2);
+
+        PhoneAccountHandle cachedHandle = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
         SystemUtil.runWithShellPermissionIdentity(() -> {
             mTelecomManager.setUserSelectedOutgoingPhoneAccount(null);
         });
 
-        Uri testNumber = createTestNumber();
-        mTelecomManager.placeCall(testNumber, null);
+        try {
+            Uri testNumber = createTestNumber();
+            mTelecomManager.placeCall(testNumber, null);
 
-        assertTrue(latch.await(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S, TimeUnit.SECONDS));
+            assertTrue(latch.await(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S, TimeUnit.SECONDS));
+        } finally {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mTelecomManager.setUserSelectedOutgoingPhoneAccount(cachedHandle);
+            });
+        }
     }
 }
