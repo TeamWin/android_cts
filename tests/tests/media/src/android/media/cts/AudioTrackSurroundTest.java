@@ -593,7 +593,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
     public void testPcmSupport() throws Exception {
         if (REQUIRE_PCM_DEVICE) {
-            // There should always be a dummy PCM device available.
+            // There should always be a fake PCM device available.
             assertTrue("testPcmSupport: PCM should be supported."
                     + " On ATV device please check HDMI connection.",
                     mInfoPCM16 != null);

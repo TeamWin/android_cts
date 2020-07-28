@@ -588,7 +588,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
                     // can release empty buffers now
                     if (info.size == 0) {
                         mDecoder.releaseOutputBuffer(ix, false /* render */);
-                        ix = -1; // dummy index used by render to not render
+                        ix = -1; // fake index used by render to not render
                     }
                     synchronized(mCondition) {
                         if (ix < 0 && eos && mBuffersToRender.size() > 0) {
@@ -840,7 +840,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
                     // can release empty buffers now
                     if (info.size == 0) {
                         mDecoder.releaseOutputBuffer(ix, false /* render */);
-                        ix = -1; // dummy index used by render to not render
+                        ix = -1; // fake index used by render to not render
                     }
                     if (eos || info.size > 0) {
                         synchronized(mCondition) {
