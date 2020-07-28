@@ -116,7 +116,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
                 .build();
         validateCommonParams(suggestion);
         assertEquals(TEST_PASSPHRASE, suggestion.getPassphrase());
-        assertNotNull(suggestion.getEnterpriseConfig());
+        assertNull(suggestion.getEnterpriseConfig());
         assertNull(suggestion.getPasspointConfig());
     }
 
@@ -134,7 +134,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
                         .build();
         validateCommonParams(suggestion);
         assertEquals(TEST_PASSPHRASE, suggestion.getPassphrase());
-        assertNotNull(suggestion.getEnterpriseConfig());
+        assertNull(suggestion.getEnterpriseConfig());
         assertNull(suggestion.getPasspointConfig());
     }
 
@@ -152,7 +152,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
                         .build();
         validateCommonParams(suggestion);
         assertEquals(TEST_PASSPHRASE, suggestion.getPassphrase());
-        assertNotNull(suggestion.getEnterpriseConfig());
+        assertNull(suggestion.getEnterpriseConfig());
         assertNull(suggestion.getPasspointConfig());
     }
 
@@ -267,7 +267,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
                         .build();
         validateCommonParams(suggestion, true);
         assertNull(suggestion.getPassphrase());
-        assertNotNull(suggestion.getEnterpriseConfig());
+        assertNull(suggestion.getEnterpriseConfig());
         assertEquals(passpointConfig, suggestion.getPasspointConfig());
     }
 }
