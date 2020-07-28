@@ -101,10 +101,12 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         try {
             // Install and enable assistant in personal side.
             installAppAsUser(ASSIST_APP_APK, mParentUserId);
+            waitForBroadcastIdle();
             setVoiceInteractionService(ASSIST_INTERACTION_SERVICE);
 
             // Start an activity in parent user.
             installAppAsUser(DEVICE_ADMIN_APK, mParentUserId);
+            waitForBroadcastIdle();
             startSimpleActivityAsUser(mParentUserId);
 
             // Verify assistant app can't take a screenshot.
