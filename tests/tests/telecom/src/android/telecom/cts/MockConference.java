@@ -16,6 +16,7 @@
 
 package android.telecom.cts;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.Conference;
 import android.telecom.Connection;
@@ -23,6 +24,13 @@ import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.RemoteConference;
 import android.telecom.TelecomManager;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * {@link Conference} subclass that immediately performs any state changes that are a result of
@@ -34,6 +42,8 @@ public class MockConference extends Conference {
     private String mDtmfString = "";
     public TestUtils.InvokeCounter mOnExtrasChanged =
             new TestUtils.InvokeCounter("onExtrasChanged");
+    public List<Uri> mParticipants = new ArrayList<>();
+    public CompletableFuture<Void> mLock = new CompletableFuture<>();
 
     public MockConference(PhoneAccountHandle phoneAccount) {
         super(phoneAccount);
@@ -141,6 +151,13 @@ public class MockConference extends Conference {
         }
     }
 
+    @Override
+    public void onAddConferenceParticipants(List<Uri> participants) {
+        super.onAddConferenceParticipants(participants);
+        mParticipants.addAll(participants);
+        mLock.complete(null);
+    }
+
     public void setRemoteConference(RemoteConference remoteConference) {
         mRemoteConference = remoteConference;
         Bundle bundle = remoteConference.getExtras();
@@ -161,5 +178,14 @@ public class MockConference extends Conference {
     public void onExtrasChanged(Bundle extras) {
         setExtras(extras);
         mOnExtrasChanged.invoke(extras);
+    }
+
+    public boolean acquireLock(long time, TimeUnit unit) {
+        try {
+            mLock.get(time, unit);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            return false;
+        }
+        return true;
     }
 }

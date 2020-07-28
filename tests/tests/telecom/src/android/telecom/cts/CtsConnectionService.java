@@ -118,6 +118,54 @@ public class CtsConnectionService extends ConnectionService {
     }
 
     @Override
+    public Conference onCreateOutgoingConference(PhoneAccountHandle connectionManagerPhoneAccount,
+            ConnectionRequest request) {
+        synchronized (sLock) {
+            if (sConnectionService != null) {
+                return sConnectionService.onCreateOutgoingConference(connectionManagerPhoneAccount,
+                        request);
+            } else {
+                return null;
+            }
+        }
+    }
+
+    @Override
+    public void onCreateOutgoingConferenceFailed(PhoneAccountHandle connectionManagerPhoneAccount,
+            ConnectionRequest request) {
+        synchronized (sLock) {
+            if (sConnectionService != null) {
+                sConnectionService.onCreateOutgoingConferenceFailed(connectionManagerPhoneAccount,
+                        request);
+            }
+        }
+    }
+
+    @Override
+    public Conference onCreateIncomingConference(PhoneAccountHandle connectionManagerPhoneAccount,
+            ConnectionRequest request) {
+        synchronized (sLock) {
+            if (sConnectionService != null) {
+                return sConnectionService.onCreateIncomingConference(connectionManagerPhoneAccount,
+                        request);
+            } else {
+                return null;
+            }
+        }
+    }
+
+    @Override
+    public void onCreateIncomingConferenceFailed(PhoneAccountHandle connectionManagerPhoneAccount,
+            ConnectionRequest request) {
+        synchronized (sLock) {
+            if (sConnectionService != null) {
+                sConnectionService.onCreateIncomingConferenceFailed(connectionManagerPhoneAccount,
+                        request);
+            }
+        }
+    }
+
+    @Override
     public void onConference(Connection connection1, Connection connection2) {
         synchronized(sLock) {
             if (sConnectionService != null) {
