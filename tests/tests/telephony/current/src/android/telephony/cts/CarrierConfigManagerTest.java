@@ -156,6 +156,9 @@ public class CarrierConfigManagerTest {
             assertEquals("KEY_MONTHLY_DATA_CYCLE_DAY_INT doesn't match static default.",
                     config.getInt(CarrierConfigManager.KEY_MONTHLY_DATA_CYCLE_DAY_INT),
                             CarrierConfigManager.DATA_CYCLE_USE_PLATFORM_DEFAULT);
+            assertEquals("KEY_SUPPORT_ADHOC_CONFERENCE_CALLS_BOOL doesn't match static default.",
+                    config.getBoolean(CarrierConfigManager.KEY_SUPPORT_ADHOC_CONFERENCE_CALLS_BOOL),
+                    false);
         }
 
         // These key should return default values if not customized.
