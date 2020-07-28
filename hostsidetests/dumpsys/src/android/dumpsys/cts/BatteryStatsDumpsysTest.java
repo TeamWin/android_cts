@@ -246,7 +246,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertInteger(parts[8]); // starts
         assertInteger(parts[9]); // launches
 
-        // Sanity check.
+        // Validation check.
         assertTrue("wakeup count must be >= 0", wakeup_count >= 0);
     }
 
@@ -330,7 +330,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
         assertInteger(parts[27]);      // max duration
         assertInteger(parts[28]);      // total duration
 
-        // Sanity checks.
+        // Validation checks.
         assertTrue("full wakelock count must be >= 0", full_count >= 0);
         assertTrue("partial wakelock count must be >= 0", partial_count >= 0);
         assertTrue("background partial wakelock count must be >= 0", bg_partial_count >= 0);
