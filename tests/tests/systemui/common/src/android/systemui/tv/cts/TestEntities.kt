@@ -56,3 +56,10 @@ object PipMenu {
     const val ACTION_MENU = "PipNotification.menu"
     const val ACTION_CLOSE = "PipNotification.close"
 }
+
+object ResourceNames {
+    const val SYSTEM_UI_PACKAGE = "com.android.systemui"
+
+    const val ID_PIP_MENU_CLOSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/close_button"
+    const val ID_PIP_MENU_FULLSCREEN_BUTTON = "$SYSTEM_UI_PACKAGE:id/full_button"
+}

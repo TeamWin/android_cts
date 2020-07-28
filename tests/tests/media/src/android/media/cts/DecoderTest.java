@@ -104,7 +104,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         super.setUp();
         mResources = mContext.getResources();
 
-        // read master file into memory
+        // read primary file into memory
         AssetFileDescriptor masterFd = mResources.openRawResourceFd(R.raw.sinesweepraw);
         long masterLength = masterFd.getLength();
         mMasterBuffer = new short[(int) (masterLength / 2)];

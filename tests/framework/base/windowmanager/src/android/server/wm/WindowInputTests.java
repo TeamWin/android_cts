@@ -27,8 +27,6 @@ import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
@@ -181,6 +179,8 @@ public class WindowInputTests {
         mClickCount = 0;
         try (final PointerLocationSession session = new PointerLocationSession()) {
             session.set(true);
+            session.waitForReady(mActivity.getDisplayId());
+
             // Set up window.
             mActivityRule.runOnUiThread(() -> {
                 mView = new View(mActivity);
@@ -395,6 +395,15 @@ public class WindowInputTests {
             } catch (NumberFormatException e) {
                 return false;
             }
+        }
+
+        // Wait until pointer location surface shown.
+        static void waitForReady(int displayId) {
+            final WindowManagerStateHelper wmState = new WindowManagerStateHelper();
+            final String windowName = "PointerLocation - display " + displayId;
+            wmState.waitForWithAmState(state -> {
+                return state.isWindowSurfaceShown(windowName);
+            }, windowName + "'s surface is appeared");
         }
     }
 }

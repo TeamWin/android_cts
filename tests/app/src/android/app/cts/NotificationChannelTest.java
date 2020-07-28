@@ -65,6 +65,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertNull(channel.getConversationId());
         assertNull(channel.getParentChannelId());
         assertFalse(channel.isImportantConversation());
+        assertFalse(channel.isDemoted());
     }
 
     public void testWriteToParcel() {
@@ -85,6 +86,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         channel.setBlockable(true);
         channel.setConversationId("parent_channel", "conversation 1");
         channel.setImportantConversation(true);
+        channel.setDemoted(true);
         Parcel parcel = Parcel.obtain();
         channel.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
@@ -230,5 +232,13 @@ public class NotificationChannelTest extends AndroidTestCase {
         channel.lockFields(NotificationChannel.USER_LOCKED_SOUND);
 
         assertTrue(channel.hasUserSetSound());
+    }
+
+    public void testIsDemoted() {
+        NotificationChannel channel = new NotificationChannel("a", "a", IMPORTANCE_DEFAULT);
+        channel.setConversationId("parent", "conversation with friend");
+        channel.setDemoted(true);
+
+        assertTrue(channel.isDemoted());
     }
 }
