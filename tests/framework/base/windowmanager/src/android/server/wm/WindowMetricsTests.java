@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -76,7 +77,7 @@ public class WindowMetricsTests extends WindowManagerTestBase {
     }
 
     @Test
-    public void testMetricsMatchesDisplay() {
+    public void testMetricsMatchesDisplayArea() {
         final MetricsActivity activity = mMetricsActivity.launchActivity(null);
         activity.waitForLayout();
 
@@ -93,14 +94,11 @@ public class WindowMetricsTests extends WindowManagerTestBase {
                 displaySize.y, bounds.height());
 
         // Check max window size
-        final Point realDisplaySize = new Point();
-        display.getRealSize(realDisplaySize);
+        final Rect tdaBounds = getTaskDisplayAreaBounds(activity.getComponentName());
         final WindowMetrics maxWindowMetrics = activity.getWindowManager()
                 .getMaximumWindowMetrics();
-        assertEquals("Reported real display width must match max window size",
-                realDisplaySize.x, maxWindowMetrics.getBounds().width());
-        assertEquals("Reported real display height must match max window size",
-                realDisplaySize.y, maxWindowMetrics.getBounds().height());
+        assertEquals("Display area bounds must match max window size",
+                tdaBounds, maxWindowMetrics.getBounds());
     }
 
     private static Rect getLegacyBounds(WindowMetrics windowMetrics) {
@@ -118,6 +116,12 @@ public class WindowMetricsTests extends WindowManagerTestBase {
         final int right = original.right - insets.right;
         final int bottom = original.bottom - insets.bottom;
         return new Rect(left, top, right, bottom);
+    }
+
+    private Rect getTaskDisplayAreaBounds(ComponentName activityName) {
+        mWmState.computeState();
+        WindowManagerState.DisplayArea tda = mWmState.getTaskDisplayArea(activityName);
+        return tda.mFullConfiguration.windowConfiguration.getBounds();
     }
 
     public static class MetricsActivity extends Activity implements View.OnLayoutChangeListener {
