@@ -194,9 +194,11 @@ public class StartActivityTests extends ActivityManagerTestBase {
     @Test
     public void testStartActivityByNavigateUpToFromDiffUid() {
         final Intent intent1 = new Intent(mContext, Activities.RegularActivity.class);
+        final String regularActivityName = Activities.RegularActivity.class.getName();
         final TestActivitySession<Activities.RegularActivity> activitySession1 =
                 createManagedTestActivitySession();
-        activitySession1.launchTestActivityOnDisplaySync(intent1, DEFAULT_DISPLAY);
+        activitySession1.launchTestActivityOnDisplaySync(regularActivityName, intent1,
+                DEFAULT_DISPLAY);
         final TestActivitySession<Activities.SingleTopActivity> activitySession2 =
                 createManagedTestActivitySession();
         activitySession2.launchTestActivityOnDisplaySync(Activities.SingleTopActivity.class,
