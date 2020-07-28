@@ -210,7 +210,15 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         }
         tearDownConnectionService(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
         tearDownEmergencyCalling();
-        assertMockInCallServiceUnbound();
+        try {
+            assertMockInCallServiceUnbound();
+        } catch (Throwable t) {
+            // If we haven't unbound, that means there's some dirty state in Telecom that needs
+            // cleaning up. Forcibly unbind and clean up Telecom state so that we don't have a
+            // cascading failure of tests.
+            TestUtils.executeShellCommand(getInstrumentation(), "telecom cleanup-stuck-calls");
+            throw t;
+        }
     }
 
     protected PhoneAccount setupConnectionService(MockConnectionService connectionService,
