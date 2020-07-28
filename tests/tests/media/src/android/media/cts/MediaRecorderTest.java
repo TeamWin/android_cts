@@ -1283,7 +1283,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
         if (surface == null) {
             return false;
         }
-        Surface dummy = null;
+        Surface placeholder = null;
 
         boolean success = true;
         try {
@@ -1304,7 +1304,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             /*
              * Test: getSurface() should fail before prepare
              */
-            dummy = tryGetSurface(true /* shouldThow */);
+            placeholder = tryGetSurface(true /* shouldThow */);
 
             mMediaRecorder.prepare();
 
@@ -1316,7 +1316,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             /*
              * Test: getSurface() should fail if setInputSurface() succeeded
              */
-            dummy = tryGetSurface(!errorCase /* shouldThow */);
+            placeholder = tryGetSurface(!errorCase /* shouldThow */);
 
             mMediaRecorder.start();
 
@@ -1328,7 +1328,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             /*
              * Test: getSurface() should fail if setInputSurface() succeeded
              */
-            dummy = tryGetSurface(!errorCase /* shouldThow */);
+            placeholder = tryGetSurface(!errorCase /* shouldThow */);
 
             try {
                 mMediaRecorder.stop();
@@ -1340,7 +1340,7 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
             /*
              * Test: getSurface() should fail after stop
              */
-            dummy = tryGetSurface(true /* shouldThow */);
+            placeholder = tryGetSurface(true /* shouldThow */);
         } catch (Exception e) {
             Log.d(TAG, e.toString());
             success = false;
@@ -1356,9 +1356,9 @@ public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStu
                 surface.release();
                 surface = null;
             }
-            if (dummy != null) {
-                dummy.release();
-                dummy = null;
+            if (placeholder != null) {
+                placeholder.release();
+                placeholder = null;
             }
         }
 
