@@ -104,6 +104,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     static final String ACTION_STOP_FOREGROUND = "com.android.test.action.STOP_FOREGROUND";
     static final String ACTION_START_THEN_FG = "com.android.test.action.START_THEN_FG";
     static final String ACTION_STOP_SERVICE = "com.android.test.action.STOP";
+    static final String ACTION_FINISH = "com.android.test.action.FINISH";
 
     private static final int TEMP_WHITELIST_DURATION_MS = 2000;
 
@@ -1340,11 +1341,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             device.waitForIdle();
 
             // Exit activity, check to see if we are now cached.
-            mInstrumentation.getUiAutomation().performGlobalAction(
-                    AccessibilityService.GLOBAL_ACTION_BACK);
-            // Hit back again in case the notification curtain is open
-            mInstrumentation.getUiAutomation().performGlobalAction(
-                    AccessibilityService.GLOBAL_ACTION_BACK);
+            final Intent finishIntent = new Intent();
+            finishIntent.setPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
+            finishIntent.setAction(ACTION_FINISH);
+            finishIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            finishIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            mTargetContext.startActivity(finishIntent);
 
             // Wait for process to become cached
             uidCachedListener.waitForValue(
@@ -1505,14 +1507,17 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid1Watcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
-            // Exit activity, check to see if we are now cached.
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
-            mInstrumentation.getUiAutomation().performGlobalAction(
-                    AccessibilityService.GLOBAL_ACTION_BACK);
-            // Hit back again in case the notification curtain is open
-            mInstrumentation.getUiAutomation().performGlobalAction(
-                    AccessibilityService.GLOBAL_ACTION_BACK);
+
+            // Exit activity, check to see if we are now cached.
+            final Intent finishIntent = new Intent();
+            finishIntent.setPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
+            finishIntent.setAction(ACTION_FINISH);
+            finishIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            finishIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            mTargetContext.startActivity(finishIntent);
+
             uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
