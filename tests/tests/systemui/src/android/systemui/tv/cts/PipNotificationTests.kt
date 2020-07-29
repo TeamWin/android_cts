@@ -22,6 +22,8 @@ import android.platform.test.annotations.Postsubmit
 import android.server.wm.annotation.Group2
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
+import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_ACTIVE
+import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_TITLE
 import android.systemui.tv.cts.ShellCommands.CMD_TEMPLATE_NOTIFICATION_ALLOW_LISTENER
 import android.systemui.tv.cts.ShellCommands.CMD_TEMPLATE_NOTIFICATION_DISALLOW_LISTENER
 import android.systemui.tv.cts.TVNotificationExtender.EXTRA_CONTENT_INTENT
@@ -111,6 +113,18 @@ class PipNotificationTests : PipTestBase() {
         assertNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
     }
 
+    /** Ensure the pip notifications reflect the title of the active media session. */
+    @Test
+    fun mediaSession_setsNotificationTitle() {
+        val mediaTitle = "\"Where has my time gone?\" - Google Interns' Choir"
+        launchPipWithMediaTitle(mediaTitle)
+
+        // ensure the launcher notification has the correct title
+        assertNotNull(notificationListener.findActivePipNotification(mediaTitle))
+        // also ensure that there is no default notification
+        assertNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
+    }
+
     /** Enable/disable the [PipNotificationListenerService] listening to notifications. */
     private fun toggleListenerAccess(allow: Boolean) {
         val listenerName = PipNotificationListenerService.componentName
@@ -128,4 +142,13 @@ class PipNotificationTests : PipTestBase() {
     private val notificationListener: PipNotificationListenerService
         get() = PipNotificationListenerService.instance
             ?: error("PipNotificationListenerService not connected!")
+
+    /** Launches an app into pip mode and sets its media session title. */
+    private fun launchPipWithMediaTitle(title: String) {
+        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP,
+            boolExtras = mapOf(EXTRA_MEDIA_SESSION_ACTIVE to true),
+            stringExtras = mapOf(EXTRA_MEDIA_SESSION_TITLE to title.urlEncoded())
+        )
+        wmState.waitForValidState(PIP_ACTIVITY)
+    }
 }

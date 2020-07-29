@@ -44,6 +44,7 @@ object Components {
 object PipActivity {
     /** Instruct the app to go into pip mode */
     const val ACTION_ENTER_PIP = "$pkg.PipTestActivity.enter_pip"
+    const val ACTION_SET_MEDIA_TITLE = "$pkg.PipTestActivity.set_media_title"
 
     /** Instruct the app to go into pip mode when set to true */
     const val EXTRA_ENTER_PIP = "enter_pip"
@@ -72,6 +73,13 @@ object PipActivity {
         const val MAX_ASPECT_RATIO_NUMERATOR = 239
         const val MAX_ASPECT_RATIO_DENOMINATOR = 100
     }
+
+    /** URL encoded string. Sets the title of the media session. */
+    const val EXTRA_MEDIA_SESSION_TITLE = "media_session_title"
+    /** Boolean. Controls the active status of the media session. */
+    const val EXTRA_MEDIA_SESSION_ACTIVE = "media_session_active"
+
+    const val MEDIA_SESSION_TITLE = "PipTestActivity:MediaSession"
 }
 
 object KeyboardActivity {

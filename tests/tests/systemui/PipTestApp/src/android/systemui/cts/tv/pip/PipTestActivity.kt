@@ -18,20 +18,36 @@ package android.systemui.cts.tv.pip
 
 import android.app.Activity
 import android.app.PictureInPictureParams
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Rect
+import android.media.MediaMetadata
+import android.media.session.MediaSession
 import android.os.Bundle
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
+import android.systemui.tv.cts.PipActivity.ACTION_SET_MEDIA_TITLE
 import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_DENOMINATOR
 import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_NUMERATOR
 import android.systemui.tv.cts.PipActivity.EXTRA_ENTER_PIP
+import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_ACTIVE
+import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_TITLE
 import android.systemui.tv.cts.PipActivity.EXTRA_SOURCE_RECT_HINT
 import android.systemui.tv.cts.PipActivity.EXTRA_TURN_ON_SCREEN
+import android.systemui.tv.cts.PipActivity.MEDIA_SESSION_TITLE
 import android.util.Log
 import android.util.Rational
+import java.net.URLDecoder
 
 /** A simple PiP test activity */
 class PipTestActivity : Activity() {
+
+    private lateinit var mediaSession: MediaSession
+
+    private val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) = handle(intent)
+    }
 
     companion object {
         private const val TAG = "PipTestActivity"
@@ -39,6 +55,8 @@ class PipTestActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        mediaSession = MediaSession(this, MEDIA_SESSION_TITLE)
+        registerReceiver(broadcastReceiver, IntentFilter(ACTION_SET_MEDIA_TITLE))
         handle(intent)
     }
 
@@ -57,6 +75,25 @@ class PipTestActivity : Activity() {
 
         if (intent.getBooleanExtra(EXTRA_TURN_ON_SCREEN, false)) {
             setTurnScreenOn(true)
+        }
+
+        if (intent.hasExtra(EXTRA_MEDIA_SESSION_ACTIVE)) {
+            intent.extras?.getBoolean(EXTRA_MEDIA_SESSION_ACTIVE)?.let {
+                Log.d(TAG, "Setting media session active = $it")
+                mediaSession.isActive = it
+            }
+        }
+
+        intent.getStringExtra(EXTRA_MEDIA_SESSION_TITLE)?.let {
+            // We expect the media session title to be url encoded.
+            // This is needed to be able to set arbitrary titles over adb
+            val title: String = URLDecoder.decode(it, "UTF-8")
+            Log.d(TAG, "Setting media session title = $title")
+            mediaSession.setMetadata(
+                MediaMetadata.Builder()
+                    .putText(MediaMetadata.METADATA_KEY_TITLE, title)
+                    .build()
+            )
         }
     }
 
