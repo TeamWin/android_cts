@@ -124,7 +124,7 @@ public class InstrumentedAutoFillService extends AutofillService {
      */
     public static List<Event> getFillEvents(int expectedSize) throws Exception {
         final List<Event> events = getFillEventHistory(expectedSize).getEvents();
-        // Sanity check
+        // Validation check
         if (expectedSize > 0 && events == null || events.size() != expectedSize) {
             throw new IllegalStateException("INTERNAL ERROR: events should have " + expectedSize
                     + ", but it is: " + events);
