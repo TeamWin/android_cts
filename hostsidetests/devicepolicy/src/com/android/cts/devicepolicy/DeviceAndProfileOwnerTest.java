@@ -564,6 +564,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testSetSupportedVpnAlwaysOn");
             // Update the app to target higher API level, but with manifest opt-out
             installAppAsUser(VPN_APP_NOT_ALWAYS_ON_APK, mUserId);
+            // wait for the app update install completed, ready to be tested
+            waitForBroadcastIdle();
             executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testAssertNoAlwaysOnVpn");
         } finally {
             executeDeviceTestMethod(".AlwaysOnVpnUnsupportedTest", "testClearAlwaysOnVpn");
