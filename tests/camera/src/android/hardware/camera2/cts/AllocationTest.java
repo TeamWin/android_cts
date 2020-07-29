@@ -431,7 +431,7 @@ public class AllocationTest extends AndroidTestCase {
         int width = size.getWidth();
         int height = size.getHeight();
         /**
-         * Check the input allocation is sane.
+         * Check the input allocation is valid.
          * - Byte size matches what we expect.
          * - The input is not all zeroes.
          */

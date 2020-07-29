@@ -144,7 +144,7 @@ def find_circle(gray, name):
         # 3. Child's width > 0.1*Image width
         # 4. Child's height > 0.1*Image height
         # 5. 0.25*Parent's area < Child's area < 0.45*Parent's area
-        # 6. Child is a black, and Parent is white
+        # 6. Child == 0, and Parent == 255
         # 7. Center of Child and center of parent should overlap
         if (prt_shape['width'] * 0.56 < child_shape['width']
                     < prt_shape['width'] * 0.76
@@ -248,7 +248,7 @@ def main():
     world coordinates.
 
     Reproject the world coordinates back to pixel coordinates and compare
-    against originals as a sanity check.
+    against originals as a validity check.
 
     Compare the circle sizes if the focal lengths of the cameras are
     different using
@@ -465,7 +465,7 @@ def main():
             x_w[i], y_w[i] = convert_to_world_coordinates(
                     circle[i][0], circle[i][1], r[i], t[i], k[i], chart_distance)
 
-        # Back convert to image coordinates for sanity check
+        # Back convert to image coordinates for round-trip check
         x_p = {}
         y_p = {}
         x_p[i_2nd], y_p[i_2nd] = convert_to_image_coordinates(

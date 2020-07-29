@@ -2316,7 +2316,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                         result.get(CaptureResult.TONEMAP_PRESET_CURVE));
             }
 
-            // Tonemap curve result availability and basic sanity check for all modes.
+            // Tonemap curve result availability and basic validity check for all modes.
             mCollector.expectValuesInRange("Tonemap curve red values are out of range",
                     CameraTestUtils.toObject(mapRed), /*min*/ZERO, /*max*/ONE);
             mCollector.expectInRange("Tonemap curve red length is out of range",
@@ -2783,8 +2783,9 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     private void changeExposure(CaptureRequest.Builder requestBuilder,
             long expTime, int sensitivity) {
-        // Check if the max analog sensitivity is available and no larger than max sensitivity.
-        // The max analog sensitivity is not actually used here. This is only an extra sanity check.
+        // Check if the max analog sensitivity is available and no larger than max sensitivity.  The
+        // max analog sensitivity is not actually used here. This is only an extra correctness
+        // check.
         mStaticInfo.getMaxAnalogSensitivityChecked();
 
         expTime = mStaticInfo.getExposureClampToRange(expTime);
