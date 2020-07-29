@@ -117,7 +117,7 @@ public class OptionalSaveActivityTest
         // Trigger auto-fill.
         mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
@@ -174,7 +174,7 @@ public class OptionalSaveActivityTest
         // Trigger auto-fill.
         mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
 
-        // Sanity check.
+        // Validation check.
         mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
