@@ -137,11 +137,11 @@ public class SubscriptionManagerTest {
     }
 
     /**
-     * Sanity check that the device has a cellular network and a valid default data subId
+     * Correctness check that the device has a cellular network and a valid default data subId
      * when {@link PackageManager#FEATURE_TELEPHONY} support.
      */
     @Test
-    public void testSanity() throws Exception {
+    public void testCorrectness() throws Exception {
         if (!isSupported()) return;
 
         final boolean hasCellular = findCellularNetwork() != null;
