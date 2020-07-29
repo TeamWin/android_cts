@@ -46,6 +46,9 @@ object PipActivity {
     const val ACTION_ENTER_PIP = "$pkg.PipTestActivity.enter_pip"
     const val ACTION_SET_MEDIA_TITLE = "$pkg.PipTestActivity.set_media_title"
 
+    const val ACTION_MEDIA_PLAY = "$pkg.PipTestActivity.media_play"
+    const val ACTION_MEDIA_PAUSE = "$pkg.PipTestActivity.media_pause"
+
     /** Instruct the app to go into pip mode when set to true */
     const val EXTRA_ENTER_PIP = "enter_pip"
 
@@ -79,6 +82,12 @@ object PipActivity {
     /** Boolean. Controls the active status of the media session. */
     const val EXTRA_MEDIA_SESSION_ACTIVE = "media_session_active"
 
+    /**
+     * Allows to set the [android.media.session.PlaybackState.Actions] that the media
+     * session will react to. Defaults to (ACTION_PAUSE | ACTION_PLAY).
+     */
+    const val EXTRA_MEDIA_SESSION_ACTIONS = "media_session_actions"
+
     const val MEDIA_SESSION_TITLE = "PipTestActivity:MediaSession"
 }
 
@@ -109,6 +118,7 @@ object ResourceNames {
 
     const val ID_PIP_MENU_CLOSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/close_button"
     const val ID_PIP_MENU_FULLSCREEN_BUTTON = "$SYSTEM_UI_PACKAGE:id/full_button"
+    const val ID_PIP_MENU_PLAY_PAUSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/play_pause_button"
 }
 
 object ShellCommands {

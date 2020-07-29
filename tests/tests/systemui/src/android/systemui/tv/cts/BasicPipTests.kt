@@ -41,6 +41,7 @@ import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_DENOMINATOR
 import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_NUMERATOR
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_FULLSCREEN_BUTTON
+import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_PLAY_PAUSE_BUTTON
 import android.util.Size
 import android.view.Gravity
 import android.view.KeyEvent
@@ -232,6 +233,30 @@ class BasicPipTests : PipTestBase() {
         assertTrue("The PiP app must be in fullscreen mode!") {
             wmState.containsActivityInWindowingMode(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN)
         }
+    }
+
+    /** Ensure the pip menu contains a media control button when there is playback. */
+    @Test
+    fun pipMenu_containsMediaButton() {
+        // launch a pip app, activate its media session, and start media playback
+        launchActivity(
+            activity = PIP_ACTIVITY,
+            action = PipActivity.ACTION_MEDIA_PLAY,
+            boolExtras = mapOf(
+                PipActivity.EXTRA_ENTER_PIP to true,
+                PipActivity.EXTRA_MEDIA_SESSION_ACTIVE to true
+            ),
+            stringExtras = mapOf(PipActivity.EXTRA_MEDIA_SESSION_TITLE to "Playback")
+        )
+        wmState.waitForValidState(PIP_ACTIVITY)
+
+        // enter pip menu
+        sendBroadcast(PipMenu.ACTION_MENU)
+        wmState.waitForValidState(PIP_MENU_ACTIVITY)
+        assertPipMenuOpen()
+
+        // the media control button has to be present in the pip menu
+        locateByResourceName(ID_PIP_MENU_PLAY_PAUSE_BUTTON)
     }
 
     /** Open an app's pip menu then press back and ensure the app is back in pip. */
