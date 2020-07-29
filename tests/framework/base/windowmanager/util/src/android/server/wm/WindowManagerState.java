@@ -21,10 +21,10 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
-import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ProtoExtractors.extract;
 import static android.server.wm.StateLogger.log;
@@ -33,6 +33,8 @@ import static android.util.DisplayMetrics.DENSITY_DEFAULT;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -51,14 +53,14 @@ import android.view.nano.ViewProtoEnums;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.server.wm.nano.ActivityRecordProto;
 import com.android.server.wm.nano.AppTransitionProto;
+import com.android.server.wm.nano.ConfigurationContainerProto;
 import com.android.server.wm.nano.DisplayAreaProto;
+import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.DisplayFramesProto;
 import com.android.server.wm.nano.IdentifierProto;
 import com.android.server.wm.nano.KeyguardControllerProto;
-import com.android.server.wm.nano.ActivityRecordProto;
-import com.android.server.wm.nano.ConfigurationContainerProto;
-import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.PinnedStackControllerProto;
 import com.android.server.wm.nano.RootWindowContainerProto;
 import com.android.server.wm.nano.TaskProto;
@@ -66,10 +68,10 @@ import com.android.server.wm.nano.WindowContainerChildProto;
 import com.android.server.wm.nano.WindowContainerProto;
 import com.android.server.wm.nano.WindowFramesProto;
 import com.android.server.wm.nano.WindowManagerServiceDumpProto;
-import com.android.server.wm.nano.WindowTokenProto;
 import com.android.server.wm.nano.WindowStateAnimatorProto;
 import com.android.server.wm.nano.WindowStateProto;
 import com.android.server.wm.nano.WindowSurfaceControllerProto;
+import com.android.server.wm.nano.WindowTokenProto;
 
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
 
@@ -466,6 +468,21 @@ public class WindowManagerState {
             }
         }
         return null;
+    }
+
+    @Nullable
+    DisplayArea getTaskDisplayArea(ComponentName activityName) {
+        final List<DisplayArea> result = new ArrayList<>();
+        for (DisplayContent display : mDisplays) {
+            final DisplayArea tda = display.getTaskDisplayArea(activityName);
+            if (tda != null) {
+                result.add(tda);
+            }
+        }
+        assertWithMessage("There must be exactly one activity among all TaskDisplayAreas.")
+                .that(result.size()).isAtMost(1);
+
+        return result.stream().findFirst().orElse(null);
     }
 
     int getFrontRootTaskId(int displayId) {
@@ -1114,6 +1131,21 @@ public class WindowManagerState {
             return false;
         }
 
+        @Nullable
+        DisplayArea getTaskDisplayArea(ComponentName activityName) {
+            List<DisplayArea> taskDisplayAreas = new ArrayList<>();
+            collectDescendantsOfTypeIf(DisplayArea.class, DisplayArea::isTaskDisplayArea, this,
+                    taskDisplayAreas);
+            List<DisplayArea> result = taskDisplayAreas.stream().filter(
+                    tda -> tda.containsActivity(activityName))
+                    .collect(Collectors.toList());
+
+            assertWithMessage("There must be exactly one activity among all TaskDisplayAreas.")
+                    .that(result.size()).isAtMost(1);
+
+            return result.stream().findFirst().orElse(null);
+        }
+
         ArrayList<ActivityTask> getRootTasks() {
             return mRootTasks;
         }
@@ -1419,8 +1451,34 @@ public class WindowManagerState {
         }
     }
     public static class DisplayArea extends WindowContainer {
+        final boolean mIsTaskDisplayArea;
+        ArrayList<Activity> mActivities;
+
         DisplayArea(DisplayAreaProto proto) {
             super(proto.windowContainer);
+            mIsTaskDisplayArea = proto.isTaskDisplayArea;
+            if (mIsTaskDisplayArea) {
+                mActivities = new ArrayList<>();
+                collectDescendantsOfType(Activity.class, this, mActivities);
+            }
+        }
+
+        boolean isTaskDisplayArea() {
+            return mIsTaskDisplayArea;
+        }
+
+        boolean containsActivity(ComponentName activityName) {
+            if (!mIsTaskDisplayArea) {
+                return false;
+            }
+
+            final String fullName = getActivityName(activityName);
+            for (Activity a : mActivities) {
+                if (a.name.equals(fullName)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
     public static class WindowToken extends WindowContainer {

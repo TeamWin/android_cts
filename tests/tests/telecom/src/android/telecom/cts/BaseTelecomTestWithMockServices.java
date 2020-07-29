@@ -42,6 +42,7 @@ import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Conference;
 import android.telecom.Connection;
+import android.telecom.ConnectionRequest;
 import android.telecom.InCallService;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
@@ -209,7 +210,15 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         }
         tearDownConnectionService(TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
         tearDownEmergencyCalling();
-        assertMockInCallServiceUnbound();
+        try {
+            assertMockInCallServiceUnbound();
+        } catch (Throwable t) {
+            // If we haven't unbound, that means there's some dirty state in Telecom that needs
+            // cleaning up. Forcibly unbind and clean up Telecom state so that we don't have a
+            // cascading failure of tests.
+            TestUtils.executeShellCommand(getInstrumentation(), "telecom cleanup-stuck-calls");
+            throw t;
+        }
     }
 
     protected PhoneAccount setupConnectionService(MockConnectionService connectionService,
@@ -787,6 +796,19 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         MockConference conference = connectionService.conferences.get(0);
         setAndVerifyConferenceForOutgoingCall(conference);
         return conference;
+    }
+
+    Pair<Conference, ConnectionRequest> verifyAdhocConferenceCall() {
+        try {
+            if (!connectionService.lock.tryAcquire(2, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                    TimeUnit.MILLISECONDS)) {
+                fail("No conference requested by Telecom");
+            }
+        } catch (InterruptedException e) {
+            Log.i(TAG, "Test interrupted!");
+        }
+        return new Pair<>(connectionService.conferences.get(0),
+                connectionService.connectionRequest);
     }
 
     void setAndVerifyConferenceForOutgoingCall(MockConference conference) {

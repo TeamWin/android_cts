@@ -17,13 +17,24 @@
 package com.android.test.cantsavestate1;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 
 public class CantSave1Activity extends Activity {
+
+    public static final String ACTION_FINISH = "com.android.test.action.FINISH";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.cant_save_1_activity);
         getWindow().getDecorView().requestFocus();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        if (ACTION_FINISH.equals(intent.getAction())) {
+            finish();
+        }
     }
 }
