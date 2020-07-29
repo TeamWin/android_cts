@@ -157,6 +157,24 @@ class PipNotificationTests : PipTestBase() {
         assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
     }
 
+    /** Ensure a change to the media session's title is propagated to the pip notification. */
+    @Test
+    fun mediaSession_changesNotificationTitle() {
+        val firstMediaTitle = "First Media Title"
+        launchPipWithMediaTitle(firstMediaTitle)
+
+        assertNotNull(notificationListener.findActivePipNotification(firstMediaTitle))
+
+        // now change the title
+        val secondMediaTitle = "Second Media Title"
+        sendBroadcast(
+            action = PipActivity.ACTION_SET_MEDIA_TITLE,
+            stringExtras = mapOf(EXTRA_MEDIA_SESSION_TITLE to secondMediaTitle.urlEncoded())
+        )
+        assertNull(notificationListener.findActivePipNotification(firstMediaTitle))
+        assertNotNull(notificationListener.findActivePipNotification(secondMediaTitle))
+    }
+
     /** Enable/disable the [PipNotificationListenerService] listening to notifications. */
     private fun toggleListenerAccess(allow: Boolean) {
         val listenerName = PipNotificationListenerService.componentName
