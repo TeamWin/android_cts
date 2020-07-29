@@ -31,24 +31,26 @@ public class MediaRecorderInfoLeakTest extends AndroidTestCase {
     @SecurityTest(minPatchLevel = "2016-06")
     public void test_cve_2016_2499() throws Exception {
         MediaRecorder mediaRecorder = null;
+        long end = System.currentTimeMillis() + 600_000; // 10 minutes from now
         try {
-            for (int i = 0; i < 1000; i++) {
-              mediaRecorder = new MediaRecorder();
-              mediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
-              mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-              mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-              mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-              mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263);
-              mediaRecorder.setVideoFrameRate(30);
-              mediaRecorder.setVideoSize(352, 288);
-              mediaRecorder.setOutputFile(
-                      new File(getContext().getFilesDir(), "record.output").getPath());
-              mediaRecorder.prepare();
-              int test = mediaRecorder.getMaxAmplitude();
-              mediaRecorder.release();
-              if(test != 0){
-                fail("MediaRecorderInfoLeakTest failed");
-              }
+            while(System.currentTimeMillis() < end) {
+                mediaRecorder = new MediaRecorder();
+                mediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+                mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+                mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+                mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+                mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H263);
+                mediaRecorder.setVideoFrameRate(30);
+                mediaRecorder.setVideoSize(352, 288);
+                mediaRecorder.setOutputFile(
+                        new File(getContext().getFilesDir(), "record.output").getPath());
+                mediaRecorder.prepare();
+                int test = mediaRecorder.getMaxAmplitude();
+                mediaRecorder.reset();
+                mediaRecorder.release();
+                if(test != 0){
+                    fail("MediaRecorderInfoLeakTest failed");
+                }
             }
         } catch (Exception e) {
             fail("Media Recorder Exception" + e.getMessage());
@@ -57,5 +59,5 @@ public class MediaRecorderInfoLeakTest extends AndroidTestCase {
                 mediaRecorder.release();
             }
         }
-      }
+    }
 }
