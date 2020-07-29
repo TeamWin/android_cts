@@ -25,7 +25,7 @@ import android.os.Bundle;
 import android.telephony.euicc.EuiccManager;
 
 /**
- * A dummy activity started by {@link EuiccManagerTest#testStartResolutionActivity()} for testing
+ * A mock activity started by {@link EuiccManagerTest#testStartResolutionActivity()} for testing
  * {@link android.telephony.euicc.EuiccManager#startResolutionActivity(Activity, int, Intent,
  * PendingIntent)}. Sends {@link EuiccTestResolutionActivity#RESULT_CODE_TEST_PASSED} if the
  * resolution activity is successfully started, {@link
