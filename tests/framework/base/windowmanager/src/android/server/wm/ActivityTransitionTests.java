@@ -17,11 +17,12 @@
 package android.server.wm;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.wm.ActivityLauncher.KEY_NEW_TASK;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
@@ -43,9 +44,25 @@ import java.util.concurrent.TimeUnit;
  */
 @Presubmit
 public class ActivityTransitionTests extends ActivityManagerTestBase {
+    // See WindowManagerService.DISABLE_CUSTOM_TASK_ANIMATION_PROPERTY
+    static final String DISABLE_CUSTOM_TASK_ANIMATION_PROPERTY =
+            "persist.wm.disable_custom_task_animation";
+    static final boolean DISABLE_CUSTOM_TASK_ANIMATION_DEFAULT = false;
+
+    private static boolean customTaskAnimationDisabled() {
+        try {
+            return Integer.parseInt(executeShellCommand(
+                    "getprop " + DISABLE_CUSTOM_TASK_ANIMATION_PROPERTY).replace("\n", "")) != 0;
+        } catch (NumberFormatException e) {
+            return DISABLE_CUSTOM_TASK_ANIMATION_DEFAULT;
+        }
+    }
+
     @Test
-    public void testActivityTransitionDurationNoShortenAsExpected() throws Exception {
-        final long expectedDurationMs = 500L - 100L;
+    public void testTaskTransitionDurationNoShortenAsExpected() throws Exception {
+        assumeFalse(customTaskAnimationDisabled());
+
+        final long expectedDurationMs = 500L - 100L;    // custom animation
         final long minDurationMs = expectedDurationMs;
         final long maxDurationMs = expectedDurationMs + 300L;
         final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
@@ -63,6 +80,47 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
             latch.countDown();
         };
 
+        final Bundle bundle = ActivityOptions.makeCustomAnimation(mContext,
+                R.anim.alpha, 0, new Handler(Looper.getMainLooper()), startedListener,
+                finishedListener).toBundle();
+        final Intent intent = new Intent().setComponent(TEST_ACTIVITY)
+                .addFlags(FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent, bundle);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                "Activity must be launched");
+
+        latch.await(2, TimeUnit.SECONDS);
+        final long totalTime = transitionEndTime[0] - transitionStartTime[0];
+        assertTrue("Actual transition duration should be in the range "
+                + "<" + minDurationMs + ", " + maxDurationMs + "> ms, "
+                + "actual=" + totalTime, durationRange.contains(totalTime));
+    }
+
+    @Test
+    public void testTaskTransitionOverrideDisabled() throws Exception {
+        assumeTrue(customTaskAnimationDisabled());
+
+        final long expectedDurationMs = 275L - 100L;   // wallpaper close animation
+        final long minDurationMs = expectedDurationMs;
+        final long maxDurationMs = expectedDurationMs + 300L;
+        final Range<Long> durationRange = new Range<>(minDurationMs, maxDurationMs);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        long[] transitionStartTime = new long[1];
+        long[] transitionEndTime = new long[1];
+
+        final ActivityOptions.OnAnimationStartedListener startedListener = () -> {
+            transitionStartTime[0] = System.currentTimeMillis();
+        };
+
+        final ActivityOptions.OnAnimationFinishedListener finishedListener = () -> {
+            transitionEndTime[0] = System.currentTimeMillis();
+            latch.countDown();
+        };
+
+        // Overriding task transit animation is disabled, so default wallpaper close animation
+        // is played.
         final Bundle bundle = ActivityOptions.makeCustomAnimation(mContext,
                 R.anim.alpha, 0, new Handler(Looper.getMainLooper()), startedListener,
                 finishedListener).toBundle();
