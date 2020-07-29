@@ -116,8 +116,8 @@ public class AccessibilityGestureDispatchTest {
     StubGestureAccessibilityService mService;
     MyTouchListener mMyTouchListener = new MyTouchListener();
     TextView mFullScreenTextView;
-    int[] mViewLocation = new int[2];
-    PointF mStartPoint = new PointF();
+    int[] mViewLocation = new int[2];  // The location of TextView on the screen.
+    PointF mStartPoint = new PointF(); // The relative location from mViewLocation.
     boolean mGotUpEvent;
     // Without a touch screen, there's no point in testing this feature
     boolean mHasTouchScreen;
@@ -147,7 +147,7 @@ public class AccessibilityGestureDispatchTest {
             final int midY = mFullScreenTextView.getHeight() / 2;
             mFullScreenTextView.getLocationOnScreen(mViewLocation);
             mFullScreenTextView.setOnTouchListener(mMyTouchListener);
-            mStartPoint.set(mViewLocation[0] + midX, mViewLocation[1] + midY);
+            mStartPoint.set(midX, midY);
         });
 
         mService = mServiceRule.enableService();
