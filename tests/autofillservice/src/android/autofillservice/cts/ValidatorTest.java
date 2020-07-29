@@ -63,7 +63,7 @@ public class ValidatorTest extends AbstractLoginActivityTestCase {
                     final AutofillId usernameId =
                             findAutofillIdByResourceId(contexts.get(0), ID_USERNAME);
                     final LuhnChecksumValidator validator = new LuhnChecksumValidator(usernameId);
-                    // Sanity check to make sure the validator is properly configured
+                    // Validation check to make sure the validator is properly configured
                     assertValidator(validator, usernameId, username, willSaveBeShown);
                     builder.setValidator(validator);
                 })

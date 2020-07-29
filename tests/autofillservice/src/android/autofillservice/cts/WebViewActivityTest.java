@@ -103,7 +103,7 @@ public class WebViewActivityTest extends AbstractWebViewTestCase<WebViewActivity
 
         // Load WebView
         final MyWebView myWebView = mActivity.loadWebView(mUiBot, usesAppContext);
-        // Sanity check to make sure autofill is enabled in the application context
+        // Validation check to make sure autofill is enabled in the application context
         Helper.assertAutofillEnabled(myWebView.getContext(), true);
 
         // Set expectations.
