@@ -31,7 +31,7 @@ import its.image
 
 import numpy as np
 
-# For sanity checking the installed APK's target SDK version
+# For checking the installed APK's target SDK version
 MIN_SUPPORTED_SDK_VERSION = 28  # P
 
 CHART_DELAY = 1  # seconds
@@ -311,7 +311,7 @@ def main():
     device_id_arg = "device=" + device_id
     print "Testing device " + device_id
 
-    # Sanity check CtsVerifier SDK level
+    # Check CtsVerifier SDK level
     # Here we only do warning as there is no guarantee on pm dump output formt not changed
     # Also sometimes it's intentional to run mismatched versions
     cmd = "adb -s %s shell pm dump com.android.cts.verifier" % (device_id)
@@ -355,7 +355,7 @@ def main():
     with ItsSession() as cam:
         cam.check_its_version_compatible()
 
-    # Sanity Check for devices
+    # Correctness check for devices
     device_bfp = its.device.get_device_fingerprint(device_id)
     assert device_bfp is not None
 

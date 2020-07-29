@@ -1011,9 +1011,9 @@ public class CameraTest extends Assert {
     }
 
     /**
-     * Sanity check of some extra exif tags.
+     * Correctness check of some extra exif tags.
      * <p>
-     * Sanity check some extra exif tags without asserting the check failures
+     * Check some extra exif tags without asserting the check failures
      * immediately. When a failure is detected, the failure cause is logged,
      * the rest of the tests are still executed. The caller can assert with the
      * failure cause based on the returned test status.

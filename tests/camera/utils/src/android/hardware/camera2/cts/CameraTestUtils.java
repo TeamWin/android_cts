@@ -280,7 +280,7 @@ public class CameraTestUtils extends Assert {
                 image = reader.acquireNextImage();
             } finally {
                 if (image != null) {
-                    // Should only do some quick sanity check in callback, as the ImageReader
+                    // Should only do some quick validity checks in callback, as the ImageReader
                     // could be closed asynchronously, which will close all images acquired from
                     // this ImageReader.
                     checkImage(image, mSize.getWidth(), mSize.getHeight(), mFormat);
@@ -2229,7 +2229,7 @@ public class CameraTestUtils extends Assert {
     /**
      * Simple validation of JPEG image size and format.
      * <p>
-     * Only validate the image object sanity. It is fast, but doesn't actually
+     * Only validate the image object basic correctness. It is fast, but doesn't actually
      * check the buffer data. Assert is used here as it make no sense to
      * continue the test if the jpeg image captured has some serious failures.
      * </p>
