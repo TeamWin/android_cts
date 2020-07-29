@@ -35,6 +35,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.graphics.Point;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.service.chooser.ChooserTarget;
@@ -101,6 +102,8 @@ public class CtsSharesheetDeviceTest {
 
     private Set<ComponentName> mTargetsToExclude;
 
+    private boolean mMeetsResolutionRequirements;
+
     /**
      * To validate Sharesheet API and API behavior works as intended UI test sare required. It is
      * impossible to know the how the Sharesheet UI will be modified by end partners so these tests
@@ -128,6 +131,10 @@ public class CtsSharesheetDeviceTest {
 
         mDevice = UiDevice.getInstance(mInstrumentation);
         mAutomation = mInstrumentation.getUiAutomation();
+
+        // The the device resolution is too low skip the unneeded init
+        mMeetsResolutionRequirements = meetsResolutionRequirements();
+        if (!mMeetsResolutionRequirements) return;
 
         mActivityManager = mContext.getSystemService(ActivityManager.class);
         mShortcutManager = mContext.getSystemService(ShortcutManager.class);
@@ -199,6 +206,7 @@ public class CtsSharesheetDeviceTest {
      */
     @Test
     public void bulkTest1() {
+        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
         try {
             launchSharesheet(createShareIntent(false /* do not test preview */,
                     0 /* do not test EIIs */,
@@ -223,6 +231,7 @@ public class CtsSharesheetDeviceTest {
 
     @Test
     public void bulkTest2() {
+        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
         try {
             addShortcuts(1);
             launchSharesheet(createShareIntent(false /* do not test preview */,
@@ -248,6 +257,7 @@ public class CtsSharesheetDeviceTest {
      */
     @Test
     public void contentPreviewTest() {
+        if (!mMeetsResolutionRequirements) return; // Skip test if resolution is too low
         try {
             launchSharesheet(createShareIntent(true /* test content preview */,
                     0 /* do not test EIIs */,
@@ -430,6 +440,26 @@ public class CtsSharesheetDeviceTest {
     /*
     Setup methods
      */
+
+    /**
+     * Included CTS tests can fail for resolutions that are too small. This is because
+     * the tests check for visibility of UI elements that are hidden below certain resolutions.
+     * Ensure that the device under test has the min necessary screen height in dp. Tests do not
+     * fail at any width at or above the CDD minimum of 320dp.
+     *
+     * Tests have different failure heights:
+     * bulkTest1, bulkTest2 fail below ~680 dp in height
+     * contentPreviewTest fails below ~640dp in height
+     *
+     * For safety, check against screen height some buffer on the worst case: 700dp. Most new
+     * consumer devices have a height above this.
+     *
+     * @return if min resolution requirements are met
+     */
+    private boolean meetsResolutionRequirements() {
+        final Point displaySizeDp = mDevice.getDisplaySizeDp();
+        return displaySizeDp.y >= 700; // dp
+    }
 
     public void addShortcuts(int size) {
         mShortcutManager.addDynamicShortcuts(createShortcuts(size));
