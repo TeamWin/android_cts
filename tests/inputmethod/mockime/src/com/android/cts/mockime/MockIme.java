@@ -43,6 +43,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -152,6 +153,14 @@ public final class MockIme extends InputMethodService {
                     throw new IllegalStateException("command " + command
                             + " should be handled on the main thread");
                 }
+                // The context which created from
+                // InputMethodService#createConfigurationContext(Configuration)
+                // must behave like an UI context, which can obtain a display, a window manager,
+                // a view configuration and a gesture detector instance without strict mode
+                // violation.
+                final Configuration testConfig = new Configuration();
+                testConfig.setToDefaults();
+                final Context configContext = createConfigurationContext(testConfig);
                 switch (command.getName()) {
                     case "getTextBeforeCursor": {
                         final int n = command.getExtras().getInt("n");
@@ -311,16 +320,18 @@ public final class MockIme extends InputMethodService {
                         mInlineSuggestionsExtras = command.getExtras();
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     case "verifyGetDisplay":
-                        Context configContext = createConfigurationContext(new Configuration());
                         return getDisplay() != null && configContext.getDisplay() != null;
                     case "verifyGetWindowManager":
-                        configContext = createConfigurationContext(new Configuration());
                         return getSystemService(WindowManager.class) != null
                                 && configContext.getSystemService(WindowManager.class) != null;
                     case "verifyGetViewConfiguration":
-                            configContext = createConfigurationContext(new Configuration());
-                            return ViewConfiguration.get(this) != null
-                                    && ViewConfiguration.get(configContext) != null;
+                        return ViewConfiguration.get(this) != null
+                                && ViewConfiguration.get(configContext) != null;
+                    case "verifyGetGestureDetector":
+                        final GestureDetector.SimpleOnGestureListener listener =
+                                new GestureDetector.SimpleOnGestureListener();
+                        return new GestureDetector(this, listener) != null
+                                && new GestureDetector(configContext, listener) != null;
                 }
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;

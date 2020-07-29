@@ -79,6 +79,12 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
      * {@link android.view.ViewConfiguration#get(Context)} violates incorrect context violation.
      */
     private static final int VERIFY_MODE_GET_VIEW_CONFIGURATION = 3;
+    /**
+     * Verifies if passing {@link InputMethodService} and context created
+     * from {@link InputMethodService#createConfigurationContext(Configuration)} to
+     * {@link android.view.GestureDetector} constructor violates incorrect context violation.
+     */
+    private static final int VERIFY_MODE_GET_GESTURE_DETECTOR = 4;
 
     /**
      * Verify mode to verifying if APIs violates incorrect context violation.
@@ -86,12 +92,14 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
      * @see #VERIFY_MODE_GET_DISPLAY
      * @see #VERIFY_MODE_GET_WINDOW_MANAGER
      * @see #VERIFY_MODE_GET_VIEW_CONFIGURATION
+     * @see #VERIFY_MODE_GET_GESTURE_DETECTOR
      */
     @Retention(RetentionPolicy.SOURCE)
     @IntDef(flag = true, value = {
             VERIFY_MODE_GET_DISPLAY,
             VERIFY_MODE_GET_WINDOW_MANAGER,
             VERIFY_MODE_GET_VIEW_CONFIGURATION,
+            VERIFY_MODE_GET_GESTURE_DETECTOR,
     })
     private @interface VerifyMode {}
 
@@ -106,8 +114,13 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
     }
 
     @Test
-    public void testIncorrectContextUse_GetViewConfiguration() throws Exception {
+    public void testIncorrectContextUseOnGetViewConfiguration() throws Exception {
         verifyIms(VERIFY_MODE_GET_VIEW_CONFIGURATION);
+    }
+
+    @Test
+    public void testIncorrectContextUseOnGetGestureDetector() throws Exception {
+        verifyIms(VERIFY_MODE_GET_GESTURE_DETECTOR);
     }
 
     /**
@@ -139,6 +152,10 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
                 case VERIFY_MODE_GET_VIEW_CONFIGURATION:
                     imeEvent = expectCommand(forkedStream,
                             imeSession.callVerifyGetViewConfiguration(), TIMEOUT);
+                    break;
+                case VERIFY_MODE_GET_GESTURE_DETECTOR:
+                    imeEvent = expectCommand(forkedStream,
+                            imeSession.callVerifyGetGestureDetector(), TIMEOUT);
                     break;
                 default:
                     imeEvent = null;
