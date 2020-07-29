@@ -27,6 +27,7 @@ import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
 import android.app.AppOpsManager.OPSTR_GET_USAGE_STATS
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
 import android.app.AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE
+import android.app.AppOpsManager.OPSTR_SEND_SMS
 import android.app.AppOpsManager.OPSTR_WRITE_CONTACTS
 import android.app.AppOpsManager.OnOpNotedCallback
 import android.app.AppOpsManager.strOpToOp
@@ -63,6 +64,7 @@ import android.os.Looper
 import android.os.Process.myUserHandle
 import android.platform.test.annotations.AppModeFull
 import android.provider.ContactsContract
+import android.telephony.SmsManager
 import android.telephony.TelephonyManager
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
@@ -679,6 +681,24 @@ class AppOpsLoggingTest {
         assertThat(noted[0].first.op).isEqualTo(OPSTR_READ_EXTERNAL_STORAGE)
         assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
         assertThat(noted[0].second.map { it.methodName }).contains("getWallpaper")
+    }
+
+    /**
+     * Realistic end-to-end test for sending a SMS message
+     */
+    @Test
+    fun sendSms() {
+        assumeTrue(context.packageManager.hasSystemFeature(FEATURE_TELEPHONY))
+
+        val smsManager = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
+                .getSystemService(SmsManager::class.java)
+
+        // No need for valid data. The permission is checked before the parameters are validated
+        smsManager.sendTextMessage("dst", null, "text", null, null)
+
+        assertThat(noted[0].first.op).isEqualTo(OPSTR_SEND_SMS)
+        assertThat(noted[0].first.attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+        assertThat(noted[0].second.map { it.methodName }).contains("sendSms")
     }
 
     /**
