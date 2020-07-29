@@ -120,7 +120,7 @@ public class WebViewActivity extends AbstractWebViewActivity {
             throw new RetryableException(WEBVIEW_TIMEOUT, "WebView not loaded");
         }
 
-        // Sanity check to make sure autofill was enabled when the WebView was created
+        // Validation check to make sure autofill was enabled when the WebView was created
         assertThat(mWebView.isAutofillEnabled()).isTrue();
 
         // WebView builds its accessibility tree asynchronously and only after being queried the

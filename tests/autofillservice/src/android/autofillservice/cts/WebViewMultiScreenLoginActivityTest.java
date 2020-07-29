@@ -87,7 +87,7 @@ public class WebViewMultiScreenLoginActivityTest
 
         // Load WebView
         final MyWebView myWebView = mActivity.loadWebView(mUiBot);
-        // Sanity check to make sure autofill is enabled in the application context
+        // Validation check to make sure autofill is enabled in the application context
         Helper.assertAutofillEnabled(myWebView.getContext(), true);
 
         /*
@@ -193,7 +193,7 @@ public class WebViewMultiScreenLoginActivityTest
 
         // Load WebView
         final MyWebView myWebView = mActivity.loadWebView(mUiBot);
-        // Sanity check to make sure autofill is enabled in the application context
+        // Validation check to make sure autofill is enabled in the application context
         Helper.assertAutofillEnabled(myWebView.getContext(), true);
 
         /*

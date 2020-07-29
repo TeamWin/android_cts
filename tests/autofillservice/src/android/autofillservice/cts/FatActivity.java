@@ -123,7 +123,7 @@ public class FatActivity extends AbstractAutoFillActivity {
         mViewWithAutofillHints = (MyView) findViewByAutofillHint(this, "importantAmI");
         assertThat(mViewWithAutofillHints).isNotNull();
 
-        // Sanity check for importantForAutofill modes
+        // Validation check for importantForAutofill modes
         assertThat(mRoot.getImportantForAutofill()).isEqualTo(IMPORTANT_FOR_AUTOFILL_AUTO);
         assertThat(mInput.getImportantForAutofill()).isEqualTo(IMPORTANT_FOR_AUTOFILL_YES);
         assertThat(mCaptcha.getImportantForAutofill()).isEqualTo(IMPORTANT_FOR_AUTOFILL_NO);
