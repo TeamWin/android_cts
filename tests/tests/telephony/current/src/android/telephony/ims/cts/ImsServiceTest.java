@@ -196,7 +196,7 @@ public class ImsServiceTest {
         if (tm.getSimState(sTestSlot) != TelephonyManager.SIM_STATE_READY) {
             fail("This test requires that there is a SIM in the device!");
         }
-        // Sanity check: ensure that the subscription hasn't changed between tests.
+        // Correctness check: ensure that the subscription hasn't changed between tests.
         int[] subs = SubscriptionManager.getSubId(sTestSlot);
 
         if (subs == null) {
