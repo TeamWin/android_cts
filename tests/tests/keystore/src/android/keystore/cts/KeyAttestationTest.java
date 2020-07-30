@@ -780,6 +780,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                 case 2:
                 case 3:
                 case 4:
+                case 41:
                     assertThat(teeEnforcedDigests, is(expectedDigests));
                     break;
 
@@ -822,7 +823,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                 assertThat("TEE attestation can only come from TEE keymaster",
                         attestation.getKeymasterSecurityLevel(),
                         is(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT));
-                assertThat(attestation.getKeymasterVersion(), either(is(2)).or(is(3)).or(is(4)));
+                assertThat(attestation.getKeymasterVersion(), either(is(2)).or(is(3)).or(is(4)).or(is(41)));
 
                 checkRootOfTrust(attestation, false /* requireLocked */);
                 assertThat(teeEnforced.getOsVersion(), is(systemOsVersion));
