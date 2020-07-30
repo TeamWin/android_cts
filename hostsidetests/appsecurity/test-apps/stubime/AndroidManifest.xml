@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
 /*
  * Copyright 2019, The Android Open Source Project
@@ -17,15 +18,18 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.dummyime">
-    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29" />
-    <application android:label="Dummy IME">
-        <service android:name=".CtsDummyIme"
-                android:permission="android.permission.BIND_INPUT_METHOD">
+     package="com.android.cts.stubime">
+    <uses-sdk android:minSdkVersion="29"
+         android:targetSdkVersion="29"/>
+    <application android:label="Stub IME">
+        <service android:name=".CtsStubIme"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.view.InputMethod" />
+                <action android:name="android.view.InputMethod"/>
             </intent-filter>
-            <meta-data android:name="android.view.im" android:resource="@xml/method" />
+            <meta-data android:name="android.view.im"
+                 android:resource="@xml/method"/>
         </service>
     </application>
 </manifest>
