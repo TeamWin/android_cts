@@ -133,7 +133,11 @@ public class LegacyStorageTest {
     @After
     public void teardown() throws Exception {
         executeShellCommand("rm " + getShellFile());
-        MediaStore.scanFile(getContentResolver(), getShellFile());
+        try {
+            MediaStore.scanFile(getContentResolver(), getShellFile());
+        } catch (Exception ignored) {
+            //ignore MediaScanner exceptions
+        }
     }
 
     /**

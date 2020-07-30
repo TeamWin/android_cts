@@ -73,7 +73,7 @@ public class DisableAutofillTest extends AugmentedAutofillManualActivityLaunchTe
         autofillExpectation.assertAutoFilled();
         mAugmentedUiBot.assertUiGone();
 
-        // Sanity check - make sure standard autofill was not requested
+        // Validation check - make sure standard autofill was not requested
         sReplier.assertNoUnhandledFillRequests();
     }
 
@@ -127,7 +127,7 @@ public class DisableAutofillTest extends AugmentedAutofillManualActivityLaunchTe
         autofillExpectation.assertAutoFilled();
         mAugmentedUiBot.assertUiGone();
 
-        // Sanity check - make sure standard autofill was not requested
+        // Validation check - make sure standard autofill was not requested
         sReplier.assertNoUnhandledFillRequests();
     }
 }

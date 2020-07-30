@@ -46,7 +46,7 @@ public class ClipboardAccessTest extends AugmentedAutofillManualActivityLaunchTe
 
     @Test
     public void testDoIt() throws Exception {
-        // Sanity check to make sure test is in a state where it cannot write to the clipboard.
+        // Check to make sure test is in a state where it cannot write to the clipboard.
         mClipboardManager.setPrimaryClip(ClipData.newPlainText(null, "Y U SET?"));
         assertWithMessage("should not be able to set clipboard yet")
                 .that(mClipboardManager.getPrimaryClip()).isNull();
