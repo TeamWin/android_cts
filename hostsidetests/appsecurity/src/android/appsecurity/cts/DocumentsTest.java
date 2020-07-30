@@ -24,9 +24,9 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
  */
 public class DocumentsTest extends DocumentsTestCase {
     private static final String PROVIDER_PKG = "com.android.cts.documentprovider";
-    private static final String DUMMYIME_PKG = "com.android.cts.dummyime";
+    private static final String STUBIME_PKG = "com.android.cts.stubime";
     private static final String PROVIDER_APK = "CtsDocumentProvider.apk";
-    private static final String DUMMYIME_APK = "CtsDummyIme.apk";
+    private static final String STUBIME_APK = "CtsStubIme.apk";
 
     @Override
     protected void setUp() throws Exception {
@@ -35,7 +35,7 @@ public class DocumentsTest extends DocumentsTestCase {
         getDevice().uninstallPackage(PROVIDER_PKG);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         assertNull(getDevice().installPackage(buildHelper.getTestFile(PROVIDER_APK), false));
-        assertNull(getDevice().installPackage(buildHelper.getTestFile(DUMMYIME_APK), false));
+        assertNull(getDevice().installPackage(buildHelper.getTestFile(STUBIME_APK), false));
     }
 
     @Override
@@ -43,7 +43,7 @@ public class DocumentsTest extends DocumentsTestCase {
         super.tearDown();
 
         getDevice().uninstallPackage(PROVIDER_PKG);
-        getDevice().uninstallPackage(DUMMYIME_PKG);
+        getDevice().uninstallPackage(STUBIME_PKG);
     }
 
     public void testOpenSimple() throws Exception {
