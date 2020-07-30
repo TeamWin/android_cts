@@ -36,6 +36,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.server.wm.lifecycle.ActivityLifecycleClientTestBase.CallbackTrackingActivity;
+import android.server.wm.lifecycle.ActivityLifecycleClientTestBase.ConfigChangeHandlingActivity;
 import android.server.wm.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
@@ -47,6 +48,7 @@ import java.util.List;
 class LifecycleVerifier {
 
     private static final Class CALLBACK_TRACKING_CLASS = CallbackTrackingActivity.class;
+    private static final Class CONFIG_CHANGE_HANDLING_CLASS = ConfigChangeHandlingActivity.class;
 
     static void assertLaunchSequence(Class<? extends Activity> activityClass,
             LifecycleLog lifecycleLog, LifecycleLog.ActivityCallback... expectedSubsequentEvents) {
@@ -299,9 +301,11 @@ class LifecycleVerifier {
     static List<LifecycleLog.ActivityCallback> getSplitScreenTransitionSequence(
             Class<? extends Activity> activityClass) {
         return CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass)
-                ? Arrays.asList(
+                ? CONFIG_CHANGE_HANDLING_CLASS.isAssignableFrom(activityClass)
+                ? Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST, ON_PAUSE)
+                : Arrays.asList(
                 ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE,
-                ON_CREATE, ON_MULTI_WINDOW_MODE_CHANGED, ON_START, ON_POST_CREATE, ON_RESUME,
+                ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                 ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE)
                 : Arrays.asList(
                         ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,

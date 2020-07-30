@@ -309,14 +309,11 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         final List<LifecycleLog.ActivityCallback> expectedEnterSequence =
                 Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE,
                         ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
-                        ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST, ON_PAUSE);
+                        ON_TOP_POSITION_LOST, ON_PAUSE);
         waitForActivityTransitions(CallbackTrackingActivity.class, expectedEnterSequence);
         LifecycleVerifier.assertOrder(getLifecycleLog(), CallbackTrackingActivity.class,
                 Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, ON_CREATE,
                         ON_RESUME), "moveToSplitScreen");
-        LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
-                transition(CallbackTrackingActivity.class, ON_MULTI_WINDOW_MODE_CHANGED),
-                "moveToSplitScreen");
 
         // Exit split-screen
         getLifecycleLog().clear();
@@ -325,14 +322,10 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         // Wait for the activity to relaunch and receive multi-window mode change
         final List<LifecycleLog.ActivityCallback> expectedExitSequence =
                 Arrays.asList(ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
-                        ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_MULTI_WINDOW_MODE_CHANGED,
-                        ON_RESUME, ON_TOP_POSITION_GAINED);
+                        ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_RESUME, ON_TOP_POSITION_GAINED);
         waitForActivityTransitions(CallbackTrackingActivity.class, expectedExitSequence);
         LifecycleVerifier.assertOrder(getLifecycleLog(), CallbackTrackingActivity.class,
-                Arrays.asList(ON_DESTROY, ON_CREATE, ON_MULTI_WINDOW_MODE_CHANGED),
-                "moveFromSplitScreen");
-        LifecycleVerifier.assertOrder(getLifecycleLog(), CallbackTrackingActivity.class,
-                Arrays.asList(ON_RESUME, ON_TOP_POSITION_GAINED),
+                Arrays.asList(ON_DESTROY, ON_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED),
                 "moveFromSplitScreen");
     }
 
