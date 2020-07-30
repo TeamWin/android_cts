@@ -107,7 +107,7 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
      *
      * <ol>
      *   <li>Install 3 test packages on the device
-     *   <li>Write dummy values to shared preferences for each package
+     *   <li>Write test values to shared preferences for each package
      *   <li>Backup each package (adb shell bmgr backupnow)
      *   <li>Clear shared preferences for each package
      *   <li>Run restore for the first {@code numPackagesToRestore}, verify only those are restored
@@ -120,7 +120,7 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
         installPackage(getApkNameForTestApp(2));
         installPackage(getApkNameForTestApp(3));
 
-        // Write dummy value to shared preferences for all test packages.
+        // Write test values to shared preferences for all test packages.
         checkRestoreSessionDeviceTestForAllApps("testSaveValuesToSharedPrefs");
         checkRestoreSessionDeviceTestForAllApps("testCheckSharedPrefsExist");
 
