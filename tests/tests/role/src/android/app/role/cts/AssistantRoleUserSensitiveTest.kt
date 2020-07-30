@@ -21,6 +21,7 @@ import android.app.Instrumentation
 import android.app.role.RoleManager
 import android.content.Context
 import android.os.Process
+import android.provider.DeviceConfig
 import android.provider.Settings
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
@@ -30,6 +31,7 @@ import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -59,6 +61,12 @@ class AssistantRoleUserSensitiveTest {
 
     private var originalRoleHolder: String? = null
     private var originalShowAssistantSetting: Int = 0
+
+    @Before
+    fun assumeEnabled() {
+        assumeTrue(DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
+            "permissions_hub_2_enabled", false))
+    }
 
     @Before
     fun installApp() {
