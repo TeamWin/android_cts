@@ -104,7 +104,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         // real profile.
         byte[] profileBytes = ByteStreams.toByteArray(
                 getClass().getResourceAsStream("/primary.prof.txt"));
-        assertTrue("empty profile", profileBytes.length > 0); // sanity check
+        assertTrue("empty profile", profileBytes.length > 0); // validity check
         textProfileFile = File.createTempFile("compilationtest", "prof.txt");
         Files.write(profileBytes, textProfileFile);
 
@@ -216,7 +216,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         executeCompile("-m", "speed-profile", "-f");
         String odexFilePath = getOdexFilePath();
         byte[] initialOdexFileContents = readFileOnClient(odexFilePath);
-        assertTrue("empty odex file", initialOdexFileContents.length > 0); // sanity check
+        assertTrue("empty odex file", initialOdexFileContents.length > 0); // validity check
 
         for (ProfileLocation profileLocation : profileLocations) {
             writeProfile(profileLocation);
