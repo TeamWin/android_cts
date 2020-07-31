@@ -15,7 +15,7 @@
 //
 
 android_test_helper_app {
-    name: "CtsDummyIme",
+    name: "CtsStubIme",
     defaults: ["cts_support_defaults"],
     sdk_version: "test_current",
     srcs: ["src/**/*.java"],
