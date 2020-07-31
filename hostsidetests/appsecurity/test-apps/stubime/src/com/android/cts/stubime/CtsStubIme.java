@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.cts.dummyime;
+package com.android.cts.stubime;
 
 import android.inputmethodservice.InputMethodService;
 
 /**
- * Dummy IME implementation that basically does nothing
+ * Stub IME implementation that basically does nothing
  */
-public class CtsDummyIme extends InputMethodService {
+public class CtsStubIme extends InputMethodService {
 
     @Override
     public boolean onEvaluateFullscreenMode() {
