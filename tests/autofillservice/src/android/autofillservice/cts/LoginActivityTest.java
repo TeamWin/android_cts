@@ -102,6 +102,8 @@ import android.view.autofill.AutofillManager;
 import android.widget.EditText;
 import android.widget.RemoteViews;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.RetryableException;
 
 import org.junit.Test;
@@ -320,6 +322,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         waitUntilDisconnected();
     }
 
+    @FlakyTest(bugId = 162372863)
     @Test
     @AppModeFull(reason = "testAutofillManuallyOneDataset() is enough")
     public void testAutofillManuallyAlwaysCallServiceAgain() throws Exception {
