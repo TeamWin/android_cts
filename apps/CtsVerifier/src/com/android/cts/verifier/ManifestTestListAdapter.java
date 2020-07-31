@@ -113,6 +113,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     private static final String CONFIG_HDMI_SOURCE = "config_hdmi_source";
 
+    private static final String CONFIG_QUICK_SETTINGS_SUPPORTED = "config_quick_settings_supported";
+
     private final HashSet<String> mDisabledTests;
 
     private Context mContext;
@@ -339,10 +341,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         }
                         break;
                     case CONFIG_HAS_RECENTS:
-                        final Resources systemRes = mContext.getResources().getSystem();
-                        final int id = systemRes.getIdentifier("config_hasRecents", "bool",
-                                "android");
-                        if (id == Resources.ID_NULL || !systemRes.getBoolean(id)) {
+                        if (!getSystemResourceFlag("config_hasRecents")) {
                             return false;
                         }
                         break;
@@ -359,12 +358,28 @@ public class ManifestTestListAdapter extends TestListAdapter {
                                     exception);
                         }
                         break;
+                    case CONFIG_QUICK_SETTINGS_SUPPORTED:
+                        if (!getSystemResourceFlag("config_quickSettingsSupported")) {
+                            return false;
+                        }
+                        break;
                     default:
                         break;
                 }
             }
         }
         return true;
+    }
+
+    private boolean getSystemResourceFlag(String key) {
+        final Resources systemRes = mContext.getResources().getSystem();
+        final int id = systemRes.getIdentifier(key, "bool", "android");
+        if (id == Resources.ID_NULL) {
+            // The flag being queried should exist in
+            // frameworks/base/core/res/res/values/config.xml.
+            throw new RuntimeException("System resource flag " + key + " not found");
+        }
+        return systemRes.getBoolean(id);
     }
 
     private static List<Integer> getHdmiDeviceType()
