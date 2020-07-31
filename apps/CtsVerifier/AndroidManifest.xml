@@ -2652,6 +2652,7 @@
                        android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="test_required_configs" android:value="config_quick_settings_supported" />
         </activity>
 
         <service android:name=".notifications.MockListener"
@@ -2695,6 +2696,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tiles" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="test_required_configs" android:value="config_quick_settings_supported" />
         </activity>
 
         <service android:name=".qstiles.MockTileService"
