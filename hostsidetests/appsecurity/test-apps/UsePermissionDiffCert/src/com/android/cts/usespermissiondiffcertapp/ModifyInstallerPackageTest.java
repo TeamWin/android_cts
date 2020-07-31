@@ -48,21 +48,6 @@ public class ModifyInstallerPackageTest extends AndroidTestCase {
     }
 
     /**
-     * Test that we can set the installer package name.
-     */
-    public void testSetInstallPackage() {
-        // Pre-condition.
-        assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-
-        getPackageManager().setInstallerPackageName(OTHER_PACKAGE, MY_PACKAGE);
-        assertEquals(MY_PACKAGE, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-
-        // Clean up.
-        getPackageManager().setInstallerPackageName(OTHER_PACKAGE, null);
-        assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-    }
-
-    /**
      * Test that we fail if trying to set an installer package with an unknown
      * target package name.
      */
@@ -103,41 +88,6 @@ public class ModifyInstallerPackageTest extends AndroidTestCase {
         } catch (SecurityException e) {
             // That's what we want!
         }
-
-        assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-    }
-
-    /**
-     * Test that we fail if trying to set an installer package that is not
-     * signed with the same cert as the currently set installer.
-     */
-    public void testSetInstallPackageConflictingInstaller() {
-        // Pre-condition.
-        assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-
-        // Have the other package set the installer, under its cert.
-        Intent intent = new Intent();
-        intent.setAction(ACTION_SET_INSTALLER_PACKAGE_NAME);
-        intent.putExtra(EXTRA_PACKAGE_NAME, OTHER_PACKAGE);
-        intent.putExtra(EXTRA_INSTALLER_PACKAGE_NAME, OTHER_PACKAGE);
-        call(intent);
-
-        assertEquals(OTHER_PACKAGE, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-
-        try {
-            getPackageManager().setInstallerPackageName(OTHER_PACKAGE, MY_PACKAGE);
-            fail("setInstallerPackageName did not throw SecurityException");
-        } catch (SecurityException e) {
-            // That's what we want!
-        }
-
-        assertEquals(OTHER_PACKAGE, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
-
-        // Now clear the installer
-        intent.setAction(ACTION_SET_INSTALLER_PACKAGE_NAME);
-        intent.putExtra(EXTRA_PACKAGE_NAME, OTHER_PACKAGE);
-        intent.putExtra(EXTRA_INSTALLER_PACKAGE_NAME, (String)null);
-        call(intent);
 
         assertEquals(null, getPackageManager().getInstallerPackageName(OTHER_PACKAGE));
     }
