@@ -282,23 +282,6 @@ public class AccessibilityGestureDetectorTest {
                 displayId);
 
         testGesture(
-                MultiFingerSwipe(displayId, 2, 0, dy),
-                AccessibilityService.GESTURE_2_FINGER_SWIPE_DOWN,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 2, -dx, 0),
-                AccessibilityService.GESTURE_2_FINGER_SWIPE_LEFT,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 2, dx, 0),
-                AccessibilityService.GESTURE_2_FINGER_SWIPE_RIGHT,
-                displayId);
-        testGesture(
-                MultiFingerSwipe(displayId, 2, 0, -dy),
-                AccessibilityService.GESTURE_2_FINGER_SWIPE_UP,
-                displayId);
-
-        testGesture(
                 MultiFingerSwipe(displayId, 3, 0, dy),
                 AccessibilityService.GESTURE_3_FINGER_SWIPE_DOWN,
                 displayId);
