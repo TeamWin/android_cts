@@ -695,6 +695,12 @@ public class TelephonyManagerTest {
             Log.d(TAG, "Skipping test that requires config_voice_capable is true");
             return;
         }
+        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        if (subId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            Log.d(TAG, "Skipping test that requires DefaultDataSubscriptionId setting");
+            return;
+        }
+
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
         PhoneAccountHandle handle =
                 telecomManager.getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
