@@ -1507,6 +1507,11 @@
     <string name="wifi_unexpected_error">
         Test failed.\n\nUnexpected error. Check logcat.</string>
 
+    <string name="wifi_ssid_label">SSID for network</string>
+    <string name="wifi_psk_label">Passphrase for network (leave empty for open network)</string>
+    <string name="wifi_start_test_label">Start test</string>
+
+    <string name="wifi_status_need_psk">Need a psk network for this test.</string>
     <string name="wifi_status_initiating_scan">Initiating scan.</string>
     <string name="wifi_status_scan_failure">Unable to initiate scan or find any open network in scan results.</string>
     <string name="wifi_status_connected_to_other_network">Connected to some other network on the device. Please ensure that there is no saved networks on the device.</string>

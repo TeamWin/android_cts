@@ -19,6 +19,9 @@ package com.android.cts.verifier.wifi.testcase;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS;
 
+import static com.android.cts.verifier.wifi.TestUtils.SCAN_RESULT_TYPE_OPEN;
+import static com.android.cts.verifier.wifi.TestUtils.SCAN_RESULT_TYPE_PSK;
+
 import android.annotation.NonNull;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -37,8 +40,10 @@ import android.util.Pair;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.wifi.BaseTestCase;
 import com.android.cts.verifier.wifi.CallbackUtils;
+import com.android.cts.verifier.wifi.TestUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -58,9 +63,9 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
     private final Object mLock = new Object();
     private final ScheduledExecutorService mExecutorService;
-    private final List<WifiNetworkSuggestion> mNetworkSuggestions = new ArrayList<>();
 
     private ConnectivityManager mConnectivityManager;
+    private List<WifiNetworkSuggestion> mNetworkSuggestions;
     private NetworkRequest mNetworkRequest;
     private CallbackUtils.NetworkCallback mNetworkCallback;
     private BroadcastReceiver mBroadcastReceiver;
@@ -87,6 +92,13 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         if (mSetRequiresAppInteraction) {
             builder.setIsAppInteractionRequired(true);
         }
+        if (!mPsk.isEmpty()) {
+            if (TestUtils.isScanResultForWpa2Network(scanResult)) {
+                builder.setWpa2Passphrase(mPsk);
+            } else if (TestUtils.isScanResultForWpa3Network(scanResult)) {
+                builder.setWpa3Passphrase(mPsk);
+            }
+        }
         return builder.build();
     }
 
@@ -98,10 +110,11 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
     @Override
     protected boolean executeTest() throws InterruptedException {
-        // Step 1: Scan and find any open network around.
-        if (DBG) Log.v(TAG, "Scan and find an open network");
-        ScanResult openNetwork = mTestUtils.startScanAndFindAnyOpenNetworkInResults();
-        if (openNetwork == null) {
+        // Step 1: Scan and find the network around.
+        if (DBG) Log.v(TAG, "Scan and find the network: " + mSsid);
+        ScanResult testNetwork = mTestUtils.startScanAndFindAnyMatchingNetworkInResults(
+                mSsid, mPsk.isEmpty() ? SCAN_RESULT_TYPE_OPEN : SCAN_RESULT_TYPE_PSK);
+        if (testNetwork == null) {
             setFailureReason(mContext.getString(R.string.wifi_status_scan_failure));
             return false;
         }
@@ -136,8 +149,8 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
         mConnectivityManager.registerNetworkCallback(mNetworkRequest, mNetworkCallback);
 
         // Step 2: Create a suggestion for the chosen open network depending on the type of test.
-        WifiNetworkSuggestion networkSuggestion = createNetworkSuggestion(openNetwork);
-        mNetworkSuggestions.add(networkSuggestion);
+        WifiNetworkSuggestion networkSuggestion = createNetworkSuggestion(testNetwork);
+        mNetworkSuggestions = Arrays.asList(networkSuggestion);
 
         // Step 4: Add a network suggestions.
         if (DBG) Log.v(TAG, "Adding suggestion");
@@ -171,11 +184,11 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
         // Step 7: Ensure that we connected to the suggested network (optionally, the correct
         // BSSID).
-        if (!mTestUtils.isConnected("\"" + openNetwork.SSID + "\"",
+        if (!mTestUtils.isConnected("\"" + testNetwork.SSID + "\"",
                 // TODO: This might fail if there are other BSSID's for the same network & the
                 //  device decided to connect/roam to a different BSSID. We don't turn off roaming
                 //  for suggestions.
-                mSetBssid ? openNetwork.BSSID : null)) {
+                mSetBssid ? testNetwork.BSSID : null)) {
             Log.e(TAG, "Failed to connected to a wrong network");
             setFailureReason(mContext.getString(R.string.wifi_status_connected_to_other_network));
             return false;
