@@ -174,6 +174,7 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             }
             /* TODO(b/156571486) */
             if (encoder.equals("c2.android.hevc.encoder") ||
+                    encoder.equals("OMX.google.h264.encoder") ||
                     encoder.equals("c2.android.avc.encoder")) {
                 Log.d(LOG_TAG, "test skipped due to b/156571486");
                 mCodec.release();
