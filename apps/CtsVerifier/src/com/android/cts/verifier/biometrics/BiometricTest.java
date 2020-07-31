@@ -195,6 +195,7 @@ public class BiometricTest extends PassFailButtons.Activity {
         } else {
             // NO biometrics available
             mButtonTestNoneEnrolled.setEnabled(false);
+            showToastAndLog("No Biometrics available in this device. Mark Test Pass");
             getPassButton().setEnabled(true);
         }
     }
