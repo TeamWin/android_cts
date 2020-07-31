@@ -16,7 +16,9 @@
 
 package android.app.appops.cts
 
+import android.Manifest.permission.READ_CONTACTS
 import android.Manifest.permission.READ_LOGS
+import android.app.Activity.RESULT_OK
 import android.app.AppOpsManager
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.OPSTR_ACCESS_ACCESSIBILITY
@@ -83,6 +85,9 @@ import android.bluetooth.cts.BTAdapterUtils.enableAdapter as enableBTAdapter
 
 private const val TEST_SERVICE_PKG = "android.app.appops.cts.appthatusesappops"
 private const val TIMEOUT_MILLIS = 10000L
+private const val PRIVATE_ACTION = "android.app.appops.cts.PRIVATE_ACTION"
+private const val PUBLIC_ACTION = "android.app.appops.cts.PUBLIC_ACTION"
+private const val PROTECTED_ACTION = "android.app.appops.cts.PROTECTED_ACTION"
 
 private external fun nativeNoteOp(
     op: Int,
@@ -94,7 +99,7 @@ private external fun nativeNoteOp(
 
 @AppModeFull(reason = "Test relies on other app to connect to. Instant apps can't see other apps")
 class AppOpsLoggingTest {
-    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext as Context
     private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
 
     private val myUid = android.os.Process.myUid()
@@ -737,6 +742,56 @@ class AppOpsLoggingTest {
         assertThat(noted[0].second.map { it.methodName }).contains("getNextDropBoxEntry")
     }
 
+    @Test
+    fun receiveBroadcastRegisteredReceiver() {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+            }
+        }
+
+        val testContext = context.createAttributionContext(TEST_ATTRIBUTION_TAG)
+        testContext.registerReceiver(receiver, IntentFilter(PRIVATE_ACTION))
+
+        try {
+            context.sendOrderedBroadcast(Intent(PRIVATE_ACTION), READ_CONTACTS, OPSTR_READ_CONTACTS,
+                    null, null, RESULT_OK, null, null)
+
+            eventually {
+                assertThat(asyncNoted[0].op).isEqualTo(OPSTR_READ_CONTACTS)
+                assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+                assertThat(asyncNoted[0].message)
+                        .contains(System.identityHashCode(receiver).toString())
+            }
+        } finally {
+            testContext.unregisterReceiver(receiver)
+        }
+    }
+
+    @Test
+    fun receiveBroadcastManifestReceiver() {
+        context.sendOrderedBroadcast(Intent(PUBLIC_ACTION).setPackage(myPackage), READ_CONTACTS,
+                OPSTR_READ_CONTACTS, null, null, RESULT_OK, null, null)
+
+        eventually {
+            assertThat(asyncNoted[0].op).isEqualTo(OPSTR_READ_CONTACTS)
+
+            // Manifest receivers do not have an attribution
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(null)
+            assertThat(asyncNoted[0].message).contains("PublicActionReceiver")
+        }
+    }
+
+    @Test
+    fun sendBroadcastToProtectedReceiver() {
+        context.createAttributionContext(TEST_ATTRIBUTION_TAG)
+                .sendBroadcast(Intent(PROTECTED_ACTION).setPackage(myPackage))
+
+        eventually {
+            assertThat(asyncNoted[0].op).isEqualTo(OPSTR_READ_CONTACTS)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+        }
+    }
+
     @After
     fun removeNotedAppOpsCollector() {
         appOpsManager.setOnOpNotedCallback(null, null)
@@ -893,5 +948,15 @@ class AppOpsLoggingTest {
                 }
             }
         }
+    }
+}
+
+class PublicActionReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent?) {
+    }
+}
+
+class ProtectedActionReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent?) {
     }
 }
