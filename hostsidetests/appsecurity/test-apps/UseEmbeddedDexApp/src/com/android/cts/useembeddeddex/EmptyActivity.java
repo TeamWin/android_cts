@@ -18,5 +18,5 @@ package com.android.cts.useembeddeddex;
 
 import android.app.Activity;
 
-/** Dummy class just to generate some dex */
-public class DummyActivity extends Activity {}
+/** Empty class just to generate some dex */
+public class EmptyActivity extends Activity {}
