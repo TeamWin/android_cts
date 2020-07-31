@@ -191,6 +191,7 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         assertEquals(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, conn.getPhoneAccountHandle());
 
         cleanupCalls();
+        assertCtsConnectionServiceUnbound();
         CtsConnectionService.tearDown();
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
 
