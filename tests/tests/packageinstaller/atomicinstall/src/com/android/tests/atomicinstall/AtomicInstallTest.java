@@ -80,7 +80,10 @@ public class AtomicInstallTest {
     @After
     public void cleanUpSessions() {
         InstallUtils.getPackageInstaller().getMySessions().forEach(info -> {
-            InstallUtils.getPackageInstaller().abandonSession(info.getSessionId());
+            try {
+                InstallUtils.getPackageInstaller().abandonSession(info.getSessionId());
+            } catch (Exception ignore) {
+            }
         });
     }
 
