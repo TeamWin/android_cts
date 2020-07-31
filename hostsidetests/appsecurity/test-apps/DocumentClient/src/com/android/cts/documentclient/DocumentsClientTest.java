@@ -111,7 +111,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         try {
             //Enfornce to set the list mode
             //Because UiScrollable can't reach the real bottom (when WEB_LINKABLE_FILE item) in grid mode when screen landscape mode
-            new UiObject(new UiSelector().resourceId("com.android.documentsui:id/option_menu_list")).click();
+            new UiObject(new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/sub_menu_list")).click();
             mDevice.waitForIdle();
         }catch (UiObjectNotFoundException e){
             //do nothing, already be in list mode.
