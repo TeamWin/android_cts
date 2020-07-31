@@ -1,9 +1,12 @@
-# Bug component: 41666
+# Bug component: 656484
 # Use this reviewer by default.
-br-framework-team+reviews@google.com
+br-platform-dev@google.com
 
-alsutton@google.com
-anniemeng@google.com
-brufino@google.com
-nathch@google.com
+# People who can approve changes for submission.
 rthakohov@google.com
+tobiast@google.com
+jstemmer@google.com
+aabhinav@google.com
+philippov@google.com
+niagra@google.com
+niamhfw@google.com
