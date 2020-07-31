@@ -2469,6 +2469,47 @@ public class ScopedStorageTest {
     }
 
     @Test
+    public void testRenameWithSpecialChars() throws Exception {
+        final String specialCharsSuffix = "'`~!@#$%^& ()_+-={}[];'.)";
+
+        final File fileSpecialChars =
+                new File(getDownloadDir(), NONMEDIA_FILE_NAME + specialCharsSuffix);
+
+        final File dirSpecialChars =
+                new File(getDownloadDir(), TEST_DIRECTORY_NAME + specialCharsSuffix);
+        final File file1 = new File(dirSpecialChars, NONMEDIA_FILE_NAME);
+        final File fileSpecialChars1 =
+                new File(dirSpecialChars, NONMEDIA_FILE_NAME + specialCharsSuffix);
+
+        final File renamedDir = new File(getDocumentsDir(), TEST_DIRECTORY_NAME);
+        final File file2 = new File(renamedDir, NONMEDIA_FILE_NAME);
+        final File fileSpecialChars2 =
+                new File(renamedDir, NONMEDIA_FILE_NAME + specialCharsSuffix);
+        try {
+            assertTrue(fileSpecialChars.createNewFile());
+            if (!dirSpecialChars.exists()) {
+                assertTrue(dirSpecialChars.mkdir());
+            }
+            assertTrue(file1.createNewFile());
+
+            // We can rename file name with special characters
+            assertCanRenameFile(fileSpecialChars, fileSpecialChars1);
+
+            // We can rename directory name with special characters
+            assertCanRenameDirectory(dirSpecialChars, renamedDir,
+                    new File[] {file1, fileSpecialChars1}, new File[] {file2, fileSpecialChars2});
+        } finally {
+            file1.delete();
+            file2.delete();
+            fileSpecialChars.delete();
+            fileSpecialChars1.delete();
+            fileSpecialChars2.delete();
+            dirSpecialChars.delete();
+            renamedDir.delete();
+        }
+    }
+
+    @Test
     public void testAndroidMedia() throws Exception {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
 
