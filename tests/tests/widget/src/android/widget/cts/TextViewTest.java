@@ -738,7 +738,7 @@ public class TextViewTest {
         mTextView = findTextView(R.id.selectAllOnFocus_default);
         mTextView.setText(blank, BufferType.SPANNABLE);
         // change the focus
-        findTextView(R.id.selectAllOnFocus_dummy).requestFocus();
+        findTextView(R.id.selectAllOnFocus_placeholder).requestFocus();
         assertFalse(mTextView.isFocused());
         mTextView.requestFocus();
         assertTrue(mTextView.isFocused());
@@ -749,7 +749,7 @@ public class TextViewTest {
         mTextView.setText(content, BufferType.SPANNABLE);
         mTextView.setSelectAllOnFocus(true);
         // change the focus
-        findTextView(R.id.selectAllOnFocus_dummy).requestFocus();
+        findTextView(R.id.selectAllOnFocus_placeholder).requestFocus();
         assertFalse(mTextView.isFocused());
         mTextView.requestFocus();
         assertTrue(mTextView.isFocused());
@@ -760,7 +760,7 @@ public class TextViewTest {
         Selection.setSelection((Spannable) mTextView.getText(), 0);
         mTextView.setSelectAllOnFocus(false);
         // change the focus
-        findTextView(R.id.selectAllOnFocus_dummy).requestFocus();
+        findTextView(R.id.selectAllOnFocus_placeholder).requestFocus();
         assertFalse(mTextView.isFocused());
         mTextView.requestFocus();
         assertTrue(mTextView.isFocused());
@@ -771,7 +771,7 @@ public class TextViewTest {
         mTextView.setText(blank, BufferType.SPANNABLE);
         mTextView.setSelectAllOnFocus(true);
         // change the focus
-        findTextView(R.id.selectAllOnFocus_dummy).requestFocus();
+        findTextView(R.id.selectAllOnFocus_placeholder).requestFocus();
         assertFalse(mTextView.isFocused());
         mTextView.requestFocus();
         assertTrue(mTextView.isFocused());
@@ -782,7 +782,7 @@ public class TextViewTest {
         Selection.setSelection((Spannable) mTextView.getText(), 0);
         mTextView.setSelectAllOnFocus(false);
         // change the focus
-        findTextView(R.id.selectAllOnFocus_dummy).requestFocus();
+        findTextView(R.id.selectAllOnFocus_placeholder).requestFocus();
         assertFalse(mTextView.isFocused());
         mTextView.requestFocus();
         assertTrue(mTextView.isFocused());
@@ -5789,11 +5789,11 @@ public class TextViewTest {
     public void testSelectAllJustAfterTap() throws Throwable {
         // Prepare an EditText with focus.
         mActivityRule.runOnUiThread(() -> {
-            // Make a dummy focusable so that initial focus doesn't go to our test textview
+            // Make a placeholder focusable so that initial focus doesn't go to our test textview
             LinearLayout top = new LinearLayout(mActivity);
-            TextView dummy = new TextView(mActivity);
-            dummy.setFocusableInTouchMode(true);
-            top.addView(dummy, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            TextView placeholder = new TextView(mActivity);
+            placeholder.setFocusableInTouchMode(true);
+            top.addView(placeholder, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             mTextView = new EditText(mActivity);
             top.addView(mTextView, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             mActivity.setContentView(top);
@@ -6951,11 +6951,11 @@ public class TextViewTest {
         final View.OnClickListener mockOnClickListener = mock(View.OnClickListener.class);
         final int safeDoubleTapTimeout = ViewConfiguration.getDoubleTapTimeout() + 1;
         mActivityRule.runOnUiThread(() -> {
-            // set up a dummy focusable so that initial focus doesn't go to our test textview
+            // set up a placeholder focusable so that initial focus doesn't go to our test textview
             LinearLayout top = new LinearLayout(mActivity);
-            TextView dummy = new TextView(mActivity);
-            dummy.setFocusableInTouchMode(true);
-            top.addView(dummy, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            TextView placeholder = new TextView(mActivity);
+            placeholder.setFocusableInTouchMode(true);
+            top.addView(placeholder, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             mTextView = new TextView(mActivity);
             mTextView.setText("...text 11:11. some more text is in here...");
             mTextView.setFocusable(true);
