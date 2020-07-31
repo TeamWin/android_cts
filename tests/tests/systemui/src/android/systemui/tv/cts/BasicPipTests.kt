@@ -19,6 +19,8 @@ package android.systemui.tv.cts
 import android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN
 import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
 import android.content.ComponentName
+import android.graphics.Point
+import android.graphics.Rect
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.annotation.Group2
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
@@ -28,6 +30,8 @@ import android.systemui.tv.cts.Components.windowName
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_FULLSCREEN_BUTTON
+import android.util.Size
+import android.view.Gravity
 import android.view.KeyEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
@@ -50,6 +54,21 @@ import kotlin.test.assertTrue
 @RunWith(AndroidJUnit4::class)
 class BasicPipTests : PipTestBase() {
 
+    private val pipGravity: Int = resources.getInteger(
+        com.android.internal.R.integer.config_defaultPictureInPictureGravity)
+    private val displaySize = windowManager.maximumWindowMetrics.bounds
+
+    private val defaultPipAspectRatio: Float = resources.getFloat(
+        com.android.internal.R.dimen.config_pictureInPictureDefaultAspectRatio)
+    private val defaultPipHeight: Float = resources.getDimension(
+        com.android.internal.R.dimen.default_minimal_size_pip_resizable_task)
+    private val screenEdgeInsetString = resources.getString(
+        com.android.internal.R.string.config_defaultPictureInPictureScreenEdgeInsets)
+    private val screenEdgeInsets: Point = Size.parseSize(screenEdgeInsetString).let {
+        val displayMetrics = resources.displayMetrics
+        Point(dipToPx(it.width, displayMetrics), dipToPx(it.height, displayMetrics))
+    }
+
     @After
     fun tearDown() {
         stopPackage(PIP_ACTIVITY)
@@ -65,6 +84,26 @@ class BasicPipTests : PipTestBase() {
         wmState.assertNotFocusedWindow(
             "PiP Window must not be focused!",
             PIP_ACTIVITY.windowName()
+        )
+    }
+
+    /** Open an app in pip mode and ensure it is located at the expected default position. */
+    @Test
+    fun openPip_correctDefaultPosition() {
+        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+        wmState.waitForValidState(PIP_ACTIVITY)
+
+        val expectedBounds = Rect().apply {
+            Gravity.apply(pipGravity, (defaultPipHeight * defaultPipAspectRatio).toInt(),
+                defaultPipHeight.toInt(),
+                displaySize, screenEdgeInsets.x, screenEdgeInsets.y, this)
+        }
+
+        val pipTask = wmState.getTaskByActivity(PIP_ACTIVITY, WINDOWING_MODE_PINNED)
+        assertEquals(
+            expected = expectedBounds,
+            actual = pipTask.bounds,
+            message = "The PiP window must be at the expected location!"
         )
     }
 
