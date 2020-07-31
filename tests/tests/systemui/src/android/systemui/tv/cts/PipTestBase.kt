@@ -20,8 +20,12 @@ import android.app.Instrumentation
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Resources
+import android.graphics.Rect
 import android.server.wm.UiDeviceUtils
 import android.server.wm.WindowManagerStateHelper
+import android.systemui.tv.cts.ResourceNames.STRING_PIP_MENU_BOUNDS
+import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
@@ -41,9 +45,18 @@ abstract class PipTestBase {
     protected val packageManager: PackageManager = context.packageManager
         ?: error("Could not get a PackageManager")
     protected val wmState: WindowManagerStateHelper = WindowManagerStateHelper()
+    protected val systemuiResources: Resources =
+        packageManager.getResourcesForApplication(SYSTEM_UI_PACKAGE)
 
     /** Default timeout in milliseconds to use for wait and find operations. */
     protected open val defaultTimeout: Long = 2_000
+
+    /** Bounds when the pip menu is open */
+    protected val menuModePipBounds: Rect = systemuiResources.run {
+        val menuBoundsId = getIdentifier(STRING_PIP_MENU_BOUNDS, "string", SYSTEM_UI_PACKAGE)
+        Rect.unflattenFromString(getString(menuBoundsId))
+            ?: error("Could not find the pip_menu_bounds resource!")
+    }
 
     @Before
     open fun setUp() {

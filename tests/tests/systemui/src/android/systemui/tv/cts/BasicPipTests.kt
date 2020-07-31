@@ -85,6 +85,17 @@ class BasicPipTests : PipTestBase() {
         assertPipMenuOpen()
     }
 
+    /** Ensure the pip menu opens in the expected location. */
+    @Test
+    fun pipMenu_correctLocation() {
+        launchPipThenEnterMenu()
+
+        wmState.waitFor("The PiP menu must be in the right place!") {
+            val pipTask = it.getTaskByActivity(PIP_ACTIVITY, WINDOWING_MODE_PINNED)
+            pipTask.bounds == menuModePipBounds
+        }
+    }
+
     /** Open an app's pip menu then press its close button and ensure the app is closed. */
     @Test
     fun pipMenu_openThenClose() {
