@@ -22,6 +22,7 @@ import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_DENIED
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.content.res.Resources
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
@@ -61,6 +62,9 @@ private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
  * Test for auto revoke
  */
 class AutoRevokeTest : InstrumentationTestCase() {
+
+    private val mPermissionControllerResources: Resources = context.createPackageContext(
+            context.packageManager.permissionControllerPackageName, 0).resources
 
     companion object {
         const val LOG_TAG = "AutoRevokeTest"
@@ -311,8 +315,17 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     private fun clickPermissionAllow() {
-        waitFindObject(By.res("com.android.permissioncontroller:id/permission_allow_button"))
-                .click()
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            waitFindObject(By.text(Pattern.compile(
+                    Pattern.quote(mPermissionControllerResources.getString(
+                            mPermissionControllerResources.getIdentifier(
+                                    "grant_dialog_button_allow", "string",
+                                    "com.android.permissioncontroller"))),
+                    Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE))).click()
+        } else {
+            waitFindObject(By.res("com.android.permissioncontroller:id/permission_allow_button"))
+                    .click()
+        }
     }
 
     private inline fun withDummyApp(
