@@ -64,10 +64,10 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
             // 0 is technically a valid UID.
             assertTrue(0 <= uid);
         }
-        for (int aid : appStateTracker.getPowerSaveWhitelistAppIdsList()) {
+        for (int aid : appStateTracker.getPowerSaveExemptAppIdsList()) {
             assertTrue(0 <= aid);
         }
-        for (int aid : appStateTracker.getTempPowerSaveWhitelistAppIdsList()) {
+        for (int aid : appStateTracker.getTempPowerSaveExemptAppIdsList()) {
             assertTrue(0 <= aid);
         }
         for (RunAnyInBackgroundRestrictedPackages r : appStateTracker.getRunAnyInBackgroundRestrictedPackagesList()) {
@@ -87,7 +87,7 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
         assertTrue(0 < dump.getTimeSinceLastWakeupSetMs());
         assertTrue(0 <= dump.getTimeChangeEventCount());
 
-        for (int aid : dump.getDeviceIdleUserWhitelistAppIdsList()) {
+        for (int aid : dump.getDeviceIdleUserExemptAppIdsList()) {
             assertTrue(0 <= aid);
         }
 
