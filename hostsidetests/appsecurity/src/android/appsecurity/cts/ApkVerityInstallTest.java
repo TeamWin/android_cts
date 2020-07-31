@@ -26,6 +26,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,6 +63,11 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         String apkVerityMode = device.getProperty("ro.apk_verity.mode");
         assumeTrue(device.getLaunchApiLevel() >= 30
                 || APK_VERITY_STANDARD_MODE.equals(apkVerityMode));
+    }
+
+    @After
+    public void tearDown() throws DeviceNotAvailableException {
+        getDevice().uninstallPackage(PACKAGE_NAME);
     }
 
     @CddTest(requirement="9.10/C-0-3")

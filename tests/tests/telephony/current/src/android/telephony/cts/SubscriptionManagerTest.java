@@ -131,12 +131,14 @@ public class SubscriptionManagerTest {
     }
 
     /**
-     * Sanity check that both {@link PackageManager#FEATURE_TELEPHONY} and
+     * Correctness check that both {@link PackageManager#FEATURE_TELEPHONY} and
      * {@link NetworkCapabilities#TRANSPORT_CELLULAR} network must both be
      * either defined or undefined; you can't cross the streams.
      */
     @Test
-    public void testSanity() throws Exception {
+    public void testCorrectness() throws Exception {
+        if (!isSupported()) return;
+
         final boolean hasCellular = findCellularNetwork() != null;
         if (isSupported() && !hasCellular) {
             fail("Device claims to support " + PackageManager.FEATURE_TELEPHONY

@@ -22,6 +22,7 @@ import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUti
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
 import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
@@ -52,6 +53,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityService;
@@ -651,6 +653,8 @@ public class AccessibilityWindowQueryTest {
 
     @Test
     public void testGetWindowsOnAllDisplays_resultIsSortedByLayerDescending() throws Exception {
+        assumeTrue(supportsMultiDisplay(sInstrumentation.getContext()));
+
         addTwoAppPanelWindows(mActivity);
         // Creates a virtual display.
         try (final VirtualDisplaySession displaySession = new VirtualDisplaySession()) {

@@ -452,8 +452,8 @@ public class NotificationManagerTest extends AndroidTestCase {
             toggleListenerAccess(TestNotificationListener.getId(),
                     InstrumentationRegistry.getInstrumentation(), true);
             mListener = TestNotificationListener.getInstance();
-            mListener.resetData();
             assertNotNull(mListener);
+            mListener.resetData();
         } catch (IOException e) {
         }
     }

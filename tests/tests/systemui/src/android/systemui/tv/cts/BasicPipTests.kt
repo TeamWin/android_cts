@@ -28,6 +28,7 @@ import android.systemui.tv.cts.Components.windowName
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_FULLSCREEN_BUTTON
+import android.view.KeyEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiObject2
@@ -71,13 +72,17 @@ class BasicPipTests : PipTestBase() {
     @Test
     fun pipMenu_open() {
         launchPipThenEnterMenu()
+        assertPipMenuOpen()
+    }
 
-        wmState.assertActivityDisplayed(PIP_ACTIVITY)
-        assertEquals(
-            expected = PIP_MENU_ACTIVITY.activityName(),
-            actual = wmState.focusedActivity,
-            message = "The PiP Menu activity must be focused!"
-        )
+    /** Ensure the [android.view.KeyEvent.KEYCODE_WINDOW] correctly opens the pip menu. */
+    @Test
+    fun pipMenu_open_onWindowButtonPress() {
+        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+        wmState.waitForValidState(PIP_ACTIVITY)
+        // enter pip menu
+        uiDevice.pressKeyCode(KeyEvent.KEYCODE_WINDOW)
+        assertPipMenuOpen()
     }
 
     /** Open an app's pip menu then press its close button and ensure the app is closed. */
@@ -142,6 +147,17 @@ class BasicPipTests : PipTestBase() {
         // enter pip menu
         sendBroadcast(PipMenu.ACTION_MENU)
         wmState.waitForValidState(PIP_MENU_ACTIVITY)
+    }
+
+    /** Ensure the pip detail menu is open. */
+    private fun assertPipMenuOpen() {
+        wmState.waitForValidState(PIP_MENU_ACTIVITY)
+        wmState.assertActivityDisplayed(PIP_MENU_ACTIVITY)
+        assertEquals(
+            expected = PIP_MENU_ACTIVITY.activityName(),
+            actual = wmState.focusedActivity,
+            message = "The PiP Menu activity must be focused!"
+        )
     }
 
     private fun locateByResourceName(resourceName: String): UiObject2 =
