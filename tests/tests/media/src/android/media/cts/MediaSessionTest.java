@@ -270,7 +270,8 @@ public class MediaSessionTest extends AndroidTestCase {
      * Test whether media button receiver can be a explicit broadcast receiver.
      */
     public void testSetMediaButtonReceiver_broadcastReceiver() throws Exception {
-        Intent intent = new Intent(mContext.getApplicationContext(), MediaButtonReceiver.class);
+        Intent intent = new Intent(mContext.getApplicationContext(),
+                MediaButtonBroadcastReceiver.class);
         PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, intent, 0);
 
         // Play a sound so this session can get the priority.
@@ -287,7 +288,7 @@ public class MediaSessionTest extends AndroidTestCase {
         int keyCode = KeyEvent.KEYCODE_MEDIA_PLAY;
         try {
             CountDownLatch latch = new CountDownLatch(2);
-            MediaButtonReceiver.setCallback((keyEvent) -> {
+            MediaButtonBroadcastReceiver.setCallback((keyEvent) -> {
                 assertEquals(keyCode, keyEvent.getKeyCode());
                 switch ((int) latch.getCount()) {
                     case 2:
@@ -305,7 +306,51 @@ public class MediaSessionTest extends AndroidTestCase {
 
             assertTrue(latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
         } finally {
-            MediaButtonReceiver.setCallback(null);
+            MediaButtonBroadcastReceiver.setCallback(null);
+        }
+    }
+
+    /**
+     * Test whether media button receiver can be a explicit service.
+     */
+    public void testSetMediaButtonReceiver_service() throws Exception {
+        Intent intent = new Intent(mContext.getApplicationContext(),
+                MediaButtonReceiverService.class);
+        PendingIntent pi = PendingIntent.getService(mContext, 0, intent, 0);
+
+        // Play a sound so this session can get the priority.
+        Utils.assertMediaPlaybackStarted(getContext());
+
+        // Sets the media button receiver. Framework would try to keep the pending intent in the
+        // persistent store.
+        mSession.setMediaButtonReceiver(pi);
+
+        // Call explicit release, so change in the media key event session can be notified with the
+        // pending intent.
+        mSession.release();
+
+        int keyCode = KeyEvent.KEYCODE_MEDIA_PLAY;
+        try {
+            CountDownLatch latch = new CountDownLatch(2);
+            MediaButtonReceiverService.setCallback((keyEvent) -> {
+                assertEquals(keyCode, keyEvent.getKeyCode());
+                switch ((int) latch.getCount()) {
+                    case 2:
+                        assertEquals(KeyEvent.ACTION_DOWN, keyEvent.getAction());
+                        break;
+                    case 1:
+                        assertEquals(KeyEvent.ACTION_UP, keyEvent.getAction());
+                        break;
+                }
+                latch.countDown();
+            });
+            // Also try to dispatch media key event.
+            // System would try to dispatch event.
+            simulateMediaKeyInput(keyCode);
+
+            assertTrue(latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            MediaButtonReceiverService.setCallback(null);
         }
     }
 

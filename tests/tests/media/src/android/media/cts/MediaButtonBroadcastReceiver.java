@@ -25,14 +25,14 @@ import android.view.KeyEvent;
 
 import java.util.function.Consumer;
 
-public class MediaButtonReceiver extends BroadcastReceiver {
+public class MediaButtonBroadcastReceiver extends BroadcastReceiver {
     public static Consumer<KeyEvent> mCallback;
 
     @Override
     public void onReceive(Context context, Intent intent) {
         assertEquals(Intent.ACTION_MEDIA_BUTTON, intent.getAction());
         KeyEvent keyEvent = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-        synchronized (MediaButtonReceiver.class) {
+        synchronized (MediaButtonBroadcastReceiver.class) {
             if (mCallback != null) {
                 mCallback.accept(keyEvent);
             }
@@ -40,7 +40,7 @@ public class MediaButtonReceiver extends BroadcastReceiver {
     }
 
     public synchronized static void setCallback(Consumer<KeyEvent> callback) {
-        synchronized (MediaButtonReceiver.class) {
+        synchronized (MediaButtonBroadcastReceiver.class) {
             mCallback = callback;
         }
     }
