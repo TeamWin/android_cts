@@ -18,5 +18,5 @@ package com.android.cts.apkintergrity.feature_x;
 
 import android.app.Activity;
 
-/** Dummy class just to generate some dex */
-public class DummyActivity extends Activity {}
+/** Empty class just to generate some dex */
+public class EmptyActivity extends Activity {}
