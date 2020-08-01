@@ -47,6 +47,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class PermissionGroupChange {
     private static final String APP_PKG_NAME = "android.permission.cts.appthatrequestpermission";
@@ -107,7 +108,8 @@ public class PermissionGroupChange {
             if (mAllowButtonText == null) {
                 mAllowButtonText = getPermissionControllerString("grant_dialog_button_allow");
             }
-            mUiDevice.findObject(By.text(mAllowButtonText)).click();
+            mUiDevice.findObject(By.text(Pattern.compile(Pattern.quote(mAllowButtonText),
+                    Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE))).click();
         } else {
             mUiDevice.findObject(By.res(
                     "com.android.permissioncontroller:id/permission_allow_button")).click();
