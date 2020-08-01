@@ -14,9 +14,22 @@
  * limitations under the License.
  */
 
-package com.android.cts.apkintergrity.feature_x;
+package com.android.cts.stubime;
 
-import android.app.Activity;
+import android.inputmethodservice.InputMethodService;
 
-/** Dummy class just to generate some dex */
-public class DummyActivity extends Activity {}
+/**
+ * Stub IME implementation that basically does nothing
+ */
+public class CtsStubIme extends InputMethodService {
+
+    @Override
+    public boolean onEvaluateFullscreenMode() {
+        return false;
+    }
+
+    @Override
+    public boolean onEvaluateInputViewShown() {
+        return false;
+    }
+}

@@ -52,7 +52,7 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
         byte[] rulesFileBytes =
                 ByteStreams.toByteArray(getClass().getResourceAsStream("/" + hostFilename));
 
-        Assert.assertTrue("Loaded empty rules file", rulesFileBytes.length > 0); // sanity check
+        Assert.assertTrue("Loaded empty rules file", rulesFileBytes.length > 0); // validity check
         mRulesFile = File.createTempFile("rulesFile", "tempRules.json");
         Files.write(rulesFileBytes, mRulesFile);
 

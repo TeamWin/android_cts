@@ -14,22 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.cts.dummyime;
+package com.android.cts.useembeddeddex;
 
-import android.inputmethodservice.InputMethodService;
+import android.app.Activity;
 
-/**
- * Dummy IME implementation that basically does nothing
- */
-public class CtsDummyIme extends InputMethodService {
-
-    @Override
-    public boolean onEvaluateFullscreenMode() {
-        return false;
-    }
-
-    @Override
-    public boolean onEvaluateInputViewShown() {
-        return false;
-    }
-}
+/** Empty class just to generate some dex */
+public class EmptyActivity extends Activity {}
