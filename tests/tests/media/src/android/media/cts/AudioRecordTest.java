@@ -577,7 +577,7 @@ public class AudioRecordTest {
                 final short[] shortData = new short[BUFFER_SAMPLES];
                 final AudioHelper.TimestampVerifier tsVerifier =
                         new AudioHelper.TimestampVerifier(TAG, RECORD_SAMPLE_RATE,
-                                isProAudioDevice());
+                                0 /* startFrames */, isProAudioDevice());
 
                 while (samplesRead < targetSamples) {
                     final int amount = samplesRead == 0 ? numChannels :
