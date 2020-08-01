@@ -30,7 +30,7 @@ class CtsAngleCommon {
     static final String SETTINGS_GLOBAL_ALL_USE_ANGLE = "angle_gl_driver_all_angle";
     static final String SETTINGS_GLOBAL_DRIVER_PKGS = "angle_gl_driver_selection_pkgs";
     static final String SETTINGS_GLOBAL_DRIVER_VALUES = "angle_gl_driver_selection_values";
-    static final String SETTINGS_GLOBAL_WHITELIST = "angle_whitelist";
+    static final String SETTINGS_GLOBAL_ALLOWLIST = "angle_allowlist";
     static final String SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX = "show_angle_in_use_dialog_box";
 
     // System Properties
@@ -98,7 +98,7 @@ class CtsAngleCommon {
         setGlobalSetting(device, SETTINGS_GLOBAL_ANGLE_IN_USE_DIALOG_BOX, "0");
         setGlobalSetting(device, SETTINGS_GLOBAL_DRIVER_PKGS, "\"\"");
         setGlobalSetting(device, SETTINGS_GLOBAL_DRIVER_VALUES, "\"\"");
-        setGlobalSetting(device, SETTINGS_GLOBAL_WHITELIST, "\"\"");
+        setGlobalSetting(device, SETTINGS_GLOBAL_ALLOWLIST, "\"\"");
 
         // Properties
         setProperty(device, PROPERTY_TEMP_RULES_FILE, "\"\"");
