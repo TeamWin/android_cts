@@ -402,7 +402,8 @@ public abstract class BasePermissionsTest {
         String s = mPermissionControllerResources.getString(mPermissionControllerResources
                 .getIdentifier(res, "string", "com.android.permissioncontroller"));
         waitForIdle();
-        getUiDevice().wait(Until.findObject(By.text(s)),
+        getUiDevice().wait(Until.findObject(By.text(
+                Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE))),
                 GLOBAL_TIMEOUT_MILLIS).click();
     }
 
