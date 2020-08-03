@@ -33,7 +33,7 @@ object Components {
 
     @JvmField
     val PIP_MENU_ACTIVITY: ComponentName = ComponentName.createRelative(
-            "com.android.systemui",
+        ResourceNames.SYSTEM_UI_PACKAGE,
             ".pip.tv.PipMenuActivity"
     )
 }
@@ -47,6 +47,14 @@ object PipActivity {
 
     /** Provide a rect hint for entering pip in the form "left top right bottom" */
     const val EXTRA_SOURCE_RECT_HINT = "source_rect_hint"
+
+    /**
+     * Boolean.
+     * Make sure the app will turn on the screen (waking up the device) upon start.
+     * This is accomplished by means of
+     * https://developer.android.com/reference/android/app/Activity#setTurnScreenOn(boolean)
+     */
+    const val EXTRA_TURN_ON_SCREEN = "turn_on_screen"
 
     const val EXTRA_ASPECT_RATIO_DENOMINATOR = "aspect_ratio_denominator"
     const val EXTRA_ASPECT_RATIO_NUMERATOR = "aspect_ratio_numerator"
