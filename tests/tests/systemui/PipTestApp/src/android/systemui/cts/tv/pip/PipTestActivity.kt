@@ -26,6 +26,7 @@ import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_DENOMINATOR
 import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_NUMERATOR
 import android.systemui.tv.cts.PipActivity.EXTRA_ENTER_PIP
 import android.systemui.tv.cts.PipActivity.EXTRA_SOURCE_RECT_HINT
+import android.systemui.tv.cts.PipActivity.EXTRA_TURN_ON_SCREEN
 import android.util.Log
 import android.util.Rational
 
@@ -52,6 +53,10 @@ class PipTestActivity : Activity() {
             Log.d(TAG, "Entering PIP. Currently in PIP = $isInPictureInPictureMode")
             val res = enterPictureInPictureMode(pipParams(intent.extras))
             Log.d(TAG, "Entered PIP = $res. Currently in PIP = $isInPictureInPictureMode")
+        }
+
+        if (intent.getBooleanExtra(EXTRA_TURN_ON_SCREEN, false)) {
+            setTurnScreenOn(true)
         }
     }
 
