@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.assertNotEquals;
+
 import static android.media.AudioManager.ADJUST_LOWER;
 import static android.media.AudioManager.ADJUST_RAISE;
 import static android.media.AudioManager.ADJUST_SAME;
@@ -52,6 +54,7 @@ import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MicrophoneInfo;
+import android.os.Build;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.platform.test.annotations.AppModeFull;
@@ -62,6 +65,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.SoundEffectConstants;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.internal.annotations.GuardedBy;
@@ -1560,6 +1564,25 @@ public class AudioManagerTest extends InstrumentationTestCase {
     public void testIsHapticPlaybackSupported() {
         // Calling the API to make sure it doesn't crash.
         Log.i(TAG, "isHapticPlaybackSupported: " + AudioManager.isHapticPlaybackSupported());
+    }
+
+    public void testGetAudioHwSyncForSession() {
+        // AudioManager.getAudioHwSyncForSession is not supported before S
+        if (ApiLevelUtil.isAtMost(Build.VERSION_CODES.R)) {
+            Log.i(TAG, "testGetAudioHwSyncForSession skipped, release: " + Build.VERSION.SDK_INT);
+            return;
+        }
+        try {
+            int sessionId = mAudioManager.generateAudioSessionId();
+            assertNotEquals("testGetAudioHwSyncForSession cannot get audio session ID",
+                    AudioManager.ERROR, sessionId);
+            int hwSyncId = mAudioManager.getAudioHwSyncForSession(sessionId);
+            Log.i(TAG, "getAudioHwSyncForSession: " + hwSyncId);
+        } catch (UnsupportedOperationException e) {
+            Log.i(TAG, "getAudioHwSyncForSession not supported");
+        } catch (Exception e) {
+            fail("Unexpected exception thrown by getAudioHwSyncForSession: " + e);
+        }
     }
 
     private void setInterruptionFilter(int filter) {
