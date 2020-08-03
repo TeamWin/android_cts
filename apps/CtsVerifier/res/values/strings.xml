@@ -2186,6 +2186,11 @@
         dismiss them.
     </string>
     <string name="msg_extras_preserved">Check that Message extras Bundle was preserved.</string>
+    <string name="conversation_section_ordering">If this device supports conversation notifications,
+        and groups them into a separate section from alerting and silent non-conversation
+        notifications, fully expand the notification display and verify that the \"Person A\"
+        notification appears before the "\Non-Person Notification\".
+        If this device does not support conversation notifications or does not group them together, press Pass.</string>
     <string name="qs_media_player_title">QS Media Controls Test</string>
     <string name="qs_media_player_test">Media Controls Test</string>
     <string name="qs_media_player_info">This test checks that media controls appear in the
