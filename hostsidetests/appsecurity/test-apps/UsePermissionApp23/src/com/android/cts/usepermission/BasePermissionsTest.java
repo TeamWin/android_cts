@@ -391,7 +391,9 @@ public abstract class BasePermissionsTest {
         String s = mPermissionControllerResources.getString(mPermissionControllerResources
                 .getIdentifier(res, "string", "com.android.permissioncontroller"));
         waitForIdle();
-        waitFindObject(By.text(s), GLOBAL_TIMEOUT_MILLIS).click();
+        waitFindObject(By.text(
+                Pattern.compile(Pattern.quote(s), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE)),
+                GLOBAL_TIMEOUT_MILLIS).click();
     }
 
     protected void grantPermission(String permission) throws Exception {

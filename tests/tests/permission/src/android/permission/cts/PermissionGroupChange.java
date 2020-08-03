@@ -104,7 +104,7 @@ public class PermissionGroupChange {
 
     protected void clickAllowButton() throws Exception {
         if (mIsAutomotive) {
-            mUiDevice.findObject(new UiSelector().text("Allow")).click();
+            mUiDevice.findObject(new UiSelector().textMatches("(?i)Allow")).click();
         } else {
             mUiDevice.findObject(new UiSelector().resourceId(
                     "com.android.permissioncontroller:id/permission_allow_button")).click();
