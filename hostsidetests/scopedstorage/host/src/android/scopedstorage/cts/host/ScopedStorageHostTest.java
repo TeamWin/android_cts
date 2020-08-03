@@ -91,33 +91,8 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testTypePathConformity() throws Exception {
-        runDeviceTest("testTypePathConformity");
-    }
-
-    @Test
-    public void testCreateFileInAppExternalDir() throws Exception {
-        runDeviceTest("testCreateFileInAppExternalDir");
-    }
-
-    @Test
-    public void testCreateFileInOtherAppExternalDir() throws Exception {
-        runDeviceTest("testCreateFileInOtherAppExternalDir");
-    }
-
-    @Test
     public void testReadWriteFilesInOtherAppExternalDir() throws Exception {
         runDeviceTest("testReadWriteFilesInOtherAppExternalDir");
-    }
-
-    @Test
-    public void testContributeMediaFile() throws Exception {
-        runDeviceTest("testContributeMediaFile");
-    }
-
-    @Test
-    public void testCreateAndDeleteEmptyDir() throws Exception {
-        runDeviceTest("testCreateAndDeleteEmptyDir");
     }
 
     @Test
@@ -129,20 +104,6 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     public void testDeleteAlreadyUnlinkedFile() throws Exception {
         runDeviceTest("testDeleteAlreadyUnlinkedFile");
 
-    }
-    @Test
-    public void testOpendirRestrictions() throws Exception {
-        runDeviceTest("testOpendirRestrictions");
-    }
-
-    @Test
-    public void testLowLevelFileIO() throws Exception {
-        runDeviceTest("testLowLevelFileIO");
-    }
-
-    @Test
-    public void testListDirectoriesWithMediaFiles() throws Exception {
-        runDeviceTest("testListDirectoriesWithMediaFiles");
     }
 
     @Test
@@ -156,40 +117,8 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testListFilesFromExternalMediaDirectory() throws Exception {
-        runDeviceTest("testListFilesFromExternalMediaDirectory");
-    }
-
-    @Test
     public void testListUnsupportedFileType() throws Exception {
         runDeviceTest("testListUnsupportedFileType");
-    }
-
-    @Test
-    public void testMetaDataRedaction() throws Exception {
-        runDeviceTest("testMetaDataRedaction");
-    }
-
-    @Test
-    public void testVfsCacheConsistency() throws Exception {
-        runDeviceTest("testOpenFilePathFirstWriteContentResolver");
-        runDeviceTest("testOpenContentResolverFirstWriteContentResolver");
-        runDeviceTest("testOpenFilePathFirstWriteFilePath");
-        runDeviceTest("testOpenContentResolverFirstWriteFilePath");
-        runDeviceTest("testOpenContentResolverWriteOnly");
-        runDeviceTest("testOpenContentResolverDup");
-        runDeviceTest("testContentResolverDelete");
-        runDeviceTest("testContentResolverUpdate");
-        runDeviceTest("testOpenContentResolverClose");
-    }
-
-    @Test
-    public void testCaseInsensitivity() throws Exception {
-        runDeviceTest("testCreateLowerCaseDeleteUpperCase");
-        runDeviceTest("testCreateUpperCaseDeleteLowerCase");
-        runDeviceTest("testCreateMixedCaseDeleteDifferentMixedCase");
-        runDeviceTest("testAndroidDataObbDoesNotForgetMount");
-        runDeviceTest("testCacheConsistencyForCaseInsensitivity");
     }
 
     @Test
@@ -220,18 +149,8 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testRenameAndReplaceFile() throws Exception {
-        runDeviceTest("testRenameAndReplaceFile");
-    }
-
-    @Test
     public void testRenameFileNotOwned() throws Exception {
         runDeviceTest("testRenameFileNotOwned");
-    }
-
-    @Test
-    public void testRenameDirectory() throws Exception {
-        runDeviceTest("testRenameDirectory");
     }
 
     @Test
@@ -245,45 +164,10 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testSystemGalleryAppHasFullAccessToImages() throws Exception {
-        runDeviceTest("testSystemGalleryAppHasFullAccessToImages");
-    }
-
-    @Test
-    public void testSystemGalleryAppHasNoFullAccessToAudio() throws Exception {
-        runDeviceTest("testSystemGalleryAppHasNoFullAccessToAudio");
-    }
-
-    @Test
-    public void testSystemGalleryCanRenameImagesAndVideos() throws Exception {
-        runDeviceTest("testSystemGalleryCanRenameImagesAndVideos");
-    }
-
-    @Test
-    public void testManageExternalStorageCanCreateFilesAnywhere() throws Exception {
-        allowAppOps("android:manage_external_storage");
-        try {
-            runDeviceTest("testManageExternalStorageCanCreateFilesAnywhere");
-        } finally {
-            denyAppOps("android:manage_external_storage");
-        }
-    }
-
-    @Test
     public void testManageExternalStorageCanDeleteOtherAppsContents() throws Exception {
         allowAppOps("android:manage_external_storage");
         try {
             runDeviceTest("testManageExternalStorageCanDeleteOtherAppsContents");
-        } finally {
-            denyAppOps("android:manage_external_storage");
-        }
-    }
-
-    @Test
-    public void testManageExternalStorageReaddir() throws Exception {
-        allowAppOps("android:manage_external_storage");
-        try {
-            runDeviceTest("testManageExternalStorageReaddir");
         } finally {
             denyAppOps("android:manage_external_storage");
         }
@@ -312,21 +196,6 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testCantAccessOtherAppsContents() throws Exception {
         runDeviceTest("testCantAccessOtherAppsContents");
-    }
-
-    @Test
-    public void testCanCreateHiddenFile() throws Exception {
-        runDeviceTest("testCanCreateHiddenFile");
-    }
-
-    @Test
-    public void testCanRenameHiddenFile() throws Exception {
-        runDeviceTest("testCanRenameHiddenFile");
-    }
-
-    @Test
-    public void testHiddenDirectory() throws Exception {
-        runDeviceTest("testHiddenDirectory");
     }
 
     @Test
@@ -380,26 +249,6 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testQueryOtherAppsFiles() throws Exception {
-        runDeviceTest("testQueryOtherAppsFiles");
-    }
-
-    @Test
-    public void testSystemGalleryCanRenameImageAndVideoDirs() throws Exception {
-        runDeviceTest("testSystemGalleryCanRenameImageAndVideoDirs");
-    }
-
-    @Test
-    public void testCreateCanRestoreDeletedRowId() throws Exception {
-        runDeviceTest("testCreateCanRestoreDeletedRowId");
-    }
-
-    @Test
-    public void testRenameCanRestoreDeletedRowId() throws Exception {
-        runDeviceTest("testRenameCanRestoreDeletedRowId");
-    }
-
-    @Test
     public void testCantCreateOrRenameFileWithInvalidName() throws Exception {
         runDeviceTest("testCantCreateOrRenameFileWithInvalidName");
     }
@@ -427,28 +276,6 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testCantSetAttrOtherAppsFile() throws Exception {
         runDeviceTest("testCantSetAttrOtherAppsFile");
-    }
-
-    @Test
-    public void testAccess_file() throws Exception {
-        grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
-        try {
-            runDeviceTest("testAccess_file");
-        } finally {
-            revokePermissions("android.permission.READ_EXTERNAL_STORAGE");
-        }
-    }
-
-    @Test
-    public void testAccess_directory() throws Exception {
-        grantPermissions("android.permission.READ_EXTERNAL_STORAGE",
-                "android.permission.WRITE_EXTERNAL_STORAGE");
-        try {
-            runDeviceTest("testAccess_directory");
-        } finally {
-            revokePermissions("android.permission.READ_EXTERNAL_STORAGE",
-                    "android.permission.WRITE_EXTERNAL_STORAGE");
-        }
     }
 
     @Test
