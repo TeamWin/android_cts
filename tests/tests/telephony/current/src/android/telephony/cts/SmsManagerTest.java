@@ -433,7 +433,7 @@ public class SmsManagerTest {
         int originalWriteSmsMode = -1;
         String ctsPackageName = context.getPackageName();
         try {
-            // Insert some dummy sms
+            // Insert some test sms
             originalWriteSmsMode = context.getSystemService(AppOpsManager.class)
                     .unsafeCheckOpNoThrow(AppOpsManager.OPSTR_WRITE_SMS,
                             getPackageUid(ctsPackageName), ctsPackageName);
@@ -448,8 +448,8 @@ public class SmsManagerTest {
                         new Date().toString().replace(" ", "_"));
                 return contentResolver.insert(Telephony.Sms.CONTENT_URI, contentValues);
             });
-            assertNotNull("Failed to insert dummy sms", dummySmsUri);
-            assertNotEquals("Failed to insert dummy sms", dummySmsUri.getLastPathSegment(), "0");
+            assertNotNull("Failed to insert test sms", dummySmsUri);
+            assertNotEquals("Failed to insert test sms", dummySmsUri.getLastPathSegment(), "0");
             testSmsAccessAboutDefaultApp(LEGACY_SMS_APP);
             testSmsAccessAboutDefaultApp(MODERN_SMS_APP);
         } finally {

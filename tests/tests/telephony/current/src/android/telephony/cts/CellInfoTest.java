@@ -530,7 +530,7 @@ public class CellInfoTest {
 
     private void verifyCellIdentityNr(CellIdentityNr nr, boolean isRegistered) {
         // This class was added after numeric mcc/mncs were no longer provided, so it lacks the
-        // basic getMcc() and getMnc() - Dummy out those checks.
+        // basic getMcc() and getMnc() - empty out those checks.
         String mccStr = nr.getMccString();
         String mncStr = nr.getMncString();
         verifyPlmnInfo(mccStr, mncStr,
@@ -1001,7 +1001,7 @@ public class CellInfoTest {
         String mncStr = tdscdma.getMncString();
 
         // This class was added after numeric mcc/mncs were no longer provided, so it lacks the
-        // basic getMcc() and getMnc() - Dummy out those checks.
+        // basic getMcc() and getMnc() - empty out those checks.
         verifyPlmnInfo(tdscdma.getMccString(), tdscdma.getMncString(),
                 mccStr != null ? Integer.parseInt(mccStr) : CellInfo.UNAVAILABLE,
                 mncStr != null ? Integer.parseInt(mncStr) : CellInfo.UNAVAILABLE);
