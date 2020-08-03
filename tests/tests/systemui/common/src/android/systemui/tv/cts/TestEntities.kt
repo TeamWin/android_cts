@@ -36,6 +36,9 @@ object Components {
         ResourceNames.SYSTEM_UI_PACKAGE,
             ".pip.tv.PipMenuActivity"
     )
+
+    @JvmField
+    val KEYBOARD_ACTIVITY: ComponentName = ComponentName.createRelative(pkg, ".KeyboardActivity")
 }
 
 object PipActivity {
@@ -58,6 +61,11 @@ object PipActivity {
 
     const val EXTRA_ASPECT_RATIO_DENOMINATOR = "aspect_ratio_denominator"
     const val EXTRA_ASPECT_RATIO_NUMERATOR = "aspect_ratio_numerator"
+}
+
+object KeyboardActivity {
+    const val ACTION_SHOW_KEYBOARD = "$pkg.KeyboardActivity.show_keyboard"
+    const val ACTION_HIDE_KEYBOARD = "$pkg.KeyboardActivity.hide_keyboard"
 }
 
 object PipMenu {
