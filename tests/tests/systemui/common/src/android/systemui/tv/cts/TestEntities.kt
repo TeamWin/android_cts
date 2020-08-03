@@ -76,6 +76,9 @@ object PipMenu {
 object ResourceNames {
     const val SYSTEM_UI_PACKAGE = "com.android.systemui"
 
+    /** The name of the soft keyboard window. */
+    const val WINDOW_NAME_INPUT_METHOD = "InputMethod"
+
     const val STRING_PIP_MENU_BOUNDS = "pip_menu_bounds"
 
     const val ID_PIP_MENU_CLOSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/close_button"
