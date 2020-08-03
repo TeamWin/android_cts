@@ -780,6 +780,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                 case 2:
                 case 3:
                 case 4:
+                case 41:
                     assertThat(teeEnforcedDigests, is(expectedDigests));
                     break;
 
