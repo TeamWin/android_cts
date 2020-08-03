@@ -602,7 +602,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mOnUiThread.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
 
-        final class DummyJavaScriptInterface {
+        final class TestJavaScriptInterface {
             private boolean mWasProvideResultCalled;
             private String mResult;
 
@@ -632,8 +632,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             }
         }
 
-        final DummyJavaScriptInterface obj = new DummyJavaScriptInterface();
-        mOnUiThread.addJavascriptInterface(obj, "dummy");
+        final TestJavaScriptInterface obj = new TestJavaScriptInterface();
+        mOnUiThread.addJavascriptInterface(obj, "interface");
         assertFalse(obj.wasProvideResultCalled());
 
         startWebServer(false);
@@ -644,13 +644,13 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         // Verify that only methods annotated with @JavascriptInterface are exposed
         // on the JavaScript interface object.
         assertEquals("\"function\"",
-                mOnUiThread.evaluateJavascriptSync("typeof dummy.provideResult"));
+                mOnUiThread.evaluateJavascriptSync("typeof interface.provideResult"));
 
         assertEquals("\"undefined\"",
-                mOnUiThread.evaluateJavascriptSync("typeof dummy.wasProvideResultCalled"));
+                mOnUiThread.evaluateJavascriptSync("typeof interface.wasProvideResultCalled"));
 
         assertEquals("\"undefined\"",
-                mOnUiThread.evaluateJavascriptSync("typeof dummy.getClass"));
+                mOnUiThread.evaluateJavascriptSync("typeof interface.getClass"));
     }
 
     public void testAddJavascriptInterfaceNullObject() throws Exception {
@@ -779,14 +779,14 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             }
         };
 
-        mOnUiThread.addJavascriptInterface(mJsInterfaceWasCalled, "dummy");
+        mOnUiThread.addJavascriptInterface(mJsInterfaceWasCalled, "interface");
 
         mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
         assertFalse(mJsInterfaceWasCalled.get());
 
         assertEquals("\"pass\"", mOnUiThread.evaluateJavascriptSync(
-                "try {dummy.call(); 'fail'; } catch (exception) { 'pass'; } "));
+                "try {interface.call(); 'fail'; } catch (exception) { 'pass'; } "));
         assertTrue(mJsInterfaceWasCalled.get());
     }
 
@@ -797,19 +797,16 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
 
-        class DummyJavaScriptInterface {
-        }
-        final DummyJavaScriptInterface obj = new DummyJavaScriptInterface();
-        mOnUiThread.addJavascriptInterface(obj, "dummy");
+        mOnUiThread.addJavascriptInterface(new Object(), "interface");
         mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
-        assertEquals("42", mOnUiThread.evaluateJavascriptSync("dummy.custom_property = 42"));
+        assertEquals("42", mOnUiThread.evaluateJavascriptSync("interface.custom_property = 42"));
 
-        assertEquals("true", mOnUiThread.evaluateJavascriptSync("'custom_property' in dummy"));
+        assertEquals("true", mOnUiThread.evaluateJavascriptSync("'custom_property' in interface"));
 
         mOnUiThread.reloadAndWaitForCompletion();
 
-        assertEquals("false", mOnUiThread.evaluateJavascriptSync("'custom_property' in dummy"));
+        assertEquals("false", mOnUiThread.evaluateJavascriptSync("'custom_property' in interface"));
     }
 
     public void testJavascriptInterfaceForClientPopup() throws Exception {
@@ -821,18 +818,18 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         mOnUiThread.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         mOnUiThread.getSettings().setSupportMultipleWindows(true);
 
-        class DummyJavaScriptInterface {
+        class TestJavaScriptInterface {
             @JavascriptInterface
             public int test() {
                 return 42;
             }
         }
-        final DummyJavaScriptInterface obj = new DummyJavaScriptInterface();
+        final TestJavaScriptInterface obj = new TestJavaScriptInterface();
 
         final WebView childWebView = mOnUiThread.createWebView();
         WebViewOnUiThread childOnUiThread = new WebViewOnUiThread(childWebView);
         childOnUiThread.getSettings().setJavaScriptEnabled(true);
-        childOnUiThread.addJavascriptInterface(obj, "dummy");
+        childOnUiThread.addJavascriptInterface(obj, "interface");
 
         final SettableFuture<Void> onCreateWindowFuture = SettableFuture.create();
         mOnUiThread.setWebChromeClient(new WebViewSyncLoader.WaitForProgressClient(mOnUiThread) {
@@ -857,10 +854,10 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         childOnUiThread.loadUrlAndWaitForCompletion("about:blank");
 
-        assertEquals("true", childOnUiThread.evaluateJavascriptSync("'dummy' in window"));
+        assertEquals("true", childOnUiThread.evaluateJavascriptSync("'interface' in window"));
 
         assertEquals("The injected object should be functional", "42",
-                childOnUiThread.evaluateJavascriptSync("dummy.test()"));
+                childOnUiThread.evaluateJavascriptSync("interface.test()"));
     }
 
     private final class TestPictureListener implements PictureListener {
