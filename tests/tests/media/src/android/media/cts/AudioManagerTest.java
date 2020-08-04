@@ -280,7 +280,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         // should hear sound after loadSoundEffects() called.
         mAudioManager.loadSoundEffects();
         Thread.sleep(TIME_TO_PLAY);
-        float volume = 13;
+        float volume = 0.5f;  // volume should be between 0.f to 1.f (or -1).
         mAudioManager.playSoundEffect(SoundEffectConstants.CLICK);
         mAudioManager.playSoundEffect(AudioManager.FX_FOCUS_NAVIGATION_UP);
         mAudioManager.playSoundEffect(AudioManager.FX_FOCUS_NAVIGATION_DOWN);
