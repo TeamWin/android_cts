@@ -117,7 +117,7 @@ public class BaseInputConnectionTest {
         assertNotNull(text);
         assertEquals(0, text.length());
 
-        // Test commitText, not dummy mode
+        // Test commitText, not default fake mode
         CharSequence str = "TestCommit ";
         Editable inputText = Editable.Factory.getInstance().newEditable(str);
         connection.commitText(inputText, inputText.length());
@@ -160,7 +160,7 @@ public class BaseInputConnectionTest {
         Editable inputText = Editable.Factory.getInstance().newEditable(str);
         connection.commitText(inputText, inputText.length());
         final Editable text = connection.getEditable();
-        // Test finishComposingText, not dummy mode
+        // Test finishComposingText, not default fake mode
         BaseInputConnection.setComposingSpans(text);
         assertTrue(BaseInputConnection.getComposingSpanStart(text) > -1);
         assertTrue(BaseInputConnection.getComposingSpanEnd(text) > -1);
