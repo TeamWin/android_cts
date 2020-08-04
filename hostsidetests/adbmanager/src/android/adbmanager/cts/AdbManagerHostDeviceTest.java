@@ -35,7 +35,6 @@ public class AdbManagerHostDeviceTest extends BaseHostJUnit4Test {
 
     private boolean hasFeature(String feature) throws Exception {
         CommandResult result = getDevice().executeShellV2Command("pm has-feature " + feature);
-        Assert.assertTrue(new Integer(0).equals(result.getExitCode()));
         return Boolean.parseBoolean(result.getStdout().trim());
     }
 
