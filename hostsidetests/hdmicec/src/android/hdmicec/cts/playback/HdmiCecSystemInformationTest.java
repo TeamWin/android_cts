@@ -16,20 +16,25 @@
 
 package android.hdmicec.cts.playback;
 
-import static org.junit.Assert.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeTrue;
 
 import android.hdmicec.cts.CecClientMessage;
-import android.hdmicec.cts.CecDevice;
 import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
+import android.hdmicec.cts.LogicalAddress;
+import android.hdmicec.cts.RequiredPropertyRule;
+import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
@@ -42,9 +47,18 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
 
     private static final String PROPERTY_LOCALE = "persist.sys.locale";
 
+    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+
     @Rule
-    public HdmiCecClientWrapper hdmiCecClient =
-        new HdmiCecClientWrapper(CecDevice.PLAYBACK_1, this);
+    public RuleChain ruleChain =
+        RuleChain
+            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
+            .around(RequiredPropertyRule.asCsvContainsValue(
+                this,
+                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
+                LogicalAddress.PLAYBACK_1.getDeviceType()))
+            .around(hdmiCecClient);
 
     /**
      * Test 11.2.6-1
@@ -52,7 +66,7 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
      */
     @Test
     public void cect_11_2_6_1_Ack() throws Exception {
-        String command = CecClientMessage.POLL + " " + CecDevice.PLAYBACK_1;
+        String command = CecClientMessage.POLL + " " + LogicalAddress.PLAYBACK_1;
         String expectedOutput = "POLL sent";
         hdmiCecClient.sendConsoleMessage(command);
         if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
@@ -67,13 +81,13 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
      */
     @Test
     public void cect_11_2_6_2_GivePhysicalAddress() throws Exception {
-        hdmiCecClient.sendCecMessage(CecMessage.GIVE_PHYSICAL_ADDRESS);
-        String message = hdmiCecClient.checkExpectedOutput(CecMessage.REPORT_PHYSICAL_ADDRESS);
+        hdmiCecClient.sendCecMessage(CecOperand.GIVE_PHYSICAL_ADDRESS);
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
         /* The checkExpectedOutput has already verified the first 4 nibbles of the message. We
             * have to verify the last 6 nibbles */
-        int receivedParams = hdmiCecClient.getParamsFromMessage(message);
-        assertEquals(HdmiCecConstants.PHYSICAL_ADDRESS, receivedParams >> 8);
-        assertEquals(HdmiCecConstants.PLAYBACK_DEVICE_TYPE, receivedParams & 0xFF);
+        int receivedParams = CecMessage.getParams(message);
+        assertThat(HdmiCecConstants.PHYSICAL_ADDRESS).isEqualTo(receivedParams >> 8);
+        assertThat(HdmiCecConstants.PLAYBACK_DEVICE_TYPE).isEqualTo(receivedParams & 0xFF);
     }
 
     /**
@@ -82,11 +96,10 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
      */
     @Test
     public void cect_11_2_6_6_GiveCecVersion() throws Exception {
-        hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GET_CEC_VERSION);
-        String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV,
-                                                            CecMessage.CEC_VERSION);
-
-        assertEquals(CEC_VERSION_NUMBER, hdmiCecClient.getParamsFromMessage(message));
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GET_CEC_VERSION);
+        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
+                                                            CecOperand.CEC_VERSION);
+        assertThat(CecMessage.getParams(message)).isEqualTo(CEC_VERSION_NUMBER);
     }
 
     /**
@@ -95,11 +108,11 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
      */
     @Test
     public void cect_11_2_6_7_GetMenuLanguage() throws Exception {
-        hdmiCecClient.sendCecMessage(CecDevice.TV, CecMessage.GET_MENU_LANGUAGE);
-        String message = hdmiCecClient.checkExpectedOutput(CecDevice.TV, CecMessage.FEATURE_ABORT);
-        int abortedOpcode = hdmiCecClient.getParamsFromMessage(message,
-                CecMessage.GET_MENU_LANGUAGE.toString().length());
-        assertEquals(CecMessage.getMessage(abortedOpcode), CecMessage.GET_MENU_LANGUAGE);
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GET_MENU_LANGUAGE);
+        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.FEATURE_ABORT);
+        int abortedOpcode = CecMessage.getParams(message,
+                CecOperand.GET_MENU_LANGUAGE.toString().length());
+        assertThat(CecOperand.getOperand(abortedOpcode)).isEqualTo(CecOperand.GET_MENU_LANGUAGE);
     }
 
     private String getSystemLocale() throws Exception {
@@ -133,9 +146,9 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
         final String language = originalLanguage.equals("spa") ? "eng" : "spa";
         final String newLanguage = originalLanguage.equals("spa") ? "en" : "es";
         try {
-            hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
-                    CecMessage.SET_MENU_LANGUAGE, hdmiCecClient.convertStringToHexParams(language));
-            assertEquals(newLanguage, extractLanguage(getSystemLocale()));
+            hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
+                    CecOperand.SET_MENU_LANGUAGE, CecMessage.convertStringToHexParams(language));
+            assertThat(extractLanguage(getSystemLocale())).isEqualTo(newLanguage);
         } finally {
             setSystemLocale(locale);
         }
@@ -152,9 +165,9 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
         final String originalLanguage = extractLanguage(locale);
         final String language = "spb";
         try {
-            hdmiCecClient.sendCecMessage(CecDevice.TV, CecDevice.BROADCAST,
-                    CecMessage.SET_MENU_LANGUAGE, hdmiCecClient.convertStringToHexParams(language));
-            assertEquals(originalLanguage, extractLanguage(getSystemLocale()));
+            hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
+                    CecOperand.SET_MENU_LANGUAGE, CecMessage.convertStringToHexParams(language));
+            assertThat(extractLanguage(getSystemLocale())).isEqualTo(originalLanguage);
         } finally {
             setSystemLocale(locale);
         }
@@ -172,9 +185,9 @@ public final class HdmiCecSystemInformationTest extends BaseHostJUnit4Test {
         final String originalLanguage = extractLanguage(locale);
         final String language = originalLanguage.equals("spa") ? "eng" : "spa";
         try {
-            hdmiCecClient.sendCecMessage(CecDevice.RECORDER_1, CecDevice.BROADCAST,
-                    CecMessage.SET_MENU_LANGUAGE, hdmiCecClient.convertStringToHexParams(language));
-            assertEquals(originalLanguage, extractLanguage(getSystemLocale()));
+            hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, LogicalAddress.BROADCAST,
+                    CecOperand.SET_MENU_LANGUAGE, CecMessage.convertStringToHexParams(language));
+            assertThat(extractLanguage(getSystemLocale())).isEqualTo(originalLanguage);
         } finally {
             setSystemLocale(locale);
         }
