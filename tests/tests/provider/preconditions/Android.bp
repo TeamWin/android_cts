@@ -11,6 +11,7 @@ java_test_helper_library {
         "cts",
         "vts10",
         "general-tests",
+        "mts",
     ],
     host_supported: true,
     device_supported: false,
