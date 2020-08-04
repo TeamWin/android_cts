@@ -21,6 +21,7 @@ import android.Manifest.permission.READ_CALENDAR
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Process
+import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
@@ -41,6 +42,7 @@ class RevokePermissionTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't revoke permissions.")
     fun testRevokePermission() {
         testRevoke(
                 packageName = APP_PKG_NAME,
@@ -49,6 +51,7 @@ class RevokePermissionTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't revoke permissions.")
     fun testRevokePermissionNotRequested() {
         testRevoke(
                 packageName = APP_PKG_NAME,
@@ -58,6 +61,7 @@ class RevokePermissionTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't revoke permissions.")
     fun testRevokeFakePermission() {
         val fakePermissionName = "FAKE_PERMISSION"
         testRevoke(
@@ -68,6 +72,7 @@ class RevokePermissionTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't revoke permissions.")
     fun testRevokeFakePackage() {
         val fakePackageName = "fake.package.name.which.should.not.exist"
         assertPackageNotInstalled(fakePackageName)
@@ -77,6 +82,7 @@ class RevokePermissionTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't revoke permissions.")
     fun testRevokePermissionWithReason() {
         testRevoke(
                 packageName = APP_PKG_NAME,
@@ -86,6 +92,7 @@ class RevokePermissionTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't revoke permissions.")
     fun testRevokePermissionNotRequestedWithReason() {
         testRevoke(
                 packageName = APP_PKG_NAME,
@@ -96,6 +103,7 @@ class RevokePermissionTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't revoke permissions.")
     fun testRevokeFakePermissionWithReason() {
         val fakePermissionName = "FAKE_PERMISSION"
         testRevoke(
@@ -107,6 +115,7 @@ class RevokePermissionTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can't revoke permissions.")
     fun testRevokeFakePackageWithReason() {
         val fakePackageName = "fake.package.name.which.should.not.exist"
         assertPackageNotInstalled(fakePackageName)
