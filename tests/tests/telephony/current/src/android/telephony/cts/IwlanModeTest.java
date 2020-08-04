@@ -22,7 +22,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.SystemProperties;
 import android.telephony.TelephonyManager;
-
+import android.content.res.Resources;
 import androidx.test.InstrumentationRegistry;
 
 import org.junit.Before;
@@ -55,13 +55,14 @@ public class IwlanModeTest {
             String mode = SystemProperties.get("ro.telephony.iwlan_operation_mode");
             assertNotEquals("legacy", mode);
 
-            String wlanDataServicePackage = mContext.getResources().getString(
-                    com.android.internal.R.string.config_wlan_data_service_package);
+            Resources res = Resources.getSystem();
+            int id = res.getIdentifier("config_wlan_data_service_package", "string", "android");
+            String wlanDataServicePackage = res.getString(id);
             assertNotEquals("", wlanDataServicePackage);
             assertNotEquals("com.android.phone", wlanDataServicePackage);
 
-            String wlanNetworkServicePackage = mContext.getResources().getString(
-                    com.android.internal.R.string.config_wlan_network_service_package);
+            id = res.getIdentifier("config_wlan_network_service_package", "string", "android");
+            String wlanNetworkServicePackage = res.getString(id);
             assertNotEquals("", wlanNetworkServicePackage);
             assertNotEquals("com.android.phone", wlanNetworkServicePackage);
 
