@@ -74,13 +74,9 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        ArrayList<String> cddRequiredMimeList = new ArrayList<>();
-        if (isHandheld() || isTv() || isAutomotive()) {
-            // sec 2.2.2, 2.3.2, 2.5.2
-            cddRequiredMimeList.add(MediaFormat.MIMETYPE_AUDIO_AAC);
-            cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
-            cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP8);
-        }
+        final boolean isEncoder = true;
+        final boolean needAudio = true;
+        final boolean needVideo = true;
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, bit-rate, sample rate, channel count
                 {MediaFormat.MIMETYPE_AUDIO_AAC, 64000, 48000, 1, -1},
@@ -193,7 +189,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_VP8, 512000, 176, 144, 20},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, 512000, 480, 360, 20},
         });
-        return prepareParamList(cddRequiredMimeList, exhaustiveArgsList, true);
+        return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
 
     static {
