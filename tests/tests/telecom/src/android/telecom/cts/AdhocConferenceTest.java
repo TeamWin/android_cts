@@ -35,9 +35,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class AdhocConferenceTest extends BaseTelecomTestWithMockServices {
-    private static final List<Uri> PARTICIPANTS = new ArrayList<>(Arrays.asList(
+    public static final List<Uri> PARTICIPANTS = new ArrayList<>(Arrays.asList(
             Uri.parse("tel:555-TEST"),
-            Uri.parse("tel:555-TEST")));
+            Uri.parse("tel:555-TEST2")));
 
     @Override
     protected void setUp() throws Exception {

@@ -29,6 +29,8 @@ import android.telecom.VideoProfile;
 import android.telecom.cts.TestUtils.InvokeCounter;
 import android.util.SparseArray;
 
+import java.util.List;
+
 /**
  * {@link Connection} subclass that immediately performs any state changes that are a result of
  * callbacks sent from Telecom.
@@ -43,6 +45,7 @@ public class MockConnection extends Connection {
     public static final int ON_STOP_RTT = 7;
     public static final int ON_DEFLECT = 8;
     public static final int ON_SILENCE = 9;
+    public static final int ON_ADD_CONFERENCE_PARTICIPANTS = 10;
 
     private CallAudioState mCallAudioState =
             new CallAudioState(false, CallAudioState.ROUTE_EARPIECE, ROUTE_EARPIECE | ROUTE_SPEAKER);
@@ -54,7 +57,7 @@ public class MockConnection extends Connection {
     private RemoteConnection mRemoteConnection = null;
     private RttTextStream mRttTextStream;
 
-    private SparseArray<InvokeCounter> mInvokeCounterMap = new SparseArray<>(10);
+    private SparseArray<InvokeCounter> mInvokeCounterMap = new SparseArray<>(11);
 
     @Override
     public void onAnswer() {
@@ -191,6 +194,14 @@ public class MockConnection extends Connection {
         super.onPullExternalCall();
         if (mInvokeCounterMap.get(ON_PULL_EXTERNAL_CALL) != null) {
             mInvokeCounterMap.get(ON_PULL_EXTERNAL_CALL).invoke();
+        }
+    }
+
+    @Override
+    public void onAddConferenceParticipants(List<Uri> participants) {
+        super.onAddConferenceParticipants(participants);
+        if (mInvokeCounterMap.get(ON_ADD_CONFERENCE_PARTICIPANTS) != null) {
+            mInvokeCounterMap.get(ON_ADD_CONFERENCE_PARTICIPANTS).invoke(participants);
         }
     }
 
@@ -353,6 +364,8 @@ public class MockConnection extends Connection {
                 return "onDeflect";
             case ON_SILENCE:
                 return "onSilence";
+            case ON_ADD_CONFERENCE_PARTICIPANTS:
+                return "onAddConferenceParticipants";
             default:
                 return "Callback";
         }
