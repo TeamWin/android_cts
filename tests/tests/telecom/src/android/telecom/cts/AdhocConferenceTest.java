@@ -135,6 +135,24 @@ public class AdhocConferenceTest extends BaseTelecomTestWithMockServices {
         MockConference conference = (MockConference) resultPair.first;
         conference.setConnectionCapabilities(conference.getConnectionCapabilities()
                 | Connection.CAPABILITY_ADD_PARTICIPANT);
+
+        // Wait for the capability change to propagate before adding participants.
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.getDetails().can(Call.Details.CAPABILITY_ADD_PARTICIPANT);
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should have capability " + Call.Details.CAPABILITY_ADD_PARTICIPANT
+        );
+
         call.addConferenceParticipants(PARTICIPANTS);
         assertTrue(conference.acquireLock(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS));
         assertTrue(conference.mParticipants.containsAll(PARTICIPANTS));
