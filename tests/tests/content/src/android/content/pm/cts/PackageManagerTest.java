@@ -25,6 +25,13 @@ import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_PROVIDERS;
 import static android.content.pm.PackageManager.GET_RECEIVERS;
 import static android.content.pm.PackageManager.GET_SERVICES;
+import static android.content.pm.PackageManager.MATCH_APEX;
+import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
+import static android.content.pm.PackageManager.MATCH_FACTORY_ONLY;
+import static android.content.pm.PackageManager.MATCH_HIDDEN_UNTIL_INSTALLED_COMPONENTS;
+import static android.content.pm.PackageManager.MATCH_INSTANT;
+import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
+import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -69,8 +76,11 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -107,6 +117,10 @@ public class PackageManagerTest {
     private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 12;
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
+
+    private static final int[] PACKAGE_INFO_MATCH_FLAGS = {MATCH_UNINSTALLED_PACKAGES,
+            MATCH_DISABLED_COMPONENTS, MATCH_SYSTEM_ONLY, MATCH_FACTORY_ONLY, MATCH_INSTANT,
+            MATCH_APEX, MATCH_HIDDEN_UNTIL_INSTALLED_COMPONENTS};
 
     @Before
     public void setup() throws Exception {
@@ -1010,5 +1024,91 @@ public class PackageManagerTest {
                 packageInfo.signingInfo.getSigningCertificateHistory();
         assertThat(packageInfo.signatures)
                 .asList().containsExactly((Object[]) pastSigningCertificates);
+    }
+
+    /**
+     * Runs a test for all combinations of a set of flags
+     * @param flagValues Which flags to use
+     * @param test The test
+     */
+    public void runTestWithFlags(int[] flagValues, Consumer<Integer> test) {
+        for (int i = 0; i < (1 << flagValues.length); i++) {
+            int flags = 0;
+            for (int j = 0; j < flagValues.length; j++) {
+                if ((i & (1 << j)) != 0) {
+                    flags |= flagValues[j];
+                }
+            }
+            try {
+                test.accept(flags);
+            } catch (Throwable t) {
+                throw new AssertionError(
+                        "Test failed for flags 0x" + String.format("%08x", flags), t);
+            }
+        }
+    }
+
+    /**
+     * Test that the MATCH_FACTORY_ONLY flag doesn't add new package names in the result of
+     * getInstalledPackages.
+     */
+    @Test
+    public void testGetInstalledPackages_WithFactoryFlag_IsSubset() {
+        runTestWithFlags(PACKAGE_INFO_MATCH_FLAGS,
+                this::testGetInstalledPackages_WithFactoryFlag_IsSubset);
+    }
+    public void testGetInstalledPackages_WithFactoryFlag_IsSubset(int flags) {
+        List<PackageInfo> packageInfos = mPackageManager.getInstalledPackages(flags);
+        List<PackageInfo> packageInfos2 = mPackageManager.getInstalledPackages(
+                flags | MATCH_FACTORY_ONLY);
+        Set<String> supersetNames =
+                packageInfos.stream().map(pi -> pi.packageName).collect(Collectors.toSet());
+
+        for (PackageInfo pi : packageInfos2) {
+            if (!supersetNames.contains(pi.packageName)) {
+                throw new AssertionError(
+                        "The subset contains packages that the superset doesn't contain.");
+            }
+        }
+    }
+
+    /**
+     * Test that the MATCH_FACTORY_ONLY flag filters out all non-system packages in the result of
+     * getInstalledPackages.
+     */
+    @Test
+    public void testGetInstalledPackages_WithFactoryFlag_ImpliesSystem() {
+        runTestWithFlags(PACKAGE_INFO_MATCH_FLAGS,
+                this::testGetInstalledPackages_WithFactoryFlag_ImpliesSystem);
+    }
+    public void testGetInstalledPackages_WithFactoryFlag_ImpliesSystem(int flags) {
+        List<PackageInfo> packageInfos =
+                mPackageManager.getInstalledPackages(flags | MATCH_FACTORY_ONLY);
+        for (PackageInfo pi : packageInfos) {
+            if (!pi.applicationInfo.isSystemApp()) {
+                throw new AssertionError(pi.packageName + " is not a system app.");
+            }
+        }
+    }
+
+    /**
+     * Test that the MATCH_FACTORY_ONLY flag doesn't add the same package multiple times since there
+     * may be multiple versions of a system package on the device.
+     */
+    @Test
+    public void testGetInstalledPackages_WithFactoryFlag_ContainsNoDuplicates() {
+        runTestWithFlags(PACKAGE_INFO_MATCH_FLAGS,
+                this::testGetInstalledPackages_WithFactoryFlag_ContainsNoDuplicates);
+    }
+    public void testGetInstalledPackages_WithFactoryFlag_ContainsNoDuplicates(int flags) {
+        List<PackageInfo> packageInfos =
+                mPackageManager.getInstalledPackages(flags | MATCH_FACTORY_ONLY);
+        Set<String> foundPackages = new HashSet<>();
+        for (PackageInfo pi : packageInfos) {
+            if (foundPackages.contains(pi.packageName)) {
+                throw new AssertionError(pi.packageName + " is listed at least twice.");
+            }
+            foundPackages.add(pi.packageName);
+        }
     }
 }
