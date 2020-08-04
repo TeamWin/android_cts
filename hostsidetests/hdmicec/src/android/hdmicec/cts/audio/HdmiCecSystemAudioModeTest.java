@@ -226,14 +226,16 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
     public void cect_11_2_15_1_SystemAudioModeRequestAsFollower() throws Exception {
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, AUDIO_DEVICE,
                 CecOperand.SYSTEM_AUDIO_MODE_REQUEST,
-                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS));
+                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                    HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.SET_SYSTEM_AUDIO_MODE);
         assertThat(CecMessage.getParams(message)).isEqualTo(ON);
 
         /* Repeat test for device 0x3 (TUNER_1) */
         hdmiCecClient.sendCecMessage(LogicalAddress.TUNER_1, AUDIO_DEVICE,
                 CecOperand.SYSTEM_AUDIO_MODE_REQUEST,
-                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS));
+                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                    HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
         message = hdmiCecClient.checkExpectedOutput(CecOperand.SET_SYSTEM_AUDIO_MODE);
         assertThat(CecMessage.getParams(message)).isEqualTo(ON);
     }
@@ -347,7 +349,8 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
         unmuteDevice();
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, AUDIO_DEVICE,
                 CecOperand.SYSTEM_AUDIO_MODE_REQUEST,
-                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS));
+                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                    HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
         hdmiCecClient.sendUserControlPressAndRelease(LogicalAddress.TV, AUDIO_DEVICE,
                 HdmiCecConstants.CEC_CONTROL_MUTE, false);
         assertWithMessage("Device is not muted").that(isDeviceMuted()).isTrue();
