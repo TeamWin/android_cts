@@ -41,9 +41,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -125,37 +123,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        Set<String> list = new HashSet<>();
-        if (hasAudioOutput()) {
-            // sec 5.1.2
-            list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
-            list.add(MediaFormat.MIMETYPE_AUDIO_FLAC);
-            list.add(MediaFormat.MIMETYPE_AUDIO_MPEG);
-            list.add(MediaFormat.MIMETYPE_AUDIO_VORBIS);
-            list.add(MediaFormat.MIMETYPE_AUDIO_RAW);
-            list.add(MediaFormat.MIMETYPE_AUDIO_OPUS);
-        }
-        if (isHandheld() || isTv() || isAutomotive()) {
-            // sec 2.2.2, 2.3.2, 2.5.2
-            list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
-            list.add(MediaFormat.MIMETYPE_VIDEO_AVC);
-            list.add(MediaFormat.MIMETYPE_VIDEO_MPEG4);
-            list.add(MediaFormat.MIMETYPE_VIDEO_H263);
-            list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
-            list.add(MediaFormat.MIMETYPE_VIDEO_VP9);
-        }
-        if (isHandheld()) {
-            // sec 2.2.2
-            list.add(MediaFormat.MIMETYPE_AUDIO_AMR_NB);
-            list.add(MediaFormat.MIMETYPE_AUDIO_AMR_WB);
-            list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
-        }
-        if (isTv()) {
-            // sec 2.3.2
-            list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
-            list.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
-        }
-        ArrayList<String> cddRequiredMimeList = new ArrayList<>(list);
+        final boolean isEncoder = false;
+        final boolean needAudio = true;
+        final boolean needVideo = true;
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_1ch_8kHz_lame_cbr.mp3",
                         "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3",
@@ -220,7 +190,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_340x280_768kbps_30fps_av1.mp4", null,
                         "bbb_520x390_1mbps_30fps_av1.mp4", -1.0f},
         });
-        return prepareParamList(cddRequiredMimeList, exhaustiveArgsList, false);
+        return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
     }
 
     /**
