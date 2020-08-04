@@ -44,9 +44,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -533,8 +535,78 @@ abstract class CodecTestBase {
                 !isAutomotive();
     }
 
-    static List<Object[]> prepareParamList(ArrayList<String> cddRequiredMimeList,
-            List<Object[]> exhaustiveArgsList, boolean isEncoder) {
+    static ArrayList<String> prepareRequiredArgsList(boolean isEncoder, boolean needAudio,
+            boolean needVideo) {
+        Set<String> list = new HashSet<>();
+        if (!isEncoder) {
+            if (hasAudioOutput() && needAudio) {
+                // sec 5.1.2
+                list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
+                list.add(MediaFormat.MIMETYPE_AUDIO_FLAC);
+                list.add(MediaFormat.MIMETYPE_AUDIO_MPEG);
+                list.add(MediaFormat.MIMETYPE_AUDIO_VORBIS);
+                list.add(MediaFormat.MIMETYPE_AUDIO_RAW);
+                list.add(MediaFormat.MIMETYPE_AUDIO_OPUS);
+            }
+            if (isHandheld() || isTv() || isAutomotive()) {
+                // sec 2.2.2, 2.3.2, 2.5.2
+                if (needAudio) {
+                    list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
+                }
+                if (needVideo) {
+                    list.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+                    list.add(MediaFormat.MIMETYPE_VIDEO_MPEG4);
+                    list.add(MediaFormat.MIMETYPE_VIDEO_H263);
+                    list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+                    list.add(MediaFormat.MIMETYPE_VIDEO_VP9);
+                }
+            }
+            if (isHandheld()) {
+                // sec 2.2.2
+                if (needAudio) {
+                    list.add(MediaFormat.MIMETYPE_AUDIO_AMR_NB);
+                    list.add(MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+                }
+                if (needVideo) {
+                    list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+                }
+            }
+            if (isTv() && needVideo) {
+                // sec 2.3.2
+                list.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+                list.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
+            }
+        } else {
+            if (hasMicrophone() && needAudio) {
+                // sec 5.1.1
+                // TODO(b/154423550)
+                // list.add(MediaFormat.MIMETYPE_AUDIO_RAW);
+                list.add(MediaFormat.MIMETYPE_AUDIO_FLAC);
+                list.add(MediaFormat.MIMETYPE_AUDIO_OPUS);
+            }
+            if (isHandheld() || isTv() || isAutomotive()) {
+                // sec 2.2.2, 2.3.2, 2.5.2
+                if (needAudio) {
+                    list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
+                }
+                if (needVideo) {
+                    list.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+                    list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+                }
+            }
+            if (isHandheld() && needAudio) {
+                // sec 2.2.2
+                list.add(MediaFormat.MIMETYPE_AUDIO_AMR_NB);
+                list.add(MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+            }
+        }
+        return new ArrayList<>(list);
+    }
+
+    static List<Object[]> prepareParamList(List<Object[]> exhaustiveArgsList, boolean isEncoder,
+            boolean needAudio, boolean needVideo, boolean mustTestRequiredArgsList) {
+        ArrayList<String> cddRequiredMimeList =
+                prepareRequiredArgsList(isEncoder, needAudio, needVideo);
         ArrayList<String> mimes = new ArrayList<>();
         if (codecSelKeys.contains(CODEC_SEL_VALUE)) {
             MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
@@ -544,6 +616,8 @@ abstract class CodecTestBase {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
                 String[] types = codecInfo.getSupportedTypes();
                 for (String type : types) {
+                    if (!needAudio && type.startsWith("audio/")) continue;
+                    if (!needVideo && type.startsWith("video/")) continue;
                     if (!mimes.contains(type)) {
                         mimes.add(type);
                     }
@@ -553,7 +627,8 @@ abstract class CodecTestBase {
             /* sec 5.2: device implementations include an embedded screen display with the
             diagonal length of at least 2.5inches or include a video output port or declare the
             support of a camera */
-            if (isEncoder && hasCamera() && !mimes.contains(MediaFormat.MIMETYPE_VIDEO_AVC) &&
+            if (isEncoder && hasCamera() && needVideo &&
+                    !mimes.contains(MediaFormat.MIMETYPE_VIDEO_AVC) &&
                     !mimes.contains(MediaFormat.MIMETYPE_VIDEO_VP8)) {
                 fail("device must support at least one of VP8 or AVC video encoders");
             }
@@ -578,7 +653,7 @@ abstract class CodecTestBase {
                     miss = false;
                 }
             }
-            if (miss) {
+            if (miss && mustTestRequiredArgsList) {
                 if (cddRequiredMimeList.contains(mime)) {
                     fail("no test vectors for required mimetype " + mime);
                 }

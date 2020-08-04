@@ -49,6 +49,9 @@ public class CodecDecoderExtTest extends CodecDecoderTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
+        final boolean isEncoder = false;
+        final boolean needAudio = false;
+        final boolean needVideo = true;
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_VIDEO_VP9,
                         //show and no-show frames are sent as separate inputs
@@ -66,19 +69,7 @@ public class CodecDecoderExtTest extends CodecDecoderTestBase {
                         //show and no-show frames are sent as one input
                         "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_2fields.mp4"},
         });
-
-        Set<String> list = new HashSet<>();
-        if (isHandheld() || isTv() || isAutomotive()) {
-            // sec 2.2.2, 2.3.2, 2.5.2
-            list.add(MediaFormat.MIMETYPE_VIDEO_VP9);
-        }
-        if (isTv()) {
-            // sec 2.3.2
-            list.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
-        }
-        ArrayList<String> cddRequiredMimeList = new ArrayList<>(list);
-
-        return prepareParamList(cddRequiredMimeList, exhaustiveArgsList, false);
+        return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
 
     /**
