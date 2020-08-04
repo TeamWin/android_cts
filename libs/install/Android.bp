@@ -108,7 +108,7 @@ android_test_helper_app {
 
 java_library {
     name: "cts-install-lib",
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/lib/*.java"],
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
@@ -132,4 +132,10 @@ java_library {
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV3",
     ],
+}
+
+java_library_host {
+    name: "cts-install-lib-host",
+    srcs: ["src/**/host/InstallUtilsHost.java"],
+    libs: ["tradefed"],
 }
