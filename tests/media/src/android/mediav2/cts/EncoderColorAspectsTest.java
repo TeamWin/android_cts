@@ -108,34 +108,27 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
 
     @Parameterized.Parameters(name = "{index}({0}{3}{4}{5})")
     public static Collection<Object[]> input() {
-        ArrayList<String> testMimeList = new ArrayList<>();
-        testMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
-        testMimeList.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
-        testMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP8);
-        testMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP9);
-        ArrayList<String> mimes = new ArrayList<>();
-        if (CodecTestBase.codecSelKeys.contains(CodecTestBase.CODEC_SEL_VALUE)) {
-            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
-            for (MediaCodecInfo codecInfo : codecInfos) {
-                if (!codecInfo.isEncoder()) continue;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
-                String[] types = codecInfo.getSupportedTypes();
-                for (String type : types) {
-                    if (testMimeList.contains(type) && !mimes.contains(type)) {
-                        mimes.add(type);
-                    }
-                }
-            }
-        }
-        int[] ranges =
-                {-1, UNSPECIFIED, MediaFormat.COLOR_RANGE_FULL, MediaFormat.COLOR_RANGE_LIMITED};
-        int[] standards =
-                {-1, UNSPECIFIED, MediaFormat.COLOR_STANDARD_BT709,
-                        MediaFormat.COLOR_STANDARD_BT601_PAL,
-                        MediaFormat.COLOR_STANDARD_BT601_NTSC, MediaFormat.COLOR_STANDARD_BT2020};
-        int[] transfers =
-                {-1, UNSPECIFIED, MediaFormat.COLOR_TRANSFER_LINEAR, MediaFormat.COLOR_TRANSFER_SDR_VIDEO};
+        final boolean isEncoder = true;
+        final boolean needAudio = false;
+        final boolean needVideo = true;
+        String[] mimes = {MediaFormat.MIMETYPE_VIDEO_AVC,
+                MediaFormat.MIMETYPE_VIDEO_HEVC,
+                MediaFormat.MIMETYPE_VIDEO_VP8,
+                MediaFormat.MIMETYPE_VIDEO_VP9};
+        int[] ranges = {-1,
+                UNSPECIFIED,
+                MediaFormat.COLOR_RANGE_FULL,
+                MediaFormat.COLOR_RANGE_LIMITED};
+        int[] standards = {-1,
+                UNSPECIFIED,
+                MediaFormat.COLOR_STANDARD_BT709,
+                MediaFormat.COLOR_STANDARD_BT601_PAL,
+                MediaFormat.COLOR_STANDARD_BT601_NTSC,
+                MediaFormat.COLOR_STANDARD_BT2020};
+        int[] transfers = {-1,
+                UNSPECIFIED,
+                MediaFormat.COLOR_TRANSFER_LINEAR,
+                MediaFormat.COLOR_TRANSFER_SDR_VIDEO};
         // TODO: COLOR_TRANSFER_ST2084, COLOR_TRANSFER_HLG are for 10 bit and above. Should these
         //  be tested as well?
         List<Object[]> exhaustiveArgsList = new ArrayList<>();
@@ -150,7 +143,8 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 }
             }
         }
-        return exhaustiveArgsList;
+        return CodecTestBase
+                .prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
 
     @SmallTest

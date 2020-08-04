@@ -35,9 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -159,26 +157,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        Set<String> list = new HashSet<>();
-        if (hasMicrophone()) {
-            // sec 5.1.1
-            // TODO(b/154423550)
-            // list.add(MediaFormat.MIMETYPE_AUDIO_RAW);
-            list.add(MediaFormat.MIMETYPE_AUDIO_FLAC);
-            list.add(MediaFormat.MIMETYPE_AUDIO_OPUS);
-        }
-        if (isHandheld() || isTv() || isAutomotive()) {
-            // sec 2.2.2, 2.3.2, 2.5.2
-            list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
-            list.add(MediaFormat.MIMETYPE_VIDEO_AVC);
-            list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
-        }
-        if (isHandheld()) {
-            // sec 2.2.2
-            list.add(MediaFormat.MIMETYPE_AUDIO_AMR_NB);
-            list.add(MediaFormat.MIMETYPE_AUDIO_AMR_WB);
-        }
-        ArrayList<String> cddRequiredMimeList = new ArrayList<>(list);
+        final boolean isEncoder = true;
+        final boolean needAudio = true;
+        final boolean needVideo = true;
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Audio - CodecMime, arrays of bit-rates, sample rates, channel counts
                 {MediaFormat.MIMETYPE_AUDIO_AAC, new int[]{64000, 128000}, new int[]{8000, 11025,
@@ -208,7 +189,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_AV1, new int[]{256000, 512000}, new int[]{176, 352,
                         352, 480}, new int[]{144, 240, 288, 360}},
         });
-        return prepareParamList(cddRequiredMimeList, exhaustiveArgsList, true);
+        return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
     }
 
     private void setUpParams(int limit) {

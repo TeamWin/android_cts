@@ -22,7 +22,6 @@ import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
-import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Surface;
@@ -38,9 +37,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -99,13 +98,10 @@ public class CodecEncoderSurfaceTest {
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
-        ArrayList<String> cddRequiredMimeList = new ArrayList<>();
-        if (CodecTestBase.isHandheld() || CodecTestBase.isTv() || CodecTestBase.isAutomotive()) {
-            // sec 2.2.2, 2.3.2, 2.5.2
-            cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_AVC);
-            cddRequiredMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP8);
-        }
-        final Object[][] exhaustiveArgsList = new Object[][]{
+        final boolean isEncoder = true;
+        final boolean needAudio = false;
+        final boolean needVideo = true;
+        final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 // Video - CodecMime, test file, bit rate, frame rate
                 {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_176x144_128kbps_15fps_h263.3gp", 128000, 15},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, "bbb_128x96_64kbps_12fps_mpeg4.mp4", 64000, 12},
@@ -114,60 +110,9 @@ public class CodecEncoderSurfaceTest {
                 {MediaFormat.MIMETYPE_VIDEO_VP8, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_cif_768kbps_30fps_avc.mp4", 512000, 30},
-        };
-        ArrayList<String> mimes = new ArrayList<>();
-        if (CodecTestBase.codecSelKeys.contains(CodecTestBase.CODEC_SEL_VALUE)) {
-            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            MediaCodecInfo[] codecInfos = codecList.getCodecInfos();
-            for (MediaCodecInfo codecInfo : codecInfos) {
-                if (!codecInfo.isEncoder()) continue;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && codecInfo.isAlias()) continue;
-                String[] types = codecInfo.getSupportedTypes();
-                for (String type : types) {
-                    if (!mimes.contains(type) && type.startsWith("video/")) {
-                        mimes.add(type);
-                    }
-                }
-            }
-            // TODO(b/154423708): add checks for video o/p port and display length >= 2.5"
-            /* sec 5.2: device implementations include an embedded screen display with the diagonal
-            length of at least 2.5inches or include a video output port or declare the support of a
-            camera */
-            if (CodecTestBase.hasCamera() && !mimes.contains(MediaFormat.MIMETYPE_VIDEO_AVC) &&
-                    !mimes.contains(MediaFormat.MIMETYPE_VIDEO_VP8)) {
-                fail("device must support at least one of VP8 or AVC video encoders");
-            }
-            for (String mime : cddRequiredMimeList) {
-                if (!mimes.contains(mime)) {
-                    fail("no codec found for mime " + mime + " as required by cdd");
-                }
-            }
-        } else {
-            for (Map.Entry<String, String> entry : CodecTestBase.codecSelKeyMimeMap.entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-                if (CodecTestBase.codecSelKeys.contains(key) && !mimes.contains(value)) {
-                    mimes.add(value);
-                }
-            }
-        }
-        final List<Object[]> argsList = new ArrayList<>();
-        for (String mime : mimes) {
-            boolean miss = true;
-            for (Object[] arg : exhaustiveArgsList) {
-                if (mime.equals(arg[0])) {
-                    argsList.add(arg);
-                    miss = false;
-                }
-            }
-            if (miss) {
-                if (cddRequiredMimeList.contains(mime)) {
-                    fail("no test vectors for required mimetype " + mime);
-                }
-                Log.w(LOG_TAG, "no test vectors available for optional mime type " + mime);
-            }
-        }
-        return argsList;
+        });
+        return CodecTestBase.prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo,
+                true);
     }
 
     private boolean hasSeenError() {
