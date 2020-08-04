@@ -207,5 +207,11 @@ public class InlineAugmentedAuthTest
         mUiBot.selectByRelativeId(AugmentedAuthActivity.ID_AUTH_ACTIVITY_BUTTON);
         mUiBot.waitForIdle();
         assertThat(unField.getText().toString()).isEqualTo("");
+
+        // Return from the auth activity to login activity, if the login onResume() is prior to
+        // the test finished, there is another FillRequest() will be received. Because it may
+        // notifyViewEntered() in onResume().
+        mUiBot.assertShownByRelativeId(ID_USERNAME);
+        sAugmentedReplier.getNextFillRequest();
     }
 }

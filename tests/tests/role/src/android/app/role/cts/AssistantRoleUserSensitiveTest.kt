@@ -62,10 +62,18 @@ class AssistantRoleUserSensitiveTest {
     private var originalRoleHolder: String? = null
     private var originalShowAssistantSetting: Int = 0
 
+    private fun isPermissionHubEnabled(): Boolean {
+        var isEnabled = false
+        runWithShellPermissionIdentity {
+            isEnabled = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
+                "permissions_hub_2_enabled", false)
+        }
+        return isEnabled
+    }
+
     @Before
     fun assumeEnabled() {
-        assumeTrue(DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
-            "permissions_hub_2_enabled", false))
+        assumeTrue(isPermissionHubEnabled())
     }
 
     @Before

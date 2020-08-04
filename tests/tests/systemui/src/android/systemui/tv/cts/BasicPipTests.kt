@@ -16,13 +16,19 @@
 
 package android.systemui.tv.cts
 
+import android.Manifest.permission.READ_DREAM_STATE
+import android.Manifest.permission.WRITE_DREAM_STATE
 import android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN
 import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
 import android.content.ComponentName
 import android.graphics.Point
 import android.graphics.Rect
+import android.os.ServiceManager
 import android.platform.test.annotations.Postsubmit
+import android.server.wm.Condition
 import android.server.wm.annotation.Group2
+import android.service.dreams.DreamService
+import android.service.dreams.IDreamManager
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
 import android.systemui.tv.cts.Components.PIP_MENU_ACTIVITY
 import android.systemui.tv.cts.Components.activityName
@@ -37,6 +43,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
+import com.android.compatibility.common.util.SystemUtil
+import com.android.compatibility.common.util.ThrowingSupplier
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -80,11 +88,47 @@ class BasicPipTests : PipTestBase() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
         wmState.waitForValidState(PIP_ACTIVITY)
 
-        wmState.assertActivityDisplayed(PIP_ACTIVITY)
-        wmState.assertNotFocusedWindow(
-            "PiP Window must not be focused!",
-            PIP_ACTIVITY.windowName()
+        assertLaunchedNotFocused(PIP_ACTIVITY)
+    }
+
+    /** Ensure an app can be launched into pip mode from the screensaver state. */
+    @Test
+    fun openPip_afterScreenSaver() {
+        runWithDreamManager { dreamManager ->
+            dreamManager.dream()
+            Condition.waitFor("Device must be dreaming") { dreamManager.isDreaming }
+        }
+
+        // Launch pip activity that is supposed to wake up the device
+        launchActivity(
+            activity = PIP_ACTIVITY,
+            action = ACTION_ENTER_PIP,
+            boolExtras = mapOf(PipActivity.EXTRA_TURN_ON_SCREEN to true)
         )
+        wmState.waitForValidState(PIP_ACTIVITY)
+
+        assertLaunchedNotFocused(PIP_ACTIVITY)
+        assertTrue("Device must be awake") {
+            runWithDreamManager { dreamManager ->
+                !dreamManager.isDreaming
+            }
+        }
+    }
+
+    /** Ensure an app in pip mode remains open throughout the device dreaming and waking. */
+    @Test
+    fun pipApp_remainsOpen_afterScreensaver() {
+        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+        wmState.waitForValidState(PIP_ACTIVITY)
+
+        runWithDreamManager { dreamManager ->
+            dreamManager.dream()
+            Condition.waitFor("Device must be dreaming") { dreamManager.isDreaming }
+            dreamManager.awaken()
+            Condition.waitFor("Device must be awake") { !dreamManager.isDreaming }
+        }
+
+        assertLaunchedNotFocused(PIP_ACTIVITY)
     }
 
     /** Open an app in pip mode and ensure it is located at the expected default position. */
@@ -208,6 +252,24 @@ class BasicPipTests : PipTestBase() {
             actual = wmState.focusedActivity,
             message = "The PiP Menu activity must be focused!"
         )
+    }
+
+    private fun assertLaunchedNotFocused(activity: ComponentName) {
+        wmState.assertActivityDisplayed(activity)
+        wmState.assertNotFocusedWindow(
+            "PiP Window must not be focused!",
+            activity.windowName()
+        )
+    }
+
+    /** Run the given actions on a dream manager, acquiring appropriate permissions.  */
+    private fun <T> runWithDreamManager(actions: (IDreamManager) -> T): T {
+        val dreamManager: IDreamManager = IDreamManager.Stub.asInterface(
+            ServiceManager.getServiceOrThrow(DreamService.DREAM_SERVICE))
+
+        return SystemUtil.runWithShellPermissionIdentity(ThrowingSupplier {
+            actions(dreamManager)
+        }, READ_DREAM_STATE, WRITE_DREAM_STATE)
     }
 
     private fun locateByResourceName(resourceName: String): UiObject2 =
