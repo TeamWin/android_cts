@@ -73,7 +73,7 @@ class PipNotificationTests : PipTestBase() {
     @Test
     fun pipNotification_isPosted() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
 
         assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
     }
@@ -82,7 +82,7 @@ class PipNotificationTests : PipTestBase() {
     @Test
     fun pipNotification_detailsButton() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
 
         val notification =
             assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
@@ -97,7 +97,7 @@ class PipNotificationTests : PipTestBase() {
     @Test
     fun pipNotification_dismissButton() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
 
         val notification =
             assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
@@ -199,6 +199,6 @@ class PipNotificationTests : PipTestBase() {
             boolExtras = mapOf(EXTRA_MEDIA_SESSION_ACTIVE to true),
             stringExtras = mapOf(EXTRA_MEDIA_SESSION_TITLE to title.urlEncoded())
         )
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
     }
 }

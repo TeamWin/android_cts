@@ -18,7 +18,6 @@ package android.systemui.tv.cts
 
 import android.graphics.Region
 import android.platform.test.annotations.Postsubmit
-import android.server.wm.Condition
 import android.server.wm.UiDeviceUtils
 import android.server.wm.annotation.Group2
 import android.support.test.launcherhelper.TvLauncherStrategy
@@ -30,7 +29,6 @@ import android.systemui.tv.cts.KeyboardActivity.ACTION_HIDE_KEYBOARD
 import android.systemui.tv.cts.KeyboardActivity.ACTION_SHOW_KEYBOARD
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.ResourceNames.WINDOW_NAME_INPUT_METHOD
-import android.view.inputmethod.InputMethodManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.server.wm.flicker.dsl.FlickerBuilder
 import org.junit.Test
@@ -46,10 +44,6 @@ import org.junit.runner.RunWith
 @Group2
 @RunWith(AndroidJUnit4::class)
 class FlickerPipTests : PipTestBase() {
-
-    private val inputMethodManager: InputMethodManager =
-        context.getSystemService(InputMethodManager::class.java)
-            ?: error("Could not get an InputMethodManager")
 
     private val testRepetitions = 10
 
@@ -67,10 +61,10 @@ class FlickerPipTests : PipTestBase() {
                 UiDeviceUtils.pressHomeButton()
                 // launch our target pip app
                 launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-                wmState.waitForValidState(PIP_ACTIVITY)
+                waitForEnterPip(PIP_ACTIVITY)
                 // open an app with an input field
                 launchActivity(KEYBOARD_ACTIVITY)
-                wmState.waitForValidState(KEYBOARD_ACTIVITY)
+                waitForFullscreen(KEYBOARD_ACTIVITY)
             }
         }
         teardown {
@@ -90,19 +84,11 @@ class FlickerPipTests : PipTestBase() {
             transitions {
                 // open the soft keyboard
                 launchActivity(KEYBOARD_ACTIVITY, ACTION_SHOW_KEYBOARD)
-                Condition.waitFor("Keyboard must be open") {
-                    inputMethodManager.isActive
-                }
-                wmState.waitForValidState(PIP_ACTIVITY)
-                wmState.waitForValidState(KEYBOARD_ACTIVITY)
+                waitForKeyboardShown()
 
                 // then close it again
                 launchActivity(KEYBOARD_ACTIVITY, ACTION_HIDE_KEYBOARD)
-                Condition.waitFor("Keyboard must be closed") {
-                    !inputMethodManager.isActive
-                }
-                wmState.waitForValidState(PIP_ACTIVITY)
-                wmState.waitForValidState(KEYBOARD_ACTIVITY)
+                waitForKeyboardHidden()
             }
             assertions {
                 windowManagerTrace {
@@ -126,21 +112,13 @@ class FlickerPipTests : PipTestBase() {
             transitions {
                 // open the soft keyboard
                 launchActivity(KEYBOARD_ACTIVITY, ACTION_SHOW_KEYBOARD)
-                Condition.waitFor("Keyboard must be open") {
-                    inputMethodManager.isActive
-                }
-                wmState.waitForValidState(PIP_ACTIVITY)
-                wmState.waitForValidState(KEYBOARD_ACTIVITY)
+                waitForKeyboardShown()
             }
             teardown {
                 eachRun {
                     // close the keyboard
                     launchActivity(KEYBOARD_ACTIVITY, ACTION_HIDE_KEYBOARD)
-                    Condition.waitFor("Keyboard must be closed") {
-                        !inputMethodManager.isActive
-                    }
-                    wmState.waitForValidState(PIP_ACTIVITY)
-                    wmState.waitForValidState(KEYBOARD_ACTIVITY)
+                    waitForKeyboardHidden()
                 }
             }
             assertions {
@@ -155,4 +133,20 @@ class FlickerPipTests : PipTestBase() {
 
     /** Execute the tests that were set up in this builder. */
     private fun FlickerBuilder.runTests() = build().execute().makeAssertions()
+
+    /** Wait for the soft keyboard window to be open or throw. */
+    private fun waitForKeyboardShown() {
+        val message = "Keyboard must be shown"
+        wmState.waitFor(message) { state ->
+            state.isWindowVisible(WINDOW_NAME_INPUT_METHOD)
+        } || error(message)
+    }
+
+    /** Wait for the soft keyboard window to be hidden or throw. */
+    private fun waitForKeyboardHidden() {
+        val message = "Keyboard must be hidden"
+        wmState.waitFor(message) { state ->
+            !state.isWindowVisible(WINDOW_NAME_INPUT_METHOD)
+        } || error(message)
+    }
 }
