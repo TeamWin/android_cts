@@ -653,36 +653,6 @@ public class StrictModeTest {
     }
 
     @Test
-    public void testIncorrectContextUse_GetDisplay() throws Exception {
-        StrictMode.setVmPolicy(
-                new StrictMode.VmPolicy.Builder()
-                        .detectIncorrectContextUse()
-                        .penaltyLog()
-                        .build());
-
-        final Display display = getContext().getSystemService(DisplayManager.class)
-                .getDisplay(DEFAULT_DISPLAY);
-
-        final Context displayContext = getContext().createDisplayContext(display);
-        assertNoViolation(displayContext::getDisplay);
-
-        final Context windowContext =
-                displayContext.createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
-        assertNoViolation(windowContext::getDisplay);
-
-        final Activity activity = mActivityRule.launchActivity(
-                new Intent(getContext(), SimpleTestActivity.class));
-        assertNoViolation(() -> activity.getDisplay());
-
-        try {
-            getContext().getApplicationContext().getDisplay();
-        } catch (UnsupportedOperationException e) {
-            return;
-        }
-        fail("Expected to get incorrect use exception from calling getDisplay() on Application");
-    }
-
-    @Test
     public void testIncorrectContextUse_GetViewConfiguration() throws Exception {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder()
