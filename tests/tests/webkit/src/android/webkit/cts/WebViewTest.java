@@ -2441,6 +2441,17 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertEquals(kRequest, (long) WebkitUtils.waitForFuture(visualStateFuture));
     }
 
+    private static boolean setSafeBrowsingAllowlistSync(List<String> allowlist) {
+        final SettableFuture<Boolean> safeBrowsingAllowlistFuture = SettableFuture.create();
+        WebView.setSafeBrowsingWhitelist(allowlist, new ValueCallback<Boolean>() {
+            @Override
+            public void onReceiveValue(Boolean success) {
+                safeBrowsingAllowlistFuture.set(success);
+            }
+        });
+        return WebkitUtils.waitForFuture(safeBrowsingAllowlistFuture);
+    }
+
     /**
      * This should remain functionally equivalent to
      * androidx.webkit.WebViewCompatTest#testSetSafeBrowsingAllowlistWithMalformedList.
@@ -2455,14 +2466,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         List allowlist = new ArrayList<String>();
         // Protocols are not supported in the allowlist
         allowlist.add("http://google.com");
-        final SettableFuture<Boolean> safeBrowsingAllowlistFuture = SettableFuture.create();
-        WebView.setSafeBrowsingWhitelist(allowlist, new ValueCallback<Boolean>() {
-            @Override
-            public void onReceiveValue(Boolean success) {
-                safeBrowsingAllowlistFuture.set(success);
-            }
-        });
-        assertFalse(WebkitUtils.waitForFuture(safeBrowsingAllowlistFuture));
+        assertFalse("Malformed list entry should fail", setSafeBrowsingAllowlistSync(allowlist));
     }
 
     /**
@@ -2478,14 +2482,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         List allowlist = new ArrayList<String>();
         allowlist.add("safe-browsing");
-        final SettableFuture<Boolean> safeBrowsingAllowlistFuture = SettableFuture.create();
-        WebView.setSafeBrowsingWhitelist(allowlist, new ValueCallback<Boolean>() {
-            @Override
-            public void onReceiveValue(Boolean success) {
-                safeBrowsingAllowlistFuture.set(success);
-            }
-        });
-        assertTrue(WebkitUtils.waitForFuture(safeBrowsingAllowlistFuture));
+        assertTrue("Valid allowlist should be successful", setSafeBrowsingAllowlistSync(allowlist));
 
         final SettableFuture<Void> pageFinishedFuture = SettableFuture.create();
         mOnUiThread.setWebViewClient(new WebViewClient() {
