@@ -34,7 +34,7 @@ object Components {
     @JvmField
     val PIP_MENU_ACTIVITY: ComponentName = ComponentName.createRelative(
         ResourceNames.SYSTEM_UI_PACKAGE,
-            ".pip.tv.PipMenuActivity"
+        ".pip.tv.PipMenuActivity"
     )
 
     @JvmField
@@ -61,6 +61,17 @@ object PipActivity {
 
     const val EXTRA_ASPECT_RATIO_DENOMINATOR = "aspect_ratio_denominator"
     const val EXTRA_ASPECT_RATIO_NUMERATOR = "aspect_ratio_numerator"
+
+    /** Taken from [android.server.wm.PinnedStackTests] */
+    object Ratios {
+        // Corresponds to com.android.internal.R.dimen.config_pictureInPictureMinAspectRatio
+        const val MIN_ASPECT_RATIO_NUMERATOR = 100
+        const val MIN_ASPECT_RATIO_DENOMINATOR = 239
+
+        // Corresponds to com.android.internal.R.dimen.config_pictureInPictureMaxAspectRatio
+        const val MAX_ASPECT_RATIO_NUMERATOR = 239
+        const val MAX_ASPECT_RATIO_DENOMINATOR = 100
+    }
 }
 
 object KeyboardActivity {
