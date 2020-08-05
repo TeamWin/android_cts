@@ -17,8 +17,9 @@ android_test {
     defaults: ["cts_defaults"],
     static_libs: ["ctstestrunner-axt"],
     srcs: ["src/**/*.java"],
-    // Use TEST_CURRENT instead of setting sdk version 28 to be able to access UiAutomator.
-    sdk_version: "test_current",
+    // The SDK version is set to 28 to test device identifier access for apps with
+    // the READ_PHONE_STATE permission targeting pre-Q.
+    sdk_version: "28",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
