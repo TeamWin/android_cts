@@ -25,6 +25,8 @@ import android.systemui.tv.cts.PipActivity
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_ACTIVE
 import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_TITLE
+import android.systemui.tv.cts.PipMenu.ACTION_CLOSE
+import android.systemui.tv.cts.PipMenu.ACTION_MENU
 import android.systemui.tv.cts.ShellCommands.CMD_TEMPLATE_NOTIFICATION_ALLOW_LISTENER
 import android.systemui.tv.cts.ShellCommands.CMD_TEMPLATE_NOTIFICATION_DISALLOW_LISTENER
 import android.systemui.tv.cts.TVNotificationExtender.EXTRA_CONTENT_INTENT
@@ -37,6 +39,7 @@ import org.junit.runner.RunWith
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Tests notification-related (PiP) behavior.
@@ -89,6 +92,9 @@ class PipNotificationTests : PipTestBase() {
             assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
 
         val contentIntent = notification.pendingTvIntent(EXTRA_CONTENT_INTENT)
+        assertTrue("The notification content intent must have action $ACTION_MENU") {
+            Intent(ACTION_MENU).filterEquals(contentIntent.innerIntent)
+        }
 
         contentIntent.send()
         assertPipMenuOpen()
@@ -104,6 +110,9 @@ class PipNotificationTests : PipTestBase() {
             assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
 
         val deleteIntent = notification.pendingTvIntent(EXTRA_DELETE_INTENT)
+        assertTrue("The notification cancel intent must have action $ACTION_CLOSE") {
+            Intent(ACTION_CLOSE).filterEquals(deleteIntent.innerIntent)
+        }
 
         deleteIntent.send()
         wmState.waitFor("The PiP app must be closed!") {
