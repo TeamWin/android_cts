@@ -18,10 +18,8 @@ package android.mediav2.cts;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
-import android.os.Build;
 import android.util.Log;
 
 import androidx.test.filters.SmallTest;
@@ -46,7 +44,6 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Parameterized.class)
 public class EncoderColorAspectsTest extends CodecEncoderTestBase {
     private static final String LOG_TAG = EncoderColorAspectsTest.class.getSimpleName();
-    private static final int UNSPECIFIED = 0;
 
     private int mRange;
     private int mStandard;
@@ -55,8 +52,6 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
 
     private MediaMuxer mMuxer;
     private int mTrackID = -1;
-
-    private ArrayList<MediaCodec.BufferInfo> mInfoList = new ArrayList<>();
 
     private ArrayList<String> mCheckESList = new ArrayList<>();
 
@@ -98,10 +93,6 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 }
                 mMuxer.writeSampleData(mTrackID, buf, info);
             }
-            MediaCodec.BufferInfo copy = new MediaCodec.BufferInfo();
-            copy.set(mOutputBuff.getOutStreamSize(), info.size, info.presentationTimeUs,
-                    info.flags);
-            mInfoList.add(copy);
         }
         super.dequeueOutput(bufferIndex, info);
     }
@@ -153,19 +144,10 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
         ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
         assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
         setUpSource(mInputFile);
-        mSaveToMem = true;
         mOutputBuff = new OutputManager();
         for (String encoder : listOfEncoders) {
             mCodec = MediaCodec.createByCodecName(encoder);
             mOutputBuff.reset();
-            mInfoList.clear();
-            /* TODO(b/157523045) */
-            if (mRange <= UNSPECIFIED || mStandard <= UNSPECIFIED ||
-                    mTransferCurve <= UNSPECIFIED) {
-                Log.d(LOG_TAG, "test skipped due to b/157523045");
-                mCodec.release();
-                continue;
-            }
             /* TODO(b/156571486) */
             if (encoder.equals("c2.android.hevc.encoder") ||
                     encoder.equals("OMX.google.h264.encoder") ||
@@ -214,16 +196,13 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
             if (parent != null) parent += File.separator;
             else parent = "";
             cdtb.validateColorAspects(null, parent, tmpFile.getName(), mRange, mStandard,
-                    mTransferCurve);
+                    mTransferCurve, false);
 
             // if color metadata can also be signalled via elementary stream then verify if the
             // elementary stream contains color aspects as expected
             if (mCheckESList.contains(mMime)) {
-                fmt.removeKey(MediaFormat.KEY_COLOR_RANGE);
-                fmt.removeKey(MediaFormat.KEY_COLOR_STANDARD);
-                fmt.removeKey(MediaFormat.KEY_COLOR_TRANSFER);
-                cdtb.validateColorAspects(null, fmt, mOutputBuff.getBuffer(), mInfoList, mRange,
-                        mStandard, mTransferCurve);
+                cdtb.validateColorAspects(null, parent, tmpFile.getName(), mRange, mStandard,
+                        mTransferCurve, true);
             }
         }
     }
