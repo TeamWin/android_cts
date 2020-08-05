@@ -34,6 +34,7 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import javax.annotation.Nullable;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
@@ -44,6 +45,7 @@ import java.util.List;
 /**
  * HDMI CEC test to verify physical address after device reboot (Section 10.2.3)
  */
+@Ignore("b/149519706")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
 
