@@ -183,6 +183,8 @@ public class StreamingVideoActivity extends PassFailButtons.TestListActivity {
     private TestListAdapter getStreamAdapter() {
         ArrayTestListAdapter adapter = new ArrayTestListAdapter(this);
 
+        // TODO(b/161675976): Re-enable RTSP tests once they can be served reliably.
+        /*
         adapter.add(TestListItem.newCategory("RTSP"));
         addRtspStreamToTest(
                 adapter, "H263 Video, AMR Audio", "rtsp_h263_amr", 13, ITAG_13_SIGNATURE);
@@ -190,6 +192,7 @@ public class StreamingVideoActivity extends PassFailButtons.TestListActivity {
                 adapter, "MPEG4 SP Video, AAC Audio", "rtsp_mpeg4_aac", 17, ITAG_17_SIGNATURE);
         addRtspStreamToTest(
                 adapter, "H264 Base Video, AAC Audio", "rtsp_h264_aac", 18, ITAG_18_SIGNATURE);
+        */
 
         adapter.add(TestListItem.newCategory("HTTP Progressive"));
         for (Stream stream : HTTP_STREAMS) {
