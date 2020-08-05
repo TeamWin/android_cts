@@ -34,6 +34,12 @@ import android.systemui.tv.cts.Components.PIP_MENU_ACTIVITY
 import android.systemui.tv.cts.Components.activityName
 import android.systemui.tv.cts.Components.windowName
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
+import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_DENOMINATOR
+import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_NUMERATOR
+import android.systemui.tv.cts.PipActivity.Ratios.MAX_ASPECT_RATIO_DENOMINATOR
+import android.systemui.tv.cts.PipActivity.Ratios.MAX_ASPECT_RATIO_NUMERATOR
+import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_DENOMINATOR
+import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_NUMERATOR
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_FULLSCREEN_BUTTON
 import android.util.Size
@@ -68,6 +74,11 @@ class BasicPipTests : PipTestBase() {
 
     private val defaultPipAspectRatio: Float = resources.getFloat(
         com.android.internal.R.dimen.config_pictureInPictureDefaultAspectRatio)
+    private val minPipAspectRatio: Float = resources.getFloat(
+        com.android.internal.R.dimen.config_pictureInPictureMinAspectRatio)
+    private val maxPipAspectRatio: Float = resources.getFloat(
+        com.android.internal.R.dimen.config_pictureInPictureMaxAspectRatio)
+
     private val defaultPipHeight: Float = resources.getDimension(
         com.android.internal.R.dimen.default_minimal_size_pip_resizable_task)
     private val screenEdgeInsetString = resources.getString(
@@ -133,22 +144,39 @@ class BasicPipTests : PipTestBase() {
 
     /** Open an app in pip mode and ensure it is located at the expected default position. */
     @Test
-    fun openPip_correctDefaultPosition() {
+    fun openPip_position_defaultAspectRatio() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        wmState.waitForValidState(PIP_ACTIVITY)
+        assertPipWindowPosition(PIP_ACTIVITY, defaultPipAspectRatio)
+    }
 
-        val expectedBounds = Rect().apply {
-            Gravity.apply(pipGravity, (defaultPipHeight * defaultPipAspectRatio).toInt(),
-                defaultPipHeight.toInt(),
-                displaySize, screenEdgeInsets.x, screenEdgeInsets.y, this)
-        }
-
-        val pipTask = wmState.getTaskByActivity(PIP_ACTIVITY, WINDOWING_MODE_PINNED)
-        assertEquals(
-            expected = expectedBounds,
-            actual = pipTask.bounds,
-            message = "The PiP window must be at the expected location!"
+    /** Open an app in pip mode with minimal aspect ratio and ensure its position is correct. */
+    @Test
+    fun openPip_position_minAspectRatio() {
+        launchActivity(
+            PIP_ACTIVITY,
+            ACTION_ENTER_PIP,
+            intExtras = mapOf(
+                EXTRA_ASPECT_RATIO_NUMERATOR to MIN_ASPECT_RATIO_NUMERATOR,
+                EXTRA_ASPECT_RATIO_DENOMINATOR to MIN_ASPECT_RATIO_DENOMINATOR
+            )
         )
+
+        assertPipWindowPosition(PIP_ACTIVITY, minPipAspectRatio)
+    }
+
+    /** Open an app in pip mode with maximal aspect ratio and ensure its position is correct. */
+    @Test
+    fun openPip_position_maxAspectRatio() {
+        launchActivity(
+            PIP_ACTIVITY,
+            ACTION_ENTER_PIP,
+            intExtras = mapOf(
+                EXTRA_ASPECT_RATIO_NUMERATOR to MAX_ASPECT_RATIO_NUMERATOR,
+                EXTRA_ASPECT_RATIO_DENOMINATOR to MAX_ASPECT_RATIO_DENOMINATOR
+            )
+        )
+
+        assertPipWindowPosition(PIP_ACTIVITY, maxPipAspectRatio)
     }
 
     /** Open an app in pip mode and ensure its pip menu can be opened. */
@@ -252,6 +280,25 @@ class BasicPipTests : PipTestBase() {
             actual = wmState.focusedActivity,
             message = "The PiP Menu activity must be focused!"
         )
+    }
+
+    /** Ensure the pip window has the correct dimensions and position for a given [aspectRatio]. */
+    private fun assertPipWindowPosition(activity: ComponentName, aspectRatio: Float) {
+        wmState.waitForValidState(activity)
+
+        val pipTask = wmState.getTaskByActivity(activity, WINDOWING_MODE_PINNED)
+        assertEquals(
+            expected = expectedPipBounds(aspectRatio),
+            actual = pipTask.bounds,
+            message = "The PiP window must be at the expected location!"
+        )
+    }
+
+    /** Calculates the pip window bounds given the [aspectRatio]. */
+    private fun expectedPipBounds(aspectRatio: Float): Rect = Rect().apply {
+        Gravity.apply(pipGravity, (defaultPipHeight * aspectRatio).toInt(),
+            defaultPipHeight.toInt(),
+            displaySize, screenEdgeInsets.x, screenEdgeInsets.y, this)
     }
 
     private fun assertLaunchedNotFocused(activity: ComponentName) {
