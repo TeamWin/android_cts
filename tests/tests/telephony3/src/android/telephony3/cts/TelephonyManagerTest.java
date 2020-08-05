@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -49,6 +50,10 @@ public class TelephonyManagerTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mTelephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        // Ensure we are not running under SHELL permission identity for this test.
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.dropShellPermissionIdentity();
     }
 
     @Test
