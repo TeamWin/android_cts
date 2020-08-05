@@ -133,7 +133,7 @@ public class ViewNodeTest {
 
         ViewStructureImpl structure = new ViewStructureImpl(view);
         ViewNode node = structure.getNode();
-        assertThat(node.getAutofillId()).isEqualTo(initialId); // sanity check
+        assertThat(node.getAutofillId()).isEqualTo(initialId); // confidence check
 
         assertThrows(NullPointerException.class, () -> structure.setAutofillId(null));
         assertThat(node.getAutofillId()).isEqualTo(initialId); // invariant
@@ -156,7 +156,7 @@ public class ViewNodeTest {
     public void testValidProperties_throughParcel() {
         ViewStructureImpl structure = newSimpleStructure();
         final ViewNode node = structure.getNode();
-        assertSimpleNode(node); // sanity check
+        assertSimpleNode(node); // confidence check
 
         final ViewNode clone = cloneThroughParcel(node);
         assertSimpleNode(clone);
@@ -173,7 +173,7 @@ public class ViewNodeTest {
     public void testComplexText_throughParcel() {
         ViewStructureImpl structure = newStructureWithComplexText();
         final ViewNode node = structure.getNode();
-        assertNodeWithComplexText(node); // sanity check
+        assertNodeWithComplexText(node); // confidence check
 
         ViewNode clone = cloneThroughParcel(node);
         assertNodeWithComplexText(clone);
@@ -401,7 +401,7 @@ public class ViewNodeTest {
 
         try {
             // Write to parcel
-            parcel.setDataPosition(0); // Sanity / paranoid check
+            parcel.setDataPosition(0); // Confidence check
             ViewNode.writeToParcel(parcel, node, 0);
 
             // Read from parcel
