@@ -34,6 +34,7 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import javax.annotation.Nullable;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
@@ -74,6 +75,7 @@ public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
    * Tests that the device sends all the messages that should be sent on startup. It also ensures
    * that only the device only sends messages which are allowed by the spec.
    */
+  @Ignore("b/149519706")
   @Test
   public void cectVerifyStartupMessages() throws Exception {
     ITestDevice device = getDevice();
