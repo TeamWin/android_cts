@@ -213,6 +213,21 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Tests that existing staged sessions are failed when rollback is committed
+     */
+    @Test
+    public void testRollbackFailsBlockingSessions() throws Exception {
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
+        run("testRollbackFailsBlockingSessions_Phase1");
+        getDevice().reboot();
+        run("testRollbackFailsBlockingSessions_Phase2");
+        getDevice().reboot();
+        run("testRollbackFailsBlockingSessions_Phase3");
+    }
+
+    /**
      * Tests that rollbacks are invalidated upon fingerprint changes.
      */
     @Test
