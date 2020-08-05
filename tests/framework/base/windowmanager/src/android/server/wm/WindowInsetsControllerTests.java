@@ -24,6 +24,7 @@ import static android.view.View.SYSTEM_UI_FLAG_LOW_PROFILE;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
+import static android.view.WindowInsets.Type.systemBars;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
@@ -40,6 +41,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
@@ -545,6 +547,88 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             activity.getWindowManager().removeView(childWindow);
         });
 
+    }
+
+    @Test
+    public void testDispatchApplyWindowInsetsCount_systemBars() throws InterruptedException {
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+        getInstrumentation().waitForIdleSync();
+
+        // Assume we have at least one visible system bar.
+        assumeTrue(rootView.getRootWindowInsets().isVisible(statusBars())
+                || rootView.getRootWindowInsets().isVisible(navigationBars()));
+
+        final int[] dispatchApplyWindowInsetsCount = {0};
+        rootView.setOnApplyWindowInsetsListener((v, insets) -> {
+            dispatchApplyWindowInsetsCount[0]++;
+            return v.onApplyWindowInsets(insets);
+        });
+
+        // One show-system-bar call...
+        ANIMATION_CALLBACK.reset();
+        getInstrumentation().runOnMainSync(() -> {
+            rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
+            rootView.getWindowInsetsController().hide(systemBars());
+        });
+        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+
+        // ... should only trigger one dispatchApplyWindowInsets
+        assertEquals(1, dispatchApplyWindowInsetsCount[0]);
+
+        // One hide-system-bar call...
+        dispatchApplyWindowInsetsCount[0] = 0;
+        ANIMATION_CALLBACK.reset();
+        getInstrumentation().runOnMainSync(() -> {
+            rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
+            rootView.getWindowInsetsController().show(systemBars());
+        });
+        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+
+        // ... should only trigger one dispatchApplyWindowInsets
+        assertEquals(1, dispatchApplyWindowInsetsCount[0]);
+    }
+
+    @Test
+    public void testDispatchApplyWindowInsetsCount_ime() throws Exception {
+        assumeThat(MockImeSession.getUnavailabilityReason(getInstrumentation().getContext()),
+                nullValue());
+
+        try (MockImeSession imeSession = MockImeSession.create(getInstrumentation().getContext(),
+                getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
+            final TestActivity activity = startActivity(TestActivity.class);
+            final View rootView = activity.getWindow().getDecorView();
+            getInstrumentation().waitForIdleSync();
+
+            final int[] dispatchApplyWindowInsetsCount = {0};
+            rootView.setOnApplyWindowInsetsListener((v, insets) -> {
+                dispatchApplyWindowInsetsCount[0]++;
+                return v.onApplyWindowInsets(insets);
+            });
+
+            // One show-ime call...
+            ANIMATION_CALLBACK.reset();
+            getInstrumentation().runOnMainSync(() -> {
+                rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
+                rootView.getWindowInsetsController().show(ime());
+            });
+            ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+
+            // ... should only trigger one dispatchApplyWindowInsets
+            assertEquals(1, dispatchApplyWindowInsetsCount[0]);
+
+            // One hide-ime call...
+            dispatchApplyWindowInsetsCount[0] = 0;
+            ANIMATION_CALLBACK.reset();
+            getInstrumentation().runOnMainSync(() -> {
+                rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
+                rootView.getWindowInsetsController().hide(ime());
+            });
+            ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+
+            // ... should only trigger one dispatchApplyWindowInsets
+            assertEquals(1, dispatchApplyWindowInsetsCount[0]);
+        }
     }
 
     private static void broadcastCloseSystemDialogs() {
