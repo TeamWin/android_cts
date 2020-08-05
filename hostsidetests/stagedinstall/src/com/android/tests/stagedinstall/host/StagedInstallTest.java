@@ -87,14 +87,14 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Before
     public void setUp() throws Exception {
         cleanUp();
-        uninstallShimApexIfNecessary();
+        mHostUtils.uninstallShimApexIfNecessary();
         storeDefaultLauncher();
     }
 
     @After
     public void tearDown() throws Exception {
         cleanUp();
-        uninstallShimApexIfNecessary();
+        mHostUtils.uninstallShimApexIfNecessary();
         setDefaultLauncher(mDefaultLauncher);
     }
 
@@ -171,7 +171,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testGetActiveStagedSessions() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testGetActiveStagedSessions");
     }
 
@@ -191,7 +193,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testGetActiveStagedSessions_MultiApkSession() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testGetActiveStagedSessions_MultiApkSession");
     }
 
@@ -220,7 +224,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testShimApexShouldPreInstalledIfUpdatingApexIsSupported() throws Exception {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
-        final ITestDevice.ApexInfo shimApex = getShimApex();
+        final ITestDevice.ApexInfo shimApex = mHostUtils.getShimApex().orElseThrow(
+                () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME)
+        );
         assertThat(shimApex.versionCode).isEqualTo(1);
     }
 
@@ -489,7 +495,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     // Should fail to stage multiple sessions when check-point is not available
     @Test
     public void testFailStagingMultipleSessionsIfNoCheckPoint() throws Exception {
-        assumeFalse(isCheckpointSupported());
+        assumeFalse("Device supports file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testFailStagingMultipleSessionsIfNoCheckPoint");
     }
 
@@ -501,13 +509,17 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
             throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk");
     }
 
     @Test
     public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk");
     }
 
@@ -515,7 +527,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testMultipleStagedInstall_ApkOnly() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testMultipleStagedInstall_ApkOnly_Commit");
         getDevice().reboot();
         runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
@@ -525,7 +539,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testInstallMultipleStagedSession_PartialFail_ApkOnly() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_Commit");
         getDevice().reboot();
         runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_VerifyPostReboot");
@@ -535,7 +551,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testFailureReasonPersists_SingleSession() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testFailureReasonPersists_SingleSession_Commit");
         getDevice().reboot();
         runPhase("testFailureReasonPersists_SingleSession_VerifyPostReboot");
@@ -545,7 +563,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testFailureReasonPersists_MultiSession() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testFailureReasonPersists_MultipleSession_Commit");
         getDevice().reboot();
         runPhase("testFailureReasonPersists_MultipleSession_VerifyPostReboot");
@@ -637,42 +657,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     /**
-     * Uninstalls a shim apex only if it's latest version is installed on /data partition (i.e.
-     * it has a version higher than {@code 1}).
-     *
-     * <p>This is purely to optimize tests run time. Since uninstalling an apex requires a reboot,
-     * and only a small subset of tests successfully install an apex, this code avoids ~10
-     * unnecessary reboots.
-     */
-    private void uninstallShimApexIfNecessary() throws Exception {
-        if (!mHostUtils.isApexUpdateSupported()) {
-            // Device doesn't support updating apex. Nothing to uninstall.
-            return;
-        }
-        if (getShimApex().sourceDir.startsWith("/system")) {
-            // System version is active, nothing to uninstall.
-            return;
-        }
-        // Non system version is active, need to uninstall it and reboot the device.
-        Log.i(TAG, "Uninstalling shim apex");
-        final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
-        if (errorMessage != null) {
-            Log.e(TAG, "Failed to uninstall " + SHIM_APEX_PACKAGE_NAME + " : " + errorMessage);
-        } else {
-            getDevice().reboot();
-            final ITestDevice.ApexInfo shim = getShimApex();
-            assertThat(shim.versionCode).isEqualTo(1L);
-            assertThat(shim.sourceDir).startsWith("/system");
-        }
-    }
-
-    private ITestDevice.ApexInfo getShimApex() throws DeviceNotAvailableException {
-        return getDevice().getActiveApexes().stream().filter(
-                apex -> apex.name.equals(SHIM_APEX_PACKAGE_NAME)).findAny().orElseThrow(
-                () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME));
-    }
-
-    /**
      * Store the component name of the default launcher. This value will be used to reset the
      * default launcher to its correct component upon test completion.
      */
@@ -726,15 +710,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
                 Log.e(TAG, e);
                 return "Failed to get staged sessions";
             }
-        }
-    }
-
-    private boolean isCheckpointSupported() throws Exception {
-        try {
-            runPhase("isCheckpointSupported");
-            return true;
-        } catch (AssertionError ignore) {
-            return false;
         }
     }
 }
