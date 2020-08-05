@@ -28,6 +28,6 @@ java_test_host {
         "compatibility-host-util",
     ],
     data: [
-        ":HdmiCecKeyEventCaptureApp",
+        ":HdmiCecHelperApp",
     ],
 }
