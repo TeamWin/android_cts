@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
+import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
@@ -31,7 +32,6 @@ import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,7 +40,7 @@ import org.junit.runner.RunWith;
 
 /** HDMI CEC test to verify that device ignores invalid messages (Section 12) */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
+public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
 
     private static final LogicalAddress AUDIO_DEVICE = LogicalAddress.AUDIO_SYSTEM;
     private static final String PROPERTY_LOCALE = "persist.sys.locale";
@@ -58,17 +58,16 @@ public final class HdmiCecInvalidMessagesTest extends BaseHostJUnit4Test {
     /** The command to clear the main activity. */
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE);
+    public HdmiCecInvalidMessagesTest() {
+        super(AUDIO_DEVICE);
+    }
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, HdmiCecConstants.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, HdmiCecConstants.LEANBACK_FEATURE))
-            .around(RequiredPropertyRule.asCsvContainsValue(
-                this,
-                HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
-                AUDIO_DEVICE.getDeviceType()))
+            .outerRule(CecRules.requiresCec(this))
+            .around(CecRules.requiresLeanback(this))
+            .around(CecRules.requiresDeviceType(this, AUDIO_DEVICE))
             .around(hdmiCecClient);
 
     private String getSystemLocale() throws Exception {
