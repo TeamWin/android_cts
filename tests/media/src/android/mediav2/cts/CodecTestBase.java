@@ -535,6 +535,10 @@ abstract class CodecTestBase {
                 !isAutomotive();
     }
 
+    static boolean hasDecoder(String mime) {
+        return CodecTestBase.selectCodecs(mime, null, null, false).size() != 0;
+    }
+
     static ArrayList<String> prepareRequiredArgsList(boolean isEncoder, boolean needAudio,
             boolean needVideo) {
         Set<String> list = new HashSet<>();
