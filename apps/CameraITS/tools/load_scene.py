@@ -17,7 +17,6 @@ import re
 import subprocess
 import sys
 import time
-
 import its.cv2image
 import numpy as np
 
@@ -40,7 +39,6 @@ def main():
     cmd = ('adb -s %s shell am force-stop com.google.android.apps.docs' %
            screen_id)
     subprocess.Popen(cmd.split())
-
     if not scene:
         print 'Error: need to specify which scene to load'
         assert False
@@ -72,6 +70,14 @@ def main():
     cmd = ("adb -s %s wait-for-device shell am start -d 'file://%s'"
            " -a android.intent.action.VIEW" % (screen_id, dst_scene_file))
     subprocess.Popen(cmd.split())
+
+    with its.device.ItsSession() as cam:
+        props = cam.get_camera_properties()
+        req = its.objects.fastest_auto_capture_request(props)
+        cap = cam.do_capture(req)
+        img = its.image.convert_capture_to_rgb_image(cap)
+        its.image.write_image(img, 'load_scene.jpg')
+        its.image.validate_lighting(img)
 
 if __name__ == '__main__':
     main()
