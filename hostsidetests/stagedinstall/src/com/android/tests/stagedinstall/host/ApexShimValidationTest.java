@@ -23,7 +23,7 @@ import static com.android.cts.shim.lib.ShimPackage.SHIM_PACKAGE_NAME;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.LargeTest;
 
@@ -37,7 +37,6 @@ import com.android.tradefed.util.FileUtil;
 import com.android.tradefed.util.RunUtil;
 import com.android.tradefed.util.ZipUtil;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -110,8 +109,7 @@ public class ApexShimValidationTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        assumeThat("Device doesn't support updating APEX", mHostUtils.isApexUpdateSupported(),
-                CoreMatchers.equalTo("true"));
+        assumeTrue("Device doesn't support updating APEX", mHostUtils.isApexUpdateSupported());
         cleanUp();
         mDeapexerZip = getTestInformation().getDependencyFile(DEAPEXER_ZIP_FILE_NAME, false);
         mAllApexesZip = getTestInformation().getDependencyFile(STAGED_INSTALL_TEST_FILE_NAME,
