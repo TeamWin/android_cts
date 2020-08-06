@@ -95,13 +95,8 @@ class PipTestActivity : Activity() {
             return
         }
 
-        if (intent.action == ACTION_ENTER_PIP || intent.getBooleanExtra(EXTRA_ENTER_PIP, false)) {
-            Log.d(TAG, "Entering PIP. Currently in PIP = $isInPictureInPictureMode")
-            val res = enterPictureInPictureMode(pipParams(intent.extras))
-            Log.d(TAG, "Entered PIP = $res. Currently in PIP = $isInPictureInPictureMode")
-        }
-
         if (intent.getBooleanExtra(EXTRA_TURN_ON_SCREEN, false)) {
+            Log.d(TAG, "Setting setTurnScreenOn")
             setTurnScreenOn(true)
         }
 
@@ -139,6 +134,12 @@ class PipTestActivity : Activity() {
                 Log.d(TAG, "Pausing media")
                 mediaSession.controller.transportControls.pause()
             }
+        }
+
+        if (intent.action == ACTION_ENTER_PIP || intent.getBooleanExtra(EXTRA_ENTER_PIP, false)) {
+            Log.d(TAG, "Entering PIP. Currently in PIP = $isInPictureInPictureMode")
+            val res = enterPictureInPictureMode(pipParams(intent.extras))
+            Log.d(TAG, "Entered PIP = $res. Currently in PIP = $isInPictureInPictureMode")
         }
     }
 
