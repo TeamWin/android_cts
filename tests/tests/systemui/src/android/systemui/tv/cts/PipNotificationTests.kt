@@ -140,6 +140,23 @@ class PipNotificationTests : PipTestBase() {
         assertNotNull(notificationListener.findActivePipNotification(title))
     }
 
+    /** Ensure the notification displays app name after media session is stopped. */
+    @Test
+    fun mediaSession_revertsNotificationTitle() {
+        val title = "Hello there"
+        launchPipWithMediaTitle(title)
+        // ensure the media title is used
+        assertNotNull(notificationListener.findActivePipNotification(title))
+
+        // stop the media session
+        sendBroadcast(
+            action = PipActivity.ACTION_SET_MEDIA_TITLE,
+            boolExtras = mapOf(EXTRA_MEDIA_SESSION_ACTIVE to false)
+        )
+        // assert the notification reverted to the app name
+        assertNotNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
+    }
+
     /** Enable/disable the [PipNotificationListenerService] listening to notifications. */
     private fun toggleListenerAccess(allow: Boolean) {
         val listenerName = PipNotificationListenerService.componentName
