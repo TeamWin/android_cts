@@ -17,15 +17,16 @@
 @file:JvmName("NotificationUtils")
 package android.systemui.tv.cts
 
-import android.app.Notification
+import android.app.Notification.EXTRA_TITLE
 import android.app.PendingIntent
+import android.service.notification.StatusBarNotification
 import java.net.URLEncoder
 
 /** Extract a pending intent that was put by a [android.app.Notification.TvExtender]. */
-fun Notification.pendingTvIntent(key: String): PendingIntent =
-    extras.getBundle(TVNotificationExtender.EXTRA_TV_EXTENDER)?.getParcelable(key)
+fun StatusBarNotification.pendingTvIntent(key: String): PendingIntent =
+    notification?.extras?.getBundle(TVNotificationExtender.EXTRA_TV_EXTENDER)?.getParcelable(key)
         ?: error("No pending intent found for key $key")
 
-fun Notification.title(): String = extras.getString(Notification.EXTRA_TITLE) ?: ""
+fun StatusBarNotification.title(): String = notification?.extras?.getString(EXTRA_TITLE) ?: ""
 
 internal fun String.urlEncoded(): String = URLEncoder.encode(this, "UTF-8")
