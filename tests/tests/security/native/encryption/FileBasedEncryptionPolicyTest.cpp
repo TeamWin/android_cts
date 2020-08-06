@@ -46,14 +46,17 @@ static int getFirstApiLevel(void) {
 }
 
 #ifdef __arm__
-// For ARM32, assemble the 'aese.8' instruction as a .word, since otherwise
+// For ARM32, assemble the 'aese.8' instruction as an .inst, since otherwise
 // clang does not accept it.  It would be allowed in a separate file compiled
-// with -march=armv8, but this way is much easier.  And it's not yet possible to
-// use a target function attribute, because clang doesn't yet support
-// target("fpu=crypto-neon-fp-armv8") like gcc does.
-static void executeAESInstruction(void) {
+// with -march=armv8+crypto, but this way is much easier.  And it's not yet
+// possible to use a target function attribute, because clang doesn't yet
+// support target("fpu=crypto-neon-fp-armv8") like gcc does.
+//
+// We use the ARM encoding of the instruction, not the Thumb encoding.  So make
+// sure to use target("arm") to mark the function as containing ARM code.
+static void __attribute__((target("arm"))) executeAESInstruction(void) {
     // aese.8  q0, q1
-    asm volatile(".word  0xf3b00302" : : : "q0");
+    asm volatile(".inst  0xf3b00302" : : : "q0");
 }
 #elif defined(__aarch64__)
 static void __attribute__((target("crypto"))) executeAESInstruction(void) {
