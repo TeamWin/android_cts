@@ -4,8 +4,8 @@ NOTE: CTS has two meanings here. HDMI defines a set of tests in **Compliance
 Test Specification** in HDMI 1.4b *HDMI Compliance Test Specification 1.4b and
 **Android Compatibility Test Suite**.
 
-Android Compatibility Test Suite include specific tests from HDMI Compliance
-Test Specification and other Android specific tests.
+The Android Compatibility Test Suite includes specific tests from the HDMI 
+Compliance Test Specification as well as other Android specific tests.
 
 ## Setup
 
