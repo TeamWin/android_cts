@@ -81,7 +81,7 @@ public final class HdmiCecPowerStatusTest extends BaseHostJUnit4Test {
     /**
      * Test 11.2.14-2
      * Tests that the device broadcasts a <REPORT_POWER_STATUS> with params 0x1 when the device is
-     * powered on.
+     * powered off.
      */
     @Test
     public void cect_11_2_14_2_PowerStatusWhenOff() throws Exception {
