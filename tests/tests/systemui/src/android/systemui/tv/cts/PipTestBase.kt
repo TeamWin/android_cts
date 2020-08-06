@@ -24,6 +24,7 @@ import android.content.res.Resources
 import android.graphics.Rect
 import android.server.wm.UiDeviceUtils
 import android.server.wm.WindowManagerStateHelper
+import android.systemui.tv.cts.Components.activityName
 import android.systemui.tv.cts.ResourceNames.STRING_PIP_MENU_BOUNDS
 import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE
 import android.util.DisplayMetrics
@@ -36,10 +37,11 @@ import com.android.compatibility.common.util.SystemUtil
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import java.io.IOException
+import kotlin.test.assertEquals
 
 abstract class PipTestBase {
     companion object {
-        const val TAG: String = "PipTestBase"
+        private const val TAG: String = "PipTestBase"
     }
 
     protected val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -79,6 +81,17 @@ abstract class PipTestBase {
     protected fun isTelevision(): Boolean =
         packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
             packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)
+
+    /** Ensure the pip detail menu is open. */
+    protected fun assertPipMenuOpen() {
+        wmState.waitForValidState(Components.PIP_MENU_ACTIVITY)
+        wmState.assertActivityDisplayed(Components.PIP_MENU_ACTIVITY)
+        assertEquals(
+            expected = Components.PIP_MENU_ACTIVITY.activityName(),
+            actual = wmState.focusedActivity,
+            message = "The PiP Menu activity must be focused!"
+        )
+    }
 
     @JvmOverloads
     protected fun launchActivity(
@@ -154,7 +167,7 @@ abstract class PipTestBase {
 
     private fun Map.Entry<String, *>.withFlag(flag: String): String = " --$flag $key $value"
 
-    private fun executeShellCommand(cmd: String): String {
+    protected fun executeShellCommand(cmd: String): String {
         try {
             return SystemUtil.runShellCommand(instrumentation, cmd)
         } catch (e: IOException) {
