@@ -125,6 +125,21 @@ class PipNotificationTests : PipTestBase() {
         assertNull(notificationListener.findActivePipNotification(PIP_ACTIVITY.packageName))
     }
 
+    /** Ensure the pip notification can display long media titles with many characters. */
+    @Test
+    fun pipNotification_canDisplayAllChars() {
+        val az = ('a'..'z').joinToString("")
+        val AZ = ('A'..'Z').joinToString("")
+        val num = ('0'..'9').joinToString("")
+        val extra = """öäüÖÄÜß^°âêîôû!"²§³$¼%½6¬/{([)]=}?\´`¸@€+*~#'<>|µ;,·.:…-_–¯\_(ツ)_/¯"""
+        val emoji = "\uD83D\uDE00\uD83E\uDD87\uD83D\uDC00"
+        val spaces = " \t"
+
+        val title = "$emoji$spaces$az$AZ$num$extra"
+        launchPipWithMediaTitle(title)
+        assertNotNull(notificationListener.findActivePipNotification(title))
+    }
+
     /** Enable/disable the [PipNotificationListenerService] listening to notifications. */
     private fun toggleListenerAccess(allow: Boolean) {
         val listenerName = PipNotificationListenerService.componentName
