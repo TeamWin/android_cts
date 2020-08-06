@@ -327,4 +327,43 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             uid2Watcher.finish();
         }
     }
+
+
+    public void testFgsLocationStartFromBGWithBind() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+
+        try {
+            // Package1 is in BG state, bind FGSL in package1 first.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            Bundle bundle = new Bundle();
+            bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+            // Then start FGSL in package1, it won't get location capability.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+
+            // Package1 is in FGS state, but won't get location capability.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_FG_SERVICE,
+                    new Integer(PROCESS_CAPABILITY_NONE));
+
+            // unbind service.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // stop FGSL
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                    WatchUidRunner.STATE_CACHED_EMPTY,
+                    new Integer(PROCESS_CAPABILITY_NONE));
+        } finally {
+            uid1Watcher.finish();
+        }
+    }
 }
