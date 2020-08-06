@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsTelephony3TestCases",
+java_test_host {
+    name: "CtsStatsdAtomHostTestCases",
     defaults: ["cts_defaults"],
-    static_libs: ["ctstestrunner-axt"],
-    srcs: ["src/**/*.java"],
-    // The SDK version is set to 28 to test device identifier access for apps with
-    // the READ_PHONE_STATE permission targeting pre-Q.
-    sdk_version: "28",
-    // Tag this module as a cts test artifact
+    srcs: ["src/**/statsd/*.java"],
+
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
-    libs: ["android.test.runner"] + ["android.test.base"],
+
+    libs: [
+        "compatibility-host-util",
+        "cts-tradefed",
+        "tradefed",
+        "truth-prebuilt",
+    ],
+
+    static_libs: [
+        "cts-statsd-atom-host-test-utils",
+    ]
+}
+
+java_library_host {
+    name: "cts-statsd-atom-host-test-utils",
+    srcs: ["src/**/lib/*.java"],
 }

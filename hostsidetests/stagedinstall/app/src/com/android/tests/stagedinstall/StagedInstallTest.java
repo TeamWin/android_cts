@@ -41,7 +41,6 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.storage.StorageManager;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -282,10 +281,10 @@ public class StagedInstallTest {
         int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         waitForIsReadyBroadcast(sessionId);
-        PackageInstaller.SessionInfo session = getStagedSessionInfo(sessionId);
+        PackageInstaller.SessionInfo session = InstallUtils.getStagedSessionInfo(sessionId);
         assertSessionReady(sessionId);
         abandonSession(sessionId);
-        assertThat(getStagedSessionInfo(sessionId)).isNull();
+        InstallUtils.assertStagedSessionIsAbandoned(sessionId);
         // Allow the session to be removed from PackageInstaller
         Duration spentWaiting = Duration.ZERO;
         while (spentWaiting.compareTo(WAIT_FOR_SESSION_REMOVED_TTL) < 0) {
@@ -315,7 +314,7 @@ public class StagedInstallTest {
         int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         abandonSession(sessionId);
-        assertThat(getStagedSessionInfo(sessionId)).isNull();
+        InstallUtils.assertStagedSessionIsAbandoned(sessionId);
     }
 
     @Test
@@ -350,7 +349,7 @@ public class StagedInstallTest {
         int sessionId = stageMultipleApks(TestApp.A1, TestApp.Apex2).assertSuccessful()
                 .getSessionId();
         abandonSession(sessionId);
-        assertThat(getStagedSessionInfo(sessionId)).isNull();
+        InstallUtils.assertStagedSessionIsAbandoned(sessionId);
         counter.assertNoBroadcastReceived();
     }
 
@@ -1376,19 +1375,6 @@ public class StagedInstallTest {
         getPackageInstaller().abandonSession(sessionId);
     }
 
-    /**
-     * Returns the session by session Id, or null if no session is found.
-     */
-    private static PackageInstaller.SessionInfo getStagedSessionInfo(int sessionId) {
-        PackageInstaller packageInstaller = getPackageInstaller();
-        for (PackageInstaller.SessionInfo session : packageInstaller.getStagedSessions()) {
-            if (session.getSessionId() == sessionId) {
-                return session;
-            }
-        }
-        return null;
-    }
-
     private static PackageInstaller.SessionInfo getSessionInfo(int sessionId) {
         return getPackageInstaller().getSessionInfo(sessionId);
     }
@@ -1407,12 +1393,5 @@ public class StagedInstallTest {
 
     private PackageInstaller.SessionInfo waitForBroadcast(int sessionId) {
         return InstallUtils.waitForSession(sessionId);
-    }
-
-    @Test
-    public void isCheckpointSupported() {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
-        assertThat(sm.isCheckpointSupported()).isTrue();
     }
 }

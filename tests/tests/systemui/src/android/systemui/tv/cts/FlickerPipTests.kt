@@ -29,9 +29,10 @@ import android.systemui.tv.cts.Components.windowName
 import android.systemui.tv.cts.KeyboardActivity.ACTION_HIDE_KEYBOARD
 import android.systemui.tv.cts.KeyboardActivity.ACTION_SHOW_KEYBOARD
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
+import android.systemui.tv.cts.ResourceNames.WINDOW_NAME_INPUT_METHOD
 import android.view.inputmethod.InputMethodManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.server.wm.flicker.dsl.flicker
+import com.android.server.wm.flicker.dsl.FlickerBuilder
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -52,35 +53,40 @@ class FlickerPipTests : PipTestBase() {
 
     private val testRepetitions = 10
 
+    private val tvLauncherStrategy = TvLauncherStrategy().apply {
+        setUiDevice(UiDevice.getInstance(instrumentation))
+    }
+
+    /** Starts and stops a keyboard app and a pip app. Repeats [testRepetitions] times. */
+    private val keyboardScenario = FlickerBuilder(instrumentation, tvLauncherStrategy).apply {
+        repeat { testRepetitions }
+        // disable layer tracing
+        withLayerTracing { null }
+        setup {
+            test {
+                UiDeviceUtils.pressHomeButton()
+                // launch our target pip app
+                launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+                wmState.waitForValidState(PIP_ACTIVITY)
+                // open an app with an input field
+                launchActivity(KEYBOARD_ACTIVITY)
+                wmState.waitForValidState(KEYBOARD_ACTIVITY)
+            }
+        }
+        teardown {
+            test {
+                stopPackage(PIP_ACTIVITY)
+                stopPackage(KEYBOARD_ACTIVITY)
+            }
+        }
+    }
+
     /** Ensure the pip window remains visible throughout any keyboard interactions. */
     @Test
-    fun pipInBounds_afterKeyboard() {
-        val testTag = "pipInBounds_afterKeyboard"
-        val myLauncher = TvLauncherStrategy().apply {
-            setUiDevice(UiDevice.getInstance(instrumentation))
-        }
-        flicker(instrumentation, myLauncher) {
+    fun pipWindow_doesNotLeaveTheScreen_onKeyboardOpenClose() {
+        val testTag = "pipWindow_doesNotLeaveTheScreen_onKeyboardOpenClose"
+        keyboardScenario.apply {
             withTag { testTag }
-            repeat { testRepetitions }
-            // disable layer tracing
-            withLayerTracing { null }
-            setup {
-                test {
-                    UiDeviceUtils.pressHomeButton()
-                    // launch our target pip app
-                    launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-                    wmState.waitForValidState(PIP_ACTIVITY)
-                    // open an app with an input field
-                    launchActivity(KEYBOARD_ACTIVITY)
-                    wmState.waitForValidState(KEYBOARD_ACTIVITY)
-                }
-            }
-            teardown {
-                test {
-                    stopPackage(PIP_ACTIVITY)
-                    stopPackage(KEYBOARD_ACTIVITY)
-                }
-            }
             transitions {
                 // open the soft keyboard
                 launchActivity(KEYBOARD_ACTIVITY, ACTION_SHOW_KEYBOARD)
@@ -108,6 +114,45 @@ class FlickerPipTests : PipTestBase() {
                     }
                 }
             }
-        }
+        }.runTests()
     }
+
+    /** Ensure the pip window does not obscure the keyboard. */
+    @Test
+    fun pipWindow_doesNotObscure_keyboard() {
+        val testTag = "pipWindow_doesNotObscure_keyboard"
+        keyboardScenario.apply {
+            withTag { testTag }
+            transitions {
+                // open the soft keyboard
+                launchActivity(KEYBOARD_ACTIVITY, ACTION_SHOW_KEYBOARD)
+                Condition.waitFor("Keyboard must be open") {
+                    inputMethodManager.isActive
+                }
+                wmState.waitForValidState(PIP_ACTIVITY)
+                wmState.waitForValidState(KEYBOARD_ACTIVITY)
+            }
+            teardown {
+                eachRun {
+                    // close the keyboard
+                    launchActivity(KEYBOARD_ACTIVITY, ACTION_HIDE_KEYBOARD)
+                    Condition.waitFor("Keyboard must be closed") {
+                        !inputMethodManager.isActive
+                    }
+                    wmState.waitForValidState(PIP_ACTIVITY)
+                    wmState.waitForValidState(KEYBOARD_ACTIVITY)
+                }
+            }
+            assertions {
+                windowManagerTrace {
+                    end {
+                        noWindowsOverlap(WINDOW_NAME_INPUT_METHOD, PIP_ACTIVITY.windowName())
+                    }
+                }
+            }
+        }.runTests()
+    }
+
+    /** Execute the tests that were set up in this builder. */
+    private fun FlickerBuilder.runTests() = build().execute().makeAssertions()
 }
