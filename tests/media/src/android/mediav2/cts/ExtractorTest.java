@@ -19,6 +19,7 @@ package android.mediav2.cts;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -53,6 +54,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import static android.mediav2.cts.CodecTestBase.hasDecoder;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -1122,6 +1125,238 @@ public class ExtractorTest {
                     break;
                 }
                 assertTrue(testName.getMethodName() + " failed for mime: " + mMime, isOk);
+            }
+        }
+    }
+
+    /**
+     * Test if extractor populates key-value pairs correctly
+     */
+    @RunWith(Parameterized.class)
+    public static class ValidateKeyValuePairs {
+        private static final String mInpPrefix = WorkDir.getMediaDirString();
+        private final String mMime;
+        private final String[] mInpFiles;
+        private final int mProfile;
+        private final int mLevel;
+        private final int mWR;
+        private final int mHCh;
+
+        public ValidateKeyValuePairs(String mime, String[] inpFiles, int profile, int level, int wr,
+                int hCh) {
+            mMime = mime;
+            mInpFiles = inpFiles;
+            mProfile = profile;
+            mLevel = level;
+            mWR = wr;
+            mHCh = hCh;
+        }
+
+        @Parameterized.Parameters(name = "{index}({0})")
+        public static Collection<Object[]> input() {
+            // mime, clips, profile, level, width/sample rate, height/channel count
+            List<Object[]> exhaustiveArgsList = new ArrayList<>();
+
+            if (hasDecoder(MediaFormat.MIMETYPE_VIDEO_MPEG2)) {
+                // profile and level constraints as per sec 2.3.2 of cdd
+                /* TODO(b/159582475)
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_MPEG2, new String[]{
+                        "bbb_1920x1080_mpeg2_main_high.mp4",
+                        "bbb_1920x1080_mpeg2_main_high.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.MPEG2ProfileMain,
+                        MediaCodecInfo.CodecProfileLevel.MPEG2LevelHL, 1920, 1080});*/
+            }
+
+            if (hasDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+                // profile and level constraints as per sec 2.3.2 of cdd
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
+                        "bbb_1920x1080_avc_baseline_l42.mp4",
+                        "bbb_1920x1080_avc_baseline_l42.mkv",
+                        "bbb_1920x1080_avc_baseline_l42.3gp"},
+                        MediaCodecInfo.CodecProfileLevel.AVCProfileConstrainedBaseline,
+                        MediaCodecInfo.CodecProfileLevel.AVCLevel42, 1920, 1080});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
+                        "bbb_1920x1080_avc_main_l42.mp4",
+                        "bbb_1920x1080_avc_main_l42.mkv",
+                        "bbb_1920x1080_avc_main_l42.3gp"},
+                        MediaCodecInfo.CodecProfileLevel.AVCProfileMain,
+                        MediaCodecInfo.CodecProfileLevel.AVCLevel42, 1920, 1080});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
+                        "bbb_1920x1080_avc_high_l42.mp4",
+                        "bbb_1920x1080_avc_high_l42.mkv",
+                        "bbb_1920x1080_avc_high_l42.3gp"},
+                        MediaCodecInfo.CodecProfileLevel.AVCProfileHigh,
+                        MediaCodecInfo.CodecProfileLevel.AVCLevel42, 1920, 1080});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
+                        "video_dovi_1920x1080_60fps_dvav_09.mp4"},
+                        MediaCodecInfo.CodecProfileLevel.AVCProfileHigh,
+                        MediaCodecInfo.CodecProfileLevel.AVCLevel42, 1920, 1080});
+                // profile/level constraints for avc as per sec 5.3.4 of cdd
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
+                        "bbb_1920x1080_avc_baseline_l40.mp4",
+                        "bbb_1920x1080_avc_baseline_l40.mkv",
+                        "bbb_1920x1080_avc_baseline_l40.3gp"},
+                        MediaCodecInfo.CodecProfileLevel.AVCProfileConstrainedBaseline,
+                        MediaCodecInfo.CodecProfileLevel.AVCLevel4, 1920, 1080});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
+                        "bbb_1920x1080_avc_main_l40.mp4",
+                        "bbb_1920x1080_avc_main_l40.mkv",
+                        "bbb_1920x1080_avc_main_l40.3gp"},
+                        MediaCodecInfo.CodecProfileLevel.AVCProfileMain,
+                        MediaCodecInfo.CodecProfileLevel.AVCLevel4, 1920, 1080});
+            }
+
+            if (hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+                // profile and level constraints as per sec 2.3.2 of cdd
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_HEVC, new String[]{
+                        "bbb_1920x1080_hevc_main_l41.mp4",
+                        "bbb_1920x1080_hevc_main_l41.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.HEVCProfileMain,
+                        MediaCodecInfo.CodecProfileLevel.HEVCMainTierLevel41, 1920, 1080});
+                // profile/level constraints for hevc as per sec 5.3.5 of cdd
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_HEVC, new String[]{
+                        "bbb_1920x1080_hevc_main_l40.mp4",
+                        "bbb_1920x1080_hevc_main_l40.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.HEVCProfileMain,
+                        MediaCodecInfo.CodecProfileLevel.HEVCMainTierLevel4, 1920, 1080});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_HEVC, new String[]{
+                        "video_dovi_1920x1080_30fps_dvhe_04.mp4"},
+                        MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10,
+                        MediaCodecInfo.CodecProfileLevel.HEVCMainTierLevel4, 1920, 1080});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_HEVC, new String[]{
+                        "video_dovi_1920x1080_60fps_dvhe_08.mp4"},
+                        MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10,
+                        MediaCodecInfo.CodecProfileLevel.HEVCMainTierLevel41, 1920, 1080});
+            }
+
+            if (hasDecoder(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+                // profile and level constraints as per sec 2.3.2 of cdd
+                /* TODO(b/159582475)
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{
+                        "bbb_1920x1080_vp9_main_l41.webm",
+                        "bbb_1920x1080_vp9_main_l41.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.VP9Profile0,
+                        MediaCodecInfo.CodecProfileLevel.VP9Level41, 1920, 1080});*/
+                // profile/level constraints for vp9 as per sec 5.3.6 of cdd
+                /* TODO(b/159582475)
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{
+                        "bbb_1920x1080_vp9_main_l40.webm",
+                        "bbb_1920x1080_vp9_main_l40.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.VP9Profile0,
+                        MediaCodecInfo.CodecProfileLevel.VP9Level4, 1920, 1080});*/
+            }
+
+            if (hasDecoder(MediaFormat.MIMETYPE_VIDEO_H263)) {
+                // profile/level constraints for h263 as per sec 5.3.2 of cdd
+                /* TODO(b/159582475)
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_H263, new String[]{
+                        "bbb_352x288_384kbps_30fps_h263_baseline_l3.3gp",
+                        "bbb_352x288_384kbps_30fps_h263_baseline_l3.mp4",
+                        "bbb_352x288_384kbps_30fps_h263_baseline_l3.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.H263ProfileBaseline,
+                        MediaCodecInfo.CodecProfileLevel.H263Level30, 352, 288});*/
+            }
+
+            if (hasDecoder(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
+                // profile/level constraints for mpeg4 as per sec 5.3.3 of cdd
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_MPEG4, new String[]{
+                        "bbb_352x288_384kbps_30fps_mpeg4_simple_l3.mp4",
+                        "bbb_352x288_384kbps_30fps_mpeg4_simple_l3.3gp",
+                        "bbb_352x288_384kbps_30fps_mpeg4_simple_l3.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.MPEG4ProfileSimple,
+                        MediaCodecInfo.CodecProfileLevel.MPEG4Level3, 352, 288});
+            }
+
+            if (hasDecoder(MediaFormat.MIMETYPE_AUDIO_AAC)) {
+                // profile and level constraints for devices that have audio output as per sec 2.2.2,
+                // sec 2.3.2, sec 2.5.2, sec 5.1.2 of cdd
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
+                        "bbb_stereo_44kHz_192kbps_aac_lc.mp4",
+                        "bbb_stereo_44kHz_192kbps_aac_lc.3gp",
+                        "bbb_stereo_44kHz_192kbps_aac_lc.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.AACObjectLC, 0, 44100, 2});
+                /* TODO(b/159582475)
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
+                        "bbb_stereo_44kHz_192kbps_aac_he.mp4",
+                        "bbb_stereo_44kHz_192kbps_aac_he.3gp",
+                        "bbb_stereo_44kHz_192kbps_aac_he.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.AACObjectHE, 0, 44100, 2});*/
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_AUDIO_AAC, new String[] {
+                        "bbb_stereo_44kHz_192kbps_aac_eld.mp4",
+                        "bbb_stereo_44kHz_192kbps_aac_eld.3gp",
+                        "bbb_stereo_44kHz_192kbps_aac_eld.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.AACObjectELD, 0, 44100, 2});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
+                        "bbb_stereo_44kHz_192kbps_aac_ld.mp4",
+                        "bbb_stereo_44kHz_192kbps_aac_ld.3gp",
+                        "bbb_stereo_44kHz_192kbps_aac_ld.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.AACObjectLD, 0, 44100, 2});
+                /*TODO(b/159582475)
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
+                        "bbb_stereo_44kHz_192kbps_aac_hev2.mp4",
+                        "bbb_stereo_44kHz_192kbps_aac_hev2.3gp",
+                        "bbb_stereo_44kHz_192kbps_aac_hev2.mkv"},
+                        MediaCodecInfo.CodecProfileLevel.AACObjectHE_PS, 0, 44100, 2});*/
+            }
+
+            // Miscellaneous
+            if (hasDecoder(MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION)) {
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION,
+                        new String[]{"video_dovi_1920x1080_30fps_dvhe_04.mp4"},
+                        MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheDtr,
+                        MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelFhd30, 1920, 1080});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION,
+                        new String[]{"video_dovi_1920x1080_60fps_dvhe_05.mp4"},
+                        MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheStn,
+                        MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelFhd60, 1920, 1080});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION,
+                        new String[]{"video_dovi_1920x1080_60fps_dvhe_08.mp4"},
+                        MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvheSt,
+                        MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelFhd60, 1920, 1080});
+                exhaustiveArgsList.add(new Object[]{MediaFormat.MIMETYPE_VIDEO_DOLBY_VISION,
+                        new String[]{"video_dovi_1920x1080_60fps_dvav_09.mp4"},
+                        MediaCodecInfo.CodecProfileLevel.DolbyVisionProfileDvavSe,
+                        MediaCodecInfo.CodecProfileLevel.DolbyVisionLevelFhd60, 1920, 1080});
+            }
+
+            return exhaustiveArgsList;
+        }
+
+        @Test
+        public void validateKeyValuePairs() throws IOException {
+            for (String file : mInpFiles) {
+                MediaFormat format = null;
+                MediaExtractor extractor = new MediaExtractor();
+                extractor.setDataSource(mInpPrefix + file);
+                for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
+                    MediaFormat fmt = extractor.getTrackFormat(trackID);
+                    if (mMime.equalsIgnoreCase(fmt.getString(MediaFormat.KEY_MIME))) {
+                        format = fmt;
+                        break;
+                    }
+                }
+                extractor.release();
+                assertTrue(format != null);
+                if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
+                    assertTrue(format.containsKey(MediaFormat.KEY_AAC_PROFILE) ||
+                            format.containsKey(MediaFormat.KEY_PROFILE));
+                    if (format.containsKey(MediaFormat.KEY_AAC_PROFILE)) {
+                        assertEquals(mProfile, format.getInteger(MediaFormat.KEY_AAC_PROFILE));
+                    }
+                    if (format.containsKey(MediaFormat.KEY_PROFILE)) {
+                        assertEquals(mProfile, format.getInteger(MediaFormat.KEY_PROFILE));
+                    }
+                } else {
+                    assertEquals(mProfile, format.getInteger(MediaFormat.KEY_PROFILE));
+                    assertEquals(mLevel, format.getInteger(MediaFormat.KEY_LEVEL));
+                }
+                if (mMime.startsWith("audio/")) {
+                    assertEquals(mWR, format.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+                    assertEquals(mHCh, format.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+                } else if (mMime.startsWith("video/")) {
+                    assertEquals(mWR, format.getInteger(MediaFormat.KEY_WIDTH));
+                    assertEquals(mHCh, format.getInteger(MediaFormat.KEY_HEIGHT));
+                }
             }
         }
     }
