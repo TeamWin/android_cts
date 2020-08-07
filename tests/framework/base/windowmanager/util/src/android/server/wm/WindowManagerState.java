@@ -1305,7 +1305,7 @@ public class WindowManagerState {
             return null;
         }
 
-        Activity getActivity(ComponentName activityName) {
+        public Activity getActivity(ComponentName activityName) {
             final String fullName = getActivityName(activityName);
             return getActivity((activity) -> activity.name.equals(fullName));
         }
@@ -1430,7 +1430,7 @@ public class WindowManagerState {
             return windowingMode == requestedWindowingMode;
         }
 
-        int getWindowingMode() {
+        public int getWindowingMode() {
             if (mFullConfiguration == null) {
                 return WINDOWING_MODE_UNDEFINED;
             }
