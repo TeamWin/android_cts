@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package android.systemui.tv.cts
+package android.systemui.cts.tv
 
 import android.app.NotificationManager
 import android.content.Intent
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.annotation.Group2
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
+import android.systemui.tv.cts.PipActivity
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_ACTIVE
 import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_TITLE
