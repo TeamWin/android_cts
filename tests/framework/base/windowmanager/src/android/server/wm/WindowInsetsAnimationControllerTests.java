@@ -175,7 +175,9 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         // which can trigger assertion failures in VerifyingCallback otherwise.
         runOnUiThread(() -> {
             mCallbacks.clear();
-            mRootView.setWindowInsetsAnimationCallback(null);
+            if (mRootView != null) {
+                mRootView.setWindowInsetsAnimationCallback(null);
+            }
         });
 
         // Now it should be safe to reset the IME to the default one.
