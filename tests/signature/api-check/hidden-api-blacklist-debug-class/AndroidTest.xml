@@ -28,7 +28,7 @@
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
         <option name="class" value="android.signature.cts.api.DebugClassHiddenApiTest" />
         <option name="instrumentation-arg" key="hiddenapi-files" value="hiddenapi-flags.csv" />
-        <option name="instrumentation-arg" key="hiddenapi-test-flags" value="blacklist,greylist-max-o,greylist-max-p" />
+        <option name="instrumentation-arg" key="hiddenapi-test-flags" value="blocked,max-target-o,max-target-p" />
         <option name="test-api-access" value="false" />
         <option name="runtime-hint" value="30s" />
     </test>
