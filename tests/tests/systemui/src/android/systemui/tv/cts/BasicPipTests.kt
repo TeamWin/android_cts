@@ -97,7 +97,7 @@ class BasicPipTests : PipTestBase() {
     @Test
     fun openPip_launchedNotFocused() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
 
         assertLaunchedNotFocused(PIP_ACTIVITY)
     }
@@ -116,7 +116,7 @@ class BasicPipTests : PipTestBase() {
             action = ACTION_ENTER_PIP,
             boolExtras = mapOf(PipActivity.EXTRA_TURN_ON_SCREEN to true)
         )
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
 
         assertLaunchedNotFocused(PIP_ACTIVITY)
         assertTrue("Device must be awake") {
@@ -130,7 +130,7 @@ class BasicPipTests : PipTestBase() {
     @Test
     fun pipApp_remainsOpen_afterScreensaver() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
 
         runWithDreamManager { dreamManager ->
             dreamManager.dream()
@@ -190,7 +190,7 @@ class BasicPipTests : PipTestBase() {
     @Test
     fun pipMenu_open_onWindowButtonPress() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
         // enter pip menu
         uiDevice.pressKeyCode(KeyEvent.KEYCODE_WINDOW)
         assertPipMenuOpen()
@@ -204,7 +204,7 @@ class BasicPipTests : PipTestBase() {
         wmState.waitFor("The PiP menu must be in the right place!") {
             val pipTask = it.getTaskByActivity(PIP_ACTIVITY, WINDOWING_MODE_PINNED)
             pipTask.bounds == menuModePipBounds
-        }
+        } || error("The PiP activity is not in the right place when the menu is shown!")
     }
 
     /** Open an app's pip menu then press its close button and ensure the app is closed. */
@@ -227,6 +227,7 @@ class BasicPipTests : PipTestBase() {
 
         val fullscreenButton = locateByResourceName(ID_PIP_MENU_FULLSCREEN_BUTTON)
         fullscreenButton.click()
+        waitForFullscreen(PIP_ACTIVITY)
 
         wmState.waitAndAssertActivityRemoved(PIP_MENU_ACTIVITY)
         wmState.assertFocusedActivity("The PiP app must be focused!", PIP_ACTIVITY)
@@ -248,11 +249,11 @@ class BasicPipTests : PipTestBase() {
             ),
             stringExtras = mapOf(PipActivity.EXTRA_MEDIA_SESSION_TITLE to "Playback")
         )
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
 
         // enter pip menu
         sendBroadcast(PipMenu.ACTION_MENU)
-        wmState.waitForValidState(PIP_MENU_ACTIVITY)
+        waitForFullscreen(PIP_MENU_ACTIVITY)
         assertPipMenuOpen()
 
         // the media control button has to be present in the pip menu
@@ -289,15 +290,15 @@ class BasicPipTests : PipTestBase() {
     /** Launches an app into pip mode then opens the pip menu. */
     private fun launchPipThenEnterMenu() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        wmState.waitForValidState(PIP_ACTIVITY)
+        waitForEnterPip(PIP_ACTIVITY)
         // enter pip menu
         sendBroadcast(PipMenu.ACTION_MENU)
-        wmState.waitForValidState(PIP_MENU_ACTIVITY)
+        waitForFullscreen(PIP_MENU_ACTIVITY)
     }
 
     /** Ensure the pip window has the correct dimensions and position for a given [aspectRatio]. */
     private fun assertPipWindowPosition(activity: ComponentName, aspectRatio: Float) {
-        wmState.waitForValidState(activity)
+        waitForEnterPip(PIP_ACTIVITY)
 
         val pipTask = wmState.getTaskByActivity(activity, WINDOWING_MODE_PINNED)
         assertEquals(

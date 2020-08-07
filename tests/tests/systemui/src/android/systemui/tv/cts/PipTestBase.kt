@@ -17,12 +17,15 @@
 package android.systemui.tv.cts
 
 import android.app.Instrumentation
+import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Rect
 import android.server.wm.UiDeviceUtils
+import android.server.wm.WindowManagerState
+import android.server.wm.WindowManagerState.STATE_PAUSED
 import android.server.wm.WindowManagerStateHelper
 import android.systemui.tv.cts.Components.activityName
 import android.systemui.tv.cts.ResourceNames.STRING_PIP_MENU_BOUNDS
@@ -82,9 +85,42 @@ abstract class PipTestBase {
         packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
             packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)
 
+    /** Waits until the pip animation has finished and the app is fully in pip mode. */
+    protected fun waitForEnterPip(activityName: ComponentName) {
+        wmState.waitForWithAmState("checking task windowing mode") { state: WindowManagerState ->
+            state.getTaskByActivity(activityName)?.let { task ->
+                task.windowingMode == WINDOWING_MODE_PINNED
+            } ?: false
+        } || error("Task $activityName is not pinned!")
+
+        wmState
+            .waitForWithAmState("checking activity windowing mode") { state: WindowManagerState ->
+                state.getTaskByActivity(activityName)?.getActivity(activityName)?.let { activity ->
+                    activity.windowingMode == WINDOWING_MODE_PINNED &&
+                        activity.state == STATE_PAUSED
+                } ?: false
+            } || error("Activity $activityName is not pinned or not paused!")
+    }
+
+    /** Waits until the app is in fullscreen accounting for a possible pip transition animation. */
+    protected fun waitForFullscreen(activityName: ComponentName) {
+        wmState
+            .waitForWithAmState("checking activity windowing mode") { state: WindowManagerState ->
+                state.getTaskByActivity(activityName)?.getActivity(activityName)?.let { activity ->
+                    activity.windowingMode != WINDOWING_MODE_PINNED
+                } ?: false
+            } || error("Task $activityName is pinned!")
+
+        wmState.waitForWithAmState("checking task windowing mode") { state: WindowManagerState ->
+            state.getTaskByActivity(activityName)?.let { task ->
+                task.windowingMode != WINDOWING_MODE_PINNED
+            } ?: false
+        } || error("Activity $activityName is pinned!")
+    }
+
     /** Ensure the pip detail menu is open. */
     protected fun assertPipMenuOpen() {
-        wmState.waitForValidState(Components.PIP_MENU_ACTIVITY)
+        waitForFullscreen(Components.PIP_MENU_ACTIVITY)
         wmState.assertActivityDisplayed(Components.PIP_MENU_ACTIVITY)
         assertEquals(
             expected = Components.PIP_MENU_ACTIVITY.activityName(),
