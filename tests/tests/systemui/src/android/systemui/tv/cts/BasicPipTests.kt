@@ -107,7 +107,7 @@ class BasicPipTests : PipTestBase() {
     fun openPip_afterScreenSaver() {
         runWithDreamManager { dreamManager ->
             dreamManager.dream()
-            Condition.waitFor("Device must be dreaming") { dreamManager.isDreaming }
+            dreamManager.waitForDream()
         }
 
         // Launch pip activity that is supposed to wake up the device
@@ -134,9 +134,9 @@ class BasicPipTests : PipTestBase() {
 
         runWithDreamManager { dreamManager ->
             dreamManager.dream()
-            Condition.waitFor("Device must be dreaming") { dreamManager.isDreaming }
+            dreamManager.waitForDream()
             dreamManager.awaken()
-            Condition.waitFor("Device must be awake") { !dreamManager.isDreaming }
+            dreamManager.waitForAwake()
         }
 
         assertLaunchedNotFocused(PIP_ACTIVITY)
@@ -331,6 +331,22 @@ class BasicPipTests : PipTestBase() {
         return SystemUtil.runWithShellPermissionIdentity(ThrowingSupplier {
             actions(dreamManager)
         }, READ_DREAM_STATE, WRITE_DREAM_STATE)
+    }
+
+    /** Wait for the device to enter dream state. Throw on timeout. */
+    private fun IDreamManager.waitForDream() {
+        val message = "Device must be dreaming!"
+        Condition.waitFor(message) {
+            isDreaming
+        } || error(message)
+    }
+
+    /** Wait for the device to awaken. Throw on timeout. */
+    private fun IDreamManager.waitForAwake() {
+        val message = "Device must be awake!"
+        Condition.waitFor(message) {
+            !isDreaming
+        } || error(message)
     }
 
     private fun locateByResourceName(resourceName: String): UiObject2 =
