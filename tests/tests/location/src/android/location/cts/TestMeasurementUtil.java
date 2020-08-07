@@ -16,6 +16,8 @@
 
 package android.location.cts;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
@@ -128,6 +130,13 @@ public final class TestMeasurementUtil {
                 + "from year " + minHardwareYear + " or newer provide GnssMeasurement support." );
 
         return true;
+    }
+
+    /**
+     * Check if current device is an Android Automotive OS device.
+     */
+    public static boolean isAutomotiveDevice(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     /**

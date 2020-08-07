@@ -106,6 +106,11 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
       return;
     }
 
+    if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+        Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
+        return;
+    }
+
     mLocationListener = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
     mTestLocationManager.requestLocationUpdates(mLocationListener);
 
@@ -251,6 +256,11 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
         // From android O, CTS tests should run in the lab with GPS signal.
         if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
                 TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, true)) {
+            return;
+        }
+
+        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
             return;
         }
 
