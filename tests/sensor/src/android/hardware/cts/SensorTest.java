@@ -37,6 +37,7 @@ import android.hardware.cts.helpers.sensorverification.ContinuousEventSanitizedV
 import android.hardware.cts.helpers.sensorverification.EventGapVerification;
 import android.hardware.cts.helpers.sensorverification.EventOrderingVerification;
 import android.hardware.cts.helpers.sensorverification.EventTimestampSynchronizationVerification;
+import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PowerManager;
@@ -44,6 +45,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
+import com.android.compatibility.common.util.PropertyUtil;
 
 import junit.framework.Assert;
 
@@ -563,7 +565,11 @@ public class SensorTest extends SensorTestCase {
                     sensor.getResolution() <= maxResolution);
         }
 
-        if (SensorCtsHelper.hasMinResolutionRequirement(sensor)) {
+        // The minimum resolution requirement was introduced to the CDD in R so
+        // it's only possible to assert compliance for devices that release with
+        // R or later.
+        if (PropertyUtil.getFirstApiLevel() >= VERSION_CODES.R &&
+                SensorCtsHelper.hasMinResolutionRequirement(sensor)) {
             float minResolution = SensorCtsHelper.getRequiredMinResolutionForSensor(sensor);
             assertTrue("Resolution must be >= " + minResolution + ". Resolution =" +
                     sensor.getResolution() + " " + sensor.getName(),
