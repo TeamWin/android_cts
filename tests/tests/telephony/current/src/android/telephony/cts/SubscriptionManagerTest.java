@@ -39,16 +39,19 @@ import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.os.Looper;
 import android.os.ParcelUuid;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestThread;
 import com.android.internal.util.ArrayUtils;
 
 import org.junit.AfterClass;
@@ -72,6 +75,7 @@ import java.util.stream.Collectors;
 
 
 public class SubscriptionManagerTest {
+    private static final String TAG = "SubscriptionManagerTest";
     private SubscriptionManager mSm;
 
     private int mSubId;
@@ -687,12 +691,51 @@ public class SubscriptionManagerTest {
         if (!isSupported()) return;
         boolean enabled = executeWithShellPermissionAndDefault(false, mSm,
                 (sm) -> sm.isSubscriptionEnabled(mSubId));
-        // Enable or disable subscription may require users UX confirmation or may not be supported.
-        // Call APIs to make sure there's no crash.
-        executeWithShellPermissionAndDefault(false, mSm,
-                (sm) -> sm.setSubscriptionEnabled(mSubId, !enabled));
-        executeWithShellPermissionAndDefault(false, mSm,
-                (sm) -> sm.setSubscriptionEnabled(mSubId, enabled));
+
+        // wait for the first call to take effect
+        CountDownLatch subscriptionEnabledLatch = new CountDownLatch(1);
+        TestThread t = new TestThread(new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+
+                SubscriptionManager.OnSubscriptionsChangedListener listener =
+                        new SubscriptionManager.OnSubscriptionsChangedListener() {
+                            @Override
+                            public void onSubscriptionsChanged() {
+                                if (executeWithShellPermissionAndDefault(enabled, mSm,
+                                        (sm) -> sm.isSubscriptionEnabled(mSubId)) != enabled) {
+                                    subscriptionEnabledLatch.countDown();
+                                }
+                            }
+                        };
+                mSm.addOnSubscriptionsChangedListener(listener);
+
+                Looper.loop();
+            }
+        });
+
+        try {
+            t.start();
+            // Enable or disable subscription may require users UX confirmation or may not be
+            // supported. Call APIs to make sure there's no crash.
+            executeWithShellPermissionAndDefault(false, mSm,
+                    (sm) -> sm.setSubscriptionEnabled(mSubId, !enabled));
+
+            boolean setSubscriptionEnabledCallComplete =
+                    subscriptionEnabledLatch.await(5000, TimeUnit.MILLISECONDS);
+            if (!setSubscriptionEnabledCallComplete) {
+                // not treating this as test failure as it may be due to UX confirmation or may not
+                // be supported
+                Log.e(TAG, "setSubscriptionEnabled() did not complete");
+                return;
+            }
+
+            executeWithShellPermissionAndDefault(false, mSm,
+                    (sm) -> sm.setSubscriptionEnabled(mSubId, enabled));
+        } catch (InterruptedException e) {
+            // ignore
+        }
     }
 
     @Test
