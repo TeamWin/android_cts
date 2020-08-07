@@ -27,6 +27,8 @@ cc_library_shared {
         "libdl",
     ],
 
+    stl: "c++_static",
+
     static_libs: ["cpufeatures"],
     sdk_version: "19",
 
