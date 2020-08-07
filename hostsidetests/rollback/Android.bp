@@ -16,9 +16,8 @@ java_test_host {
     name: "CtsRollbackManagerHostTestCases",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
-    libs: [
-        "cts-tradefed", "cts-shim-host-lib", "tradefed", "truth-prebuilt", "cts-install-lib-host"
-    ],
+    libs: ["cts-tradefed", "cts-shim-host-lib", "tradefed", "truth-prebuilt"],
+    static_libs: ["cts-install-lib-host"],
     data: [":CtsRollbackManagerHostTestHelperApp", ":CtsRollbackManagerHostTestHelperApp2"],
     test_suites: ["cts", "general-tests"],
 }

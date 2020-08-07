@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.install.lib.host;
+package android.cts.install.lib.host;
 
 import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
 
