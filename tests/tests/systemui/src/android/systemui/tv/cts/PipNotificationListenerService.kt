@@ -16,8 +16,8 @@
 
 package android.systemui.tv.cts
 
-import android.app.Notification
 import android.content.ComponentName
+import android.server.wm.Condition
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_CTS_PACKAGE
@@ -27,12 +27,16 @@ import javax.annotation.concurrent.GuardedBy
  * This service exposes pip notifications to the tests.
  */
 class PipNotificationListenerService : NotificationListenerService() {
+    /**
+     * Stores notifications mapped by their notifying app uid and the notification id.
+     * We cannot store these efficiently in a set as they only support referential equality.
+     */
     @GuardedBy("this")
-    private val _activeNotifications: MutableSet<Notification> = mutableSetOf()
+    private val _activeNotifications = mutableMapOf<Pair<Int, Int>, StatusBarNotification>()
 
     /** Currently active notifications from the [ResourceNames.SYSTEM_UI_PACKAGE] package. */
-    val activePipNotifications: Set<Notification>
-        get() = synchronized(this) { _activeNotifications.toSet() }
+    val activePipNotifications: List<StatusBarNotification>
+        get() = synchronized(this) { _activeNotifications.values.toList() }
 
     /** Clear the internal active and removed notification sets. */
     fun clearNotifications() {
@@ -41,28 +45,37 @@ class PipNotificationListenerService : NotificationListenerService() {
         }
     }
 
-    fun findActivePipNotification(title: String): Notification? =
-        activePipNotifications.find { it.title() == title }
+    /** Find a notification by the given title or return null. */
+    fun findActivePipNotification(title: String): StatusBarNotification? =
+        Condition.waitForResult("find notification with title $title") { condition ->
+            condition.setResultSupplier {
+                activePipNotifications.find { it.title() == title }
+            }
+            condition.setResultValidator { it != null }
+            condition.setReturnLastResult(true)
+        }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         if (sbn?.packageName == ResourceNames.SYSTEM_UI_PACKAGE) {
-            sbn.notification?.let {
-                synchronized(this) {
-                    _activeNotifications.add(it)
-                }
+            synchronized(this) {
+                _activeNotifications[sbn.asKey()] = sbn
             }
         }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         if (sbn?.packageName == ResourceNames.SYSTEM_UI_PACKAGE) {
-            sbn.notification?.let {
-                synchronized(this) {
-                    _activeNotifications.remove(it)
-                }
+            synchronized(this) {
+                _activeNotifications.remove(sbn.asKey())
             }
         }
     }
+
+    /**
+     * Produce a unique key for this notification.
+     * Specifically, this is a pair of notifying app uid and the notification id.
+     */
+    private fun StatusBarNotification.asKey() = uid to id
 
     override fun onListenerConnected() {
         instance = this
