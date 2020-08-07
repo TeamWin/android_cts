@@ -49,6 +49,19 @@
   <application>
       <uses-library android:name="android.test.runner"/>
       <activity android:name=".UidStateForceActivity" />
+      <receiver android:name=".PublicActionReceiver"
+                android:exported="false">
+          <intent-filter>
+              <action android:name="android.app.appops.cts.PUBLIC_ACTION" />
+          </intent-filter>
+      </receiver>
+      <receiver android:name=".ProtectedActionReceiver"
+                android:exported="false"
+                android:permission="android.permission.READ_CONTACTS">
+          <intent-filter>
+              <action android:name="android.app.appops.cts.PROTECTED_ACTION" />
+          </intent-filter>
+      </receiver>
   </application>
 
   <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
