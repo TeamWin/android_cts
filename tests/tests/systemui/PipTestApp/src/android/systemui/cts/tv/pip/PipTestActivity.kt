@@ -164,4 +164,9 @@ class PipTestActivity : Activity() {
     private fun PlaybackState.Builder.setState(state: Int) = apply {
         setState(state, 0, 0f)
     }
+
+    override fun onDestroy() {
+        unregisterReceiver(broadcastReceiver)
+        super.onDestroy()
+    }
 }
