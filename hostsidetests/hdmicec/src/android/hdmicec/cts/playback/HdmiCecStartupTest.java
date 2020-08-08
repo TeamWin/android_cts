@@ -51,12 +51,13 @@ public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
   private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
   private static final ImmutableList<CecOperand> necessaryMessages =
       new ImmutableList.Builder<CecOperand>()
-          .add(CecOperand.REPORT_PHYSICAL_ADDRESS, CecOperand.CEC_VERSION,
-              CecOperand.DEVICE_VENDOR_ID, CecOperand.GIVE_POWER_STATUS).build();
+          .add(CecOperand.REPORT_PHYSICAL_ADDRESS).build();
   private static final ImmutableList<CecOperand> permissibleMessages =
       new ImmutableList.Builder<CecOperand>()
           .add(CecOperand.VENDOR_COMMAND, CecOperand.GIVE_DEVICE_VENDOR_ID,
-              CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME).build();
+              CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME, CecOperand.CEC_VERSION,
+              CecOperand.DEVICE_VENDOR_ID, CecOperand.GIVE_POWER_STATUS,
+              CecOperand.GET_MENU_LANGUAGE).build();
 
   public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
 

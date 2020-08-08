@@ -21,6 +21,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.systemui.tv.cts.KeyboardActivity.ACTION_HIDE_KEYBOARD
 import android.systemui.tv.cts.KeyboardActivity.ACTION_SHOW_KEYBOARD
+import android.util.Log
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 
@@ -28,7 +29,6 @@ import android.widget.EditText
 class KeyboardActivity : Activity() {
     private lateinit var inputMethodManager: InputMethodManager
     private lateinit var textInput: EditText
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.keyboard_layout)
@@ -47,11 +47,17 @@ class KeyboardActivity : Activity() {
     private fun handle(intent: Intent?) {
         when (intent?.action) {
             ACTION_SHOW_KEYBOARD -> {
+                Log.d(TAG, "Showing keyboard")
                 inputMethodManager.showSoftInput(textInput, 0)
             }
             ACTION_HIDE_KEYBOARD -> {
+                Log.d(TAG, "Hiding keyboard")
                 inputMethodManager.hideSoftInputFromWindow(textInput.windowToken, 0)
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "KeyboardActivity"
     }
 }
