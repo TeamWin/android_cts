@@ -27,6 +27,7 @@ import static android.accessibilityservice.cts.utils.GestureUtils.drag;
 import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.lastPointOf;
 import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
+import static android.accessibilityservice.cts.utils.GestureUtils.path;
 import static android.accessibilityservice.cts.utils.GestureUtils.pointerDown;
 import static android.accessibilityservice.cts.utils.GestureUtils.pointerUp;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
@@ -181,17 +182,35 @@ public class MagnificationGestureHandlerTest {
     public void testPanning() {
         //The minimum movement to transit to panningState.
         final float minSwipeDistance = ViewConfiguration.get(
-                mInstrumentation.getContext()).getScaledTouchSlop();
+                mInstrumentation.getContext()).getScaledTouchSlop() + 1;
         final boolean screenBigEnough = mPan > minSwipeDistance;
         if (!mHasTouchscreen || !screenBigEnough) return;
         assertFalse(isZoomed());
 
         setZoomByTripleTapping(true);
-        PointF oldCenter = mCurrentZoomCenter;
+        final PointF oldCenter = mCurrentZoomCenter;
 
-        dispatch(
-                swipe(mTapLocation, add(mTapLocation, -mPan, 0)),
-                swipe(mTapLocation2, add(mTapLocation2, -mPan, 0)));
+        // Dispatch a swipe gesture composed of two consecutive gestures; the first one to transit
+        // to panningState, and the second one to moves the window.
+        final GestureDescription.Builder builder1 = new GestureDescription.Builder();
+        final GestureDescription.Builder builder2 = new GestureDescription.Builder();
+
+        final long totalDuration = ViewConfiguration.getTapTimeout();
+        final long firstDuration = (long)(totalDuration * (minSwipeDistance / mPan));
+
+        for (final PointF startPoint : new PointF[]{mTapLocation, mTapLocation2}) {
+            final PointF midPoint = add(startPoint, -minSwipeDistance, 0);
+            final PointF endPoint = add(startPoint, -mPan, 0);
+            final StrokeDescription firstStroke = new StrokeDescription(path(startPoint, midPoint),
+                    0, firstDuration, true);
+            final StrokeDescription secondStroke = firstStroke.continueStroke(
+                    path(midPoint, endPoint), 0, totalDuration - firstDuration, false);
+            builder1.addStroke(firstStroke);
+            builder2.addStroke(secondStroke);
+        }
+
+        dispatch(builder1.build());
+        dispatch(builder2.build());
 
         waitOn(mZoomLock,
                 () -> (mCurrentZoomCenter.x - oldCenter.x
