@@ -128,6 +128,15 @@
     <string name="da_tapjacking_test_info">This test checks that an activity cannot tapjack the
         user by obscuring the device admin details while prompting the user to activate the admin.
     </string>
+    <string name="car_enable_garage_monitor">Enable Garage Mode Monitor</string>
+    <string name="car_garage_mode_test">Garage Mode Test</string>
+    <string name="car_garage_mode_test_desc">
+        This test verifies that Garage Mode runs at the end of a drive.\n
+        1. Touch \"Enable Garage Mode Monitor\".\n
+        2. Turn the vehicle off and exit the vehicle.\n
+        3. Do not enter the vehicle for at least 15 minutes.\n
+        4. Enter the vehicle and re-launch this app.\n
+        5. If Garage Mode ran, the pass button will be enabled.</string>
     <string name="car_dock_test">Car Dock Test</string>
     <string name="car_dock_test_desc">This test ensures that car mode opens the app associated with
         car dock when going into car mode.\n\n
