@@ -35,6 +35,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
@@ -46,6 +47,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /** HDMI CEC test to test system audio mode (Section 11.2.15) */
+@Ignore("b/162820841")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
 

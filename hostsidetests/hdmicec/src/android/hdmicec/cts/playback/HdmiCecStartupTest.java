@@ -45,6 +45,7 @@ import java.util.List;
 /**
  * HDMI CEC test to verify physical address after device reboot (Section 10.2.3)
  */
+@Ignore("b/149519706")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
 
