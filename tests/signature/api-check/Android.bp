@@ -72,9 +72,9 @@ hiddenapi_flags {
     filename: "hiddenapi-flags.csv",
 }
 
-// Defaults for hiddenapi blacklist checks.
+// Defaults for hiddenapi blocklist checks.
 java_defaults {
-    name: "hiddenapi-blacklist-check-defaults",
+    name: "hiddenapi-blocklist-check-defaults",
     defaults: ["signature-api-check-defaults"],
     java_resources: [
         ":cts-hiddenapi-flags-csv",
