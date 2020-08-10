@@ -153,6 +153,36 @@ public class InputJsonParser {
         }
     }
 
+    /**
+     * Extract the Vendor id from the raw resource file.
+     *
+     * @param resourceId resource file that contains the register command.
+     * @return device vendor id
+     */
+    public int readVendorId(int resourceId) {
+        try {
+            JSONObject json = new JSONObject(readRawResource(resourceId));
+            return json.getInt("vid");
+        } catch (JSONException e) {
+            throw new RuntimeException("Could not read vendor id from resource " + resourceId);
+        }
+    }
+
+    /**
+     * Extract the Product id from the raw resource file.
+     *
+     * @param resourceId resource file that contains the register command.
+     * @return device product id
+     */
+    public int readProductId(int resourceId) {
+        try {
+            JSONObject json = new JSONObject(readRawResource(resourceId));
+            return json.getInt("pid");
+        } catch (JSONException e) {
+            throw new RuntimeException("Could not read prduct id from resource " + resourceId);
+        }
+    }
+
     private InputEvent parseInputEvent(int testCaseNumber, int source, JSONObject entry) {
         try {
             InputEvent event;
@@ -194,6 +224,75 @@ public class InputJsonParser {
                 JSONArray events = testcaseEntry.getJSONArray("events");
                 for (int i = 0; i < events.length(); i++) {
                     testData.events.add(parseInputEvent(i, source, events.getJSONObject(i)));
+                }
+                tests.add(testData);
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not process entry " + testCaseNumber);
+            }
+        }
+        return tests;
+    }
+
+    /**
+     * Read json resource, and return a {@code List} of HidVibratorTestData, which contains
+     * the vibrator FF effect strength data index, and the hid output verification data.
+     */
+    public List<HidVibratorTestData> getHidVibratorTestData(int resourceId) {
+        JSONArray json = getJsonArrayFromResource(resourceId);
+        List<HidVibratorTestData> tests = new ArrayList<HidVibratorTestData>();
+        for (int testCaseNumber = 0; testCaseNumber < json.length(); testCaseNumber++) {
+            HidVibratorTestData testData = new HidVibratorTestData();
+            try {
+                JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
+                testData.leftFfIndex = testcaseEntry.getInt("leftFfIndex");
+                testData.rightFfIndex = testcaseEntry.getInt("rightFfIndex");
+
+                JSONArray durationsArray = testcaseEntry.getJSONArray("durations");
+                JSONArray amplitudesArray = testcaseEntry.getJSONArray("amplitudes");
+                assertTrue(durationsArray.length() == amplitudesArray.length());
+                testData.durations = new ArrayList<Long>();
+                testData.amplitudes = new ArrayList<Integer>();
+                for (int i = 0; i < durationsArray.length(); i++) {
+                    testData.durations.add(durationsArray.getLong(i));
+                    testData.amplitudes.add(amplitudesArray.getInt(i));
+                }
+
+                JSONArray outputArray = testcaseEntry.getJSONArray("output");
+                testData.verifyMap = new ArrayMap<Integer, Integer>();
+                for (int i = 0; i < outputArray.length(); i++) {
+                    JSONObject item = outputArray.getJSONObject(i);
+                    int index = item.getInt("index");
+                    int data = item.getInt("data");
+                    testData.verifyMap.put(index, data);
+                }
+                tests.add(testData);
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not process entry " + testCaseNumber);
+            }
+        }
+        return tests;
+    }
+
+    /**
+     * Read json resource, and return a {@code List} of UinputVibratorTestData, which contains
+     * the vibrator FF effect of durations and amplitudes.
+     */
+    public List<UinputVibratorTestData> getUinputVibratorTestData(int resourceId) {
+        JSONArray json = getJsonArrayFromResource(resourceId);
+        List<UinputVibratorTestData> tests = new ArrayList<UinputVibratorTestData>();
+        for (int testCaseNumber = 0; testCaseNumber < json.length(); testCaseNumber++) {
+            UinputVibratorTestData testData = new UinputVibratorTestData();
+            try {
+                JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
+
+                JSONArray durationsArray = testcaseEntry.getJSONArray("durations");
+                JSONArray amplitudesArray = testcaseEntry.getJSONArray("amplitudes");
+                assertTrue(durationsArray.length() == amplitudesArray.length());
+                testData.durations = new ArrayList<Long>();
+                testData.amplitudes = new ArrayList<Integer>();
+                for (int i = 0; i < durationsArray.length(); i++) {
+                    testData.durations.add(durationsArray.getLong(i));
+                    testData.amplitudes.add(amplitudesArray.getInt(i));
                 }
                 tests.add(testData);
             } catch (JSONException e) {

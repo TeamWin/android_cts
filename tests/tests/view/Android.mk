@@ -34,6 +34,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util-axt \
     ctsdeviceutillegacy-axt \
     ctstestrunner-axt \
+    cts-input-lib \
     mockito-target-minus-junit4 \
     platform-test-annotations \
     ub-uiautomator \
