@@ -54,4 +54,11 @@ public final class HdmiCecConstants {
     public static final int ABORT_INVALID_OPERAND = 3;
     public static final int ABORT_REFUSED = 4;
     public static final int ABORT_UNABLE_TO_DETERMINE = 5;
+
+    // CEC Device feature list
+    public static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
+    public static final String LEANBACK_FEATURE = "feature:android.software.leanback";
+
+    // CEC Device property list
+    public static final String HDMI_DEVICE_TYPE_PROPERTY = "ro.hdmi.device_type";
 }

@@ -47,11 +47,11 @@ public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
+            .outerRule(new RequiredFeatureRule(this, HdmiCecConstants.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, HdmiCecConstants.LEANBACK_FEATURE))
             .around(RequiredPropertyRule.asCsvContainsValue(
                 this,
-                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
+                HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
                 PLAYBACK_DEVICE.getDeviceType()))
             .around(hdmiCecClient);
 

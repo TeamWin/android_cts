@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 import android.hdmicec.cts.RequiredPropertyRule;
 import android.hdmicec.cts.RequiredFeatureRule;
@@ -45,11 +46,11 @@ public final class HdmiCecDeviceOsdNameTest extends BaseHostJUnit4Test {
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
+            .outerRule(new RequiredFeatureRule(this, HdmiCecConstants.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, HdmiCecConstants.LEANBACK_FEATURE))
             .around(RequiredPropertyRule.asCsvContainsValue(
                 this,
-                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
+                HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
                 LogicalAddress.PLAYBACK_1.getDeviceType()))
             .around(hdmiCecClient);
 
