@@ -29,12 +29,14 @@ import android.hdmicec.cts.RequiredFeatureRule;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
 /** HDMI CEC test to test audio return channel control (Section 11.2.17) */
+@Ignore("b/162820841")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecAudioReturnChannelControlTest extends BaseHostJUnit4Test {
 

@@ -27,11 +27,13 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
+@Ignore("b/162820841")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Test {
 
