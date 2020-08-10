@@ -999,8 +999,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             boolean wifiEnabled = mWifiManager.isWifiEnabled();
             mWifiManager.startLocalOnlyHotspot(customConfig, executor, callback);
-            Log.d(TAG, "Sleeping for 2 seconds");
-            Thread.sleep(2000);
+            // now wait for callback
+            Thread.sleep(TEST_WAIT_DURATION_MS);
 
             // Verify callback is run on the supplied executor
             assertFalse(callback.onStartedCalled);
