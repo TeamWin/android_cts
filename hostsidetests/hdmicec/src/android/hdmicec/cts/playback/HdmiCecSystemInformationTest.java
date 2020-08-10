@@ -82,10 +82,9 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     public void cect_11_2_6_2_GivePhysicalAddress() throws Exception {
         hdmiCecClient.sendCecMessage(CecOperand.GIVE_PHYSICAL_ADDRESS);
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
-        /* The checkExpectedOutput has already verified the first 4 nibbles of the message. We
-            * have to verify the last 6 nibbles */
+        /* Check that the physical address taken is valid. */
+        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
         int receivedParams = CecMessage.getParams(message);
-        assertThat(HdmiCecConstants.PHYSICAL_ADDRESS).isEqualTo(receivedParams >> 8);
         assertThat(HdmiCecConstants.PLAYBACK_DEVICE_TYPE).isEqualTo(receivedParams & 0xFF);
     }
 

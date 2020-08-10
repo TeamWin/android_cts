@@ -16,11 +16,14 @@
 
 package android.hdmicec.cts;
 
+import com.android.tradefed.config.Option;
+import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.rules.TestRule;
 
 /** Base class for all HDMI CEC CTS tests. */
+@OptionClass(alias="hdmi-cec-client-cts-test")
 public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     public final HdmiCecClientWrapper hdmiCecClient;
@@ -54,4 +57,9 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                         dutLogicalAddress.getDeviceType());
         }
     }
+
+    @Option(name = HdmiCecConstants.PHYSICAL_ADDRESS_NAME,
+        description = "HDMI CEC physical address of the DUT",
+        mandatory = false)
+    public static int dutPhysicalAddress = HdmiCecConstants.DEFAULT_PHYSICAL_ADDRESS;
 }
