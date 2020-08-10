@@ -16,8 +16,6 @@
 
 package com.android.cts.rollback.host;
 
-import static com.android.cts.shim.lib.ShimPackage.SHIM_APEX_PACKAGE_NAME;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.hamcrest.CoreMatchers.endsWith;
@@ -25,10 +23,8 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-import com.android.cts.install.lib.host.InstallUtilsHost;
-import com.android.ddmlib.Log;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
+import android.cts.install.lib.host.InstallUtilsHost;
+
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
