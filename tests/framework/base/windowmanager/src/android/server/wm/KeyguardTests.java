@@ -569,7 +569,7 @@ public class KeyguardTests extends KeyguardTestBase {
         mWmState.waitForKeyguardShowingAndNotOccluded();
         mWmState.waitForDisplayUnfrozen();
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-        mWmState.assertSanity();
+        mWmState.assertValidation();
         mWmState.assertHomeActivityVisible(false);
         mWmState.assertKeyguardShowingAndNotOccluded();
         // The {@link SHOW_WHEN_LOCKED_ACTIVITY} has gone because of the 'finish' broadcast.
