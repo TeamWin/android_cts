@@ -16,11 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
-import android.platform.test.annotations.SecurityTest;
-
-import org.junit.Test;
-
 import com.android.tradefed.device.DeviceNotAvailableException;
+import android.platform.test.annotations.SecurityTest;
 
 /**
  * Host side tests for separate profile challenge permissions.
@@ -49,7 +46,6 @@ public class SeparateProfileChallengeTest extends BaseDevicePolicyTest {
     }
 
     @SecurityTest
-    @Test
     public void testSeparateProfileChallengePermissions() throws Exception {
         if (!mHasFeature || !mSupportsMultiUser) {
             return;
