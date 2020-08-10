@@ -19,6 +19,8 @@ package android.app.cts;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import android.app.Instrumentation;
 import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
@@ -28,6 +30,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
+import android.provider.DeviceConfig;
 import android.test.InstrumentationTestCase;
 
 public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
@@ -41,6 +44,9 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             "android.app.stubs.LocalForegroundService.RESULT";
     private static final String ACTION_START_FGSL_RESULT =
             "android.app.stubs.LocalForegroundServiceLocation.RESULT";
+
+    private static final String KEY_DEFAULT_FGS_STARTS_RESTRICTION_ENABLED =
+            "default_fgs_starts_restriction_enabled";
 
     private static final int WAITFOR_MSEC = 10000;
 
@@ -365,5 +371,81 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         } finally {
             uid1Watcher.finish();
         }
+    }
+
+    /**
+     * Test FGS background startForeground() restriction.
+     * @throws Exception
+     */
+    public void testFgsStartFromBG() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        try {
+            // disable the FGS background startForeground() restriction.
+            enableFgsRestriction(false);
+            // Package1 is in BG state, Start FGS in package1.
+            Bundle bundle = new Bundle();
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+            // Package1 is in STATE_FG_SERVICE.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            // stop FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true);
+            // Start FGS in BG state.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+            // FGS goes to FGS state momentarily because Context.startForegroundService() call.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            // FGS will failed to startForeground() and return to service state.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
+            // stop FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+
+            // Put Package1 in TOP state.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
+            // Now it can start FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+            // Stop activity.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // FGS is still running.
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            enableFgsRestriction(false);
+        }
+    }
+
+    private void enableFgsRestriction(boolean enable) {
+        runWithShellPermissionIdentity(()-> {
+                    DeviceConfig.setProperty("activity_manager",
+                            KEY_DEFAULT_FGS_STARTS_RESTRICTION_ENABLED, Boolean.toString(enable),
+                            false);
+                }
+        );
     }
 }
