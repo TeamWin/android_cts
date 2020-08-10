@@ -120,6 +120,7 @@ public class TestUtils {
     public static void setupDefaultDirectories() {
         for (File dir : getDefaultTopLevelDirs()) {
             dir.mkdir();
+            assertThat(dir.exists()).isTrue();
         }
     }
 
