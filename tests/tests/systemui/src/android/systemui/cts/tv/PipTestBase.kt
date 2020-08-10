@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.systemui.tv.cts
+package android.systemui.cts.tv
 
 import android.app.Instrumentation
 import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
@@ -27,6 +27,7 @@ import android.server.wm.UiDeviceUtils
 import android.server.wm.WindowManagerState
 import android.server.wm.WindowManagerState.STATE_PAUSED
 import android.server.wm.WindowManagerStateHelper
+import android.systemui.tv.cts.Components
 import android.systemui.tv.cts.Components.activityName
 import android.systemui.tv.cts.ResourceNames.STRING_PIP_MENU_BOUNDS
 import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE

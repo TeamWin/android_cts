@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.systemui.tv.cts
+package android.systemui.cts.tv
 
 import android.Manifest.permission.READ_DREAM_STATE
 import android.Manifest.permission.WRITE_DREAM_STATE
@@ -32,6 +32,7 @@ import android.service.dreams.IDreamManager
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
 import android.systemui.tv.cts.Components.PIP_MENU_ACTIVITY
 import android.systemui.tv.cts.Components.windowName
+import android.systemui.tv.cts.PipActivity
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_DENOMINATOR
 import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_NUMERATOR
@@ -39,6 +40,7 @@ import android.systemui.tv.cts.PipActivity.Ratios.MAX_ASPECT_RATIO_DENOMINATOR
 import android.systemui.tv.cts.PipActivity.Ratios.MAX_ASPECT_RATIO_NUMERATOR
 import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_DENOMINATOR
 import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_NUMERATOR
+import android.systemui.tv.cts.PipMenu
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_FULLSCREEN_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_PLAY_PAUSE_BUTTON
