@@ -30,6 +30,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
@@ -76,6 +77,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
      * the volume up and down keys are pressed on the DUT. Test also verifies that the
      * <USER_CONTROL_PRESSED> message has the right control param.
      */
+    @Ignore("b/162836413")
     @Test
     public void cect_11_2_15_11_VolumeUpDownUserControlPressed() throws Exception {
         ITestDevice device = getDevice();
@@ -103,6 +105,7 @@ public final class HdmiCecSystemAudioControlTest extends BaseHostJUnit4Test {
      * the mute key is pressed on the DUT. Test also verifies that the <USER_CONTROL_PRESSED>
      * message has the right control param.
      */
+    @Ignore("b/162836413")
     @Test
     public void cect_11_2_15_12_MuteUserControlPressed() throws Exception {
         ITestDevice device = getDevice();
