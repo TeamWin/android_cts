@@ -250,8 +250,15 @@ public class CapturedActivity extends Activity {
             Display display = getWindow().getDecorView().getDisplay();
             Point size = new Point();
             DisplayMetrics metrics = new DisplayMetrics();
-            display.getRealSize(size);
             display.getMetrics(metrics);
+
+            final DisplayManager displayManager =
+                    (DisplayManager) CapturedActivity.this.getSystemService(
+                    Context.DISPLAY_SERVICE);
+            final Display defaultDisplay = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+            final int rotation = defaultDisplay.getRotation();
+            Display.Mode mode = defaultDisplay.getMode();
+            size = new Point(mode.getPhysicalWidth(), mode.getPhysicalHeight());
 
             View testAreaView = findViewById(android.R.id.content);
             Rect boundsToCheck = new Rect(0, 0, testAreaView.getWidth(), testAreaView.getHeight());
