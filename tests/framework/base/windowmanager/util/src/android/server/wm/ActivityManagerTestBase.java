@@ -1021,7 +1021,7 @@ public abstract class ActivityManagerTestBase {
         mWmState.waitForWithAmState(state -> activityClassName.equals(state.getFocusedActivity()),
                 "activity to be on top");
 
-        mWmState.assertSanity();
+        mWmState.assertValidation();
         mWmState.assertFocusedActivity(message, activityName);
         assertTrue("Activity must be resumed",
                 mWmState.hasActivityState(activityName, STATE_RESUMED));
