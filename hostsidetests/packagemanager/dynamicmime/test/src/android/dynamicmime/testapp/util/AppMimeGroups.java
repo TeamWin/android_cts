@@ -72,7 +72,7 @@ public class AppMimeGroups {
 
         mContext.sendBroadcast(getRequestIntent(mimeGroup, mimeTypes, request));
 
-        Intent response = receiver.awaitForBroadcast(TimeUnit.SECONDS.toMillis(5L));
+        Intent response = receiver.awaitForBroadcast(TimeUnit.SECONDS.toMillis(60L));
 
         mContext.unregisterReceiver(receiver);
 
