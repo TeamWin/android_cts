@@ -4882,7 +4882,7 @@ public class ViewTest {
         float[] newValues = new float[9];
         newMatrix.getValues(newValues);
         int[] location = new int[2];
-        view.getLocationInWindow(location);
+        view.getLocationOnScreen(location);
         boolean hasChanged = false;
         for (int i = 0; i < 9; ++i) {
             if (initialValues[i] != newValues[i]) {
@@ -4890,7 +4890,7 @@ public class ViewTest {
             }
         }
         assertTrue("Matrix should be changed", hasChanged);
-        assertEquals("Matrix should reflect position in window",
+        assertEquals("Matrix should reflect position on screen",
                 location[1], newValues[5], 0.001);
     }
 
