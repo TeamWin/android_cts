@@ -265,9 +265,6 @@ public class AnimatedVectorDrawableParameterizedTest {
 
         for (int x = rangeRect.left; x < rangeRect.right; x++) {
             for (int y = rangeRect.top; y < rangeRect.bottom; y++) {
-                if (image1.getPixel(x, y) != image2.getPixel(x, y)) {
-                    return false;
-                }
                 int color1 = image1.getPixel(x, y);
                 int color2 = image2.getPixel(x, y);
                 int rDiff = Math.abs(Color.red(color1) - Color.red(color2));
