@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.systemui.tv.cts
+package android.systemui.cts.tv
 
 import android.graphics.Region
 import android.platform.test.annotations.Postsubmit
