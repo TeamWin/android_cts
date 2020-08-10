@@ -3148,7 +3148,9 @@ public class ScopedStorageTest {
 
     private static void assertCreateFilesAs(TestApp testApp, File... files) throws Exception {
         for (File file : files) {
-            assertThat(createFileAs(testApp, file.getPath())).isTrue();
+            assertFalse("File already exists: " + file, file.exists());
+            assertTrue("Failed to create file " + file + " on behalf of "
+                            + testApp.getPackageName(), createFileAs(testApp, file.getPath()));
         }
     }
 
@@ -3162,8 +3164,10 @@ public class ScopedStorageTest {
     private static void assertCreatePublishedFilesAs(TestApp testApp, File... files)
             throws Exception {
         for (File file : files) {
-            assertThat(createFileAs(testApp, file.getPath())).isTrue();
-            assertNotNull(MediaStore.scanFile(getContentResolver(), file));
+            assertTrue("Failed to create published file " + file + " on behalf of "
+                    + testApp.getPackageName(), createFileAs(testApp, file.getPath()));
+            assertNotNull("Failed to scan " + file,
+                    MediaStore.scanFile(getContentResolver(), file));
         }
     }
 
@@ -3176,14 +3180,16 @@ public class ScopedStorageTest {
     private static void assertCanDeletePathsAs(TestApp testApp, String... filePaths)
             throws Exception {
         for (String path: filePaths) {
-            assertTrue(deleteFileAs(testApp, path));
+            assertTrue("Failed to delete file " + path + " on behalf of "
+                    + testApp.getPackageName(), deleteFileAs(testApp, path));
         }
     }
 
     private static void assertCantDeletePathsAs(TestApp testApp, String... filePaths)
             throws Exception {
         for (String path: filePaths) {
-            assertFalse(deleteFileAs(testApp, path));
+            assertFalse("Deleting " + path + " on behalf of " + testApp.getPackageName()
+                            + " was expected to fail", deleteFileAs(testApp, path));
         }
     }
 
@@ -3203,7 +3209,8 @@ public class ScopedStorageTest {
 
     private static void assertCanDeletePaths(String... filePaths) {
         for (String filePath : filePaths) {
-            assertTrue(new File(filePath).delete());
+            assertTrue("Failed to delete " + filePath,
+                    new File(filePath).delete());
         }
     }
 
