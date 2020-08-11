@@ -43,7 +43,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <service android:name="android.systemui.tv.cts.PipNotificationListenerService"
+        <service android:name=".tv.PipNotificationListenerService"
             android:exported="true"
             android:label="PipNotificationListenerService"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">

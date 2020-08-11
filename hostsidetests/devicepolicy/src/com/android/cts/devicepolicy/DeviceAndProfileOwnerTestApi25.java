@@ -58,7 +58,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
             return;
         }
         installAppAsUser(SIMPLE_PRE_M_APP_APK, mUserId);
-        executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantStateAppPreMDeviceAdminPreQ");
+        executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState_preMApp_preQDeviceAdmin");
     }
 
     @Test

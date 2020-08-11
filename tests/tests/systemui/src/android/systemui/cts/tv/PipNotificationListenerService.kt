@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package android.systemui.tv.cts
+package android.systemui.cts.tv
 
 import android.content.ComponentName
 import android.server.wm.Condition
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import android.systemui.tv.cts.ResourceNames
 import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_CTS_PACKAGE
 import javax.annotation.concurrent.GuardedBy
 

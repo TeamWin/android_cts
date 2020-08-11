@@ -27,7 +27,7 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
-import androidx.test.InstrumentationRegistry
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
@@ -63,7 +63,7 @@ abstract class BasePermissionTest {
     private var screenTimeoutBeforeTest: Long = 0L
 
     @Before
-    fun setUp() {
+    open fun setUp() {
         runWithShellPermissionIdentity {
             screenTimeoutBeforeTest = Settings.System.getLong(
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT
@@ -80,7 +80,7 @@ abstract class BasePermissionTest {
     }
 
     @After
-    fun tearDown() {
+    open fun tearDown() {
         runWithShellPermissionIdentity {
             Settings.System.putLong(
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT,

@@ -15,11 +15,12 @@
  */
 
 @file:JvmName("NotificationUtils")
-package android.systemui.tv.cts
+package android.systemui.cts.tv
 
 import android.app.Notification.EXTRA_TITLE
 import android.app.PendingIntent
 import android.service.notification.StatusBarNotification
+import android.systemui.tv.cts.TVNotificationExtender
 import java.net.URLEncoder
 
 /** Extract a pending intent that was put by a [android.app.Notification.TvExtender]. */

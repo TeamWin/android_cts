@@ -25,9 +25,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.cts.install.lib.host.InstallUtilsHost;
 import android.platform.test.annotations.LargeTest;
 
-import com.android.cts.install.lib.host.InstallUtilsHost;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AaptParser;

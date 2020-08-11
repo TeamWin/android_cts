@@ -1,3 +1,4 @@
+//
 // Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,17 +12,26 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-// Build the common library for use device-side
-java_library {
-    name: "devicepolicy-deviceside-common",
-    srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
-    libs: ["junit"],
+android_test_helper_app {
+    name: "CtsAppThatAccessesMicAndCameraPermission",
+    defaults: ["cts_defaults"],
+    sdk_version: "current",
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+
     static_libs: [
-            "androidx.legacy_legacy-support-v4",
-            "ctstestrunner-axt",
-            "androidx.test.rules",
-            "ub-uiautomator",
-            ],
+        "androidx.test.rules",
+        "kotlin-stdlib",
+        "kotlinx-coroutines-android",
+    ],
+
+    srcs: [
+        "src/**/*.kt"
+    ],
 }

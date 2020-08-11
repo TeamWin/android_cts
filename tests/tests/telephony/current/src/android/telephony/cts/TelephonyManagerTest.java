@@ -1255,8 +1255,6 @@ public class TelephonyManagerTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
-        assertEquals(mTelephonyManager.getServiceState().getState(), ServiceState.STATE_IN_SERVICE);
-
         TestThread t = new TestThread(new Runnable() {
             public void run() {
                 Looper.prepare();

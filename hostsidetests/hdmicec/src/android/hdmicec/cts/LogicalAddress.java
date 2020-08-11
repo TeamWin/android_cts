@@ -40,13 +40,6 @@ public enum LogicalAddress {
     private final int address;
     private static Map deviceMap = new HashMap<>();
 
-    // CEC Device feature list
-    public static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";
-    public static final String LEANBACK_FEATURE = "feature:android.software.leanback";
-
-    // CEC Device property list
-    public static final String HDMI_DEVICE_TYPE_PROPERTY = "ro.hdmi.device_type";
-
     @Override
     public String toString() {
         return Integer.toHexString(this.address);

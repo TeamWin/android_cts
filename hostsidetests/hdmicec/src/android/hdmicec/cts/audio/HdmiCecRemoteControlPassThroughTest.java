@@ -27,11 +27,13 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 
+@Ignore("b/162820841")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Test {
 
@@ -53,11 +55,11 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, LogicalAddress.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, LogicalAddress.LEANBACK_FEATURE))
+            .outerRule(new RequiredFeatureRule(this, HdmiCecConstants.HDMI_CEC_FEATURE))
+            .around(new RequiredFeatureRule(this, HdmiCecConstants.LEANBACK_FEATURE))
             .around(RequiredPropertyRule.asCsvContainsValue(
                 this,
-                LogicalAddress.HDMI_DEVICE_TYPE_PROPERTY,
+                HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
                 LogicalAddress.AUDIO_SYSTEM.getDeviceType()))
             .around(hdmiCecClient);
 
