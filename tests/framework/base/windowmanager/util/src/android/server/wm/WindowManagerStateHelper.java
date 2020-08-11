@@ -53,7 +53,7 @@ import java.util.function.Predicate;
 public class WindowManagerStateHelper extends WindowManagerState {
 
     /**
-     * Compute AM and WM state of device, check validation and bounds.
+     * Compute AM and WM state of device, check validity and bounds.
      * WM state will include only visible windows, stack and task bounds will be compared.
      *
      * @param componentNames array of activity names to wait for.
@@ -65,7 +65,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
     }
 
     /**
-     * Compute AM and WM state of device, check validation and bounds.
+     * Compute AM and WM state of device, check validity and bounds.
      * WM state will include only visible windows, stack and task bounds will be compared.
      *
      * @param waitForActivitiesVisible array of activity names to wait for.
@@ -95,7 +95,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
             // TODO: Get state of AM and WM at the same time to avoid mismatches caused by
             // requesting dump in some intermediate state.
             computeState();
-            return !(shouldWaitForValidationCheck()
+            return !(shouldWaitForValidityCheck()
                     || shouldWaitForValidStacks()
                     || shouldWaitForActivities(waitForActivitiesVisible)
                     || shouldWaitForWindows());
@@ -444,17 +444,17 @@ public class WindowManagerStateHelper extends WindowManagerState {
         return false;
     }
 
-    private boolean shouldWaitForValidationCheck() {
+    private boolean shouldWaitForValidityCheck() {
         try {
-            assertValidation();
+            assertValidity();
         } catch (Throwable t) {
-            logAlways("Waiting for validation check: " + t.toString());
+            logAlways("Waiting for validity check: " + t.toString());
             return true;
         }
         return false;
     }
 
-    void assertValidation() {
+    void assertValidity() {
         assertThat("Must have stacks", getStackCount(), greaterThan(0));
         // TODO: Update when keyguard will be shown on multiple displays
         if (!getKeyguardControllerState().keyguardShowing) {
