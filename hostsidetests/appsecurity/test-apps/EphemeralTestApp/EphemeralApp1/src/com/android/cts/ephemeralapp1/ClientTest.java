@@ -17,8 +17,9 @@
 package com.android.cts.ephemeralapp1;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -940,6 +941,28 @@ public class ClientTest {
         assertThat(InstrumentationRegistry.getContext()
                     .checkCallingOrSelfPermission(Manifest.permission.INTERNET),
                 is(PackageManager.PERMISSION_GRANTED));
+    }
+
+    @Test
+    public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
+        assertThat(isPermissionGrantedInPackageInfo(Manifest.permission.SET_ALARM), is(false));
+    }
+
+    @Test
+    public void testInstallPermissionGrantedInPackageInfo() throws Exception {
+        assertThat(isPermissionGrantedInPackageInfo(Manifest.permission.INTERNET), is(true));
+    }
+
+    private static boolean isPermissionGrantedInPackageInfo(String permissionName)
+            throws Exception {
+        final Context context = InstrumentationRegistry.getContext();
+        final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(
+                context.getPackageName(), PackageManager.GET_PERMISSIONS);
+        final int permissionIndex = Arrays.asList(packageInfo.requestedPermissions).indexOf(
+                permissionName);
+        assertThat(permissionIndex, is(not(-1)));
+        return (packageInfo.requestedPermissionsFlags[permissionIndex]
+                & PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0;
     }
 
     @Test
