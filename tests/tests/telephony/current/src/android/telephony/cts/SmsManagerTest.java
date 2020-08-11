@@ -64,6 +64,8 @@ import android.telephony.cdma.CdmaSmsCbProgramData;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -692,6 +694,27 @@ public class SmsManagerTest {
             });
         } catch (Exception e) {
             // expected
+        }
+    }
+
+    @Test
+    public void testGetSmsCapacityOnIcc() {
+        try {
+            getSmsManager().getSmsCapacityOnIcc();
+            fail("Caller without READ_PRIVILEGED_PHONE_STATE should NOT be able to call API");
+        } catch (SecurityException se) {
+            // all good
+        }
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+        try {
+            getSmsManager().getSmsCapacityOnIcc();
+        } catch (SecurityException se) {
+            fail("Caller with READ_PRIVILEGED_PHONE_STATE should be able to call API");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
     }
 
