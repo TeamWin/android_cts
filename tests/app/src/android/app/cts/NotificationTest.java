@@ -290,10 +290,13 @@ public class NotificationTest extends AndroidTestCase {
         final Intent intent = new Intent();
         final PendingIntent actionIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
         mAction = null;
-        mAction = new Notification.Action.Builder(0, ACTION_TITLE, actionIntent).build();
+        mAction = new Notification.Action.Builder(0, ACTION_TITLE, actionIntent)
+                .setAuthenticationRequired(true)
+                .build();
         assertEquals(ACTION_TITLE, mAction.title);
         assertEquals(actionIntent, mAction.actionIntent);
         assertEquals(true, mAction.getAllowGeneratedReplies());
+        assertTrue(mAction.isAuthenticationRequired());
     }
 
     public void testNotification_addPerson() {

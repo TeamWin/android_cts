@@ -35,6 +35,7 @@ import static com.android.cts.verifier.notifications.MockListener.JSON_WHEN;
 import static com.android.cts.verifier.notifications.MockListener.REASON_LISTENER_CANCEL;
 
 import android.annotation.SuppressLint;
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
@@ -73,7 +74,7 @@ import java.util.UUID;
 
 public class NotificationListenerVerifierActivity extends InteractiveVerifierActivity
         implements Runnable {
-    private static final String TAG = "NoListenerVerifier";
+    static final String TAG = "NoListenerVerifier";
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
     private static final String NOISY_NOTIFICATION_CHANNEL_ID = TAG + "Noisy";
     protected static final String PREFS = "listener_prefs";
@@ -141,6 +142,9 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
         tests.add(new NotificationNotReceivedTest());
+        tests.add(new AddScreenLockTest());
+        tests.add(new SecureActionOnLockScreenTest());
+        tests.add(new RemoveScreenLockTest());
         return tests;
     }
 
@@ -1540,6 +1544,120 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void test() {
             status = WAIT_FOR_USER;
             next();
+        }
+    }
+
+    private class AddScreenLockTest extends InteractiveTestCase {
+        private View mView;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            mView = createNlsSettingsItem(parent, R.string.add_screen_lock);
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(false);
+            return mView;
+        }
+
+        @Override
+        protected void setUp() {
+            status = READY;
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(true);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            KeyguardManager km = getSystemService(KeyguardManager.class);
+            if (km.isDeviceSecure()) {
+                status = PASS;
+            } else {
+                status = WAIT_FOR_USER;
+            }
+
+            next();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_SECURITY_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        }
+    }
+
+    private class SecureActionOnLockScreenTest extends InteractiveTestCase {
+        @Override
+        protected void setUp() {
+            createChannels();
+            ActionTriggeredReceiver.sendNotification(mContext, true);
+            status = READY;
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            deleteChannels();
+            delay();
+        }
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createPassFailItem(parent, R.string.secure_action_lockscreen);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            status = WAIT_FOR_USER;
+            next();
+        }
+    }
+
+    private class RemoveScreenLockTest extends InteractiveTestCase {
+        private View mView;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            mView = createNlsSettingsItem(parent, R.string.remove_screen_lock);
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(false);
+            return mView;
+        }
+
+        @Override
+        protected void setUp() {
+            status = READY;
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(true);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            KeyguardManager km = getSystemService(KeyguardManager.class);
+            if (!km.isDeviceSecure()) {
+                status = PASS;
+            } else {
+                status = WAIT_FOR_USER;
+            }
+
+            next();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_SECURITY_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         }
     }
 }

@@ -2185,6 +2185,15 @@
         and disabled, and that once enabled the service is able to receive notifications and
         dismiss them.
     </string>
+    <string name="action_not_sent">SecureActionOnLockScreenTest</string>
+    <string name="action_received">Action Sent - SecureActionOnLockScreenTest</string>
+    <string name="action_test_title">Action</string>
+    <string name="add_screen_lock">Add a secure screen lock of any type</string>
+    <string name="remove_screen_lock">Remove the added screen lock</string>
+    <string name="secure_action_lockscreen">Lock the screen and find the SecureActionOnLockScreenTest
+        notification. Tap on its action. Verify that the keyguard displays on tap, and that the
+        notification text does not update until the passcode is entered. Ensure that the notification
+        text does update once the device is unlocked.</string>
     <string name="msg_extras_preserved">Check that Message extras Bundle was preserved.</string>
     <string name="conversation_section_ordering">If this device supports conversation notifications,
         and groups them into a separate section from alerting and silent non-conversation
