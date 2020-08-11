@@ -28,7 +28,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class MicrosoftDesignerKeyboardTest extends InputTestCase {
+public class MicrosoftDesignerKeyboardTest extends InputHidTestCase {
 
     public MicrosoftDesignerKeyboardTest() {
         super(R.raw.microsoft_designer_keyboard_register);

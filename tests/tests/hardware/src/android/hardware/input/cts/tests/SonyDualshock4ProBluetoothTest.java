@@ -26,7 +26,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class SonyDualshock4ProBluetoothTest extends InputTestCase {
+public class SonyDualshock4ProBluetoothTest extends InputHidTestCase {
 
     // Simulates the behavior of PlayStation DualShock4 Pro gamepad (model CUH-ZCT2U)
     public SonyDualshock4ProBluetoothTest() {

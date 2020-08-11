@@ -26,7 +26,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class SonyDualshock3UsbTest extends InputTestCase {
+public class SonyDualshock3UsbTest extends InputHidTestCase {
 
     // Simulates the behavior of PlayStation DualShock3 gamepad (model CECHZC2U)
     public SonyDualshock3UsbTest() {

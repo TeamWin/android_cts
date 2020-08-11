@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class RazerServalTest extends InputTestCase {
+public class RazerServalTest extends InputHidTestCase {
     public RazerServalTest() {
         super(R.raw.razer_serval_register);
     }
