@@ -1292,6 +1292,24 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         );
     }
 
+    void assertCallHandle(final Call call, final Uri expectedHandle) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return expectedHandle;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return call.getDetails().getHandle();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should have handle name: " + expectedHandle
+        );
+    }
+
     void assertCallConnectTimeChanged(final Call call, final long time) {
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
@@ -1770,7 +1788,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     void waitUntilConditionIsTrueOrTimeout(Condition condition, long timeout,
             String description) {
         final long start = System.currentTimeMillis();
-        while (!condition.expected().equals(condition.actual())
+        while (!Objects.equals(condition.expected(), condition.actual())
                 && System.currentTimeMillis() - start < timeout) {
             sleep(50);
         }
