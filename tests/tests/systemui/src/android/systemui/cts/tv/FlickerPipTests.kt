@@ -124,7 +124,7 @@ class FlickerPipTests : PipTestBase() {
             assertions {
                 windowManagerTrace {
                     end {
-                        noWindowsOverlap(WINDOW_NAME_INPUT_METHOD, PIP_ACTIVITY.windowName())
+                        isAboveWindow(WINDOW_NAME_INPUT_METHOD, PIP_ACTIVITY.windowName())
                     }
                 }
             }
