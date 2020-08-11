@@ -160,10 +160,10 @@
             <intent-filter>
                 <action android:name="android.media.MediaRoute2ProviderService"/>
             </intent-filter>
-       </service>
-       <service android:name="android.media.cts.MediaButtonReceiverService"
-              android:exported="true"/>
-       <receiver android:name="android.media.cts.MediaButtonBroadcastReceiver"/>
+        </service>
+        <service android:name="android.media.cts.MediaButtonReceiverService"
+             android:exported="true"/>
+        <receiver android:name="android.media.cts.MediaButtonBroadcastReceiver"/>
     </application>
 
     <uses-sdk android:minSdkVersion="29"
