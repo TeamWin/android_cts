@@ -205,10 +205,10 @@ class BasicPipTests : PipTestBase() {
     fun pipMenu_correctLocation() {
         launchPipThenEnterMenu()
 
-        wmState.waitFor("The PiP menu must be in the right place!") {
+        waitForWMState("The PiP menu must be in the right place!") {
             val pipTask = it.getTaskByActivity(PIP_ACTIVITY, WINDOWING_MODE_PINNED)
             pipTask.bounds == menuModePipBounds
-        } || error("The PiP activity is not in the right place when the menu is shown!")
+        }
     }
 
     /** Open an app's pip menu then press its close button and ensure the app is closed. */
@@ -219,8 +219,9 @@ class BasicPipTests : PipTestBase() {
         val closeButton = locateByResourceName(ID_PIP_MENU_CLOSE_BUTTON)
         closeButton.click()
 
-        wmState.waitFor("The PiP app and its menu must be closed!") {
-            it.containsNoneOf(listOf(PIP_ACTIVITY, PIP_MENU_ACTIVITY))
+        waitForWMState("The PiP app and its menu must be closed!") { state ->
+            !state.containsActivity(PIP_MENU_ACTIVITY) &&
+                !state.isActivityVisible(PIP_ACTIVITY)
         }
     }
 
