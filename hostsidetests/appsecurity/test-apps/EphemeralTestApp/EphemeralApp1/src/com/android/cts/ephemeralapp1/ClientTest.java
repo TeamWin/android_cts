@@ -23,6 +23,7 @@ import static android.media.MediaRecorder.AudioSource.MIC;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertSame;
@@ -77,6 +78,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -1142,6 +1144,28 @@ public class ClientTest {
         assertThat(InstrumentationRegistry.getContext()
                     .checkCallingOrSelfPermission(Manifest.permission.INTERNET),
                 is(PackageManager.PERMISSION_GRANTED));
+    }
+
+    @Test
+    public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
+        assertThat(isPermissionGrantedInPackageInfo(Manifest.permission.SET_ALARM), is(false));
+    }
+
+    @Test
+    public void testInstallPermissionGrantedInPackageInfo() throws Exception {
+        assertThat(isPermissionGrantedInPackageInfo(Manifest.permission.INTERNET), is(true));
+    }
+
+    private static boolean isPermissionGrantedInPackageInfo(String permissionName)
+            throws Exception {
+        final Context context = InstrumentationRegistry.getContext();
+        final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(
+                context.getPackageName(), PackageManager.GET_PERMISSIONS);
+        final int permissionIndex = Arrays.asList(packageInfo.requestedPermissions).indexOf(
+                permissionName);
+        assertThat(permissionIndex, is(not(-1)));
+        return (packageInfo.requestedPermissionsFlags[permissionIndex]
+                & PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0;
     }
 
     @Test
