@@ -631,6 +631,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * activities, the process of the package should not be alive (restarted).
      */
     public void testForceStopPackageWontRestartProcess() throws Exception {
+        // Ensure that there are no remaining component records of the test app package.
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mActivityManager.forceStopPackage(SIMPLE_PACKAGE_NAME));
         ActivityReceiverFilter appStartedReceiver = new ActivityReceiverFilter(
                 ACTIVITY_LAUNCHED_ACTION);
         // Start an activity of another APK.
