@@ -917,6 +917,20 @@ abstract class CodecTestBase {
         assertEquals("color mismatch ", standard, colorStandard);
         assertEquals("transfer mismatch ", transfer, colorTransfer);
     }
+
+    public void setUpSurface(CodecTestActivity activity) throws InterruptedException {
+        activity.waitTillSurfaceIsCreated();
+        mSurface = activity.getSurface();
+        assertTrue("Surface created is null.", mSurface != null);
+        assertTrue("Surface created is invalid.", mSurface.isValid());
+    }
+
+    public void tearDownSurface() {
+        if (mSurface != null) {
+            mSurface.release();
+            mSurface = null;
+        }
+    }
 }
 
 class CodecDecoderTestBase extends CodecTestBase {
