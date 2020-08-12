@@ -419,6 +419,14 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         return pi;
     }
 
+    protected PendingIntent makeBroadcastIntent(int code, String tag) {
+        Intent intent = new Intent(tag);
+        intent.setComponent(new ComponentName(mContext, ActionTriggeredReceiver.class));
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, code, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        return pi;
+    }
+
     protected boolean checkEquals(long[] expected, long[] actual, String message) {
         if (Arrays.equals(expected, actual)) {
             return true;

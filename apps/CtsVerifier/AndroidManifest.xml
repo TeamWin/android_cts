@@ -2577,6 +2577,13 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name=".notifications.ActionTriggeredReceiver"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.verifier.notifications.ActionTriggeredReceiver"/>
+            </intent-filter>
+        </receiver>
+
         <receiver android:name=".notifications.AutomaticZenRuleStatusReceiver"
             android:exported="true">
             <intent-filter>
