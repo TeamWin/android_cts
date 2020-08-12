@@ -739,24 +739,18 @@ public class SmsManagerTest {
         }
     }
 
+    /**
+     * Verify that SmsManager.getSmsCapacityOnIcc requires Permission.
+     * <p>
+     * Requires Permission:
+     * {@link android.Manifest.permission#READ_PHONE_STATE}.
+     */
     @Test
     public void testGetSmsCapacityOnIcc() {
         try {
             getSmsManager().getSmsCapacityOnIcc();
-            fail("Caller without READ_PRIVILEGED_PHONE_STATE should NOT be able to call API");
-        } catch (SecurityException se) {
-            // all good
-        }
-
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
-        try {
-            getSmsManager().getSmsCapacityOnIcc();
-        } catch (SecurityException se) {
-            fail("Caller with READ_PRIVILEGED_PHONE_STATE should be able to call API");
-        } finally {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
+        } catch (SecurityException e) {
+            fail("Caller with READ_PHONE_STATE should be able to call API");
         }
     }
 
