@@ -95,7 +95,7 @@ import java.util.concurrent.TimeUnit;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationControllerTests
  */
-@Presubmit
+//TODO(b/159167851) @Presubmit
 @RunWith(Parameterized.class)
 public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase {
 
@@ -192,6 +192,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         }
     }
 
+    @Presubmit
     @Test
     public void testControl_andCancel() throws Throwable {
         runOnUiThread(() -> {
@@ -224,6 +225,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mListener.assertWasNotCalled(FINISHED);
     }
 
+    @Presubmit
     @Test
     public void testControl_immediately_show() throws Throwable {
         setVisibilityAndWait(mType, false);
@@ -244,6 +246,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mListener.assertWasNotCalled(CANCELLED);
     }
 
+    @Presubmit
     @Test
     public void testControl_immediately_hide() throws Throwable {
         setVisibilityAndWait(mType, true);
@@ -264,6 +267,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mListener.assertWasNotCalled(CANCELLED);
     }
 
+    @Presubmit
     @Test
     public void testControl_transition_show() throws Throwable {
         setVisibilityAndWait(mType, false);
@@ -282,6 +286,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mListener.assertWasNotCalled(CANCELLED);
     }
 
+    @Presubmit
     @Test
     public void testControl_transition_hide() throws Throwable {
         setVisibilityAndWait(mType, true);
@@ -300,6 +305,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mListener.assertWasNotCalled(CANCELLED);
     }
 
+    @Presubmit
     @Test
     public void testControl_transition_show_interpolator() throws Throwable {
         mInterpolator = new DecelerateInterpolator();
@@ -319,6 +325,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mListener.assertWasNotCalled(CANCELLED);
     }
 
+    @Presubmit
     @Test
     public void testControl_transition_hide_interpolator() throws Throwable {
         mInterpolator = new AccelerateInterpolator();
@@ -361,6 +368,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         mListener.assertWasNotCalled(FINISHED);
     }
 
+    @Presubmit
     @Test
     public void testImeControl_isntInterruptedByStartingInput() throws Throwable {
         if (mType != ime()) {
