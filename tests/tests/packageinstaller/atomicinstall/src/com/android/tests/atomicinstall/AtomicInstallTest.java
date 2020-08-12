@@ -29,6 +29,7 @@ import android.content.pm.PackageInstaller;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.LocalIntentSender;
@@ -174,6 +175,25 @@ public class AtomicInstallTest {
                 Install.multi(TestApp.A1, TestApp.B1, CORRUPT_TESTAPP));
         assertThat(getInstalledVersion(TestApp.A)).isEqualTo(-1);
         assertThat(getInstalledVersion(TestApp.B)).isEqualTo(-1);
+    }
+
+    @Test
+    public void testInvalidStateScenario_MultiSessionCantBeApex() throws Exception {
+        try {
+            SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check true");
+            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                    PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            params.setMultiPackage();
+            params.setInstallAsApex();
+            params.setStaged();
+            try {
+                InstallUtils.getPackageInstaller().createSession(params);
+                fail("Should not be able to create a multi-session set as APEX!");
+            } catch (Exception ignore) {
+            }
+        } finally {
+            SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check false");
+        }
     }
 
     /**
