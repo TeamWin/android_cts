@@ -16,7 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.permission3.cts.appthataccessescameraandmic"
+          package="android.permission4.cts.appthataccessescameraandmic"
           android:versionCode="1">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>

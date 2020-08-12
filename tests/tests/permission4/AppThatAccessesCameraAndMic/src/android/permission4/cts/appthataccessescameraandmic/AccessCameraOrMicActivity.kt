@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package android.permission3.cts.appthataccessescameraandmic
+package android.permission4.cts.appthataccessescameraandmic
 
 import android.app.Activity
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CaptureRequest
 import android.media.AudioFormat.CHANNEL_IN_MONO
 import android.media.AudioFormat.ENCODING_PCM_16BIT
 import android.media.AudioRecord
@@ -30,7 +29,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private const val USE_CAMERA = "use camera"
+private const val USE_CAMERA = "use_camera"
 private const val USE_MICROPHONE = "use_microphone"
 private const val USE_DURATION_MS = 10000L
 private const val SAMPLE_RATE_HZ = 44100
@@ -40,7 +39,6 @@ private const val SAMPLE_RATE_HZ = 44100
  * or both.
  */
 class AccessCameraOrMicActivity : Activity() {
-    private lateinit var builder: CaptureRequest.Builder
     private lateinit var cameraId: String
     private var cameraDevice: CameraDevice? = null
     private var recorder: AudioRecord? = null
@@ -53,12 +51,13 @@ class AccessCameraOrMicActivity : Activity() {
         super.onStart()
         runCamera = intent.getBooleanExtra(USE_CAMERA, false)
         runMic = intent.getBooleanExtra(USE_MICROPHONE, false)
-        if (runCamera) {
-            useCamera()
-        }
 
         if (runMic) {
             useMic()
+        }
+
+        if (runCamera) {
+            useCamera()
         }
     }
 
@@ -66,6 +65,7 @@ class AccessCameraOrMicActivity : Activity() {
         super.onStop()
         cameraDevice?.close()
         recorder?.stop()
+        finish()
     }
 
     private val stateCallback = object : CameraDevice.StateCallback() {
