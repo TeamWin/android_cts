@@ -49,9 +49,6 @@ import android.util.Size
 import android.view.Gravity
 import android.view.KeyEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.uiautomator.By
-import androidx.test.uiautomator.UiObject2
-import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.ThrowingSupplier
 import org.junit.After
@@ -366,8 +363,4 @@ class BasicPipTests : PipTestBase() {
             !isDreaming
         } || error(message)
     }
-
-    private fun locateByResourceName(resourceName: String): UiObject2 =
-        uiDevice.wait(Until.findObject(By.res(resourceName)), defaultTimeout)
-            ?: error("Could not locate $resourceName")
 }

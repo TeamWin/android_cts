@@ -16,6 +16,7 @@
 
 package android.systemui.cts.tv
 
+import android.app.ActivityTaskManager
 import android.app.Instrumentation
 import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
 import android.content.ComponentName
@@ -36,7 +37,10 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.WindowManager
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -57,6 +61,9 @@ abstract class PipTestBase {
     protected val windowManager: WindowManager =
         context.getSystemService(WindowManager::class.java)
             ?: error("Could not get a WindowManager")
+    protected val activityTaskManager: ActivityTaskManager =
+        context.getSystemService(ActivityTaskManager::class.java)
+            ?: error("Could not get an ActivityManager")
     protected val wmState: WindowManagerStateHelper = WindowManagerStateHelper()
     protected val systemuiResources: Resources =
         packageManager.getResourcesForApplication(SYSTEM_UI_PACKAGE)
@@ -129,6 +136,11 @@ abstract class PipTestBase {
             message = "The PiP Menu activity must be focused!"
         )
     }
+
+    /** Locate an object by its resource id or throw. */
+    protected fun locateByResourceName(resourceName: String): UiObject2 =
+        uiDevice.wait(Until.findObject(By.res(resourceName)), defaultTimeout)
+            ?: error("Could not locate $resourceName")
 
     @JvmOverloads
     protected fun launchActivity(
