@@ -19,7 +19,9 @@ package android.accessibilityservice.cts;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithAction;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangTypesAndWindowId;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangeTypesAndWindowTitle;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterWindowsChangedWithChangeTypes;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
@@ -82,6 +84,8 @@ import android.widget.Button;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -706,6 +710,36 @@ public class AccessibilityWindowQueryTest {
                     new IsSortedBy<>(w -> w.getLayer(), /* ascending */ false));
 
             mActivityOnVirtualDisplay.finish();
+        }
+    }
+
+    @Test
+    public void testShowInputMethodDialogWindow_resultIsApplicationType()
+            throws TimeoutException {
+        final WindowManager wm =
+                sInstrumentation.getContext().getSystemService(WindowManager.class);
+        final View view = new View(sInstrumentation.getContext());
+        final String windowTitle = "Input Method Dialog";
+
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                () -> {
+                    WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                            WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG);
+                    params.accessibilityTitle = windowTitle;
+
+                    SystemUtil.runWithShellPermissionIdentity(
+                            () -> wm.addView(view, params),
+                            "android.permission.INTERNAL_SYSTEM_WINDOW");
+                }),
+                filterWindowsChangeTypesAndWindowTitle(sUiAutomation,
+                        WINDOWS_CHANGE_ADDED, windowTitle), DEFAULT_TIMEOUT_MS);
+
+        try {
+            final List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
+            assertTrue(windows.stream().anyMatch(window -> window.getType()
+                    == AccessibilityWindowInfo.TYPE_APPLICATION));
+        } finally {
+            wm.removeView(view);
         }
     }
 
