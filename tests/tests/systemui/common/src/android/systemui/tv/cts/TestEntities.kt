@@ -46,8 +46,19 @@ object PipActivity {
     const val ACTION_ENTER_PIP = "$pkg.PipTestActivity.enter_pip"
     const val ACTION_SET_MEDIA_TITLE = "$pkg.PipTestActivity.set_media_title"
 
+    /**
+     * A no-op action that the app's broadcast receiver listens to.
+     *
+     * This action can be used to apply changes passed in extras without having to
+     * launch the activity thereby moving it out of pip.
+     */
+    const val ACTION_NO_OP = "$pkg.PipTestActivity.generic_update"
+
     const val ACTION_MEDIA_PLAY = "$pkg.PipTestActivity.media_play"
     const val ACTION_MEDIA_PAUSE = "$pkg.PipTestActivity.media_pause"
+
+    /** Instruct the app to clear the set of its custom pip actions. */
+    const val ACTION_CLEAR_CUSTOM_ACTIONS = "$pkg.PipTestActivity.clear_custom_actions"
 
     /** Instruct the app to go into pip mode when set to true */
     const val EXTRA_ENTER_PIP = "enter_pip"
@@ -89,6 +100,9 @@ object PipActivity {
     const val EXTRA_MEDIA_SESSION_ACTIONS = "media_session_actions"
 
     const val MEDIA_SESSION_TITLE = "PipTestActivity:MediaSession"
+
+    /** Set the pip menu custom actions to this [ArrayList] of [android.app.RemoteAction]. */
+    const val EXTRA_SET_CUSTOM_ACTIONS = "set_custom_actions"
 }
 
 object KeyboardActivity {
@@ -119,6 +133,7 @@ object ResourceNames {
     const val ID_PIP_MENU_CLOSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/close_button"
     const val ID_PIP_MENU_FULLSCREEN_BUTTON = "$SYSTEM_UI_PACKAGE:id/full_button"
     const val ID_PIP_MENU_PLAY_PAUSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/play_pause_button"
+    const val ID_PIP_MENU_CUSTOM_BUTTON = "$SYSTEM_UI_PACKAGE:id/button"
 }
 
 object ShellCommands {
