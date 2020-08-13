@@ -1201,7 +1201,7 @@
       If your device supports type B (for example, because of a type B only UICC), select "Type B" from the drop-down box above. Note that all tests must be completed in the same mode (either "Type A" or "Type B").</string>
     <string name="nfc_offhost_please_wait">Please wait</string>
     <string name="nfc_offhost_setting_up">Setting up card emulation services...</string>
-    <string name="nfc_offhost_uicc_transaction_event_emulator_help">Switch application to background before starting tests. Successful transaction event will switch application to foreground with transaction event data.</string>
+    <string name="nfc_offhost_uicc_transaction_event_emulator_help"> This is an optional test for Android version beofre S. This is okay to set this test to passed and continue. Switch application to background before starting tests. Successful transaction event will switch application to foreground with transaction event data.</string>
 
     <!-- Strings for Sensor Test Activities -->
     <string name="snsr_device_admin_receiver">Sensor Tests Device Admin Receiver</string>
