@@ -196,9 +196,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         removeOrgOwnedProfile();
         assertHasNoUser(mUserId);
 
-        // Make sure the user restrictions are removed before continuing
-        waitForBroadcastIdle();
-
         // User restrictions are not persist after organization-owned profile owner is removed
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testUserRestrictionDisallowConfigDateTimeIsNotPersisted", mPrimaryUserId);
