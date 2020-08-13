@@ -69,6 +69,7 @@ public class SettingsPanelTest {
 
     private Context mContext;
     private boolean mHasTouchScreen;
+    private boolean mHasBluetooth;
 
     private UiDevice mDevice;
 
@@ -81,6 +82,7 @@ public class SettingsPanelTest {
 
         mHasTouchScreen = packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
                 || packageManager.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
+        mHasBluetooth = packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
 
         Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
         launcherIntent.addCategory(Intent.CATEGORY_HOME);
@@ -133,6 +135,7 @@ public class SettingsPanelTest {
     @Test
     public void mediaOutputPanel_withPackageNameExtra_correctPackage() {
         assumeTrue(mHasTouchScreen);
+        assumeTrue(mHasBluetooth);
         launchMediaOutputPanel(TEST_PACKAGE_NAME);
 
         String currentPackage = mDevice.getCurrentPackageName();
@@ -143,6 +146,7 @@ public class SettingsPanelTest {
     @Test
     public void mediaOutputPanel_noPutPackageNameExtra_correctPackage() {
         assumeTrue(mHasTouchScreen);
+        assumeTrue(mHasBluetooth);
         launchMediaOutputPanel(null /* packageName */);
 
         String currentPackage = mDevice.getCurrentPackageName();
@@ -162,6 +166,7 @@ public class SettingsPanelTest {
     @Test
     public void mediaOutputPanel_correctTitle() {
         assumeTrue(mHasTouchScreen);
+        assumeTrue(mHasBluetooth);
         launchMediaOutputPanel(TEST_PACKAGE_NAME);
 
         final UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_HEADER));
@@ -232,6 +237,7 @@ public class SettingsPanelTest {
     @Test
     public void mediaOutputPanel_doneClosesPanel() {
         assumeTrue(mHasTouchScreen);
+        assumeTrue(mHasBluetooth);
         // Launch panel
         launchMediaOutputPanel(TEST_PACKAGE_NAME);
         String currentPackage = mDevice.getCurrentPackageName();
@@ -322,6 +328,7 @@ public class SettingsPanelTest {
     @Test
     public void mediaOutputPanel_seeMoreButton_doNothing() {
         assumeTrue(mHasTouchScreen);
+        assumeTrue(mHasBluetooth);
         // Launch panel
         launchMediaOutputPanel(TEST_PACKAGE_NAME);
         String currentPackage = mDevice.getCurrentPackageName();
