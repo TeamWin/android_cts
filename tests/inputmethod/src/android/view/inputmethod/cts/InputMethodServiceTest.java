@@ -38,6 +38,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
+import android.content.Intent;
 import android.graphics.Matrix;
 import android.inputmethodservice.InputMethodService;
 import android.os.SystemClock;
@@ -73,10 +74,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -423,6 +426,92 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             // Verify if getDisplay doesn't throw exception
             assertTrue(expectCommand(stream, imeSession.callVerifyGetDisplay(), TIMEOUT)
                     .getReturnBooleanValue());
+        }
+    }
+
+    /** Test the cursor position of {@link EditText} is correct after typing on another activity. */
+    @Test
+    public void testCursorAfterLaunchAnotherActivity() throws Exception {
+        final AtomicReference<EditText> firstEditTextRef = new AtomicReference<>();
+        final int NEW_CURSOR_OFFSET = 6;
+        final String INITIAL_TEXT = "initial";
+        final String COMMIT_MSG = "commit msg";
+        final String SECOND_COMMIT_MSG = "second commit msg";
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final String marker =
+                    "testCursorAfterLaunchAnotherActivity()/" + SystemClock.elapsedRealtimeNanos();
+
+            // Launch first test activity
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText editText = new EditText(activity);
+                editText.setPrivateImeOptions(marker);
+                editText.setSingleLine(false);
+                firstEditTextRef.set(editText);
+                editText.setText(INITIAL_TEXT);
+                layout.addView(editText);
+                editText.requestFocus();
+                return layout;
+            });
+
+            final EditText firstEditText = firstEditTextRef.get();
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            // Verify onStartInput when first activity launch
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            final ImeCommand commit = imeSession.callCommitText(COMMIT_MSG, 1);
+            expectCommand(stream, commit, TIMEOUT);
+
+            // Get current position
+            int originalSelectionStart = firstEditText.getSelectionStart();
+            int originalSelectionEnd = firstEditText.getSelectionEnd();
+
+            assertEquals(INITIAL_TEXT.length() + COMMIT_MSG.length(), originalSelectionStart);
+            assertEquals(INITIAL_TEXT.length() + COMMIT_MSG.length(), originalSelectionEnd);
+
+            // Launch second test activity
+            final Intent intent = new Intent()
+                    .setAction(Intent.ACTION_MAIN)
+                    .setClass(InstrumentationRegistry.getInstrumentation().getContext(),
+                            TestActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            TestActivity secondActivity = (TestActivity) InstrumentationRegistry
+                    .getInstrumentation().startActivitySync(intent);
+
+            // Commit some messages on second activity
+            final ImeCommand secondCommit = imeSession.callCommitText(SECOND_COMMIT_MSG, 1);
+            expectCommand(stream, secondCommit, TIMEOUT);
+
+            // Back to first activity
+            runOnMainSync(secondActivity::onBackPressed);
+
+            // Make sure TestActivity#onBackPressed() is called.
+            TestUtils.waitOnMainUntil(() -> secondActivity.getOnBackPressedCallCount() > 0,
+                    TIMEOUT, "Activity#onBackPressed() should be called");
+
+            // Update cursor to a new position
+            int newCursorPosition = originalSelectionStart - NEW_CURSOR_OFFSET;
+            final ImeCommand setSelection =
+                    imeSession.callSetSelection(newCursorPosition, newCursorPosition);
+            expectCommand(stream, setSelection, TIMEOUT);
+
+            // Commit to first activity again
+            final ImeCommand commitFirstAgain = imeSession.callCommitText(COMMIT_MSG, 1);
+            expectCommand(stream, commitFirstAgain, TIMEOUT);
+
+            // get new position
+            int newSelectionStart = firstEditText.getSelectionStart();
+            int newSelectionEnd = firstEditText.getSelectionEnd();
+
+            assertEquals(newSelectionStart, newCursorPosition + COMMIT_MSG.length());
+            assertEquals(newSelectionEnd, newCursorPosition + COMMIT_MSG.length());
         }
     }
 }
