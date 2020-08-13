@@ -35,8 +35,11 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.autofill.AutofillId;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 
+@FlakyTest(bugId = 162372863)
 public class InlineAugmentedWebViewActivityTest extends
         AugmentedAutofillAutoActivityLaunchTestCase<WebViewActivity> {
 
