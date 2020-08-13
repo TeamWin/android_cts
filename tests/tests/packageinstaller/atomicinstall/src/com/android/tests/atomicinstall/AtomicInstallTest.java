@@ -390,6 +390,6 @@ public class AtomicInstallTest {
     }
 
     private static void assertInconsistentSettings(String failMessage, Install install) {
-        InstallUtils.commitExpectingFailure(AssertionError.class, failMessage, install);
+        InstallUtils.commitExpectingFailure(IllegalStateException.class, failMessage, install);
     }
 }
