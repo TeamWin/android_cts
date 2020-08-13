@@ -223,6 +223,25 @@ public class CtsConnectionService extends ConnectionService {
         }
     }
 
+    public static RemoteConference createRemoteIncomingConferenceToTelecom(
+            PhoneAccountHandle connectionManagerPhoneAccount,
+            ConnectionRequest request) {
+        synchronized (sLock) {
+            return sTelecomConnectionService.createRemoteIncomingConference(
+                    connectionManagerPhoneAccount, request);
+        }
+    }
+
+
+    public static RemoteConference createRemoteOutgoingConferenceToTelecom(
+            PhoneAccountHandle connectionManagerPhoneAccount,
+            ConnectionRequest request) {
+        synchronized (sLock) {
+            return sTelecomConnectionService.createRemoteOutgoingConference(
+                    connectionManagerPhoneAccount, request);
+        }
+    }
+
     @Override
     public void onRemoteConferenceAdded(RemoteConference conference) {
         synchronized(sLock) {
