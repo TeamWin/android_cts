@@ -707,6 +707,18 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         return connection;
     }
 
+    MockConference verifyConference(int permit) {
+        try {
+            if (!connectionService.lock.tryAcquire(permit, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                    TimeUnit.MILLISECONDS)) {
+                fail("No conference requested by Telecom");
+            }
+        } catch (InterruptedException e) {
+            Log.i(TAG, "Test interrupted!");
+        }
+        return connectionService.conferences.get(0);
+    }
+
     void setAndVerifyConnectionForIncomingCall(MockConnection connection) {
         if (connection.getState() == Connection.STATE_ACTIVE) {
             // If the connection is already active (like if it got picked up immediately), don't
