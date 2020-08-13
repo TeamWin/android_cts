@@ -751,10 +751,10 @@ public final class MockIme extends InputMethodService {
     @NonNull
     private ImeState getState() {
         final boolean hasInputBinding = getCurrentInputBinding() != null;
-        final boolean hasDummyInputConnectionConnection =
+        final boolean hasFallbackInputConnection =
                 !hasInputBinding
                         || getCurrentInputConnection() == getCurrentInputBinding().getConnection();
-        return new ImeState(hasInputBinding, hasDummyInputConnectionConnection);
+        return new ImeState(hasInputBinding, hasFallbackInputConnection);
     }
 
     private PendingInlineSuggestions mPendingInlineSuggestions;
