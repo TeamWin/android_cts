@@ -62,7 +62,7 @@ public class CrossProfileAppsStartActivityTest {
             "com.android.cts.crossprofileappstest:id/user_textview";
     private static final String ID_USER_TEXTVIEW_NONMAIN =
             "com.android.cts.crossprofileappstest:id/user_textview_nonmain";
-    private static final long TIMEOUT_WAIT_UI = TimeUnit.SECONDS.toMillis(10);
+    private static final long TIMEOUT_WAIT_UI = TimeUnit.SECONDS.toMillis(15);
 
     private CrossProfileApps mCrossProfileApps;
     private UserHandle mTargetUser;
