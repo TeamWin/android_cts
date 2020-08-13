@@ -42,11 +42,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
 /**
  * Tests for multi-package (a.k.a. atomic) installs.
  */
 @RunWith(JUnit4.class)
 public class AtomicInstallTest {
+    /**
+     * Time between repeated checks in {@link #retry}.
+     */
+    private static final long RETRY_CHECK_INTERVAL_MILLIS = 500;
+    /**
+     * Maximum number of checks in {@link #retry} before a timeout occurs.
+     */
+    private static final long RETRY_MAX_INTERVALS = 20;
 
     public static final String TEST_APP_CORRUPT_FILENAME = "corrupt.apk";
     private static final TestApp CORRUPT_TESTAPP = new TestApp(
@@ -86,6 +97,47 @@ public class AtomicInstallTest {
             } catch (Exception ignore) {
             }
         });
+    }
+
+    private static <T> T retry(Supplier<T> supplier, Predicate<T> predicate, String message)
+            throws InterruptedException {
+        for (int i = 0; i < RETRY_MAX_INTERVALS; i++) {
+            T result = supplier.get();
+            if (predicate.test(result)) {
+                return result;
+            }
+            Thread.sleep(RETRY_CHECK_INTERVAL_MILLIS);
+        }
+        throw new AssertionError(message);
+    }
+
+    /**
+     * Tests a completed session should be cleaned up.
+     */
+    @Test
+    public void testSessionCleanUp_Single() throws Exception {
+        int sessionId = Install.single(TestApp.A1).commit();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
+        // The session is cleaned up asynchronously after install completed.
+        // Retry until the session no longer exists.
+        retry(() -> InstallUtils.getPackageInstaller().getSessionInfo(sessionId),
+                info -> info == null,
+                "Session " + sessionId + " not cleaned up");
+    }
+
+    /**
+     * Tests a completed session should be cleaned up.
+     */
+    @Test
+    public void testSessionCleanUp_Multi() throws Exception {
+        int sessionId = Install.multi(TestApp.A1, TestApp.B1).commit();
+        assertThat(getInstalledVersion(TestApp.A)).isEqualTo(1);
+        assertThat(getInstalledVersion(TestApp.B)).isEqualTo(1);
+        // The session is cleaned up asynchronously after install completed.
+        // Retry until the session no longer exists.
+        retry(() -> InstallUtils.getPackageInstaller().getSessionInfo(sessionId),
+                info -> info == null,
+                "Session " + sessionId + " not cleaned up");
     }
 
     @Test
