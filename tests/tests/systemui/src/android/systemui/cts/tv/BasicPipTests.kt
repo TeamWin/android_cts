@@ -26,6 +26,7 @@ import android.graphics.Rect
 import android.os.ServiceManager
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.Condition
+import android.server.wm.UiDeviceUtils
 import android.server.wm.annotation.Group2
 import android.service.dreams.DreamService
 import android.service.dreams.IDreamManager
@@ -48,9 +49,6 @@ import android.util.Size
 import android.view.Gravity
 import android.view.KeyEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.uiautomator.By
-import androidx.test.uiautomator.UiObject2
-import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.ThrowingSupplier
 import org.junit.After
@@ -154,30 +152,33 @@ class BasicPipTests : PipTestBase() {
     /** Open an app in pip mode with minimal aspect ratio and ensure its position is correct. */
     @Test
     fun openPip_position_minAspectRatio() {
-        launchActivity(
-            PIP_ACTIVITY,
-            ACTION_ENTER_PIP,
-            intExtras = mapOf(
-                EXTRA_ASPECT_RATIO_NUMERATOR to MIN_ASPECT_RATIO_NUMERATOR,
-                EXTRA_ASPECT_RATIO_DENOMINATOR to MIN_ASPECT_RATIO_DENOMINATOR
-            )
-        )
-
+        launchPipWithAspectRatio(MIN_ASPECT_RATIO_NUMERATOR, MIN_ASPECT_RATIO_DENOMINATOR)
         assertPipWindowPosition(PIP_ACTIVITY, minPipAspectRatio)
     }
 
     /** Open an app in pip mode with maximal aspect ratio and ensure its position is correct. */
     @Test
     fun openPip_position_maxAspectRatio() {
-        launchActivity(
-            PIP_ACTIVITY,
-            ACTION_ENTER_PIP,
-            intExtras = mapOf(
-                EXTRA_ASPECT_RATIO_NUMERATOR to MAX_ASPECT_RATIO_NUMERATOR,
-                EXTRA_ASPECT_RATIO_DENOMINATOR to MAX_ASPECT_RATIO_DENOMINATOR
-            )
-        )
+        launchPipWithAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR)
+        assertPipWindowPosition(PIP_ACTIVITY, maxPipAspectRatio)
+    }
 
+    /** Ensure the pip window keeps its aspect ratio after the pip menu is dismissed. */
+    @Test
+    fun pipMenu_restoresAspectRatio_onExit() {
+        // start pip with maximum aspect ratio
+        launchPipWithAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR)
+        assertPipWindowPosition(PIP_ACTIVITY, maxPipAspectRatio)
+
+        // open pip menu
+        sendBroadcast(PipMenu.ACTION_MENU)
+        waitForFullscreen(PIP_MENU_ACTIVITY)
+
+        // back out of the menu
+        UiDeviceUtils.pressBackButton()
+        wmState.waitAndAssertActivityRemoved(PIP_MENU_ACTIVITY)
+
+        // now ensure the window kept its initial maximum aspect ratio
         assertPipWindowPosition(PIP_ACTIVITY, maxPipAspectRatio)
     }
 
@@ -280,6 +281,18 @@ class BasicPipTests : PipTestBase() {
         assertActivityInPip(PIP_ACTIVITY)
     }
 
+    /**  Open an app in pip mode and set the given aspect ratio for its pip window. */
+    private fun launchPipWithAspectRatio(numerator: Int, denominator: Int) {
+        launchActivity(
+            PIP_ACTIVITY,
+            ACTION_ENTER_PIP,
+            intExtras = mapOf(
+                EXTRA_ASPECT_RATIO_NUMERATOR to numerator,
+                EXTRA_ASPECT_RATIO_DENOMINATOR to denominator
+            )
+        )
+    }
+
     /** Assert that the given activity is in pip mode and the pip menu is gone. */
     private fun assertActivityInPip(activity: ComponentName) {
         wmState.waitAndAssertActivityRemoved(PIP_MENU_ACTIVITY)
@@ -350,8 +363,4 @@ class BasicPipTests : PipTestBase() {
             !isDreaming
         } || error(message)
     }
-
-    private fun locateByResourceName(resourceName: String): UiObject2 =
-        uiDevice.wait(Until.findObject(By.res(resourceName)), defaultTimeout)
-            ?: error("Could not locate $resourceName")
 }

@@ -17,7 +17,7 @@
 android_test_helper_app {
     name: "CtsAppThatAccessesMicAndCameraPermission",
     defaults: ["cts_defaults"],
-    sdk_version: "current",
+    sdk_version: "system_current",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

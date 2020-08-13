@@ -63,7 +63,7 @@ abstract class BasePermissionTest {
     private var screenTimeoutBeforeTest: Long = 0L
 
     @Before
-    open fun setUp() {
+    fun setUp() {
         runWithShellPermissionIdentity {
             screenTimeoutBeforeTest = Settings.System.getLong(
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT
@@ -80,7 +80,7 @@ abstract class BasePermissionTest {
     }
 
     @After
-    open fun tearDown() {
+    fun tearDown() {
         runWithShellPermissionIdentity {
             Settings.System.putLong(
                 context.contentResolver, Settings.System.SCREEN_OFF_TIMEOUT,

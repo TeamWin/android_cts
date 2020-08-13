@@ -18,6 +18,7 @@ package android.app.cts;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -30,7 +31,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
@@ -89,14 +92,19 @@ public class DownloadManagerTestBase {
     protected Context mContext;
     protected DownloadManager mDownloadManager;
 
+    private WifiManager mWifiManager;
+    private ConnectivityManager mCm;
     private CtsTestServer mWebServer;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mDownloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
+        mWifiManager = mContext.getSystemService(WifiManager.class);
+        mCm = mContext.getSystemService(ConnectivityManager.class);
         mWebServer = new CtsTestServer(mContext);
         clearDownloads();
+        checkConnection();
     }
 
     @After
@@ -202,6 +210,23 @@ public class DownloadManagerTestBase {
 
     protected static String getRawFilePath(Uri uri) throws Exception {
         return getFileData(uri, "_data");
+    }
+
+    private void checkConnection() throws Exception {
+        if (!hasConnectedNetwork(mCm)) {
+            Log.d(TAG, "Enabling WiFi to ensure connectivity for this test");
+            runShellCommand("svc wifi enable");
+            runWithShellPermissionIdentity(mWifiManager::reconnect,
+                    android.Manifest.permission.NETWORK_SETTINGS);
+            final long startTime = SystemClock.elapsedRealtime();
+            while (!hasConnectedNetwork(mCm)
+                && (SystemClock.elapsedRealtime() - startTime) < SHORT_TIMEOUT) {
+                Thread.sleep(500);
+            }
+            if (!hasConnectedNetwork(mCm)) {
+                Log.d(TAG, "Unable to connect to any network");
+            }
+        }
     }
 
     private static String getFileData(Uri uri, String projection) throws Exception {
@@ -380,6 +405,10 @@ public class DownloadManagerTestBase {
                 }
             }
         }.run();
+    }
+
+    private static boolean hasConnectedNetwork(final ConnectivityManager cm) {
+        return cm.getActiveNetwork() != null;
     }
 
     protected void assertSuccessfulDownload(long id, File location) throws Exception {

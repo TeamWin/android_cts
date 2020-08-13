@@ -404,15 +404,12 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
-            // FGS goes to FGS state momentarily because Context.startForegroundService() call.
-            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
-            // FGS will failed to startForeground() and return to service state.
-            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
-            // stop FGS.
-            CommandReceiver.sendCommand(mContext,
-                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
-            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+            // Package1 does not enter FGS state
+            try {
+                uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+                fail("Service should not enter foreground service state");
+            } catch (Exception e) {
+            }
 
             // Put Package1 in TOP state.
             CommandReceiver.sendCommand(mContext,
@@ -432,6 +429,76 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             // Stop the FGS.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            enableFgsRestriction(false);
+        }
+    }
+
+    public void testFgsStartFromBGWithBind() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+
+        try {
+            enableFgsRestriction(false);
+            // Package1 is in BG state, bind FGSL in package1 first.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            Bundle bundle = new Bundle();
+            // Then start FGSL in package1
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+            // Package1 is in FGS state
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+
+            // stop FGS
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // unbind service.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            enableFgsRestriction(false);
+        }
+    }
+
+    public void testFgsStartFromBGWithBindWithRestriction() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+
+        try {
+            enableFgsRestriction(true);
+            // Package1 is in BG state, bind FGSL in package1 first.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // Then start FGSL in package1
+            Bundle bundle = new Bundle();
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+            // Package1 does not enter FGS state
+            try {
+                uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+                fail("Service should not enter foreground service state");
+            } catch (Exception e) {
+            }
+
+            // stop FGS
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE_LOCATION,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // unbind service.
+            CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
         } finally {

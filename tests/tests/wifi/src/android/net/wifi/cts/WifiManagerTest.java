@@ -1832,22 +1832,29 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         TestActionListener actionListener = new TestActionListener(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         List<WifiConfiguration> savedNetworks = null;
-        WifiConfiguration savedNetwork = null;
+        WifiConfiguration currentConfig = null;
         try {
             uiAutomation.adoptShellPermissionIdentity();
             // These below API's only work with privileged permissions (obtained via shell identity
             // for test)
-            savedNetworks = mWifiManager.getConfiguredNetworks();
-
-            // Ensure that the saved network is not metered.
-            savedNetwork = savedNetworks.get(0);
-            assertNotEquals("Ensure that the saved network is configured as unmetered",
-                    savedNetwork.meteredOverride,
-                    WifiConfiguration.METERED_OVERRIDE_METERED);
 
             // Trigger a scan & wait for connection to one of the saved networks.
             mWifiManager.startScan();
             waitForConnection();
+
+            WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
+
+            // find the current network's WifiConfiguration
+            currentConfig = mWifiManager.getConfiguredNetworks()
+                    .stream()
+                    .filter(config -> config.networkId == wifiInfo.getNetworkId())
+                    .findAny()
+                    .get();
+
+            // Ensure that the current network is not metered.
+            assertNotEquals("Ensure that the saved network is configured as unmetered",
+                    currentConfig.meteredOverride,
+                    WifiConfiguration.METERED_OVERRIDE_METERED);
 
             // Check the network capabilities to ensure that the network is marked not metered.
             waitForNetworkCallbackAndCheckForMeteredness(false);
@@ -1855,7 +1862,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // Now mark the network metered and save.
             synchronized (mLock) {
                 try {
-                    WifiConfiguration modSavedNetwork = new WifiConfiguration(savedNetwork);
+                    WifiConfiguration modSavedNetwork = new WifiConfiguration(currentConfig);
                     modSavedNetwork.meteredOverride = WifiConfiguration.METERED_OVERRIDE_METERED;
                     mWifiManager.save(modSavedNetwork, actionListener);
                     // now wait for callback
@@ -1873,8 +1880,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         } finally {
             // Restore original network config (restore the meteredness back);
-            if (savedNetwork != null) {
-                mWifiManager.updateNetwork(savedNetwork);
+            if (currentConfig != null) {
+                mWifiManager.updateNetwork(currentConfig);
             }
             uiAutomation.dropShellPermissionIdentity();
         }

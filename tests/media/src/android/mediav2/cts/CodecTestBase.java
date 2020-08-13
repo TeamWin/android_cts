@@ -18,6 +18,7 @@ package android.mediav2.cts;
 
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
+import android.graphics.Rect;
 import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -208,14 +209,16 @@ class OutputManager {
     private static final String LOG_TAG = OutputManager.class.getSimpleName();
     private byte[] memory;
     private int memIndex;
-    private ArrayList<Long> crc32List;
+    private CRC32 mCrc32UsingImage;
+    private CRC32 mCrc32UsingBuffer;
     private ArrayList<Long> inpPtsList;
     private ArrayList<Long> outPtsList;
 
     OutputManager() {
         memory = new byte[1024];
         memIndex = 0;
-        crc32List = new ArrayList<>();
+        mCrc32UsingImage = new CRC32();
+        mCrc32UsingBuffer = new CRC32();
         inpPtsList = new ArrayList<>();
         outPtsList = new ArrayList<>();
     }
@@ -282,9 +285,8 @@ class OutputManager {
         int cap = buf.capacity();
         assertTrue("checksum() params are invalid: size = " + size + " cap = " + cap,
                 size > 0 && size <= cap);
-        CRC32 crc = new CRC32();
         if (buf.hasArray()) {
-            crc.update(buf.array(), buf.position() + buf.arrayOffset(), size);
+            mCrc32UsingBuffer.update(buf.array(), buf.position() + buf.arrayOffset(), size);
         } else {
             int pos = buf.position();
             final int rdsize = Math.min(4096, size);
@@ -293,43 +295,49 @@ class OutputManager {
             for (int i = 0; i < size; i += chk) {
                 chk = Math.min(rdsize, size - i);
                 buf.get(bb, 0, chk);
-                crc.update(bb, 0, chk);
+                mCrc32UsingBuffer.update(bb, 0, chk);
             }
             buf.position(pos);
         }
-        crc32List.add(crc.getValue());
     }
 
     void checksum(Image image) {
         int format = image.getFormat();
-        if (format != ImageFormat.YUV_420_888) {
-            crc32List.add(-1L);
-            return;
-        }
-        CRC32 crc = new CRC32();
-        int imageWidth = image.getWidth();
-        int imageHeight = image.getHeight();
+        assertEquals("unexpected image format", ImageFormat.YUV_420_888, format);
+
+        Rect cropRect = image.getCropRect();
+        int imageWidth = cropRect.width();
+        int imageHeight = cropRect.height();
+        assertTrue("unexpected image dimensions", imageWidth > 0 && imageHeight > 0);
+
+        int imageLeft = cropRect.left;
+        int imageTop = cropRect.top;
         Image.Plane[] planes = image.getPlanes();
         for (int i = 0; i < planes.length; ++i) {
             ByteBuffer buf = planes[i].getBuffer();
-            int width, height, rowStride, pixelStride, x, y;
+            int width, height, rowStride, pixelStride, x, y, left, top;
             rowStride = planes[i].getRowStride();
             pixelStride = planes[i].getPixelStride();
             if (i == 0) {
                 width = imageWidth;
                 height = imageHeight;
+                left = imageLeft;
+                top = imageTop;
             } else {
                 width = imageWidth / 2;
                 height = imageHeight / 2;
+                left = imageLeft / 2;
+                top = imageTop / 2;
             }
+            int cropOffset = left + top * rowStride;
             // local contiguous pixel buffer
             byte[] bb = new byte[width * height];
             if (buf.hasArray()) {
                 byte[] b = buf.array();
-                int offs = buf.arrayOffset();
+                int offs = buf.arrayOffset() + cropOffset;
                 if (pixelStride == 1) {
                     for (y = 0; y < height; ++y) {
-                        System.arraycopy(bb, y * width, b, y * rowStride + offs, width);
+                        System.arraycopy(b, offs + y * rowStride, bb, y * width, width);
                     }
                 } else {
                     // do it pixel-by-pixel
@@ -341,7 +349,8 @@ class OutputManager {
                     }
                 }
             } else { // almost always ends up here due to direct buffers
-                int pos = buf.position();
+                int base = buf.position();
+                int pos = base + cropOffset;
                 if (pixelStride == 1) {
                     for (y = 0; y < height; ++y) {
                         buf.position(pos + y * rowStride);
@@ -360,11 +369,10 @@ class OutputManager {
                         }
                     }
                 }
-                buf.position(pos);
+                buf.position(base);
             }
-            crc.update(bb, 0, width * height);
+            mCrc32UsingImage.update(bb, 0, width * height);
         }
-        crc32List.add(crc.getValue());
     }
 
     void saveToMemory(ByteBuffer buf, MediaCodec.BufferInfo info) {
@@ -387,7 +395,8 @@ class OutputManager {
 
     void reset() {
         position(0);
-        crc32List.clear();
+        mCrc32UsingImage.reset();
+        mCrc32UsingBuffer.reset();
         inpPtsList.clear();
         outPtsList.clear();
     }
@@ -406,15 +415,25 @@ class OutputManager {
         return (float) Math.sqrt(avgErrorSquared);
     }
 
+    long getCheckSumImage() {
+        return mCrc32UsingImage.getValue();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OutputManager that = (OutputManager) o;
         boolean isEqual = true;
-        if (!crc32List.equals(that.crc32List)) {
+        if (mCrc32UsingImage.getValue() != that.mCrc32UsingImage.getValue()) {
             isEqual = false;
-            Log.e(LOG_TAG, "ref and test crc32 checksums mismatch");
+            Log.e(LOG_TAG, "ref and test crc32 checksums calculated using image mismatch " +
+                          mCrc32UsingImage.getValue() + '/' + that.mCrc32UsingImage.getValue());
+        }
+        if (mCrc32UsingBuffer.getValue() != that.mCrc32UsingBuffer.getValue()) {
+            isEqual = false;
+            Log.e(LOG_TAG, "ref and test crc32 checksums calculated using buffer mismatch " +
+                          mCrc32UsingBuffer.getValue() + '/' + that.mCrc32UsingBuffer.getValue());
         }
         if (!outPtsList.equals(that.outPtsList)) {
             isEqual = false;

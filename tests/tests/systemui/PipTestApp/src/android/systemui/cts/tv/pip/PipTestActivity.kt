@@ -18,6 +18,7 @@ package android.systemui.cts.tv.pip
 
 import android.app.Activity
 import android.app.PictureInPictureParams
+import android.app.RemoteAction
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -32,12 +33,15 @@ import android.media.session.PlaybackState.STATE_PAUSED
 import android.media.session.PlaybackState.STATE_PLAYING
 import android.media.session.PlaybackState.STATE_STOPPED
 import android.os.Bundle
+import android.systemui.tv.cts.PipActivity.ACTION_CLEAR_CUSTOM_ACTIONS
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.PipActivity.ACTION_MEDIA_PAUSE
 import android.systemui.tv.cts.PipActivity.ACTION_MEDIA_PLAY
 import android.systemui.tv.cts.PipActivity.ACTION_SET_MEDIA_TITLE
+import android.systemui.tv.cts.PipActivity.ACTION_NO_OP
 import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_DENOMINATOR
 import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_NUMERATOR
+import android.systemui.tv.cts.PipActivity.EXTRA_SET_CUSTOM_ACTIONS
 import android.systemui.tv.cts.PipActivity.EXTRA_ENTER_PIP
 import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_ACTIONS
 import android.systemui.tv.cts.PipActivity.EXTRA_MEDIA_SESSION_ACTIVE
@@ -68,6 +72,8 @@ class PipTestActivity : Activity() {
         addAction(ACTION_SET_MEDIA_TITLE)
         addAction(ACTION_MEDIA_PLAY)
         addAction(ACTION_MEDIA_PAUSE)
+        addAction(ACTION_CLEAR_CUSTOM_ACTIONS)
+        addAction(ACTION_NO_OP)
     }
 
     private val mediaCallback = object : MediaSession.Callback() {
@@ -126,6 +132,9 @@ class PipTestActivity : Activity() {
         }
 
         when (intent.action) {
+            ACTION_NO_OP -> {
+                // explicitly do nothing
+            }
             ACTION_MEDIA_PLAY -> {
                 Log.d(TAG, "Playing media")
                 mediaSession.controller.transportControls.play()
@@ -133,6 +142,14 @@ class PipTestActivity : Activity() {
             ACTION_MEDIA_PAUSE -> {
                 Log.d(TAG, "Pausing media")
                 mediaSession.controller.transportControls.pause()
+            }
+            ACTION_CLEAR_CUSTOM_ACTIONS -> {
+                Log.d(TAG, "Clearing custom PIP controls")
+                val params = pipParamsBuilder(intent.extras).run {
+                    setActions(emptyList())
+                    build()
+                }
+                setPictureInPictureParams(params)
             }
         }
 
@@ -143,7 +160,10 @@ class PipTestActivity : Activity() {
         }
     }
 
-    private fun pipParams(bundle: Bundle?): PictureInPictureParams {
+    private fun pipParams(bundle: Bundle?): PictureInPictureParams =
+        pipParamsBuilder(bundle).build()
+
+    private fun pipParamsBuilder(bundle: Bundle?): PictureInPictureParams.Builder {
         val builder = PictureInPictureParams.Builder()
         bundle?.run {
             if (containsKey(EXTRA_ASPECT_RATIO_NUMERATOR) &&
@@ -156,9 +176,14 @@ class PipTestActivity : Activity() {
             getString(EXTRA_SOURCE_RECT_HINT)?.let {
                 builder.setSourceRectHint(Rect.unflattenFromString(it))
             }
-            // TODO(havrikov) make pip actions customizable
+
+            getParcelableArrayList<RemoteAction>(EXTRA_SET_CUSTOM_ACTIONS)?.let { actions ->
+                val names = actions.joinToString(", ") { it.title }
+                Log.d(TAG, "Setting custom pip actions: $names")
+                builder.setActions(actions)
+            }
         }
-        return builder.build()
+        return builder
     }
 
     /** Just set the playback state without updating the position or playback speed. */

@@ -480,7 +480,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 .setWindowingMode(windowingMode)
                 .setActivityType(ACTIVITY_TYPE_STANDARD)
                 .build());
-        mWmState.assertValidation();
+        mWmState.assertValidity();
 
         // Check if the top activity is now back on primary display.
         mWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
@@ -763,7 +763,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         transitionActivitySession.launchTestActivityOnDisplaySync(StandardActivity.class,
                 DEFAULT_DISPLAY);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-        mWmState.assertValidation();
+        mWmState.assertValidity();
         assertEquals(TRANSIT_TASK_OPEN,
                 mWmState.getDisplay(DEFAULT_DISPLAY).getLastTransition());
 
@@ -772,7 +772,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         launchActivityOnDisplayNoWait(TEST_ACTIVITY, newDisplay.mId);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         mWmState.waitForAppTransitionIdleOnDisplay(newDisplay.mId);
-        mWmState.assertValidation();
+        mWmState.assertValidity();
 
         // Verify each display's last transition if is correct as expected.
         assertEquals(TRANSIT_TASK_CLOSE,
@@ -790,7 +790,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         // Launch TestActivity in virtual display & capture its transition state.
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
         mWmState.waitForAppTransitionIdleOnDisplay(newDisplay.mId);
-        mWmState.assertValidation();
+        mWmState.assertValidity();
         final String lastTranstionOnVirtualDisplay = mWmState
                 .getDisplay(newDisplay.mId).getLastTransition();
 

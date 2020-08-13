@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -58,17 +59,20 @@ import static org.junit.Assert.fail;
 @RunWith(Parameterized.class)
 public class CodecDecoderTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderTest.class.getSimpleName();
+    private static final float RMS_ERROR_TOLERANCE = 1.05f;        // 5%
 
     private final String mRefFile;
     private final String mReconfigFile;
     private final float mRmsError;
+    private final long mRefCRC;
 
     public CodecDecoderTest(String mime, String testFile, String refFile, String reconfigFile,
-            float rmsError) {
+            float rmsError, long refCRC) {
         super(mime, testFile);
         mRefFile = refFile;
         mReconfigFile = reconfigFile;
         mRmsError = rmsError;
+        mRefCRC = refCRC;
     }
 
     private short[] setUpAudioReference() throws IOException {
@@ -126,69 +130,73 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         final boolean isEncoder = false;
         final boolean needAudio = true;
         final boolean needVideo = true;
+        // mime, testClip, referenceClip, reconfigureTestClip, refRmsError, refCRC32
         final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_1ch_8kHz_lame_cbr.mp3",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3",
-                        91.022f * 1.05f},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3", 91.022f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_1ch_16kHz_lame_vbr.mp3",
-                        "bbb_1ch_16kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3",
-                        119.256f * 1.05f},
+                        "bbb_1ch_16kHz_s16le.raw", "bbb_2ch_44kHz_lame_vbr.mp3", 119.256f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_2ch_44kHz_lame_cbr.mp3",
-                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_lame_vbr.mp3",
-                        103.60f * 1.05f},
+                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_lame_vbr.mp3", 103.60f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_2ch_44kHz_lame_vbr.mp3",
-                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_8kHz_lame_cbr.mp3",
-                        53.066f * 1.05f},
+                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_8kHz_lame_cbr.mp3", 53.066f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_WB, "bbb_1ch_16kHz_16kbps_amrwb.3gp",
-                        "bbb_1ch_16kHz_s16le.raw", "bbb_1ch_16kHz_23kbps_amrwb.3gp",
-                        2393.598f * 1.05f},
+                        "bbb_1ch_16kHz_s16le.raw", "bbb_1ch_16kHz_23kbps_amrwb.3gp", 2393.598f,
+                        -1L},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_NB, "bbb_1ch_8kHz_10kbps_amrnb.3gp",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_8kbps_amrnb.3gp", -1.0f},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_8kbps_amrnb.3gp", -1.0f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_FLAC, "bbb_1ch_16kHz_flac.mka",
-                        "bbb_1ch_16kHz_s16le.raw", "bbb_2ch_44kHz_flac.mka", 0.0f},
+                        "bbb_1ch_16kHz_s16le.raw", "bbb_2ch_44kHz_flac.mka", 0.0f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_FLAC, "bbb_2ch_44kHz_flac.mka",
-                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_flac.mka", 0.0f},
+                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_flac.mka", 0.0f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_RAW, "bbb_1ch_16kHz.wav", "bbb_1ch_16kHz_s16le.raw",
-                        "bbb_2ch_44kHz.wav", 0.0f},
+                        "bbb_2ch_44kHz.wav", 0.0f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_RAW, "bbb_2ch_44kHz.wav", "bbb_2ch_44kHz_s16le.raw",
-                        "bbb_1ch_16kHz.wav", 0.0f},
+                        "bbb_1ch_16kHz.wav", 0.0f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_G711_ALAW, "bbb_1ch_8kHz_alaw.wav",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_alaw.wav", 23.08678f * 1.05f},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_alaw.wav", 23.08678f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_G711_MLAW, "bbb_1ch_8kHz_mulaw.wav",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_mulaw.wav", 24.4131f * 1.05f},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_8kHz_mulaw.wav", 24.4131f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_MSGSM, "bbb_1ch_8kHz_gsm.wav",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_gsm.wav", 946.02698f * 1.05f},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_1ch_8kHz_gsm.wav", 946.02698f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_VORBIS, "bbb_1ch_16kHz_vorbis.mka",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_vorbis.mka", -1.0f},
+                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_vorbis.mka", -1.0f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_OPUS, "bbb_2ch_48kHz_opus.mka",
-                        "bbb_2ch_48kHz_s16le.raw", "bbb_1ch_48kHz_opus.mka", -1.0f},
+                        "bbb_2ch_48kHz_s16le.raw", "bbb_1ch_48kHz_opus.mka", -1.0f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_AAC, "bbb_1ch_16kHz_aac.mp4",
-                        "bbb_1ch_8kHz_s16le.raw", "bbb_2ch_44kHz_aac.mp4", -1.0f},
+                        "bbb_1ch_16kHz_s16le.raw", "bbb_2ch_44kHz_aac.mp4", -1.0f, -1L},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2, "bbb_340x280_768kbps_30fps_mpeg2.mp4", null,
-                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f},
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f, -1L},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2,
                         "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_2fields.mp4", null,
-                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f},
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f, -1L},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG2,
                         "bbb_512x288_30fps_1mbps_mpeg2_interlaced_nob_1field.ts", null,
-                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f},
+                        "bbb_520x390_1mbps_30fps_mpeg2.mp4", -1.0f, -1L},
                 {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_340x280_768kbps_30fps_avc.mp4", null,
-                        "bbb_520x390_1mbps_30fps_avc.mp4", -1.0f},
+                        "bbb_520x390_1mbps_30fps_avc.mp4", -1.0f, 1746312400L},
+                /* TODO(b/163299340) */
+//                {MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_504x224_768kbps_30fps_avc.mp4", null,
+//                        "bbb_520x390_1mbps_30fps_avc.mp4", -1.0f, 4060874918L},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_520x390_1mbps_30fps_hevc.mp4", null,
-                        "bbb_340x280_768kbps_30fps_hevc.mp4", -1.0f},
+                        "bbb_340x280_768kbps_30fps_hevc.mp4", -1.0f, 3061322606L},
+                /* TODO(b/163299340) */
+//                {MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_560x280_1mbps_30fps_hevc.mkv", null,
+//                        "bbb_340x280_768kbps_30fps_hevc.mp4", -1.0f, 26298353L},
                 {MediaFormat.MIMETYPE_VIDEO_MPEG4, "bbb_128x96_64kbps_12fps_mpeg4.mp4",
-                        null, "bbb_176x144_192kbps_15fps_mpeg4.mp4", -1.0f},
+                        null, "bbb_176x144_192kbps_15fps_mpeg4.mp4", -1.0f, -1L},
                 {MediaFormat.MIMETYPE_VIDEO_H263, "bbb_176x144_128kbps_15fps_h263.3gp",
-                        null, "bbb_176x144_192kbps_10fps_h263.3gp", -1.0f},
+                        null, "bbb_176x144_192kbps_10fps_h263.3gp", -1.0f, -1L},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, "bbb_340x280_768kbps_30fps_vp8.webm", null,
-                        "bbb_520x390_1mbps_30fps_vp8.webm", -1.0f},
+                        "bbb_520x390_1mbps_30fps_vp8.webm", -1.0f, 2030620796L},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_340x280_768kbps_30fps_vp9.webm", null,
-                        "bbb_520x390_1mbps_30fps_vp9.webm", -1.0f},
+                        "bbb_520x390_1mbps_30fps_vp9.webm", -1.0f, 4122701060L},
                 {MediaFormat.MIMETYPE_VIDEO_VP9,
                         "bbb_340x280_768kbps_30fps_split_non_display_frame_vp9.webm", null,
-                        "bbb_520x390_1mbps_30fps_split_non_display_frame_vp9.webm", -1.0f},
+                        "bbb_520x390_1mbps_30fps_split_non_display_frame_vp9.webm", -1.0f,
+                        4122701060L},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_340x280_768kbps_30fps_av1.mp4", null,
-                        "bbb_520x390_1mbps_30fps_av1.mp4", -1.0f},
+                        "bbb_520x390_1mbps_30fps_av1.mp4", -1.0f, 400672933L},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
     }
@@ -276,10 +284,16 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 }
             }
             mCodec.release();
-            if (mSaveToMem && mRefFile != null && mRmsError >= 0) {
-                short[] refData = setUpAudioReference();
-                assertTrue(String.format("%s rms error too high", mTestFile),
-                        ref.getRmsError(refData) <= mRmsError);
+            if (mSaveToMem) {
+                if (mRmsError >= 0) {
+                    assertTrue(mRefFile != null);
+                    short[] refData = setUpAudioReference();
+                    assertTrue(String.format("%s rms error too high", mTestFile),
+                            ref.getRmsError(refData) <= mRmsError * RMS_ERROR_TOLERANCE);
+                } else if (mRefCRC >= 0) {
+                    assertEquals(String.format("%s checksum mismatch", mTestFile), mRefCRC,
+                            ref.getCheckSumImage());
+                }
             }
         }
         mExtractor.release();
@@ -298,7 +312,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         }
         for (String decoder : listOfDecoders) {
             assertTrue(nativeTestSimpleDecode(decoder, null, mMime, mInpPrefix + mTestFile,
-                    mInpPrefix + mRefFile, mRmsError));
+                    mInpPrefix + mRefFile, mRmsError * RMS_ERROR_TOLERANCE));
         }
     }
 

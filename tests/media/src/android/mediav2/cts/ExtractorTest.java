@@ -1130,6 +1130,80 @@ public class ExtractorTest {
     }
 
     /**
+     * Encloses extractor test for validating extractor output for extractors which directly
+     * decode instead of extracting.
+     */
+    @RunWith(Parameterized.class)
+    public static class FusedExtractorDecoderTest {
+        private final String mMime;
+        private final String mRefFile;
+        private final String mTestFile;
+
+        public FusedExtractorDecoderTest(String mime, String refFile, String testFile) {
+            mMime = mime;
+            mRefFile = refFile;
+            mTestFile = testFile;
+        }
+
+        @Parameterized.Parameters(name = "{index}({0})")
+        public static Collection<Object[]> input() {
+            return Arrays.asList(new Object[][]{
+                    {MediaFormat.MIMETYPE_AUDIO_FLAC,
+                            "bbb_cif_768kbps_30fps_mpeg4_stereo_48kHz_192kbps_flac.mp4",
+                            "bbb_stereo_48kHz_192kbps_flac.flac"},
+                    /* TODO(b/163566531)
+                    {MediaFormat.MIMETYPE_AUDIO_RAW, "bbb_1ch_16kHz.mkv", "bbb_1ch_16kHz.wav"},*/
+            });
+        }
+
+        @LargeTest
+        @Test
+        public void testExtractDecodeAndValidate() throws IOException, InterruptedException {
+            MediaExtractor testExtractor = new MediaExtractor();
+            testExtractor.setDataSource(mInpPrefix + mTestFile);
+            MediaFormat format = testExtractor.getTrackFormat(0);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            if (mime.equals(MediaFormat.MIMETYPE_AUDIO_RAW)) {
+                ArrayList<String> listOfDecoders =
+                        CodecTestBase.selectCodecs(mMime, null, null, false);
+                assertTrue("no suitable codecs found for mime: " + mMime,
+                        !listOfDecoders.isEmpty());
+                CodecDecoderTestBase cdtb = new CodecDecoderTestBase(mMime, mRefFile);
+                cdtb.decodeToMemory(mRefFile, listOfDecoders.get(0), 0,
+                        MediaExtractor.SEEK_TO_CLOSEST_SYNC, Integer.MAX_VALUE);
+                String log = String.format("test file: %s, ref file: %s:: ", mTestFile, mRefFile);
+                assertTrue(log + "no output received", 0 != cdtb.mOutputCount);
+                final ByteBuffer refBuffer = cdtb.mOutputBuff.getBuffer();
+
+                testExtractor.selectTrack(0);
+                ByteBuffer testBuffer = ByteBuffer.allocate(refBuffer.limit());
+                int bufOffset = 0;
+                while (true) {
+                    long bytesRead = testExtractor.readSampleData(testBuffer, bufOffset);
+                    if (bytesRead == -1) break;
+                    bufOffset += bytesRead;
+                    testExtractor.advance();
+                }
+                testBuffer.rewind();
+                assertEquals(log + "Output mismatch", 0, refBuffer.compareTo(testBuffer));
+                assertTrue(log + "Output formats mismatch",
+                        isFormatSimilar(cdtb.mOutFormat, format));
+            } else if (mime.equals(mMime)) {
+                MediaExtractor refExtractor = new MediaExtractor();
+                refExtractor.setDataSource(mInpPrefix + mRefFile);
+                if (!isMediaSimilar(refExtractor, testExtractor, mMime, Integer.MAX_VALUE)) {
+                    fail("Files: " + mRefFile + ", " + mTestFile +
+                            " are different from extractor perspective");
+                }
+                refExtractor.release();
+            } else {
+                fail("unexpected mime: " + mime);
+            }
+            testExtractor.release();
+        }
+    }
+
+    /**
      * Test if extractor populates key-value pairs correctly
      */
     @RunWith(Parameterized.class)

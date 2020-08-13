@@ -428,7 +428,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-        mWmState.assertValidation();
+        mWmState.assertValidity();
         mWmState.assertContainsStack("Must contain fullscreen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
         mWmState.assertContainsStack("Must contain docked stack.",
