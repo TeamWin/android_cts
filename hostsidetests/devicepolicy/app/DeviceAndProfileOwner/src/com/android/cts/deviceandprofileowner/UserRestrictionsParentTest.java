@@ -32,6 +32,7 @@ import android.util.Log;
 
 import com.google.common.collect.ImmutableSet;
 
+import java.util.concurrent.TimeUnit;
 import java.util.Set;
 
 public class UserRestrictionsParentTest extends InstrumentationTestCase {
@@ -89,9 +90,15 @@ public class UserRestrictionsParentTest extends InstrumentationTestCase {
                 hasUserRestriction(UserManager.DISALLOW_CONFIG_DATE_TIME)).isTrue();
     }
 
-    public void testUserRestrictionDisallowConfigDateTimeIsNotPersisted() {
-        assertThat(mUserManager.
-                hasUserRestriction(UserManager.DISALLOW_CONFIG_DATE_TIME)).isFalse();
+    public void testUserRestrictionDisallowConfigDateTimeIsNotPersisted() throws Exception {
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+        while (System.nanoTime() <= deadline) {
+            if (!mUserManager.hasUserRestriction(UserManager.DISALLOW_CONFIG_DATE_TIME)) {
+                return;
+            }
+            Thread.sleep(100);
+        }
+        fail("The restriction didn't go away.");
     }
 
     public void testAddUserRestrictionDisallowAddUser_onParent() {
