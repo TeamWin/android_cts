@@ -59,13 +59,10 @@ public class IwlanModeTest {
             int id = res.getIdentifier("config_wlan_data_service_package", "string", "android");
             String wlanDataServicePackage = res.getString(id);
             assertNotEquals("", wlanDataServicePackage);
-            assertNotEquals("com.android.phone", wlanDataServicePackage);
 
             id = res.getIdentifier("config_wlan_network_service_package", "string", "android");
             String wlanNetworkServicePackage = res.getString(id);
             assertNotEquals("", wlanNetworkServicePackage);
-            assertNotEquals("com.android.phone", wlanNetworkServicePackage);
-
         }
     }
 }

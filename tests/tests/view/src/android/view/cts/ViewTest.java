@@ -50,6 +50,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.Insets;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
@@ -58,7 +59,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
-import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.SystemClock;
@@ -90,6 +90,9 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.ViewTreeObserver;
+import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -3834,14 +3837,18 @@ public class ViewTest {
         Rect outRect = new Rect();
         View view = new View(mActivity);
         // mAttachInfo is null
-        DisplayManager dm = (DisplayManager) mActivity.getApplicationContext().getSystemService(
-                Context.DISPLAY_SERVICE);
-        Display d = dm.getDisplay(Display.DEFAULT_DISPLAY);
         view.getWindowVisibleDisplayFrame(outRect);
+        final WindowManager windowManager = mActivity.getWindowManager();
+        final WindowMetrics metrics = windowManager.getMaximumWindowMetrics();
+        final Insets insets =
+                metrics.getWindowInsets().getInsets(
+                        WindowInsets.Type.navigationBars() | WindowInsets.Type.displayCutout());
+        final int expectedWidth = metrics.getBounds().width() - insets.left - insets.right;
+        final int expectedHeight = metrics.getBounds().height() - insets.top - insets.bottom;
         assertEquals(0, outRect.left);
         assertEquals(0, outRect.top);
-        assertEquals(d.getWidth(), outRect.right);
-        assertEquals(d.getHeight(), outRect.bottom);
+        assertEquals(expectedWidth, outRect.right);
+        assertEquals(expectedHeight, outRect.bottom);
 
         // mAttachInfo is not null
         outRect = new Rect();
@@ -4882,7 +4889,7 @@ public class ViewTest {
         float[] newValues = new float[9];
         newMatrix.getValues(newValues);
         int[] location = new int[2];
-        view.getLocationInWindow(location);
+        view.getLocationOnScreen(location);
         boolean hasChanged = false;
         for (int i = 0; i < 9; ++i) {
             if (initialValues[i] != newValues[i]) {
@@ -4890,7 +4897,7 @@ public class ViewTest {
             }
         }
         assertTrue("Matrix should be changed", hasChanged);
-        assertEquals("Matrix should reflect position in window",
+        assertEquals("Matrix should reflect position on screen",
                 location[1], newValues[5], 0.001);
     }
 
