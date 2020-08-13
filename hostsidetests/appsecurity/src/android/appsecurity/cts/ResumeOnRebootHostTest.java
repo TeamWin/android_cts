@@ -327,7 +327,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     private void deviceRebootAndApply() throws Exception {
         String res = getDevice().executeShellCommand("cmd recovery reboot-and-apply cts-test1 cts-test");
-        if (res != null && res.contains("failure")) {
+        if (res != null && res.contains("Reboot and apply status: failure")) {
             fail("could not call reboot-and-apply");
         }
 
