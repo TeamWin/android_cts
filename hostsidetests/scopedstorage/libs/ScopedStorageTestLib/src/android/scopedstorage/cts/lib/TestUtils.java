@@ -622,11 +622,20 @@ public class TestUtils {
      * Asserts can rename file.
      */
     public static void assertCanRenameFile(File oldFile, File newFile) {
+        assertCanRenameFile(oldFile, newFile, /* checkDB */ true);
+    }
+
+    /**
+     * Asserts can rename file and optionally checks if the database is updated after rename.
+     */
+    public static void assertCanRenameFile(File oldFile, File newFile, boolean checkDatabase) {
         assertThat(oldFile.renameTo(newFile)).isTrue();
         assertThat(oldFile.exists()).isFalse();
         assertThat(newFile.exists()).isTrue();
-        assertThat(getFileRowIdFromDatabase(oldFile)).isEqualTo(-1);
-        assertThat(getFileRowIdFromDatabase(newFile)).isNotEqualTo(-1);
+        if (checkDatabase) {
+            assertThat(getFileRowIdFromDatabase(oldFile)).isEqualTo(-1);
+            assertThat(getFileRowIdFromDatabase(newFile)).isNotEqualTo(-1);
+        }
     }
 
     /**
