@@ -52,29 +52,30 @@ class FlickerPipTests : PipTestBase() {
     }
 
     /** Starts and stops a keyboard app and a pip app. Repeats [testRepetitions] times. */
-    private val keyboardScenario = FlickerBuilder(instrumentation, tvLauncherStrategy).apply {
-        repeat { testRepetitions }
-        // disable layer tracing
-        withLayerTracing { null }
-        setup {
-            test {
-                UiDeviceUtils.pressHomeButton()
-                // launch our target pip app
-                launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-                waitForEnterPip(PIP_ACTIVITY)
-                // open an app with an input field and keyboard
-                launchActivity(KEYBOARD_ACTIVITY)
-                waitForFullscreen(KEYBOARD_ACTIVITY)
-                waitForKeyboardShown()
+    private val keyboardScenario: FlickerBuilder
+        get() = FlickerBuilder(instrumentation, tvLauncherStrategy).apply {
+            repeat { testRepetitions }
+            // disable layer tracing
+            withLayerTracing { null }
+            setup {
+                test {
+                    UiDeviceUtils.pressHomeButton()
+                    // launch our target pip app
+                    launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
+                    waitForEnterPip(PIP_ACTIVITY)
+                    // open an app with an input field and a keyboard
+                    launchActivity(KEYBOARD_ACTIVITY)
+                    waitForFullscreen(KEYBOARD_ACTIVITY)
+                    waitForKeyboardShown()
+                }
+            }
+            teardown {
+                test {
+                    stopPackage(PIP_ACTIVITY)
+                    stopPackage(KEYBOARD_ACTIVITY)
+                }
             }
         }
-        teardown {
-            test {
-                stopPackage(PIP_ACTIVITY)
-                stopPackage(KEYBOARD_ACTIVITY)
-            }
-        }
-    }
 
     /** Ensure the pip window remains visible throughout any keyboard interactions. */
     @Test
