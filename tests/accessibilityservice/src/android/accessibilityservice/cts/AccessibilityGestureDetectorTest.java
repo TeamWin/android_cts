@@ -69,7 +69,10 @@ public class AccessibilityGestureDetectorTest {
 
     // Constants
     private static final float GESTURE_LENGTH_INCHES = 1.0f;
-    private static final long STROKE_MS = 400;
+    // The movement should exceed the threshold 1 cm in 150 ms defined in Swipe.java. It means the
+    // swipe velocity in testing should be greater than 2.54 cm / 381 ms. Therefore the
+    // duration should be smaller than 381.
+    private static final long STROKE_MS = 380;
     private static final long GESTURE_DISPATCH_TIMEOUT_MS = 3000;
     private static final long EVENT_DISPATCH_TIMEOUT_MS = 3000;
     private static final PointF FINGER_OFFSET_PX = new PointF(100f, -50f);
@@ -131,8 +134,11 @@ public class AccessibilityGestureDetectorTest {
         mCenter = new Point((int) metrics.widthPixels / 2, (int) metrics.heightPixels / 2);
         mTapLocation = new PointF(mCenter);
         mStrokeLenPxX = (int) (GESTURE_LENGTH_INCHES * metrics.xdpi);
-        mStrokeLenPxY = (int) (GESTURE_LENGTH_INCHES * metrics.ydpi);
-        mScreenBigEnough = (metrics.widthPixels / (2 * metrics.xdpi) > GESTURE_LENGTH_INCHES);
+        // The threshold is determined by xdpi.
+        mStrokeLenPxY = mStrokeLenPxX;
+        final boolean screenWideEnough = metrics.widthPixels / 2 > mStrokeLenPxX;
+        final boolean screenHighEnough =  metrics.heightPixels / 2 > mStrokeLenPxY;
+        mScreenBigEnough = screenWideEnough && screenHighEnough;
         if (!mScreenBigEnough) {
             return;
         }
