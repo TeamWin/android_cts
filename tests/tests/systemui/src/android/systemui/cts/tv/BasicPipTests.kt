@@ -79,7 +79,8 @@ class BasicPipTests : PipTestBase() {
     private val maxPipAspectRatio: Float = resources.getFloat(
         com.android.internal.R.dimen.config_pictureInPictureMaxAspectRatio)
 
-    private val defaultPipHeight: Float = resources.getDimension(
+    /** The size of the smaller side of the pip window. */
+    private val defaultPipSize: Float = resources.getDimension(
         com.android.internal.R.dimen.default_minimal_size_pip_resizable_task)
     private val screenEdgeInsetString = resources.getString(
         com.android.internal.R.string.config_defaultPictureInPictureScreenEdgeInsets)
@@ -325,8 +326,17 @@ class BasicPipTests : PipTestBase() {
 
     /** Calculates the pip window bounds given the [aspectRatio]. */
     private fun expectedPipBounds(aspectRatio: Float): Rect = Rect().apply {
-        Gravity.apply(pipGravity, (defaultPipHeight * aspectRatio).toInt(),
-            defaultPipHeight.toInt(),
+        // defaultPipSize is always the size of the smaller side
+        val (width, height) =
+            if (aspectRatio <= 1.0f) {
+                // portrait orientation, the width is smaller
+                defaultPipSize to defaultPipSize / aspectRatio
+            } else {
+                // landscape, the height is smaller
+                defaultPipSize * aspectRatio to defaultPipSize
+            }
+
+        Gravity.apply(pipGravity, width.toInt(), height.toInt(),
             displaySize, screenEdgeInsets.x, screenEdgeInsets.y, this)
     }
 
