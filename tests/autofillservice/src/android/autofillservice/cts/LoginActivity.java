@@ -182,6 +182,37 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Sets the expectation for an autofill request (for username only), so it can be asserted
      * through {@link #assertAutoFilled()} later.
+     *
+     * <p><strong>NOTE: </strong>This method checks the result of text change, it should not call
+     * this method too early, it may cause test fail. Call this method before checking autofill
+     * behavior.
+     * <pre>
+     * An example usage is:
+     * <code>
+     *  public void testAutofill() throws Exception {
+     *      // Enable service and trigger autofill
+     *      enableService();
+     *      final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+     *                 .addDataset(new CannedFillResponse.CannedDataset.Builder()
+     *                         .setField(ID_USERNAME, "test")
+     *                         .setField(ID_PASSWORD, "tweet")
+     *                         .setPresentation(createPresentation("Second Dude"))
+     *                         .setInlinePresentation(createInlinePresentation("Second Dude"))
+     *                         .build());
+     *      sReplier.addResponse(builder.build());
+     *      mUiBot.selectByRelativeId(ID_USERNAME);
+     *      sReplier.getNextFillRequest();
+     *      // Filter suggestion
+     *      mActivity.onUsername((v) -> v.setText("t"));
+     *      mUiBot.assertDatasets("Second Dude");
+     *
+     *      // Call expectAutoFill() before checking autofill behavior
+     *      mActivity.expectAutoFill("test", "tweet");
+     *      mUiBot.selectDataset("Second Dude");
+     *      mActivity.assertAutoFilled();
+     *  }
+     * </code>
+     * </pre>
      */
     public void expectAutoFill(String username) {
         mExpectation = new FillExpectation(username);
@@ -191,6 +222,10 @@ public class LoginActivity extends AbstractAutoFillActivity {
     /**
      * Sets the expectation for an autofill request (for password only), so it can be asserted
      * through {@link #assertAutoFilled()} later.
+     *
+     * <p><strong>NOTE: </strong>This method checks the result of text change, it should not call
+     * this method too early, it may cause test fail. Call this method before checking autofill
+     * behavior. {@See #expectAutoFill(String)} for how it should be used.
      */
     public void expectPasswordAutoFill(String password) {
         mExpectation = new FillExpectation(null, password);
