@@ -39,16 +39,19 @@ import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.os.Looper;
 import android.os.ParcelUuid;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestThread;
 import com.android.internal.util.ArrayUtils;
 
 import org.junit.AfterClass;
@@ -66,12 +69,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 
 public class SubscriptionManagerTest {
+    private static final String TAG = "SubscriptionManagerTest";
     private SubscriptionManager mSm;
 
     private int mSubId;
@@ -685,12 +690,80 @@ public class SubscriptionManagerTest {
         if (!isSupported()) return;
         boolean enabled = executeWithShellPermissionAndDefault(false, mSm,
                 (sm) -> sm.isSubscriptionEnabled(mSubId));
-        // Enable or disable subscription may require users UX confirmation or may not be supported.
-        // Call APIs to make sure there's no crash.
-        executeWithShellPermissionAndDefault(false, mSm,
-                (sm) -> sm.setSubscriptionEnabled(mSubId, !enabled));
-        executeWithShellPermissionAndDefault(false, mSm,
-                (sm) -> sm.setSubscriptionEnabled(mSubId, enabled));
+
+        AtomicBoolean waitForIsEnabledValue = new AtomicBoolean(!enabled);
+        // wait for the first call to take effect
+        Object lock = new Object();
+        AtomicBoolean setSubscriptionEnabledCallCompleted = new AtomicBoolean(false);
+        TestThread t = new TestThread(new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+
+                SubscriptionManager.OnSubscriptionsChangedListener listener =
+                        new SubscriptionManager.OnSubscriptionsChangedListener() {
+                            @Override
+                            public void onSubscriptionsChanged() {
+                                boolean waitForValue = waitForIsEnabledValue.get();
+                                if (executeWithShellPermissionAndDefault(!waitForValue, mSm,
+                                        (sm) -> sm.isSubscriptionEnabled(mSubId)) == waitForValue) {
+                                    synchronized (lock) {
+                                        setSubscriptionEnabledCallCompleted.set(true);
+                                        lock.notifyAll();
+                                    }
+                                }
+                            }
+                        };
+                mSm.addOnSubscriptionsChangedListener(listener);
+
+                Looper.loop();
+            }
+        });
+
+        try {
+            t.start();
+            // Enable or disable subscription may require users UX confirmation or may not be
+            // supported. Call APIs to make sure there's no crash.
+            executeWithShellPermissionAndDefault(false, mSm,
+                    (sm) -> sm.setSubscriptionEnabled(mSubId, !enabled));
+
+            synchronized (lock) {
+                if (!setSubscriptionEnabledCallCompleted.get()) {
+                    lock.wait(5000);
+                }
+            }
+            if (!setSubscriptionEnabledCallCompleted.get()) {
+                // not treating this as test failure as it may be due to UX confirmation or may not
+                // be supported
+                Log.e(TAG, "setSubscriptionEnabled() did not complete");
+                return;
+            }
+
+            // switch back to the original value
+            waitForIsEnabledValue.set(enabled);
+            setSubscriptionEnabledCallCompleted.set(false);
+            executeWithShellPermissionAndDefault(false, mSm,
+                    (sm) -> sm.setSubscriptionEnabled(mSubId, enabled));
+
+            // wait to make sure device is left in the same state after the test as it was before
+            // the test
+            synchronized (lock) {
+                if (!setSubscriptionEnabledCallCompleted.get()) {
+                    // longer wait time on purpose as re-enabling can take a longer time
+                    lock.wait(50000);
+                }
+            }
+            if (!setSubscriptionEnabledCallCompleted.get()) {
+                // treat this as failure because it worked the first time
+                fail("setSubscriptionEnabled() did not work second time");
+            }
+        } catch (InterruptedException e) {
+            fail("InterruptedException");
+        }
+
+        // Reset default data subId as it may have been changed as part of the calls above
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                (sm) -> sm.setDefaultDataSubId(mSubId));
     }
 
     @Test
