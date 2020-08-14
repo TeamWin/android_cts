@@ -16,6 +16,12 @@
 package android.media.cts;
 
 import static android.media.AudioAttributes.USAGE_GAME;
+import static android.media.cts.MediaSessionTestService.KEY_EXPECTED_TOTAL_NUMBER_OF_ITEMS;
+import static android.media.cts.MediaSessionTestService.KEY_SESSION_TOKEN;
+import static android.media.cts.MediaSessionTestService.STEP_CHECK;
+import static android.media.cts.MediaSessionTestService.STEP_CLEAN_UP;
+import static android.media.cts.MediaSessionTestService.STEP_SET_UP;
+import static android.media.cts.MediaSessionTestService.TEST_SERIES_OF_SET_QUEUE;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
 import android.app.PendingIntent;
@@ -771,6 +777,34 @@ public class MediaSessionTest extends AndroidTestCase {
             for (MediaSession session : sessions) {
                 session.release();
             }
+        }
+    }
+
+    /**
+     * Check that a series of {@link MediaSession#setQueue} does not break {@link MediaController}
+     * on the remote process due to binder buffer overflow.
+     */
+    public void testSeriesOfSetQueue() throws Exception {
+        int numberOfCalls = 100;
+        int queueSize = 1_000;
+        List<QueueItem> queue = new ArrayList<>();
+        for (int id = 0; id < queueSize; id++) {
+            MediaDescription description = new MediaDescription.Builder()
+                    .setMediaId(Integer.toString(id)).build();
+            queue.add(new QueueItem(description, id));
+        }
+
+        try (RemoteService.Invoker invoker = new RemoteService.Invoker(mContext,
+                MediaSessionTestService.class, TEST_SERIES_OF_SET_QUEUE)) {
+            Bundle args = new Bundle();
+            args.putParcelable(KEY_SESSION_TOKEN, mSession.getSessionToken());
+            args.putInt(KEY_EXPECTED_TOTAL_NUMBER_OF_ITEMS, numberOfCalls * queueSize);
+            invoker.run(STEP_SET_UP, args);
+            for (int i = 0; i < numberOfCalls; i++) {
+                mSession.setQueue(queue);
+            }
+            invoker.run(STEP_CHECK);
+            invoker.run(STEP_CLEAN_UP);
         }
     }
 

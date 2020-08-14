@@ -62,7 +62,10 @@ android_test {
         "-0 .ota",
         "-0 .mxmf",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "aidl/**/*.aidl",
+    ],
     // This test uses private APIs
     //sdk_version: "current",
     platform_apis: true,
