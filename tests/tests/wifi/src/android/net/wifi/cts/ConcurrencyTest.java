@@ -554,6 +554,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         String originalDeviceName = getDeviceName();
         assertNotNull(originalDeviceName);
 
+        resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
             mWifiP2pManager.setDeviceName(
                     mWifiP2pChannel, testDeviceName, mActionListener);
@@ -565,6 +566,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         assertEquals(testDeviceName, currentDeviceName);
 
         // restore the device name at the end
+        resetResponse(mMyResponse);
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
             mWifiP2pManager.setDeviceName(
                     mWifiP2pChannel, originalDeviceName, mActionListener);
