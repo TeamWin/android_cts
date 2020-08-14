@@ -39,9 +39,12 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.ViewStructure.HtmlInfo;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
+@FlakyTest(bugId = 162372863)
 public class InlineWebViewActivityTest extends AbstractWebViewTestCase<WebViewActivity> {
 
     private static final String TAG = "InlineWebViewActivityTest";

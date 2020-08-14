@@ -460,14 +460,17 @@ public class RemoteConferenceTest extends BaseRemoteTelecomTest {
         mRemoteConferenceObject.unregisterCallback(callback);
     }
 
-    private void verifyRemoteConferenceObject(RemoteConference remoteConferenceObject,
+    public static void verifyRemoteConferenceObject(RemoteConference remoteConferenceObject,
             MockConference remoteConference, MockConference conference) {
         assertEquals(remoteConference.getConnectionCapabilities(),
                 remoteConferenceObject.getConnectionCapabilities());
         assertTrue(remoteConferenceObject.getConferenceableConnections().isEmpty());
         List<RemoteConnection> remoteConnections = new ArrayList<>();
         for (Connection c: conference.getConnections()) {
-            remoteConnections.add(((MockConnection)c).getRemoteConnection());
+            RemoteConnection remoteConnection = ((MockConnection) c).getRemoteConnection();
+            if (remoteConnection != null) {
+                remoteConnections.add(remoteConnection);
+            }
         }
         assertEquals(remoteConnections, remoteConferenceObject.getConnections());
         assertEquals(remoteConference.getDisconnectCause(),
