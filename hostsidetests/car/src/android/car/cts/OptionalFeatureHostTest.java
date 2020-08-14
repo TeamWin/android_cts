@@ -55,7 +55,6 @@ public class OptionalFeatureHostTest extends BaseHostJUnit4Test {
             "car_occupant_zone_service",
             "car_user_service",
             "car_watchdog",
-            "configuration",
             "drivingstate",
             "hvac",
             "info",
