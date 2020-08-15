@@ -15,9 +15,18 @@
  */
 package android.media.cts;
 
+import static android.media.browse.MediaBrowser.MediaItem.FLAG_PLAYABLE;
+import static android.media.cts.MediaBrowserServiceTestService.KEY_PARENT_MEDIA_ID;
+import static android.media.cts.MediaBrowserServiceTestService.KEY_SERVICE_COMPONENT_NAME;
+import static android.media.cts.MediaBrowserServiceTestService.TEST_SERIES_OF_NOTIFY_CHILDREN_CHANGED;
+import static android.media.cts.MediaSessionTestService.KEY_EXPECTED_TOTAL_NUMBER_OF_ITEMS;
+import static android.media.cts.MediaSessionTestService.STEP_CHECK;
+import static android.media.cts.MediaSessionTestService.STEP_CLEAN_UP;
+import static android.media.cts.MediaSessionTestService.STEP_SET_UP;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
 import android.content.ComponentName;
+import android.media.MediaDescription;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.session.MediaSessionManager.RemoteUserInfo;
@@ -27,6 +36,9 @@ import android.service.media.MediaBrowserService;
 import android.service.media.MediaBrowserService.BrowserRoot;
 import android.test.InstrumentationTestCase;
 
+import androidx.test.core.app.ApplicationProvider;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -230,6 +242,41 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         MediaBrowserService.BrowserRoot browserRoot = new BrowserRoot(id, extras);
         assertEquals(id, browserRoot.getRootId());
         assertEquals(val, browserRoot.getExtras().getString(key));
+    }
+
+    /**
+     * Check that a series of {@link MediaBrowserService#notifyChildrenChanged} does not break
+     * {@link MediaBrowser} on the remote process due to binder buffer overflow.
+     */
+    public void testSeriesOfNotifyChildrenChanged() throws Exception {
+        String parentMediaId = "testSeriesOfNotifyChildrenChanged";
+        int numberOfCalls = 100;
+        int childrenSize = 1_000;
+        List<MediaItem> children = new ArrayList<>();
+        for (int id = 0; id < childrenSize; id++) {
+            MediaDescription description = new MediaDescription.Builder()
+                    .setMediaId(Integer.toString(id)).build();
+            children.add(new MediaItem(description, FLAG_PLAYABLE));
+        }
+        mMediaBrowserService.putChildrenToMap(parentMediaId, children);
+
+        try (RemoteService.Invoker invoker = new RemoteService.Invoker(
+                ApplicationProvider.getApplicationContext(),
+                MediaBrowserServiceTestService.class,
+                TEST_SERIES_OF_NOTIFY_CHILDREN_CHANGED)) {
+            Bundle args = new Bundle();
+            args.putParcelable(KEY_SERVICE_COMPONENT_NAME, TEST_BROWSER_SERVICE);
+            args.putString(KEY_PARENT_MEDIA_ID, parentMediaId);
+            args.putInt(KEY_EXPECTED_TOTAL_NUMBER_OF_ITEMS, numberOfCalls * childrenSize);
+            invoker.run(STEP_SET_UP, args);
+            for (int i = 0; i < numberOfCalls; i++) {
+                mMediaBrowserService.notifyChildrenChanged(parentMediaId);
+            }
+            invoker.run(STEP_CHECK);
+            invoker.run(STEP_CLEAN_UP);
+        }
+
+        mMediaBrowserService.removeChildrenFromMap(parentMediaId);
     }
 
     private void assertRootHints(MediaItem item) {

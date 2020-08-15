@@ -1204,13 +1204,13 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.seekTo(0);
         mOnSeekCompleteCalled.waitForSignal();
         Thread.sleep(playTime);
-        assertTrue("MediaPlayer should not be playing",
-                !mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() == 0);
+        assertFalse("MediaPlayer should not be playing", mMediaPlayer.isPlaying());
+        assertTrue("MediaPlayer position should be 0", mMediaPlayer.getCurrentPosition() == 0);
 
         mMediaPlayer.start();
         Thread.sleep(playTime);
-        assertTrue("MediaPlayer should be playing",
-                mMediaPlayer.isPlaying() && mMediaPlayer.getCurrentPosition() > 0);
+        assertTrue("MediaPlayer should be playing", mMediaPlayer.isPlaying());
+        assertTrue("MediaPlayer position should be > 0", mMediaPlayer.getCurrentPosition() > 0);
 
         mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(0.0f));
         assertFalse("MediaPlayer should not be playing", mMediaPlayer.isPlaying());

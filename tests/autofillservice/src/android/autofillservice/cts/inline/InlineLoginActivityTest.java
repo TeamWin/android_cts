@@ -44,6 +44,7 @@ import android.autofillservice.cts.UsernameOnlyActivity;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillContext;
 import android.support.test.uiautomator.Direction;
@@ -456,5 +457,60 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
                     event -> "onInlineSuggestionClickedEvent".equals(event.getEventName()),
                     MOCK_IME_TIMEOUT_MS);
         }
+    }
+
+    @Test
+    public void testInlineSuggestionViewReleased() throws Exception {
+        // Set service
+        enableService();
+
+        // Prepare the autofill response
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation(createPresentation("The Username"))
+                        .setInlinePresentation(createInlinePresentation("The Username"))
+                        .build())
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Password"))
+                        .setInlinePresentation(createInlinePresentation("The Password"))
+                        .build())
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_PASSWORD, "lollipop")
+                        .setPresentation(createPresentation("The Password2"))
+                        .setInlinePresentation(createInlinePresentation("The Password2"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger auto-fill on username field
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+        mUiBot.assertDatasets("The Username");
+        Helper.assertActiveViewCountFromInlineSuggestionRenderService(1);
+
+        // Switch focus to password
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+        mUiBot.assertDatasets("The Password", "The Password2");
+        Helper.assertActiveViewCountFromInlineSuggestionRenderService(2);
+
+        // Switch focus back to username
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+        mUiBot.assertDatasets("The Username");
+        Helper.assertActiveViewCountFromInlineSuggestionRenderService(1);
+
+        // Select the autofill suggestion on username, then check the results
+        mActivity.expectAutoFill("dude");
+        mUiBot.selectDataset("The Username");
+        mUiBot.waitForIdleSync();
+        mActivity.assertAutoFilled();
+        sReplier.getNextFillRequest();
+
+        // Sleep for a while for the wait in {@link com.android.server.autofill.ui
+        // .RemoteInlineSuggestionUi} to timeout.
+        SystemClock.sleep(500);
+        Helper.assertActiveViewCountFromInlineSuggestionRenderService(0);
     }
 }
