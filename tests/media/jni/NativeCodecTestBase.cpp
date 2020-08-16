@@ -188,24 +188,6 @@ media_status_t CodecAsyncHandler::setCallBack(AMediaCodec* codec, bool isCodecIn
     return status;
 }
 
-uint32_t OutputManager::adler32(const uint8_t* input, int offset, int len) {
-    constexpr uint32_t modAdler = 65521;
-    constexpr uint32_t overflowLimit = 5500;
-    uint32_t a = 1;
-    uint32_t b = 0;
-    for (int i = offset, count = 0; i < len; i++) {
-        a += input[i];
-        b += a;
-        count++;
-        if (count > overflowLimit) {
-            a %= modAdler;
-            b %= modAdler;
-            count = 0;
-        }
-    }
-    return b * 65536 + a;
-}
-
 bool OutputManager::isPtsStrictlyIncreasing(int64_t lastPts) {
     bool result = true;
     for (auto it1 = outPtsArray.cbegin(); it1 < outPtsArray.cend(); it1++) {
@@ -274,11 +256,11 @@ bool OutputManager::equals(const OutputManager* that) {
             if (count != 0) return false;
         }
     }
-    if (memory != that->memory) {
+    if (crc32value != that->crc32value) {
+        ALOGE("ref and test outputs checksum do not match %lu, %lu", crc32value, that->crc32value);
         if (memory.size() != that->memory.size()) {
             ALOGE("ref and test outputs decoded buffer are of unequal sizes %d, %d",
                   (int)memory.size(), (int)that->memory.size());
-            return false;
         } else {
             int count = 0;
             for (auto it1 = memory.cbegin(), it2 = that->memory.cbegin(); it1 < memory.cend();
@@ -292,37 +274,16 @@ bool OutputManager::equals(const OutputManager* that) {
                     break;
                 }
             }
-            if (count != 0) return false;
         }
-    }
-    if (checksum != that->checksum) {
-        if (checksum.size() != that->checksum.size()) {
-            ALOGE("ref and test outputs checksum arrays are of unequal sizes %d, %d",
-                  (int)checksum.size(), (int)that->checksum.size());
-            return false;
-        } else {
-            int count = 0;
-            for (auto it1 = checksum.cbegin(), it2 = that->checksum.cbegin(); it1 < checksum.cend();
-                 it1++, it2++) {
-                if (*it1 != *it2) {
-                    ALOGE("adler32 checksum exp/rec %u/%u", (int)*it1, (int)*it2);
-                    count++;
-                }
-                if (count == 20) {
-                    ALOGE("stopping after 20 mismatches ... ");
-                    break;
-                }
-            }
-            if (count != 0) return false;
-        }
+        return false;
     }
     return true;
 }
 
 float OutputManager::getRmsError(uint8_t* refData, int length) {
     long totalErrorSquared = 0;
-    if (length != memory.size()) return -1.0F;
-    if ((length % 2) != 0) return -1.0F;
+    if (length != memory.size()) return MAXFLOAT;
+    if ((length % 2) != 0) return MAXFLOAT;
     auto* testData = new uint8_t[length];
     std::copy(memory.begin(), memory.end(), testData);
     auto* testDataReinterpret = reinterpret_cast<int16_t*>(testData);
@@ -532,7 +493,7 @@ int CodecTestBase::getWidth(AMediaFormat* format) {
     AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_WIDTH, &width);
     if (AMediaFormat_getRect(format, "crop", &cropLeft, &cropTop, &cropRight, &cropBottom) ||
         (AMediaFormat_getInt32(format, "crop-left", &cropLeft) &&
-        AMediaFormat_getInt32(format, "crop-right", &cropRight))) {
+         AMediaFormat_getInt32(format, "crop-right", &cropRight))) {
         width = cropRight + 1 - cropLeft;
     }
     return width;
@@ -544,7 +505,7 @@ int CodecTestBase::getHeight(AMediaFormat* format) {
     AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_HEIGHT, &height);
     if (AMediaFormat_getRect(format, "crop", &cropLeft, &cropTop, &cropRight, &cropBottom) ||
         (AMediaFormat_getInt32(format, "crop-top", &cropTop) &&
-        AMediaFormat_getInt32(format, "crop-bottom", &cropBottom))) {
+         AMediaFormat_getInt32(format, "crop-bottom", &cropBottom))) {
         height = cropBottom + 1 - cropTop;
     }
     return height;
