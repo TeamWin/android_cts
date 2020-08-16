@@ -419,6 +419,10 @@ class OutputManager {
         return mCrc32UsingImage.getValue();
     }
 
+    long getCheckSumBuffer() {
+        return mCrc32UsingBuffer.getValue();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -434,29 +438,27 @@ class OutputManager {
             isEqual = false;
             Log.e(LOG_TAG, "ref and test crc32 checksums calculated using buffer mismatch " +
                           mCrc32UsingBuffer.getValue() + '/' + that.mCrc32UsingBuffer.getValue());
+            if (memIndex == that.memIndex) {
+                int count = 0;
+                for (int i = 0; i < memIndex; i++) {
+                    if (memory[i] != that.memory[i]) {
+                        count++;
+                        if (count < 20) {
+                            Log.d(LOG_TAG, "sample at " + i + " exp/got:: " + memory[i] + '/' +
+                                    that.memory[i]);
+                        }
+                    }
+                }
+                if (count != 0) {
+                    Log.e(LOG_TAG, "ref and test o/p samples mismatch " + count);
+                }
+            } else {
+                Log.e(LOG_TAG, "ref and test o/p sizes mismatch " + memIndex + '/' + that.memIndex);
+            }
         }
         if (!outPtsList.equals(that.outPtsList)) {
             isEqual = false;
             Log.e(LOG_TAG, "ref and test presentation timestamp mismatch");
-        }
-        if (memIndex == that.memIndex) {
-            int count = 0;
-            for (int i = 0; i < memIndex; i++) {
-                if (memory[i] != that.memory[i]) {
-                    count++;
-                    if (count < 20) {
-                        Log.d(LOG_TAG, "sample at offset " + i + " exp/got:: " + memory[i] + '/' +
-                                that.memory[i]);
-                    }
-                }
-            }
-            if (count != 0) {
-                isEqual = false;
-                Log.e(LOG_TAG, "ref and test o/p samples mismatch " + count);
-            }
-        } else {
-            isEqual = false;
-            Log.e(LOG_TAG, "ref and test o/p sizes mismatch " + memIndex + '/' + that.memIndex);
         }
         return isEqual;
     }
@@ -947,6 +949,8 @@ class CodecDecoderTestBase extends CodecTestBase {
     ArrayList<ByteBuffer> mCsdBuffers;
     private int mCurrCsdIdx;
 
+    private ByteBuffer flatBuffer = ByteBuffer.allocate(4 * Integer.BYTES);
+
     MediaExtractor mExtractor;
 
     CodecDecoderTestBase(String mime, String testFile) {
@@ -982,6 +986,12 @@ class CodecDecoderTestBase extends CodecTestBase {
 
     boolean hasCSD(MediaFormat format) {
         return format.containsKey("csd-0");
+    }
+
+    void flattenBufferInfo(MediaCodec.BufferInfo info) {
+        flatBuffer.putInt(info.size).putInt(info.flags & ~MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                .putLong(info.presentationTimeUs);
+        flatBuffer.flip();
     }
 
     void enqueueCodecConfig(int bufferIndex) {
@@ -1049,8 +1059,11 @@ class CodecDecoderTestBase extends CodecTestBase {
 
     void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0 && mSaveToMem) {
+            ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
+            mOutputBuff.checksum(buf, info.size);
+            flattenBufferInfo(info);
+            mOutputBuff.checksum(flatBuffer, flatBuffer.limit());
             if (mIsAudio) {
-                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
                 mOutputBuff.saveToMemory(buf, info);
             } else {
                 // tests both getOutputImage and getOutputBuffer. Can do time division
@@ -1058,9 +1071,6 @@ class CodecDecoderTestBase extends CodecTestBase {
                 Image img = mCodec.getOutputImage(bufferIndex);
                 assertTrue(img != null);
                 mOutputBuff.checksum(img);
-
-                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-                mOutputBuff.checksum(buf, info.size);
             }
         }
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
