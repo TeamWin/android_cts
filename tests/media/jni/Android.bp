@@ -74,6 +74,7 @@ cc_test_library {
         "libmediandk",
         "liblog",
         "libandroid",
+        "libz",
     ],
     include_dirs: [
         "frameworks/av/media/ndk/include/media",
