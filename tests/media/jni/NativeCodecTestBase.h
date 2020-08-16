@@ -18,12 +18,15 @@
 #define MEDIACTSNATIVE_NATIVE_CODEC_TEST_BASE_H
 
 #include <NdkMediaCodec.h>
+#include <zlib.h>
 
 #include <cmath>
 #include <cstdint>
 #include <list>
 #include <mutex>
 #include <vector>
+
+#include "NativeMediaCommon.h"
 
 #define CHECK_STATUS(status, str)                  \
     {                                              \
@@ -87,14 +90,12 @@ class OutputManager {
     std::vector<int64_t> inpPtsArray;
     std::vector<int64_t> outPtsArray;
     std::vector<uint8_t> memory;
-    std::vector<uint32_t> checksum;
-
-    uint32_t adler32(const uint8_t* input, int offset, int len);
+    uLong crc32value = 0U;
 
   public:
     void saveInPTS(int64_t pts) {
         // Add only Unique timeStamp, discarding any duplicate frame / non-display frame
-        if(0 == std::count(inpPtsArray.begin(), inpPtsArray.end(), pts)) {
+        if (0 == std::count(inpPtsArray.begin(), inpPtsArray.end(), pts)) {
             inpPtsArray.push_back(pts);
         }
     }
@@ -104,14 +105,22 @@ class OutputManager {
     void saveToMemory(uint8_t* buf, AMediaCodecBufferInfo* info) {
         memory.insert(memory.end(), buf + info->offset, buf + info->size);
     }
-    void saveChecksum(uint8_t* buf, AMediaCodecBufferInfo* info) {
-        checksum.push_back(adler32(buf, info->offset, info->size));
+    void updateChecksum(uint8_t* buf, AMediaCodecBufferInfo* info) {
+        crc32value = crc32(crc32value, buf + info->offset, info->size);
+        uint8_t flattenInfo[16];
+        int pos = 0;
+        flattenField<int32_t>(flattenInfo, &pos, info->size);
+        flattenField<int32_t>(flattenInfo, &pos,
+                              info->flags & ~AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
+        flattenField<int64_t>(flattenInfo, &pos, info->presentationTimeUs);
+        crc32value = crc32(crc32value, flattenInfo, sizeof(flattenInfo));
     }
+    uLong getChecksum() { return crc32value; }
     void reset() {
         inpPtsArray.clear();
         outPtsArray.clear();
         memory.clear();
-        checksum.clear();
+        crc32value = 0U;
     }
     bool equals(const OutputManager* that);
     float getRmsError(uint8_t* refData, int length);
