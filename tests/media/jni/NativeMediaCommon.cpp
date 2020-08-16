@@ -73,3 +73,15 @@ bool isCSDIdentical(AMediaFormat* refFormat, AMediaFormat* testFormat) {
     }
     return true;
 }
+
+template <class T>
+void flattenField(uint8_t* buffer, int* pos, T value) {
+    uint8_t* ptr = (buffer + *pos);
+    for (int i = sizeof(T) - 1; i >= 0; i--) {
+        *ptr++ = (uint8_t)((value >> (i * 8)) & 0xff);
+    }
+    *pos += sizeof(T);
+}
+
+template void flattenField<int32_t>(uint8_t* buffer, int* pos, int32_t value);
+template void flattenField<int64_t>(uint8_t* buffer, int* pos, int64_t value);

@@ -420,7 +420,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     }
 
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
-            String testFile, String refFile, float rmsError);
+            String testFile, String refFile, float rmsError, long checksum);
 
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -435,7 +435,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         setScreenParams(getWidth(format), getHeight(format), false);
         for (String decoder : listOfDecoders) {
             assertTrue(nativeTestSimpleDecode(decoder, mSurface, mMime, mInpPrefix + mTestFile,
-                    mInpPrefix + mReconfigFile, -1.0f));
+                    mInpPrefix + mReconfigFile, -1.0f, 0L));
         }
         tearDownSurface();
     }
