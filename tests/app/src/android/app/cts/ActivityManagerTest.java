@@ -798,9 +798,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     public void testKillingPidsOnImperceptible() throws Exception {
         // Start remote service process
         final String remoteProcessName = STUB_PACKAGE_NAME + ":remote";
-        Intent intent = new Intent("android.app.REMOTESERVICE");
-        intent.setPackage(STUB_PACKAGE_NAME);
-        mTargetContext.startService(intent);
+        Intent remoteIntent = new Intent("android.app.REMOTESERVICE");
+        remoteIntent.setPackage(STUB_PACKAGE_NAME);
+        mTargetContext.startService(remoteIntent);
         Thread.sleep(WAITFOR_MSEC);
 
         RunningAppProcessInfo remote = getRunningAppProcessInfo(remoteProcessName);
@@ -813,7 +813,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             if (disabled) {
                 executeAndLogShellCommand("cmd deviceidle enable light");
             }
-            intent = new Intent(Intent.ACTION_MAIN);
+            final Intent intent = new Intent(Intent.ACTION_MAIN);
             intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mTargetContext.startActivity(intent);
@@ -884,6 +884,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             triggerIdle(false);
             toggleScreenOn(true);
             appStartedReceiver.close();
+            mTargetContext.stopService(remoteIntent);
 
             if (disabled) {
                 executeAndLogShellCommand("cmd deviceidle disable light");
