@@ -18,15 +18,21 @@ package android.mediav2.cts;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
+import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.media.MediaMuxer;
+import android.mediav2.cts.MuxerTest;
 import android.util.Log;
 import android.util.Pair;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,8 +40,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Validate profile and level configuration for listed encoder components
@@ -47,6 +55,8 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     private static final HashMap<String, Pair<int[], Integer>> mProfileLevelCdd = new HashMap<>();
 
     private MediaFormat mConfigFormat;
+    private MediaMuxer mMuxer;
+    private ArrayList<MediaCodec.BufferInfo> mInfoList = new ArrayList<>();
 
     public EncoderProfileLevelTest(String mime, int bitrate, int encoderInfo1, int encoderInfo2,
             int frameRate) {
@@ -604,6 +614,17 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
     }
 
     @Override
+    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+        if (info.size > 0) {
+            MediaCodec.BufferInfo copy = new MediaCodec.BufferInfo();
+            copy.set(mOutputBuff.getOutStreamSize(), info.size, info.presentationTimeUs,
+                    info.flags);
+            mInfoList.add(copy);
+        }
+        super.dequeueOutput(bufferIndex, info);
+    }
+
+    @Override
     boolean isFormatSimilar(MediaFormat inpFormat, MediaFormat outFormat) {
         if (!super.isFormatSimilar(inpFormat, outFormat)) {
             Log.e(LOG_TAG, "Basic channel-rate/resolution comparisons failed");
@@ -614,19 +635,29 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         assertTrue("Input and Output mimes are different.", inpMime.equals(outMime));
         if (outMime.startsWith("audio/")) {
             if (outFormat.getString(MediaFormat.KEY_MIME).equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
-                if (!outFormat.containsKey(MediaFormat.KEY_AAC_PROFILE)) {
-                    Log.e(LOG_TAG, "Output format doesn't contain aac-profile key");
+                int inputProfileKey, outputProfileKey;
+                if (outFormat.containsKey(MediaFormat.KEY_AAC_PROFILE)) {
+                    outputProfileKey = outFormat.getInteger(MediaFormat.KEY_AAC_PROFILE);
+                } else if (outFormat.containsKey(MediaFormat.KEY_PROFILE)) {
+                    outputProfileKey = outFormat.getInteger(MediaFormat.KEY_PROFILE);
+                } else {
+                    Log.e(LOG_TAG,
+                            "Output format doesn't contain either KEY_AAC_PROFILE or KEY_PROFILE");
+                    return false;
+                }
+                if (inpFormat.containsKey(MediaFormat.KEY_AAC_PROFILE)) {
+                    inputProfileKey = inpFormat.getInteger(MediaFormat.KEY_AAC_PROFILE);
+                } else if (inpFormat.containsKey(MediaFormat.KEY_PROFILE)) {
+                    inputProfileKey = inpFormat.getInteger(MediaFormat.KEY_PROFILE);
+                } else {
+                    Log.e(LOG_TAG,
+                            "Input format doesn't contain either KEY_AAC_PROFILE or KEY_PROFILE");
+                    return false;
+                }
+                if (outputProfileKey != inputProfileKey) {
+                    Log.e(LOG_TAG, "aac-profile in output doesn't match configured input");
                     //TODO (b/151429829)
                     if (true) return true;
-                    return false;
-                }
-                if (!inpFormat.containsKey(MediaFormat.KEY_AAC_PROFILE)) {
-                    Log.e(LOG_TAG, "Input format doesn't contain aac-profile key");
-                    return false;
-                }
-                if (outFormat.getInteger(MediaFormat.KEY_AAC_PROFILE)
-                        != inpFormat.getInteger(MediaFormat.KEY_AAC_PROFILE)) {
-                    Log.e(LOG_TAG, "aac-profile in output doesn't match configured input");
                     return false;
                 }
             }
@@ -671,6 +702,8 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
      * Sets profile and level keys in config format for encoder and validates the keys in output
      * format if component supports the configuration and also verifies whether cdd mandated
      * (profile, level) combination is supported
+     * Write the encoder output in all container formats that can hold the mime and validates the
+     * keys in extracted format.
      */
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testValidateProfileLevel() throws IOException, InterruptedException {
@@ -691,6 +724,8 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         MediaFormat format = mConfigFormat;
         mOutputBuff = new OutputManager();
         setUpSource(mInputFile);
+        mSaveToMem = true;
+        String tempMuxedFile = File.createTempFile("tmp", ".out").getAbsolutePath();
         int supportedCddCount = listOfEncoders.size() * (cddSupportedMime ? profileCdd.length : 1);
         for (String encoder : listOfEncoders) {
             mCodec = MediaCodec.createByCodecName(encoder);
@@ -735,10 +770,51 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                     assertTrue(log + "configured format and output format are not similar." +
                                     (ENABLE_LOGS ? "\n output format:" + outFormat : ""),
                             isFormatSimilar(format, outFormat));
+
+                    // TODO (b/151429829) (b/151398466)
+                    if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC)) {
+                        Assume.assumeTrue("neither KEY_AAC_PROFILE nor KEY_PROFILE are present",
+                                outFormat.containsKey(MediaFormat.KEY_AAC_PROFILE) ||
+                                        outFormat.containsKey(MediaFormat.KEY_PROFILE));
+                    } else {
+                        Assume.assumeTrue("KEY_PROFILE not present",
+                                outFormat.containsKey(MediaFormat.KEY_PROFILE));
+                    }
+                    Assume.assumeTrue(outFormat.containsKey(MediaFormat.KEY_LEVEL));
+                    for (int muxerFormat = MediaMuxer.OutputFormat.MUXER_OUTPUT_FIRST;
+                         muxerFormat <= MediaMuxer.OutputFormat.MUXER_OUTPUT_LAST; muxerFormat++) {
+                        if (!MuxerTest.isCodecContainerPairValid(mMime, muxerFormat)) continue;
+                        ByteBuffer mBuff = mOutputBuff.getBuffer();
+                        mMuxer = new MediaMuxer(tempMuxedFile, muxerFormat);
+                        try {
+                            mMuxer.addTrack(outFormat);
+                            mMuxer.start();
+                            for (int i = 0; i < mInfoList.size(); i++) {
+                                mMuxer.writeSampleData(0, mBuff, mInfoList.get(i));
+                            }
+                            mMuxer.stop();
+                        } catch (Exception e) {
+                            fail(log + "error! failed write to muxer format " + muxerFormat);
+                        } finally {
+                            mMuxer.release();
+                            mMuxer = null;
+                        }
+                        MediaExtractor extractor = new MediaExtractor();
+                        extractor.setDataSource(tempMuxedFile);
+                        assertEquals("Should be only 1 track ", 1, extractor.getTrackCount());
+                        MediaFormat extractedFormat = extractor.getTrackFormat(0);
+                        assertTrue(log + "\nmuxer input config = " + outFormat +
+                                           "\ninput format and extracted format are not similar." +
+                                           "\nextracted format:" + extractedFormat +
+                                           "\ncontainer format = " + muxerFormat,
+                                isFormatSimilar(format, extractedFormat));
+                        extractor.release();
+                    }
                 }
             }
             mCodec.release();
         }
+        new File(tempMuxedFile).delete();
         assertFalse("No components support cdd requirement profile level for mime: " + mMime,
                 supportedCddCount == 0);
     }
