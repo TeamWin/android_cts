@@ -15,6 +15,10 @@
  */
 package android.extractnativelibs.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.targetprep.BuildError;
 import com.android.tradefed.targetprep.TargetSetupError;
@@ -33,6 +37,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * TODO(b/147496159): add more tests.
@@ -42,25 +47,20 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
     static final String TEST_APK_RESOURCE_PREFIX = "/prebuilt/";
     static final String TEST_HOST_TMP_DIR_PREFIX = "cts_extract_native_libs_host_test";
 
-    static final String TEST_NO_EXTRACT_PKG =
-            "com.android.cts.extractnativelibs.app.noextract";
+    static final String TEST_APK_NAME_BASE = "CtsExtractNativeLibsApp";
+    static final String TEST_PKG_NAME_BASE = "com.android.cts.extractnativelibs.app";
+    static final String TEST_NO_EXTRACT_PKG = TEST_PKG_NAME_BASE + ".noextract";
     static final String TEST_NO_EXTRACT_CLASS =
             TEST_NO_EXTRACT_PKG + ".ExtractNativeLibsFalseDeviceTest";
     static final String TEST_NO_EXTRACT_TEST = "testNativeLibsNotExtracted";
-    static final String TEST_NO_EXTRACT_APK = "CtsExtractNativeLibsAppFalse.apk";
 
-    static final String TEST_EXTRACT_PKG =
-            "com.android.cts.extractnativelibs.app.extract";
+    static final String TEST_EXTRACT_PKG = TEST_PKG_NAME_BASE + ".extract";
     static final String TEST_EXTRACT_CLASS =
             TEST_EXTRACT_PKG + ".ExtractNativeLibsTrueDeviceTest";
     static final String TEST_EXTRACT_TEST = "testNativeLibsExtracted";
-    static final String TEST_EXTRACT_APK32 = "CtsExtractNativeLibsAppTrue32.apk";
-    static final String TEST_EXTRACT_APK64 = "CtsExtractNativeLibsAppTrue64.apk";
-    static final String TEST_EXTRACT_APK_BOTH = "CtsExtractNativeLibsAppTrueBoth.apk";
-    static final String TEST_NO_EXTRACT_MISALIGNED_APK =
-            "CtsExtractNativeLibsAppFalseWithMisalignedLib.apk";
 
     static final String TEST_NATIVE_LIB_LOADED_TEST = "testNativeLibsLoaded";
+    static final String IDSIG_SUFFIX = ".idsig";
 
     /** Setup test dir. */
     @Before
@@ -74,6 +74,39 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
         uninstallPackage(getDevice(), TEST_NO_EXTRACT_PKG);
         uninstallPackage(getDevice(), TEST_EXTRACT_PKG);
         getDevice().executeShellCommand("rm -r " + TEST_REMOTE_DIR);
+    }
+
+    boolean isIncrementalInstallSupported() throws Exception {
+        return getDevice().hasFeature("android.software.incremental_delivery");
+    }
+
+    static String getTestApkName(boolean isExtractNativeLibs, String abiSuffix) {
+        return TEST_APK_NAME_BASE + (isExtractNativeLibs ? "True" : "False") + abiSuffix + ".apk";
+    }
+
+    static String getTestPackageName(boolean isExtractNativeLibs) {
+        return isExtractNativeLibs ? TEST_EXTRACT_PKG : TEST_NO_EXTRACT_PKG;
+    }
+
+    static String getTestClassName(boolean isExtractNativeLibs) {
+        return isExtractNativeLibs ? TEST_EXTRACT_CLASS : TEST_NO_EXTRACT_CLASS;
+    }
+
+    final void installPackage(boolean isIncremental, String apkName) throws Exception {
+        if (isIncremental) {
+            installPackageIncremental(apkName);
+        } else {
+            installPackageLegacy(apkName);
+        }
+    }
+
+    final boolean checkNativeLibDir(boolean isExtractNativeLibs, String abi) throws Exception {
+        if (isExtractNativeLibs) {
+            return checkExtractedNativeLibDirForAbi(abi);
+        } else {
+            return runDeviceTests(
+                    TEST_NO_EXTRACT_PKG, TEST_NO_EXTRACT_CLASS, TEST_NO_EXTRACT_TEST);
+        }
     }
 
     File getFileFromResource(String filenameInResources) throws Exception {
@@ -104,7 +137,7 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
                 0L, true, false, testArgs);
     }
 
-    final void installPackage(String apkFileName)
+    private void installPackageLegacy(String apkFileName)
             throws DeviceNotAvailableException, TargetSetupError {
         SuiteApkInstaller installer = new SuiteApkInstaller();
         installer.addTestFileName(apkFileName);
@@ -115,12 +148,65 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
         }
     }
 
-    final boolean checkExtractedNativeLibDirForAbi(String abi) throws Exception {
+    private boolean checkExtractedNativeLibDirForAbi(String abiSuffix) throws Exception {
+        final String libAbi = getLibAbi(abiSuffix);
+        assertNotNull(libAbi);
         final String expectedSubDirArg = "expectedSubDir";
-        final String expectedNativeLibSubDir = AbiUtils.getArchForAbi(abi);
+        final String expectedNativeLibSubDir = AbiUtils.getArchForAbi(libAbi);
         final Map<String, String> testArgs = new HashMap<>();
         testArgs.put(expectedSubDirArg, expectedNativeLibSubDir);
         return runDeviceTestsWithArgs(TEST_EXTRACT_PKG, TEST_EXTRACT_CLASS, TEST_EXTRACT_TEST,
                 testArgs);
+    }
+
+    /** Given the abi included in the APK, predict which abi libs will be installed
+     * @param abiSuffix "64" means the APK contains only 64-bit native libs
+     *                  "32" means the APK contains only 32-bit native libs
+     *                  "Both" means the APK contains both 32-bit and 64-bit native libs
+     * @return an ABI string from AbiUtils.ABI_*
+     * @return an ABI string from AbiUtils.ABI_*
+     */
+    private String getLibAbi(String abiSuffix) throws Exception {
+        final String deviceAbi = getDevice().getProperty("ro.product.cpu.abi");
+        final String deviceBitness = AbiUtils.getBitness(deviceAbi);
+        final String libBitness;
+        // Use 32-bit native libs if device only supports 32-bit or APK only has 32-libs native libs
+        if (abiSuffix.equals("32") || deviceBitness.equals("32")) {
+            libBitness = "32";
+        } else {
+            libBitness = "64";
+        }
+        final Set<String> libAbis = AbiUtils.getAbisForArch(AbiUtils.getBaseArchForAbi(deviceAbi));
+        for (String libAbi : libAbis) {
+            if (AbiUtils.getBitness(libAbi).equals(libBitness)) {
+                return libAbi;
+            }
+        }
+        return null;
+    }
+
+    private void installPackageIncremental(String apkName) throws Exception {
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
+        final File apk = buildHelper.getTestFile(apkName);
+        assertNotNull(apk);
+        final File v4Signature = buildHelper.getTestFile(apkName + IDSIG_SUFFIX);
+        assertNotNull(v4Signature);
+        installPackageIncrementalFromFiles(apk, v4Signature);
+    }
+
+    private String installPackageIncrementalFromFiles(File apk, File v4Signature) throws Exception {
+        final String remoteApkPath = TEST_REMOTE_DIR + "/" + apk.getName();
+        final String remoteIdsigPath = remoteApkPath + IDSIG_SUFFIX;
+        assertTrue(getDevice().pushFile(apk, remoteApkPath));
+        assertTrue(getDevice().pushFile(v4Signature, remoteIdsigPath));
+        return getDevice().executeShellCommand("pm install-incremental -t -g " + remoteApkPath);
+    }
+
+    final String installIncrementalPackageFromResource(String apkFilenameInRes)
+            throws Exception {
+        final File apkFile = getFileFromResource(apkFilenameInRes);
+        final File v4SignatureFile = getFileFromResource(
+                apkFilenameInRes + IDSIG_SUFFIX);
+        return installPackageIncrementalFromFiles(apkFile, v4SignatureFile);
     }
 }
