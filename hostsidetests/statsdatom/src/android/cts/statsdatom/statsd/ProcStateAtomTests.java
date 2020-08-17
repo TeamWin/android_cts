@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.cts.statsd.atom;
+package android.cts.statsdatom.statsd;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
