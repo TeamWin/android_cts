@@ -16,13 +16,19 @@
 
 package com.android.cts.documentclient;
 
+import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
+import static android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+
 import android.app.Activity;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
@@ -37,8 +43,12 @@ import android.test.MoreAsserts;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.cts.documentclient.MyActivity.Result;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -47,6 +57,19 @@ import java.util.List;
  */
 public class DocumentsClientTest extends DocumentsClientTestCase {
     private static final String TAG = "DocumentsClientTest";
+    private static final String DOWNLOAD_PATH =
+            Environment.getExternalStorageDirectory().getAbsolutePath() + File.separatorChar
+                    + Environment.DIRECTORY_DOWNLOADS;
+    private static final String TEST_DESTINATION_DIRECTORY_NAME = "TEST_PERMISSION_DESTINATION";
+    private static final String TEST_DESTINATION_DIRECTORY_PATH =
+            DOWNLOAD_PATH + File.separatorChar + TEST_DESTINATION_DIRECTORY_NAME;
+    private static final String TEST_SOURCE_DIRECTORY_NAME = "TEST_PERMISSION_SOURCE";
+    private static final String TEST_SOURCE_DIRECTORY_PATH =
+            DOWNLOAD_PATH + File.separatorChar + TEST_SOURCE_DIRECTORY_NAME;
+    private static final String TEST_TARGET_DIRECTORY_NAME = "TEST_TARGET";
+    private static final String TEST_TARGET_DIRECTORY_PATH =
+            TEST_SOURCE_DIRECTORY_PATH + File.separatorChar + TEST_TARGET_DIRECTORY_NAME;
+    private static final String STORAGE_AUTHORITY = "com.android.externalstorage.documents";
 
     private UiSelector findRootListSelector() throws UiObjectNotFoundException {
         return new UiSelector().resourceId(
@@ -138,6 +161,18 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
                 new UiSelector().className("android.widget.TextView").text(label)));
 
         assertTrue(title.waitForExists(TIMEOUT));
+    }
+
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        deleteTestDirectory();
+    }
+
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+        deleteTestDirectory();
     }
 
     public void testOpenSimple() throws Exception {
@@ -814,5 +849,76 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         } catch(UiObjectNotFoundException e) {
             // expected
         }
+    }
+
+    public void testAfterMoveDocumentInStorage_revokeUriPermission() throws Exception {
+        if (!supportedHardware()) return;
+
+        final Context context = getInstrumentation().getContext();
+        final Uri initUri = DocumentsContract.buildDocumentUri(STORAGE_AUTHORITY,
+                "primary:" + Environment.DIRECTORY_DOWNLOADS);
+
+        // create the source directory
+        final Uri sourceUri = assertCreateDocumentSuccess(initUri, TEST_SOURCE_DIRECTORY_NAME,
+                Document.MIME_TYPE_DIR);
+
+        // create the target directory
+        final Uri targetUri = assertCreateDocumentSuccess(sourceUri, TEST_TARGET_DIRECTORY_NAME,
+                Document.MIME_TYPE_DIR);
+        final int permissionFlag = FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION;
+
+        // check permission for the target uri
+        assertEquals(PackageManager.PERMISSION_GRANTED,
+                context.checkCallingOrSelfUriPermission(targetUri, permissionFlag));
+
+        // create the destination directory
+        final Uri destinationUri = assertCreateDocumentSuccess(initUri,
+                TEST_DESTINATION_DIRECTORY_NAME, Document.MIME_TYPE_DIR);
+
+        final ContentResolver resolver = context.getContentResolver();
+        final Uri movedFileUri = DocumentsContract.moveDocument(resolver, targetUri, sourceUri,
+                destinationUri);
+        assertTrue(movedFileUri != null);
+
+        // after moving the document,  the permission of targetUri is revoked
+        assertEquals(PackageManager.PERMISSION_DENIED,
+                context.checkCallingOrSelfUriPermission(targetUri, permissionFlag));
+
+        // create the target directory again, it still has no permission for targetUri
+        executeShellCommand("mkdir " + TEST_TARGET_DIRECTORY_PATH);
+
+        assertEquals(PackageManager.PERMISSION_DENIED,
+                context.checkCallingOrSelfUriPermission(targetUri, permissionFlag));
+    }
+
+    private Uri assertCreateDocumentSuccess(@Nullable Uri initUri, @NonNull String displayName,
+            @NonNull String mimeType) throws Exception {
+        // Clear DocsUI's storage to avoid it opening stored last location.
+        clearDocumentsUi();
+
+        // create document
+        final Intent createIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        createIntent.addCategory(Intent.CATEGORY_OPENABLE);
+        createIntent.putExtra(Intent.EXTRA_TITLE, displayName);
+        createIntent.setType(mimeType);
+        if (initUri != null) {
+            createIntent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initUri);
+        }
+        mActivity.startActivityForResult(createIntent, REQUEST_CODE);
+
+        mDevice.waitForIdle();
+        findSaveButton().click();
+
+        // check result
+        final Uri uri = mActivity.getResult().data.getData();
+        assertEquals(displayName, getColumn(uri, Document.COLUMN_DISPLAY_NAME));
+        assertEquals(mimeType, getColumn(uri, Document.COLUMN_MIME_TYPE));
+
+        return uri;
+    }
+
+    private void deleteTestDirectory() throws Exception{
+        executeShellCommand("rm -rf " + TEST_DESTINATION_DIRECTORY_PATH);
+        executeShellCommand("rm -rf " + TEST_SOURCE_DIRECTORY_PATH);
     }
 }
