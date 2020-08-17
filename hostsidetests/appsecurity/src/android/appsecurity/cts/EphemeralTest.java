@@ -489,6 +489,17 @@ public class EphemeralTest extends BaseAppSecurityTest {
                 "testFullApplicationReadFile");
     }
 
+    @Test
+    public void testGetChangedPackages() throws Throwable {
+        if (mIsUnsupportedDevice) {
+            return;
+        }
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), NORMAL_PKG, TEST_CLASS,
+                "testGetChangedPackages");
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testGetChangedPackages");
+    }
+
     private static final HashMap<String, String> makeArgs(
             String action, String category, String mimeType) {
         if (action == null || action.length() == 0) {
