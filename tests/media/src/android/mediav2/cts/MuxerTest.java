@@ -357,6 +357,20 @@ public class MuxerTest {
     private static boolean[] muxSelector = new boolean[MUXER_OUTPUT_LAST + 1];
     private static HashMap<Integer, String> formatStringPair = new HashMap<>();
 
+    static final List<String> codecListforTypeMp4 =
+            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
+                    MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_VIDEO_HEVC,
+                    MediaFormat.MIMETYPE_AUDIO_AAC);
+    static final List<String> codecListforTypeWebm =
+            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_VP8, MediaFormat.MIMETYPE_VIDEO_VP9,
+                    MediaFormat.MIMETYPE_AUDIO_VORBIS, MediaFormat.MIMETYPE_AUDIO_OPUS);
+    static final List<String> codecListforType3gp =
+            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
+                    MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_AUDIO_AAC,
+                    MediaFormat.MIMETYPE_AUDIO_AMR_NB, MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+    static final List<String> codecListforTypeOgg =
+            Arrays.asList(MediaFormat.MIMETYPE_AUDIO_OPUS);
+
     static {
         android.os.Bundle args = InstrumentationRegistry.getArguments();
         final String defSel = "mp4;webm;3gp;ogg";
@@ -378,6 +392,20 @@ public class MuxerTest {
 
     static private boolean shouldRunTest(int format) {
         return muxSelector[format];
+    }
+
+    static boolean isCodecContainerPairValid(String mime, int format) {
+        boolean result = false;
+        if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            result = codecListforTypeMp4.contains(mime) || mime.startsWith("application/");
+        else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM) {
+            return codecListforTypeWebm.contains(mime);
+        } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
+            result = codecListforType3gp.contains(mime);
+        } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG) {
+            result = codecListforTypeOgg.contains(mime);
+        }
+        return result;
     }
 
     /**
@@ -916,19 +944,6 @@ public class MuxerTest {
     @LargeTest
     @RunWith(Parameterized.class)
     public static class TestSimpleMux {
-        private final List<String> codecListforTypeMp4 =
-                Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
-                        MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_VIDEO_HEVC,
-                        MediaFormat.MIMETYPE_AUDIO_AAC);
-        private final List<String> codecListforTypeWebm =
-                Arrays.asList(MediaFormat.MIMETYPE_VIDEO_VP8, MediaFormat.MIMETYPE_VIDEO_VP9,
-                        MediaFormat.MIMETYPE_AUDIO_VORBIS, MediaFormat.MIMETYPE_AUDIO_OPUS);
-        private final List<String> codecListforType3gp =
-                Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
-                        MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_AUDIO_AAC,
-                        MediaFormat.MIMETYPE_AUDIO_AMR_NB, MediaFormat.MIMETYPE_AUDIO_AMR_WB);
-        private final List<String> codecListforTypeOgg =
-                Arrays.asList(MediaFormat.MIMETYPE_AUDIO_OPUS);
         private String mMime;
         private String mSrcFile;
         private String mInpPath;
@@ -952,20 +967,6 @@ public class MuxerTest {
         @After
         public void epilogue() {
             new File(mOutPath).delete();
-        }
-
-        private boolean isCodecContainerPairValid(int format) {
-            boolean result = false;
-            if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-                result = codecListforTypeMp4.contains(mMime) || mMime.startsWith("application/");
-            else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM) {
-                return codecListforTypeWebm.contains(mMime);
-            } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
-                result = codecListforType3gp.contains(mMime);
-            } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG) {
-                result = codecListforTypeOgg.contains(mMime);
-            }
-            return result;
         }
 
         private boolean doesCodecRequireCSD(String aMime) {
@@ -1036,7 +1037,7 @@ public class MuxerTest {
                         fail(msg + "error! output != clone(input)");
                     }
                 } catch (Exception e) {
-                    if (isCodecContainerPairValid(format)) {
+                    if (isCodecContainerPairValid(mMime, format)) {
                         fail(msg + "error! incompatible mime and output format");
                     }
                 } finally {
