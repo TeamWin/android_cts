@@ -62,9 +62,10 @@ class FlickerPipTests : PipTestBase() {
                 // launch our target pip app
                 launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
                 waitForEnterPip(PIP_ACTIVITY)
-                // open an app with an input field
+                // open an app with an input field and keyboard
                 launchActivity(KEYBOARD_ACTIVITY)
                 waitForFullscreen(KEYBOARD_ACTIVITY)
+                waitForKeyboardShown()
             }
         }
         teardown {

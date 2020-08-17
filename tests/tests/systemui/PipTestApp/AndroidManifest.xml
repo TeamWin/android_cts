@@ -32,7 +32,7 @@
             android:name=".KeyboardActivity"
             android:exported="true"
             android:launchMode="singleInstance"
-            android:windowSoftInputMode="stateHidden" />
+            android:windowSoftInputMode="stateAlwaysVisible" />
     </application>
 
 </manifest>
