@@ -53,6 +53,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.zip.CRC32;
 
 import static android.mediav2.cts.CodecTestBase.hasDecoder;
 import static org.junit.Assert.assertEquals;
@@ -381,6 +382,70 @@ public class ExtractorTest {
         }
     }
 
+    private static long readAllData(MediaExtractor extractor, String mime, int sampleLimit) {
+        CRC32 checksum = new CRC32();
+        ByteBuffer buffer = ByteBuffer.allocate(MAX_SAMPLE_SIZE);
+        int tracksSelected = 0;
+        for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
+            MediaFormat format = extractor.getTrackFormat(trackID);
+            String srcMime = format.getString(MediaFormat.KEY_MIME);
+            if (mime != null && !srcMime.equals(mime)) {
+                continue;
+            }
+            extractor.selectTrack(trackID);
+            tracksSelected++;
+            if (srcMime.startsWith("audio/")) {
+                buffer.putInt(0);
+                buffer.putInt(format.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+                buffer.putInt(format.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+            } else if (srcMime.startsWith("video/")) {
+                buffer.putInt(1);
+                buffer.putInt(format.getInteger(MediaFormat.KEY_WIDTH));
+                buffer.putInt(format.getInteger(MediaFormat.KEY_HEIGHT));
+            } else {
+                buffer.putInt(2);
+            }
+            buffer.putLong(format.getLong(MediaFormat.KEY_DURATION));
+            for (int i = 0; ; i++) {
+                String csdKey = "csd-" + i;
+                if (format.containsKey(csdKey)) {
+                    checksum.update(format.getByteBuffer(csdKey));
+                } else break;
+            }
+        }
+        assertTrue(tracksSelected > 0);
+        buffer.flip();
+        checksum.update(buffer);
+
+        MediaCodec.BufferInfo sampleInfo = new MediaCodec.BufferInfo();
+        for (int sampleCount = 0; sampleCount < sampleLimit; sampleCount++) {
+            sampleInfo.set(0, (int) extractor.getSampleSize(), extractor.getSampleTime(),
+                    extractor.getSampleFlags());
+            extractor.readSampleData(buffer, 0);
+            checksum.update(buffer);
+            assertEquals(sampleInfo.size, buffer.limit());
+            assertTrue(sampleInfo.flags != -1);
+            assertTrue(sampleInfo.presentationTimeUs != -1);
+            buffer.position(0);
+            buffer.putInt(sampleInfo.size)
+                    .putInt(sampleInfo.flags)
+                    .putLong(sampleInfo.presentationTimeUs);
+            buffer.flip();
+            checksum.update(buffer);
+            sampleCount++;
+            if (!extractor.advance()) {
+                assertTrue(isExtractorOKonEOS(extractor));
+                break;
+            }
+        }
+        for (int trackID = 0; trackID < extractor.getTrackCount(); trackID++) {
+            extractor.unselectTrack(trackID);
+        }
+        return checksum.getValue();
+    }
+
+    private static native long nativeReadAllData(String srcPath, String mime, int sampleLimit);
+
     /**
      * Tests setDataSource(...) Api by observing the extractor behavior after its successful
      * instantiation using a media stream.
@@ -507,7 +572,11 @@ public class ExtractorTest {
                     !isSeekOk(mRefExtractor, testExtractor)) {
                 fail("setDataSource failed: " + testName.getMethodName());
             }
+            long sdkChecksum = readAllData(testExtractor, null, Integer.MAX_VALUE);
+            long ndkChecksum =
+                    nativeReadAllData(mInpPrefix + mInpMedia, "", Integer.MAX_VALUE);
             testExtractor.release();
+            assertEquals("SDK and NDK checksums mismatch", sdkChecksum, ndkChecksum);
         }
 
         @Test
@@ -867,12 +936,16 @@ public class ExtractorTest {
         public void testExtract() throws IOException {
             assumeTrue(shouldRunTest(mMime));
             assertTrue(mSrcFiles.length > 1);
+            MediaExtractor refExtractor = new MediaExtractor();
+            refExtractor.setDataSource(mInpPrefix + mSrcFiles[0]);
+            long sdkChecksum = readAllData(refExtractor, mMime, Integer.MAX_VALUE);
+            long ndkChecksum =
+                    nativeReadAllData(mInpPrefix + mSrcFiles[0], mMime, Integer.MAX_VALUE);
+            assertEquals("SDK and NDK checksums mismatch", sdkChecksum, ndkChecksum);
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_MPEG));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC));
-            MediaExtractor refExtractor = new MediaExtractor();
-            refExtractor.setDataSource(mInpPrefix + mSrcFiles[0]);
             boolean isOk = true;
             for (int i = 1; i < mSrcFiles.length && isOk; i++) {
                 MediaExtractor testExtractor = new MediaExtractor();
