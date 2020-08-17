@@ -21,11 +21,19 @@
 #include <NdkMediaExtractor.h>
 #include <jni.h>
 #include <sys/stat.h>
+#include <zlib.h>
 
 #include <cstdlib>
 #include <random>
 
 #include "NativeMediaCommon.h"
+
+#define CHECK_KEY(hasKey, format, isPass) \
+    if (!(hasKey)) {                      \
+        AMediaFormat_delete((format));    \
+        (isPass) = false;                 \
+        break;                            \
+    }
 
 static bool isExtractorOKonEOS(AMediaExtractor* extractor) {
     return AMediaExtractor_getSampleTrackIndex(extractor) < 0 &&
@@ -501,6 +509,126 @@ static bool isSeekOk(AMediaExtractor* refExtractor, AMediaExtractor* testExtract
     return result;
 }
 
+static jlong nativeReadAllData(JNIEnv* env, jobject, jstring jsrcPath, jstring jmime,
+                               jint sampleLimit) {
+    const int maxSampleSize = (4 * 1024 * 1024);
+    bool isPass = false;
+    uLong crc32value = 0U;
+    const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
+    const char* cmime = env->GetStringUTFChars(jmime, nullptr);
+    FILE* srcFp = fopen(csrcPath, "rbe");
+    AMediaExtractor* extractor = createExtractorFromFD(srcFp);
+    if (extractor == nullptr) {
+        if (srcFp) fclose(srcFp);
+        env->ReleaseStringUTFChars(jmime, cmime);
+        env->ReleaseStringUTFChars(jsrcPath, csrcPath);
+        ALOGE(" Error while creating extractor");
+        return static_cast<jlong>(-2);
+    }
+    isPass = true;
+    auto buffer = new uint8_t[maxSampleSize];
+    int bufferSize = 0;
+    int tracksSelected = 0;
+    for (size_t trackID = 0; trackID < AMediaExtractor_getTrackCount(extractor) && isPass;
+         trackID++) {
+        AMediaFormat* format = AMediaExtractor_getTrackFormat(extractor, trackID);
+        const char* refMime = nullptr;
+        CHECK_KEY(AMediaFormat_getString(format, AMEDIAFORMAT_KEY_MIME, &refMime), format, isPass);
+        if (strlen(cmime) != 0 && strcmp(refMime, cmime) != 0) {
+            AMediaFormat_delete(format);
+            continue;
+        }
+        AMediaExtractor_selectTrack(extractor, trackID);
+        tracksSelected++;
+        if (strncmp(refMime, "audio/", strlen("audio/")) == 0) {
+            int32_t refSampleRate, refNumChannels;
+            flattenField<int32_t>(buffer, &bufferSize, 0);
+            CHECK_KEY(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_SAMPLE_RATE, &refSampleRate),
+                      format, isPass);
+            flattenField<int32_t>(buffer, &bufferSize, refSampleRate);
+            CHECK_KEY(
+                    AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_CHANNEL_COUNT, &refNumChannels),
+                    format, isPass);
+            flattenField<int32_t>(buffer, &bufferSize, refNumChannels);
+        } else if (strncmp(refMime, "video/", strlen("video/")) == 0) {
+            int32_t refWidth, refHeight;
+            flattenField<int32_t>(buffer, &bufferSize, 1);
+            CHECK_KEY(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_WIDTH, &refWidth), format,
+                      isPass);
+            flattenField<int32_t>(buffer, &bufferSize, refWidth);
+            CHECK_KEY(AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_HEIGHT, &refHeight), format,
+                      isPass);
+            flattenField<int32_t>(buffer, &bufferSize, refHeight);
+        } else {
+            flattenField<int32_t>(buffer, &bufferSize, 2);
+        }
+        int64_t keyDuration = 0;
+        CHECK_KEY(AMediaFormat_getInt64(format, AMEDIAFORMAT_KEY_DURATION, &keyDuration), format,
+                  isPass);
+        flattenField<int64_t>(buffer, &bufferSize, keyDuration);
+        // csd keys
+        for (int i = 0;; i++) {
+            char csdName[16];
+            void* csdBuffer;
+            size_t csdSize;
+            snprintf(csdName, sizeof(csdName), "csd-%d", i);
+            if (AMediaFormat_getBuffer(format, csdName, &csdBuffer, &csdSize)) {
+                crc32value = crc32(crc32value, static_cast<uint8_t*>(csdBuffer), csdSize);
+            } else
+                break;
+        }
+        AMediaFormat_delete(format);
+    }
+    if (tracksSelected < 1) {
+        isPass = false;
+        ALOGE("No track selected");
+    }
+    crc32value = crc32(crc32value, buffer, bufferSize);
+
+    AMediaCodecBufferInfo sampleInfo;
+    for (int sampleCount = 0; sampleCount < sampleLimit && isPass; sampleCount++) {
+        setSampleInfo(extractor, &sampleInfo);
+        ssize_t refSz = AMediaExtractor_readSampleData(extractor, buffer, maxSampleSize);
+        crc32value = crc32(crc32value, buffer, refSz);
+        if (sampleInfo.size != refSz) {
+            isPass = false;
+            ALOGE("Buffer read size %zd mismatches extractor sample size %d", refSz,
+                  sampleInfo.size);
+        }
+        if (sampleInfo.flags == -1) {
+            isPass = false;
+            ALOGE("No extractor flags");
+        }
+        if (sampleInfo.presentationTimeUs == -1) {
+            isPass = false;
+            ALOGE("Presentation times are negative");
+        }
+        bufferSize = 0;
+        flattenField<int32_t>(buffer, &bufferSize, sampleInfo.size);
+        flattenField<int32_t>(buffer, &bufferSize, sampleInfo.flags);
+        flattenField<int64_t>(buffer, &bufferSize, sampleInfo.presentationTimeUs);
+        crc32value = crc32(crc32value, buffer, bufferSize);
+        sampleCount++;
+        if (!AMediaExtractor_advance(extractor)) {
+            if (!isExtractorOKonEOS(extractor)) {
+                isPass = false;
+                ALOGE("Mime: %s calls post advance() are not OK", cmime);
+            }
+            break;
+        }
+    }
+    delete[] buffer;
+    AMediaExtractor_delete(extractor);
+    if (srcFp) fclose(srcFp);
+    env->ReleaseStringUTFChars(jmime, cmime);
+    env->ReleaseStringUTFChars(jsrcPath, csrcPath);
+    if (!isPass) {
+        ALOGE(" Error while extracting");
+        return static_cast<jlong>(-3);
+    }
+    return static_cast<jlong>(crc32value);
+}
+
 static jboolean nativeTestExtract(JNIEnv* env, jobject, jstring jsrcPath, jstring jrefPath,
                                   jstring jmime) {
     bool isPass = false;
@@ -733,11 +861,21 @@ int registerAndroidMediaV2CtsExtractorTestFunc(JNIEnv* env) {
     return env->RegisterNatives(c, methodTable, sizeof(methodTable) / sizeof(JNINativeMethod));
 }
 
+int registerAndroidMediaV2CtsExtractorTest(JNIEnv* env) {
+    const JNINativeMethod methodTable[] = {
+            {"nativeReadAllData", "(Ljava/lang/String;Ljava/lang/String;I)J",
+             (void*)nativeReadAllData},
+    };
+    jclass c = env->FindClass("android/mediav2/cts/ExtractorTest");
+    return env->RegisterNatives(c, methodTable, sizeof(methodTable) / sizeof(JNINativeMethod));
+}
+
 extern int registerAndroidMediaV2CtsExtractorUnitTestApi(JNIEnv* env);
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*) {
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) return JNI_ERR;
+    if (registerAndroidMediaV2CtsExtractorTest(env) != JNI_OK) return JNI_ERR;
     if (registerAndroidMediaV2CtsExtractorTestSetDS(env) != JNI_OK) return JNI_ERR;
     if (registerAndroidMediaV2CtsExtractorTestFunc(env) != JNI_OK) return JNI_ERR;
     if (registerAndroidMediaV2CtsExtractorUnitTestApi(env) != JNI_OK) return JNI_ERR;
