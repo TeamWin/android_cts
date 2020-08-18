@@ -69,7 +69,7 @@ public class PermissionPolicyTest {
     private static final String MANAGE_COMPANION_DEVICES_PERMISSION
             = "android.permission.MANAGE_COMPANION_DEVICES";
 
-    private static final Date INPUT_CONSUMER_PATCH_DATE = parseDate("2020-10-01");
+    private static final Date INPUT_CONSUMER_PATCH_DATE = parseDate("2020-12-05");
     private static final String INPUT_CONSUMER_PERMISSION = "android.permission.INPUT_CONSUMER";
 
     private static final String LOG_TAG = "PermissionProtectionTest";
