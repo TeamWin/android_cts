@@ -230,6 +230,10 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         assertTrue(CtsSelfManagedConnectionService.getConnectionService().waitForUpdate(
                         CtsSelfManagedConnectionService.FOCUS_GAINED_LOCK));
 
+        // Wait for the internal handlers to set the self-managed call to active. Otherwise, the
+        // call will get stuck in telecom if the set-active command gets run after the initial
+        // disconnect command.
+        TestUtils.waitOnAllHandlers(getInstrumentation());
         // Disconnected the self-managed call
         selfManagedConnection.disconnectAndDestroy();
     }
