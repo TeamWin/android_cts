@@ -126,6 +126,11 @@ abstract class PipTestBase {
         } || error("Activity $activityName is pinned!")
     }
 
+    /** Waits until the given window state condition is true. Throws on timeout. */
+    protected fun waitForWMState(message: String, condition: (WindowManagerState) -> Boolean) {
+        wmState.waitFor(message, condition) || error("Timed out while waiting for $message")
+    }
+
     /** Ensure the pip detail menu is open. */
     protected fun assertPipMenuOpen() {
         waitForFullscreen(Components.PIP_MENU_ACTIVITY)
