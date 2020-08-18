@@ -279,8 +279,8 @@ public class ActivityLaunchUtils {
                     AccessibilityNodeInfo node = event.getSource();
                     if (node != null) {
                         final AccessibilityWindowInfo window = node.getWindow();
-                        if(TextUtils.equals(activityTitle, window.getTitle())) {
-                            return  true;
+                        if(!TextUtils.equals(activityTitle, window.getTitle())) {
+                            return  false;
                         }
                     }
                     final AccessibilityWindowInfo window =
