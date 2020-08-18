@@ -26,10 +26,10 @@ import android.server.wm.UiDeviceUtils
 import android.server.wm.annotation.Group2
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
 import android.systemui.tv.cts.PipActivity
-import android.systemui.tv.cts.PipActivity.ACTION_CLEAR_CUSTOM_ACTIONS
 import android.systemui.tv.cts.PipActivity.ACTION_MEDIA_PLAY
 import android.systemui.tv.cts.PipActivity.ACTION_NO_OP
 import android.systemui.tv.cts.PipActivity.EXTRA_ENTER_PIP
+import android.systemui.tv.cts.PipActivity.EXTRA_SET_CUSTOM_ACTIONS
 import android.systemui.tv.cts.PipMenu
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CUSTOM_BUTTON
@@ -44,7 +44,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -127,7 +126,6 @@ class CustomPipActionsTests : PipTestBase() {
         val titles = List(maxPipActions) { num: Int ->
             "Action $num"
         }
-        val actions = createClearActionsList(titles)
         launchPipMenuWithActions(createClearActionsList(titles))
 
         // click on a random button
@@ -207,13 +205,16 @@ class CustomPipActionsTests : PipTestBase() {
     }
 
     /** Ensure action with [title] no longer exists. */
-    private fun assertActionButtonGone(title: String) = assertNull(
-        findActionButton(title),
+    private fun assertActionButtonGone(title: String) = assertTrue(
+        uiDevice.wait(Until.gone(title.asSelector()), defaultTimeout),
         "Button $title must be gone!"
     )
 
-    private fun findActionButton(title: String): UiObject2? = uiDevice.wait(Until.findObject(
-        By.res(ID_PIP_MENU_CUSTOM_BUTTON).desc(title)), defaultTimeout)
+    private fun findActionButton(title: String): UiObject2? = uiDevice.wait(
+        Until.findObject(title.asSelector()), defaultTimeout)
+
+    /** Constructs a selector for a custom action button with [this] title. */
+    private fun String.asSelector() = By.res(ID_PIP_MENU_CUSTOM_BUTTON).desc(this)
 
     /**
      * Create a remote action that will clear all remote actions.
@@ -226,8 +227,11 @@ class CustomPipActionsTests : PipTestBase() {
         PendingIntent.getBroadcast(
             context,
             0,
-            Intent(ACTION_CLEAR_CUSTOM_ACTIONS),
-            PendingIntent.FLAG_CANCEL_CURRENT
+            Intent().apply {
+                action = ACTION_NO_OP
+                putParcelableArrayListExtra(EXTRA_SET_CUSTOM_ACTIONS, arrayListOf<RemoteAction>())
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT
         )
 
     /** Launches a pip app with given custom actions and enters the pip menu. */
@@ -246,7 +250,7 @@ class CustomPipActionsTests : PipTestBase() {
 
     /** Modify a pip app intent to set custom actions. */
     private fun Intent.setCustomActions(actions: ArrayList<RemoteAction>): Intent = apply {
-        putParcelableArrayListExtra(PipActivity.EXTRA_SET_CUSTOM_ACTIONS, actions)
+        putParcelableArrayListExtra(EXTRA_SET_CUSTOM_ACTIONS, actions)
     }
 
     /** Create an intent to start an app in pip mode. */
@@ -257,10 +261,7 @@ class CustomPipActionsTests : PipTestBase() {
     }
 
     /** Creates an intent to update an already running pip app. */
-    private fun makeUpdatePipIntent() = makeStartPipIntent().apply {
-        component = null
-        action = ACTION_NO_OP
-    }
+    private fun makeUpdatePipIntent() = Intent(ACTION_NO_OP)
 
     /** Start the app with the given intent and open its pip menu. */
     private fun startAndOpenPipMenu(startPipActivityIntent: Intent) {
