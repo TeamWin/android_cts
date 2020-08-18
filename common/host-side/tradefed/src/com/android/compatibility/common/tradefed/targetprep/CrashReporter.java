@@ -44,6 +44,9 @@ public class CrashReporter implements ITargetCleaner {
 
     /** Uploads the current buffer of Crashes to the phone under the current test name. */
     private static void upload(ITestDevice device, String testname, JSONArray crashes) {
+        if (crashes == null) {
+            crashes = new JSONArray();
+        }
         try {
             if (testname == null) {
                 CLog.logAndDisplay(LogLevel.ERROR, "Attempted upload with no test name");
@@ -75,6 +78,13 @@ public class CrashReporter implements ITargetCleaner {
     @Override
     public void setUp(ITestDevice device, IBuildInfo buildInfo) {
         try {
+            device.executeShellCommand("logcat -c");
+        } catch (DeviceNotAvailableException e) {
+            CLog.logAndDisplay(LogLevel.ERROR, "CrashReporterThread failed to clear logcat");
+            CLog.logAndDisplay(LogLevel.ERROR, e.getMessage());
+        }
+
+        try {
             device.executeShellCommand("rm -rf " + CrashUtils.DEVICE_PATH);
             device.executeShellCommand("mkdir " + CrashUtils.DEVICE_PATH);
         } catch (DeviceNotAvailableException e) {
@@ -84,14 +94,23 @@ public class CrashReporter implements ITargetCleaner {
             CLog.logAndDisplay(LogLevel.ERROR, e.getMessage());
             return;
         }
+
+        CrashReporterReceiver receiver = new CrashReporterReceiver(device);
         mBackgroundThread =
                 new BackgroundDeviceAction(
-                        "logcat",
-                        "CrashReporter logcat thread",
-                        device,
-                        new CrashReporterReceiver(device),
-                        0);
+                        "logcat", "CrashReporter logcat thread", device, receiver, 0);
         mBackgroundThread.start();
+
+        try {
+            // If the test starts before the reporter receiver can read the test start message then
+            // the crash could only be read halfway. We wait until the receiver starts getting
+            // messages.
+            synchronized (receiver) {
+                receiver.wait(10_000); // wait for 10 seconds max
+            }
+        } catch (InterruptedException e) {
+            // continue as normal
+        }
     }
 
     /** {@inheritDoc} */
@@ -127,6 +146,11 @@ public class CrashReporter implements ITargetCleaner {
                 mCrashes = new JSONArray();
                 mLogcatChunk.setLength(0);
             } else if (CrashUtils.sEndofCrashPattern.matcher(line).find()) {
+                if (mCrashes == null) {
+                    // In case the crash happens before any test is started, it's not related to the
+                    // current test and shouldn't be reported.
+                    return;
+                }
                 CrashUtils.addAllCrashes(mLogcatChunk.toString(), mCrashes);
                 mLogcatChunk.setLength(0);
             } else if (CrashUtils.sUploadRequestPattern.matcher(line).find()) {
@@ -135,7 +159,8 @@ public class CrashReporter implements ITargetCleaner {
         }
 
         @Override
-        public void processNewLines(String[] lines) {
+        public synchronized void processNewLines(String[] lines) {
+            this.notifyAll(); // alert the main thread that we are active.
             if (!isCancelled()) {
                 for (String line : lines) {
                     processLogLine(line);
