@@ -68,6 +68,12 @@ public class CtsApi29InCallService extends MockInCallService {
         return null;
     }
 
+    @Override
+    public boolean onUnbind(Intent intent) {
+        reset();
+        return super.onUnbind(intent);
+    }
+
     public static boolean waitForBindRequest() {
         try {
             if (isServiceBound()) return true;
