@@ -237,22 +237,30 @@ public class ExtractorTest {
         return true;
     }
 
-    private static boolean isFormatSimilar(MediaFormat refFormat, MediaFormat testFormat) {
+    static boolean isFormatSimilar(MediaFormat refFormat, MediaFormat testFormat) {
         String refMime = refFormat.getString(MediaFormat.KEY_MIME);
         String testMime = testFormat.getString(MediaFormat.KEY_MIME);
 
         if (!refMime.equals(testMime)) return false;
+        if (refFormat.getLong(MediaFormat.KEY_DURATION) !=
+                    testFormat.getLong(MediaFormat.KEY_DURATION)) {
+            Log.w(LOG_TAG, "Duration mismatches ref / test = " +
+                                   refFormat.getLong(MediaFormat.KEY_DURATION) + " / " +
+                                   testFormat.getLong(MediaFormat.KEY_DURATION));
+            // TODO (b/163477410)(b/163478168)
+//            return false;
+        }
         if (!isCSDIdentical(refFormat, testFormat)) return false;
         if (refMime.startsWith("audio/")) {
-            return refFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) ==
-                    testFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) &&
-                    refFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) ==
-                            testFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            if (refFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) !=
+                        testFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)) return false;
+            if (refFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) !=
+                        testFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)) return false;
         } else if (refMime.startsWith("video/")) {
-            return refFormat.getInteger(MediaFormat.KEY_WIDTH) ==
-                    testFormat.getInteger(MediaFormat.KEY_WIDTH) &&
-                    refFormat.getInteger(MediaFormat.KEY_HEIGHT) ==
-                            testFormat.getInteger(MediaFormat.KEY_HEIGHT);
+            if (refFormat.getInteger(MediaFormat.KEY_WIDTH) !=
+                        testFormat.getInteger(MediaFormat.KEY_WIDTH)) return false;
+            if (refFormat.getInteger(MediaFormat.KEY_HEIGHT) !=
+                        testFormat.getInteger(MediaFormat.KEY_HEIGHT)) return false;
         }
         return true;
     }
@@ -1308,7 +1316,7 @@ public class ExtractorTest {
                 testBuffer.rewind();
                 assertEquals(log + "Output mismatch", 0, refBuffer.compareTo(testBuffer));
                 assertTrue(log + "Output formats mismatch",
-                        isFormatSimilar(cdtb.mOutFormat, format));
+                        cdtb.isFormatSimilar(cdtb.mOutFormat, format));
             } else if (mime.equals(mMime)) {
                 MediaExtractor refExtractor = new MediaExtractor();
                 refExtractor.setDataSource(mInpPrefix + mRefFile);
