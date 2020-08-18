@@ -19,11 +19,8 @@ package android.mediav2.cts;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Surface;
-import android.view.SurfaceView;
-import android.view.ViewGroup;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
@@ -48,32 +45,10 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
     private static final String LOG_TAG = CodecDecoderSurfaceTest.class.getSimpleName();
 
     private final String mReconfigFile;
-    private SurfaceView mSurfaceView;
 
     public CodecDecoderSurfaceTest(String mime, String testFile, String reconfigFile) {
         super(mime, testFile);
         mReconfigFile = reconfigFile;
-    }
-
-    private void setScreenParams(int width, int height, boolean noStretch) {
-        ViewGroup.LayoutParams lp = mSurfaceView.getLayoutParams();
-        final DisplayMetrics dm = mActivityRule.getActivity().getResources().getDisplayMetrics();
-        if (noStretch && width <= dm.widthPixels && height <= dm.heightPixels) {
-            lp.width = width;
-            lp.height = height;
-        } else {
-            int a = dm.widthPixels * height / width;
-            if (a <= dm.heightPixels) {
-                lp.width = dm.widthPixels;
-                lp.height = a;
-            } else {
-                lp.width = dm.heightPixels * width / height;
-                lp.height = dm.heightPixels;
-            }
-        }
-        assertTrue(lp.width <= dm.widthPixels);
-        assertTrue(lp.height <= dm.heightPixels);
-        mActivityRule.getActivity().runOnUiThread(() -> mSurfaceView.setLayoutParams(lp));
     }
 
     void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
@@ -93,6 +68,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
     private void decodeAndSavePts(String file, String decoder, long pts, int mode, int frameLimit)
             throws IOException, InterruptedException {
+        Surface sf = mSurface;
+        mSurface = null; // for reference, decode in non-surface mode
         mOutputBuff = new OutputManager();
         mCodec = MediaCodec.createByCodecName(decoder);
         MediaFormat format = setUpSource(file);
@@ -105,24 +82,12 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         mCodec.stop();
         mCodec.release();
         mExtractor.release();
+        mSurface = sf; // restore surface
     }
 
     @Rule
     public ActivityTestRule<CodecTestActivity> mActivityRule =
             new ActivityTestRule<>(CodecTestActivity.class);
-
-    public void setUpSurface() {
-        CodecTestActivity activity = mActivityRule.getActivity();
-        mSurfaceView = activity.findViewById(R.id.surface);
-        mSurface = mSurfaceView.getHolder().getSurface();
-    }
-
-    public void tearDownSurface() {
-        if (mSurface != null) {
-            mSurface.release();
-            mSurface = null;
-        }
-    }
 
     @Parameterized.Parameters(name = "{index}({0})")
     public static Collection<Object[]> input() {
@@ -181,6 +146,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         OutputManager test = new OutputManager();
         final long pts = 0;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
+        CodecTestActivity activity = mActivityRule.getActivity();
+        setUpSurface(activity);
         for (String decoder : listOfDecoders) {
             decodeAndSavePts(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
             ref = mOutputBuff;
@@ -188,8 +155,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                     ref.isOutPtsListIdenticalToInpPtsList(false));
             MediaFormat format = setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(decoder);
-            setUpSurface();
-            setScreenParams(getWidth(format), getHeight(format), true);
+            activity.setScreenParams(getWidth(format), getHeight(format), true);
             for (boolean isAsync : boolStates) {
                 String log = String.format("codec: %s, file: %s, mode: %s:: ", decoder, mTestFile,
                         (isAsync ? "async" : "sync"));
@@ -211,7 +177,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             }
             mCodec.release();
             mExtractor.release();
-            mSurface = null;
         }
         tearDownSurface();
     }
@@ -241,6 +206,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
         OutputManager test = new OutputManager();
+        CodecTestActivity activity = mActivityRule.getActivity();
+        setUpSurface(activity);
         for (String decoder : listOfDecoders) {
             decodeAndSavePts(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
@@ -249,8 +216,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             mOutputBuff = test;
             setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(decoder);
-            setUpSurface();
-            setScreenParams(getWidth(format), getHeight(format), false);
+            activity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
                 String log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
                         mTestFile, (isAsync ? "async" : "sync"));
@@ -305,7 +271,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             }
             mCodec.release();
             mExtractor.release();
-            mSurface = null;
         }
         tearDownSurface();
     }
@@ -330,6 +295,8 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
         OutputManager test = new OutputManager();
+        CodecTestActivity activity = mActivityRule.getActivity();
+        setUpSurface(activity);
         for (String decoder : listOfDecoders) {
             decodeAndSavePts(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
@@ -341,8 +308,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                     configRef.isOutPtsListIdenticalToInpPtsList(false));
             mOutputBuff = test;
             mCodec = MediaCodec.createByCodecName(decoder);
-            setUpSurface();
-            setScreenParams(getWidth(format), getHeight(format), false);
+            activity.setScreenParams(getWidth(format), getHeight(format), false);
             for (boolean isAsync : boolStates) {
                 setUpSource(mTestFile);
                 String log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
@@ -396,7 +362,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 setUpSource(mReconfigFile);
                 log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
                         mReconfigFile, (isAsync ? "async" : "sync"));
-                setScreenParams(getWidth(newFormat), getHeight(newFormat), true);
+                activity.setScreenParams(getWidth(newFormat), getHeight(newFormat), true);
                 reConfigureCodec(newFormat, isAsync, false, false);
                 mCodec.start();
                 test.reset();
@@ -414,28 +380,28 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 mExtractor.release();
             }
             mCodec.release();
-            mSurface = null;
         }
         tearDownSurface();
     }
 
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
-            String testFile, String refFile, float rmsError);
+            String testFile, String refFile, float rmsError, long checksum);
 
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testSimpleDecodeToSurfaceNative() throws IOException {
+    public void testSimpleDecodeToSurfaceNative() throws IOException, InterruptedException {
         ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
         if (listOfDecoders.isEmpty()) {
             fail("no suitable codecs found for mime: " + mMime);
         }
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
-        setUpSurface();
-        setScreenParams(getWidth(format), getHeight(format), false);
+        CodecTestActivity activity = mActivityRule.getActivity();
+        setUpSurface(activity);
+        activity.setScreenParams(getWidth(format), getHeight(format), false);
         for (String decoder : listOfDecoders) {
             assertTrue(nativeTestSimpleDecode(decoder, mSurface, mMime, mInpPrefix + mTestFile,
-                    mInpPrefix + mReconfigFile, -1.0f));
+                    mInpPrefix + mReconfigFile, -1.0f, 0L));
         }
         tearDownSurface();
     }
@@ -445,15 +411,16 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
 
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testFlushNative() throws IOException {
+    public void testFlushNative() throws IOException, InterruptedException {
         ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
         if (listOfDecoders.isEmpty()) {
             fail("no suitable codecs found for mime: " + mMime);
         }
         MediaFormat format = setUpSource(mTestFile);
         mExtractor.release();
-        setUpSurface();
-        setScreenParams(getWidth(format), getHeight(format), true);
+        CodecTestActivity activity = mActivityRule.getActivity();
+        setUpSurface(activity);
+        activity.setScreenParams(getWidth(format), getHeight(format), true);
         for (String decoder : listOfDecoders) {
             assertTrue(nativeTestFlush(decoder, mSurface, mMime, mInpPrefix + mTestFile));
         }

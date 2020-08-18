@@ -56,7 +56,6 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 
 import com.android.compatibility.common.util.AmUtils;
@@ -261,7 +260,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 Arrays.asList(ON_RESUME), "secondDestroy");
     }
 
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishBottom() throws Exception {
         final Activity bottomActivity = launchActivityAndWait(FirstActivity.class);
@@ -281,13 +279,11 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 "destroyOnBottom");
     }
 
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAndLaunchOnResult() throws Exception {
         testLaunchForResultAndLaunchAfterResultSequence(EXTRA_LAUNCH_ON_RESULT);
     }
 
-    @FlakyTest(bugId=137329632)
     @Test
     public void testFinishAndLaunchAfterOnResultInOnResume() throws Exception {
         testLaunchForResultAndLaunchAfterResultSequence(EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT);
@@ -573,7 +569,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    @FlakyTest(bugId=127741025)
     public void testOnActivityResultAfterStop() throws Exception {
         final ActivityMonitor resultMonitor = getInstrumentation().addMonitor(
                 ResultActivity.class.getName(), null /* result */, false /* block */);
@@ -908,7 +903,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 FirstActivity.class);
     }
 
-    @FlakyTest(bugId=142125019) // Add to presubmit when proven stable
     @Test
     public void testFinishBelowDialogActivity() throws Exception {
         verifyFinishAtStage(ResultActivity.class, EXTRA_FINISH_IN_ON_PAUSE, "onPause",
@@ -933,7 +927,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityTransitions(activityClass, expectedSequence, "finish in " + stageName);
     }
 
-    @FlakyTest(bugId=142125019) // Add to presubmit when proven stable
     @Test
     public void testFinishBelowTranslucentActivityAfterDelay() throws Exception {
         final Activity bottomActivity = launchActivityAndWait(CallbackTrackingActivity.class);
@@ -949,7 +942,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 getLifecycleLog(), "finishBelow");
     }
 
-    @FlakyTest(bugId=142125019) // Add to presubmit when proven stable
     @Test
     public void testFinishBelowFullscreenActivityAfterDelay() throws Exception {
         final Activity bottomActivity = launchActivityAndWait(CallbackTrackingActivity.class);

@@ -46,6 +46,7 @@ cc_test_library {
     shared_libs: [
         "libmediandk",
         "liblog",
+        "libz",
     ],
     include_dirs: [
         "frameworks/av/media/ndk/include/media",
@@ -74,6 +75,7 @@ cc_test_library {
         "libmediandk",
         "liblog",
         "libandroid",
+        "libz",
     ],
     include_dirs: [
         "frameworks/av/media/ndk/include/media",

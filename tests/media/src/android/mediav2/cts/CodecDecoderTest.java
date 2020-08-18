@@ -201,6 +201,9 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
     }
 
+    private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
+            String testFile, String refFile, float rmsError, long checksum);
+
     /**
      * Tests decoder for combinations:
      * 1. Codec Sync Mode, Signal Eos with Last frame
@@ -288,32 +291,20 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 if (mRmsError >= 0) {
                     assertTrue(mRefFile != null);
                     short[] refData = setUpAudioReference();
-                    assertTrue(String.format("%s rms error too high", mTestFile),
-                            ref.getRmsError(refData) <= mRmsError * RMS_ERROR_TOLERANCE);
+                    float currError = ref.getRmsError(refData);
+                    float errMargin = mRmsError * RMS_ERROR_TOLERANCE;
+                    assertTrue(String.format("%s rms error too high exp/got %f/%f", mTestFile,
+                            errMargin, currError), currError <= errMargin);
                 } else if (mRefCRC >= 0) {
                     assertEquals(String.format("%s checksum mismatch", mTestFile), mRefCRC,
                             ref.getCheckSumImage());
                 }
             }
+            assertTrue(nativeTestSimpleDecode(decoder, null, mMime, mInpPrefix + mTestFile,
+                    mInpPrefix + mRefFile, mRmsError * RMS_ERROR_TOLERANCE,
+                    ref.getCheckSumBuffer()));
         }
         mExtractor.release();
-    }
-
-    private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
-            String testFile, String refFile, float rmsError);
-
-
-    @LargeTest
-    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
-    public void testSimpleDecodeNative() {
-        ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
-        if (listOfDecoders.isEmpty()) {
-            fail("no suitable codecs found for mime: " + mMime);
-        }
-        for (String decoder : listOfDecoders) {
-            assertTrue(nativeTestSimpleDecode(decoder, null, mMime, mInpPrefix + mTestFile,
-                    mInpPrefix + mRefFile, mRmsError * RMS_ERROR_TOLERANCE));
-        }
     }
 
     /**

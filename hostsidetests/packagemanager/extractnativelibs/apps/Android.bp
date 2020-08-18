@@ -27,7 +27,47 @@ cc_test_library {
 }
 
 android_test_helper_app {
-    name: "CtsExtractNativeLibsAppFalse",
+    name: "CtsExtractNativeLibsAppFalse32",
+    defaults: ["cts_defaults"],
+    sdk_version: "current",
+    srcs: ["app_no_extract/src/**/*.java"],
+    manifest: "app_no_extract/AndroidManifest.xml",
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+    jni_libs: [
+        "libtest_extract_native_libs",
+    ],
+    static_libs: ["androidx.test.rules"],
+    use_embedded_native_libs: true,
+    compile_multilib: "32",
+    v4_signature: true,
+}
+
+android_test_helper_app {
+    name: "CtsExtractNativeLibsAppFalse64",
+    defaults: ["cts_defaults"],
+    sdk_version: "current",
+    srcs: ["app_no_extract/src/**/*.java"],
+    manifest: "app_no_extract/AndroidManifest.xml",
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+    jni_libs: [
+        "libtest_extract_native_libs",
+    ],
+    static_libs: ["androidx.test.rules"],
+    use_embedded_native_libs: true,
+    compile_multilib: "64",
+    v4_signature: true,
+}
+
+android_test_helper_app {
+    name: "CtsExtractNativeLibsAppFalseBoth",
     defaults: ["cts_defaults"],
     sdk_version: "current",
     srcs: ["app_no_extract/src/**/*.java"],
