@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.provider.cts.contacts;
+package android.provider.cts.contacts.galprovider;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -26,7 +26,6 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Directory;
 import android.provider.ContactsContract.RawContacts;
-import android.provider.cts.contacts.account.StaticAccountAuthenticator;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -36,15 +35,17 @@ import org.json.JSONObject;
 /**
  * GAL provider for CTS.
  */
-public class DummyGalProvider extends ContentProvider {
-    private static final String TAG = "DummyGalProvider";
+public class CtsGalProvider extends ContentProvider {
+    private static final String TAG = "GalProvider";
 
-    public static final String AUTHORITY = "android.provider.cts.contacts.dgp";
+    // The main CTS refers to it.
+    public static final String GAL_PACKAGE_NAME = "android.provider.cts.contacts.galprovider";
+    public static final String AUTHORITY = "android.provider.cts.contacts.gal";
 
-    public static final String ACCOUNT_NAME = "dummygal";
-    public static final String ACCOUNT_TYPE = StaticAccountAuthenticator.TYPE;
+    public static final String ACCOUNT_NAME = "ctsgal";
+    public static final String ACCOUNT_TYPE = "com.android.cts.contactsprovider";
 
-    public static final String DISPLAY_NAME = "dummy-gal";
+    public static final String DISPLAY_NAME = "cts-gal";
 
     public static final String ERROR_MESSAGE_KEY = "error";
     public static final String QUERY_KEY = "query";
@@ -54,23 +55,14 @@ public class DummyGalProvider extends ContentProvider {
 
     private static final int GAL_DIRECTORIES = 0;
     private static final int GAL_FILTER = 1;
-    private static final int GAL_CONTACT = 2;
-    private static final int GAL_CONTACT_WITH_ID = 3;
-    private static final int GAL_EMAIL_FILTER = 4;
-    private static final int GAL_PHONE_FILTER = 5;
-    private static final int GAL_PHONE_LOOKUP = 6;
+    private static final int SUB_PATH = 1;
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     static {
         sURIMatcher.addURI(AUTHORITY, "directories", GAL_DIRECTORIES);
         sURIMatcher.addURI(AUTHORITY, "contacts/filter/*", GAL_FILTER);
-        // The following URIs are not supported by this class.
-//        sURIMatcher.addURI(AUTHORITY, "contacts/lookup/*/entities", GAL_CONTACT);
-//        sURIMatcher.addURI(AUTHORITY, "contacts/lookup/*/#/entities", GAL_CONTACT_WITH_ID);
-//        sURIMatcher.addURI(AUTHORITY, "data/emails/filter/*", GAL_EMAIL_FILTER);
-//        sURIMatcher.addURI(AUTHORITY, "data/phones/filter/*", GAL_PHONE_FILTER);
-//        sURIMatcher.addURI(AUTHORITY, "phone_lookup/*", GAL_PHONE_LOOKUP);
+        sURIMatcher.addURI(AUTHORITY, "sub/*", SUB_PATH);
     }
 
     @Override
