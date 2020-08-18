@@ -68,7 +68,7 @@ class MuxerNativeTestHelper {
 
     bool isSubsetOf(MuxerNativeTestHelper* that);
 
-    void offsetTimeStamp(int trackID, long tsOffset, int sampleOffset);
+    void offsetTimeStamp(int64_t tsAudioOffsetUs, int64_t tsVideoOffsetUs, int sampleOffset);
 
   private:
     void splitMediaToMuxerParameters();
@@ -277,7 +277,7 @@ bool MuxerNativeTestHelper::isSubsetOf(MuxerNativeTestHelper* that) {
             const char* thatMime = nullptr;
             AMediaFormat_getString(thatFormat, AMEDIAFORMAT_KEY_MIME, &thatMime);
             if (thisMime != nullptr && thatMime != nullptr && !strcmp(thisMime, thatMime)) {
-                if (!isCSDIdentical(thisFormat, thatFormat)) continue;
+                if (!isFormatSimilar(thisFormat, thatFormat)) continue;
                 if (mBufferInfo[i].size() == that->mBufferInfo[j].size()) {
                     int tolerance =
                             !strncmp(thisMime, "video/", strlen("video/")) ? STTS_TOLERANCE_US : 0;
@@ -312,12 +312,24 @@ bool MuxerNativeTestHelper::isSubsetOf(MuxerNativeTestHelper* that) {
     return true;
 }
 
-void MuxerNativeTestHelper::offsetTimeStamp(int trackID, long tsOffset, int sampleOffset) {
-    // offset pts of samples from index sampleOffset till the end by tsOffset
-    if (trackID < mTrackCount) {
-        for (int i = sampleOffset; i < mBufferInfo[trackID].size(); i++) {
-            AMediaCodecBufferInfo* info = mBufferInfo[trackID][i];
-            info->presentationTimeUs += tsOffset;
+void MuxerNativeTestHelper::offsetTimeStamp(int64_t tsAudioOffsetUs, int64_t tsVideoOffsetUs,
+                                            int sampleOffset) {
+    // offset pts of samples from index sampleOffset till the end by tsOffset for each audio and
+    // video track
+    for (int trackID = 0; trackID < mTrackCount; trackID++) {
+        int64_t tsOffsetUs = 0;
+        const char* thisMime = nullptr;
+        AMediaFormat_getString(mFormat[trackID], AMEDIAFORMAT_KEY_MIME, &thisMime);
+        if (thisMime != nullptr) {
+            if (strncmp(thisMime, "video/", strlen("video/")) == 0) {
+                tsOffsetUs = tsVideoOffsetUs;
+            } else if (strncmp(thisMime, "audio/", strlen("audio/")) == 0) {
+                tsOffsetUs = tsAudioOffsetUs;
+            }
+            for (int i = sampleOffset; i < mBufferInfo[trackID].size(); i++) {
+                AMediaCodecBufferInfo *info = mBufferInfo[trackID][i];
+                info->presentationTimeUs += tsOffsetUs;
+            }
         }
     }
 }
@@ -511,7 +523,8 @@ static jboolean nativeTestMultiTrack(JNIEnv* env, jobject, jint jformat, jstring
     if (mediaInfoA->getTrackCount() == 1 && mediaInfoB->getTrackCount() == 1) {
         const char* crefPath = env->GetStringUTFChars(jrefPath, nullptr);
         // number of times to repeat {mSrcFileA, mSrcFileB} in Output
-        int numTracks[][2]{{1, 1}, {2, 0}, {0, 2}, {1, 2}, {2, 1}};
+        // values should be in sync with testMultiTrack
+        static const int numTracks[][2] = {{1, 1}, {2, 0}, {0, 2}, {1, 2}, {2, 1}, {2, 2}};
         // prepare reference
         FILE* rfp = fopen(crefPath, "wbe+");
         if (rfp) {
@@ -593,35 +606,40 @@ static jboolean nativeTestMultiTrack(JNIEnv* env, jobject, jint jformat, jstring
 static jboolean nativeTestOffsetPts(JNIEnv* env, jobject, jint format, jstring jsrcPath,
                                     jstring jdstPath, jintArray joffsetIndices) {
     bool isPass = true;
-    const int OFFSET_TS = 111000;
+    // values should be in sync with testOffsetPresentationTime
+    static const int64_t OFFSET_TS_AUDIO_US[4] = {-23220LL, 0LL, 200000LL, 400000LL};
+    static const int64_t OFFSET_TS_VIDEO_US[3] = {0LL, 200000LL, 400000LL};
     jsize len = env->GetArrayLength(joffsetIndices);
     jint* coffsetIndices = env->GetIntArrayElements(joffsetIndices, nullptr);
     const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     auto* mediaInfo = new MuxerNativeTestHelper(csrcPath);
     if (mediaInfo->getTrackCount() != 0) {
-        for (int trackID = 0; trackID < mediaInfo->getTrackCount() && isPass; trackID++) {
-            for (int i = 0; i < len; i++) {
-                mediaInfo->offsetTimeStamp(trackID, OFFSET_TS, coffsetIndices[i]);
-            }
-            FILE* ofp = fopen(cdstPath, "wbe+");
-            if (ofp) {
-                AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)format);
-                mediaInfo->muxMedia(muxer);
-                AMediaMuxer_delete(muxer);
-                fclose(ofp);
-                auto* outInfo = new MuxerNativeTestHelper(cdstPath);
-                isPass = mediaInfo->isSubsetOf(outInfo);
-                if (!isPass) {
-                    ALOGE("Validation failed after adding timestamp offset to track %d", trackID);
+        for (int64_t audioOffsetUs : OFFSET_TS_AUDIO_US) {
+            for (int64_t videoOffsetUs : OFFSET_TS_VIDEO_US) {
+                for (int i = 0; i < len; i++) {
+                    mediaInfo->offsetTimeStamp(audioOffsetUs, videoOffsetUs, coffsetIndices[i]);
                 }
-                delete outInfo;
-            } else {
-                isPass = false;
-                ALOGE("failed to open output file %s", cdstPath);
-            }
-            for (int i = len - 1; i >= 0; i--) {
-                mediaInfo->offsetTimeStamp(trackID, -OFFSET_TS, coffsetIndices[i]);
+                FILE *ofp = fopen(cdstPath, "wbe+");
+                if (ofp) {
+                    AMediaMuxer *muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat) format);
+                    mediaInfo->muxMedia(muxer);
+                    AMediaMuxer_delete(muxer);
+                    fclose(ofp);
+                    auto *outInfo = new MuxerNativeTestHelper(cdstPath);
+                    isPass = mediaInfo->isSubsetOf(outInfo);
+                    if (!isPass) {
+                        ALOGE("Validation failed after adding timestamp offsets audio: %lld,"
+                              " video: %lld", (long long) audioOffsetUs, (long long) videoOffsetUs);
+                    }
+                    delete outInfo;
+                } else {
+                    isPass = false;
+                    ALOGE("failed to open output file %s", cdstPath);
+                }
+                for (int i = len - 1; i >= 0; i--) {
+                    mediaInfo->offsetTimeStamp(-audioOffsetUs, -videoOffsetUs, coffsetIndices[i]);
+                }
             }
         }
     } else {
