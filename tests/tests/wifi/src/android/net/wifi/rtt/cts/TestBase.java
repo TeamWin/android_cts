@@ -31,7 +31,6 @@ import android.net.wifi.rtt.WifiRttManager;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
-import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -55,6 +54,9 @@ public class TestBase extends WifiJUnit3TestBase {
 
     // wait for network selection and connection finish
     private static final int WAIT_FOR_CONNECTION_FINISH_MS = 30_000;
+
+    // Interval between failure scans
+    private static final int INTERVAL_BETWEEN_FAILURE_SCAN_MILLIS = 5_000;
 
     protected WifiRttManager mWifiRttManager;
     protected WifiManager mWifiManager;
@@ -234,10 +236,12 @@ public class TestBase extends WifiJUnit3TestBase {
                     bestTestAp = scanResult;
                 }
             }
-
+            if (bestTestAp == null) {
+                // Ongoing connection may cause scan failure, wait for a while before next scan.
+                Thread.sleep(INTERVAL_BETWEEN_FAILURE_SCAN_MILLIS);
+            }
             scanCount++;
         }
-
         return bestTestAp;
     }
 }
