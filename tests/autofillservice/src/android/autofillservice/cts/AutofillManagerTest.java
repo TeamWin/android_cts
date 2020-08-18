@@ -26,6 +26,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -57,6 +58,7 @@ public class AutofillManagerTest {
             new SettingsStateKeeperRule(sContext, Settings.Secure.AUTOFILL_SERVICE);
 
     @Test
+    @AppModeFull(reason = "Package cannot install in instant app mode")
     public void testHasEnabledAutofillServices() throws Exception {
         // Verify the calling application's AutofillService is initially disabled
         runQueryAutofillStatusActivityAndVerifyResult(AUTOFILL_DISABLE);
