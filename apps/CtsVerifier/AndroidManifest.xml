@@ -1715,7 +1715,7 @@
             <meta-data android:name="test_required_features"
                        android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.software.lockscreen_disabled" />
+                       android:value="android.hardware.type.automotive:android.software.lockscreen_disabled" />
         </activity>
 
         <activity android:name=".streamquality.StreamingVideoActivity"
