@@ -44,8 +44,7 @@ class TestTaskOrganizer extends TaskOrganizer {
     private void registerOrganizerIfNeeded() {
         if (mRegistered) return;
 
-        registerOrganizer(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        registerOrganizer(WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
+        registerOrganizer();
         mRegistered = true;
     }
 
