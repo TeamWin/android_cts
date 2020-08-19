@@ -106,8 +106,8 @@ class PipNotificationTests : PipTestBase() {
         val deleteIntent = notification.pendingTvIntent(EXTRA_DELETE_INTENT)
 
         deleteIntent.send()
-        wmState.waitFor("The PiP app must be closed!") {
-            !it.containsActivity(PIP_ACTIVITY)
+        waitForWMState("The PiP app must be closed!") { state ->
+            !state.containsActivity(PIP_ACTIVITY)
         }
 
         // Also make sure the pip notification was removed

@@ -138,17 +138,15 @@ class FlickerPipTests : PipTestBase() {
 
     /** Wait for the soft keyboard window to be open or throw. */
     private fun waitForKeyboardShown() {
-        val message = "Keyboard must be shown"
-        wmState.waitFor(message) { state ->
+        waitForWMState("Keyboard must be shown") { state ->
             state.isWindowVisible(WINDOW_NAME_INPUT_METHOD)
-        } || error(message)
+        }
     }
 
     /** Wait for the soft keyboard window to be hidden or throw. */
     private fun waitForKeyboardHidden() {
-        val message = "Keyboard must be hidden"
-        wmState.waitFor(message) { state ->
+        waitForWMState("Keyboard must be hidden") { state ->
             !state.isWindowVisible(WINDOW_NAME_INPUT_METHOD)
-        } || error(message)
+        }
     }
 }

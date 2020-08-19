@@ -79,7 +79,8 @@ class BasicPipTests : PipTestBase() {
     private val maxPipAspectRatio: Float = resources.getFloat(
         com.android.internal.R.dimen.config_pictureInPictureMaxAspectRatio)
 
-    private val defaultPipHeight: Float = resources.getDimension(
+    /** The size of the smaller side of the pip window. */
+    private val defaultPipSize: Float = resources.getDimension(
         com.android.internal.R.dimen.default_minimal_size_pip_resizable_task)
     private val screenEdgeInsetString = resources.getString(
         com.android.internal.R.string.config_defaultPictureInPictureScreenEdgeInsets)
@@ -204,10 +205,10 @@ class BasicPipTests : PipTestBase() {
     fun pipMenu_correctLocation() {
         launchPipThenEnterMenu()
 
-        wmState.waitFor("The PiP menu must be in the right place!") {
+        waitForWMState("The PiP menu must be in the right place!") {
             val pipTask = it.getTaskByActivity(PIP_ACTIVITY, WINDOWING_MODE_PINNED)
             pipTask.bounds == menuModePipBounds
-        } || error("The PiP activity is not in the right place when the menu is shown!")
+        }
     }
 
     /** Open an app's pip menu then press its close button and ensure the app is closed. */
@@ -218,8 +219,9 @@ class BasicPipTests : PipTestBase() {
         val closeButton = locateByResourceName(ID_PIP_MENU_CLOSE_BUTTON)
         closeButton.click()
 
-        wmState.waitFor("The PiP app and its menu must be closed!") {
-            it.containsNoneOf(listOf(PIP_ACTIVITY, PIP_MENU_ACTIVITY))
+        waitForWMState("The PiP app and its menu must be closed!") { state ->
+            !state.containsActivity(PIP_MENU_ACTIVITY) &&
+                !state.isActivityVisible(PIP_ACTIVITY)
         }
     }
 
@@ -325,8 +327,17 @@ class BasicPipTests : PipTestBase() {
 
     /** Calculates the pip window bounds given the [aspectRatio]. */
     private fun expectedPipBounds(aspectRatio: Float): Rect = Rect().apply {
-        Gravity.apply(pipGravity, (defaultPipHeight * aspectRatio).toInt(),
-            defaultPipHeight.toInt(),
+        // defaultPipSize is always the size of the smaller side
+        val (width, height) =
+            if (aspectRatio <= 1.0f) {
+                // portrait orientation, the width is smaller
+                defaultPipSize to defaultPipSize / aspectRatio
+            } else {
+                // landscape, the height is smaller
+                defaultPipSize * aspectRatio to defaultPipSize
+            }
+
+        Gravity.apply(pipGravity, width.toInt(), height.toInt(),
             displaySize, screenEdgeInsets.x, screenEdgeInsets.y, this)
     }
 

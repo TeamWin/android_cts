@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MediaSessionTestService extends RemoteService {
     public static final int TEST_SERIES_OF_SET_QUEUE = 0;
+    public static final int TEST_SET_QUEUE_WITH_LARGE_NUMBER_OF_ITEMS = 1;
 
     public static final int STEP_SET_UP = 0;
     public static final int STEP_CHECK = 1;
@@ -40,10 +41,12 @@ public class MediaSessionTestService extends RemoteService {
 
     public static final String KEY_SESSION_TOKEN = "sessionToken";
     public static final String KEY_EXPECTED_TOTAL_NUMBER_OF_ITEMS = "expectedTotalNumberOfItems";
+    public static final String KEY_EXPECTED_QUEUE_SIZE = "expectedQueueSize";
 
     private MediaController mMediaController;
     private MediaController.Callback mMediaControllerCallback;
     private CountDownLatch mAllItemsNotified;
+    private CountDownLatch mQueueNotified;
 
     private void testSeriesOfSetQueue_setUp(Bundle args) {
         MediaSession.Token token = args.getParcelable(KEY_SESSION_TOKEN);
@@ -77,6 +80,35 @@ public class MediaSessionTestService extends RemoteService {
         mAllItemsNotified = null;
     }
 
+    private void testSetQueueWithLargeNumberOfItems_setUp(Bundle args) {
+        MediaSession.Token token = args.getParcelable(KEY_SESSION_TOKEN);
+        int expectedQueueSize = args.getInt(KEY_EXPECTED_QUEUE_SIZE);
+
+        mQueueNotified = new CountDownLatch(1);
+        mMediaControllerCallback = new MediaController.Callback() {
+            @Override
+            public void onQueueChanged(List<MediaSession.QueueItem> queue) {
+                if (queue != null && queue.size() == expectedQueueSize) {
+                    mQueueNotified.countDown();
+                }
+            }
+        };
+        mMediaController = new MediaController(this, token);
+        mMediaController.registerCallback(mMediaControllerCallback,
+                new Handler(Looper.getMainLooper()));
+    }
+
+    private void testSetQueueWithLargeNumberOfItems_check() throws Exception {
+        assertTrue(mQueueNotified.await(TIMEOUT_MS, MILLISECONDS));
+    }
+
+    private void testSetQueueWithLargeNumberOfItems_cleanUp() {
+        mMediaController.unregisterCallback(mMediaControllerCallback);
+        mMediaController = null;
+        mMediaControllerCallback = null;
+        mQueueNotified = null;
+    }
+
     @Override
     public void onRun(int testId, int step, @Nullable Bundle args) throws Exception {
         if (testId == TEST_SERIES_OF_SET_QUEUE) {
@@ -89,6 +121,17 @@ public class MediaSessionTestService extends RemoteService {
             } else {
                 throw new IllegalArgumentException("Unknown step=" + step);
             }
+        } else if (testId == TEST_SET_QUEUE_WITH_LARGE_NUMBER_OF_ITEMS) {
+            if (step == STEP_SET_UP) {
+                testSetQueueWithLargeNumberOfItems_setUp(args);
+            } else if (step == STEP_CHECK) {
+                testSetQueueWithLargeNumberOfItems_check();
+            } else if (step == STEP_CLEAN_UP) {
+                testSetQueueWithLargeNumberOfItems_cleanUp();
+            } else {
+                throw new IllegalArgumentException("Unknown step=" + step);
+            }
+
         } else {
             throw new IllegalArgumentException("Unknown testId=" + testId);
         }

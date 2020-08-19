@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.TEST_DREAM_SERVICE;
 import static android.server.wm.app.Components.TEST_STUBBORN_DREAM_SERVICE;
 import static android.server.wm.ComponentNameUtils.getWindowName;
@@ -29,6 +30,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.DreamManager;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.app.Components;
 import android.view.Surface;
 
 import androidx.test.filters.FlakyTest;
@@ -159,5 +161,55 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
         waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
                 "Dream activity should be the top resumed activity");
+    }
+
+    @Test
+    public void testStartActivityDoesNotWakeAndIsNotResumed() {
+        try (DreamingState state = new DreamingState(TEST_DREAM_SERVICE)) {
+            launchActivity(Components.TEST_ACTIVITY);
+            mWmState.waitForActivityState(Components.TEST_ACTIVITY, STATE_STOPPED);
+            assertTrue(getIsDreaming());
+        }
+    }
+
+    @Test
+    public void testStartTurnScreenOnActivityDoesWake() {
+        try (DreamingState state = new DreamingState(TEST_DREAM_SERVICE)) {
+            launchActivity(Components.TURN_SCREEN_ON_ACTIVITY);
+            waitAndAssertTopResumedActivity(Components.TURN_SCREEN_ON_ACTIVITY,
+                    DEFAULT_DISPLAY, "Starting TurnScreenOnActivity should turn screen on");
+            assertFalse(getIsDreaming());
+        }
+    }
+
+    @Test
+    public void testStartTurnScreenOnAttrActivityDoesWake() {
+        try (DreamingState state = new DreamingState(TEST_DREAM_SERVICE)) {
+            launchActivity(Components.TURN_SCREEN_ON_ATTR_ACTIVITY);
+            waitAndAssertTopResumedActivity(Components.TURN_SCREEN_ON_ATTR_ACTIVITY,
+                    DEFAULT_DISPLAY, "Starting TurnScreenOnAttrActivity should turn screen on");
+            assertFalse(getIsDreaming());
+        }
+    }
+
+    private class DreamingState implements AutoCloseable {
+        public DreamingState(ComponentName dream) {
+            setActiveDream(dream);
+            startDream(dream);
+            waitForDreaming();
+        }
+
+        @Override
+        public void close() {
+            stopDream();
+        }
+
+        public void waitForDreaming() {
+            waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
+                    "Dream activity should be the top resumed activity");
+            mWmState.waitForValidState(mWmState.getHomeActivityName());
+            mWmState.assertVisibility(mWmState.getHomeActivityName(), false);
+            assertTrue(getIsDreaming());
+        }
     }
 }

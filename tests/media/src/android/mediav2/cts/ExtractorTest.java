@@ -153,19 +153,25 @@ public class ExtractorTest {
     static private final List<String> codecListforTypeTs =
             Arrays.asList(MediaFormat.MIMETYPE_AUDIO_AAC, MediaFormat.MIMETYPE_VIDEO_MPEG2,
                     MediaFormat.MIMETYPE_VIDEO_AVC);
+    static private final List<String> codecListforTypePs =
+            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG2);
     static private final List<String> codecListforTypeRaw =
             Arrays.asList(MediaFormat.MIMETYPE_AUDIO_AAC, MediaFormat.MIMETYPE_AUDIO_FLAC,
                     MediaFormat.MIMETYPE_AUDIO_MPEG, MediaFormat.MIMETYPE_AUDIO_AMR_NB,
                     MediaFormat.MIMETYPE_AUDIO_AMR_WB, MediaFormat.MIMETYPE_AUDIO_RAW);
+    static private final List<String> codecListforTypeWav =
+            Arrays.asList(MediaFormat.MIMETYPE_AUDIO_RAW,  MediaFormat.MIMETYPE_AUDIO_G711_ALAW,
+                    MediaFormat.MIMETYPE_AUDIO_G711_MLAW,  MediaFormat.MIMETYPE_AUDIO_MSGSM);
     // List of codecs that are not required to be supported as per CDD but are tested
     static private final List<String> codecListSupp =
-            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_AV1);
+            Arrays.asList(MediaFormat.MIMETYPE_VIDEO_AV1, MediaFormat.MIMETYPE_AUDIO_AC3,
+                    MediaFormat.MIMETYPE_AUDIO_AC4, MediaFormat.MIMETYPE_AUDIO_EAC3);
     private static String mInpPrefix = WorkDir.getMediaDirString();
     private static String extSel;
 
     static {
         android.os.Bundle args = InstrumentationRegistry.getArguments();
-        final String defSel = "mp4;webm;3gp;mkv;ogg;supp";
+        final String defSel = "mp4;webm;3gp;mkv;ogg;supp;raw;ts;ps;wav";
         extSel = (null == args.getString(EXT_SEL_KEY)) ? defSel : args.getString(EXT_SEL_KEY);
     }
 
@@ -176,6 +182,10 @@ public class ExtractorTest {
                 (extSel.contains("3gp") && codecListforType3gp.contains(mime)) ||
                 (extSel.contains("mkv") && codecListforTypeMkv.contains(mime)) ||
                 (extSel.contains("ogg") && codecListforTypeOgg.contains(mime)) ||
+                (extSel.contains("ts") && codecListforTypeTs.contains(mime)) ||
+                (extSel.contains("ps") && codecListforTypePs.contains(mime)) ||
+                (extSel.contains("raw") && codecListforTypeRaw.contains(mime)) ||
+                (extSel.contains("wav") && codecListforTypeWav.contains(mime)) ||
                 (extSel.contains("supp") && codecListSupp.contains(mime)))
             result = true;
         return result;
@@ -227,22 +237,30 @@ public class ExtractorTest {
         return true;
     }
 
-    private static boolean isFormatSimilar(MediaFormat refFormat, MediaFormat testFormat) {
+    static boolean isFormatSimilar(MediaFormat refFormat, MediaFormat testFormat) {
         String refMime = refFormat.getString(MediaFormat.KEY_MIME);
         String testMime = testFormat.getString(MediaFormat.KEY_MIME);
 
         if (!refMime.equals(testMime)) return false;
+        if (refFormat.getLong(MediaFormat.KEY_DURATION) !=
+                    testFormat.getLong(MediaFormat.KEY_DURATION)) {
+            Log.w(LOG_TAG, "Duration mismatches ref / test = " +
+                                   refFormat.getLong(MediaFormat.KEY_DURATION) + " / " +
+                                   testFormat.getLong(MediaFormat.KEY_DURATION));
+            // TODO (b/163477410)(b/163478168)
+//            return false;
+        }
         if (!isCSDIdentical(refFormat, testFormat)) return false;
         if (refMime.startsWith("audio/")) {
-            return refFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) ==
-                    testFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) &&
-                    refFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) ==
-                            testFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            if (refFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) !=
+                        testFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)) return false;
+            if (refFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) !=
+                        testFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)) return false;
         } else if (refMime.startsWith("video/")) {
-            return refFormat.getInteger(MediaFormat.KEY_WIDTH) ==
-                    testFormat.getInteger(MediaFormat.KEY_WIDTH) &&
-                    refFormat.getInteger(MediaFormat.KEY_HEIGHT) ==
-                            testFormat.getInteger(MediaFormat.KEY_HEIGHT);
+            if (refFormat.getInteger(MediaFormat.KEY_WIDTH) !=
+                        testFormat.getInteger(MediaFormat.KEY_WIDTH)) return false;
+            if (refFormat.getInteger(MediaFormat.KEY_HEIGHT) !=
+                        testFormat.getInteger(MediaFormat.KEY_HEIGHT)) return false;
         }
         return true;
     }
@@ -698,7 +716,11 @@ public class ExtractorTest {
             return Arrays.asList(new Object[][]{
                     {MediaFormat.MIMETYPE_VIDEO_MPEG2, new String[]{
                             "bbb_cif_768kbps_30fps_mpeg2_stereo_48kHz_192kbps_mp3.mp4",
-                            "bbb_cif_768kbps_30fps_mpeg2.mkv",}},
+                            "bbb_cif_768kbps_30fps_mpeg2.mkv",
+                            /* TODO(b/162919907)
+                            "bbb_cif_768kbps_30fps_mpeg2.vob",*/
+                            /* TODO(b/162715861)
+                            "bbb_cif_768kbps_30fps_mpeg2.ts" */}},
                     {MediaFormat.MIMETYPE_VIDEO_H263, new String[]{
                             "bbb_cif_768kbps_30fps_h263.mp4",
                             "bbb_cif_768kbps_30fps_h263_mono_8kHz_12kbps_amrnb.3gp",}},
@@ -708,7 +730,9 @@ public class ExtractorTest {
                     {MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
                             "bbb_cif_768kbps_30fps_avc_stereo_48kHz_192kbps_vorbis.mp4",
                             "bbb_cif_768kbps_30fps_avc_stereo_48kHz_192kbps_aac.mkv",
-                            "bbb_cif_768kbps_30fps_avc_stereo_48kHz_192kbps_aac.3gp",}},
+                            "bbb_cif_768kbps_30fps_avc_stereo_48kHz_192kbps_aac.3gp",
+                            /* TODO(b/162715861)
+                            "bbb_cif_768kbps_30fps_avc.ts",*/}},
                     {MediaFormat.MIMETYPE_VIDEO_HEVC, new String[]{
                             "bbb_cif_768kbps_30fps_hevc_stereo_48kHz_192kbps_opus.mp4",
                             "bbb_cif_768kbps_30fps_hevc_stereo_48kHz_192kbps_mp3.mkv",}},
@@ -739,7 +763,8 @@ public class ExtractorTest {
                     {MediaFormat.MIMETYPE_AUDIO_AAC, new String[]{
                             "bbb_stereo_48kHz_192kbps_aac.mp4",
                             "bbb_cif_768kbps_30fps_avc_stereo_48kHz_192kbps_aac.3gp",
-                            "bbb_cif_768kbps_30fps_avc_stereo_48kHz_192kbps_aac.mkv",}},
+                            "bbb_cif_768kbps_30fps_avc_stereo_48kHz_192kbps_aac.mkv",
+                            "bbb_stereo_48kHz_128kbps_aac.ts",}},
                     {MediaFormat.MIMETYPE_AUDIO_AMR_NB, new String[]{
                             "bbb_cif_768kbps_30fps_h263_mono_8kHz_12kbps_amrnb.3gp",
                             "bbb_mono_8kHz_12kbps_amrnb.amr",}},
@@ -749,6 +774,18 @@ public class ExtractorTest {
                     {MediaFormat.MIMETYPE_AUDIO_FLAC, new String[]{
                             "bbb_cif_768kbps_30fps_mpeg4_stereo_48kHz_192kbps_flac.mp4",
                             "bbb_cif_768kbps_30fps_h263_stereo_48kHz_192kbps_flac.mkv",}},
+                    {MediaFormat.MIMETYPE_AUDIO_RAW, new String[]{
+                            "bbb_stereo_48kHz_192kbps_flac.flac",}},
+                    {MediaFormat.MIMETYPE_AUDIO_RAW, new String[]{"canon.mid",}},
+                    {MediaFormat.MIMETYPE_AUDIO_AC3, new String[]{
+                            "testac3mp4.mp4", "testac3ts.ts",}},
+                    {MediaFormat.MIMETYPE_AUDIO_AC4, new String[]{"multi0.mp4", "multi0.ts",}},
+                    {MediaFormat.MIMETYPE_AUDIO_EAC3, new String[]{
+                            "testeac3mp4.mp4", "testeac3ts.ts",}},
+                    {MediaFormat.MIMETYPE_AUDIO_RAW, new String[]{"bbb_1ch_16kHz.wav",}},
+                    {MediaFormat.MIMETYPE_AUDIO_G711_ALAW, new String[]{"bbb_2ch_8kHz_alaw.wav",}},
+                    {MediaFormat.MIMETYPE_AUDIO_G711_MLAW, new String[]{"bbb_2ch_8kHz_mulaw.wav",}},
+                    {MediaFormat.MIMETYPE_AUDIO_MSGSM, new String[]{"bbb_1ch_8kHz_gsm.wav",}},
             });
         }
 
@@ -924,6 +961,16 @@ public class ExtractorTest {
             return errCnt;
         }
 
+        private boolean isFileSeekable(String srcFile) throws IOException {
+            MediaExtractor ext = new MediaExtractor();
+            ext.setDataSource(mInpPrefix + srcFile);
+            String format = ext.getMetrics().getString(MediaExtractor.MetricsConstants.FORMAT);
+            ext.release();
+            // MPEG2TS and MPEG2PS files are non-seekable
+            return !(format.equalsIgnoreCase("MPEG2TSExtractor") ||
+                    format.equalsIgnoreCase("MPEG2PSExtractor"));
+        }
+
         /**
          * Audio, Video codecs support a variety of file-types/container formats. For example,
          * Vorbis supports OGG, MP4, WEBM and MKV. H.263 supports 3GPP, WEBM and MKV. For every
@@ -935,13 +982,16 @@ public class ExtractorTest {
         @Test
         public void testExtract() throws IOException {
             assumeTrue(shouldRunTest(mMime));
-            assertTrue(mSrcFiles.length > 1);
             MediaExtractor refExtractor = new MediaExtractor();
             refExtractor.setDataSource(mInpPrefix + mSrcFiles[0]);
             long sdkChecksum = readAllData(refExtractor, mMime, Integer.MAX_VALUE);
             long ndkChecksum =
                     nativeReadAllData(mInpPrefix + mSrcFiles[0], mMime, Integer.MAX_VALUE);
             assertEquals("SDK and NDK checksums mismatch", sdkChecksum, ndkChecksum);
+            if (mSrcFiles.length == 1) {
+                refExtractor.release();
+                return;
+            }
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_MPEG));
@@ -973,9 +1023,10 @@ public class ExtractorTest {
         @Test
         @Ignore("TODO(b/146420831)")
         public void testSeek() throws IOException {
-            assumeTrue(shouldRunTest(mMime));
+            assumeTrue(shouldRunTest(mMime) && !mMime.equals(MediaFormat.MIMETYPE_AUDIO_RAW));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
+                if (!isFileSeekable(srcFile)) continue;
                 ArrayList<SeekTestParams> seekTestArgs =
                         generateSeekTestArgs(srcFile, mMime, false);
                 assertTrue("Mime is null.", seekTestArgs != null);
@@ -1005,6 +1056,7 @@ public class ExtractorTest {
             assumeTrue(shouldRunTest(mMime));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
+                if (!isFileSeekable(srcFile)) continue;
                 ArrayList<SeekTestParams> seekTestArgs = generateSeekTestArgs(srcFile, mMime, true);
                 assertTrue("Mime is null.", seekTestArgs != null);
                 assertTrue("No samples found.", !seekTestArgs.isEmpty());
@@ -1037,6 +1089,7 @@ public class ExtractorTest {
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
+                if (!isFileSeekable(srcFile)) continue;
                 MediaExtractor extractor = new MediaExtractor();
                 extractor.setDataSource(mInpPrefix + srcFile);
                 MediaCodec.BufferInfo sampleInfoAtZero = new MediaCodec.BufferInfo();
@@ -1115,7 +1168,7 @@ public class ExtractorTest {
         @Test
         public void testExtractNative() {
             assumeTrue(shouldRunTest(mMime));
-            assertTrue(mSrcFiles.length > 1);
+            if (mSrcFiles.length == 1) return;
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_MPEG));
@@ -1138,10 +1191,11 @@ public class ExtractorTest {
         @LargeTest
         @Test
         @Ignore("TODO(b/146420831)")
-        public void testSeekNative() {
-            assumeTrue(shouldRunTest(mMime));
+        public void testSeekNative() throws IOException {
+            assumeTrue(shouldRunTest(mMime) && !mMime.equals(MediaFormat.MIMETYPE_AUDIO_RAW));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
+                if (!isFileSeekable(srcFile)) continue;
                 if (!nativeTestSeek(mInpPrefix + srcFile, mMime)) {
                     if (!codecListSupp.contains(mMime)) {
                         isOk = false;
@@ -1154,10 +1208,11 @@ public class ExtractorTest {
 
         @LargeTest
         @Test
-        public void testSeekFlakinessNative() {
+        public void testSeekFlakinessNative() throws IOException {
             assumeTrue(shouldRunTest(mMime));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
+                if (!isFileSeekable(srcFile)) continue;
                 if (!nativeTestSeekFlakiness(mInpPrefix + srcFile, mMime)) {
                     if (!codecListSupp.contains(mMime)) {
                         isOk = false;
@@ -1170,13 +1225,14 @@ public class ExtractorTest {
 
         @SmallTest
         @Test
-        public void testSeekToZeroNative() {
+        public void testSeekToZeroNative() throws IOException {
             assumeTrue(shouldRunTest(mMime));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_MPEG));
             assumeTrue("TODO(b/146925481)", !mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC));
             boolean isOk = true;
             for (String srcFile : mSrcFiles) {
+                if (!isFileSeekable(srcFile)) continue;
                 if (!nativeTestSeekToZero(mInpPrefix + srcFile, mMime)) {
                     if (!codecListSupp.contains(mMime)) {
                         isOk = false;
@@ -1197,8 +1253,8 @@ public class ExtractorTest {
                     isOk = false;
                     break;
                 }
-                assertTrue(testName.getMethodName() + " failed for mime: " + mMime, isOk);
             }
+            assertTrue(testName.getMethodName() + " failed for mime: " + mMime, isOk);
         }
     }
 
@@ -1260,7 +1316,7 @@ public class ExtractorTest {
                 testBuffer.rewind();
                 assertEquals(log + "Output mismatch", 0, refBuffer.compareTo(testBuffer));
                 assertTrue(log + "Output formats mismatch",
-                        isFormatSimilar(cdtb.mOutFormat, format));
+                        cdtb.isFormatSimilar(cdtb.mOutFormat, format));
             } else if (mime.equals(mMime)) {
                 MediaExtractor refExtractor = new MediaExtractor();
                 refExtractor.setDataSource(mInpPrefix + mRefFile);
