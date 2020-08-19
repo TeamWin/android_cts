@@ -185,6 +185,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testInstallStagedApexAndApk() throws Exception {
+        assumeSystemUser();
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
         runPhase("testInstallStagedApexAndApk_Commit");

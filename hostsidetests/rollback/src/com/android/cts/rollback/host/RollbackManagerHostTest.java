@@ -19,7 +19,8 @@ package com.android.cts.rollback.host;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
-
+import static org.junit.Assume.assumeThat;
+import static org.hamcrest.CoreMatchers.equalTo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -139,6 +140,7 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApexAndApkStagedRollback() throws Exception {
+        assumeSystemUser();
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
         run("testApexAndApkInstallFirstVersion");
@@ -148,6 +150,12 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         run("testApexAndApkCommitRollback");
         getDevice().reboot();
         run("testApexAndApkConfirmRollback");
+    }
+
+    private void assumeSystemUser() throws Exception {
+        String systemUser = "0";
+        assumeThat("Current user is not system user",
+                getDevice().executeShellCommand("am get-current-user").trim(), equalTo(systemUser));
     }
 
     /**
