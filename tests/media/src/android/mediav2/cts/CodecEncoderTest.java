@@ -32,6 +32,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,6 +60,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
     private ArrayList<MediaFormat> mFormats;
     private int mNumSyncFramesReceived;
     private ArrayList<Integer> mSyncFramesPos;
+    ArrayList<MediaCodec.BufferInfo> mInfoList;
 
     public CodecEncoderTest(String mime, int[] bitrates, int[] encoderInfo1, int[] encoderInfo2) {
         super(mime);
@@ -67,6 +69,7 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         mEncParamList2 = encoderInfo2;
         mFormats = new ArrayList<>();
         mSyncFramesPos = new ArrayList<>();
+        mInfoList = new ArrayList<>();
     }
 
     @Override
@@ -87,6 +90,12 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
         if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
             mNumSyncFramesReceived += 1;
             mSyncFramesPos.add(mOutputCount);
+        }
+        if (mSaveToMem && info.size > 0) {
+            MediaCodec.BufferInfo copy = new MediaCodec.BufferInfo();
+            copy.set(mOutputBuff.getOutStreamSize(), info.size, info.presentationTimeUs,
+                    info.flags);
+            mInfoList.add(copy);
         }
         super.dequeueOutput(bufferIndex, info);
     }
@@ -190,6 +199,24 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                         352, 480}, new int[]{144, 240, 288, 360}},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
+    }
+
+    private ByteBuffer decodeElementaryStream(String decoder, MediaFormat format,
+            ByteBuffer elementaryStream, ArrayList<MediaCodec.BufferInfo> infos)
+            throws IOException, InterruptedException {
+        String mime = format.getString(MediaFormat.KEY_MIME);
+        CodecDecoderTestBase cdtb = new CodecDecoderTestBase(mime, null);
+        cdtb.mOutputBuff = new OutputManager();
+        cdtb.mSaveToMem = true;
+        cdtb.mCodec = MediaCodec.createByCodecName(decoder);
+        cdtb.mCodec.configure(format, null, null, 0);
+        cdtb.mCodec.start();
+        cdtb.doWork(elementaryStream, infos);
+        cdtb.queueEOS();
+        cdtb.waitForAllOutputs();
+        cdtb.mCodec.stop();
+        cdtb.mCodec.release();
+        return cdtb.mOutputBuff.getBuffer();
     }
 
     private void setUpParams(int limit) {
@@ -306,6 +333,76 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                             }
                         }
                         loopCounter++;
+                    }
+                }
+            }
+            mCodec.release();
+        }
+    }
+
+    private boolean isCodecLossless(String mime) {
+        return mime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC) ||
+                mime.equals(MediaFormat.MIMETYPE_AUDIO_RAW);
+    }
+
+    /**
+     * Identity test for encoder
+     */
+    @LargeTest
+    @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void testLosslessEncodeDecode() throws IOException, InterruptedException {
+        Assume.assumeTrue(isCodecLossless(mMime));
+        setUpParams(Integer.MAX_VALUE);
+        ArrayList<String> listOfEncoders = selectCodecs(mMime, null, null, true);
+        assertFalse("no suitable codecs found for mime: " + mMime, listOfEncoders.isEmpty());
+        setUpSource(mInputFile);
+        mOutputBuff = new OutputManager();
+        for (String encoder : listOfEncoders) {
+            mCodec = MediaCodec.createByCodecName(encoder);
+            mSaveToMem = true;
+            for (MediaFormat format : mFormats) {
+                if (mIsAudio) {
+                    mSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+                    mChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+                } else {
+                    mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
+                    mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
+                }
+                String log = String.format("format: %s \n codec: %s, file: %s :: ", format, encoder,
+                        mInputFile);
+                mOutputBuff.reset();
+                mInfoList.clear();
+                configureCodec(format, true, true, true);
+                mCodec.start();
+                doWork(Integer.MAX_VALUE);
+                queueEOS();
+                waitForAllOutputs();
+                /* TODO(b/147348711) */
+                if (false) mCodec.stop();
+                else mCodec.reset();
+                assertTrue(log + "unexpected error", !mAsyncHandle.hasSeenError());
+                assertTrue(log + "no input sent", 0 != mInputCount);
+                assertTrue(log + "no output received", 0 != mOutputCount);
+                if (!mIsAudio) {
+                    assertTrue(
+                            log + "input count != output count, act/exp: " + mOutputCount +
+                                    " / " + mInputCount, mInputCount == mOutputCount);
+                }
+                if (mIsAudio) {
+                    assertTrue(log + " pts is not strictly increasing",
+                            mOutputBuff.isPtsStrictlyIncreasing(mPrevOutputPts));
+                } else {
+                    assertTrue(
+                            log + " input pts list and output pts list are not identical",
+                            mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
+                }
+                ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
+                assertTrue(listOfDecoders.size() > 0);
+                for (String decoder : listOfDecoders) {
+                    ByteBuffer out = decodeElementaryStream(decoder, format,
+                            mOutputBuff.getBuffer(), mInfoList);
+                    if (!out.equals(ByteBuffer.wrap(mInputData))) {
+                        fail(log + "identity test failed");
                     }
                 }
             }
