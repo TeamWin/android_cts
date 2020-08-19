@@ -1115,6 +1115,24 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testGetServiceStateForInactiveSub() {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        int[] allSubs = mSubscriptionManager.getActiveSubscriptionIdList();
+        // generate a subscription that is valid (>0) but inactive (not part of active subId list)
+        // A simple way to do this is sum the active subIds and add 1
+        int inactiveValidSub = 1;
+        for (int sub : allSubs) {
+            inactiveValidSub += sub;
+        }
+
+        assertNull(mTelephonyManager.createForSubscriptionId(inactiveValidSub).getServiceState());
+    }
+
+    @Test
     public void testGetSimLocale() throws InterruptedException {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG,"skipping test that requires Telephony");
