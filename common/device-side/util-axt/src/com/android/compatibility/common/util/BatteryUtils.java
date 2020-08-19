@@ -44,6 +44,12 @@ public class BatteryUtils {
         return InstrumentationRegistry.getContext().getSystemService(PowerManager.class);
     }
 
+    public static boolean hasBattery() {
+        final Intent batteryInfo = InstrumentationRegistry.getContext()
+                .registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        return batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
+    }
+
     /** Make the target device think it's off charger. */
     public static void runDumpsysBatteryUnplug() {
         SystemUtil.runShellCommandForNoOutput("cmd battery unplug");
@@ -137,10 +143,8 @@ public class BatteryUtils {
 
     /** @return true if the device supports battery saver. */
     public static boolean isBatterySaverSupported() {
-        final Intent batteryInfo = InstrumentationRegistry.getContext().registerReceiver(
-                null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        if (!batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true)) {
-            // Devices without battery does not support battery saver.
+        if (!hasBattery()) {
+            // Devices without a battery don't support battery saver.
             return false;
         }
 
