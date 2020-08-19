@@ -39,6 +39,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import androidx.test.filters.RequiresDevice;
+
 /**
  * Test computing and verifying the pseudoranges based on the raw measurements
  * reported by the GNSS chipset
@@ -251,6 +253,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
      */
     @CddTest(requirement = "7.3.3")
     @AppModeFull(reason = "Flaky in instant mode")
+    @RequiresDevice  // emulated devices do not support real measurements so far.
     public void testPseudoPosition() throws Exception {
         // Checks if Gnss hardware feature is present, skips test (pass) if not
         if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N,
