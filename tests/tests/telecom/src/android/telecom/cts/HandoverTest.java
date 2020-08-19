@@ -23,6 +23,7 @@ import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.Call;
+import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -210,6 +211,10 @@ public class HandoverTest extends BaseTelecomTestWithMockServices {
         extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
                 TEST_HANDOVER_SRC_PHONE_ACCOUNT_HANDLE);
         placeAndVerifyCall(extras);
+        Connection connection = verifyConnectionForOutgoingCall();
+        connection.setActive();
+        Call call = mInCallCallbacks.getService().getLastCall();
+        assertCallState(call, Call.STATE_ACTIVE);
     }
 
     /**
