@@ -237,6 +237,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     // Don't mark as @LargeTest since we want at least one test to install apex during pre-submit.
     public void testInstallStagedApexAndApk() throws Exception {
+        assumeSystemUser();
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
         setDefaultLauncher(BROADCAST_RECEIVER_COMPONENT);
