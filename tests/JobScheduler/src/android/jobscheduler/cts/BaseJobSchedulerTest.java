@@ -31,6 +31,8 @@ import android.os.Bundle;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
@@ -121,6 +123,9 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd jobscheduler reset-execution-quota -u current "
                         + kJobServiceComponent.getPackageName());
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
+                        DeviceConfig.NAMESPACE_JOB_SCHEDULER));
 
         // The super method should be called at the end.
         super.tearDown();
@@ -208,5 +213,10 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
                 + " -u " + UserHandle.myUserId()
                 + " " + kJobServiceComponent.getPackageName()
                 + " " + jobId);
+    }
+
+    static void updateConfiguration(DeviceConfig.Properties properties) {
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> DeviceConfig.setProperties(properties));
     }
 }
