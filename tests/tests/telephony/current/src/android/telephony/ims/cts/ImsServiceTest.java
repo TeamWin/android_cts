@@ -1634,6 +1634,8 @@ public class ImsServiceTest {
                     ProvisioningManager.KEY_MULTIENDPOINT_ENABLED, 0);
             verifyIntKey(provisioningManager, mIntQueue,
                     ProvisioningManager.KEY_RTT_ENABLED, 0);
+            verifyStringKey(provisioningManager, mStringQueue,
+                    ProvisioningManager.KEY_VOICE_OVER_WIFI_ENTITLEMENT_ID, "carrier_spec");
 
             automan.adoptShellPermissionIdentity();
             provisioningManager.unregisterProvisioningChangedCallback(callback);
