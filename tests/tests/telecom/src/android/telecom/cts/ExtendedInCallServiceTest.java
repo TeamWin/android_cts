@@ -367,8 +367,12 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
             // The second call should now be active
             assertCallState(call2, Call.STATE_ACTIVE);
             assertConnectionState(connection2, Connection.STATE_ACTIVE);
-
         } finally {
+            // Cleanup the call explicitly before exiting car mode -- there's a potential race
+            // between disconnecting the calls from CTS and disabling car mode where if Telecom
+            // sees the car mode change first, it'll try and rebind the incall services while
+            // the calls are disconnecting.
+            cleanupCalls();
             // Set device back to normal
             manager.disableCarMode(0);
         }
