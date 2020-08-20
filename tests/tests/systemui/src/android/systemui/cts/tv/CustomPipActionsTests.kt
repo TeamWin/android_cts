@@ -23,8 +23,10 @@ import android.content.Intent
 import android.graphics.drawable.Icon
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.UiDeviceUtils
+import android.server.wm.WindowManagerState
 import android.server.wm.annotation.Group2
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
+import android.systemui.tv.cts.Components.PIP_MENU_ACTIVITY
 import android.systemui.tv.cts.PipActivity
 import android.systemui.tv.cts.PipActivity.ACTION_CLEAR_CUSTOM_ACTIONS
 import android.systemui.tv.cts.PipActivity.ACTION_MEDIA_PLAY
@@ -176,6 +178,24 @@ class CustomPipActionsTests : PipTestBase() {
         context.sendBroadcast(removeCustomActions)
         // make sure the media button is present again
         assertMediaControlsPresent()
+    }
+
+    /** Ensure the pip menu is not dismissed when custom actions are set while it is open. */
+    @Test
+    fun pipMenu_doesNotClose_whenUpdating_customActions() {
+        startAndOpenPipMenu(makeStartPipIntent())
+
+        val updateIntent =
+            makeUpdatePipIntent().setCustomActions(createClearActionsList(listOf("Custom")))
+        context.sendBroadcast(updateIntent)
+
+        // wait for a potential erroneous transition into pip mode (but don't throw)
+        wmState.waitForWithAmState("back to pip mode?") { state: WindowManagerState ->
+            !state.containsActivity(PIP_MENU_ACTIVITY)
+        }
+
+        // what we actually expect is that the pip menu never went away
+        assertPipMenuOpen()
     }
 
     /** Find the pip media controls or throw. */
