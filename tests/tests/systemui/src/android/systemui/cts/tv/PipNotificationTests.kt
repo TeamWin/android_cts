@@ -107,7 +107,7 @@ class PipNotificationTests : PipTestBase() {
 
         deleteIntent.send()
         waitForWMState("The PiP app must be closed!") { state ->
-            !state.containsActivity(PIP_ACTIVITY)
+            !state.isActivityVisible(PIP_ACTIVITY)
         }
 
         // Also make sure the pip notification was removed

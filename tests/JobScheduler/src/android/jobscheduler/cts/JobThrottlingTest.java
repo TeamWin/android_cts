@@ -16,6 +16,7 @@
 
 package android.jobscheduler.cts;
 
+import static android.jobscheduler.cts.BaseJobSchedulerTest.updateConfiguration;
 import static android.jobscheduler.cts.ConnectivityConstraintTest.ensureSavedWifiNetwork;
 import static android.jobscheduler.cts.ConnectivityConstraintTest.setWifiState;
 import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
@@ -41,6 +42,7 @@ import android.os.SystemClock;
 import android.os.Temperature;
 import android.os.UserHandle;
 import android.platform.test.annotations.RequiresDevice;
+import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
@@ -52,6 +54,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThermalUtils;
 
 import junit.framework.AssertionFailedError;
@@ -101,7 +104,6 @@ public class JobThrottlingTest {
     /** Track whether WiFi was enabled in case we turn it off. */
     private boolean mInitialWiFiState;
     private boolean mInitialAirplaneModeState;
-    private String mInitialJobSchedulerConstants;
     private String mInitialDisplayTimeout;
     private String mInitialRestrictedBucketEnabled;
     private boolean mAutomotiveDevice;
@@ -156,13 +158,12 @@ public class JobThrottlingTest {
         mHasWifi = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI);
         mInitialWiFiState = mWifiManager.isWifiEnabled();
         mInitialAirplaneModeState = isAirplaneModeOn();
-        mInitialJobSchedulerConstants = Settings.Global.getString(mContext.getContentResolver(),
-                Settings.Global.JOB_SCHEDULER_CONSTANTS);
         mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET);
         // Make sure test jobs can run regardless of bucket.
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.JOB_SCHEDULER_CONSTANTS, "min_ready_non_active_jobs_count=0");
+        updateConfiguration(
+                new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
+                        .setInt("min_ready_non_active_jobs_count", 0).build());
         // Make sure the screen doesn't turn off when the test turns it on.
         mInitialDisplayTimeout =
                 Settings.System.getString(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT);
@@ -509,8 +510,9 @@ public class JobThrottlingTest {
                 Log.e(TAG, "Failed to return wifi state to " + mInitialWiFiState, e);
             }
         }
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.JOB_SCHEDULER_CONSTANTS, mInitialJobSchedulerConstants);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
+                        DeviceConfig.NAMESPACE_JOB_SCHEDULER));
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
         if (isAirplaneModeOn() != mInitialAirplaneModeState) {
@@ -606,6 +608,7 @@ public class JobThrottlingTest {
     private void setScreenState(boolean on) throws Exception {
         if (on) {
             mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            mUiDevice.executeShellCommand("wm dismiss-keyguard");
         } else {
             mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
         }
