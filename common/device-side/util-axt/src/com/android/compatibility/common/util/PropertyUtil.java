@@ -16,7 +16,10 @@
 
 package com.android.compatibility.common.util;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.os.Build;
+import android.os.SystemProperties;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -41,7 +44,7 @@ public class PropertyUtil {
     private static final String BUILD_TYPE_PROPERTY = "ro.build.type";
     private static final String MANUFACTURER_PROPERTY = "ro.product.manufacturer";
     private static final String TAG_DEV_KEYS = "dev-keys";
-    private static final String VNDK_VERSION = "ro.vndk.version";
+    private static final String VENDOR_SDK_VERSION = "ro.vendor.build.version.sdk";
 
     public static final String GOOGLE_SETTINGS_QUERY =
             "content query --uri content://com.google.settings/partner";
@@ -76,29 +79,25 @@ public class PropertyUtil {
 
     /**
      * Return whether the SDK version of the vendor partiton is newer than the given API level.
-     * If the property is set to non-integer value, this means the vendor partition is using
-     * current API level and true is returned.
      */
     public static boolean isVendorApiLevelNewerThan(int apiLevel) {
-        int vendorApiLevel = getPropertyInt(VNDK_VERSION);
-        if (vendorApiLevel == INT_VALUE_IF_UNSET) {
-            return true;
-        }
-        return vendorApiLevel > apiLevel;
+        int vendorSdkVersion = SystemProperties.getInt(VENDOR_SDK_VERSION, 0);
+
+        assertNotEquals(0, vendorSdkVersion);
+
+        return vendorSdkVersion > apiLevel;
     }
 
     /**
      * Return whether the SDK version of the vendor partiton is same or newer than the
      * given API level.
-     * If the property is set to non-integer value, this means the vendor partition is using
-     * current API level and true is returned.
      */
     public static boolean isVendorApiLevelAtLeast(int apiLevel) {
-        int vendorApiLevel = getPropertyInt(VNDK_VERSION);
-        if (vendorApiLevel == INT_VALUE_IF_UNSET) {
-            return true;
-        }
-        return vendorApiLevel >= apiLevel;
+        int vendorSdkVersion = SystemProperties.getInt(VENDOR_SDK_VERSION, 0);
+
+        assertNotEquals(0, vendorSdkVersion);
+
+        return vendorSdkVersion >= apiLevel;
     }
 
     /**
