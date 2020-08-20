@@ -61,9 +61,11 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -125,6 +127,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         List<Pair<Integer, String>> mCallStates = new ArrayList<>();
         EmergencyNumber mLastOutgoingEmergencyNumber;
 
+        LinkedBlockingQueue<Map<Integer, List<EmergencyNumber>>> mEmergencyNumberListQueue =
+               new LinkedBlockingQueue<>(2);
+
         @Override
         public void onCallStateChanged(int state, String number) {
             Log.i(TAG, "onCallStateChanged: state=" + state + ", number=" + number);
@@ -133,10 +138,23 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         }
 
         @Override
-        public void onOutgoingEmergencyCall(EmergencyNumber emergencyNumber) {
+        public void onOutgoingEmergencyCall(EmergencyNumber emergencyNumber, int subscriptionId) {
             Log.i(TAG, "onOutgoingEmergencyCall: emergencyNumber=" + emergencyNumber);
             mLastOutgoingEmergencyNumber = emergencyNumber;
             mCallbackSemaphore.release();
+        }
+
+        @Override
+        public void onEmergencyNumberListChanged(
+                Map<Integer, List<EmergencyNumber>> emergencyNumberList) {
+            Log.i(TAG, "onEmergencyNumberChanged, total size=" + emergencyNumberList.values()
+                    .stream().mapToInt(List::size).sum());
+            mEmergencyNumberListQueue.offer(emergencyNumberList);
+        }
+
+        public Map<Integer, List<EmergencyNumber>> waitForEmergencyNumberListUpdate(
+                long timeoutMillis) throws Throwable {
+            return mEmergencyNumberListQueue.poll(timeoutMillis, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -176,8 +194,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 mPhoneStateListener = new TestPhoneStateListener();
                 ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     (tm) -> tm.listen(mPhoneStateListener,
-                        PhoneStateListener.LISTEN_CALL_STATE | PhoneStateListener
-                            .LISTEN_OUTGOING_EMERGENCY_CALL));
+                        PhoneStateListener.LISTEN_CALL_STATE
+                                | PhoneStateListener.LISTEN_OUTGOING_EMERGENCY_CALL
+                                | PhoneStateListener.LISTEN_EMERGENCY_NUMBER_LIST));
                 registeredLatch.countDown();
             }
         });
