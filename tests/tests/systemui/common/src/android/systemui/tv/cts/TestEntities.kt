@@ -57,9 +57,6 @@ object PipActivity {
     const val ACTION_MEDIA_PLAY = "$pkg.PipTestActivity.media_play"
     const val ACTION_MEDIA_PAUSE = "$pkg.PipTestActivity.media_pause"
 
-    /** Instruct the app to clear the set of its custom pip actions. */
-    const val ACTION_CLEAR_CUSTOM_ACTIONS = "$pkg.PipTestActivity.clear_custom_actions"
-
     /** Instruct the app to go into pip mode when set to true */
     const val EXTRA_ENTER_PIP = "enter_pip"
 
