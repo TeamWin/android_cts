@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.server.cts.device.statsd;
+package com.android.server.cts.device.statsdatom;
 
 import android.app.Service;
 import android.content.Intent;
