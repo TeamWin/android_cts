@@ -27,6 +27,7 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "androidx.test.rules",
+        "compatibility-device-util-axt",
     ],
     jni_libs: [
         "libjni_test_dlclose",
