@@ -84,6 +84,7 @@
             android:debuggable="true"
             android:largeHeap="true"
             android:requestLegacyExternalStorage="true"
+            android:allowBackup="false"
             android:theme="@android:style/Theme.DeviceDefault">
 
         <provider android:name="android.location.cts.MmsPduProvider"
