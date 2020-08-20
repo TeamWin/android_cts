@@ -816,10 +816,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertNotNull(softApConfig);
             int securityType = softApConfig.getSecurityType();
             if (securityType == SoftApConfiguration.SECURITY_TYPE_OPEN
-                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK
-                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE_TRANSITION) {
-                 assertNotNull(softApConfig.toWifiConfiguration());
-            } else {
+                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK) {
+                // TODO: b/165504232, add WPA3_SAE_TRANSITION assert check
+                assertNotNull(softApConfig.toWifiConfiguration());
+            } else if (securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE) {
                 assertNull(softApConfig.toWifiConfiguration());
             }
             if (!hasAutomotiveFeature()) {
