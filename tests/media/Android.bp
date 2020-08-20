@@ -19,6 +19,7 @@ android_test {
     static_libs: [
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "ctstestserver",
     ],
     libs: [
         "android.test.runner",
