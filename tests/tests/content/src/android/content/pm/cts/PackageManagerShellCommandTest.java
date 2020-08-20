@@ -185,8 +185,7 @@ public class PackageManagerShellCommandTest {
         File file = new File(createApkPath(TEST_HW5));
         String command = "pm " + mInstall + " -t -g " + file.getPath() + (new Random()).nextLong();
         String commandResult = executeShellCommand(command);
-        assertEquals("Failure [INSTALL_FAILED_MEDIA_UNAVAILABLE: Failed to prepare image.]\n",
-                commandResult);
+        assertEquals("Failure [failed to add file(s)]\n", commandResult);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
