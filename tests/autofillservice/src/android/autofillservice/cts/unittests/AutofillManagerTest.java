@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts;
+package android.autofillservice.cts.unittests;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -22,6 +22,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.PendingIntent;
+import android.autofillservice.cts.Helper;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;

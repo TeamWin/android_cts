@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.unittests;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -133,11 +133,9 @@ public class CharSequenceTransformationTest {
     @Test
     public void testCreditCardObfuscator() throws Exception {
         AutofillId creditCardFieldId = new AutofillId(1);
-        CharSequenceTransformation trans = new CharSequenceTransformation
-                .Builder(creditCardFieldId,
-                        Pattern.compile("^\\s*\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?(\\d{4})\\s*$"),
-                        "...$1")
-                .build();
+        CharSequenceTransformation trans = new CharSequenceTransformation.Builder(creditCardFieldId,
+                Pattern.compile("^\\s*\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?(\\d{4})\\s*$"),
+                "...$1").build();
 
         ValueFinder finder = mock(ValueFinder.class);
         RemoteViews template = mock(RemoteViews.class);

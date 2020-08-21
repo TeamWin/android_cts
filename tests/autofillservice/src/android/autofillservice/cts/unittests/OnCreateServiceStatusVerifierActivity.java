@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts;
+package android.autofillservice.cts.unittests;
 
 import static android.autofillservice.cts.Helper.getAutofillServiceName;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.autofillservice.cts.AbstractAutoFillActivity;
+import android.autofillservice.cts.R;
 import android.os.Bundle;
 import android.util.Log;
 
+// TODO(b/159304958): Move to activity folder
 /**
  * Activity used to verify whether the service is enable or not when it's launched.
  */
