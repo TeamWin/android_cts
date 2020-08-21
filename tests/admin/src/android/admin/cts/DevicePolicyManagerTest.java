@@ -774,7 +774,8 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
 
     private void assertDeviceOwnerMessage(String message) {
         assertTrue("message is: "+ message, message.contains("does not own the device")
-                || message.contains("can only be called by the device owner"));
+                || message.contains("can only be called by the device owner")
+                || message.contains("Calling identity is not authorized"));
     }
 
     private void assertOrganizationOwnedProfileOwnerMessage(String message) {
@@ -786,11 +787,14 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         assertTrue("message is: "+ message, message.contains("does not own the device")
                 || message.contains("can only be called by the device owner")
                 || (message.startsWith("Neither user ") && message.endsWith(
-                        " nor current process has android.permission.MANAGE_USERS.")));
+                        " nor current process has android.permission.MANAGE_USERS."))
+                || message.contains("Calling identity is not authorized"));
     }
 
     private void assertProfileOwnerMessage(String message) {
-        assertTrue("message is: "+ message, message.contains("does not own the profile"));
+        assertTrue("message is: "+ message, message.contains("does not own the profile")
+                || message.contains("is not profile owner")
+                || message.contains("Calling identity is not authorized"));
     }
 
     public void testSetDelegatedCertInstaller_failIfNotProfileOwner() {
