@@ -33,7 +33,6 @@ import android.media.session.PlaybackState.STATE_PAUSED
 import android.media.session.PlaybackState.STATE_PLAYING
 import android.media.session.PlaybackState.STATE_STOPPED
 import android.os.Bundle
-import android.systemui.tv.cts.PipActivity.ACTION_CLEAR_CUSTOM_ACTIONS
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.PipActivity.ACTION_MEDIA_PAUSE
 import android.systemui.tv.cts.PipActivity.ACTION_MEDIA_PLAY
@@ -59,6 +58,7 @@ class PipTestActivity : Activity() {
         private const val TAG = "PipTestActivity"
     }
 
+    private lateinit var pipParams: PictureInPictureParams
     private lateinit var mediaSession: MediaSession
     private val playbackBuilder = PlaybackState.Builder()
         .setActions(ACTION_PAUSE or ACTION_PLAY)
@@ -72,7 +72,6 @@ class PipTestActivity : Activity() {
         addAction(ACTION_SET_MEDIA_TITLE)
         addAction(ACTION_MEDIA_PLAY)
         addAction(ACTION_MEDIA_PAUSE)
-        addAction(ACTION_CLEAR_CUSTOM_ACTIONS)
         addAction(ACTION_NO_OP)
     }
 
@@ -101,11 +100,46 @@ class PipTestActivity : Activity() {
             return
         }
 
-        if (intent.getBooleanExtra(EXTRA_TURN_ON_SCREEN, false)) {
-            Log.d(TAG, "Setting setTurnScreenOn")
-            setTurnScreenOn(true)
+        handleScreenExtras(intent)
+
+        handleMediaExtras(intent)
+
+        handlePipExtras(intent)
+
+        when (intent.action) {
+            ACTION_NO_OP -> {
+                // explicitly do nothing
+            }
+            ACTION_MEDIA_PLAY -> {
+                Log.d(TAG, "Playing media")
+                mediaSession.controller.transportControls.play()
+            }
+            ACTION_MEDIA_PAUSE -> {
+                Log.d(TAG, "Pausing media")
+                mediaSession.controller.transportControls.pause()
+            }
         }
 
+        if (intent.action == ACTION_ENTER_PIP || intent.getBooleanExtra(EXTRA_ENTER_PIP, false)) {
+            Log.d(TAG, "Entering PIP. Currently in PIP = $isInPictureInPictureMode")
+            val res = enterPictureInPictureMode(pipParams)
+            Log.d(TAG, "Entered PIP = $res. Currently in PIP = $isInPictureInPictureMode")
+        }
+    }
+
+    /**
+     * Applies the pip parameters from the intent to the current pip window if there is one, or
+     * sets them for when pip mode will be entered next.
+     *
+     * Also stores the new parameters in [pipParams].
+     */
+    private fun handlePipExtras(intent: Intent) {
+        pipParams = buildPipParams(intent.extras)
+        setPictureInPictureParams(pipParams)
+    }
+
+    /**  Updates the state of the [mediaSession]. */
+    private fun handleMediaExtras(intent: Intent) {
         if (intent.hasExtra(EXTRA_MEDIA_SESSION_ACTIVE)) {
             intent.extras?.getBoolean(EXTRA_MEDIA_SESSION_ACTIVE)?.let {
                 Log.d(TAG, "Setting media session active = $it")
@@ -130,47 +164,24 @@ class PipTestActivity : Activity() {
                 intent.getLongExtra(EXTRA_MEDIA_SESSION_ACTIONS, ACTION_PAUSE or ACTION_PLAY)
             mediaSession.setPlaybackState(playbackBuilder.setActions(requestedActions).build())
         }
+    }
 
-        when (intent.action) {
-            ACTION_NO_OP -> {
-                // explicitly do nothing
-            }
-            ACTION_MEDIA_PLAY -> {
-                Log.d(TAG, "Playing media")
-                mediaSession.controller.transportControls.play()
-            }
-            ACTION_MEDIA_PAUSE -> {
-                Log.d(TAG, "Pausing media")
-                mediaSession.controller.transportControls.pause()
-            }
-            ACTION_CLEAR_CUSTOM_ACTIONS -> {
-                Log.d(TAG, "Clearing custom PIP controls")
-                val params = pipParamsBuilder(intent.extras).run {
-                    setActions(emptyList())
-                    build()
-                }
-                setPictureInPictureParams(params)
-            }
-        }
-
-        if (intent.action == ACTION_ENTER_PIP || intent.getBooleanExtra(EXTRA_ENTER_PIP, false)) {
-            Log.d(TAG, "Entering PIP. Currently in PIP = $isInPictureInPictureMode")
-            val res = enterPictureInPictureMode(pipParams(intent.extras))
-            Log.d(TAG, "Entered PIP = $res. Currently in PIP = $isInPictureInPictureMode")
+    /** Calls [android.app.Activity.setTurnScreenOn] if needed. */
+    private fun handleScreenExtras(intent: Intent) {
+        if (intent.getBooleanExtra(EXTRA_TURN_ON_SCREEN, false)) {
+            Log.d(TAG, "Setting setTurnScreenOn")
+            setTurnScreenOn(true)
         }
     }
 
-    private fun pipParams(bundle: Bundle?): PictureInPictureParams =
-        pipParamsBuilder(bundle).build()
-
-    private fun pipParamsBuilder(bundle: Bundle?): PictureInPictureParams.Builder {
+    private fun buildPipParams(bundle: Bundle?): PictureInPictureParams {
         val builder = PictureInPictureParams.Builder()
         bundle?.run {
             if (containsKey(EXTRA_ASPECT_RATIO_NUMERATOR) &&
-                    containsKey(EXTRA_ASPECT_RATIO_DENOMINATOR)) {
+                containsKey(EXTRA_ASPECT_RATIO_DENOMINATOR)) {
                 builder.setAspectRatio(Rational(
-                        getInt(EXTRA_ASPECT_RATIO_NUMERATOR),
-                        getInt(EXTRA_ASPECT_RATIO_DENOMINATOR)))
+                    getInt(EXTRA_ASPECT_RATIO_NUMERATOR),
+                    getInt(EXTRA_ASPECT_RATIO_DENOMINATOR)))
             }
 
             getString(EXTRA_SOURCE_RECT_HINT)?.let {
@@ -183,7 +194,7 @@ class PipTestActivity : Activity() {
                 builder.setActions(actions)
             }
         }
-        return builder
+        return builder.build()
     }
 
     /** Just set the playback state without updating the position or playback speed. */

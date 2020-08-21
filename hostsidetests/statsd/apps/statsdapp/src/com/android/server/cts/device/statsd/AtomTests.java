@@ -271,7 +271,7 @@ public class AtomTests {
                 Log.e(TAG, "Could not enable bluetooth to trigger state reset");
                 return;
             }
-            sleep(2_000); // Wait for Bluetooth to fully turn on.
+            sleep(3_000); // Wait for Bluetooth to fully turn on.
             writeSliceByBleScanStateChangedAtom(whatAtomId, uid, false, false, false);
             writeSliceByBleScanStateChangedAtom(whatAtomId, uid, false, false, false);
             writeSliceByBleScanStateChangedAtom(whatAtomId, uid, false, false, false);
@@ -933,20 +933,6 @@ public class AtomTests {
             }
         }
     }
-
-    @Test
-    public void testIsolatedProcessService() throws Exception {
-        Context context = InstrumentationRegistry.getContext();
-        int uid = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).uid;
-
-        // Start the isolated service, which logs an AppBreadcrumbReported atom, and then exit
-        // shortly afterwards.
-        Intent intent = new Intent(context, IsolatedProcessService.class);
-        context.startService(intent);
-        sleep(500);
-        context.stopService(intent);
-    }
-
 
     // Constants for testBlobStore
     private static final long BLOB_COMMIT_CALLBACK_TIMEOUT_SEC = 5;

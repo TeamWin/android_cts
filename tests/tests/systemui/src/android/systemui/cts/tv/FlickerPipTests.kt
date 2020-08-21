@@ -31,6 +31,7 @@ import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.ResourceNames.WINDOW_NAME_INPUT_METHOD
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.server.wm.flicker.dsl.FlickerBuilder
+import com.android.server.wm.flicker.dsl.runWithFlicker
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -81,7 +82,7 @@ class FlickerPipTests : PipTestBase() {
     @Test
     fun pipWindow_doesNotLeaveTheScreen_onKeyboardOpenClose() {
         val testTag = "pipWindow_doesNotLeaveTheScreen_onKeyboardOpenClose"
-        keyboardScenario.apply {
+        runWithFlicker(keyboardScenario) {
             withTag { testTag }
             transitions {
                 // open the soft keyboard
@@ -102,14 +103,14 @@ class FlickerPipTests : PipTestBase() {
                     }
                 }
             }
-        }.runTests()
+        }
     }
 
     /** Ensure the pip window does not obscure the keyboard. */
     @Test
     fun pipWindow_doesNotObscure_keyboard() {
         val testTag = "pipWindow_doesNotObscure_keyboard"
-        keyboardScenario.apply {
+        runWithFlicker(keyboardScenario) {
             withTag { testTag }
             transitions {
                 // open the soft keyboard
@@ -130,11 +131,8 @@ class FlickerPipTests : PipTestBase() {
                     }
                 }
             }
-        }.runTests()
+        }
     }
-
-    /** Execute the tests that were set up in this builder. */
-    private fun FlickerBuilder.runTests() = build().execute().makeAssertions()
 
     /** Wait for the soft keyboard window to be open or throw. */
     private fun waitForKeyboardShown() {

@@ -57,6 +57,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Point;
@@ -73,6 +74,7 @@ import android.view.Display;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Build/Install/Run:
@@ -634,14 +636,41 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     }
 
     /**
-     * Test that the orientation for a simulated display context will not change when the device is
-     * rotated.
+     * Test that the orientation for a simulated display context derived from an application context
+     * will not change when the device rotates.
      */
     @Test
     public void testAppContextDerivedDisplayContextOrientationWhenRotating() {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
         assumeTrue("Skipping test: no multi-display support", supportsMultiDisplay());
 
+        assertDisplayContextDoesntChangeOrientationWhenRotating(Activity::getApplicationContext);
+    }
+
+    /**
+     * Test that the orientation for a simulated display context derived from an activity context
+     * will not change when the device rotates.
+     */
+    @Test
+    public void testActivityContextDerivedDisplayContextOrientationWhenRotating() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no multi-display support", supportsMultiDisplay());
+
+        assertDisplayContextDoesntChangeOrientationWhenRotating(activity -> activity);
+    }
+
+    /**
+     * Asserts that the orientation for a simulated display context derived from a base context will
+     * not change when the device rotates.
+     *
+     * @param baseContextSupplier function that returns a base context used to created the display
+     *                            context.
+     *
+     * @see #testAppContextDerivedDisplayContextOrientationWhenRotating
+     * @see #testActivityContextDerivedDisplayContextOrientationWhenRotating
+     */
+    private void assertDisplayContextDoesntChangeOrientationWhenRotating(
+            Function<Activity, Context> baseContextSupplier) {
         RotationSession rotationSession = createManagedRotationSession();
         rotationSession.set(ROTATION_0);
 
@@ -659,7 +688,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         DisplayManager dm = activity.getSystemService(DisplayManager.class);
         Display simulatedDisplay = dm.getDisplay(displayContent.mId);
-        Context simulatedDisplayContext = activity.getApplicationContext()
+        Context simulatedDisplayContext = baseContextSupplier.apply(activity)
                 .createDisplayContext(simulatedDisplay);
         assertEquals(ORIENTATION_PORTRAIT,
                 simulatedDisplayContext.getResources().getConfiguration().orientation);
