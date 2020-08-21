@@ -16,6 +16,10 @@
 
 package com.android.cts.normalapp;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -30,6 +34,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ChangedPackages;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
@@ -486,6 +492,24 @@ public class ClientTest {
                             null /*sortOrder*/);
             assertThat(testCursor, is(nullValue()));
         }
+    }
+
+    /** Tests getting changed packages for instant app. */
+    @Test
+    public void testGetChangedPackages() {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+
+        // Query changed packages without permission, and we should only get normal apps.
+        final ChangedPackages changedPackages = pm.getChangedPackages(0);
+        assertThat(changedPackages.getPackageNames()).doesNotContain(
+                "com.android.cts.ephemeralapp1");
+
+        // Query changed packages with permission, and we should be able to get ephemeral apps.
+        runWithShellPermissionIdentity(() -> {
+            final ChangedPackages changesInstantApp = pm.getChangedPackages(0);
+            assertThat(changesInstantApp.getPackageNames()).contains(
+                    "com.android.cts.ephemeralapp1");
+        }, "android.permission.ACCESS_INSTANT_APPS");
     }
 
     private TestResult getResult() {

@@ -20,6 +20,8 @@ android_test_helper_app {
     static_libs: [
         "cts-aia-util",
         "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "truth-prebuilt",
     ],
     libs: ["android.test.base"],
     // tag this module as a cts test artifact
