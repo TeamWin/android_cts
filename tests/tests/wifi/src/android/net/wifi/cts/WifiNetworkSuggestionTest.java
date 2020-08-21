@@ -37,6 +37,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     private static final String TEST_SSID = "testSsid";
     private static final String TEST_BSSID = "00:df:aa:bc:12:23";
     private static final String TEST_PASSPHRASE = "testPassword";
+    private static final int TEST_PRIORITY = 5;
+    private static final int TEST_PRIORITY_GROUP = 1;
 
     @Override
     protected void setUp() throws Exception {
@@ -69,7 +71,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
             builder.setIsEnhancedOpen(false);
             builder.setIsHiddenSsid(true);
         }
-        builder.setPriority(0);
+        builder.setPriority(TEST_PRIORITY);
+        builder.setPriorityGroup(TEST_PRIORITY_GROUP);
         builder.setIsAppInteractionRequired(true);
         builder.setIsUserInteractionRequired(true);
         builder.setIsMetered(true);
@@ -93,13 +96,14 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
             assertFalse(suggestion.isEnhancedOpen());
             assertTrue(suggestion.isHiddenSsid());
         }
-        assertEquals(0, suggestion.getPriority());
+        assertEquals(TEST_PRIORITY, suggestion.getPriority());
         assertTrue(suggestion.isAppInteractionRequired());
         assertTrue(suggestion.isUserInteractionRequired());
         assertTrue(suggestion.isMetered());
         assertTrue(suggestion.isCredentialSharedWithUser());
         assertTrue(suggestion.isInitialAutojoinEnabled());
         assertFalse(suggestion.isUntrusted());
+        assertEquals(TEST_PRIORITY_GROUP, suggestion.getPriorityGroup());
     }
 
     /**
