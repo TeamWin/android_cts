@@ -58,6 +58,8 @@ public class CpuFeatures {
 
     public static native int getHwCaps();
 
+    public static native boolean isNativeBridgedCpu();
+
     public static boolean isArm64CpuIn32BitMode() {
         if (!isArmCpu()) {
             return false;
