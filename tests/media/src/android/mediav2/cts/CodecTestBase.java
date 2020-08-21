@@ -55,6 +55,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.CRC32;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface;
 import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -473,6 +474,7 @@ abstract class CodecTestBase {
     static final int PER_TEST_TIMEOUT_LARGE_TEST_MS = 300000;
     static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
     static final long Q_DEQ_TIMEOUT_US = 5000;
+    static final int UNSPECIFIED = 0;
     static final String mInpPrefix = WorkDir.getMediaDirString();
     static final PackageManager pm =
             InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
@@ -931,12 +933,18 @@ abstract class CodecTestBase {
     }
 
     void validateColorAspects(MediaFormat fmt, int range, int standard, int transfer) {
-        int colorRange = fmt.getInteger(MediaFormat.KEY_COLOR_RANGE, 0);
-        int colorStandard = fmt.getInteger(MediaFormat.KEY_COLOR_STANDARD, 0);
-        int colorTransfer = fmt.getInteger(MediaFormat.KEY_COLOR_TRANSFER, 0);
-        assertEquals("range mismatch ", range, colorRange);
-        assertEquals("color mismatch ", standard, colorStandard);
-        assertEquals("transfer mismatch ", transfer, colorTransfer);
+        int colorRange = fmt.getInteger(MediaFormat.KEY_COLOR_RANGE, UNSPECIFIED);
+        int colorStandard = fmt.getInteger(MediaFormat.KEY_COLOR_STANDARD, UNSPECIFIED);
+        int colorTransfer = fmt.getInteger(MediaFormat.KEY_COLOR_TRANSFER, UNSPECIFIED);
+        if (range > UNSPECIFIED) {
+            assertEquals("color range mismatch ", range, colorRange);
+        }
+        if (standard > UNSPECIFIED) {
+            assertEquals("color standard mismatch ", standard, colorStandard);
+        }
+        if (transfer > UNSPECIFIED) {
+            assertEquals("color transfer mismatch ", transfer, colorTransfer);
+        }
     }
 
     public void setUpSurface(CodecTestActivity activity) throws InterruptedException {
@@ -987,9 +995,12 @@ class CodecDecoderTestBase extends CodecTestBase {
             if (mMime.equalsIgnoreCase(format.getString(MediaFormat.KEY_MIME))) {
                 mExtractor.selectTrack(trackID);
                 if (!mIsAudio) {
-                    // COLOR_FormatYUV420Flexible by default should be supported by all components
-                    // This call shouldn't effect configure() call for any codec
-                    format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
+                    if (mSurface == null) {
+                        // COLOR_FormatYUV420Flexible must be supported by all components
+                        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
+                    } else {
+                        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatSurface);
+                    }
                 }
                 return format;
             }
@@ -1182,9 +1193,15 @@ class CodecDecoderTestBase extends CodecTestBase {
     }
 
     void validateColorAspects(String decoder, String parent, String name, int range, int standard,
-            int transfer) throws IOException, InterruptedException {
+            int transfer, boolean ignoreColorBox)
+            throws IOException, InterruptedException {
         mOutputBuff = new OutputManager();
         MediaFormat format = setUpSource(parent, name);
+        if (ignoreColorBox) {
+            format.removeKey(MediaFormat.KEY_COLOR_RANGE);
+            format.removeKey(MediaFormat.KEY_COLOR_STANDARD);
+            format.removeKey(MediaFormat.KEY_COLOR_TRANSFER);
+        }
         if (decoder == null) {
             MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
             decoder = codecList.findDecoderForFormat(format);
@@ -1199,25 +1216,6 @@ class CodecDecoderTestBase extends CodecTestBase {
         mCodec.stop();
         mCodec.release();
         mExtractor.release();
-    }
-
-    void validateColorAspects(String decoder, MediaFormat format, ByteBuffer buffer,
-            ArrayList<MediaCodec.BufferInfo> infos, int range, int standard, int transfer)
-            throws IOException, InterruptedException {
-        mOutputBuff = new OutputManager();
-        if (decoder == null) {
-            MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
-            decoder = codecList.findDecoderForFormat(format);
-        }
-        mCodec = MediaCodec.createByCodecName(decoder);
-        configureCodec(format, true, true, false);
-        mCodec.start();
-        doWork(buffer, infos);
-        queueEOS();
-        waitForAllOutputs();
-        validateColorAspects(mCodec.getOutputFormat(), range, standard, transfer);
-        mCodec.stop();
-        mCodec.release();
     }
 }
 
