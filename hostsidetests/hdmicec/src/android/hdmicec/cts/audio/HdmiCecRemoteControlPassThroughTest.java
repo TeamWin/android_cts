@@ -16,6 +16,7 @@
 
 package android.hdmicec.cts.audio;
 
+import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogHelper;
@@ -25,7 +26,6 @@ import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -35,7 +35,7 @@ import org.junit.Test;
 
 @Ignore("b/162820841")
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Test {
+public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTest {
 
     /** The package name of the APK. */
     private static final String PACKAGE = "android.hdmicec.app";
@@ -50,17 +50,16 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHostJUnit4Tes
     /** The command to clear the main activity. */
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.AUDIO_SYSTEM);
+    public HdmiCecRemoteControlPassThroughTest() {
+        super(LogicalAddress.AUDIO_SYSTEM);
+    }
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, HdmiCecConstants.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, HdmiCecConstants.LEANBACK_FEATURE))
-            .around(RequiredPropertyRule.asCsvContainsValue(
-                this,
-                HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
-                LogicalAddress.AUDIO_SYSTEM.getDeviceType()))
+            .outerRule(CecRules.requiresCec(this))
+            .around(CecRules.requiresLeanback(this))
+            .around(CecRules.requiresDeviceType(this, LogicalAddress.AUDIO_SYSTEM))
             .around(hdmiCecClient);
 
     /**

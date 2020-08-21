@@ -20,6 +20,7 @@ import static com.google.common.collect.Iterables.filter;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
 
+import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
@@ -29,7 +30,6 @@ import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -47,7 +47,7 @@ import java.util.List;
  */
 @Ignore("b/149519706")
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
+public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
 
   private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
   private static final ImmutableList<CecOperand> necessaryMessages =
@@ -60,18 +60,17 @@ public final class HdmiCecStartupTest extends BaseHostJUnit4Test {
               CecOperand.DEVICE_VENDOR_ID, CecOperand.GIVE_POWER_STATUS,
               CecOperand.GET_MENU_LANGUAGE).build();
 
-  public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+    public HdmiCecStartupTest() {
+        super(LogicalAddress.PLAYBACK_1);
+    }
 
-  @Rule
-  public RuleChain ruleChain =
-      RuleChain
-          .outerRule(new RequiredFeatureRule(this, HdmiCecConstants.HDMI_CEC_FEATURE))
-          .around(new RequiredFeatureRule(this, HdmiCecConstants.LEANBACK_FEATURE))
-          .around(RequiredPropertyRule.asCsvContainsValue(
-              this,
-              HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
-              PLAYBACK_DEVICE.getDeviceType()))
-          .around(hdmiCecClient);
+    @Rule
+    public RuleChain ruleChain =
+        RuleChain
+            .outerRule(CecRules.requiresCec(this))
+            .around(CecRules.requiresLeanback(this))
+            .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
+            .around(hdmiCecClient);
 
   /**
    * Tests that the device sends all the messages that should be sent on startup. It also ensures
