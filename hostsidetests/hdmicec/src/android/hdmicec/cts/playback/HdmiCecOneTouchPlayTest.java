@@ -16,6 +16,9 @@
 
 package android.hdmicec.cts.playback;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
@@ -26,18 +29,15 @@ import android.hdmicec.cts.RequiredPropertyRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
-import static com.google.common.truth.Truth.assertThat;
-
 /** HDMI CEC tests for One Touch Play (Section 11.2.1) */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
+public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
 
     private static final int PHYSICAL_ADDRESS = 0x1000;
     /**
@@ -69,17 +69,16 @@ public final class HdmiCecOneTouchPlayTest extends BaseHostJUnit4Test {
     /** The command to stop an app. */
     private static final String FORCE_STOP_COMMAND = "am force-stop ";
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+    public HdmiCecOneTouchPlayTest() {
+        super(LogicalAddress.PLAYBACK_1);
+    }
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, HdmiCecConstants.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, HdmiCecConstants.LEANBACK_FEATURE))
-            .around(RequiredPropertyRule.asCsvContainsValue(
-                this,
-                HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
-                LogicalAddress.PLAYBACK_1.getDeviceType()))
+            .outerRule(CecRules.requiresCec(this))
+            .around(CecRules.requiresLeanback(this))
+            .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
             .around(hdmiCecClient);
 
     /**
