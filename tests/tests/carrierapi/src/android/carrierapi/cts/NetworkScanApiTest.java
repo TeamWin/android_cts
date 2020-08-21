@@ -33,6 +33,7 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.Process;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.CellInfo;
@@ -444,7 +445,7 @@ public class NetworkScanApiTest {
                         return Process.INVALID_UID;
                     }
                 })
-                .filter(uid -> !specialUids.contains(uid))
+                .filter(uid -> !specialUids.contains(UserHandle.getAppId(uid)))
                 .collect(Collectors.toList());
 
         if (nonSpecialPackages.size() > 1) {
