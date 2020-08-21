@@ -608,7 +608,10 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                                     segmentSize,
                                     lastSequence /* sendEos */,
                                     lastSequence /* expectEos */,
-                                    mAdjustTimeUs);
+                                    mAdjustTimeUs,
+                                    // Try sleeping after first queue so that we can verify
+                                    // output format change event happens at the right time.
+                                    true /* sleepAfterFirstQueue */);
                             if (lastSequence && frames >= 0) {
                                 warn("did not receive EOS, received " + frames + " frames");
                             } else if (!lastSequence && frames < 0) {
@@ -688,7 +691,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                                 framesBeforeEos,
                                 true /* sendEos */,
                                 true /* expectEos */,
-                                adjustTimeUs);
+                                adjustTimeUs,
+                                false /* sleepAfterFirstQueue */);
                         if (framesB >= 0) {
                             warn("did not receive EOS, received " + (-framesB) + " frames");
                         }
@@ -762,7 +766,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                                 segmentSize,
                                 lastSequence /* sendEos */,
                                 lastSequence /* expectEos */,
-                                mAdjustTimeUs);
+                                mAdjustTimeUs,
+                                false /* sleepAfterFirstQueue */);
                             if (lastSequence && frames >= 0) {
                                 warn("did not receive EOS, received " + frames + " frames");
                             } else if (!lastSequence && frames < 0) {
@@ -890,6 +895,11 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         Vector<Long> mRenderedTimeStamps; // using Vector as it is implicitly synchronized
         long mLastRenderNanoTime;
         int mFramesNotifiedRendered;
+        // True iff previous dequeue request returned INFO_OUTPUT_FORMAT_CHANGED.
+        boolean mOutputFormatChanged;
+        // Save the timestamps of the first frame of each sequence.
+        // Note: this is the only time output format change could happen.
+        ArrayList<Long> mFirstQueueTimestamps;
 
         public Decoder(String codecName) {
             MediaCodec codec = null;
@@ -907,6 +917,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
             mRenderedTimeStamps = new Vector<Long>();
             mLastRenderNanoTime = System.nanoTime();
             mFramesNotifiedRendered = 0;
+            mOutputFormatChanged = false;
+            mFirstQueueTimestamps = new ArrayList<Long>();
 
             codec.setOnFrameRenderedListener(this, null);
         }
@@ -996,6 +1008,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 Log.d(TAG, "output format has changed to " + format);
                 int colorFormat = format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
                 mDoChecksum = isRecognizedFormat(colorFormat);
+                mOutputFormatChanged = true;
                 return null;
             } else if (ix < 0) {
                 Log.v(TAG, "no output");
@@ -1003,7 +1016,6 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
             }
             /* create checksum */
             long sum = 0;
-
 
             Log.v(TAG, "dequeue #" + ix + " => { [" + info.size + "] flags=" + info.flags +
                     " @" + info.presentationTimeUs + "}");
@@ -1037,6 +1049,16 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                     warn("invalid timestamp " + info.presentationTimeUs + ", queued " +
                             mTimeStamps);
                 }
+            }
+
+            if (mOutputFormatChanged) {
+                // Previous dequeue was output format change; format change must
+                // correspond to a new sequence, so it must happen right before
+                // the first frame of one of the sequences.
+                assertTrue("cannot find " + info.presentationTimeUs +
+                        " in " + mFirstQueueTimestamps,
+                        mFirstQueueTimestamps.remove(info.presentationTimeUs));
+                mOutputFormatChanged = false;
             }
 
             return String.format(Locale.US, "{pts=%d, flags=%x, data=0x%x}",
@@ -1088,7 +1110,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         public int queueInputBufferRange(
                 Media media, int frameStartIx, int frameEndIx, boolean sendEosAtEnd,
                 boolean waitForEos) {
-            return queueInputBufferRange(media,frameStartIx,frameEndIx,sendEosAtEnd,waitForEos,0);
+            return queueInputBufferRange(
+                    media, frameStartIx, frameEndIx, sendEosAtEnd, waitForEos, 0, false);
         }
 
         public void queueCSD(MediaFormat format) {
@@ -1118,7 +1141,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
 
         public int queueInputBufferRange(
                 Media media, int frameStartIx, int frameEndIx, boolean sendEosAtEnd,
-                boolean waitForEos, long adjustTimeUs) {
+                boolean waitForEos, long adjustTimeUs, boolean sleepAfterFirstQueue) {
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             int frameIx = frameStartIx;
             int numFramesDecoded = 0;
@@ -1134,6 +1157,19 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             frameIx,
                             sendEosAtEnd && (frameIx + 1 == frameEndIx),
                             adjustTimeUs)) {
+                        if (frameIx == frameStartIx) {
+                            if (sleepAfterFirstQueue) {
+                                // MediaCodec detects and processes output format change upon
+                                // the first frame. It must not send the event prematurely with
+                                // pending buffers to be dequeued. Sleep after the first frame
+                                // with new resolution to make sure MediaCodec had enough time
+                                // to process the frame with pending buffers.
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {}
+                            }
+                            mFirstQueueTimestamps.add(mTimeStamps.get(mTimeStamps.size() - 1));
+                        }
                         frameIx++;
                     }
                 }
