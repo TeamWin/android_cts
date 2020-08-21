@@ -18,6 +18,9 @@
 #include <jni.h>
 #include <string.h>
 #include <sys/auxv.h>
+#include <sys/utsname.h>
+
+#include <string>
 
 jboolean android_cts_CpuFeatures_isArmCpu(JNIEnv* env, jobject thiz)
 {
@@ -60,6 +63,20 @@ jint android_cts_CpuFeatures_getHwCaps(JNIEnv*, jobject)
     return (jint)getauxval(AT_HWCAP);
 }
 
+jboolean android_cts_CpuFeatures_isNativeBridgedCpu(JNIEnv* env, jobject thiz)
+{
+#if defined(__arm__) || defined(__aarch64__)
+  // If the test is compiled for arm use uname() to check if host CPU is x86.
+  struct utsname uname_data;
+  uname(&uname_data);
+  std::string machine = uname_data.machine;
+  // Matches all of i386, i686 and x86_64.
+  return machine.find("86") != std::string::npos;
+#else
+  return false;
+#endif
+}
+
 static JNINativeMethod gMethods[] = {
     {  "isArmCpu", "()Z",
             (void *) android_cts_CpuFeatures_isArmCpu  },
@@ -75,6 +92,8 @@ static JNINativeMethod gMethods[] = {
             (void *) android_cts_CpuFeatures_isX86_64Cpu  },
     {  "getHwCaps", "()I",
             (void *) android_cts_CpuFeatures_getHwCaps  },
+    {  "isNativeBridgedCpu", "()Z",
+            (void *) android_cts_CpuFeatures_isNativeBridgedCpu  },
 };
 
 int register_android_cts_CpuFeatures(JNIEnv* env)
