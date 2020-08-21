@@ -16,6 +16,8 @@
 
 package android.os.cts
 
+import android.app.Instrumentation
+import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_AUTO_REVOKE_PERMISSIONS
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
@@ -29,10 +31,10 @@ import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
-import android.test.InstrumentationTestCase
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
-import com.android.compatibility.common.util.textAsString
+import androidx.test.InstrumentationRegistry
+import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
@@ -42,11 +44,19 @@ import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.click
 import com.android.compatibility.common.util.depthFirstSearch
 import com.android.compatibility.common.util.lowestCommonAncestor
+import com.android.compatibility.common.util.textAsString
 import com.android.compatibility.common.util.uiDump
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.containsStringIgnoringCase
+import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.Matcher
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
 import java.lang.reflect.Modifier
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -61,7 +71,11 @@ private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
 /**
  * Test for auto revoke
  */
-class AutoRevokeTest : InstrumentationTestCase() {
+@RunWith(AndroidJUnit4::class)
+class AutoRevokeTest {
+
+    private val context: Context = InstrumentationRegistry.getTargetContext()
+    private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
 
     private val mPermissionControllerResources: Resources = context.createPackageContext(
             context.packageManager.permissionControllerPackageName, 0).resources
@@ -70,9 +84,27 @@ class AutoRevokeTest : InstrumentationTestCase() {
         const val LOG_TAG = "AutoRevokeTest"
     }
 
+    @Before
+    fun setup() {
+        // Kill Permission Controller
+        assertThat(
+                runShellCommand("killall " +
+                        context.packageManager.permissionControllerPackageName),
+                equalTo(""))
+
+        // Collapse notifications
+        assertThat(
+                runShellCommand("cmd statusbar collapse"),
+                equalTo(""))
+
+        // Wake up the device
+        runShellCommand("input keyevent KEYCODE_WAKEUP")
+        runShellCommand("input keyevent 82")
+    }
+
     @AppModeFull(reason = "Uses separate apps for testing")
+    @Test
     fun testUnusedApp_getsPermissionRevoked() {
-        wakeUpScreen()
         withUnusedThresholdMs(3L) {
             withDummyApp {
                 // Setup
@@ -103,8 +135,8 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @Test
     fun testUsedApp_doesntGetPermissionRevoked() {
-        wakeUpScreen()
         withUnusedThresholdMs(100_000L) {
             withDummyApp {
                 // Setup
@@ -127,8 +159,8 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @Test
     fun testPreRUnusedApp_doesntGetPermissionRevoked() {
-        wakeUpScreen()
         withUnusedThresholdMs(3L) {
             withDummyApp(APK_PATH_2, APK_PACKAGE_NAME_2) {
                 withDummyApp {
@@ -168,8 +200,8 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @Test
     fun testAutoRevoke_userWhitelisting() {
-        wakeUpScreen()
         withUnusedThresholdMs(4L) {
             withDummyApp {
                 // Setup
@@ -205,8 +237,8 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @Test
     fun testInstallGrants_notRevokedImmediately() {
-        wakeUpScreen()
         withUnusedThresholdMs(TimeUnit.DAYS.toMillis(30)) {
             withDummyApp {
                 // Setup
@@ -231,6 +263,7 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @Test
     fun testAutoRevoke_whitelistingApis() {
         withDummyApp {
             val pm = context.packageManager
@@ -256,11 +289,6 @@ class AutoRevokeTest : InstrumentationTestCase() {
                 }
             }
         }
-    }
-
-    private fun wakeUpScreen() {
-        runShellCommand("input keyevent KEYCODE_WAKEUP")
-        runShellCommand("input keyevent 82")
     }
 
     private fun runAutoRevoke() {
