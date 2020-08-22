@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.collect.Range;
 
+import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
@@ -32,7 +33,6 @@ import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Ignore;
@@ -49,7 +49,7 @@ import java.util.stream.IntStream;
 /** HDMI CEC test to test system audio mode (Section 11.2.15) */
 @Ignore("b/162820841")
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
+public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
 
     /** The package name of the APK. */
     private static final String PACKAGE = "android.hdmicec.app";
@@ -72,17 +72,16 @@ public final class HdmiCecSystemAudioModeTest extends BaseHostJUnit4Test {
 
     private List<Integer> mSupportedAudioFormats = null;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(AUDIO_DEVICE, "-t", "t");
+    public HdmiCecSystemAudioModeTest() {
+        super(AUDIO_DEVICE, "-t", "t");
+    }
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, HdmiCecConstants.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, HdmiCecConstants.LEANBACK_FEATURE))
-            .around(RequiredPropertyRule.asCsvContainsValue(
-                this,
-                HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
-                AUDIO_DEVICE.getDeviceType()))
+            .outerRule(CecRules.requiresCec(this))
+            .around(CecRules.requiresLeanback(this))
+            .around(CecRules.requiresDeviceType(this, AUDIO_DEVICE))
             .around(hdmiCecClient);
 
     private String getRequestSadFormatsParams(boolean sendValidFormats) throws Exception {

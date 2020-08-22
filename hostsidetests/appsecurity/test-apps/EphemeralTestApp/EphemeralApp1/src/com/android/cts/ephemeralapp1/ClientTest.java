@@ -29,6 +29,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertThrows;
 
 import android.Manifest;
@@ -44,6 +45,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ChangedPackages;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
@@ -1422,6 +1424,16 @@ public class ClientTest {
                             "com.android.cts.normalapp.NormalActivity"));
             assertThat(info, is(nullValue()));
         }
+    }
+
+    /** Tests getting changed packages for instant app. */
+    @Test
+    public void testGetChangedPackages() {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+
+        // Instant apps can't get changed packages.
+        final ChangedPackages changedPackages = pm.getChangedPackages(0);
+        assertNull(changedPackages);
     }
 
     /** Returns {@code true} if the given filter handles all web URLs, regardless of host. */

@@ -18,6 +18,7 @@ package android.hdmicec.cts.playback;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecClientWrapper;
@@ -28,7 +29,6 @@ import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
@@ -37,22 +37,21 @@ import org.junit.Test;
 
 /** HDMI CEC test to verify device vendor specific commands (Section 11.2.9) */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class HdmiCecVendorCommandsTest extends BaseHostJUnit4Test {
+public final class HdmiCecVendorCommandsTest extends BaseHdmiCecCtsTest {
 
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
     private static final int INCORRECT_VENDOR_ID = 0x0;
 
-    public HdmiCecClientWrapper hdmiCecClient = new HdmiCecClientWrapper(LogicalAddress.PLAYBACK_1);
+    public HdmiCecVendorCommandsTest() {
+        super(LogicalAddress.PLAYBACK_1);
+    }
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
-            .outerRule(new RequiredFeatureRule(this, HdmiCecConstants.HDMI_CEC_FEATURE))
-            .around(new RequiredFeatureRule(this, HdmiCecConstants.LEANBACK_FEATURE))
-            .around(RequiredPropertyRule.asCsvContainsValue(
-                this,
-                HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
-                PLAYBACK_DEVICE.getDeviceType()))
+            .outerRule(CecRules.requiresCec(this))
+            .around(CecRules.requiresLeanback(this))
+            .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
             .around(hdmiCecClient);
 
     /**
