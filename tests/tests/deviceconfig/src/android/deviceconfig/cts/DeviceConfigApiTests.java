@@ -28,7 +28,6 @@ import android.provider.DeviceConfig.OnPropertiesChangedListener;
 import android.provider.DeviceConfig.Properties;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -41,8 +40,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-@RunWith(AndroidJUnit4.class)
-public final class DeviceConfigApiTests {
+public final class DeviceConfigApiTests extends AbstractDeviceConfigTestCase {
     private static final String NAMESPACE1 = "namespace1";
     private static final String NAMESPACE2 = "namespace2";
     private static final String EMPTY_NAMESPACE = "empty_namespace";
@@ -70,24 +68,16 @@ public final class DeviceConfigApiTests {
     private static final float VALID_FLOAT = 456.789f;
     private static final String INVALID_FLOAT = "34343et";
 
-    private static final Executor EXECUTOR = InstrumentationRegistry.getContext().getMainExecutor();
-
-
     private static final long WAIT_FOR_PROPERTY_CHANGE_TIMEOUT_MILLIS = 2000; // 2 sec
     private final Object mLock = new Object();
-
-
-    private static final String WRITE_DEVICE_CONFIG_PERMISSION =
-            "android.permission.WRITE_DEVICE_CONFIG";
-
-    private static final String READ_DEVICE_CONFIG_PERMISSION =
-            "android.permission.READ_DEVICE_CONFIG";
 
     /**
      * Get necessary permissions to access and modify properties through DeviceConfig API.
      */
     @BeforeClass
     public static void setUp() throws Exception {
+        if (!isSupported()) return;
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 WRITE_DEVICE_CONFIG_PERMISSION, READ_DEVICE_CONFIG_PERMISSION);
     }
@@ -97,6 +87,8 @@ public final class DeviceConfigApiTests {
      */
     @After
     public void cleanUp() throws Exception {
+        if (!isSupported()) return;
+
         // first wait to make sure callbacks for SetProperties/SetProperty
         // invoked in the test methods got emitted. So that the callbacks
         // won't interfere with setPropertiesAndAssertSuccessfulChange invoked
@@ -114,6 +106,8 @@ public final class DeviceConfigApiTests {
      */
     @AfterClass
     public static void cleanUpAfterAllTests() {
+        if (!isSupported()) return;
+
         deletePropertyThrowShell(NAMESPACE1, KEY1);
         deletePropertyThrowShell(NAMESPACE2, KEY1);
         deletePropertyThrowShell(NAMESPACE1, KEY2);
