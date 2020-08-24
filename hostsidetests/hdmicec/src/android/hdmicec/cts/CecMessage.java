@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -146,6 +148,12 @@ public class CecMessage {
             params.append(String.format(":%02x", (int) rawParams.charAt(i)));
         }
         return params.toString();
+    }
+
+    /** Assert for the DUT's physical address with the value passed from command line argument. */
+    public static void assertPhysicalAddressValid(String message, int expectedPhysicalAddress) {
+        int physicalAddress = getParams(message, HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH);
+        assertThat(expectedPhysicalAddress).isEqualTo(physicalAddress);
     }
 
     private static String getNibbles(String message) {
