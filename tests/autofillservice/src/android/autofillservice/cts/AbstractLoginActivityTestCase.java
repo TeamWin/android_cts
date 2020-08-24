@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.LoginActivity;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 

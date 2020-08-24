@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.GridActivity;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.concurrent.TimeoutException;

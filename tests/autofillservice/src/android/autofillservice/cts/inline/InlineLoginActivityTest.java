@@ -35,12 +35,12 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.PendingIntent;
 import android.autofillservice.cts.CannedFillResponse;
-import android.autofillservice.cts.DummyActivity;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService;
 import android.autofillservice.cts.LoginActivityCommonTestCase;
-import android.autofillservice.cts.NonAutofillableActivity;
-import android.autofillservice.cts.UsernameOnlyActivity;
+import android.autofillservice.cts.activities.DummyActivity;
+import android.autofillservice.cts.activities.NonAutofillableActivity;
+import android.autofillservice.cts.activities.UsernameOnlyActivity;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;

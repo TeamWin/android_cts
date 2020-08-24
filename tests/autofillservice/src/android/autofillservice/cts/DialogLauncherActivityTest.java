@@ -17,10 +17,11 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
+import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_PASSWORD;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.activities.DialogLauncherActivity;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 

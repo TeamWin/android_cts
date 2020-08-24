@@ -15,6 +15,7 @@
  */
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.OutOfProcessLoginActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;

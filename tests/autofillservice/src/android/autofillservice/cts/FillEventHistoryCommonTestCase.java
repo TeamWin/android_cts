@@ -18,7 +18,6 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPONSE;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.CheckoutActivity.ID_CC_NUMBER;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.NULL_DATASET_ID;
@@ -31,14 +30,17 @@ import static android.autofillservice.cts.Helper.assertFillEventForSaveShown;
 import static android.autofillservice.cts.Helper.assertNoDeprecatedClientState;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
-import static android.autofillservice.cts.LoginActivity.BACKDOOR_USERNAME;
-import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_NUMBER;
+import static android.autofillservice.cts.activities.LoginActivity.BACKDOOR_USERNAME;
+import static android.autofillservice.cts.activities.LoginActivity.getWelcomeMessage;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.activities.AuthenticationActivity;
+import android.autofillservice.cts.activities.CheckoutActivity;
 import android.autofillservice.cts.inline.InlineFillEventHistoryTest;
 import android.content.Intent;
 import android.content.IntentSender;

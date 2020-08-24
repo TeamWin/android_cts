@@ -20,8 +20,8 @@ import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicR
 import static android.autofillservice.cts.augmented.AugmentedHelper.resetAugmentedService;
 
 import android.autofillservice.cts.CannedFillResponse;
-import android.autofillservice.cts.PreSimpleSaveActivity;
-import android.autofillservice.cts.SimpleSaveActivity;
+import android.autofillservice.cts.activities.PreSimpleSaveActivity;
+import android.autofillservice.cts.activities.SimpleSaveActivity;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;

@@ -606,7 +606,7 @@ public final class CannedFillResponse {
         /**
          * Creates a new dataset, replacing the field ids by the real ids from the assist structure.
          */
-        Dataset asDataset(Function<String, ViewNode> nodeResolver) {
+        public Dataset asDataset(Function<String, ViewNode> nodeResolver) {
             final Dataset.Builder builder = mPresentation != null
                     ? mInlinePresentation == null
                     ? new Dataset.Builder(mPresentation)

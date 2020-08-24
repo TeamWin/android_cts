@@ -17,8 +17,8 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.DuplicateIdActivity.DUPLICATE_ID;
 import static android.autofillservice.cts.Helper.assertEqualsIgnoreSession;
+import static android.autofillservice.cts.activities.DuplicateIdActivity.DUPLICATE_ID;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -28,6 +28,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
+import android.autofillservice.cts.activities.DuplicateIdActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;

@@ -31,19 +31,19 @@ import java.util.concurrent.TimeUnit;
 /**
  * Custom {@link OnItemSelectedListener} used to assert an {@link Spinner} was auto-filled properly.
  */
-final class OneTimeSpinnerListener implements OnItemSelectedListener {
+public final class OneTimeSpinnerListener implements OnItemSelectedListener {
     private final String name;
     private final CountDownLatch latch = new CountDownLatch(1);
     private final Spinner spinner;
     private final int expected;
 
-    OneTimeSpinnerListener(String name, Spinner spinner, int expectedAutoFilledValue) {
+    public OneTimeSpinnerListener(String name, Spinner spinner, int expectedAutoFilledValue) {
         this.name = name;
         this.spinner = spinner;
         this.expected = expectedAutoFilledValue;
     }
 
-    void assertAutoFilled() throws Exception {
+    public void assertAutoFilled() throws Exception {
         final boolean set = latch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         assertWithMessage("Timeout (%s ms) on Spinner %s", FILL_TIMEOUT.ms(), name)
             .that(set).isTrue();

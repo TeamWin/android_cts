@@ -26,7 +26,11 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.app.PendingIntent;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
-import android.autofillservice.cts.augmented.AugmentedAuthActivity;
+import android.autofillservice.cts.activities.AbstractAutoFillActivity;
+import android.autofillservice.cts.activities.AugmentedAuthActivity;
+import android.autofillservice.cts.activities.AuthenticationActivity;
+import android.autofillservice.cts.activities.PreSimpleSaveActivity;
+import android.autofillservice.cts.activities.SimpleSaveActivity;
 import android.autofillservice.cts.inline.InlineUiBot;
 import android.content.ClipboardManager;
 import android.content.Context;

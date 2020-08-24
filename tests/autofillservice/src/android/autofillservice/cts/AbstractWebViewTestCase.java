@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.AbstractWebViewActivity;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 

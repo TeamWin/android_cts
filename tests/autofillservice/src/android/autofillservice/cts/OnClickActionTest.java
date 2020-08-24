@@ -27,11 +27,12 @@ import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.SimpleSaveActivity.ID_INPUT;
-import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
+import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_INPUT;
+import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_PASSWORD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.SimpleSaveActivity;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.FillContext;

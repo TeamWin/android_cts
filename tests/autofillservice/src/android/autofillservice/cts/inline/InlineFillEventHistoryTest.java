@@ -32,7 +32,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.FillEventHistoryCommonTestCase;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService;
-import android.autofillservice.cts.LoginActivity;
+import android.autofillservice.cts.activities.LoginActivity;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;

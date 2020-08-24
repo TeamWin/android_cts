@@ -20,6 +20,9 @@ import static android.autofillservice.cts.Timeouts.ACTIVITY_RESURRECTION;
 import static android.autofillservice.cts.Timeouts.CALLBACK_NOT_CALLED_TIMEOUT_MS;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.activities.AbstractAutoFillActivity;
+import android.autofillservice.cts.activities.PreSimpleSaveActivity;
+import android.autofillservice.cts.activities.SimpleSaveActivity;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillResponse;

@@ -23,8 +23,8 @@ import static android.autofillservice.cts.Helper.assertFillEventForDatasetSelect
 import static android.autofillservice.cts.Helper.assertFillEventForDatasetShown;
 import static android.autofillservice.cts.Helper.assertFillEventForSaveShown;
 import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
-import static android.autofillservice.cts.LoginActivity.BACKDOOR_USERNAME;
-import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.autofillservice.cts.activities.LoginActivity.BACKDOOR_USERNAME;
+import static android.autofillservice.cts.activities.LoginActivity.getWelcomeMessage;
 import static android.service.autofill.FillEventHistory.Event.TYPE_CONTEXT_COMMITTED;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 

@@ -15,18 +15,6 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.CheckoutActivity.ID_ADDRESS;
-import static android.autofillservice.cts.CheckoutActivity.ID_CC_EXPIRATION;
-import static android.autofillservice.cts.CheckoutActivity.ID_CC_NUMBER;
-import static android.autofillservice.cts.CheckoutActivity.ID_DATE_PICKER;
-import static android.autofillservice.cts.CheckoutActivity.ID_HOME_ADDRESS;
-import static android.autofillservice.cts.CheckoutActivity.ID_SAVE_CC;
-import static android.autofillservice.cts.CheckoutActivity.ID_TIME_PICKER;
-import static android.autofillservice.cts.CheckoutActivity.ID_WORK_ADDRESS;
-import static android.autofillservice.cts.CheckoutActivity.INDEX_ADDRESS_WORK;
-import static android.autofillservice.cts.CheckoutActivity.INDEX_CC_EXPIRATION_NEVER;
-import static android.autofillservice.cts.CheckoutActivity.INDEX_CC_EXPIRATION_TODAY;
-import static android.autofillservice.cts.CheckoutActivity.INDEX_CC_EXPIRATION_TOMORROW;
 import static android.autofillservice.cts.Helper.assertListValue;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
@@ -35,6 +23,18 @@ import static android.autofillservice.cts.Helper.assertToggleValue;
 import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_ADDRESS;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_EXPIRATION;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_NUMBER;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_DATE_PICKER;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_HOME_ADDRESS;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_SAVE_CC;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_TIME_PICKER;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_WORK_ADDRESS;
+import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_ADDRESS_WORK;
+import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_CC_EXPIRATION_NEVER;
+import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_CC_EXPIRATION_TODAY;
+import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_CC_EXPIRATION_TOMORROW;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.view.View.AUTOFILL_TYPE_LIST;
 
@@ -45,6 +45,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.CheckoutActivity;
 import android.icu.util.Calendar;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;

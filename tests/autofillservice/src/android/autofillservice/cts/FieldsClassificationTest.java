@@ -15,13 +15,13 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.GridActivity.ID_L1C1;
-import static android.autofillservice.cts.GridActivity.ID_L1C2;
-import static android.autofillservice.cts.GridActivity.ID_L2C1;
-import static android.autofillservice.cts.GridActivity.ID_L2C2;
 import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
 import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
 import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
+import static android.autofillservice.cts.activities.GridActivity.ID_L1C1;
+import static android.autofillservice.cts.activities.GridActivity.ID_L1C2;
+import static android.autofillservice.cts.activities.GridActivity.ID_L2C1;
+import static android.autofillservice.cts.activities.GridActivity.ID_L2C2;
 import static android.provider.Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE;

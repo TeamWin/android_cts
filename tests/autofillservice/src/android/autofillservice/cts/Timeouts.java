@@ -61,8 +61,8 @@ public final class Timeouts {
     /**
      * Timeout for expected autofill requests.
      */
-    static final Timeout FILL_TIMEOUT = new Timeout("FILL_TIMEOUT", ONE_TIMEOUT_TO_RULE_THEN_ALL_MS,
-            2F, ONE_TIMEOUT_TO_RULE_THEN_ALL_MS);
+    public static final Timeout FILL_TIMEOUT = new Timeout("FILL_TIMEOUT",
+            ONE_TIMEOUT_TO_RULE_THEN_ALL_MS, 2F, ONE_TIMEOUT_TO_RULE_THEN_ALL_MS);
 
     /**
      * Timeout for expected save requests.
@@ -98,7 +98,7 @@ public final class Timeouts {
      * Timeout for webview operations. Typically used by {@link UiBot}.
      */
     // TODO(b/80317628): switch back to ONE_TIMEOUT_TO_RULE_THEN_ALL_MS once fixed...
-    static final Timeout WEBVIEW_TIMEOUT = new Timeout("WEBVIEW_TIMEOUT", 3_000, 2F, 5_000);
+    public static final Timeout WEBVIEW_TIMEOUT = new Timeout("WEBVIEW_TIMEOUT", 3_000, 2F, 5_000);
 
     /**
      * Timeout for showing the autofill dataset picker UI.
@@ -120,7 +120,7 @@ public final class Timeouts {
     /**
      * Timeout (in milliseconds) for an activity to be brought out to top.
      */
-    static final Timeout ACTIVITY_RESURRECTION = new Timeout("ACTIVITY_RESURRECTION",
+    public static final Timeout ACTIVITY_RESURRECTION = new Timeout("ACTIVITY_RESURRECTION",
             ONE_TIMEOUT_TO_RULE_THEN_ALL_MS, 2F, ONE_TIMEOUT_TO_RULE_THEN_ALL_MS);
 
     /**

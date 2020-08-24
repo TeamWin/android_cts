@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Custom {@OnDateChangedListener} used to assert a {@link DatePicker} was auto-filled properly.
  */
-final class OneTimeDateListener implements DatePicker.OnDateChangedListener {
+public final class OneTimeDateListener implements DatePicker.OnDateChangedListener {
     private final String name;
     private final CountDownLatch latch = new CountDownLatch(1);
     private final DatePicker datePicker;
@@ -36,7 +36,8 @@ final class OneTimeDateListener implements DatePicker.OnDateChangedListener {
     private final int expectedMonth;
     private final int expectedDay;
 
-    OneTimeDateListener(String name, DatePicker datePicker, int expectedYear, int expectedMonth,
+    public OneTimeDateListener(String name, DatePicker datePicker, int expectedYear,
+            int expectedMonth,
             int expectedDay) {
         this.name = name;
         this.datePicker = datePicker;
@@ -50,7 +51,7 @@ final class OneTimeDateListener implements DatePicker.OnDateChangedListener {
         latch.countDown();
     }
 
-    void assertAutoFilled() throws Exception {
+    public void assertAutoFilled() throws Exception {
         final boolean set = latch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         assertWithMessage("Timeout (%s ms) on DatePicker %s", FILL_TIMEOUT.ms(), name)
             .that(set).isTrue();

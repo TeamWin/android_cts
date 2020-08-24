@@ -26,8 +26,8 @@ import static android.autofillservice.cts.Helper.assertTextFromResources;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
-import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.autofillservice.cts.activities.LoginActivity.AUTHENTICATION_MESSAGE;
+import static android.autofillservice.cts.activities.LoginActivity.getWelcomeMessage;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -37,6 +37,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.LoginWithStringsActivity;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.view.View;
