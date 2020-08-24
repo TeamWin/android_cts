@@ -27,11 +27,12 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.UiAutomation;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.pm.DataLoaderParams;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
+import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
-import android.os.incremental.IncrementalManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
@@ -150,7 +151,7 @@ public class PackageManagerShellCommandTest {
     @Before
     public void onBefore() throws Exception {
         // Check if Incremental is allowed and revert to non-dataloader installation.
-        if (mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL && !IncrementalManager.isAllowed()) {
+        if (mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL && !checkIncrementalDeliveryFeature()) {
             mDataLoaderType = DATA_LOADER_TYPE_NONE;
         }
 
@@ -169,6 +170,12 @@ public class PackageManagerShellCommandTest {
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
+    }
+
+    private boolean checkIncrementalDeliveryFeature() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        return context.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_INCREMENTAL_DELIVERY);
     }
 
     @Test
