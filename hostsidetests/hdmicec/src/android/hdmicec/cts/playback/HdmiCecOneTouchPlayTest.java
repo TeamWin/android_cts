@@ -16,8 +16,6 @@
 
 package android.hdmicec.cts.playback;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
@@ -93,7 +91,7 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
         sendOtp(device);
         hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.TEXT_VIEW_ON);
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
-        assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
+        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
     }
 
     /**
@@ -107,7 +105,7 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
         device.executeShellCommand(START_COMMAND + ACTION_CONNECT_INPUT_NORMAL);
         hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.TEXT_VIEW_ON);
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
-        assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
+        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
         device.executeShellCommand(FORCE_STOP_COMMAND + SETTINGS_PACKAGE);
     }
 
