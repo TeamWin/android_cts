@@ -75,13 +75,16 @@ import android.app.stubs.TestNotificationListener;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.OperationApplicationException;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
@@ -91,6 +94,7 @@ import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -111,12 +115,12 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.widget.RemoteViews;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.annotation.NonNull;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
-
-import junit.framework.Assert;
+import com.android.test.notificationlistener.INotificationUriAccessService;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -133,11 +137,15 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /* This tests NotificationListenerService together with NotificationManager, as you need to have
  * notifications to manipulate in order to test the listener service. */
 public class NotificationManagerTest extends AndroidTestCase {
+    public static final String NOTIFICATIONPROVIDER = "com.android.test.notificationprovider";
+    public static final String RICH_NOTIFICATION_ACTIVITY =
+            "com.android.test.notificationprovider.RichNotificationActivity";
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
     static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
@@ -160,6 +168,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private List<String> mRuleIds;
     private BroadcastReceiver mBubbleBroadcastReceiver;
     private boolean mBubblesEnabledSettingToRestore;
+    private INotificationUriAccessService mNotificationUriAccessService;
 
     @Override
     protected void setUp() throws Exception {
@@ -195,7 +204,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         // delay between tests so notifications aren't dropped by the rate limiter
         try {
             Thread.sleep(500);
-        } catch(InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
     }
 
     @Override
@@ -222,8 +232,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
                 false);
 
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), false);
+        toggleListenerAccess(false);
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), false);
 
@@ -237,17 +246,17 @@ public class NotificationManagerTest extends AndroidTestCase {
         setBubblesGlobal(mBubblesEnabledSettingToRestore);
     }
 
-    private boolean isNotificationCancelled(int id, boolean all) {
+    private void assertNotificationCancelled(int id, boolean all) {
         for (long totalWait = 0; totalWait < MAX_WAIT_TIME; totalWait += SHORT_WAIT_TIME) {
-            StatusBarNotification sbn = findPostedNotification(id, all);
-            if (sbn == null) return true;
+            StatusBarNotification sbn = findNotificationNoWait(id, all);
+            if (sbn == null) return;
             try {
                 Thread.sleep(SHORT_WAIT_TIME);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        return false;
+        assertNull(findNotificationNoWait(id, all));
     }
 
     private void insertSingleContact(String name, String phone, String email, boolean starred) {
@@ -296,8 +305,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             Uri phoneUri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
                     Uri.encode(phone));
-            String[] projection = new String[] { ContactsContract.Contacts._ID,
-                    ContactsContract.Contacts.LOOKUP_KEY };
+            String[] projection = new String[]{ContactsContract.Contacts._ID,
+                    ContactsContract.Contacts.LOOKUP_KEY};
             c = mContext.getContentResolver().query(phoneUri, projection, null, null, null);
             if (c != null && c.getCount() > 0) {
                 c.moveToFirst();
@@ -320,25 +329,28 @@ public class NotificationManagerTest extends AndroidTestCase {
     private StatusBarNotification findPostedNotification(int id, boolean all) {
         // notification is a bit asynchronous so it may take a few ms to appear in
         // getActiveNotifications()
-        // we will check for it for up to 300ms before giving up
-        StatusBarNotification n = null;
-        for (int tries = 3; tries-- > 0; ) {
-            final StatusBarNotification[] sbns = getActiveNotifications(all);
-            for (StatusBarNotification sbn : sbns) {
-                Log.d(TAG, "Found " + sbn.getKey());
-                if (sbn.getId() == id) {
-                    n = sbn;
-                    break;
-                }
+        // we will check for it for up to 1000ms before giving up
+        for (long totalWait = 0; totalWait < MAX_WAIT_TIME; totalWait += SHORT_WAIT_TIME) {
+            StatusBarNotification n = findNotificationNoWait(id, all);
+            if (n != null) {
+                return n;
             }
-            if (n != null) break;
             try {
-                Thread.sleep(100);
+                Thread.sleep(SHORT_WAIT_TIME);
             } catch (InterruptedException ex) {
                 // pass
             }
         }
-        return n;
+        return findNotificationNoWait(id, all);
+    }
+
+    private StatusBarNotification findNotificationNoWait(int id, boolean all) {
+        for (StatusBarNotification sbn : getActiveNotifications(all)) {
+            if (sbn.getId() == id) {
+                return sbn;
+            }
+        }
+        return null;
     }
 
     private StatusBarNotification[] getActiveNotifications(boolean all) {
@@ -449,8 +461,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void setUpNotifListener() {
         try {
-            toggleListenerAccess(TestNotificationListener.getId(),
-                    InstrumentationRegistry.getInstrumentation(), true);
+            toggleListenerAccess(true);
             mListener = TestNotificationListener.getInstance();
             mListener.resetData();
             assertNotNull(mListener);
@@ -471,16 +482,16 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         if (data == null) {
             data = new Notification.BubbleMetadata.Builder(pendingIntent,
-                            Icon.createWithResource(mContext, R.drawable.black))
+                    Icon.createWithResource(mContext, R.drawable.black))
                     .build();
         }
         if (builder == null) {
             builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                            .setSmallIcon(R.drawable.black)
-                            .setWhen(System.currentTimeMillis())
-                            .setContentTitle("notify#" + id)
-                            .setContentText("This is #" + id + "notification  ")
-                            .setContentIntent(pendingIntent);
+                    .setSmallIcon(R.drawable.black)
+                    .setWhen(System.currentTimeMillis())
+                    .setContentTitle("notify#" + id)
+                    .setContentText("This is #" + id + "notification  ")
+                    .setContentIntent(pendingIntent);
         }
         builder.setBubbleMetadata(data);
 
@@ -523,7 +534,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         // getActiveNotifications()
         // we will check for it for up to 300ms before giving up
         boolean found = false;
-        for (int tries = 3; tries--> 0;) {
+        for (int tries = 3; tries-- > 0; ) {
             // Need reset flag.
             found = false;
             final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
@@ -549,7 +560,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         // getActiveNotifications()
         // we will check for it for up to 400ms before giving up
         int lastCount = 0;
-        for (int tries = 4; tries-- > 0;) {
+        for (int tries = 4; tries-- > 0; ) {
             final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
             lastCount = sbns.length;
             if (expectedCount == lastCount) return;
@@ -559,7 +570,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 // pass
             }
         }
-        fail("Expected " + expectedCount + " posted notifications, were " +  lastCount);
+        fail("Expected " + expectedCount + " posted notifications, were " + lastCount);
     }
 
     private void compareChannels(NotificationChannel expected, NotificationChannel actual) {
@@ -599,8 +610,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         runCommand(command, instrumentation);
 
         NotificationManager nm = mContext.getSystemService(NotificationManager.class);
-        Assert.assertEquals("Notification Policy Access Grant is " +
-                        nm.isNotificationPolicyAccessGranted() + " not " + on, on,
+        assertEquals("Notification Policy Access Grant is "
+                        + nm.isNotificationPolicyAccessGranted() + " not " + on, on,
                 nm.isNotificationPolicyAccessGranted());
     }
 
@@ -613,18 +624,23 @@ public class NotificationManagerTest extends AndroidTestCase {
         runCommand(command, instrumentation);
     }
 
-    private void toggleListenerAccess(String componentName, Instrumentation instrumentation,
-            boolean on) throws IOException {
-
+    private void toggleListenerAccess(boolean on) throws IOException {
         String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
-                + componentName;
+                + TestNotificationListener.getId();
 
-        runCommand(command, instrumentation);
+        runCommand(command, InstrumentationRegistry.getInstrumentation());
 
         final NotificationManager nm = mContext.getSystemService(NotificationManager.class);
         final ComponentName listenerComponent = TestNotificationListener.getComponentName();
-        assertTrue(listenerComponent + " has not been granted access",
-                nm.isNotificationListenerAccessGranted(listenerComponent) == on);
+        assertEquals(listenerComponent + " has incorrect listener access",
+                on, nm.isNotificationListenerAccessGranted(listenerComponent));
+    }
+
+    private void toggleExternalListenerAccess(ComponentName listenerComponent, boolean on)
+            throws IOException {
+        String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
+                + listenerComponent.flattenToString();
+        runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
     private void setBubblesGlobal(boolean enabled)
@@ -656,15 +672,18 @@ public class NotificationManagerTest extends AndroidTestCase {
         Thread.sleep(500); // wait for ranking update
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     private void runCommand(String command, Instrumentation instrumentation) throws IOException {
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
         // Execute command
         try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
-            Assert.assertNotNull("Failed to execute shell command: " + command, fd);
+            assertNotNull("Failed to execute shell command: " + command, fd);
             // Wait for the command to finish by reading until EOF
             try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
                 byte[] buffer = new byte[4096];
-                while (in.read(buffer) > 0) {}
+                while (in.read(buffer) > 0) {
+                    // discard output
+                }
             } catch (IOException e) {
                 throw new IOException("Could not read stdout of command: " + command, e);
             }
@@ -698,7 +717,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void assertExpectedDndState(int expectedState) {
         int tries = 3;
-        for (int i = tries; i >=0; i--) {
+        for (int i = tries; i >= 0; i--) {
             if (expectedState ==
                     mNotificationManager.getCurrentInterruptionFilter()) {
                 break;
@@ -808,11 +827,11 @@ public class NotificationManagerTest extends AndroidTestCase {
         KeyguardManager keyguardManager = mContext.getSystemService(KeyguardManager.class);
         keyguardManager.requestDismissKeyguard(sendBubbleActivity,
                 new KeyguardManager.KeyguardDismissCallback() {
-            @Override
-            public void onDismissSucceeded() {
-                latch.countDown();
-            }
-        });
+                    @Override
+                    public void onDismissSucceeded() {
+                        latch.countDown();
+                    }
+                });
         try {
             latch.await(500, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
@@ -1098,7 +1117,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                 new NotificationChannel(mId, "name", IMPORTANCE_DEFAULT);
         channel.setDescription("bananas");
         channel.enableVibration(true);
-        channel.setVibrationPattern(new long[] {5, 8, 2, 1});
+        channel.setVibrationPattern(new long[]{5, 8, 2, 1});
         channel.setSound(new Uri.Builder().scheme("test").build(),
                 new AudioAttributes.Builder().setUsage(
                         AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_DELAYED).build());
@@ -1213,7 +1232,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         try {
             mNotificationManager.createNotificationChannel(channel);
             fail("Created notification with bad group");
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     public void testCreateChannelInvalidImportance() throws Exception {
@@ -1380,8 +1400,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSuspendPackage() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -1422,8 +1441,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSuspendedPackageSendsNotification() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -1475,8 +1493,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(1, Settings.Global.getInt(
                 mContext.getContentResolver(), Settings.Global.NOTIFICATION_BUBBLES));
 
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -1520,8 +1537,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(1, Settings.Secure.getInt(
                 mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BADGING));
 
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -1563,8 +1579,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testGetSuppressedVisualEffectsOff_ranking() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -1592,8 +1607,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
         try {
-            toggleListenerAccess(TestNotificationListener.getId(),
-                    InstrumentationRegistry.getInstrumentation(), true);
+            toggleListenerAccess(true);
             Thread.sleep(500); // wait for listener to be allowed
 
             mListener = TestNotificationListener.getInstance();
@@ -1641,8 +1655,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testKeyChannelGroupOverrideImportanceExplanation_ranking() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -1930,7 +1943,8 @@ public class NotificationManagerTest extends AndroidTestCase {
                         .setStyle(new Notification.BigPictureStyle()
                                 .setBigContentTitle("title")
                                 .bigPicture(Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565))
-                                .bigLargeIcon(Icon.createWithResource(getContext(), R.drawable.icon_blue))
+                                .bigLargeIcon(
+                                        Icon.createWithResource(getContext(), R.drawable.icon_blue))
                                 .setSummaryText("summary"))
                         .build();
         mNotificationManager.notify(id, notification);
@@ -2361,31 +2375,31 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationPolicyVisualEffectsEqual() {
-        NotificationManager.Policy policy = new NotificationManager.Policy(0,0 ,0 ,
+        NotificationManager.Policy policy = new NotificationManager.Policy(0, 0, 0,
                 SUPPRESSED_EFFECT_SCREEN_ON);
-        NotificationManager.Policy policy2 = new NotificationManager.Policy(0,0 ,0 ,
+        NotificationManager.Policy policy2 = new NotificationManager.Policy(0, 0, 0,
                 SUPPRESSED_EFFECT_PEEK);
         assertTrue(policy.equals(policy2));
         assertTrue(policy2.equals(policy));
 
-        policy = new NotificationManager.Policy(0,0 ,0 ,
+        policy = new NotificationManager.Policy(0, 0, 0,
                 SUPPRESSED_EFFECT_SCREEN_ON);
-        policy2 = new NotificationManager.Policy(0,0 ,0 ,
+        policy2 = new NotificationManager.Policy(0, 0, 0,
                 0);
         assertFalse(policy.equals(policy2));
         assertFalse(policy2.equals(policy));
 
-        policy = new NotificationManager.Policy(0,0 ,0 ,
+        policy = new NotificationManager.Policy(0, 0, 0,
                 SUPPRESSED_EFFECT_SCREEN_OFF);
-        policy2 = new NotificationManager.Policy(0,0 ,0 ,
+        policy2 = new NotificationManager.Policy(0, 0, 0,
                 SUPPRESSED_EFFECT_FULL_SCREEN_INTENT | SUPPRESSED_EFFECT_AMBIENT
                         | SUPPRESSED_EFFECT_LIGHTS);
         assertTrue(policy.equals(policy2));
         assertTrue(policy2.equals(policy));
 
-        policy = new NotificationManager.Policy(0,0 ,0 ,
+        policy = new NotificationManager.Policy(0, 0, 0,
                 SUPPRESSED_EFFECT_SCREEN_OFF);
-        policy2 = new NotificationManager.Policy(0,0 ,0 ,
+        policy2 = new NotificationManager.Policy(0, 0, 0,
                 SUPPRESSED_EFFECT_LIGHTS);
         assertFalse(policy.equals(policy2));
         assertFalse(policy2.equals(policy));
@@ -2436,7 +2450,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.notifyAsPackage(DELEGATOR, "toBeCanceled", 10000, n);
         assertNotNull(findPostedNotification(10000, false));
         mNotificationManager.cancelAsPackage(DELEGATOR, "toBeCanceled", 10000);
-        assertTrue(isNotificationCancelled(10000, false));
+        assertNotificationCancelled(10000, false);
         final Intent revokeIntent = new Intent();
         revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
         revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -2446,8 +2460,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     public void testNotificationDelegate_cannotCancelNotificationsPostedByDelegator()
             throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -2466,7 +2479,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         try {
             mNotificationManager.cancelAsPackage(DELEGATOR, null, 9);
-            fail ("Delegate should not be able to cancel notification they did not post");
+            fail("Delegate should not be able to cancel notification they did not post");
         } catch (SecurityException e) {
             // yay
         }
@@ -2614,8 +2627,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             // pass
         }
 
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         // no exception this time
         mNotificationManager.shouldHideSilentStatusBarIcons();
     }
@@ -2677,9 +2689,250 @@ public class NotificationManagerTest extends AndroidTestCase {
         listener.onListenerDisconnected();
     }
 
+    private void performNotificationProviderAction(@NonNull String action) {
+        // Create an intent to launch an activity which just posts or cancels notifications
+        Intent activityIntent = new Intent();
+        activityIntent.setClassName(NOTIFICATIONPROVIDER, RICH_NOTIFICATION_ACTIVITY);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activityIntent.putExtra("action", action);
+        mContext.startActivity(activityIntent);
+    }
+
+    public void testNotificationUriPermissionsGranted() throws Exception {
+        Uri background7Uri = Uri.parse(
+                "content://com.android.test.notificationprovider.provider/background7.png");
+        Uri background8Uri = Uri.parse(
+                "content://com.android.test.notificationprovider.provider/background8.png");
+
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        try {
+            // Post #7
+            performNotificationProviderAction("send-7");
+
+            assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
+            assertNotificationCancelled(8, true);
+            assertAccessible(background7Uri);
+            assertInaccessible(background8Uri);
+
+            // Post #8
+            performNotificationProviderAction("send-8");
+
+            assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
+            assertEquals(background8Uri, getNotificationBackgroundImageUri(8));
+            assertAccessible(background7Uri);
+            assertAccessible(background8Uri);
+
+            // Cancel #7
+            performNotificationProviderAction("cancel-7");
+
+            assertNotificationCancelled(7, true);
+            assertEquals(background8Uri, getNotificationBackgroundImageUri(8));
+            assertInaccessible(background7Uri);
+            assertAccessible(background8Uri);
+
+            // Cancel #8
+            performNotificationProviderAction("cancel-8");
+
+            assertNotificationCancelled(7, true);
+            assertNotificationCancelled(8, true);
+            assertInaccessible(background7Uri);
+            assertInaccessible(background8Uri);
+
+        } finally {
+            // Clean up -- reset any remaining notifications
+            performNotificationProviderAction("reset");
+            Thread.sleep(500);
+        }
+    }
+
+    public void testNotificationUriPermissionsGrantedToNewListeners() throws Exception {
+        Uri background7Uri = Uri.parse(
+                "content://com.android.test.notificationprovider.provider/background7.png");
+
+        try {
+            // Post #7
+            performNotificationProviderAction("send-7");
+
+            Thread.sleep(500);
+            // Don't have access the notification yet, but we can test the URI
+            assertInaccessible(background7Uri);
+
+            toggleListenerAccess(true);
+            Thread.sleep(500); // wait for listener to be allowed
+
+            mListener = TestNotificationListener.getInstance();
+            assertNotNull(mListener);
+
+            assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
+            assertAccessible(background7Uri);
+
+        } finally {
+            // Clean Up -- Cancel #7
+            performNotificationProviderAction("cancel-7");
+            Thread.sleep(500);
+        }
+    }
+
+    public void testNotificationUriPermissionsRevokedFromRemovedListeners() throws Exception {
+        Uri background7Uri = Uri.parse(
+                "content://com.android.test.notificationprovider.provider/background7.png");
+
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        try {
+            // Post #7
+            performNotificationProviderAction("send-7");
+
+            mListener = TestNotificationListener.getInstance();
+            assertNotNull(mListener);
+
+            assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
+            assertAccessible(background7Uri);
+
+            // Remove the listener to ensure permissions get revoked
+            toggleListenerAccess(false);
+            Thread.sleep(500); // wait for listener to be disabled
+
+            assertInaccessible(background7Uri);
+
+        } finally {
+            // Clean Up -- Cancel #7
+            performNotificationProviderAction("cancel-7");
+            Thread.sleep(500);
+        }
+    }
+
+    private class NotificationListenerConnection implements ServiceConnection {
+        private final Semaphore mSemaphore = new Semaphore(0);
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            mNotificationUriAccessService = INotificationUriAccessService.Stub.asInterface(service);
+            mSemaphore.release();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName className) {
+            mNotificationUriAccessService = null;
+        }
+
+        public void waitForService() {
+            try {
+                if (mSemaphore.tryAcquire(5, TimeUnit.SECONDS)) {
+                    return;
+                }
+            } catch (InterruptedException e) {
+            }
+            fail("failed to connec to service");
+        }
+    }
+
+    ;
+
+    public void testNotificationUriPermissionsRevokedOnlyFromRemovedListeners() throws Exception {
+        Uri background7Uri = Uri.parse(
+                "content://com.android.test.notificationprovider.provider/background7.png");
+
+        // Connect to a service in the NotificationListener app which allows us to validate URI
+        // permissions granted to a second app, so that we show that permissions aren't being
+        // revoked too broadly.
+        final Intent intent = new Intent();
+        intent.setComponent(new ComponentName("com.android.test.notificationlistener",
+                "com.android.test.notificationlistener.NotificationUriAccessService"));
+        NotificationListenerConnection connection = new NotificationListenerConnection();
+        mContext.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        connection.waitForService();
+
+        // Before starting the test, make sure the service works, that there is no listener, and
+        // that the URI starts inaccessible to that process.
+        mNotificationUriAccessService.ensureNotificationListenerServiceConnected(false);
+        assertFalse(mNotificationUriAccessService.isFileUriAccessible(background7Uri));
+
+        // Give the NotificationListener app access to notifications, and validate that.
+        toggleExternalListenerAccess(new ComponentName("com.android.test.notificationlistener",
+                "com.android.test.notificationlistener.TestNotificationListener"), true);
+        Thread.sleep(500);
+        mNotificationUriAccessService.ensureNotificationListenerServiceConnected(true);
+        assertFalse(mNotificationUriAccessService.isFileUriAccessible(background7Uri));
+
+        // Give the test app access to notifications, and get that listener
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        try {
+            try {
+                // Post #7
+                performNotificationProviderAction("send-7");
+
+                // Check that both the test app (this code) and the external app have URI access.
+                assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
+                assertAccessible(background7Uri);
+                assertTrue(mNotificationUriAccessService.isFileUriAccessible(background7Uri));
+
+                // Remove the listener to ensure permissions get revoked
+                toggleListenerAccess(false);
+                Thread.sleep(500); // wait for listener to be disabled
+
+                // Ensure that revoking listener access to this one app does not effect the other.
+                assertInaccessible(background7Uri);
+                assertTrue(mNotificationUriAccessService.isFileUriAccessible(background7Uri));
+
+            } finally {
+                // Clean Up -- Cancel #7
+                performNotificationProviderAction("cancel-7");
+                Thread.sleep(500);
+            }
+
+            // Finally, cancelling the permission must still revoke those other permissions.
+            assertFalse(mNotificationUriAccessService.isFileUriAccessible(background7Uri));
+
+        } finally {
+            // Clean Up -- Make sure the external listener is has access revoked
+            toggleExternalListenerAccess(new ComponentName("com.android.test.notificationlistener",
+                    "com.android.test.notificationlistener.TestNotificationListener"), false);
+        }
+    }
+
+    private void assertAccessible(Uri uri)
+            throws IOException {
+        ContentResolver contentResolver = mContext.getContentResolver();
+        try (AssetFileDescriptor fd = contentResolver.openAssetFile(uri, "r", null)) {
+            assertNotNull(fd);
+        } catch (SecurityException e) {
+            throw new AssertionError("URI should be accessible: " + uri, e);
+        }
+    }
+
+    private void assertInaccessible(Uri uri)
+            throws IOException {
+        ContentResolver contentResolver = mContext.getContentResolver();
+        try (AssetFileDescriptor fd = contentResolver.openAssetFile(uri, "r", null)) {
+            fail("URI should be inaccessible: " + uri);
+        } catch (SecurityException e) {
+            // pass
+        }
+    }
+
+    @NonNull
+    private Uri getNotificationBackgroundImageUri(int notificationId) {
+        StatusBarNotification sbn = findPostedNotification(notificationId, true);
+        assertNotNull(sbn);
+        String imageUriString = sbn.getNotification().extras
+                .getString(Notification.EXTRA_BACKGROUND_IMAGE_URI);
+        assertNotNull(imageUriString);
+        return Uri.parse(imageUriString);
+    }
+
     public void testNotificationListener_setNotificationsShown() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -2695,8 +2948,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         StatusBarNotification sbn2 = findPostedNotification(notificationId2, false);
         mListener.setNotificationsShown(new String[]{ sbn1.getKey() });
 
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), false);
+        toggleListenerAccess(false);
         Thread.sleep(500); // wait for listener to be disallowed
         try {
             mListener.setNotificationsShown(new String[]{ sbn2.getKey() });
@@ -2707,8 +2959,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_getNotificationChannels() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -2723,8 +2974,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_getNotificationChannelGroups() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -2738,8 +2988,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_updateNotificationChannel() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -2758,8 +3007,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_getActiveNotifications() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -2786,8 +3034,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
 
     public void testNotificationListener_getCurrentRanking() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
@@ -2800,8 +3047,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testNotificationListener_cancelNotifications() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
 
         mListener = TestNotificationListener.getInstance();
