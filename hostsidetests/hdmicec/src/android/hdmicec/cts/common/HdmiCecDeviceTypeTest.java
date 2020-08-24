@@ -18,6 +18,10 @@ package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.hdmicec.cts.HdmiCecConstants;
+
+import com.android.tradefed.config.Option;
+import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -32,7 +36,17 @@ import java.util.Scanner;
 
 /** Tests to see that a valid HDMI CEC device type is declared by the device. */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@OptionClass(alias="hdmi-cec-cts-test")
 public final class HdmiCecDeviceTypeTest extends BaseHostJUnit4Test {
+
+    @Option(name = HdmiCecConstants.PHYSICAL_ADDRESS_NAME,
+        description = "HDMI CEC physical address of the DUT",
+        mandatory = false)
+    /*
+     * This variable is defined only to enable the physical address to be passed as a CLI argument
+     * to the module, it won't be used.
+     */
+    public static int dutPhysicalAddress = HdmiCecConstants.DEFAULT_PHYSICAL_ADDRESS;
 
     private static List<String> validTypes = new ArrayList<>(
         Arrays.asList("", "0", "4", "4,5", "5,4"));
