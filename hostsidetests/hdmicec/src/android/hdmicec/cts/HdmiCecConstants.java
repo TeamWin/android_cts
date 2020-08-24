@@ -20,9 +20,10 @@ public final class HdmiCecConstants {
 
     private HdmiCecConstants() {}
 
+    public static final String PHYSICAL_ADDRESS_NAME = "cec-phy-addr";
     public static final int REBOOT_TIMEOUT = 60000;
 
-    public static final int PHYSICAL_ADDRESS = 0x1000;
+    public static final int DEFAULT_PHYSICAL_ADDRESS = 0x1000;
     public static final int TV_PHYSICAL_ADDRESS = 0x0000;
     public static final int PHYSICAL_ADDRESS_LENGTH = 4; /* Num nibbles in CEC message */
 

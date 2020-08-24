@@ -16,8 +16,6 @@
 
 package android.hdmicec.cts.playback;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
@@ -61,8 +59,6 @@ public final class HdmiCecPhysicalAddressTest extends BaseHdmiCecCtsTest {
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
-        int physicalAddress = CecMessage.getParams(message,
-            HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH);
-        assertThat(HdmiCecConstants.PHYSICAL_ADDRESS).isEqualTo(physicalAddress);
+        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
     }
 }
