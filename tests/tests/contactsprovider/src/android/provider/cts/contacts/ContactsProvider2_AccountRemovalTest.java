@@ -26,6 +26,8 @@ import android.provider.cts.contacts.account.StaticAccountAuthenticator;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -109,6 +111,7 @@ public class ContactsProvider2_AccountRemovalTest extends AndroidTestCase {
      * {@link android.provider.ContactsContract.RawContacts#ACCOUNT_TYPE} that do not correspond
      * to an added account will be removed but this should not be done for the local account.
      */
+    @CddTest(requirement="3.18/C-1-4")
     public void testAccountRemoval_doesNotDeleteLocalAccountContacts() {
         mAccountManager.addAccountExplicitly(ACCT_1, null, null);
         ArrayList<ContactIdPair> acc1Ids = createContacts(ACCT_1, 5);
