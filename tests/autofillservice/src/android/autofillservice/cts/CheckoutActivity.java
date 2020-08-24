@@ -17,6 +17,7 @@ package android.autofillservice.cts;
 
 import static android.widget.ArrayAdapter.createFromResource;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Intent;
@@ -24,10 +25,12 @@ import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.TimePicker;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +45,8 @@ import java.util.concurrent.TimeUnit;
  *   <li>Save Credit Card CheckBox (id: save_cc, no autofill-type)
  *   <li>Clear Button
  *   <li>Buy Button
+ *   <li>DatePicker
+ *   <li>TimePicker
  * </ul>
  */
 public class CheckoutActivity extends AbstractAutoFillActivity {
@@ -53,6 +58,8 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
     static final String ID_HOME_ADDRESS = "home_address";
     static final String ID_WORK_ADDRESS = "work_address";
     static final String ID_SAVE_CC = "save_cc";
+    static final String ID_DATE_PICKER = "datePicker";
+    static final String ID_TIME_PICKER = "timePicker";
 
     static final int INDEX_ADDRESS_HOME = 0;
     static final int INDEX_ADDRESS_WORK = 1;
@@ -67,9 +74,12 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
     private ArrayAdapter<CharSequence> mCcExpirationAdapter;
     private RadioGroup mAddress;
     private RadioButton mHomeAddress;
+    private RadioButton mWorkAddress;
     private CheckBox mSaveCc;
     private Button mBuyButton;
     private Button mClearButton;
+    private DatePicker mDatePicker;
+    private TimePicker mTimePicker;
 
     private FillExpectation mExpectation;
     private CountDownLatch mBuyLatch;
@@ -84,9 +94,12 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
         mCcExpiration = findViewById(R.id.cc_expiration);
         mAddress = findViewById(R.id.address);
         mHomeAddress = findViewById(R.id.home_address);
+        mWorkAddress = findViewById(R.id.work_address);
         mSaveCc = findViewById(R.id.save_cc);
         mBuyButton = findViewById(R.id.buy);
         mClearButton = findViewById(R.id.clear);
+        mDatePicker = findViewById(R.id.datePicker);
+        mTimePicker = findViewById(R.id.timePicker);
 
         mCcExpirationAdapter = createFromResource(this,
                 R.array.cc_expiration_values, android.R.layout.simple_spinner_item);
@@ -186,6 +199,13 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
     }
 
     /**
+     * Visits the {@code workAddress} in the UiThread.
+     */
+    void onWorkAddress(Visitor<RadioButton> v) {
+        syncRunOnUiThread(() -> v.visit(mWorkAddress));
+    }
+
+    /**
      * Visits the {@code saveCC} in the UiThread.
      */
     void onSaveCc(Visitor<CheckBox> v) {
@@ -209,6 +229,28 @@ public class CheckoutActivity extends AbstractAutoFillActivity {
 
     Spinner getCcExpiration() {
         return mCcExpiration;
+    }
+
+    CheckBox getSaveCc() {
+        return mSaveCc;
+    }
+
+    RadioGroup getAddress() {
+        return mAddress;
+    }
+
+    DatePicker getDatePicker() {
+        return mDatePicker;
+    }
+
+    TimePicker getTimePicker() {
+        return mTimePicker;
+    }
+
+    void assertRadioButtonValue(boolean homeAddrValue, boolean workAddrValue)
+            throws Exception {
+        assertThat(mHomeAddress.isChecked()).isEqualTo(homeAddrValue);
+        assertThat(mWorkAddress.isChecked()).isEqualTo(workAddrValue);
     }
 
     ArrayAdapter<CharSequence> getCcExpirationAdapter() {
