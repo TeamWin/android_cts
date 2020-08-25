@@ -17,6 +17,7 @@
 package android.permission3.cts
 
 import androidx.test.filters.FlakyTest
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 
@@ -232,6 +233,8 @@ class PermissionTest23 : BaseUsePermissionTest() {
     @Test(timeout = 120000)
     @FlakyTest
     fun testNoResidualPermissionsOnUninstall() {
+        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
+
         // Grant all permissions
         grantAppPermissions(
             android.Manifest.permission.WRITE_CALENDAR,
