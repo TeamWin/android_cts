@@ -61,23 +61,24 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_11_2_2_1_SetStreamPathToDut() throws Exception {
         final long alternateAddress;
-        if (dutPhysicalAddress == 0x1000) {
+        int dumpsysPhysicalAddress = getDumpsysPhysicalAddress();
+        if (dumpsysPhysicalAddress == 0x1000) {
             alternateAddress = 0x2000;
         } else {
             alternateAddress = 0x1000;
         }
         /*
          * Switch to HDMI port whose physical address is alternateAddress. DUT is connected to HDMI
-         * port whose physical address is dutPhysicalAddress.
+         * port whose physical address is dumpsysPhysicalAddress.
          */
         hdmiCecClient.sendCecMessage(LogicalAddress.PLAYBACK_2, LogicalAddress.BROADCAST,
                 CecOperand.ACTIVE_SOURCE, CecMessage.formatParams(alternateAddress));
         TimeUnit.SECONDS.sleep(3);
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
                 CecOperand.SET_STREAM_PATH,
-                CecMessage.formatParams(dutPhysicalAddress));
+                CecMessage.formatParams(dumpsysPhysicalAddress));
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
-        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
+        CecMessage.assertPhysicalAddressValid(message, dumpsysPhysicalAddress);
     }
 
     /**
@@ -92,7 +93,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
             CecOperand.REQUEST_ACTIVE_SOURCE);
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
-        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
+        CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
     }
 
     /**
@@ -104,11 +105,12 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     public void cect_11_2_2_4_InactiveSourceOnStandby() throws Exception {
         ITestDevice device = getDevice();
         try {
+            int dumpsysPhysicalAddress = getDumpsysPhysicalAddress();
             device.executeShellCommand("input keyevent KEYCODE_HOME");
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                     CecOperand.INACTIVE_SOURCE);
-            CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
+            CecMessage.assertPhysicalAddressValid(message, dumpsysPhysicalAddress);
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
