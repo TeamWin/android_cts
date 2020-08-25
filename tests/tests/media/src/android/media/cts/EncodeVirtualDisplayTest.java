@@ -224,6 +224,9 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
             encoderFormat.setInteger(MediaFormat.KEY_BIT_RATE, sBitRate);
             encoderFormat.setInteger(MediaFormat.KEY_FRAME_RATE, sFrameRate);
             encoderFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+            encoderFormat.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED);
+            encoderFormat.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT601_PAL);
+            encoderFormat.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_LINEAR);
 
             MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
             String codec = mcl.findEncoderForFormat(encoderFormat);
