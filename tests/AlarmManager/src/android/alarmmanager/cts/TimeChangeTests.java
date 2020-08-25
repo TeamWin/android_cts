@@ -26,6 +26,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
+import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -92,7 +94,11 @@ public class TimeChangeTests {
         mAlarmPi = PendingIntent.getBroadcast(mContext, 0, alarmIntent, 0);
         final IntentFilter alarmFilter = new IntentFilter(ACTION_ALARM);
         mContext.registerReceiver(mAlarmReceiver, alarmFilter);
-        SystemUtil.runShellCommand("settings put global alarm_manager_constants min_futurity=500");
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+                    DeviceConfig.setProperty(
+                            DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
+                            "500", /* makeDefault */ false);
+                });
         BatteryUtils.runDumpsysBatteryUnplug();
         mTestStartRtc = System.currentTimeMillis();
         mTestStartElapsed = SystemClock.elapsedRealtime();
@@ -129,7 +135,9 @@ public class TimeChangeTests {
 
     @After
     public void tearDown() {
-        SystemUtil.runShellCommand("settings delete global alarm_manager_constants");
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
+                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
         BatteryUtils.runDumpsysBatteryReset();
         if (mTimeChanged) {
             // Make an attempt at resetting the clock to normal

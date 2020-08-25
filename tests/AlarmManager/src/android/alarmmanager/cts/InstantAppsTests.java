@@ -23,6 +23,8 @@ import android.app.AlarmManager;
 import android.content.Context;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeInstant;
+import android.provider.DeviceConfig;
+import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -79,12 +81,16 @@ public class InstantAppsTests {
 
     @After
     public void deleteAlarmManagerSettings() {
-        SystemUtil.runShellCommand("settings delete global alarm_manager_constants");
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
+                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
     }
 
     private void updateAlarmManagerSettings() {
-        final StringBuffer cmd = new StringBuffer("settings put global alarm_manager_constants ");
-        cmd.append("min_futurity=0");
-        SystemUtil.runShellCommand(cmd.toString());
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
+                    "0", /* makeDefault */ false);
+        });
     }
 }

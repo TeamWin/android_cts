@@ -29,12 +29,16 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -160,14 +164,21 @@ public class BackgroundRestrictedAlarmsTest {
         Thread.sleep(DEFAULT_WAIT);
     }
 
-    private void updateAlarmManagerConstants() throws IOException {
-        String cmd = "settings put global alarm_manager_constants min_futurity=0,min_interval="
-                + MIN_REPEATING_INTERVAL;
-        mUiDevice.executeShellCommand(cmd);
+    private void updateAlarmManagerConstants() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
+                    "0", /* makeDefault */ false);
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_interval",
+                    String.valueOf(MIN_REPEATING_INTERVAL), /* makeDefault */ false);
+        });
     }
 
-    private void deleteAlarmManagerConstants() throws IOException {
-        mUiDevice.executeShellCommand("settings delete global alarm_manager_constants");
+    private void deleteAlarmManagerConstants() {
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
+                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
     }
 
     private void setAppStandbyBucket(String bucket) throws IOException {
