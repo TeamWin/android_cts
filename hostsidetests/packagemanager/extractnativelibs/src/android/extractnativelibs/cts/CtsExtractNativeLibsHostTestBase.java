@@ -93,10 +93,14 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
     }
 
     final void installPackage(boolean isIncremental, String apkName) throws Exception {
+        installPackage(isIncremental, apkName, "");
+    }
+
+    final void installPackage(boolean isIncremental, String apkName, String abi) throws Exception {
         if (isIncremental) {
-            installPackageIncremental(apkName);
+            installPackageIncremental(apkName, abi);
         } else {
-            installPackageLegacy(apkName);
+            installPackageLegacy(apkName, abi);
         }
     }
 
@@ -137,10 +141,14 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
                 0L, true, false, testArgs);
     }
 
-    private void installPackageLegacy(String apkFileName)
+    private void installPackageLegacy(String apkFileName, String abi)
             throws DeviceNotAvailableException, TargetSetupError {
         SuiteApkInstaller installer = new SuiteApkInstaller();
         installer.addTestFileName(apkFileName);
+        final String abiFlag = createAbiFlag(abi);
+        if (!abiFlag.isEmpty()) {
+            installer.addInstallArg(abiFlag);
+        }
         try {
             installer.setUp(getTestInformation());
         } catch (BuildError e) {
@@ -149,7 +157,7 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
     }
 
     private boolean checkExtractedNativeLibDirForAbi(String abiSuffix) throws Exception {
-        final String libAbi = getLibAbi(abiSuffix);
+        final String libAbi = getExpectedLibAbi(abiSuffix);
         assertNotNull(libAbi);
         final String expectedSubDirArg = "expectedSubDir";
         final String expectedNativeLibSubDir = AbiUtils.getArchForAbi(libAbi);
@@ -166,8 +174,8 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
      * @return an ABI string from AbiUtils.ABI_*
      * @return an ABI string from AbiUtils.ABI_*
      */
-    private String getLibAbi(String abiSuffix) throws Exception {
-        final String deviceAbi = getDevice().getProperty("ro.product.cpu.abi");
+    final String getExpectedLibAbi(String abiSuffix) throws Exception {
+        final String deviceAbi = getDeviceAbi();
         final String deviceBitness = AbiUtils.getBitness(deviceAbi);
         final String libBitness;
         // Use 32-bit native libs if device only supports 32-bit or APK only has 32-libs native libs
@@ -185,21 +193,32 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
         return null;
     }
 
-    private void installPackageIncremental(String apkName) throws Exception {
+    final String getDeviceAbi() throws Exception {
+        return getDevice().getProperty("ro.product.cpu.abi");
+    }
+
+    private void installPackageIncremental(String apkName, String abi) throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         final File apk = buildHelper.getTestFile(apkName);
         assertNotNull(apk);
         final File v4Signature = buildHelper.getTestFile(apkName + IDSIG_SUFFIX);
         assertNotNull(v4Signature);
-        installPackageIncrementalFromFiles(apk, v4Signature);
+        installPackageIncrementalFromFiles(apk, v4Signature, abi);
     }
 
-    private String installPackageIncrementalFromFiles(File apk, File v4Signature) throws Exception {
+    private String installPackageIncrementalFromFiles(File apk, File v4Signature, String abi)
+            throws Exception {
         final String remoteApkPath = TEST_REMOTE_DIR + "/" + apk.getName();
         final String remoteIdsigPath = remoteApkPath + IDSIG_SUFFIX;
         assertTrue(getDevice().pushFile(apk, remoteApkPath));
         assertTrue(getDevice().pushFile(v4Signature, remoteIdsigPath));
-        return getDevice().executeShellCommand("pm install-incremental -t -g " + remoteApkPath);
+        return getDevice().executeShellCommand("pm install-incremental "
+                + createAbiFlag(abi)
+                + " -t -g " + remoteApkPath);
+    }
+
+    private String createAbiFlag(String abi) {
+        return abi.isEmpty() ? "" : ("--abi " + abi);
     }
 
     final String installIncrementalPackageFromResource(String apkFilenameInRes)
@@ -207,6 +226,6 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
         final File apkFile = getFileFromResource(apkFilenameInRes);
         final File v4SignatureFile = getFileFromResource(
                 apkFilenameInRes + IDSIG_SUFFIX);
-        return installPackageIncrementalFromFiles(apkFile, v4SignatureFile);
+        return installPackageIncrementalFromFiles(apkFile, v4SignatureFile, "");
     }
 }
