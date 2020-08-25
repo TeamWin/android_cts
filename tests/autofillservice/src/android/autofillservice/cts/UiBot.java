@@ -1071,7 +1071,7 @@ public class UiBot {
             }
             retryCount++;
         }
-        assertWithMessage(expectedTitle + "not found").that(retryCount).isEqualTo(
+        assertWithMessage(expectedTitle + " not found").that(retryCount).isLessThan(
                 MAX_UIOBJECT_RETRY_COUNT);
 
         if (picker != null) {
