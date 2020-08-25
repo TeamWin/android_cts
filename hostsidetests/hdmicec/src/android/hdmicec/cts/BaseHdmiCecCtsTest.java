@@ -18,9 +18,15 @@ package android.hdmicec.cts;
 
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.rules.TestRule;
+
+import java.io.BufferedReader;
+import java.io.StringReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** Base class for all HDMI CEC CTS tests. */
 @OptionClass(alias="hdmi-cec-client-cts-test")
@@ -62,4 +68,24 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         description = "HDMI CEC physical address of the DUT",
         mandatory = false)
     public static int dutPhysicalAddress = HdmiCecConstants.DEFAULT_PHYSICAL_ADDRESS;
+
+    /** Gets the physical address of the DUT by parsing the dumpsys hdmi_control. */
+    public int getDumpsysPhysicalAddress() throws Exception {
+        String line;
+        String pattern = "(.*?)" + "(physical_address: )" + "(?<address>0x\\p{XDigit}{4})" +
+                "(.*?)";
+        Pattern p = Pattern.compile(pattern);
+        Matcher m;
+        ITestDevice device = getDevice();
+        String dumpsys = device.executeShellCommand("dumpsys hdmi_control");
+        BufferedReader reader = new BufferedReader(new StringReader(dumpsys));
+        while ((line = reader.readLine()) != null) {
+            m = p.matcher(line);
+            if (m.matches()) {
+                int address = Integer.decode(m.group("address"));
+                return address;
+            }
+        }
+        throw new Exception("Could not parse physical address from dumpsys.");
+    }
 }
