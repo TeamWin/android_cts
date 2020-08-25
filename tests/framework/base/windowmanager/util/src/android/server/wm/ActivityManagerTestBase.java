@@ -983,16 +983,6 @@ public abstract class ActivityManagerTestBase {
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
     }
 
-    // Utility method for debugging, not used directly here, but useful, so kept around.
-    protected void printStacksAndTasks() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            final String output = mAtm.listAllStacks();
-            for (String line : output.split("\\n")) {
-                log(line);
-            }
-        });
-    }
-
     protected boolean supportsVrMode() {
         return hasDeviceFeature(FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
