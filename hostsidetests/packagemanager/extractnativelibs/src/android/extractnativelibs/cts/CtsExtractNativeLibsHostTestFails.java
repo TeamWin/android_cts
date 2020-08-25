@@ -18,6 +18,7 @@ package android.extractnativelibs.cts;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
@@ -33,6 +34,13 @@ import org.junit.runner.RunWith;
 public class CtsExtractNativeLibsHostTestFails extends CtsExtractNativeLibsHostTestBase {
     private static final String TEST_NO_EXTRACT_MISALIGNED_APK =
             "CtsExtractNativeLibsAppFalseWithMisalignedLib.apk";
+
+    @Override
+    public void setUp() throws Exception {
+        // Skip incremental installations for non-incremental devices
+        assumeTrue(isIncrementalInstallSupported());
+        super.setUp();
+    }
     /**
      * Test with a app that has extractNativeLibs=false but with mis-aligned lib files,
      * using Incremental install.

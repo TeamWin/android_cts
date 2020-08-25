@@ -18,8 +18,10 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.CheckoutActivity.ID_ADDRESS;
 import static android.autofillservice.cts.CheckoutActivity.ID_CC_EXPIRATION;
 import static android.autofillservice.cts.CheckoutActivity.ID_CC_NUMBER;
+import static android.autofillservice.cts.CheckoutActivity.ID_DATE_PICKER;
 import static android.autofillservice.cts.CheckoutActivity.ID_HOME_ADDRESS;
 import static android.autofillservice.cts.CheckoutActivity.ID_SAVE_CC;
+import static android.autofillservice.cts.CheckoutActivity.ID_TIME_PICKER;
 import static android.autofillservice.cts.CheckoutActivity.ID_WORK_ADDRESS;
 import static android.autofillservice.cts.CheckoutActivity.INDEX_ADDRESS_WORK;
 import static android.autofillservice.cts.CheckoutActivity.INDEX_CC_EXPIRATION_NEVER;
@@ -43,6 +45,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.icu.util.Calendar;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.CustomDescription;
@@ -51,9 +54,15 @@ import android.service.autofill.ImageTransformation;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillValue;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.RadioGroup;
 import android.widget.RemoteViews;
 import android.widget.Spinner;
+import android.widget.TimePicker;
 
 import org.junit.Test;
 
@@ -400,5 +409,381 @@ public class CheckoutActivityTest
 
         // Then make sure it does not have the custom views on it...
         assertThat(saveUi.findObject(By.res(packageName, Helper.ID_STATIC_TEXT))).isNull();
+    }
+
+    // ============================================================================================
+    // Tests to verify EditText by setting with AutofillValue.
+    // ============================================================================================
+    @Test
+    public void autofillValidTextValue() throws Exception {
+        autofillEditText(AutofillValue.forText("filled"), "filled", true);
+    }
+
+    @Test
+    public void autofillEmptyTextValue() throws Exception {
+        autofillEditText(AutofillValue.forText(""), "", true);
+    }
+
+    @Test
+    public void autofillTextWithListValue() throws Exception {
+        autofillEditText(AutofillValue.forList(0), "", false);
+    }
+
+    private void autofillEditText(AutofillValue value, String expectedText,
+            boolean expectAutoFill) throws Exception {
+        // Enable service.
+        enableService();
+
+        // Set expectations and trigger Autofill.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField(ID_CC_NUMBER, value)
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        mActivity.onCcNumber((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Autofill it and check the result.
+        EditText editText = mActivity.getCcNumber();
+        OneTimeTextWatcher textWatcher = new OneTimeTextWatcher(ID_CC_NUMBER, editText,
+                expectedText);
+        editText.addTextChangedListener(textWatcher);
+        mUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            textWatcher.assertAutoFilled();
+        } else {
+            assertThat(editText.getText().toString()).isEqualTo(expectedText);
+        }
+    }
+
+    @Test
+    public void getEditTextAutoFillValue() throws Exception {
+        EditText editText = mActivity.getCcNumber();
+        mActivity.syncRunOnUiThread(() -> editText.setText("test"));
+
+        assertThat(editText.getAutofillValue()).isEqualTo(AutofillValue.forText("test"));
+
+        mActivity.syncRunOnUiThread(() -> editText.setEnabled(false));
+
+        assertThat(editText.getAutofillValue()).isNull();
+    }
+
+    // ============================================================================================
+    // Tests to verify CheckBox by setting with AutofillValue.
+    // ============================================================================================
+    @Test
+    public void autofillToggleValueWithTrue() throws Exception {
+        autofillCompoundButton(AutofillValue.forToggle(true), true, true);
+    }
+
+    @Test
+    public void autofillToggleValueWithFalse() throws Exception {
+        autofillCompoundButton(AutofillValue.forToggle(false), false, false);
+    }
+
+    @Test
+    public void autofillCompoundButtonWithTextValue() throws Exception {
+        autofillCompoundButton(AutofillValue.forText(""), false, false);
+    }
+
+    private void autofillCompoundButton(AutofillValue value, boolean expectedValue,
+            boolean expectAutoFill) throws Exception {
+        // Enable service.
+        enableService();
+
+        // Set expectations and trigger Autofill.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField(ID_SAVE_CC, value)
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        mActivity.onSaveCc((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Autofill it and check the result.
+        CheckBox compoundButton = mActivity.getSaveCc();
+        OneTimeCompoundButtonListener checkedWatcher = new OneTimeCompoundButtonListener(
+                ID_SAVE_CC, compoundButton, expectedValue);
+        compoundButton.setOnCheckedChangeListener(checkedWatcher);
+        mUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            checkedWatcher.assertAutoFilled();
+        } else {
+            assertThat(compoundButton.isChecked()).isEqualTo(expectedValue);
+        }
+    }
+
+    @Test
+    public void getCompoundButtonAutoFillValue() throws Exception {
+        CheckBox compoundButton = mActivity.getSaveCc();
+        mActivity.syncRunOnUiThread(() -> compoundButton.setChecked(true));
+
+        assertThat(compoundButton.getAutofillValue()).isEqualTo(AutofillValue.forToggle(true));
+
+        mActivity.syncRunOnUiThread(() -> compoundButton.setEnabled(false));
+
+        assertThat(compoundButton.getAutofillValue()).isNull();
+    }
+
+    // ============================================================================================
+    // Tests to verify Spinner by setting with AutofillValue
+    // ============================================================================================
+    private void autofillListValue(AutofillValue value, int expectedValue,
+            boolean expectAutoFill) throws Exception {
+        // Enable service.
+        enableService();
+
+        // Set expectations and trigger Autofill.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField(ID_CC_EXPIRATION, value)
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        mActivity.onCcExpiration((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Autofill it and check the result.
+        Spinner spinner = mActivity.getCcExpiration();
+        OneTimeSpinnerListener spinnerWatcher = new OneTimeSpinnerListener(
+                ID_CC_EXPIRATION, spinner, expectedValue);
+        spinner.setOnItemSelectedListener(spinnerWatcher);
+        mUiBot.selectDatasetSync("dataset");
+
+        if (expectAutoFill) {
+            spinnerWatcher.assertAutoFilled();
+        } else {
+            assertThat(spinner.getSelectedItemPosition()).isEqualTo(expectedValue);
+        }
+    }
+
+    @Test
+    public void autofillZeroListValueToSpinner() throws Exception {
+        autofillListValue(AutofillValue.forList(0), 0, false);
+    }
+
+    @Test
+    public void autofillOneListValueToSpinner() throws Exception {
+        autofillListValue(AutofillValue.forList(1), 1, true);
+    }
+
+    @Test
+    public void autofillInvalidListValueToSpinner() throws Exception {
+        autofillListValue(AutofillValue.forList(-1), 0, false);
+    }
+
+    @Test
+    public void autofillSpinnerWithTextValue() throws Exception {
+        autofillListValue(AutofillValue.forText(""), 0, false);
+    }
+
+    @Test
+    public void getSpinnerAutoFillValue() throws Exception {
+        Spinner spinner = mActivity.getCcExpiration();
+        mActivity.syncRunOnUiThread(() -> spinner.setSelection(1));
+
+        assertThat(spinner.getAutofillValue()).isEqualTo(AutofillValue.forList(1));
+
+        mActivity.syncRunOnUiThread(() -> spinner.setEnabled(false));
+
+        assertThat(spinner.getAutofillValue()).isNull();
+    }
+
+    // ============================================================================================
+    // Tests to verify DatePicker by setting with AutofillValue
+    // ============================================================================================
+    @Test
+    public void autofillValidDateValueToDatePicker() throws Exception {
+        autofillDateValueToDatePicker(AutofillValue.forDate(getDateAsMillis(2017, 3, 7, 12, 32)),
+                true);
+    }
+
+    @Test
+    public void autofillDatePickerWithTextValue() throws Exception {
+        autofillDateValueToDatePicker(AutofillValue.forText(""), false);
+    }
+
+    private void autofillDateValueToDatePicker(AutofillValue value,
+            boolean expectAutoFill) throws Exception {
+        // Enable service.
+        enableService();
+
+        // Set expectations and trigger Autofill.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField(ID_DATE_PICKER, value)
+                .setField(ID_CC_NUMBER, "filled")
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        DatePicker datePicker = mActivity.getDatePicker();
+        int nonAutofilledYear = datePicker.getYear();
+        int nonAutofilledMonth = datePicker.getMonth();
+        int nonAutofilledDay = datePicker.getDayOfMonth();
+        mActivity.onCcNumber((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Autofill it and check the result.
+        OneTimeDateListener dateWatcher = new OneTimeDateListener(ID_DATE_PICKER, datePicker,
+                2017, 3, 7);
+        datePicker.setOnDateChangedListener(dateWatcher);
+        mUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            dateWatcher.assertAutoFilled();
+        } else {
+            Helper.assertDateValue(datePicker, nonAutofilledYear, nonAutofilledMonth,
+                    nonAutofilledDay);
+        }
+    }
+
+    private long getDateAsMillis(int year, int month, int day, int hour, int minute) {
+        Calendar calendar = Calendar.getInstance(
+                mActivity.getResources().getConfiguration().getLocales().get(0));
+
+        calendar.set(year, month, day, hour, minute);
+
+        return calendar.getTimeInMillis();
+    }
+
+    @Test
+    public void getDatePickerAutoFillValue() throws Exception {
+        DatePicker datePicker = mActivity.getDatePicker();
+        mActivity.syncRunOnUiThread(() -> datePicker.updateDate(2017, 3, 7));
+
+        Helper.assertDateValue(datePicker, 2017, 3, 7);
+
+        mActivity.syncRunOnUiThread(() -> datePicker.setEnabled(false));
+
+        assertThat(datePicker.getAutofillValue()).isNull();
+    }
+
+    // ============================================================================================
+    // Tests to verify TimePicker by setting with AutofillValue
+    // ============================================================================================
+    @Test
+    public void autofillValidDateValueToTimePicker() throws Exception {
+        autofillDateValueToTimePicker(AutofillValue.forDate(getDateAsMillis(2017, 3, 7, 12, 32)),
+                true);
+    }
+
+    @Test
+    public void autofillTimePickerWithTextValue() throws Exception {
+        autofillDateValueToTimePicker(AutofillValue.forText(""), false);
+    }
+
+    private void autofillDateValueToTimePicker(AutofillValue value,
+            boolean expectAutoFill) throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations and trigger Autofill.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField(ID_TIME_PICKER, value)
+                .setField(ID_CC_NUMBER, "filled")
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        TimePicker timePicker = mActivity.getTimePicker();
+        mActivity.syncRunOnUiThread(() -> {
+            timePicker.setIs24HourView(true);
+        });
+        int nonAutofilledHour = timePicker.getHour();
+        int nonAutofilledMinute = timePicker.getMinute();
+        mActivity.onCcNumber((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Autofill it and check the result.
+        MultipleTimesTimeListener timeWatcher = new MultipleTimesTimeListener(ID_TIME_PICKER, 1,
+                timePicker, 12, 32);
+        timePicker.setOnTimeChangedListener(timeWatcher);
+        mUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            timeWatcher.assertAutoFilled();
+        } else {
+            Helper.assertTimeValue(timePicker, nonAutofilledHour, nonAutofilledMinute);
+        }
+    }
+
+    @Test
+    public void getTimePickerAutoFillValue() throws Exception {
+        TimePicker timePicker = mActivity.getTimePicker();
+        mActivity.syncRunOnUiThread(() -> {
+            timePicker.setHour(12);
+            timePicker.setMinute(32);
+        });
+
+        Helper.assertTimeValue(timePicker, 12, 32);
+
+        mActivity.syncRunOnUiThread(() -> timePicker.setEnabled(false));
+
+        assertThat(timePicker.getAutofillValue()).isNull();
+    }
+
+    // ============================================================================================
+    // Tests to verify RadioGroup by setting with AutofillValue
+    // ============================================================================================
+    @Test
+    public void autofillZeroListValueToRadioGroup() throws Exception {
+        autofillRadioGroup(AutofillValue.forList(0), 0, false);
+    }
+
+    @Test
+    public void autofillOneListValueToRadioGroup() throws Exception {
+        autofillRadioGroup(AutofillValue.forList(1), 1, true);
+    }
+
+    @Test
+    public void autofillInvalidListValueToRadioGroup() throws Exception {
+        autofillRadioGroup(AutofillValue.forList(-1), 0, false);
+    }
+
+    @Test
+    public void autofillRadioGroupWithTextValue() throws Exception {
+        autofillRadioGroup(AutofillValue.forText(""), 0, false);
+    }
+
+    private void autofillRadioGroup(AutofillValue value, int expectedValue,
+            boolean expectAutoFill) throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations and trigger Autofill.
+        sReplier.addResponse(new CannedFillResponse.CannedDataset.Builder()
+                .setField(ID_ADDRESS, value)
+                .setField(ID_CC_NUMBER, "filled")
+                .setPresentation(createPresentation("dataset"))
+                .build());
+        mActivity.onHomeAddress((v) -> v.setChecked(true));
+        mActivity.onCcNumber((v) -> v.requestFocus());
+        sReplier.getNextFillRequest();
+
+        RadioGroup radioGroup = mActivity.getAddress();
+        MultipleTimesRadioGroupListener radioGroupWatcher = new MultipleTimesRadioGroupListener(
+                ID_ADDRESS, 2, radioGroup, expectedValue);
+        radioGroup.setOnCheckedChangeListener(radioGroupWatcher);
+
+        // Autofill it and check the result.
+        mUiBot.selectDataset("dataset");
+
+        if (expectAutoFill) {
+            radioGroupWatcher.assertAutoFilled();
+        } else {
+            if (expectedValue == 0) {
+                mActivity.assertRadioButtonValue(/* homeAddrValue= */
+                        true, /* workAddrValue= */ false);
+            } else {
+                mActivity.assertRadioButtonValue(/* homeAddrValue= */
+                        false, /* workAddrValue= */true);
+            }
+        }
+    }
+
+    @Test
+    public void getRadioGroupAutoFillValue() throws Exception {
+        RadioGroup radioGroup = mActivity.getAddress();
+        mActivity.onWorkAddress((v) -> v.setChecked(true));
+
+        assertThat(radioGroup.getAutofillValue()).isEqualTo(AutofillValue.forList(1));
+
+        mActivity.syncRunOnUiThread(() -> radioGroup.setEnabled(false));
+
+        assertThat(radioGroup.getAutofillValue()).isNull();
     }
 }

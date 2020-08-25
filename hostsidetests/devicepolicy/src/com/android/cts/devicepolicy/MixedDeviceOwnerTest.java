@@ -17,7 +17,6 @@
 package com.android.cts.devicepolicy;
 
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
-import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.isStatsdEnabled;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -153,13 +152,11 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             return;
         }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
-            }, new DevicePolicyEventWrapper.Builder(EventId.GET_WIFI_MAC_ADDRESS_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .build());
-        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
+        }, new DevicePolicyEventWrapper.Builder(EventId.GET_WIFI_MAC_ADDRESS_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .build());
     }
 
     @Test
@@ -235,13 +232,11 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
 
-        if (isStatsdEnabled(getDevice())) {
-            assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".LockScreenInfoTest", "testSetAndGetLockInfo");
-            }, new DevicePolicyEventWrapper.Builder(EventId.SET_DEVICE_OWNER_LOCK_SCREEN_INFO_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .build());
-        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".LockScreenInfoTest", "testSetAndGetLockInfo");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_DEVICE_OWNER_LOCK_SCREEN_INFO_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .build());
     }
 
     @Test
@@ -303,7 +298,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testInstallUpdateLogged() throws Exception {
-        if (!mHasFeature || !isDeviceAb() || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature || !isDeviceAb()) {
             return;
         }
         pushUpdateFileToDevice("wrongHash.zip");
@@ -367,7 +362,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testSecurityLoggingEnabledLogged() throws Exception {
-        if (!mHasFeature || !isStatsdEnabled(getDevice())) {
+        if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {

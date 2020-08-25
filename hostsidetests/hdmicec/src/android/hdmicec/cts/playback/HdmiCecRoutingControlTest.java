@@ -16,8 +16,6 @@
 
 package android.hdmicec.cts.playback;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
@@ -62,16 +60,24 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_11_2_2_1_SetStreamPathToDut() throws Exception {
-        final long hdmi2Address = 0x2000;
-        /* Switch to HDMI2. Setup assumes DUT is connected to HDMI1. */
+        final long alternateAddress;
+        if (dutPhysicalAddress == 0x1000) {
+            alternateAddress = 0x2000;
+        } else {
+            alternateAddress = 0x1000;
+        }
+        /*
+         * Switch to HDMI port whose physical address is alternateAddress. DUT is connected to HDMI
+         * port whose physical address is dutPhysicalAddress.
+         */
         hdmiCecClient.sendCecMessage(LogicalAddress.PLAYBACK_2, LogicalAddress.BROADCAST,
-                CecOperand.ACTIVE_SOURCE, CecMessage.formatParams(hdmi2Address));
+                CecOperand.ACTIVE_SOURCE, CecMessage.formatParams(alternateAddress));
         TimeUnit.SECONDS.sleep(3);
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
                 CecOperand.SET_STREAM_PATH,
-                CecMessage.formatParams(HdmiCecConstants.PHYSICAL_ADDRESS));
+                CecMessage.formatParams(dutPhysicalAddress));
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
-        assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
+        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
     }
 
     /**
@@ -86,7 +92,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
             CecOperand.REQUEST_ACTIVE_SOURCE);
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
-        assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
+        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
     }
 
     /**
@@ -102,7 +108,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                     CecOperand.INACTIVE_SOURCE);
-            assertThat(CecMessage.getParams(message)).isEqualTo(PHYSICAL_ADDRESS);
+            CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
