@@ -27,7 +27,8 @@ import android.app.AppOpsManager.OP_FLAG_TRUSTED_PROXY
 import android.app.AppOpsManager.OP_FLAG_UNTRUSTED_PROXIED
 import android.app.AppOpsManager.UID_STATE_TOP
 import android.content.Intent
-import android.content.Intent.ACTION_APPLICATION_PREFERENCES
+import android.content.Intent.ACTION_INSTALL_PACKAGE
+import android.net.Uri
 import android.os.SystemClock
 import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
@@ -251,7 +252,9 @@ class AppOpEventCollectionTest {
     fun noteFromTwoProxiesAndVerifyProxyInfo() {
         // Find another app to blame
         val otherAppInfo = context.packageManager
-                .resolveActivity(Intent(ACTION_APPLICATION_PREFERENCES), 0)
+                .resolveActivity(Intent(ACTION_INSTALL_PACKAGE).addCategory(Intent.CATEGORY_DEFAULT)
+                        .setDataAndType(Uri.parse("content://com.example/foo.apk"),
+                                "application/vnd.android.package-archive"), 0)
                 ?.activityInfo?.applicationInfo
 
         assumeNotNull(otherAppInfo)
