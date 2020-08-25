@@ -44,6 +44,7 @@ private:
     uint8_t*   mTestStream;
     int     mNumTestStreamBytes;
     int     mReceiveStreamPos;
+    static const int MESSAGE_MAX_BYTES = 1024;
 
     AMidiInputPort* mMidiSendPort;
     AMidiOutputPort* mMidiReceivePort;
@@ -64,6 +65,7 @@ private:
     static const int TESTSTATUS_FAILED_OVERRUN = 4;
     static const int TESTSTATUS_FAILED_DEVICE = 5;
     static const int TESTSTATUS_FAILED_JNI = 6;
+
 
     bool StartReading(AMidiDevice* nativeReadDevice);
     bool StartWriting(AMidiDevice* nativeWriteDevice);
