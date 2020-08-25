@@ -20,8 +20,12 @@ import android.Manifest.permission.INTERNET
 import android.os.Process.myUid
 import android.os.UserHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.reflect.KClass
 
 /**
  * Device-tests for {@link android.permission.host.cts.CrossUserPermissionVisibilityTests}
@@ -50,5 +54,29 @@ class CrossUserPermissionVisibilityTests : PermissionMultiUserTestBase() {
     fun cannotCheckPermissionInDifferentProfile() {
         context.checkPermission(INTERNET, -1,
                 UserHandle.getUid(createdProfile, UserHandle.getAppId(myUid())))
+    }
+
+    @Test
+    fun permissionCacheGetsInvalidatedWhenCrossProfileAppOpIsDenied() {
+        runShellCommand("appops set ${myUid()} INTERACT_ACROSS_PROFILES allow")
+        context.checkPermission(INTERNET, -1,
+                UserHandle.getUid(createdProfile, UserHandle.getAppId(myUid())))
+
+        runShellCommand("appops set ${myUid()} INTERACT_ACROSS_PROFILES default")
+        assertThrows(SecurityException::class) {
+            context.checkPermission(INTERNET, -1,
+                    UserHandle.getUid(createdProfile, UserHandle.getAppId(myUid())))
+        }
+    }
+
+    private fun assertThrows(exceptionClass: KClass<out Exception>, r: () -> Unit) {
+        try {
+            r()
+        } catch (exception: Exception) {
+            assertThat(exception).isInstanceOf(exceptionClass.java)
+            return
+        }
+
+        fail("Expected $exceptionClass to be thrown.")
     }
 }
