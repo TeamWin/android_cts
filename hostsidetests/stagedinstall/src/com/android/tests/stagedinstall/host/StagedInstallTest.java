@@ -210,6 +210,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testStagedInstallDowngrade_DowngradeRequested_UserBuild() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+        assumeFalse("Device is debuggable", isDebuggable());
+
         runPhase("testStagedInstallDowngrade_DowngradeRequested_Fails_Commit");
     }
 
@@ -308,6 +310,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testStagedInstallDowngradeApex_DowngradeRequested_UserBuild_Fails()
             throws Exception {
         assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+        assumeFalse("Device is debuggable", isDebuggable());
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
         installV3Apex();
@@ -738,5 +741,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         } catch (AssertionError ignore) {
             return false;
         }
+    }
+
+    private boolean isDebuggable() throws Exception {
+        return getDevice().getIntProperty("ro.debuggable", 0) == 1;
     }
 }
