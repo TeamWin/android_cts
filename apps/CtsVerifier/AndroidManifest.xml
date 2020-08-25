@@ -2514,7 +2514,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
+                       android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive:android.hardware.type.pc" />
         </activity>
 
         <activity android:name=".notifications.BubbleActivity"
