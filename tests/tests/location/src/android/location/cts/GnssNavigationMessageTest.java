@@ -78,6 +78,11 @@ public class GnssNavigationMessageTest extends GnssTestCase {
             return;
         }
 
+        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
+            return;
+        }
+
         mLocationListener = new TestLocationListener(EVENTS_COUNT);
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
