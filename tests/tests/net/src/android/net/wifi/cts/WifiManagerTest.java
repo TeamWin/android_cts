@@ -48,6 +48,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.FeatureUtil;
 
 import java.lang.StringBuilder;
 import java.net.HttpURLConnection;
@@ -980,6 +981,11 @@ public class WifiManagerTest extends AndroidTestCase {
      * @throws Exception
      */
     public void testScreenOffDoesNotTurnOffWifiScanningWhenWifiDisabled() throws Exception {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()) {
+            // TV and auto do not support the setting options of WIFI scanning and Bluetooth
+            // scanning
+            return;
+        }
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
