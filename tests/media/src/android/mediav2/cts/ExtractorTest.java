@@ -43,10 +43,14 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StreamTokenizer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1569,6 +1573,127 @@ public class ExtractorTest {
                     assertEquals(mWR, format.getInteger(MediaFormat.KEY_WIDTH));
                     assertEquals(mHCh, format.getInteger(MediaFormat.KEY_HEIGHT));
                 }
+            }
+        }
+    }
+
+    /**
+     * Makes sure if PTS(order) of a file matches the expected values in the corresponding text
+     * file with just PTS values.
+     */
+    @RunWith(Parameterized.class)
+    public static class ExtractorTimeStampTest {
+        private final String mRefFile;
+        private final String mPTSListFile;
+        private int mTrackIndex;
+        // Allowing tolerance of +1/-1 for rounding error.
+        private static final int PTS_TOLERANCE = 1;
+
+        public ExtractorTimeStampTest(String refFile, String textFile, int trackIndex) {
+            mRefFile = refFile;
+            mPTSListFile = textFile;
+            mTrackIndex = trackIndex;
+        }
+
+        @Parameterized.Parameters
+        public static Collection<Object[]> input() {
+            final List<Object[]> exhaustiveArgsList = Arrays.asList(new Object[][]{
+                    {"bbb_384x216_768kbps_30fps_avc_2b.mp4",
+                            "pts_bbb_384x216_768kbps_30fps_avc_2b.txt", 0},
+                    {"bbb_384x216_768kbps_25fps_avc_7b.mp4",
+                            "pts_bbb_384x216_768kbps_25fps_avc_7b.txt", 0},
+                    {"bbb_384x216_768kbps_24fps_avc_5b.mkv",
+                            "pts_bbb_384x216_768kbps_24fps_avc_5b.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_avc_badapt.mkv",
+                            "pts_bbb_384x216_768kbps_30fps_avc_badapt.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_avc_2b.3gp",
+                            "pts_bbb_384x216_768kbps_30fps_avc_2b.txt", 0},
+                    {"bbb_384x216_768kbps_25fps_avc_7b.3gp",
+                            "pts_bbb_384x216_768kbps_25fps_avc_7b.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_avc_badapt_bbb_480x360_768kbps_24fps_avc_5b.mkv",
+                            "pts_bbb_384x216_768kbps_30fps_avc_badapt.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_avc_badapt_bbb_480x360_768kbps_24fps_avc_5b.mkv",
+                            "pts_bbb_480x360_768kbps_24fps_avc_5b.txt", 1},
+                    {"bbb_384x216_768kbps_30fps_avc_2b_bbb_cif_768kbps_25fps_avc_7b.mp4",
+                            "pts_bbb_384x216_768kbps_30fps_avc_2b.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_avc_2b_bbb_cif_768kbps_25fps_avc_7b.mp4",
+                            "pts_bbb_cif_768kbps_25fps_avc_7b.txt", 1},
+                    {"bbb_384x216_768kbps_30fps_hevc_2b.mp4",
+                            "pts_bbb_384x216_768kbps_30fps_hevc_2b.txt", 0},
+                    {"bbb_384x216_768kbps_25fps_hevc_7b.mp4",
+                            "pts_bbb_384x216_768kbps_25fps_hevc_7b.txt", 0},
+                    {"bbb_384x216_768kbps_24fps_hevc_5b.mkv",
+                            "pts_bbb_384x216_768kbps_24fps_hevc_5b.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_hevc_badapt.mkv",
+                            "pts_bbb_384x216_768kbps_30fps_hevc_badapt.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_hevc_badapt_bbb_480x360_768kbps_24fps_hevc_5b.mkv",
+                            "pts_bbb_384x216_768kbps_30fps_hevc_badapt.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_hevc_badapt_bbb_480x360_768kbps_24fps_hevc_5b.mkv",
+                            "pts_bbb_480x360_768kbps_24fps_hevc_5b.txt", 1},
+                    {"bbb_384x216_768kbps_30fps_hevc_2b_bbb_cif_768kbps_25fps_hevc_7b.mp4",
+                            "pts_bbb_384x216_768kbps_30fps_hevc_2b.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_hevc_2b_bbb_cif_768kbps_25fps_hevc_7b.mp4",
+                            "pts_bbb_cif_768kbps_25fps_hevc_7b.txt", 1},
+                    {"bbb_384x216_768kbps_30fps_mpeg2_2b.mp4",
+                            "pts_bbb_384x216_768kbps_30fps_mpeg2_2b.txt", 0},
+                    {"bbb_384x216_768kbps_25fps_mpeg2_5b.mp4",
+                            "pts_bbb_384x216_768kbps_25fps_mpeg2_5b.txt", 0},
+                    {"bbb_384x216_768kbps_24fps_mpeg2_5b.mkv",
+                            "pts_bbb_384x216_768kbps_24fps_mpeg2_5b.txt", 0},
+                    {"bbb_384x216_768kbps_30fps_mpeg2_2b.ts",
+                            "pts_bbb_384x216_768kbps_30fps_mpeg2_2b.txt", 0},
+                    {"bbb_384x216_768kbps_25fps_mpeg2_7b.ts",
+                            "pts_bbb_384x216_768kbps_25fps_mpeg2_7b.txt", 0},
+                    {"bbb_cif_768kbps_30fps_vp8_stereo_48kHz_192kbps_vorbis.webm",
+                            "pts_bbb_cif_768kbps_30fps_vp8.txt", 0},
+                    {"bbb_cif_768kbps_30fps_vp8_stereo_48kHz_192kbps_vorbis.mkv",
+                            "pts_bbb_cif_768kbps_30fps_vp8.txt", 0},
+                    {"bbb_cif_768kbps_30fps_vp8_stereo_48kHz_192kbps_vorbis.webm",
+                            "pts_stereo_48kHz_192kbps_vorbis.txt", 1},
+                    {"bbb_cif_768kbps_30fps_vp8_stereo_48kHz_192kbps_vorbis.mkv",
+                            "pts_stereo_48kHz_192kbps_vorbis.txt", 1},
+                    {"bbb_340x280_768kbps_30fps_split_non_display_frame_vp9.webm",
+                            "pts_bbb_340x280_768kbps_30fps_split_non_display_frame_vp9.txt", 0},
+                    {"bbb_cif_768kbps_30fps_vp9_stereo_48kHz_192kbps_opus.webm",
+                            "pts_bbb_cif_768kbps_30fps_vp9.txt", 0},
+                    {"bbb_cif_768kbps_30fps_vp9_stereo_48kHz_192kbps_opus.mkv",
+                            "pts_bbb_cif_768kbps_30fps_vp9.txt", 0},
+                    {"bbb_cif_768kbps_30fps_av1.mp4",
+                            "pts_bbb_cif_768kbps_30fps_av1.txt", 0},
+                    {"bbb_cif_768kbps_30fps_av1.mkv",
+                            "pts_bbb_cif_768kbps_30fps_av1.txt", 0},
+                    {"bbb_cif_768kbps_30fps_av1.webm",
+                            "pts_bbb_cif_768kbps_30fps_av1.txt", 0},
+                    {"binary_counter_320x240_30fps_600frames.mp4",
+                            "pts_binary_counter_320x240_30fps_600frames.txt", 0},
+            });
+            return exhaustiveArgsList;
+        }
+
+        @LargeTest
+        @Test
+        public void testPresentationTimeStampsMatch() throws IOException {
+            try (FileInputStream file = new FileInputStream(mInpPrefix + mPTSListFile);
+                 InputStreamReader input = new InputStreamReader(file);
+                 Reader txtRdr = new BufferedReader(input)) {
+                StreamTokenizer strTok = new StreamTokenizer(txtRdr);
+                strTok.parseNumbers();
+
+                MediaExtractor extractor = new MediaExtractor();
+                extractor.setDataSource(mInpPrefix + mRefFile);
+                assertTrue(mTrackIndex < extractor.getTrackCount());
+                extractor.selectTrack(mTrackIndex);
+                while (true) {
+                    if (strTok.nextToken() == StreamTokenizer.TT_EOF) break;
+                    assertTrue("PTS mismatch exp/got: " + (long) strTok.nval + "/" +
+                                    extractor.getSampleTime(),
+                            Math.abs(extractor.getSampleTime() - (long) strTok.nval) <=
+                                    PTS_TOLERANCE);
+                    if (!extractor.advance()) break;
+                }
+                assertEquals(StreamTokenizer.TT_EOF, strTok.nextToken());
+                assertTrue(!extractor.advance());
+                extractor.release();
             }
         }
     }
