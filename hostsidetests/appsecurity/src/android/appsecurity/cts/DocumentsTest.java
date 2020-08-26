@@ -144,6 +144,12 @@ public class DocumentsTest extends DocumentsTestCase {
         }
     }
 
+    public void testAfterMoveDocumentInStorage_revokeUriPermission() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",
+                "testAfterMoveDocumentInStorage_revokeUriPermission");
+
+    }
+
     private boolean isAtLeastR() {
         try {
             String apiString = getDevice().getProperty("ro.build.version.sdk");
