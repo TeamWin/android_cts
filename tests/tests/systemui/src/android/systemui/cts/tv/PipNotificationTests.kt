@@ -172,8 +172,8 @@ class PipNotificationTests : PipTestBase() {
             action = PipActivity.ACTION_SET_MEDIA_TITLE,
             stringExtras = mapOf(EXTRA_MEDIA_SESSION_TITLE to secondMediaTitle.urlEncoded())
         )
-        assertNull(notificationListener.findActivePipNotification(firstMediaTitle))
         assertNotNull(notificationListener.findActivePipNotification(secondMediaTitle))
+        assertNull(notificationListener.findActivePipNotification(firstMediaTitle))
     }
 
     /** Enable/disable the [PipNotificationListenerService] listening to notifications. */

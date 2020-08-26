@@ -72,8 +72,6 @@ public class ExtractNativeLibsTrueDeviceTest {
         Intent launchIntent = mContext.getPackageManager().getLaunchIntentForPackage(
                 mContext.getPackageName());
         Assert.assertNotNull(launchIntent);
-        if (launchIntent != null) {
-            mContext.startActivity(launchIntent);
-        }
+        mContext.startActivity(launchIntent);
     }
 }
