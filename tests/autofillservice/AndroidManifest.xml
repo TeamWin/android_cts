@@ -118,7 +118,8 @@
              android:exported="true"/>
 
         <activity android:name=".TrampolineForResultActivity"/>
-        <activity android:name=".OnCreateServiceStatusVerifierActivity"/>
+        <!-- TODO(b/159304958): Move to activity folder -->
+        <activity android:name=".unittests.OnCreateServiceStatusVerifierActivity"/>
         <activity android:name=".UsernameOnlyActivity"
              android:exported="true">
             <intent-filter>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.unittests;
 
 import static android.service.autofill.SaveInfo.FLAG_DELAY_SAVE;
 import static android.service.autofill.SaveInfo.FLAG_DONT_SAVE_ON_FINISH;
