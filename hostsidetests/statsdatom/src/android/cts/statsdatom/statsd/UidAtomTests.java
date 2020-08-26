@@ -978,53 +978,6 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(a1.getState().getNumber()).isEqualTo(stateOff);
     }
 
-    public void testBinderStats() throws Exception {
-        try {
-            unplugDevice();
-            Thread.sleep(WAIT_TIME_SHORT);
-            enableBinderStats();
-            binderStatsNoSampling();
-            resetBinderStats();
-            StatsdConfig.Builder config = createConfigBuilder();
-            addGaugeAtomWithDimensions(config, Atom.BINDER_CALLS_FIELD_NUMBER, null);
-
-            uploadConfig(config);
-            Thread.sleep(WAIT_TIME_SHORT);
-
-            runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification",3_000);
-
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_SHORT);
-
-            boolean found = false;
-            int uid = getUid();
-            List<Atom> atomList = getGaugeMetricDataList();
-            for (Atom atom : atomList) {
-                BinderCalls calls = atom.getBinderCalls();
-                boolean classMatches = calls.getServiceClassName().contains(
-                        "com.android.server.notification.NotificationManagerService");
-                boolean methodMatches = calls.getServiceMethodName()
-                        .equals("createNotificationChannels");
-
-                if (calls.getUid() == uid && classMatches && methodMatches) {
-                    found = true;
-                    assertThat(calls.getRecordedCallCount()).isGreaterThan(0L);
-                    assertThat(calls.getCallCount()).isGreaterThan(0L);
-                    assertThat(calls.getRecordedTotalLatencyMicros())
-                        .isIn(Range.open(0L, 1000000L));
-                    assertThat(calls.getRecordedTotalCpuMicros()).isIn(Range.open(0L, 1000000L));
-                }
-            }
-
-            assertWithMessage(String.format("Did not find a matching atom for uid %d", uid))
-                .that(found).isTrue();
-
-        } finally {
-            disableBinderStats();
-            plugInAc();
-        }
-    }
-
     public void testLooperStats() throws Exception {
         try {
             unplugDevice();

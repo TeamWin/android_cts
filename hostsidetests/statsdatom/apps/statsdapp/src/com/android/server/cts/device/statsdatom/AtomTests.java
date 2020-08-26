@@ -33,7 +33,7 @@ public final class AtomTests {
         Context context = InstrumentationRegistry.getContext();
         Intent intent = new Intent(context, IsolatedProcessService.class);
         context.startService(intent);
-        Thread.sleep(500);
+        sleep(500);
         context.stopService(intent);
     }
 
@@ -45,5 +45,14 @@ public final class AtomTests {
             timestamp += 1;
         }
         Log.i(TAG, "The answer is " + timestamp);
+    }
+
+    // Puts the current thread to sleep
+    static void sleep(int millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Received InterruptedException while sleeping");
+        }
     }
 }

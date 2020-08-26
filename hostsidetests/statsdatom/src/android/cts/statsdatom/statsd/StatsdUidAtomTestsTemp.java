@@ -34,7 +34,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 
 import java.util.List;
 
-public final class UidAtomTestsTemp extends DeviceTestCase implements IBuildReceiver {
+public final class StatsdUidAtomTestsTemp extends DeviceTestCase implements IBuildReceiver {
     private IBuildInfo mCtsBuild;
 
     @Override
