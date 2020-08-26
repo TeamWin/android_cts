@@ -83,7 +83,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
         hdmiCecClient.sendCecMessage(CecOperand.GIVE_PHYSICAL_ADDRESS);
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
         /* Check that the physical address taken is valid. */
-        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
+        CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
         int receivedParams = CecMessage.getParams(message);
         assertThat(HdmiCecConstants.PLAYBACK_DEVICE_TYPE).isEqualTo(receivedParams & 0xFF);
     }
