@@ -69,7 +69,7 @@ import org.mockito.MockitoAnnotations;
 public class AccessibilityGestureDetectorTest {
 
     // Constants
-    private static final float GESTURE_LENGTH_INCHES = 1.0f;
+    private static final float GESTURE_LENGTH_INCHES = 2.0f;
     // The movement should exceed the threshold 1 cm in 150 ms defined in Swipe.java. It means the
     // swipe velocity in testing should be greater than 2.54 cm / 381 ms. Therefore the
     // duration should be smaller than 381.
