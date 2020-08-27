@@ -48,6 +48,7 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_STOP_ACTIVITY = 11;
     public static final int COMMAND_CREATE_FGSL_PENDING_INTENT = 12;
     public static final int COMMAND_SEND_FGSL_PENDING_INTENT = 13;
+    public static final int COMMAND_BIND_FOREGROUND_SERVICE = 14;
 
     public static final String EXTRA_COMMAND = "android.app.stubs.extra.COMMAND";
     public static final String EXTRA_TARGET_PACKAGE = "android.app.stubs.extra.TARGET_PACKAGE";
@@ -82,7 +83,7 @@ public class CommandReceiver extends BroadcastReceiver {
                 + intent);
         switch (command) {
             case COMMAND_BIND_SERVICE:
-                doBindService(context, intent);
+                doBindService(context, intent, SERVICE_NAME);
                 break;
             case COMMAND_UNBIND_SERVICE:
                 doUnbindService(context, intent);
@@ -120,15 +121,18 @@ public class CommandReceiver extends BroadcastReceiver {
             case COMMAND_SEND_FGSL_PENDING_INTENT:
                 doSendFgslPendingIntent(context, intent);
                 break;
+            case COMMAND_BIND_FOREGROUND_SERVICE:
+                doBindService(context, intent, FG_LOCATION_SERVICE_NAME);
+                break;
         }
     }
 
-    private void doBindService(Context context, Intent commandIntent) {
+    private void doBindService(Context context, Intent commandIntent, String serviceName) {
         String targetPackage = getTargetPackage(commandIntent);
         int flags = getFlags(commandIntent);
 
         Intent bindIntent = new Intent();
-        bindIntent.setComponent(new ComponentName(targetPackage, SERVICE_NAME));
+        bindIntent.setComponent(new ComponentName(targetPackage, serviceName));
 
         ServiceConnection connection = addServiceConnection(targetPackage);
 
