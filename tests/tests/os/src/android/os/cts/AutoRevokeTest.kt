@@ -245,7 +245,6 @@ class AutoRevokeTest {
                 goToPermissions()
                 click("Calendar")
                 click("Allow")
-                Thread.sleep(500)
                 goBack()
                 goBack()
                 goBack()
