@@ -584,8 +584,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testInstallApkChangingFingerprint() throws Exception {
-        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
-
         try {
             getDevice().executeShellCommand("setprop persist.pm.mock-upgrade true");
             runPhase("testInstallApkChangingFingerprint");
