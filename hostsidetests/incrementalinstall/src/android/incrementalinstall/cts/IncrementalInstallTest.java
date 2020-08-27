@@ -135,11 +135,14 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     public void testBaseApkMissingSignatureAdbInstall() throws Exception {
         String newApkName = String.format("base%d.apk", new Random().nextInt());
         // Create a copy of original apk but not its idsig.
-        copyTestFile(TEST_APP_BASE_APK_NAME, newApkName);
-        String output = installWithAdbInstaller(newApkName);
-        verifyInstallCommandFailure(output);
-        assertTrue(output.contains(String.format("Failed to stat signature file %s",
-                getFilePathFromBuildInfo(newApkName) + SIG_SUFFIX)));
+        copyTestFile(TEST_APP_BASE_APK_NAME, null, newApkName);
+        // Make sure it installs.
+        assertTrue(
+                installWithAdbInstaller(TEST_APP_BASE_APK_NAME).contains(INSTALL_SUCCESS_OUTPUT));
+        verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
+        verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
+                TEST_APP_V1_VERSION);
+        validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
 
     }
 
@@ -147,8 +150,9 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     public void testBaseApkInvalidSignatureAdbInstall() throws Exception {
         String newApkName = String.format("base%d.apk", new Random().nextInt());
         String sigSuffix = ".idsig";
-        copyTestFile(TEST_APP_BASE_APK_NAME, newApkName);
-        copyTestFile(TEST_APP_BASE_APK_NAME + sigSuffix, newApkName + sigSuffix);
+        File destApk = copyTestFile(TEST_APP_BASE_APK_NAME, null, newApkName);
+        copyTestFile(TEST_APP_BASE_APK_NAME + sigSuffix, destApk.getParentFile(),
+                newApkName + sigSuffix);
         try (RandomAccessFile raf = new RandomAccessFile(
                 getFilePathFromBuildInfo(newApkName + sigSuffix), "rw")) {
             // Contaminate signature by complementing a random byte.
@@ -351,10 +355,11 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         return mBuildHelper.getTestFile(filename).getAbsolutePath();
     }
 
-    private void copyTestFile(String sourceFilename, String destFilename) throws IOException {
+    private File copyTestFile(String sourceFilename, File destPath, String destFilename) throws IOException {
         File source = new File(getFilePathFromBuildInfo(sourceFilename));
-        File dest = new File(source.getParentFile(), destFilename);
+        File dest = new File(destPath != null ? destPath : source.getParentFile(), destFilename);
         FileUtil.copyFile(source, dest);
+        return dest;
     }
 
     private void uninstallApp(String packageName) throws Exception {
