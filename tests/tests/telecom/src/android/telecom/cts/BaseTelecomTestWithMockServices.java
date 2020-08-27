@@ -480,6 +480,11 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
      * {@link CtsConnectionService} which can be tested.
      */
     void addAndVerifyNewIncomingCall(Uri incomingHandle, Bundle extras) {
+        int currentCallCount = addNewIncomingCall(incomingHandle, extras);
+        verifyNewIncomingCall(currentCallCount);
+    }
+
+    int addNewIncomingCall(Uri incomingHandle, Bundle extras) {
         assertEquals("Lock should have no permits!", 0, mInCallCallbacks.lock.availablePermits());
         int currentCallCount = 0;
         if (mInCallCallbacks.getService() != null) {
@@ -492,9 +497,13 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, incomingHandle);
         mTelecomManager.addNewIncomingCall(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, extras);
 
+        return currentCallCount;
+    }
+
+    void verifyNewIncomingCall(int currentCallCount) {
         try {
             if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
-                        TimeUnit.SECONDS)) {
+                    TimeUnit.SECONDS)) {
                 fail("No call added to InCallService.");
             }
         } catch (InterruptedException e) {

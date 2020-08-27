@@ -97,9 +97,13 @@ public class NonUiInCallServiceTest extends BaseTelecomTestWithMockServices {
             ICtsApi29InCallServiceControl controlInterface = setUpControl();
             controlInterface.setShouldReturnNullBinding(true);
 
-            addAndVerifyNewIncomingCall(createTestNumber(), new Bundle());
+            int currentCallCount = addNewIncomingCall(createTestNumber(), new Bundle());
+            // The test InCallService can be bound and unbound before this test gets a chance to
+            // validate. Ensure that the test verifies it is bound before checking if onCallAdded
+            // was called.
             assertTrue("Non-UI incall incorrectly not bound to despite being enabled",
                     controlInterface.waitForBindRequest());
+            verifyNewIncomingCall(currentCallCount);
 
             assertEquals("Call was sent to incall despite null binding",
                     0, controlInterface.getLocalCallCount());
