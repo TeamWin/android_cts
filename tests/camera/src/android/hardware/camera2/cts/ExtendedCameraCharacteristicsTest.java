@@ -2404,16 +2404,21 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
         }
 
         float legacyFocalLength = params.getFocalLength();
-        float [] focalLengths = staticMeta.getAvailableFocalLengthsChecked();
-        boolean found = false;
-        for (float focalLength : focalLengths) {
-            if (Math.abs(focalLength - legacyFocalLength) <= FOCAL_LENGTH_TOLERANCE) {
-                found = true;
-                break;
+        if (ch.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS) != null) {
+            float [] focalLengths = staticMeta.getAvailableFocalLengthsChecked();
+            boolean found = false;
+            for (float focalLength : focalLengths) {
+                if (Math.abs(focalLength - legacyFocalLength) <= FOCAL_LENGTH_TOLERANCE) {
+                    found = true;
+                    break;
+                }
             }
+            return found;
+        } else if (legacyFocalLength != -1.0f) {
+            return false;
         }
 
-        return found;
+        return true;
     }
 
     /**
