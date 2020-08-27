@@ -42,6 +42,7 @@ import org.junit.runner.RunWith;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -130,6 +131,8 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
         device.executeAdbCommand("logcat", "-c");
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.MUTE");
+        // The audio device should send <Report Audio Status> message after mute.
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.REPORT_AUDIO_STATUS);
     }
 
     private void unmuteDevice() throws Exception {
@@ -138,6 +141,8 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
         device.executeShellCommand(CLEAR_COMMAND);
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.UNMUTE");
+        // The audio device should send <Report Audio Status> message after unmute.
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.REPORT_AUDIO_STATUS);
     }
 
     public boolean isDeviceMuted() throws Exception {
@@ -178,6 +183,8 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
     }
 
     private int getDutAudioStatus() throws Exception {
+        // Give a couple of seconds for the HdmiCecAudioManager intent to complete.
+        TimeUnit.SECONDS.sleep(2);
         hdmiCecClient.sendCecMessage(LogicalAddress.TV, AUDIO_DEVICE, CecOperand.GIVE_AUDIO_STATUS);
         String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                 CecOperand.REPORT_AUDIO_STATUS);
@@ -360,15 +367,15 @@ public final class HdmiCecSystemAudioModeTest extends BaseHdmiCecCtsTest {
     /**
      * Test 11.2.15-9
      * Tests that the DUT responds with a <Report Audio Status> message with correct parameters
-     * to a <Give Audio Status> message when volume is set to 0% and not muted.
+     * to a <Give Audio Status> message when volume is set to 0%.
      */
     @Test
-    public void cect_11_2_15_9_ReportAudioStatus_0_unmuted() throws Exception {
+    public void cect_11_2_15_9_ReportAudioStatus_0() throws Exception {
         sendSystemAudioModeInitiation();
         unmuteDevice();
         setDeviceVolume(0);
         int reportedVolume = getDutAudioStatus();
-        assertThat(reportedVolume).isEqualTo(0);
+        assertThat(reportedVolume).isAnyOf(0, 128);
     }
 
     /**
