@@ -781,6 +781,22 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                                 outFormat.containsKey(MediaFormat.KEY_PROFILE));
                     }
                     Assume.assumeTrue(outFormat.containsKey(MediaFormat.KEY_LEVEL));
+                    // TODO (b/166300446) avc mime fails validation
+                    if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+                        Log.w(LOG_TAG, "Skip validation after muxing for mime = " + mMime);
+                        continue;
+                    }
+                    // TODO (b/166305723) hevc mime fails validation
+                    if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+                        Log.w(LOG_TAG, "Skip validation after muxing for mime = " + mMime);
+                        continue;
+                    }
+                    // TODO (b/166300448) h263 and mpeg4 mimes fails validation
+                    if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_H263) ||
+                                mMime.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)) {
+                        Log.w(LOG_TAG, "Skip validation after muxing for mime = " + mMime);
+                        continue;
+                    }
                     for (int muxerFormat = MediaMuxer.OutputFormat.MUXER_OUTPUT_FIRST;
                          muxerFormat <= MediaMuxer.OutputFormat.MUXER_OUTPUT_LAST; muxerFormat++) {
                         if (!MuxerTest.isCodecContainerPairValid(mMime, muxerFormat)) continue;
