@@ -34,6 +34,8 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
     // true if there's platform support for call screening in the audio stack.
     private boolean doesAudioManagerSupportCallScreening = false;
 
+    private String mPreviousDefaultDialer = null;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
