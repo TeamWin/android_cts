@@ -59,12 +59,6 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
 
     /**
-     * Verifies if {@link Context#getDisplay} from {@link InputMethodService} and context created
-     * from {@link InputMethodService#createConfigurationContext(Configuration)} violates
-     * incorrect context violation.
-     */
-    private static final int VERIFY_MODE_GET_DISPLAY = 1;
-    /**
      * Verifies if get {@link android.view.WindowManager} from {@link InputMethodService} and
      * context created from {@link InputMethodService#createConfigurationContext(Configuration)}
      * violates incorrect context violation.
@@ -72,31 +66,29 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
      * @see Context#getSystemService(String)
      * @see Context#getSystemService(Class)
      */
-    private static final int VERIFY_MODE_GET_WINDOW_MANAGER = 2;
+    private static final int VERIFY_MODE_GET_WINDOW_MANAGER = 1;
     /**
      * Verifies if passing {@link InputMethodService} and context created
      * from {@link InputMethodService#createConfigurationContext(Configuration)} to
      * {@link android.view.ViewConfiguration#get(Context)} violates incorrect context violation.
      */
-    private static final int VERIFY_MODE_GET_VIEW_CONFIGURATION = 3;
+    private static final int VERIFY_MODE_GET_VIEW_CONFIGURATION = 2;
     /**
      * Verifies if passing {@link InputMethodService} and context created
      * from {@link InputMethodService#createConfigurationContext(Configuration)} to
      * {@link android.view.GestureDetector} constructor violates incorrect context violation.
      */
-    private static final int VERIFY_MODE_GET_GESTURE_DETECTOR = 4;
+    private static final int VERIFY_MODE_GET_GESTURE_DETECTOR = 3;
 
     /**
      * Verify mode to verifying if APIs violates incorrect context violation.
      *
-     * @see #VERIFY_MODE_GET_DISPLAY
      * @see #VERIFY_MODE_GET_WINDOW_MANAGER
      * @see #VERIFY_MODE_GET_VIEW_CONFIGURATION
      * @see #VERIFY_MODE_GET_GESTURE_DETECTOR
      */
     @Retention(RetentionPolicy.SOURCE)
     @IntDef(flag = true, value = {
-            VERIFY_MODE_GET_DISPLAY,
             VERIFY_MODE_GET_WINDOW_MANAGER,
             VERIFY_MODE_GET_VIEW_CONFIGURATION,
             VERIFY_MODE_GET_GESTURE_DETECTOR,
@@ -106,11 +98,6 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
     @Test
     public void testIncorrectContextUseOnGetSystemService() throws Exception {
         verifyIms(VERIFY_MODE_GET_WINDOW_MANAGER);
-    }
-
-    @Test
-    public void testIncorrectContextUseOnGetDisplay() throws Exception {
-        verifyIms(VERIFY_MODE_GET_DISPLAY);
     }
 
     @Test
@@ -141,10 +128,6 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
             final ImeEventStream forkedStream = clearAllEvents(stream, "onStrictModeViolated");
             final ImeEvent imeEvent;
             switch (mode) {
-                case VERIFY_MODE_GET_DISPLAY:
-                    imeEvent = expectCommand(forkedStream, imeSession.callVerifyGetDisplay(),
-                            TIMEOUT);
-                    break;
                 case VERIFY_MODE_GET_WINDOW_MANAGER:
                     imeEvent = expectCommand(forkedStream, imeSession.callVerifyGetWindowManager(),
                             TIMEOUT);
