@@ -25,6 +25,7 @@ import androidx.annotation.NonNull;
 
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 /**
@@ -157,6 +158,15 @@ public final class ImeEventStreamTestUtils {
             final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
             return TextUtils.equals(marker, editorInfo.privateImeOptions);
         };
+    }
+
+    /**
+     * Returns a matcher to check if the {@code name} is from
+     * {@code MockIme.Tracer#onVerify(String, BooleanSupplier)}
+     */
+    public static Predicate<ImeEvent> verificationMatcher(@NonNull String name) {
+        return event -> "onVerify".equals(event.getEventName())
+                && name.equals(event.getArguments().getString("name"));
     }
 
     /**

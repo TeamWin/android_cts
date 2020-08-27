@@ -30,6 +30,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.verificationMatcher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -401,6 +402,27 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     TIMEOUT).getArguments().getParcelable("cursorAnchorInfo");
             assertNotNull(receivedCursorAnchorInfo);
             assertEquals(receivedCursorAnchorInfo, originalCursorAnchorInfo);
+        }
+    }
+
+    /** Test that no exception is thrown when {@link InputMethodService#getDisplay()} is called */
+    @Test
+    public void testGetDisplay() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                mInstrumentation.getContext(), mInstrumentation.getUiAutomation(),
+                new ImeSettings.Builder().setVerifyGetDisplayOnCreate(true))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            // Verify if getDisplay doesn't throw exception before InputMethodService's
+            // initialization.
+            assertTrue(expectEvent(stream, verificationMatcher("getDisplay"),
+                    CHECK_EXIT_EVENT_ONLY, TIMEOUT).getReturnBooleanValue());
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            // Verify if getDisplay doesn't throw exception
+            assertTrue(expectCommand(stream, imeSession.callVerifyGetDisplay(), TIMEOUT)
+                    .getReturnBooleanValue());
         }
     }
 }
