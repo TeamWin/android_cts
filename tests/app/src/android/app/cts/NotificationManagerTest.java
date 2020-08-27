@@ -1729,6 +1729,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     public void testCancel() throws Exception {
         final int id = 9;
         sendNotification(id, R.drawable.black);
+        // Wait for the notification posted not just enqueued
+        try {
+            Thread.sleep(500);
+        } catch(InterruptedException e) {}
         mNotificationManager.cancel(id);
 
         if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
