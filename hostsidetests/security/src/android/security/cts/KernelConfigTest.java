@@ -182,6 +182,15 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
     private String getHardware() throws Exception {
         String hardware = "DEFAULT";
         String[] pathList = new String[]{"/proc/cpuinfo", "/sys/devices/soc0/soc_id"};
+        String mitigationInfoMeltdown =
+                mDevice.pullFileContents("/sys/devices/system/cpu/vulnerabilities/meltdown");
+        String mitigationInfoSpectreV2 =
+                mDevice.pullFileContents("/sys/devices/system/cpu/vulnerabilities/spectre_v2");
+
+        if (mitigationInfoMeltdown != null && mitigationInfoSpectreV2 != null &&
+            !mitigationInfoMeltdown.contains("Vulnerable") &&
+            !mitigationInfoSpectreV2.contains("Vulnerable"))
+                return "VULN_SAFE";
 
         for (String nodeInfo : pathList) {
             if (!mDevice.doesFileExist(nodeInfo))
@@ -216,6 +225,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
 
     private Map<String, String[]> hardwareMitigations = new HashMap<String, String[]>() {
     {
+        put("VULN_SAFE", null);
         put("EXYNOS990", null);
         put("EXYNOS980", null);
         put("EXYNOS850", null);
