@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.unittests;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;

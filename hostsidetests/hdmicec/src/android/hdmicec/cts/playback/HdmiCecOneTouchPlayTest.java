@@ -91,7 +91,7 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
         sendOtp(device);
         hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.TEXT_VIEW_ON);
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
-        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
+        CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
     }
 
     /**
@@ -105,7 +105,7 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
         device.executeShellCommand(START_COMMAND + ACTION_CONNECT_INPUT_NORMAL);
         hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.TEXT_VIEW_ON);
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
-        CecMessage.assertPhysicalAddressValid(message, dutPhysicalAddress);
+        CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
         device.executeShellCommand(FORCE_STOP_COMMAND + SETTINGS_PACKAGE);
     }
 

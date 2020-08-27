@@ -90,7 +90,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .runExpectingFailure();
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallBaseWithSplit()
             throws DeviceNotAvailableException, FileNotFoundException {
@@ -103,7 +103,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         verifyFsverityInstall(BASE_APK, SPLIT_APK);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallBaseWithDm() throws DeviceNotAvailableException, FileNotFoundException {
         new InstallMultiple()
@@ -115,7 +115,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         verifyFsverityInstall(BASE_APK, BASE_APK_DM);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallEverything() throws DeviceNotAvailableException, FileNotFoundException {
         new InstallMultiple()
@@ -131,7 +131,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         verifyFsverityInstall(BASE_APK, BASE_APK_DM, SPLIT_APK, SPLIT_APK_DM);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallSplitOnly()
             throws DeviceNotAvailableException, FileNotFoundException {
@@ -149,7 +149,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         verifyFsverityInstall(BASE_APK, SPLIT_APK);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallSplitOnlyMissingSignature()
             throws DeviceNotAvailableException, FileNotFoundException {
@@ -165,7 +165,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .runExpectingFailure();
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallSplitOnlyWithoutBaseSignature()
             throws DeviceNotAvailableException, FileNotFoundException {
@@ -181,7 +181,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         verifyFsverityInstall(SPLIT_APK);
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallOnlyBaseHasFsvSig()
             throws DeviceNotAvailableException, FileNotFoundException {
@@ -194,7 +194,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .runExpectingFailure();
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallOnlyDmHasFsvSig()
             throws DeviceNotAvailableException, FileNotFoundException {
@@ -207,7 +207,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .runExpectingFailure();
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallOnlySplitHasFsvSig()
             throws DeviceNotAvailableException, FileNotFoundException {
@@ -220,7 +220,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .runExpectingFailure();
     }
 
-    @CddTest(requirement="9.10/C-0-3,C-1-1")
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
     public void testInstallBaseWithFsvSigThenSplitWithout()
             throws DeviceNotAvailableException, FileNotFoundException {

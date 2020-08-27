@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.unittests;
 
 import static android.service.autofill.FillResponse.FLAG_DISABLE_ACTIVITY_ONLY;
 import static android.service.autofill.FillResponse.FLAG_TRACK_CONTEXT_COMMITED;
