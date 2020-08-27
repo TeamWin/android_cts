@@ -266,10 +266,14 @@ public class ScopedStorageTest {
         assertCanCreateFile(new File(documentsDir, AUDIO_FILE_NAME));
         assertCanCreateFile(new File(documentsDir, IMAGE_FILE_NAME));
         assertCanCreateFile(new File(documentsDir, NONMEDIA_FILE_NAME));
+        assertCanCreateFile(new File(documentsDir, PLAYLIST_FILE_NAME));
+        assertCanCreateFile(new File(documentsDir, SUBTITLE_FILE_NAME));
         assertCanCreateFile(new File(documentsDir, VIDEO_FILE_NAME));
         assertCanCreateFile(new File(downloadDir, AUDIO_FILE_NAME));
         assertCanCreateFile(new File(downloadDir, IMAGE_FILE_NAME));
         assertCanCreateFile(new File(downloadDir, NONMEDIA_FILE_NAME));
+        assertCanCreateFile(new File(downloadDir, PLAYLIST_FILE_NAME));
+        assertCanCreateFile(new File(downloadDir, SUBTITLE_FILE_NAME));
         assertCanCreateFile(new File(downloadDir, VIDEO_FILE_NAME));
         assertCanCreateFile(new File(moviesDir, VIDEO_FILE_NAME));
         assertCanCreateFile(new File(moviesDir, SUBTITLE_FILE_NAME));
