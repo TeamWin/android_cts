@@ -759,13 +759,18 @@ public class SubscriptionManagerTest {
                 // treat this as failure because it worked the first time
                 fail("setSubscriptionEnabled() did not work second time");
             }
+
+            // Reset default data subId as it may have been changed as part of the calls above
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                    (sm) -> sm.setDefaultDataSubId(mSubId));
+
+            // Other tests also expect that cellular data must be available if telephony is
+            // supported. Wait for that before returning.
+            final CountDownLatch latch = waitForCellularNetwork();
+            latch.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             fail("InterruptedException");
         }
-
-        // Reset default data subId as it may have been changed as part of the calls above
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
-                (sm) -> sm.setDefaultDataSubId(mSubId));
     }
 
     @Test
@@ -867,6 +872,28 @@ public class SubscriptionManagerTest {
                     @Override
                     public void onCapabilitiesChanged(Network net, NetworkCapabilities caps) {
                         if (net.equals(network) && predicate.test(caps)) {
+                            latch.countDown();
+                            cm.unregisterNetworkCallback(this);
+                        }
+                    }
+                });
+        return latch;
+    }
+
+    /**
+     * Corresponding to findCellularNetwork()
+     */
+    private static CountDownLatch waitForCellularNetwork() {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ConnectivityManager cm = InstrumentationRegistry.getContext()
+                .getSystemService(ConnectivityManager.class);
+        cm.registerNetworkCallback(new NetworkRequest.Builder().build(),
+                new NetworkCallback() {
+                    @Override
+                    public void onCapabilitiesChanged(Network net, NetworkCapabilities caps) {
+                        if (caps.hasTransport(TRANSPORT_CELLULAR)
+                                && caps.hasCapability(NET_CAPABILITY_INTERNET)
+                                && caps.hasCapability(NET_CAPABILITY_NOT_RESTRICTED)) {
                             latch.countDown();
                             cm.unregisterNetworkCallback(this);
                         }
