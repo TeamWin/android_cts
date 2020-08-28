@@ -296,7 +296,7 @@ public class LocationManagerFineTest {
         }
 
         try {
-            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, (LocationListener) null);
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, null, Looper.getMainLooper());
             fail("Should throw IllegalArgumentException if listener is null!");
         } catch (IllegalArgumentException e) {
             // expected
@@ -310,7 +310,7 @@ public class LocationManagerFineTest {
         }
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(null, 0, 0, capture);
+            mManager.requestLocationUpdates(null, 0, 0, capture, Looper.getMainLooper());
             fail("Should throw IllegalArgumentException if provider is null!");
         } catch (IllegalArgumentException e) {
             // expected
@@ -508,12 +508,12 @@ public class LocationManagerFineTest {
         Location loc1 = createLocation(TEST_PROVIDER, mRandom);
         Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
-        LocationRequest request = LocationRequest.createFromDeprecatedProvider(TEST_PROVIDER, 0, 0,
-                false);
-        request.setNumUpdates(1);
-
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(request, Executors.newSingleThreadExecutor(), capture);
+            mManager.requestLocationUpdates(
+                    TEST_PROVIDER,
+                    new LocationRequest.Builder(0).setMaxUpdates(1).build(),
+                    Executors.newSingleThreadExecutor(),
+                    capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
@@ -523,15 +523,16 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    public void testRequestLocationUpdates_MinTime() throws Exception {
+    public void testRequestLocationUpdates_MinUpdateInterval() throws Exception {
         Location loc1 = createLocation(TEST_PROVIDER, mRandom);
         Location loc2 = createLocation(TEST_PROVIDER, mRandom);
 
-        LocationRequest request = LocationRequest.createFromDeprecatedProvider(TEST_PROVIDER, 5000,
-                0, false);
-
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(request, Executors.newSingleThreadExecutor(), capture);
+            mManager.requestLocationUpdates(
+                    TEST_PROVIDER,
+                    new LocationRequest.Builder(5000).build(),
+                    Executors.newSingleThreadExecutor(),
+                    capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
@@ -541,15 +542,16 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    public void testRequestLocationUpdates_MinDistance() throws Exception {
+    public void testRequestLocationUpdates_MinUpdateDistance() throws Exception {
         Location loc1 = createLocation(TEST_PROVIDER, 0, 0, 10);
         Location loc2 = createLocation(TEST_PROVIDER, 0, 1, 10);
 
-        LocationRequest request = LocationRequest.createFromDeprecatedProvider(TEST_PROVIDER, 0,
-                200000, false);
-
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(request, Executors.newSingleThreadExecutor(), capture);
+            mManager.requestLocationUpdates(
+                    TEST_PROVIDER,
+                    new LocationRequest.Builder(0).setMinUpdateDistanceMeters(200000).build(),
+                    Executors.newSingleThreadExecutor(),
+                    capture);
 
             mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
@@ -585,9 +587,12 @@ public class LocationManagerFineTest {
         // reset gps provider to give it a cold start scenario
         mManager.sendExtraCommand(GPS_PROVIDER, "delete_aiding_data", null);
 
-        LocationRequest request = LocationRequest.createFromDeprecatedProvider(GPS_PROVIDER, 0, 0, false);
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(request, Executors.newSingleThreadExecutor(), capture);
+            mManager.requestLocationUpdates(
+                    GPS_PROVIDER,
+                    new LocationRequest.Builder(0).build(),
+                    Executors.newSingleThreadExecutor(),
+                    capture);
 
             Location location = capture.getNextLocation(TIMEOUT_MS);
             if (location != null) {
