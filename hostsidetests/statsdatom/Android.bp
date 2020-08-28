@@ -15,7 +15,9 @@
 java_test_host {
     name: "CtsStatsdAtomHostTestCases",
     defaults: ["cts_defaults"],
-    srcs: ["src/**/statsd/*.java"],
+    srcs: [
+        "src/**/statsd/UidAtomTestsTemp.java",
+    ],
 
     test_suites: [
         "cts",
@@ -24,6 +26,7 @@ java_test_host {
 
     libs: [
         "compatibility-host-util",
+        "core_cts_test_resources",
         "cts-tradefed",
         "host-libprotobuf-java-full",
         "platformprotos",
@@ -33,6 +36,7 @@ java_test_host {
 
     static_libs: [
         "cts-statsd-atom-host-test-utils",
+        "perfetto_config-full",
     ],
 
     data: [
