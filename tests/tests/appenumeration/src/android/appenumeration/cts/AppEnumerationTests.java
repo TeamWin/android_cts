@@ -66,6 +66,7 @@ import static android.appenumeration.cts.Constants.TARGET_EDITOR;
 import static android.appenumeration.cts.Constants.TARGET_FILTERS;
 import static android.appenumeration.cts.Constants.TARGET_FILTERS_APK;
 import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE;
+import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE_NORMAL;
 import static android.appenumeration.cts.Constants.TARGET_NO_API;
 import static android.appenumeration.cts.Constants.TARGET_SHARE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
@@ -174,6 +175,15 @@ public class AppEnumerationTests {
         assertVisible(QUERIES_SERVICE_ACTION, TARGET_FORCEQUERYABLE);
         assertVisible(QUERIES_PROVIDER_AUTH, TARGET_FORCEQUERYABLE);
         assertVisible(QUERIES_PACKAGE, TARGET_FORCEQUERYABLE);
+    }
+
+    @Test
+    public void all_cannotSeeForceQueryableInstalledNormally() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_FORCEQUERYABLE_NORMAL);
+        assertNotVisible(QUERIES_ACTIVITY_ACTION, TARGET_FORCEQUERYABLE_NORMAL);
+        assertNotVisible(QUERIES_SERVICE_ACTION, TARGET_FORCEQUERYABLE_NORMAL);
+        assertNotVisible(QUERIES_PROVIDER_AUTH, TARGET_FORCEQUERYABLE_NORMAL);
+        assertNotVisible(QUERIES_PACKAGE, TARGET_FORCEQUERYABLE_NORMAL);
     }
 
     @Test

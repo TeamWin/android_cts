@@ -16,10 +16,10 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.appenumeration.forcequeryable">
+    package="android.appenumeration.forcequeryable.normalinstall">
     <application android:forceQueryable="true">
-        <!-- This app will not be a system app and so must be installed as forceQueryable by the
-             test framework -->
+        <!-- This app will not be a system app and should be installed as a normal app (not
+             forceQueryable) to ensure it's not visible by default -->
         <uses-library android:name="android.test.runner" />
     </application>
 </manifest>
