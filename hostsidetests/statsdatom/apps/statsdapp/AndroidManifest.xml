@@ -52,5 +52,5 @@
          android:label="CTS tests of atoms used to collect stats from statsd">
         <meta-data android:name="listener"
              android:value="com.android.cts.runner.CtsTestRunListener"/>
-    </instrumentation>/&gt;
+    </instrumentation>
 </manifest>
