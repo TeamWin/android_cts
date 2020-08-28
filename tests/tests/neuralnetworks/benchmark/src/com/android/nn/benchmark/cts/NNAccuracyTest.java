@@ -97,19 +97,18 @@ public class NNAccuracyTest {
             return;
         }
 
-        try (NNTestBase test = mModel.createNNTestBase(/*useNNAPI=*/true,
-                    /*enableIntermediateTensorsDump=*/false)) {
-            test.setupModel(mActivity);
-            Pair<List<InferenceInOutSequence>, List<InferenceResult>> inferenceResults =
-                    test.runBenchmarkCompleteInputSet(/*setRepeat=*/1, /*timeoutSec=*/3600);
-            BenchmarkResult benchmarkResult =
-                    BenchmarkResult.fromInferenceResults(
-                            mModel.mModelName,
-                            BenchmarkResult.BACKEND_TFLITE_NNAPI,
-                            inferenceResults.first,
-                            inferenceResults.second,
-                            test.getEvaluator());
-            assertFalse(benchmarkResult.hasValidationErrors());
-        }
+        NNTestBase test = mModel.createNNTestBase(/*useNNAPI=*/true,
+                /*enableIntermediateTensorsDump=*/false);
+        test.setupModel(mActivity);
+        Pair<List<InferenceInOutSequence>, List<InferenceResult>> inferenceResults =
+                test.runBenchmarkCompleteInputSet(/*setRepeat=*/1, /*timeoutSec=*/3600);
+        BenchmarkResult benchmarkResult =
+                BenchmarkResult.fromInferenceResults(
+                        mModel.mModelName,
+                        BenchmarkResult.BACKEND_TFLITE_NNAPI,
+                        inferenceResults.first,
+                        inferenceResults.second,
+                        test.getEvaluator());
+        assertFalse(benchmarkResult.hasValidationErrors());
     }
 }
