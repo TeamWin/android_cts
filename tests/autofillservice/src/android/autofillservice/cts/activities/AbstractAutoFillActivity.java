@@ -20,9 +20,9 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
-import android.autofillservice.cts.AutofillTestWatcher;
-import android.autofillservice.cts.MyAutofillCallback;
-import android.autofillservice.cts.Timeouts;
+import android.autofillservice.cts.testcore.AutofillTestWatcher;
+import android.autofillservice.cts.testcore.MyAutofillCallback;
+import android.autofillservice.cts.testcore.Timeouts;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Bundle;

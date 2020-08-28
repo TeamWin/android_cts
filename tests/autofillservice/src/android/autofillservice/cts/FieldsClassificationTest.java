@@ -15,13 +15,13 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
-import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
-import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.activities.GridActivity.ID_L1C1;
 import static android.autofillservice.cts.activities.GridActivity.ID_L1C2;
 import static android.autofillservice.cts.activities.GridActivity.ID_L2C1;
 import static android.autofillservice.cts.activities.GridActivity.ID_L2C2;
+import static android.autofillservice.cts.testcore.Helper.assertFillEventForContextCommitted;
+import static android.autofillservice.cts.testcore.Helper.assertFillEventForFieldsClassification;
+import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
 import static android.provider.Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE;
@@ -34,7 +34,10 @@ import static android.service.autofill.AutofillFieldClassificationService.REQUIR
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.autofillservice.cts.Helper.FieldClassificationResult;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.Helper.FieldClassificationResult;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
+import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillContext;

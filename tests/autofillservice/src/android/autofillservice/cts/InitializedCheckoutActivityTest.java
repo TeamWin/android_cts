@@ -15,20 +15,21 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.Helper.assertListValue;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.Helper.assertToggleValue;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.activities.CheckoutActivity.ID_ADDRESS;
 import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_EXPIRATION;
 import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_NUMBER;
 import static android.autofillservice.cts.activities.CheckoutActivity.ID_SAVE_CC;
 import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_ADDRESS_HOME;
+import static android.autofillservice.cts.testcore.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.testcore.Helper.assertListValue;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.testcore.Helper.assertToggleValue;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.activities.InitializedCheckoutActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.platform.test.annotations.AppModeFull;
 
 import org.junit.Test;

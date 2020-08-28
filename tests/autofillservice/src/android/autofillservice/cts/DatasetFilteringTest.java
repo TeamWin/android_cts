@@ -16,8 +16,8 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Timeouts.MOCK_IME_TIMEOUT_MS;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Timeouts.MOCK_IME_TIMEOUT_MS;
 
 import static com.android.compatibility.common.util.ShellUtils.sendKeyEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -27,8 +27,12 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assume.assumeTrue;
 
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.activities.AuthenticationActivity;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.MaxVisibleDatasetsRule;
+import android.autofillservice.cts.testcore.MyAutofillCallback;
+import android.autofillservice.cts.testcore.UiBot;
 import android.content.IntentSender;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;

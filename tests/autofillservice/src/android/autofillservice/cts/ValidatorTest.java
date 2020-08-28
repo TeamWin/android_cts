@@ -16,9 +16,9 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.ID_PASSWORD;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.InternalValidator;
 import android.service.autofill.LuhnChecksumValidator;

@@ -15,25 +15,28 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.ID_STATIC_TEXT;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.activities.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.activities.PreSimpleSaveActivity.ID_PRE_INPUT;
 import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_INPUT;
 import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_LABEL;
+import static android.autofillservice.cts.testcore.Helper.ID_STATIC_TEXT;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.activities.PreSimpleSaveActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
 import android.autofillservice.cts.activities.TrampolineWelcomeActivity;
 import android.autofillservice.cts.activities.WelcomeActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.testcore.UiBot;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.RegexValidator;

@@ -18,6 +18,8 @@ package android.autofillservice.cts;
 
 import android.autofillservice.cts.activities.AttachedContextActivity;
 import android.autofillservice.cts.activities.AttachedContextActivity.FillExpectation;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
 
 import org.junit.Test;
 

@@ -17,7 +17,7 @@
 package android.autofillservice.cts.activities;
 
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.Timeouts;
+import android.autofillservice.cts.testcore.Timeouts;
 import android.os.Bundle;
 import android.widget.FrameLayout;
 

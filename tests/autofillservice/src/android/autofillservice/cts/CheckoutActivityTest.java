@@ -15,14 +15,6 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.assertListValue;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.Helper.assertToggleIsSanitized;
-import static android.autofillservice.cts.Helper.assertToggleValue;
-import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.activities.CheckoutActivity.ID_ADDRESS;
 import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_EXPIRATION;
 import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_NUMBER;
@@ -35,6 +27,14 @@ import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_ADDR
 import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_CC_EXPIRATION_NEVER;
 import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_CC_EXPIRATION_TODAY;
 import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_CC_EXPIRATION_TOMORROW;
+import static android.autofillservice.cts.testcore.Helper.assertListValue;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.testcore.Helper.assertToggleIsSanitized;
+import static android.autofillservice.cts.testcore.Helper.assertToggleValue;
+import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.view.View.AUTOFILL_TYPE_LIST;
 
@@ -42,10 +42,19 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.activities.CheckoutActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.testcore.MultipleTimesRadioGroupListener;
+import android.autofillservice.cts.testcore.MultipleTimesTimeListener;
+import android.autofillservice.cts.testcore.OneTimeCompoundButtonListener;
+import android.autofillservice.cts.testcore.OneTimeDateListener;
+import android.autofillservice.cts.testcore.OneTimeSpinnerListener;
+import android.autofillservice.cts.testcore.OneTimeTextWatcher;
 import android.icu.util.Calendar;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;

@@ -16,6 +16,8 @@
 package android.autofillservice.cts;
 
 import android.autofillservice.cts.activities.AbstractWebViewActivity;
+import android.autofillservice.cts.testcore.IdMode;
+import android.autofillservice.cts.testcore.UiBot;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

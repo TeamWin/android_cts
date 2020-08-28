@@ -19,10 +19,10 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.AlertDialog;
-import android.autofillservice.cts.OneTimeTextWatcher;
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.UiBot;
-import android.autofillservice.cts.Visitor;
+import android.autofillservice.cts.testcore.OneTimeTextWatcher;
+import android.autofillservice.cts.testcore.UiBot;
+import android.autofillservice.cts.testcore.Visitor;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Bundle;

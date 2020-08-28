@@ -20,12 +20,12 @@ import static android.widget.ArrayAdapter.createFromResource;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.autofillservice.cts.OneTimeCompoundButtonListener;
-import android.autofillservice.cts.OneTimeRadioGroupListener;
-import android.autofillservice.cts.OneTimeSpinnerListener;
-import android.autofillservice.cts.OneTimeTextWatcher;
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.Visitor;
+import android.autofillservice.cts.testcore.OneTimeCompoundButtonListener;
+import android.autofillservice.cts.testcore.OneTimeRadioGroupListener;
+import android.autofillservice.cts.testcore.OneTimeSpinnerListener;
+import android.autofillservice.cts.testcore.OneTimeTextWatcher;
+import android.autofillservice.cts.testcore.Visitor;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;

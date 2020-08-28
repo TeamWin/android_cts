@@ -22,6 +22,8 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.UiBot;
 import android.content.Intent;
 import android.service.autofill.CustomDescription;
 import android.support.test.uiautomator.By;

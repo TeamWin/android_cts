@@ -16,12 +16,15 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.activities.ViewAttributesTestActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.platform.test.annotations.AppModeFull;
 import android.view.View;
 import android.view.autofill.AutofillValue;

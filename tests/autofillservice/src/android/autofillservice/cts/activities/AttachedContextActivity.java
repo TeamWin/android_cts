@@ -16,8 +16,8 @@
 
 package android.autofillservice.cts.activities;
 
-import android.autofillservice.cts.OneTimeTextWatcher;
 import android.autofillservice.cts.R;
+import android.autofillservice.cts.testcore.OneTimeTextWatcher;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;

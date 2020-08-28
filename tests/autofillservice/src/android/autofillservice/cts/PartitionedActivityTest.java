@@ -15,13 +15,6 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
-import static android.autofillservice.cts.Helper.assertHasFlags;
-import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.Helper.assertValue;
-import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.Helper.getMaxPartitions;
-import static android.autofillservice.cts.Helper.setMaxPartitions;
 import static android.autofillservice.cts.activities.GridActivity.ID_L1C1;
 import static android.autofillservice.cts.activities.GridActivity.ID_L1C2;
 import static android.autofillservice.cts.activities.GridActivity.ID_L2C1;
@@ -30,6 +23,13 @@ import static android.autofillservice.cts.activities.GridActivity.ID_L3C1;
 import static android.autofillservice.cts.activities.GridActivity.ID_L3C2;
 import static android.autofillservice.cts.activities.GridActivity.ID_L4C1;
 import static android.autofillservice.cts.activities.GridActivity.ID_L4C2;
+import static android.autofillservice.cts.testcore.Helper.UNUSED_AUTOFILL_VALUE;
+import static android.autofillservice.cts.testcore.Helper.assertHasFlags;
+import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.testcore.Helper.assertValue;
+import static android.autofillservice.cts.testcore.Helper.getContext;
+import static android.autofillservice.cts.testcore.Helper.getMaxPartitions;
+import static android.autofillservice.cts.testcore.Helper.setMaxPartitions;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
@@ -41,11 +41,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.activities.AuthenticationActivity;
 import android.autofillservice.cts.activities.GridActivity.FillExpectation;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;

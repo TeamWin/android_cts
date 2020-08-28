@@ -15,16 +15,18 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
-import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.activities.AbstractDatePickerActivity.ID_DATE_PICKER;
 import static android.autofillservice.cts.activities.AbstractDatePickerActivity.ID_OUTPUT;
+import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
+import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.activities.DatePickerSpinnerActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.icu.text.SimpleDateFormat;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CustomDescription;

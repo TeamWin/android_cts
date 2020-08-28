@@ -150,14 +150,14 @@
         <activity android:name=".activities.SimpleBeforeLoginActivity"/>
         <activity android:name=".activities.NonAutofillableActivity"/>
 
-        <receiver android:name=".SelfDestructReceiver"
+        <receiver android:name=".testcore.SelfDestructReceiver"
              android:exported="true"
              android:process="android.autofillservice.cts.outside"/>
-        <receiver android:name=".OutOfProcessLoginActivityFinisherReceiver"
+        <receiver android:name=".testcore.OutOfProcessLoginActivityFinisherReceiver"
              android:exported="true"
              android:process="android.autofillservice.cts.outside"/>
 
-        <service android:name=".InstrumentedAutoFillService"
+        <service android:name=".testcore.InstrumentedAutoFillService"
              android:label="InstrumentedAutoFillService"
              android:permission="android.permission.BIND_AUTOFILL_SERVICE"
              android:exported="true">
@@ -165,8 +165,8 @@
                 <action android:name="android.service.autofill.AutofillService"/>
             </intent-filter>
         </service>
-        <service android:name=".InstrumentedAutoFillServiceCompatMode"
-             android:label="InstrumentedAutoFillServiceCompatMode"
+        <service android:name=".testcore.InstrumentedAutoFillServiceCompatMode"
+             android:label="testcore.InstrumentedAutoFillServiceCompatMode"
              android:permission="android.permission.BIND_AUTOFILL_SERVICE"
              android:exported="true">
             <intent-filter>
@@ -176,7 +176,7 @@
                  android:resource="@xml/autofill_service_compat_mode_config">
             </meta-data>
         </service>
-        <service android:name=".inline.InstrumentedAutoFillServiceInlineEnabled"
+        <service android:name=".testcore.InstrumentedAutoFillServiceInlineEnabled"
              android:label="InstrumentedAutoFillServiceInlineEnabled"
              android:permission="android.permission.BIND_AUTOFILL_SERVICE"
              android:exported="true">
@@ -187,7 +187,7 @@
                  android:resource="@xml/autofill_service_inline_enabled">
             </meta-data>
         </service>
-        <service android:name=".NoOpAutofillService"
+        <service android:name=".testcore.NoOpAutofillService"
              android:label="NoOpAutofillService"
              android:permission="android.permission.BIND_AUTOFILL_SERVICE"
              android:exported="true">
@@ -196,15 +196,15 @@
             </intent-filter>
         </service>
         <!--  BadAutofillService does not declare the proper permission -->
-        <service android:name=".BadAutofillService"
-             android:label="BadAutofillService"
+        <service android:name=".testcore.BadAutofillService"
+             android:label="testcore.BadAutofillService"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.service.autofill.AutofillService"/>
             </intent-filter>
         </service>
 
-        <service android:name=".augmented.CtsAugmentedAutofillService"
+        <service android:name=".testcore.CtsAugmentedAutofillService"
              android:label="CtsAugmentedAutofillService"
              android:permission="android.permission.BIND_AUGMENTED_AUTOFILL_SERVICE"
              android:exported="true">

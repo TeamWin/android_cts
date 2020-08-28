@@ -15,7 +15,7 @@
  */
 package android.autofillservice.cts.activities;
 
-import static android.autofillservice.cts.Helper.getAutofillServiceName;
+import static android.autofillservice.cts.testcore.Helper.getAutofillServiceName;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -32,7 +32,7 @@ public class OnCreateServiceStatusVerifierActivity extends AbstractAutoFillActiv
     private static final String TAG = "OnCreateServiceStatusVerifierActivity";
 
     public static final String SERVICE_NAME =
-            android.autofillservice.cts.NoOpAutofillService.SERVICE_NAME;
+            android.autofillservice.cts.testcore.NoOpAutofillService.SERVICE_NAME;
 
     private String mSettingsOnCreate;
     private boolean mEnabledOnCreate;

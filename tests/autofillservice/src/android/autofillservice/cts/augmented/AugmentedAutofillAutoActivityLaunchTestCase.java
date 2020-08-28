@@ -15,13 +15,16 @@
  */
 package android.autofillservice.cts.augmented;
 
-import static android.autofillservice.cts.Helper.allowOverlays;
-import static android.autofillservice.cts.Helper.disallowOverlays;
+import static android.autofillservice.cts.testcore.Helper.allowOverlays;
+import static android.autofillservice.cts.testcore.Helper.disallowOverlays;
 
 import android.autofillservice.cts.AutoFillServiceTestCase;
-import android.autofillservice.cts.UiBot;
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
-import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedReplier;
+import android.autofillservice.cts.testcore.AugmentedHelper;
+import android.autofillservice.cts.testcore.AugmentedUiBot;
+import android.autofillservice.cts.testcore.CtsAugmentedAutofillService;
+import android.autofillservice.cts.testcore.CtsAugmentedAutofillService.AugmentedReplier;
+import android.autofillservice.cts.testcore.UiBot;
 import android.content.AutofillOptions;
 import android.view.autofill.AutofillManager;
 

@@ -15,12 +15,12 @@
  */
 package android.autofillservice.cts.activities;
 
-import static android.autofillservice.cts.Timeouts.WEBVIEW_TIMEOUT;
+import static android.autofillservice.cts.testcore.Timeouts.WEBVIEW_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.UiBot;
+import android.autofillservice.cts.testcore.UiBot;
 import android.os.Bundle;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;

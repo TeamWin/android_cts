@@ -15,7 +15,7 @@
  */
 package android.autofillservice.cts.activities;
 
-import static android.autofillservice.cts.Timeouts.FILL_TIMEOUT;
+import static android.autofillservice.cts.testcore.Timeouts.FILL_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 

@@ -15,24 +15,27 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.CustomDescriptionHelper.ID_HIDE;
-import static android.autofillservice.cts.CustomDescriptionHelper.ID_PASSWORD_MASKED;
-import static android.autofillservice.cts.CustomDescriptionHelper.ID_PASSWORD_PLAIN;
-import static android.autofillservice.cts.CustomDescriptionHelper.ID_SHOW;
-import static android.autofillservice.cts.CustomDescriptionHelper.ID_USERNAME_MASKED;
-import static android.autofillservice.cts.CustomDescriptionHelper.ID_USERNAME_PLAIN;
-import static android.autofillservice.cts.CustomDescriptionHelper.newCustomDescriptionWithHiddenFields;
-import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
-import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_INPUT;
 import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.CustomDescriptionHelper.ID_HIDE;
+import static android.autofillservice.cts.testcore.CustomDescriptionHelper.ID_PASSWORD_MASKED;
+import static android.autofillservice.cts.testcore.CustomDescriptionHelper.ID_PASSWORD_PLAIN;
+import static android.autofillservice.cts.testcore.CustomDescriptionHelper.ID_SHOW;
+import static android.autofillservice.cts.testcore.CustomDescriptionHelper.ID_USERNAME_MASKED;
+import static android.autofillservice.cts.testcore.CustomDescriptionHelper.ID_USERNAME_PLAIN;
+import static android.autofillservice.cts.testcore.CustomDescriptionHelper.newCustomDescriptionWithHiddenFields;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD_LABEL;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME_LABEL;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.testcore.Timeouts;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.FillContext;

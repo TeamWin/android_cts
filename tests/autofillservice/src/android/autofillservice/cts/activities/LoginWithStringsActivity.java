@@ -16,6 +16,7 @@
 package android.autofillservice.cts.activities;
 
 import android.autofillservice.cts.R;
+
 /**
  * Same as {@link LoginActivity}, but with the texts for some fields set from resources.
  */

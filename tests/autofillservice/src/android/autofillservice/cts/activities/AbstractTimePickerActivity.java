@@ -17,10 +17,10 @@ package android.autofillservice.cts.activities;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.autofillservice.cts.MultipleTimesTextWatcher;
-import android.autofillservice.cts.MultipleTimesTimeListener;
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.Visitor;
+import android.autofillservice.cts.testcore.MultipleTimesTextWatcher;
+import android.autofillservice.cts.testcore.MultipleTimesTimeListener;
+import android.autofillservice.cts.testcore.Visitor;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
