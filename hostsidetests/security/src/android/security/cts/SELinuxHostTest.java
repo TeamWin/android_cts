@@ -419,27 +419,6 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
-     * Asserts that no vendor domains are exempted from the prohibition on Binder use.
-     *
-     * <p>NOTE: binder_in_vendor_violators attribute is only there to help bring up Treble devices.
-     * It offers a convenient way to temporarily bypass the prohibition on Binder use in vendor
-     * domains. This attribute must not be used on production Treble devices.
-     */
-    public void testNoExemptionsForBinderInVendorBan() throws Exception {
-        if (!isFullTrebleDevice()) {
-            return;
-        }
-
-        Set<String> types =
-            sepolicyAnalyzeGetTypesAssociatedWithAttribute("binder_in_vendor_violators");
-        if (!types.isEmpty()) {
-            List<String> sortedTypes = new ArrayList<>(types);
-            Collections.sort(sortedTypes);
-            fail("Policy exempts vendor domains from ban on Binder: " + sortedTypes);
-        }
-    }
-
-    /**
      * Asserts that no HAL server domains are exempted from the prohibition of socket use with the
      * only exceptions for the automotive device type.
      */
