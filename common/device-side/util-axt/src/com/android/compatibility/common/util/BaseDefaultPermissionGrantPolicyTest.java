@@ -185,7 +185,7 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
      */
     public void setCNGmsException(String pkg, String sha256, String... permissions) {
         if (!isCnGmsBuild()) {
-            Log.e(LOG_TAG, "Regular GMS build, skip whitelisting: " + pkg);
+            Log.e(LOG_TAG, "Regular GMS build, skip allowlisting: " + pkg);
             return;
         }
         setException(pkg, sha256, permissions);
@@ -205,7 +205,7 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
     public void setCNGmsExceptionWithMetadata(String company, String metadata, String pkg,
             String sha256, String... permissions) {
         if (!isCnGmsBuild()) {
-            Log.e(LOG_TAG, "Regular GMS build, skip whitelisting: " + pkg);
+            Log.e(LOG_TAG, "Regular GMS build, skip allowlisting: " + pkg);
             return;
         }
         setExceptionWithMetadata(company, metadata, pkg, sha256, permissions);
