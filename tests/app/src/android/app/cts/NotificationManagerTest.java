@@ -2084,7 +2084,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
 
             // delay for streams to get into correct mute states
-            Thread.sleep(50);
+            Thread.sleep(1000);
             assertTrue("Music (media) stream should be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
             assertTrue("System stream should be muted",
@@ -2125,7 +2125,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
 
             // delay for streams to get into correct mute states
-            Thread.sleep(50);
+            Thread.sleep(1000);
             assertFalse("Music (media) stream should not be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
             assertTrue("System stream should be muted",
@@ -3554,8 +3554,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testOriginalChannelImportance() {
-        NotificationChannel channel = new NotificationChannel(
-                "my channel", "my channel", IMPORTANCE_HIGH);
+        NotificationChannel channel = new NotificationChannel(mId, "my channel", IMPORTANCE_HIGH);
 
         mNotificationManager.createNotificationChannel(channel);
 
