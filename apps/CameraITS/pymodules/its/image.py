@@ -44,6 +44,8 @@ MAX_LUT_SIZE = 65536
 
 NUM_TRYS = 2
 NUM_FRAMES = 4
+G_CHANNEL = 1
+LIGHT_ON_THRESHOLD = 0.1  # image is [0,1] range
 
 
 def convert_capture_to_rgb_image(cap,
@@ -668,6 +670,34 @@ def get_image_patch(img, xnorm, ynorm, wnorm, hnorm):
         return img[ytile:ytile+htile,xtile:xtile+wtile].copy()
     else:
         return img[ytile:ytile+htile,xtile:xtile+wtile,:].copy()
+
+
+def validate_lighting(img):
+    """Evaluate four corner patches of image to check if light is ON or OFF.
+    Args:
+    img: numpy float array of RGB image, with pixel values in [0, 1].
+
+    Returns:
+    True if the G channel of the RGB mean is <0.1; otherwise False.
+    """
+
+    top_left_patch = its.image.get_image_patch(img, 0, 0, 0.1, 0.1)
+    top_right_patch = its.image.get_image_patch(img, 0.9, 0, 0.1, 0.1)
+    bottom_left_patch = its.image.get_image_patch(img, 0, 0.9, 0.1, 0.1)
+    bottom_right_patch = its.image.get_image_patch(img, 0.9, 0.9, 0.1, 0.1)
+    top_left_g_mean = its.image.compute_image_means(top_left_patch)[G_CHANNEL]
+    top_right_g_mean = its.image.compute_image_means(top_right_patch)[G_CHANNEL]
+    bottom_left_g_mean = its.image.compute_image_means(bottom_left_patch)[G_CHANNEL]
+    bottom_right_g_mean = its.image.compute_image_means(bottom_right_patch)[G_CHANNEL]
+    if (top_left_g_mean > LIGHT_ON_THRESHOLD and
+        top_right_g_mean > LIGHT_ON_THRESHOLD and
+        bottom_left_g_mean > LIGHT_ON_THRESHOLD and
+        bottom_right_g_mean > LIGHT_ON_THRESHOLD):
+        print "Lights are ON in test rig."
+        return True
+    else:
+        assert 0, "Lights are OFF in test rig. Please turn lights on and retry."
+        return False
 
 
 def compute_image_means(img):
