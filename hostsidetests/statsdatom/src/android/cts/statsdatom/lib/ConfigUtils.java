@@ -274,7 +274,7 @@ public final class ConfigUtils {
         Files.write(config.toByteArray(), configFile);
 
         // Push config to temporary location
-        String remotePath = "/data/local/tmp" + configFile.getName();
+        String remotePath = "/data/local/tmp/" + configFile.getName();
         device.pushFile(configFile, remotePath);
 
         // Send config to statsd
