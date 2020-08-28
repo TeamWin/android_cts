@@ -138,10 +138,10 @@ static void logBytes(uint8_t* bytes, int count) {
 
     char* logBuff = new char[buffSize];
     for (int dataIndex = 0; dataIndex < count; dataIndex++) {
-        if (dataIndex != 0) {
-            strcpy(logBuff + (dataIndex * 6), ", ");
-         }
-        sprintf(logBuff + (dataIndex * 6) + 2, "0x%.2X", bytes[dataIndex]);
+        sprintf(logBuff + (dataIndex * 6), "0x%.2X", bytes[dataIndex]);
+        if (dataIndex < count - 1) {
+            sprintf(logBuff + (dataIndex * 6) + 4, ", ");
+        }
     }
     ALOGD("%s", logBuff);
     delete[] logBuff;

@@ -43,6 +43,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -320,7 +321,11 @@ public final class MockIme extends InputMethodService {
                         mInlineSuggestionsExtras = command.getExtras();
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     case "verifyGetDisplay":
-                        return getDisplay() != null && configContext.getDisplay() != null;
+                        try {
+                            return verifyGetDisplay();
+                        } catch (UnsupportedOperationException e) {
+                            return e;
+                        }
                     case "verifyGetWindowManager":
                         return getSystemService(WindowManager.class) != null
                                 && configContext.getSystemService(WindowManager.class) != null;
@@ -336,6 +341,17 @@ public final class MockIme extends InputMethodService {
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;
         });
+    }
+
+    private boolean verifyGetDisplay() throws UnsupportedOperationException {
+        final Display display;
+        final Display configContextDisplay;
+        final Configuration config = new Configuration();
+        config.setToDefaults();
+        final Context configContext = createConfigurationContext(config);
+        display = getDisplay();
+        configContextDisplay = configContext.getDisplay();
+        return display != null && configContextDisplay != null;
     }
 
     @Nullable
@@ -425,7 +441,9 @@ public final class MockIme extends InputMethodService {
             } else {
                 registerReceiver(mCommandReceiver, filter, null /* broadcastPermission */, handler);
             }
-
+            if (mSettings.isVerifyGetDisplayOnCreate()) {
+                getTracer().onVerify("getDisplay", this::verifyGetDisplay);
+            }
             final int windowFlags = mSettings.getWindowFlags(0);
             final int windowFlagsMask = mSettings.getWindowFlagsMask(0);
             if (windowFlags != 0 || windowFlagsMask != 0) {
@@ -945,6 +963,12 @@ public final class MockIme extends InputMethodService {
 
         void onCreate(@NonNull Runnable runnable) {
             recordEventInternal("onCreate", runnable);
+        }
+
+        void onVerify(String name, @NonNull BooleanSupplier supplier) {
+            final Bundle arguments = new Bundle();
+            arguments.putString("name", name);
+            recordEventInternal("onVerify", supplier::getAsBoolean, arguments);
         }
 
         void onConfigureWindow(Window win, boolean isFullscreen, boolean isCandidatesOnly,
