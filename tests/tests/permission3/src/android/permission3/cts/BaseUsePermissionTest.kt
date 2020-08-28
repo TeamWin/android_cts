@@ -448,6 +448,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                             data = Uri.fromParts("package", APP_PACKAGE_NAME, null)
                             addCategory(Intent.CATEGORY_DEFAULT)
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                         }
                 )
                 // Open the permissions UI
