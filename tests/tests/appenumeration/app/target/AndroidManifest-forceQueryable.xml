@@ -18,6 +18,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.appenumeration.forcequeryable">
     <application android:forceQueryable="true">
+        <!-- This app will not be a system app and so must be installed as forceQueryable by the
+             test framework -->
         <uses-library android:name="android.test.runner" />
     </application>
 </manifest>
