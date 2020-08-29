@@ -24,7 +24,6 @@ import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertNotEquals;
 
-import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.app.backup.BackupManager;
 import android.app.backup.BackupManagerMonitor;
@@ -34,10 +33,10 @@ import android.app.backup.RestoreSet;
 import android.content.Context;
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import android.platform.test.annotations.AppModeFull;
 import androidx.test.runner.AndroidJUnit4;
 
-// import com.android.compatibility.common.util.SystemUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,15 +54,19 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 public class RestoreSessionTest {
-    private static final String PACKAGE_1 = "android.cts.backup.restoresessionapp1";
-    private static final String PACKAGE_2 = "android.cts.backup.restoresessionapp2";
-    private static final String PACKAGE_3 = "android.cts.backup.restoresessionapp3";
+    private static final String[] PACKAGES = new String[] {
+        "android.cts.backup.restoresessionapp1",
+        "android.cts.backup.restoresessionapp2",
+        "android.cts.backup.restoresessionapp3"
+    };
 
+    private static final int PACKAGES_COUNT = 3;
     private static final int RESTORE_TIMEOUT_SECONDS = 10;
 
     private BackupManager mBackupManager;
     private Set<String> mRestorePackages;
     private Set<String> mNonRestorePackages;
+    private CountDownLatch mRestoreSetsLatch;
     private CountDownLatch mRestoreObserverLatch;
     private RestoreSession mRestoreSession;
     private UiAutomation mUiAutomation;
@@ -89,7 +92,7 @@ public class RestoreSessionTest {
 
                     mRestoreToken = token;
 
-                    mRestoreObserverLatch.countDown();
+                    mRestoreSetsLatch.countDown();
                 }
 
                 @Override
@@ -119,7 +122,6 @@ public class RestoreSessionTest {
 
                     assertEquals(
                             "Restore finished with error: " + error, BackupManager.SUCCESS, error);
-                    mRestoreSession.endRestoreSession();
                     mRestoreObserverLatch.countDown();
                 }
             };
@@ -129,24 +131,47 @@ public class RestoreSessionTest {
         Context context = getTargetContext();
         mBackupManager = new BackupManager(context);
 
-        mRestorePackages = new HashSet<>();
-        mRestorePackages.add(PACKAGE_1);
-        mRestorePackages.add(PACKAGE_2);
-
-        mNonRestorePackages = new HashSet<>();
-        mNonRestorePackages.add(PACKAGE_3);
-
         mRestoreToken = 0L;
 
         mUiAutomation = getInstrumentation().getUiAutomation();
         mUiAutomation.adoptShellPermissionIdentity();
-
-        loadAvailableRestoreSets();
+        mRestoreSession = mBackupManager.beginRestoreSession();
     }
 
     @After
     public void tearDown() {
         mUiAutomation.dropShellPermissionIdentity();
+        mRestoreSession.endRestoreSession();
+    }
+
+    /**
+     * Restore packages added to mRestorePackages and verify only those packages are restored. Use
+     * {@link RestoreSession#restorePackage(String, RestoreObserver)}
+     */
+
+    @Test
+    public void testRestorePackage() throws InterruptedException {
+        initPackagesToRestore(/* packagesCount */ 1);
+        testRestorePackagesInternal((BackupManagerMonitor monitor) -> {
+            mRestoreSession.restorePackage(
+                mRestorePackages.iterator().next(),
+                mRestoreObserver);
+        }, false);
+    }
+
+    /**
+     * Restore packages added to mRestorePackages and verify only those packages are restored. Use
+     * {@link RestoreSession#restorePackage(String, RestoreObserver, BackupManagerMonitor)}
+     */
+    @Test
+    public void testRestorePackageWithMonitorParam() throws InterruptedException {
+        initPackagesToRestore(/* packagesCount */ 1);
+        testRestorePackagesInternal((BackupManagerMonitor monitor) -> {
+            mRestoreSession.restorePackage(
+                mRestorePackages.iterator().next(),
+                mRestoreObserver,
+                monitor);
+        }, true);
     }
 
     /**
@@ -155,7 +180,13 @@ public class RestoreSessionTest {
      */
     @Test
     public void testRestorePackages() throws InterruptedException {
-        testRestorePackagesInternal(false);
+        initPackagesToRestore(/* packagesCount */ 2);
+        testRestorePackagesInternal((BackupManagerMonitor monitor) -> {
+            mRestoreSession.restorePackages(
+                mRestoreToken,
+                mRestoreObserver,
+                mRestorePackages);
+        }, false);
     }
 
     /**
@@ -164,24 +195,30 @@ public class RestoreSessionTest {
      */
     @Test
     public void testRestorePackagesWithMonitorParam() throws InterruptedException {
-        testRestorePackagesInternal(true);
+        initPackagesToRestore(/* packagesCount */ 2);
+        testRestorePackagesInternal((BackupManagerMonitor monitor) -> {
+            mRestoreSession.restorePackages(
+                mRestoreToken,
+                mRestoreObserver,
+                mRestorePackages,
+                monitor);
+        }, true);
     }
 
-    private void testRestorePackagesInternal(boolean useMonitorParam) throws InterruptedException {
-        // Wait for the callbacks from RestoreObserver: one for each package from
-        // mRestorePackages plus restoreStarting and restoreFinished.
-        mRestoreObserverLatch = new CountDownLatch(mRestorePackages.size() + 2);
+    private void testRestorePackagesInternal(RestoreRunner restoreRunner, boolean useMonitorParam)
+            throws InterruptedException {
         CountDownLatch backupMonitorLatch = null;
         if (useMonitorParam) {
             // Wait for the callbacks from BackupManagerMonitor: one for each package.
             backupMonitorLatch = new CountDownLatch(mRestorePackages.size());
-            mRestoreSession.restorePackages(
-                    mRestoreToken,
-                    mRestoreObserver,
-                    mRestorePackages,
-                    new TestBackupMonitor(backupMonitorLatch));
+            BackupManagerMonitor backupMonitor = new TestBackupMonitor(backupMonitorLatch);
+
+            loadAvailableRestoreSets(backupMonitor);
+
+            restoreRunner.runRestore(backupMonitor);
         } else {
-            mRestoreSession.restorePackages(mRestoreToken, mRestoreObserver, mRestorePackages);
+            loadAvailableRestoreSets(null);
+            restoreRunner.runRestore(null);
         }
 
         awaitResultAndAssertSuccess(mRestoreObserverLatch);
@@ -190,13 +227,14 @@ public class RestoreSessionTest {
         }
     }
 
-    private void loadAvailableRestoreSets() throws InterruptedException {
-        // Wait for getAvailableRestoreSets to finish and the callback to be fired.
-        mRestoreObserverLatch = new CountDownLatch(1);
-        mRestoreSession = mBackupManager.beginRestoreSession();
+    private void loadAvailableRestoreSets(@Nullable BackupManagerMonitor monitor)
+            throws InterruptedException {
+        mRestoreSetsLatch = new CountDownLatch(1);
         assertEquals(
-                BackupManager.SUCCESS, mRestoreSession.getAvailableRestoreSets(mRestoreObserver));
-        awaitResultAndAssertSuccess(mRestoreObserverLatch);
+                BackupManager.SUCCESS, monitor == null
+                ? mRestoreSession.getAvailableRestoreSets(mRestoreObserver)
+                : mRestoreSession.getAvailableRestoreSets(mRestoreObserver, monitor));
+        awaitResultAndAssertSuccess(mRestoreSetsLatch);
 
         assertNotEquals("Restore set not found", 0L, mRestoreToken);
     }
@@ -213,6 +251,23 @@ public class RestoreSessionTest {
     private void awaitResultAndAssertSuccess(CountDownLatch latch) throws InterruptedException {
         boolean waitResult = latch.await(RESTORE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertTrue("Restore timed out", waitResult);
+    }
+
+    private void initPackagesToRestore(int packagesCount) {
+        mRestorePackages = new HashSet<>();
+        mNonRestorePackages = new HashSet<>();
+
+        for (int i = 0; i < PACKAGES_COUNT; i++) {
+            if (i < packagesCount) {
+                mRestorePackages.add(PACKAGES[i]);
+            } else {
+                mNonRestorePackages.add(PACKAGES[i]);
+            }
+        }
+
+        // Wait for the callbacks from RestoreObserver: one for each package from
+        // mRestorePackages plus restoreStarting and restoreFinished.
+        mRestoreObserverLatch = new CountDownLatch(mRestorePackages.size() + 2);
     }
 
     private static class TestBackupMonitor extends BackupManagerMonitor {
@@ -233,5 +288,10 @@ public class RestoreSessionTest {
                     eventType);
             mLatch.countDown();
         }
+    }
+
+    @FunctionalInterface
+    private interface RestoreRunner {
+        void runRestore(BackupManagerMonitor monitor) throws InterruptedException;
     }
 }

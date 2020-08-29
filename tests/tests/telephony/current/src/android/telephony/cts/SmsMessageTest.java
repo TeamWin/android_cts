@@ -18,6 +18,7 @@ package android.telephony.cts;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -382,6 +383,53 @@ public class SmsMessageTest {
                 SmsManager.STATUS_ON_ICC_READ,
                 scAddress, destinationAddress, message, System.currentTimeMillis());
         assertNotNull(smsPdu);
+    }
+
+    @Test
+    public void testGetSubmitPduEncodedMessage() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        String destinationAddress = "18004664411";
+        String message = "This is a test message";
+
+        byte[] gsmMsg = SmsMessage.getSubmitPduEncodedMessage(true, destinationAddress,
+                message,
+                1, // Encoding code unit size. Pick ENCODING_7BIT here.
+                0, // GSM national language table. It's usually 0.
+                0, // GSM national language table. It's usually 0.
+                1, // Reference number of concatenated SMS. Pick 1 for simplicity.
+                1, // Sequence number of concatenated SMS. Pick 1 for simplicity.
+                2); // Count of messages of concatenated SMS. Pick 2 for simplicity.
+
+        // Encoded gsm message.
+        byte[] expectedGsmMsg = {65, 0, 11, -127, -127, 0, 100, 70, 20, -15, 0, 0, 29, 5, 0, 3, 1,
+                2, 1, -88, -24, -12, 28, -108, -98, -125, -62, 32, 122, 121, 78, 7, -75, -53, -13,
+                121, -8, 92, 6};
+
+        // See comments for gsmMsg.
+        byte[] cdmaMsg = SmsMessage.getSubmitPduEncodedMessage(false, destinationAddress,
+                message, 1, 0, 0, 1, 1, 2);
+
+        // Encoded cdma message.
+        byte[] expectedCdmaMsg = {0, 0, 16, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 1, 8, 10, 10,
+                4, 6, 6, 4, 4, 1, 1, 0, 0, 0, 35, 0, 3, 32, 0, 24, 1, 28, 72, -24, 40, 0, 24, 8, 16,
+                13, 71, 71, -96, -28, -92, -12, 30, 17, 3, -45, -54, 112, 61, -82, 95, -101, -49,
+                -62, -32, 48};
+
+        assertArrayEquals(expectedGsmMsg, gsmMsg);
+        assertArrayEquals(expectedCdmaMsg, cdmaMsg);
+    }
+
+    @Test
+    public void testCreateFromNativeSmsSubmitPdu() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        // Short message with status RECEIVED_READ and size 0. See 3GPP2 C.S0023 3.4.27
+        byte[] submitPdu = {1, 0};
+        SmsMessage sms = SmsMessage.createFromNativeSmsSubmitPdu(submitPdu, true);
+        assertNull(sms);
     }
 
     private final static char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',

@@ -132,6 +132,7 @@ public class DownloadManagerApi28Test extends DownloadManagerTestBase {
                         Environment.DIRECTORY_DOWNLOADS), "file1.txt").getPath(),
                 createFile(Environment.getExternalStoragePublicDirectory(
                         Environment.DIRECTORY_DOCUMENTS), "file2.txt").getPath(),
+                "/sdcard/Download/file3.txt",
         };
 
         for (String path : filePaths) {

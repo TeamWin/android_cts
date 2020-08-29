@@ -26,6 +26,7 @@ android_test {
     srcs: [ "src/**/*.java" ],
 
     static_libs: [
+        "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "junit",
@@ -35,8 +36,14 @@ android_test {
 
     test_suites: [
         "cts",
+        "vts10",
         "general-tests",
         "mts",
+    ],
+
+
+    data: [
+        ":CtsWifiLocationTestApp",
     ],
 
     platform_apis: true,

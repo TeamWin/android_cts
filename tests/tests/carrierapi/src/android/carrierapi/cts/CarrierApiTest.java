@@ -133,6 +133,7 @@ public class CarrierApiTest extends AndroidTestCase {
     private static final String ALPHA_TAG_B = "tagB";
     private static final String NUMBER_A = "1234567890";
     private static final String NUMBER_B = "0987654321";
+    private static final String TESTING_PLMN = "12345";
 
     private static final String EAP_SIM_AKA_RAND = "11111111111111111111111111111111";
 
@@ -498,6 +499,7 @@ public class CarrierApiTest extends AndroidTestCase {
             mTelephonyManager.getVoiceMailAlphaTag();
             mTelephonyManager.getForbiddenPlmns();
             mTelephonyManager.getServiceState();
+            mTelephonyManager.getManualNetworkSelectionPlmn();
             mTelephonyManager.setForbiddenPlmns(new ArrayList<String>());
         } catch (SecurityException e) {
             failMessage();
@@ -566,6 +568,19 @@ public class CarrierApiTest extends AndroidTestCase {
     static final int CARRIER_PRIVILEGE_LISTENERS =
             READ_PHONE_STATE_LISTENERS | READ_PRECISE_PHONE_STATE_LISTENERS;
 
+    public void testGetManualNetworkSelectionPlmnPersisted() throws Exception {
+        if (!hasCellular) return;
+
+        try {
+            mTelephonyManager.setNetworkSelectionModeManual(
+                     TESTING_PLMN/* operatorNumeric */, true /* persistSelection */);
+            String plmn = mTelephonyManager.getManualNetworkSelectionPlmn();
+            assertEquals(TESTING_PLMN, plmn);
+        } finally {
+            mTelephonyManager.setNetworkSelectionModeAutomatic();
+        }
+    }
+
     public void testPhoneStateListener() throws Exception {
         if (!hasCellular) return;
         PhoneStateListener psl = new PhoneStateListener((Runnable r) -> { });
@@ -573,6 +588,29 @@ public class CarrierApiTest extends AndroidTestCase {
             mTelephonyManager.listen(psl, CARRIER_PRIVILEGE_LISTENERS);
         } finally {
             mTelephonyManager.listen(psl, PhoneStateListener.LISTEN_NONE);
+        }
+    }
+
+    public void testIsManualNetworkSelectionAllowed() throws Exception {
+        if (!hasCellular) return;
+
+        try {
+            assertTrue(mTelephonyManager.isManualNetworkSelectionAllowed());
+        } catch (SecurityException e) {
+            failMessage();
+        }
+    }
+
+    public void testGetNetworkSelectionMode() throws Exception {
+        if (!hasCellular) return;
+
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setNetworkSelectionModeAutomatic());
+            int networkMode = mTelephonyManager.getNetworkSelectionMode();
+            assertEquals(TelephonyManager.NETWORK_SELECTION_MODE_AUTO, networkMode);
+        } catch (SecurityException e) {
+            failMessage();
         }
     }
 

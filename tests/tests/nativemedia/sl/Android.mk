@@ -44,6 +44,6 @@ LOCAL_CTS_TEST_PACKAGE := android.nativemedia.sl
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
 
-LOCAL_CFLAGS := -Werror -Wall
+LOCAL_CFLAGS := -Werror -Wall -Wno-deprecated-declarations
 
 include $(BUILD_CTS_EXECUTABLE)

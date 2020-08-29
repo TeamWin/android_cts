@@ -52,6 +52,12 @@ public class GenerateImagesActivity extends Activity {
     private String mFinishReason;
     private boolean mFinishSuccess;
 
+    class CompressOutputThread extends Thread {
+        public void run() {
+            compressOutput();
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,9 +139,8 @@ public class GenerateImagesActivity extends Activity {
 
         // If we ran out of themes, we're done.
         if (!success) {
-            compressOutput();
-
-            finish("Image generation complete!", true);
+            CompressOutputThread compressOutputThread = new CompressOutputThread();
+            compressOutputThread.start();
         }
     }
 
@@ -182,6 +187,9 @@ public class GenerateImagesActivity extends Activity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        runOnUiThread(() -> {
+            finish("Image generation complete!", true);
+        });
     }
 
     private void finish(String reason, boolean success) {

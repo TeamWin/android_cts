@@ -15,6 +15,7 @@
  */
 package android.server.wm;
 
+import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
@@ -95,6 +96,16 @@ public class SurfaceControlTest {
         assertTrue(sc.isValid());
         sc.release();
         assertFalse(sc.isValid());
+    }
+
+    @Test
+    public void testSameSurface() {
+        final SurfaceControl.Builder b = new SurfaceControl.Builder();
+        final SurfaceControl sc = b.setName("CTS").build();
+        SurfaceControl copy = new SurfaceControl(sc, "SurfaceControlTest.testSameSurface");
+        assertTrue(copy.isSameSurface(sc));
+        sc.release();
+        copy.release();
     }
 
     private SurfaceControl buildDefaultSurface(SurfaceControl parent) {

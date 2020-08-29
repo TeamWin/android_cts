@@ -197,11 +197,6 @@ public class TextClockTest {
                             countDownAndRemove();
                         }
 
-                        @Override
-                        public void onChange(boolean selfChange, Uri uri, int userId) {
-                            countDownAndRemove();
-                        }
-
                         private void countDownAndRemove() {
                             latch.countDown();
                             resolver.unregisterContentObserver(this);

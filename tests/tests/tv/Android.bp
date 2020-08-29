@@ -27,8 +27,12 @@ android_test {
         "android.test.base",
     ],
     static_libs: [
+        "androidx.test.core",
+        "androidx.test.ext.truth",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "testng",
     ],
-    sdk_version: "test_current",
+    // sdk_version: "test_current",
+    platform_apis: true,
 }

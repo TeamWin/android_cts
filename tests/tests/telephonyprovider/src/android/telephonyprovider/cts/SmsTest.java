@@ -22,6 +22,8 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertNull;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -282,5 +284,48 @@ public class SmsTest {
                 String.valueOf(testSmsBodyEmoji));
     }
 
+    /**
+     * Verifies that subqueries are not allowed with a restricted view
+     */
+    @Test
+    public void testSubqueryNotAllowed() {
+        Uri uri = mSmsTestHelper.insertTestSms(TEST_ADDRESS, TEST_SMS_BODY);
+        assertThat(uri).isNotNull();
+
+        DefaultSmsAppHelper.stopBeingDefaultSmsApp();
+        {
+            // selection
+            Cursor cursor1 = mContentResolver.query(Telephony.Sms.CONTENT_URI,
+                    null, "seen=(SELECT seen FROM sms LIMIT 1)", null, null);
+            assertNull(cursor1);
+            Cursor cursor2 = mContentResolver.query(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI,
+                    null, "seen=(SELECT seen FROM sms LIMIT 1)", null, null);
+            assertNull(cursor2);
+        }
+
+        {
+            // projection
+            Cursor cursor1 = mContentResolver.query(Telephony.Sms.CONTENT_URI,
+                    new String[] {"(SELECT seen from sms LIMIT 1) AS d"}, null, null, null);
+            assertNull(cursor1);
+            Cursor cursor2 = mContentResolver.query(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI,
+                    new String[] {"(SELECT seen from sms LIMIT 1) AS d"}, null, null, null);
+            assertNull(cursor2);
+        }
+
+        {
+            // sort order
+            Cursor cursor1 = mContentResolver.query(Telephony.Sms.CONTENT_URI,
+                    null, null, null,
+                    "CASE (SELECT count(seen) FROM sms) WHEN 0 THEN 1 ELSE 0 END DESC");
+            assertNull(cursor1);
+            Cursor cursor2 = mContentResolver.query(Telephony.MmsSms.CONTENT_CONVERSATIONS_URI,
+                    null, null, null,
+                    "CASE (SELECT count(seen) FROM sms) WHEN 0 THEN 1 ELSE 0 END DESC");
+            assertNull(cursor2);
+        }
+
+        DefaultSmsAppHelper.ensureDefaultSmsApp();
+    }
 }
 

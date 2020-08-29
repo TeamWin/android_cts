@@ -59,11 +59,6 @@ import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiSelector;
-import android.support.test.uiautomator.Until;
 
 import androidx.annotation.NonNull;
 import androidx.test.runner.AndroidJUnit4;
@@ -391,10 +386,7 @@ public class PrintServicesTest extends BasePrintTest {
         print(adapter);
 
         // Open printer selection dropdown list to display icon on screen
-        UiObject destinationSpinner = UiDevice.getInstance(getInstrumentation())
-                .findObject(new UiSelector().resourceId(
-                        "com.android.printspooler:id/destination_spinner"));
-        destinationSpinner.click();
+        mPrintHelper.displayPrinterList();
 
         // Get the print service's icon
         PackageManager packageManager = getActivity().getPackageManager();
@@ -422,8 +414,8 @@ public class PrintServicesTest extends BasePrintTest {
 
         assertThatIconIs(renderDrawable(mIcon.loadDrawable(getActivity())));
 
-        getUiDevice().pressBack();
-        getUiDevice().pressBack();
+        mPrintHelper.closePrinterList();
+        mPrintHelper.cancelPrinting();
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
@@ -461,8 +453,7 @@ public class PrintServicesTest extends BasePrintTest {
         assertException(() -> serviceCallbacks.getService().callAttachBaseContext(getActivity()),
                 IllegalStateException.class);
 
-        getUiDevice().pressBack();
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 
@@ -680,11 +671,8 @@ public class PrintServicesTest extends BasePrintTest {
             try {
                 // Wait until printer is selected and thereby tracked
                 eventually(() -> {
-                    getUiDevice().waitForIdle();
                     // Open info activity which executes the code above
-                    getUiDevice().wait(
-                            Until.findObject(By.res("com.android.printspooler:id/more_info")),
-                            OPERATION_TIMEOUT_MILLIS).click();
+                    mPrintHelper.displayMoreInfo();
 
                     eventually(() -> {
                         synchronized (trackedPrinters) {
@@ -696,10 +684,10 @@ public class PrintServicesTest extends BasePrintTest {
                 InfoActivity.clearObservers();
             }
         } finally {
-            getUiDevice().pressBack();
+            mPrintHelper.closePrinterList();
         }
 
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
 }

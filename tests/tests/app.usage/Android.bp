@@ -28,7 +28,7 @@ android_test {
         "android.test.base",
         "android.test.runner",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.java", "TestApp1/**/*.java", "TestApp1/**/*.aidl"],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

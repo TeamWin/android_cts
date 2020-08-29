@@ -21,6 +21,10 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
+        "truth-host-prebuilt",
+    ],
+    static_libs: [
+        "compatibility-host-util-axt"
     ],
     // Tag this module as a cts test artifact
     test_suites: [

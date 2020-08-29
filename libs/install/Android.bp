@@ -19,6 +19,7 @@ android_test_helper_app {
     sdk_version: "current",
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v1"],
+    apex_available: [ "com.android.apex.apkrollback.test_v1" ],
 }
 
 android_test_helper_app {
@@ -27,6 +28,7 @@ android_test_helper_app {
     sdk_version: "current",
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v2"],
+    apex_available: [ "com.android.apex.apkrollback.test_v2" ],
 }
 
 android_test_helper_app {
@@ -43,6 +45,7 @@ android_test_helper_app {
     sdk_version: "current",
     srcs: ["testapp/src/**/*.java"],
     resource_dirs: ["testapp/res_v2"],
+    apex_available: [ "com.android.apex.apkrollback.test_v2Crashing" ],
 }
 
 android_test_helper_app {
@@ -90,7 +93,7 @@ android_test_helper_app {
 java_library {
     name: "cts-install-lib",
     srcs: ["src/**/*.java"],
-    static_libs: ["androidx.test.rules", "truth-prebuilt"],
+    static_libs: ["androidx.test.rules", "compatibility-device-util-axt", "truth-prebuilt"],
     sdk_version: "test_current",
     java_resources: [
         ":TestAppAv1",
@@ -102,5 +105,8 @@ java_library {
         ":TestAppACrashingV2",
         ":TestAppASplitV1",
         ":TestAppASplitV2",
+        ":StagedInstallTestApexV1",
+        ":StagedInstallTestApexV2",
+        ":StagedInstallTestApexV3",
     ],
 }

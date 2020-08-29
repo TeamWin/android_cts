@@ -33,9 +33,15 @@ android_test {
         "libnativehelper_compat_libc++",
     ],
 
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "app/GalleryTestApp/src/**/*.java"],
 
     // uncomment when b/140885436 is fixed
     // sdk_version: "test_current",
     min_sdk_version: "21",
+
+    platform_apis: true,
+
+    data: [":CtsProviderGalleryTestApp"],
 }

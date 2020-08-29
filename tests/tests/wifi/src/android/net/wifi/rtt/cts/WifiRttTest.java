@@ -16,9 +16,14 @@
 
 package android.net.wifi.rtt.cts;
 
+import static org.mockito.Mockito.mock;
+
+import android.net.MacAddress;
 import android.net.wifi.ScanResult;
+import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.rtt.RangingRequest;
 import android.net.wifi.rtt.RangingResult;
+import android.net.wifi.rtt.ResponderLocation;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.DeviceReportLog;
@@ -35,7 +40,7 @@ import java.util.List;
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 public class WifiRttTest extends TestBase {
     // Number of scans to do while searching for APs supporting IEEE 802.11mc
-    private static final int NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP = 2;
+    private static final int NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP = 5;
 
     // Number of RTT measurements per AP
     private static final int NUM_OF_RTT_ITERATIONS = 10;
@@ -44,10 +49,16 @@ public class WifiRttTest extends TestBase {
     private static final int MAX_FAILURE_RATE_PERCENT = 10;
 
     // Maximum variation from the average measurement (measures consistency)
-    private static final int MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM = 1000;
+    private static final int MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM = 2000;
 
     // Minimum valid RSSI value
     private static final int MIN_VALID_RSSI = -100;
+
+    // Valid Mac Address
+    private static final MacAddress MAC = MacAddress.fromString("00:01:02:03:04:05");
+
+    // Interval between two ranging request.
+    private static final int intervalMs = 200;
 
     /**
      * Test Wi-Fi RTT ranging operation:
@@ -64,10 +75,9 @@ public class WifiRttTest extends TestBase {
 
         // Scan for IEEE 802.11mc supporting APs
         ScanResult testAp = scanForTestAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
-        assertTrue(
+        assertNotNull(
                 "Cannot find any test APs which support RTT / IEEE 802.11mc - please verify that "
-                        + "your test setup includes them!",
-                testAp != null);
+                        + "your test setup includes them!", testAp);
 
         // Perform RTT operations
         RangingRequest request = new RangingRequest.Builder().addAccessPoint(testAp).build();
@@ -92,16 +102,15 @@ public class WifiRttTest extends TestBase {
                     callback.waitForCallback());
 
             List<RangingResult> currentResults = callback.getResults();
-            assertTrue("Wi-Fi RTT results: null results (onRangingFailure) on iteration " + i,
-                    currentResults != null);
-            assertTrue("Wi-Fi RTT results: unexpected # of results (expect 1) on iteration " + i,
-                    currentResults.size() == 1);
+            assertNotNull("Wi-Fi RTT results: null results (onRangingFailure) on iteration " + i,
+                    currentResults);
+            assertEquals("Wi-Fi RTT results: unexpected # of results (expect 1) on iteration " + i,
+                    1, currentResults.size());
             RangingResult result = currentResults.get(0);
-            assertTrue("Wi-Fi RTT results: invalid result (wrong BSSID) entry on iteration " + i,
-                    result.getMacAddress().toString().equals(testAp.BSSID));
-            assertEquals(
-                    "Wi-Fi RTT results: invalid result (non-null PeerHandle) entry on iteration "
-                            + i, null, result.getPeerHandle());
+            assertEquals("Wi-Fi RTT results: invalid result (wrong BSSID) entry on iteration " + i,
+                    result.getMacAddress().toString(), testAp.BSSID);
+            assertNull("Wi-Fi RTT results: invalid result (non-null PeerHandle) entry on iteration "
+                    + i, result.getPeerHandle());
 
             allResults.add(result);
             int status = result.getStatus();
@@ -139,6 +148,8 @@ public class WifiRttTest extends TestBase {
             } else {
                 numFailures++;
             }
+            // Sleep a while to avoid stress AP.
+            Thread.sleep(intervalMs);
         }
 
         // Save results to log
@@ -161,13 +172,16 @@ public class WifiRttTest extends TestBase {
 
         // Analyze results
         assertTrue("Wi-Fi RTT failure rate exceeds threshold: FAIL=" + numFailures + ", ITERATIONS="
-                        + NUM_OF_RTT_ITERATIONS,
+                        + NUM_OF_RTT_ITERATIONS + ", AP RSSI=" + testAp.level
+                        + ", AP SSID=" + testAp.SSID,
                 numFailures <= NUM_OF_RTT_ITERATIONS * MAX_FAILURE_RATE_PERCENT / 100);
         if (numFailures != NUM_OF_RTT_ITERATIONS) {
-            double distanceAvg = distanceSum / (NUM_OF_RTT_ITERATIONS - numFailures);
-            assertTrue("Wi-Fi RTT: Variation (max direction) exceeds threshold",
+            double distanceAvg = (double) distanceSum / (NUM_OF_RTT_ITERATIONS - numFailures);
+            assertTrue("Wi-Fi RTT: Variation (max direction) exceeds threshold, Variation ="
+                            + (distanceMax - distanceAvg),
                     (distanceMax - distanceAvg) <= MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM);
-            assertTrue("Wi-Fi RTT: Variation (min direction) exceeds threshold",
+            assertTrue("Wi-Fi RTT: Variation (min direction) exceeds threshold, Variation ="
+                            + (distanceAvg - distanceMin),
                     (distanceAvg - distanceMin) <= MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM);
             for (int i = 0; i < numGoodResults; ++i) {
                 assertNotSame("Number of attempted measurements is 0", 0, numAttempted[i]);
@@ -180,23 +194,24 @@ public class WifiRttTest extends TestBase {
      * Validate that when a request contains more range operations than allowed (by API) that we
      * get an exception.
      */
-    public void testRequestTooLarge() {
+    public void testRequestTooLarge() throws InterruptedException {
         if (!shouldTestWifiRtt(getContext())) {
             return;
         }
-
-        ScanResult dummy = new ScanResult();
-        dummy.BSSID = "00:01:02:03:04:05";
+        ScanResult testAp = scanForTestAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        assertNotNull(
+                "Cannot find any test APs which support RTT / IEEE 802.11mc - please verify that "
+                        + "your test setup includes them!", testAp);
 
         RangingRequest.Builder builder = new RangingRequest.Builder();
         for (int i = 0; i < RangingRequest.getMaxPeers() - 2; ++i) {
-            builder.addAccessPoint(dummy);
+            builder.addAccessPoint(testAp);
         }
 
         List<ScanResult> scanResults = new ArrayList<>();
-        scanResults.add(dummy);
-        scanResults.add(dummy);
-        scanResults.add(dummy);
+        scanResults.add(testAp);
+        scanResults.add(testAp);
+        scanResults.add(testAp);
 
         builder.addAccessPoints(scanResults);
 
@@ -206,9 +221,199 @@ public class WifiRttTest extends TestBase {
             return;
         }
 
-        assertTrue(
-                "Did not receive expected IllegalArgumentException when tried to range to too "
-                        + "many peers",
-                false);
+        fail("Did not receive expected IllegalArgumentException when tried to range to too "
+                + "many peers");
+    }
+
+    /**
+     * Verify ResponderLocation API
+     */
+    public void testRangingToTestApWithResponderLocation() throws InterruptedException {
+        if (!shouldTestWifiRtt(getContext())) {
+            return;
+        }
+        // Scan for IEEE 802.11mc supporting APs
+        ScanResult testAp = scanForTestAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        assertNotNull(
+                "Cannot find any test APs which support RTT / IEEE 802.11mc - please verify that "
+                        + "your test setup includes them!", testAp);
+
+        // Perform RTT operations
+        RangingRequest request = new RangingRequest.Builder().addAccessPoint(testAp).build();
+        ResultCallback callback = new ResultCallback();
+        mWifiRttManager.startRanging(request, mExecutor, callback);
+        assertTrue("Wi-Fi RTT results: no callback! ",
+                callback.waitForCallback());
+
+        RangingResult result = callback.getResults().get(0);
+        assertEquals("Ranging request not success",
+                result.getStatus(), RangingResult.STATUS_SUCCESS);
+        ResponderLocation responderLocation = result.getUnverifiedResponderLocation();
+        if (responderLocation == null) {
+            return;
+        }
+        assertTrue("ResponderLocation is not valid", responderLocation.isLciSubelementValid());
+
+        // Check LCI related APIs
+        int exceptionCount = 0;
+        int apiCount = 0;
+        try {
+            apiCount++;
+            responderLocation.getLatitudeUncertainty();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            responderLocation.getLatitude();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            responderLocation.getLongitudeUncertainty();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            responderLocation.getLongitude();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            responderLocation.getAltitudeType();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            responderLocation.getAltitudeUncertainty();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            responderLocation.getAltitude();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            responderLocation.getDatum();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            responderLocation.getRegisteredLocationAgreementIndication();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            responderLocation.getLciVersion();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        try {
+            apiCount++;
+            assertNotNull(responderLocation.toLocation());
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        // If LCI is not valid, all APIs should throw exception, otherwise no exception.
+        assertEquals("Exception number should equal to API number",
+                responderLocation.isLciSubelementValid()? 0 : apiCount, exceptionCount);
+
+        // Verify ZaxisSubelement APIs
+        apiCount = 0;
+        exceptionCount = 0;
+
+        try {
+            apiCount++;
+            responderLocation.getExpectedToMove();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+
+        try {
+            apiCount++;
+            responderLocation.getFloorNumber();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+
+        try {
+            apiCount++;
+            responderLocation.getHeightAboveFloorMeters();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+
+        try {
+            apiCount++;
+            responderLocation.getHeightAboveFloorUncertaintyMeters();
+        } catch (IllegalStateException e) {
+            exceptionCount++;
+        }
+        // If Zaxis is not valid, all APIs should throw exception, otherwise no exception.
+        assertEquals("Exception number should equal to API number",
+                responderLocation.isZaxisSubelementValid() ? 0 : apiCount, exceptionCount);
+        // Verify civic location
+        if (responderLocation.toCivicLocationAddress() == null) {
+            assertNull(responderLocation.toCivicLocationSparseArray());
+        } else {
+            assertNotNull(responderLocation.toCivicLocationSparseArray());
+        }
+        // Verify map image
+        if (responderLocation.getMapImageUri() == null) {
+            assertNull(responderLocation.getMapImageMimeType());
+        } else {
+            assertNotNull(responderLocation.getMapImageMimeType());
+        }
+        boolean extraInfoOnAssociationIndication =
+                responderLocation.getExtraInfoOnAssociationIndication();
+        assertNotNull("ColocatedBSSID list should be nonNull",
+                responderLocation.getColocatedBssids());
+    }
+
+    /**
+     * Verify ranging request with aware peer Mac address and peer handle.
+     */
+    public void testAwareRttWithMacAddress() throws InterruptedException {
+        if (!shouldTestWifiRtt(getContext())) {
+            return;
+        }
+        RangingRequest request = new RangingRequest.Builder()
+                .addWifiAwarePeer(MAC).build();
+        ResultCallback callback = new ResultCallback();
+        mWifiRttManager.startRanging(request, mExecutor, callback);
+        assertTrue("Wi-Fi RTT results: no callback",
+                callback.waitForCallback());
+        List<RangingResult> rangingResults = callback.getResults();
+        assertNotNull("Wi-Fi RTT results: null results", rangingResults);
+        assertEquals(1, rangingResults.size());
+        assertEquals(RangingResult.STATUS_FAIL, rangingResults.get(0).getStatus());
+    }
+
+    /**
+     * Verify ranging request with aware peer handle.
+     */
+    public void testAwareRttWithPeerHandle() throws InterruptedException {
+        if (!shouldTestWifiRtt(getContext())) {
+            return;
+        }
+        PeerHandle peerHandle = mock(PeerHandle.class);
+        RangingRequest request = new RangingRequest.Builder()
+                .addWifiAwarePeer(peerHandle).build();
+        ResultCallback callback = new ResultCallback();
+        mWifiRttManager.startRanging(request, mExecutor, callback);
+        assertTrue("Wi-Fi RTT results: no callback",
+                callback.waitForCallback());
+        List<RangingResult> rangingResults = callback.getResults();
+        assertNotNull("Wi-Fi RTT results: null results", rangingResults);
+        assertEquals("Invalid peerHandle should return 0 result", 0, rangingResults.size());
     }
 }

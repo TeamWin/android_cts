@@ -16,8 +16,8 @@
 
 package android.systemui.cts;
 
-import static android.provider.DeviceConfig.NAMESPACE_WINDOW_MANAGER;
-import static android.provider.DeviceConfig.WindowManager.KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP;
+import static android.provider.DeviceConfig.NAMESPACE_ANDROID;
+import static android.provider.AndroidDeviceConfig.KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP;
 import static android.view.View.SYSTEM_UI_CLEARABLE_FLAGS;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
@@ -92,6 +92,8 @@ public class WindowInsetsBehaviorTests {
     // The minimum value of the system gesture exclusion limit is 200 dp. The value here should be
     // greater than that, so that we can test if the limit can be changed by DeviceConfig or not.
     private static final int EXCLUSION_LIMIT_DP = 210;
+
+    private static final int NAV_BAR_INTERACTION_MODE_GESTURAL = 2;
 
     private final boolean mForceEnableGestureNavigation;
     private final Map<String, Boolean> mSystemGestureOptionsMap;
@@ -787,7 +789,7 @@ public class WindowInsetsBehaviorTests {
         Resources res = mTargetContext.getResources();
         int naviMode = res.getIdentifier(NAV_BAR_INTERACTION_MODE_RES_NAME, "integer", "android");
 
-        assumeTrue("Gesture navigation required", naviMode == 2);
+        assumeTrue("Gesture navigation required", naviMode == NAV_BAR_INTERACTION_MODE_GESTURAL);
     }
 
     /**
@@ -850,10 +852,10 @@ public class WindowInsetsBehaviorTests {
     private static int getPropertyOfMaxExclusionHeight() {
         final int[] originalLimitDp = new int[1];
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            originalLimitDp[0] = DeviceConfig.getInt(NAMESPACE_WINDOW_MANAGER,
+            originalLimitDp[0] = DeviceConfig.getInt(NAMESPACE_ANDROID,
                     KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP, -1);
             DeviceConfig.setProperty(
-                    NAMESPACE_WINDOW_MANAGER,
+                    NAMESPACE_ANDROID,
                     KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP,
                     Integer.toString(EXCLUSION_LIMIT_DP), false /* makeDefault */);
         });
@@ -875,7 +877,7 @@ public class WindowInsetsBehaviorTests {
         } finally {
             // Restore the value
             SystemUtil.runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(
-                    NAMESPACE_WINDOW_MANAGER,
+                    NAMESPACE_ANDROID,
                     KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP,
                     (originalLimitDp != -1) ? Integer.toString(originalLimitDp) : null,
                     false /* makeDefault */));

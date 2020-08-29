@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.Process;
 import android.provider.VoicemailContract.Voicemails;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -30,11 +31,9 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
-import android.os.Process;
-
-import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import androidx.test.InstrumentationRegistry;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.util.List;
 

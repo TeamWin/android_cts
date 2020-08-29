@@ -21,6 +21,7 @@ import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.app.AppOpsManager.OPSTR_READ_PHONE_STATE;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_OVERRIDE_BOOL;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_NAME_STRING;
+import static android.telephony.CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONED_BOOL;
 import static android.telephony.CarrierConfigManager.KEY_FORCE_HOME_NETWORK_BOOL;
 import static android.telephony.ServiceState.STATE_IN_SERVICE;
 
@@ -53,7 +54,6 @@ import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -119,7 +119,8 @@ public class CarrierConfigManagerTest {
 
     private void checkConfig(PersistableBundle config) {
         if (config == null) {
-            assertFalse("Config should only be null when telephony is not running.", hasTelephony());
+            assertFalse(
+                    "Config should only be null when telephony is not running.", hasTelephony());
             return;
         }
         assertNotNull("CarrierConfigManager should not return null config", config);
@@ -190,7 +191,6 @@ public class CarrierConfigManagerTest {
     }
 
     @SecurityTest
-    @Ignore // TODO(b/146238285) -- Appop commands not working.
     @Test
     public void testRevokePermission() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -305,6 +305,19 @@ public class CarrierConfigManagerTest {
         } finally {
             mConfigManager.overrideConfig(subId, null);
             ui.dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testGetConfigByComponentForSubId() {
+        PersistableBundle config =
+                mConfigManager.getConfigByComponentForSubId(
+                        CarrierConfigManager.Wifi.KEY_PREFIX,
+                        SubscriptionManager.getDefaultSubscriptionId());
+        if (config != null) {
+            assertTrue(config.containsKey(CarrierConfigManager.Wifi.KEY_HOTSPOT_MAX_CLIENT_COUNT));
+            assertFalse(config.containsKey(KEY_CARRIER_VOLTE_PROVISIONED_BOOL));
+            assertFalse(config.containsKey(CarrierConfigManager.Gps.KEY_SUPL_ES_STRING));
         }
     }
 }

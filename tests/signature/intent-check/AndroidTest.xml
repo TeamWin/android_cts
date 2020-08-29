@@ -28,8 +28,8 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/signature-test-packages" />
         <option name='run-command'
-            value='pm list packages | while read a; do dumpsys package ${a#"package:"} > /data/local/tmp/signature-test-packages/${a#"package:"}.txt; done' />
-        <option name="teardown-command" value="mkdir -p /data/local/tmp/signature-test-packages" />
+            value='pm list packages --user cur| while read a; do dumpsys package ${a#"package:"} > /data/local/tmp/signature-test-packages/${a#"package:"}.txt; done' />
+        <option name="teardown-command" value="rm -rf /data/local/tmp/signature-test-packages" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/signature-test" />

@@ -23,7 +23,6 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
@@ -90,6 +89,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mWorkAppVisibleTest;
     private DialogTestListItem mCrossProfileIntentFiltersTestFromPersonal;
     private DialogTestListItem mCrossProfileIntentFiltersTestFromWork;
+    private TestListItem mCrossProfilePermissionControl;
     private DialogTestListItem mAppLinkingTest;
     private TestListItem mNonMarketAppsTest;
     private DialogTestListItem mWorkNotificationBadgedTest;
@@ -451,6 +451,13 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             }
         };
 
+        mCrossProfilePermissionControl = TestListItem.newTest(this,
+                R.string.provisioning_byod_cross_profile_permission_control,
+                CrossProfilePermissionControlActivity.class.getName(),
+                new Intent(
+                        CrossProfilePermissionControlActivity.ACTION_CROSS_PROFILE_PERMISSION_CONTROL),
+                        null);
+
         mTurnOffWorkFeaturesTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_turn_off_work,
                 TurnOffWorkActivity.class.getName(),
@@ -544,6 +551,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mAppLinkingTest);
         */
         adapter.add(mIntentFiltersTest);
+        adapter.add(mCrossProfilePermissionControl);
         adapter.add(mNonMarketAppsTest);
         adapter.add(mPermissionLockdownTest);
         adapter.add(mKeyguardDisabledFeaturesTest);

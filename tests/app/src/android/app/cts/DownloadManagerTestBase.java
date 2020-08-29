@@ -285,7 +285,8 @@ public class DownloadManagerTestBase {
 
         final Bundle resultBundle = callbackResult.get(SHORT_TIMEOUT, TimeUnit.MILLISECONDS);
         if (resultBundle.getString(KEY_ERROR) != null) {
-            fail("Failed to create the file " + file + ", error:" + resultBundle.getString(KEY_ERROR));
+            fail("Failed to create the file " + file + ", error:"
+                    + resultBundle.getString(KEY_ERROR));
         }
     }
 

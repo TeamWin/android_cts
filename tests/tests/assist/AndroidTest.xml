@@ -31,9 +31,6 @@
         <option name="test-file-name" value="CtsAssistApp.apk" />
         <option name="test-file-name" value="CtsAssistTestCases.apk" />
     </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="settings put secure voice_interaction_service android.assist.service/.MainInteractionService" />
-    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.assist.cts" />
         <option name="runtime-hint" value="12m30s" />

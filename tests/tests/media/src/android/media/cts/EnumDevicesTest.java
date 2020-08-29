@@ -158,6 +158,14 @@ public class EnumDevicesTest extends AndroidTestCase {
             assertNotNull(encodings);
             // Note: an empty array indicates that the device supports arbitrary encodings.
 
+            // Encapsulation Modes
+            int[] encapsulationModes = deviceInfo.getEncapsulationModes();
+            assertNotNull(encapsulationModes);
+
+            // EncapsulationMetadataTypes
+            int[] encapsulationMetadataTypes = deviceInfo.getEncapsulationMetadataTypes();
+            assertNotNull(encapsulationMetadataTypes);
+
             int type = deviceInfo.getType();
             assertTrue(type != AudioDeviceInfo.TYPE_UNKNOWN);
         }

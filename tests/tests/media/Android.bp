@@ -28,6 +28,8 @@ android_test {
     // include both the 32 and 64 bit versions
     compile_multilib: "both",
     static_libs: [
+        "androidx.test.core",
+        "androidx.test.ext.junit",
         "compatibility-device-util-axt",
         "ctsdeviceutillegacy-axt",
         "ctsmediautil",
@@ -35,6 +37,7 @@ android_test {
         "hamcrest-library",
         "ctstestserver",
         "junit",
+        "junit-params",
         "ndkaudio",
         "testng",
         "truth-prebuilt",
@@ -43,7 +46,6 @@ android_test {
     ],
     jni_libs: [
         "libaudio_jni",
-        "libc++",
         "libctscodecutils_jni",
         "libctsimagereader_jni",
         "libctsmediadrm_jni",
@@ -57,11 +59,14 @@ android_test {
         "-0 .ts",
         "-0 .heic",
         "-0 .trp",
+        "-0 .ota",
+        "-0 .mxmf",
     ],
     srcs: ["src/**/*.java"],
     // This test uses private APIs
     //sdk_version: "current",
     platform_apis: true,
+    jni_uses_sdk_apis: true,
     libs: [
         "org.apache.http.legacy",
         "android.test.base",
@@ -75,4 +80,5 @@ android_test {
         "mts",
     ],
     host_required: ["cts-dynamic-config"],
+    min_sdk_version: "29",
 }

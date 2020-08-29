@@ -12,7 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
+//////////////////////////////////////////////////////////////////
+// Signed Package
+
+android_test_import {
+    name: "signed-CtsOmapiTestCases",
+    apk: "apk/signed-CtsOmapiTestCases.apk",
+
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+        "cts-instant",
+    ],
+    // Make sure the build system doesn't try to resign the APK
+    presigned: true,
+    dex_preopt: {
+        enabled: false,
+    },
+}
+
+//#################################################################
+// Unsigned Package
+
+android_test_helper_app {
     name: "CtsOmapiTestCases",
     defaults: ["cts_defaults"],
     static_libs: [

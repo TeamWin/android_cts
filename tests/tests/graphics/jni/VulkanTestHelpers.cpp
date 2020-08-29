@@ -647,7 +647,7 @@ bool VkImageRenderer::init(JNIEnv *env, jobject assetMgr) {
   {
     AAsset *vertFile =
         AAssetManager_open(AAssetManager_fromJava(env, assetMgr),
-                           "passthrough_vsh.spv", AASSET_MODE_BUFFER);
+                           "shaders/passthrough_vsh.spv", AASSET_MODE_BUFFER);
     ASSERT(vertFile);
     size_t vertShaderLength = AAsset_getLength(vertFile);
     std::vector<uint8_t> vertShader;
@@ -658,7 +658,7 @@ bool VkImageRenderer::init(JNIEnv *env, jobject assetMgr) {
 
     AAsset *pixelFile =
         AAssetManager_open(AAssetManager_fromJava(env, assetMgr),
-                           "passthrough_fsh.spv", AASSET_MODE_BUFFER);
+                           "shaders/passthrough_fsh.spv", AASSET_MODE_BUFFER);
     ASSERT(pixelFile);
     size_t pixelShaderLength = AAsset_getLength(pixelFile);
     std::vector<uint8_t> pixelShader;

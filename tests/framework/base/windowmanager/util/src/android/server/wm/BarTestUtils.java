@@ -62,6 +62,18 @@ public final class BarTestUtils {
     public static void assumeHasColoredBars() {
         final PackageManager pm = getInstrumentation().getContext().getPackageManager();
 
+        assumeHasBars();
+
+        assumeFalse("Automotive navigation bar is opaque",
+                pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
+        assumeTrue("Only highEndGfx devices have colored system bars",
+                ActivityManager.isHighEndGfx());
+    }
+
+    public static void assumeHasBars() {
+        final PackageManager pm = getInstrumentation().getContext().getPackageManager();
+
         assumeFalse("Embedded devices don't have system bars",
                 getInstrumentation().getContext().getPackageManager().hasSystemFeature(
                         PackageManager.FEATURE_EMBEDDED));
@@ -69,12 +81,6 @@ public final class BarTestUtils {
         assumeFalse("No bars on watches and TVs", pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
                 || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK));
-
-        assumeFalse("Automotive navigation bar is opaque",
-                pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
-
-        assumeTrue("Only highEndGfx devices have colored system bars",
-                ActivityManager.isHighEndGfx());
     }
 
     private static boolean isRunningInVr() {
@@ -99,10 +105,10 @@ public final class BarTestUtils {
     public static boolean isAssumptionViolated(Runnable assumption) {
         try {
             assumption.run();
-            return true;
+            return false;
         } catch (AssumptionViolatedException e) {
             Log.i("BarTestUtils", "Assumption violated", e);
-            return false;
+            return true;
         }
     }
 }

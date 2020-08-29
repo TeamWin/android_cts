@@ -916,7 +916,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         MoreAsserts.assertEmpty(Arrays.asList(keyInfo.getSignaturePaddings()));
         MoreAsserts.assertEmpty(Arrays.asList(keyInfo.getEncryptionPaddings()));
         assertFalse(keyInfo.isUserAuthenticationRequired());
-        assertEquals(-1, keyInfo.getUserAuthenticationValidityDurationSeconds());
+        assertEquals(0, keyInfo.getUserAuthenticationValidityDurationSeconds());
     }
 
     // Strongbox has more restrictions on key properties than general keystore.
@@ -987,7 +987,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         MoreAsserts.assertEmpty(Arrays.asList(keyInfo.getSignaturePaddings()));
         MoreAsserts.assertEmpty(Arrays.asList(keyInfo.getEncryptionPaddings()));
         assertFalse(keyInfo.isUserAuthenticationRequired());
-        assertEquals(-1, keyInfo.getUserAuthenticationValidityDurationSeconds());
+        assertEquals(0, keyInfo.getUserAuthenticationValidityDurationSeconds());
     }
 
     public void testGenerate_RSA_ModernSpec_AsCustomAsPossible() throws Exception {
@@ -1069,7 +1069,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
                 KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1);
 
         assertFalse(keyInfo.isUserAuthenticationRequired());
-        assertEquals(-1, keyInfo.getUserAuthenticationValidityDurationSeconds());
+        assertEquals(0, keyInfo.getUserAuthenticationValidityDurationSeconds());
     }
 
     // Strongbox has more restrictions on key properties than general keystore.
@@ -1159,7 +1159,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
                 KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1);
 
         assertFalse(keyInfo.isUserAuthenticationRequired());
-        assertEquals(-1, keyInfo.getUserAuthenticationValidityDurationSeconds());
+        assertEquals(0, keyInfo.getUserAuthenticationValidityDurationSeconds());
     }
 
     public void testGenerate_EC_ModernSpec_UsableForTLSPeerAuth() throws Exception {

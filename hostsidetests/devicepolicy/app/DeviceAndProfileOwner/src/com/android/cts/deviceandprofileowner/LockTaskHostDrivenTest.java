@@ -34,7 +34,8 @@ import android.telecom.TelecomManager;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+
+import java.time.Duration;
 
 /**
  * Test class that is meant to be driven from the host and can't be run alone, which is required
@@ -68,16 +69,16 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
     }
 
-    public void startLockTask() throws Exception {
-        Log.d(TAG, "startLockTask on host-driven test (no cleanup)");
+    public void testStartLockTask_noAsserts() throws Exception {
+        Log.d(TAG, "testStartLockTask_noAsserts on host-driven test (no cleanup)");
         setLockTaskPackages(mContext.getPackageName());
         setDefaultHomeIntentReceiver();
         launchLockTaskActivity();
         mUiDevice.waitForIdle();
     }
 
-    public void cleanupLockTask() {
-        Log.d(TAG, "cleanupLockTask on host-driven test");
+    public void testCleanupLockTask_noAsserts() {
+        Log.d(TAG, "testCleanupLockTask_noAsserts on host-driven test");
         mDevicePolicyManager.clearPackagePersistentPreferredActivities(
                 ADMIN_RECEIVER_COMPONENT,
                 mContext.getPackageName());
@@ -154,6 +155,10 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
 
         // The activity should be finished and exit lock task mode
         waitAndCheckLockedActivityIsPaused();
+        Utils.tryWaitForSuccess(() -> ActivityManager.LOCK_TASK_MODE_NONE
+                        == mActivityManager.getLockTaskModeState(),
+                Duration.ofSeconds(5).toMillis()
+        );
         assertEquals(ActivityManager.LOCK_TASK_MODE_NONE, mActivityManager.getLockTaskModeState());
     }
 

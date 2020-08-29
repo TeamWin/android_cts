@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.os.Process;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -29,7 +30,7 @@ import java.util.Scanner;
 
 /**
  * A broadcast receiver to check for and update user app data version
- * compatibility.
+ * and user handle compatibility.
  */
 public class ProcessUserData extends BroadcastReceiver {
 
@@ -48,17 +49,22 @@ public class ProcessUserData extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        try {
-            processUserData(context);
-            setResultCode(1);
-        } catch (UserDataException e) {
-            setResultCode(0);
-            setResultData(e.getMessage());
+        if (intent.getAction().equals("PROCESS_USER_DATA")) {
+            try {
+                processUserData(context);
+                setResultCode(1);
+            } catch (UserDataException e) {
+                setResultCode(0);
+                setResultData(e.getMessage());
+            }
+        } else if (intent.getAction().equals("GET_USER_DATA_VERSION")) {
+            setResultCode(getUserDataVersion(context));
         }
     }
 
     /**
-     * Update the app's user data version to match the app version.
+     * Update the app's user data version to match the app version, and confirm
+     * the user data is for the correct user.
      *
      * @param context The application context.
      * @throws UserDataException in case of problems with app user data.
@@ -66,6 +72,8 @@ public class ProcessUserData extends BroadcastReceiver {
     public void processUserData(Context context) throws UserDataException {
         Resources res = context.getResources();
         String packageName = context.getPackageName();
+
+        String userHandle = Process.myUserHandle().toString();
 
         int appVersionId = res.getIdentifier("app_version", "integer", packageName);
         int appVersion = res.getInteger(appVersionId);
@@ -80,17 +88,26 @@ public class ProcessUserData extends BroadcastReceiver {
         }
 
         // Read the version of the app's user data and ensure it is compatible
-        // with our version of the application.
-        File versionFile = new File(context.getFilesDir(), "version.txt");
+        // with our version of the application. Also ensure that the user data is
+        // for the correct user.
+        File versionFile = new File(context.getFilesDir(), "userdata.txt");
         try {
             Scanner s = new Scanner(versionFile);
             int userDataVersion = s.nextInt();
-            s.close();
+            s.nextLine();
 
             if (userDataVersion > appVersion) {
                 throw new UserDataException("User data is from version " + userDataVersion
                         + ", which is not compatible with this version " + appVersion
                         + " of the RollbackTestApp");
+            }
+
+            String readUserHandle = s.nextLine();
+            s.close();
+
+            if (!readUserHandle.equals(userHandle)) {
+                throw new UserDataException("User handle expected to be: " + userHandle
+                        + ", but was actually " + readUserHandle);
             }
         } catch (FileNotFoundException e) {
             // No problem. This is a fresh install of the app or the user data
@@ -101,9 +118,25 @@ public class ProcessUserData extends BroadcastReceiver {
         try {
             PrintWriter pw = new PrintWriter(versionFile);
             pw.println(appVersion);
+            pw.println(userHandle);
             pw.close();
         } catch (IOException e) {
             throw new UserDataException("Unable to write user data.", e);
+        }
+    }
+
+    /**
+     * Return the app's user data version or -1 if userdata.txt doesn't exist.
+     */
+    private int getUserDataVersion(Context context) {
+        File versionFile = new File(context.getFilesDir(), "userdata.txt");
+        try (Scanner s = new Scanner(versionFile);) {
+            int dataVersion = s.nextInt();
+            return dataVersion;
+        } catch (FileNotFoundException e) {
+            // No problem. This is a fresh install of the app or the user data
+            // has been wiped.
+            return -1;
         }
     }
 }

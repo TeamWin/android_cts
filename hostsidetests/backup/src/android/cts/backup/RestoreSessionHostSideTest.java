@@ -72,10 +72,25 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
         }
     }
 
+    /** Test {@link RestoreSession#restorePackage(RestoreObserver, String)} */
+    @Test
+    public void testRestorePackage() throws Exception {
+        testRestorePackagesInternal("testRestorePackage", /* packagesToRestore */ 1);
+    }
+
+    /**
+     * Test {@link RestoreSession#restorePackage(RestoreObserver, String, BackupManagerMonitor)}
+     */
+    @Test
+    public void testRestorePackageWithMonitorParam() throws Exception {
+        testRestorePackagesInternal("testRestorePackageWithMonitorParam",
+                /* packagesToRestore */ 1);
+    }
+
     /** Test {@link RestoreSession#restorePackages(long, RestoreObserver, Set)} */
     @Test
     public void testRestorePackages() throws Exception {
-        testRestorePackagesInternal("testRestorePackages");
+        testRestorePackagesInternal("testRestorePackages", /* packagesToRestore */ 2);
     }
 
     /**
@@ -83,7 +98,8 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testRestorePackagesWithMonitorParam() throws Exception {
-        testRestorePackagesInternal("testRestorePackagesWithMonitorParam");
+        testRestorePackagesInternal("testRestorePackagesWithMonitorParam",
+                /* packagesToRestore */ 2);
     }
 
     /**
@@ -94,15 +110,16 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
      *   <li>Write dummy values to shared preferences for each package
      *   <li>Backup each package (adb shell bmgr backupnow)
      *   <li>Clear shared preferences for each package
-     *   <li>Run restore for 2 of the packages and verify that only they were restored
-     *   <li>Verify that shared preferences for the 2 packages are restored correctly
+     *   <li>Run restore for the first {@code numPackagesToRestore}, verify only those are restored
+     *   <li>Verify that shared preferences for the restored packages are restored correctly
      * </ol>
      */
-    private void testRestorePackagesInternal(String deviceTestName) throws Exception {
+    private void testRestorePackagesInternal(String deviceTestName, int numPackagesToRestore)
+            throws Exception {
         installPackage(getApkNameForTestApp(1));
         installPackage(getApkNameForTestApp(2));
         installPackage(getApkNameForTestApp(3));
-        //
+
         // Write dummy value to shared preferences for all test packages.
         checkRestoreSessionDeviceTestForAllApps("testSaveValuesToSharedPrefs");
         checkRestoreSessionDeviceTestForAllApps("testCheckSharedPrefsExist");
@@ -119,11 +136,15 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
         runRestoreSessionDeviceTestAndAssertSuccess(
                 MAIN_TEST_APP_PKG, DEVICE_MAIN_TEST_CLASS_NAME, deviceTestName);
 
-        // Check that shared prefs are only restored (and restored correctly) for the first 2
-        // packages.
-        checkRestoreSessionDeviceTest(1, "testCheckSharedPrefsExist");
-        checkRestoreSessionDeviceTest(2, "testCheckSharedPrefsExist");
-        checkRestoreSessionDeviceTest(3, "testCheckSharedPrefsDontExist");
+        // Check that shared prefs are only restored (and restored correctly) for the packages
+        // that need to be restored.
+        for (int i = 1; i <= TEST_APPS_COUNT; i++) {
+            if (i <= numPackagesToRestore) {
+                checkRestoreSessionDeviceTest(i, "testCheckSharedPrefsExist");
+            } else {
+                checkRestoreSessionDeviceTest(i, "testCheckSharedPrefsDontExist");
+            }
+        }
 
         uninstallPackage(getPackageNameForTestApp(1));
         uninstallPackage(getPackageNameForTestApp(2));
