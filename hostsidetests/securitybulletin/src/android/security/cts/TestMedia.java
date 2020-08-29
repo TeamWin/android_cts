@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import static org.junit.Assert.*;
+import junit.framework.Assert;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class TestMedia extends SecurityTestCase {
@@ -118,6 +119,24 @@ public class TestMedia extends SecurityTestCase {
     @Test
     public void testPocCVE_2017_0814() throws Exception {
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0814", null, getDevice());
+    }
+
+    /**
+     * b/65540999
+     * Vulnerability Behaviour: Assert failure
+     **/
+    @SecurityTest(minPatchLevel = "2017-11")
+    @Test
+    public void testPocCVE_2017_0847() throws Exception {
+        String cmdOut = AdbUtils.runCommandLine("ps -eo cmd,gid | grep mediametrics", getDevice());
+        if (cmdOut.length() > 0) {
+            String[] segment = cmdOut.split("\\s+");
+            if (segment.length > 1) {
+                if (segment[1].trim().equals("0")) {
+                    Assert.fail("mediametrics has root group id");
+                }
+            }
+        }
     }
 
     /**

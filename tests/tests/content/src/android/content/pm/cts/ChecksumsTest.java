@@ -339,6 +339,45 @@ public class ChecksumsTest {
                 "90553b8d221ab1b900b242a93e4cc659ace3a2ff1d5c62e502488b385854e66a");
     }
 
+    @Test
+    public void testFixedAllIncrementalChecksums() throws Exception {
+        if (!checkIncrementalDeliveryFeature()) {
+            return;
+        }
+        installPackageIncrementally(TEST_FIXED_APK);
+        assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
+
+        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        PackageManager pm = getPackageManager();
+        pm.getChecksums(FIXED_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
+                receiver.getIntentSender());
+        FileChecksum[] checksums = receiver.getResult();
+        assertNotNull(checksums);
+        assertEquals(checksums.length, 7);
+        assertEquals(checksums[0].getKind(), WHOLE_MERKLE_ROOT_4K_SHA256);
+        assertEquals(bytesToHexString(checksums[0].getValue()),
+                "90553b8d221ab1b900b242a93e4cc659ace3a2ff1d5c62e502488b385854e66a");
+        assertEquals(checksums[1].getKind(), WHOLE_MD5);
+        assertEquals(bytesToHexString(checksums[1].getValue()), "c19868da017dc01467169f8ea7c5bc57");
+        assertEquals(checksums[2].getKind(), WHOLE_SHA1);
+        assertEquals(bytesToHexString(checksums[2].getValue()),
+                "331eef6bc57671de28cbd7e32089d047285ade6a");
+        assertEquals(checksums[3].getKind(), WHOLE_SHA256);
+        assertEquals(bytesToHexString(checksums[3].getValue()),
+                "91aa30c1ce8d0474052f71cb8210691d41f534989c5521e27e794ec4f754c5ef");
+        assertEquals(checksums[4].getKind(), WHOLE_SHA512);
+        assertEquals(bytesToHexString(checksums[4].getValue()),
+                "b59467fe578ebc81974ab3aaa1e0d2a76fef3e4ea7212a6f2885cec1af5253571"
+                        + "1e2e94496224cae3eba8dc992144ade321540ebd458ec5b9e6a4cc51170e018");
+        assertEquals(checksums[5].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+        assertEquals(bytesToHexString(checksums[5].getValue()),
+                "1eec9e86e322b8d7e48e255fc3f2df2dbc91036e63982ff9850597c6a37bbeb3");
+        assertEquals(checksums[6].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA512);
+        assertEquals(bytesToHexString(checksums[6].getValue()),
+                "ef80a8630283f60108e8557c924307d0ccdfb6bbbf2c0176bd49af342f43bc84"
+                        + "5f2888afcb71524196dda0d6dd16a6a3292bb75b431b8ff74fb60d796e882f80");
+    }
+
     private static String readFullStream(InputStream inputStream) throws IOException {
         ByteArrayOutputStream result = new ByteArrayOutputStream();
         writeFullStream(inputStream, result, -1);
@@ -426,29 +465,25 @@ public class ChecksumsTest {
             public void send(int code, Intent intent, String resolvedType, IBinder allowlistToken,
                     IIntentReceiver finishedReceiver, String requiredPermission,
                     Bundle options) {
-                try {
-                    Parcelable[] parcelables = intent.getParcelableArrayExtra(EXTRA_CHECKSUMS);
-                    assertNotNull(parcelables);
-                    FileChecksum[] checksums = Arrays.copyOf(parcelables, parcelables.length,
-                            FileChecksum[].class);
-                    Arrays.sort(checksums, (FileChecksum lhs, FileChecksum rhs) ->  {
-                        final String lhsSplit = lhs.getSplitName();
-                        final String rhsSplit = rhs.getSplitName();
-                        if (Objects.equals(lhsSplit, rhsSplit)) {
-                            return Integer.signum(lhs.getKind() - rhs.getKind());
-                        }
-                        if (lhsSplit == null) {
-                            return -1;
-                        }
-                        if (rhsSplit == null) {
-                            return +1;
-                        }
-                        return lhsSplit.compareTo(rhsSplit);
-                    });
-                    mResult.offer(checksums, 5, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                Parcelable[] parcelables = intent.getParcelableArrayExtra(EXTRA_CHECKSUMS);
+                assertNotNull(parcelables);
+                FileChecksum[] checksums = Arrays.copyOf(parcelables, parcelables.length,
+                        FileChecksum[].class);
+                Arrays.sort(checksums, (FileChecksum lhs, FileChecksum rhs) ->  {
+                    final String lhsSplit = lhs.getSplitName();
+                    final String rhsSplit = rhs.getSplitName();
+                    if (Objects.equals(lhsSplit, rhsSplit)) {
+                        return Integer.signum(lhs.getKind() - rhs.getKind());
+                    }
+                    if (lhsSplit == null) {
+                        return -1;
+                    }
+                    if (rhsSplit == null) {
+                        return +1;
+                    }
+                    return lhsSplit.compareTo(rhsSplit);
+                });
+                mResult.offer(checksums);
             }
         };
 
@@ -458,7 +493,7 @@ public class ChecksumsTest {
 
         public FileChecksum[] getResult() {
             try {
-                return mResult.take();
+                return mResult.poll(5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
