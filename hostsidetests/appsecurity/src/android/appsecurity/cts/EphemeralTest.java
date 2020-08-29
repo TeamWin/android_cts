@@ -219,6 +219,14 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
     }
 
+    public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionNotGrantedInPackageInfo");
+    }
+
+    public void testInstallPermissionGrantedInPackageInfo() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGrantedInPackageInfo");
+    }
+
     private static final HashMap<String, String> makeArgs(
             String action, String category, String mimeType) {
         if (action == null || action.length() == 0) {
