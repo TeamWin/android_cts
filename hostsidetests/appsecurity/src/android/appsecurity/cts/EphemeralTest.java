@@ -329,6 +329,20 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
     }
 
+    public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionNotGrantedInPackageInfo");
+    }
+
+    public void testInstallPermissionGrantedInPackageInfo() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGrantedInPackageInfo");
+    }
+
     /** Test for android.permission.INSTANT_APP_FOREGROUND_SERVICE */
     public void testStartForegrondService() throws Exception {
         if (isDeviceUnsupported()) {
