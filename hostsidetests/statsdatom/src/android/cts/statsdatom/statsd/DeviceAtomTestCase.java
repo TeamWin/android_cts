@@ -169,10 +169,18 @@ public class DeviceAtomTestCase extends AtomTestCase {
         int currentUser = getDevice().getCurrentUser();
         String uidLine = getDevice().executeShellCommand("cmd package list packages -U --user "
                 + currentUser + " " + DEVICE_SIDE_TEST_PACKAGE);
-        String[] uidLineParts = uidLine.split(":");
-        // 3rd entry is package uid
+        String[] uidLineParts = uidLine.split("[: ]");
+        int uid = 0;
+        // Search for the correct package name. It is possible that both
+        // com.android.server.cts.device.statsd and com.android.server.cts.device.statsdatom is
+        // retrieved.
+        for (int i = 0; i < uidLineParts.length; i++) {
+            if (DEVICE_SIDE_TEST_PACKAGE.equals(uidLineParts[i])) {
+                // the uid entry is the second entry after the package name.
+                uid = Integer.parseInt(uidLineParts[i + 2].trim());
+            }
+        }
         assertThat(uidLineParts.length).isGreaterThan(2);
-        int uid = Integer.parseInt(uidLineParts[2].trim());
         assertThat(uid).isGreaterThan(10000);
         return uid;
     }
