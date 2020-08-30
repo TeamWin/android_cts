@@ -42,4 +42,10 @@ public class SonyDualshock4BluetoothTest extends InputHidTestCase {
     public void testAllMotions() {
         testInputEvents(R.raw.sony_dualshock4_bluetooth_motioneventtests);
     }
+
+    @Test
+    public void testVibrator() {
+        testInputVibratorEvents(R.raw.sony_dualshock4_bluetooth_vibratortests);
+    }
+
 }

@@ -16,7 +16,10 @@
 
 package com.android.cts.input;
 
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
+import android.util.ArrayMap;
 import android.view.InputDevice;
 import android.view.InputEvent;
 import android.view.KeyEvent;
