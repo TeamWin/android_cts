@@ -219,7 +219,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
 
     private static class TvPanelReportedTypesAreSupportedTestStep extends YesNoTestStep {
         public TvPanelReportedTypesAreSupportedTestStep(TvAppVerifierActivity context) {
-            super(context, getInstructionText(context));
+            super(context, getInstructionText(context), R.string.tv_yes, R.string.tv_no);
         }
 
         private static String getInstructionText(Context context) {
@@ -244,7 +244,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
 
     private static class TvPanelSupportedTypesAreReportedTestStep extends YesNoTestStep {
         public TvPanelSupportedTypesAreReportedTestStep(TvAppVerifierActivity context) {
-            super(context, getInstructionText(context));
+            super(context, getInstructionText(context), R.string.tv_no, R.string.tv_yes);
         }
 
         private static String getInstructionText(Context context) {
