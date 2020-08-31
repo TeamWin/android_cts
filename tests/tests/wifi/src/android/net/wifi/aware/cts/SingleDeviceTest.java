@@ -200,6 +200,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         static final int ON_MESSAGE_SEND_SUCCEEDED = 6;
         static final int ON_MESSAGE_SEND_FAILED = 7;
         static final int ON_MESSAGE_RECEIVED = 8;
+        static final int ON_SESSION_DISCOVERED_LOST = 9;
 
         private final Object mLocalLock = new Object();
 
@@ -266,6 +267,11 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         @Override
         public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
             processCallback(ON_MESSAGE_RECEIVED);
+        }
+
+        @Override
+        public void onServiceLost(PeerHandle peerHandle) {
+            processCallback(ON_SESSION_DISCOVERED_LOST);
         }
 
         /**
@@ -542,6 +548,10 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
         PublishDiscoverySession discoverySession = discoveryCb.getPublishDiscoverySession();
         assertNotNull("Publish session", discoverySession);
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
 
         // 2. update-publish
         publishConfig = new PublishConfig.Builder().setServiceName(
@@ -626,6 +636,10 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_SUBSCRIBE_STARTED));
         SubscribeDiscoverySession discoverySession = discoveryCb.getSubscribeDiscoverySession();
         assertNotNull("Subscribe session", discoverySession);
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
+        assertFalse(discoveryCb.waitForCallback(
+                DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
 
         // 2. update-subscribe
         subscribeConfig = new SubscribeConfig.Builder().setServiceName(
