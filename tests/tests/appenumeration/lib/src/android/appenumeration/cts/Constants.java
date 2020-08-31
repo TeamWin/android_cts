@@ -78,8 +78,13 @@ public class Constants {
     public static final String TARGET_SHARED_USER = PKG_BASE + "noapi.shareduid";
     /** A package that exposes itself via various intent filters (activities, services, etc.) */
     public static final String TARGET_FILTERS = PKG_BASE + "filters";
-    /** A package that declares itself force queryable, making it visible to all other packages */
+    /** A package that declares itself force queryable, making it visible to all other packages.
+     *  This is installed as forceQueryable as non-system apps cannot declare themselves as such. */
     public static final String TARGET_FORCEQUERYABLE = PKG_BASE + "forcequeryable";
+    /** A package that declares itself force queryable, but is installed normally making it not
+     *  visible to other packages */
+    public static final String TARGET_FORCEQUERYABLE_NORMAL =
+            PKG_BASE + "forcequeryable.normalinstall";
     /** A package with no published API and so isn't queryable by anything but package name */
     public static final String TARGET_NO_API = PKG_BASE + "noapi";
     /** A package that offers an activity used for opening / editing file types */
