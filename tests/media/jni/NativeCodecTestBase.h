@@ -102,11 +102,10 @@ class OutputManager {
     bool isPtsStrictlyIncreasing(int64_t lastPts);
     bool isOutPtsListIdenticalToInpPtsList(bool requireSorting);
     void saveToMemory(uint8_t* buf, AMediaCodecBufferInfo* info) {
-        memory.insert(memory.end(), buf + info->offset, buf + info->size);
+        memory.insert(memory.end(), buf, buf + info->size);
     }
-    void saveChecksum(uint8_t* buf, AMediaCodecBufferInfo* info) {
-        checksum.push_back(adler32(buf, info->offset, info->size));
-    }
+    void saveChecksum(
+            uint8_t* buf, AMediaCodecBufferInfo* info, int width, int height, int stride);
     void reset() {
         inpPtsArray.clear();
         outPtsArray.clear();

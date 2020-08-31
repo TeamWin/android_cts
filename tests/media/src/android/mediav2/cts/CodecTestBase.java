@@ -277,12 +277,38 @@ class OutputManager {
     }
 
     void checksum(ByteBuffer buf, int size) {
+        checksum(buf, size, 0, 0, 0);
+    }
+
+    void checksum(ByteBuffer buf, int size, int width, int height, int stride) {
         int cap = buf.capacity();
         assertTrue("checksum() params are invalid: size = " + size + " cap = " + cap,
                 size > 0 && size <= cap);
         CRC32 crc = new CRC32();
         if (buf.hasArray()) {
-            crc.update(buf.array(), buf.position() + buf.arrayOffset(), size);
+            if (width > 0 && height > 0 && stride > 0) {
+                int offset = buf.position() + buf.arrayOffset();
+                byte[] bb = new byte[width * height];
+                for (int i = 0; i < height; ++i) {
+                    System.arraycopy(buf.array(), offset, bb, i * width, width);
+                    offset += stride;
+                }
+                crc.update(bb, 0, width * height);
+            } else {
+                crc.update(buf.array(), buf.position() + buf.arrayOffset(), size);
+            }
+        } else if (width > 0 && height > 0 && stride > 0) {
+            // Checksum only the Y plane
+            int pos = buf.position();
+            int offset = pos;
+            byte[] bb = new byte[width * height];
+            for (int i = 0; i < height; ++i) {
+                buf.position(offset);
+                buf.get(bb, i * width, width);
+                offset += stride;
+            }
+            crc.update(bb, 0, width * height);
+            buf.position(pos);
         } else {
             int pos = buf.position();
             final int rdsize = Math.min(4096, size);
@@ -968,18 +994,21 @@ class CodecDecoderTestBase extends CodecTestBase {
 
     void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0 && mSaveToMem) {
+            ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
             if (mIsAudio) {
-                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
                 mOutputBuff.saveToMemory(buf, info);
             } else {
                 // tests both getOutputImage and getOutputBuffer. Can do time division
                 // multiplexing but lets allow it for now
+                MediaFormat format = mCodec.getOutputFormat();
+                int width = format.getInteger(MediaFormat.KEY_WIDTH);
+                int height = format.getInteger(MediaFormat.KEY_HEIGHT);
+                int stride = format.getInteger(MediaFormat.KEY_STRIDE);
+                mOutputBuff.checksum(buf, info.size, width, height, stride);
+
                 Image img = mCodec.getOutputImage(bufferIndex);
                 assertTrue(img != null);
                 mOutputBuff.checksum(img);
-
-                ByteBuffer buf = mCodec.getOutputBuffer(bufferIndex);
-                mOutputBuff.checksum(buf, info.size);
             }
         }
         if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {

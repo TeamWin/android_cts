@@ -221,6 +221,22 @@ bool OutputManager::isPtsStrictlyIncreasing(int64_t lastPts) {
     return result;
 }
 
+void OutputManager::saveChecksum(
+        uint8_t* buf, AMediaCodecBufferInfo* info, int width, int height, int stride) {
+    if (width > 0 && height > 0 && stride > 0) {
+        // Only checksum Y plane
+        std::vector<uint8_t> tmp(width * height, 0u);
+        size_t offset = 0;
+        for (int i = 0; i < height; ++i) {
+            memcpy(tmp.data() + (i * width), buf + offset, width);
+            offset += stride;
+        }
+        checksum.push_back(adler32(tmp.data(), 0, width * height));
+    } else {
+        checksum.push_back(adler32(buf, 0, info->size));
+    }
+}
+
 bool OutputManager::isOutPtsListIdenticalToInpPtsList(bool requireSorting) {
     bool isEqual = true;
     std::sort(inpPtsArray.begin(), inpPtsArray.end());
