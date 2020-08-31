@@ -228,8 +228,18 @@ bool CodecDecoderTest::dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* 
         if (mSaveToMem) {
             size_t buffSize;
             uint8_t* buf = AMediaCodec_getOutputBuffer(mCodec, bufferIndex, &buffSize);
-            if (mIsAudio) mOutputBuff->saveToMemory(buf, info);
-            mOutputBuff->updateChecksum(buf, info);
+            if (mIsAudio) {
+                mOutputBuff->saveToMemory(buf, info);
+                mOutputBuff->updateChecksum(buf, info);
+            } else {
+                AMediaFormat* format =
+                    mIsCodecInAsyncMode ? mAsyncHandle.getOutputFormat() : mOutFormat;
+                int32_t width, height, stride;
+                AMediaFormat_getInt32(format, "width", &width);
+                AMediaFormat_getInt32(format, "height", &height);
+                AMediaFormat_getInt32(format, "stride", &stride);
+                mOutputBuff->updateChecksum(buf, info, width, height, stride);
+            }
         }
         mOutputBuff->saveOutPTS(info->presentationTimeUs);
         mOutputCount++;
@@ -360,17 +370,17 @@ bool CodecDecoderTest::testSimpleDecode(const char* decoder, const char* testFil
             if (validateFormat) {
                 if (mIsCodecInAsyncMode ? !mAsyncHandle.hasOutputFormatChanged()
                                         : !mSignalledOutFormatChanged) {
-                    ALOGE(log, "not received format change");
+                    ALOGE("%s%s", log, "not received format change");
                     isPass = false;
                 } else if (!isFormatSimilar(mInpDecFormat, mIsCodecInAsyncMode
                                                                    ? mAsyncHandle.getOutputFormat()
                                                                    : mOutFormat)) {
-                    ALOGE(log, "configured format and output format are not similar");
+                    ALOGE("%s%s", log, "configured format and output format are not similar");
                     isPass = false;
                 }
             }
             if (checksum != ref->getChecksum()) {
-                ALOGE(log, "sdk output and ndk output differ");
+                ALOGE("%s%s", log, "sdk output and ndk output differ");
                 isPass = false;
             }
             loopCounter++;
@@ -500,12 +510,12 @@ bool CodecDecoderTest::testFlush(const char* decoder, const char* testFile) {
         if (validateFormat) {
             if (mIsCodecInAsyncMode ? !mAsyncHandle.hasOutputFormatChanged()
                                     : !mSignalledOutFormatChanged) {
-                ALOGE(log, "not received format change");
+                ALOGE("%s%s", log, "not received format change");
                 isPass = false;
             } else if (!isFormatSimilar(mInpDecFormat, mIsCodecInAsyncMode
                                                                ? mAsyncHandle.getOutputFormat()
                                                                : mOutFormat)) {
-                ALOGE(log, "configured format and output format are not similar");
+                ALOGE("%s%s", log, "configured format and output format are not similar");
                 isPass = false;
             }
         }
@@ -632,12 +642,12 @@ bool CodecDecoderTest::testSimpleDecodeQueueCSD(const char* decoder, const char*
                 if (validateFormat) {
                     if (mIsCodecInAsyncMode ? !mAsyncHandle.hasOutputFormatChanged()
                                             : !mSignalledOutFormatChanged) {
-                        ALOGE(log, "not received format change");
+                        ALOGE("%s%s", log, "not received format change");
                         isPass = false;
                     } else if (!isFormatSimilar(mInpDecFormat,
                                                 mIsCodecInAsyncMode ? mAsyncHandle.getOutputFormat()
                                                                     : mOutFormat)) {
-                        ALOGE(log, "configured format and output format are not similar");
+                        ALOGE("%s%s", log, "configured format and output format are not similar");
                         isPass = false;
                     }
                 }
