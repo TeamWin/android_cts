@@ -260,7 +260,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
     private static class TvPanelReportedModesAreSupportedTestStep extends YesNoTestStep {
         public TvPanelReportedModesAreSupportedTestStep(TvAppVerifierActivity context) {
-            super(context, getInstructionText(context));
+            super(context, getInstructionText(context), R.string.tv_yes, R.string.tv_no);
         }
 
         private static String getInstructionText(Context context) {
@@ -278,7 +278,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
     private static class TvPanelSupportedModesAreReportedTestStep extends YesNoTestStep {
         public TvPanelSupportedModesAreReportedTestStep(TvAppVerifierActivity context) {
-            super(context, getInstructionText(context));
+            super(context, getInstructionText(context), R.string.tv_no, R.string.tv_yes);
         }
 
         private static String getInstructionText(Context context) {
