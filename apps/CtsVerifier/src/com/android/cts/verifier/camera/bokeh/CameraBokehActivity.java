@@ -753,7 +753,7 @@ public class CameraBokehActivity extends PassFailButtons.Activity
 
     private void startPreview() {
         try {
-            if (mPreviewSize == null || mPreviewSize.equals(mNextCombination.mPreviewSize)) {
+            if (mPreviewSize == null || !mPreviewSize.equals(mNextCombination.mPreviewSize)) {
                 mPreviewSize = mNextCombination.mPreviewSize;
 
                 mYuvImageReader = ImageReader.newInstance(mPreviewSize.getWidth(),
