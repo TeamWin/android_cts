@@ -3689,6 +3689,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.leanback" />
+            <meta-data android:name="test_required_configs"
+                       android:value="config_tv_panel"/>
         </activity>
 
 
