@@ -38,6 +38,7 @@ import android.telephony.CellIdentity;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
+import android.telephony.PhysicalChannelConfig;
 import android.telephony.PreciseCallState;
 import android.telephony.PreciseDataConnectionState;
 import android.telephony.ServiceState;
@@ -91,6 +92,7 @@ public class PhoneStateListenerTest {
     private boolean mSecurityExceptionThrown;
     private boolean mOnRegistrationFailedCalled;
     private boolean mOnTelephonyDisplayInfoChanged;
+    private boolean mOnPhysicalChannelConfigurationCalled;
     @RadioPowerState private int mRadioPowerState;
     @SimActivationState private int mVoiceActivationState;
     private BarringInfo mBarringInfo;
@@ -1164,5 +1166,37 @@ public class PhoneStateListenerTest {
         // What the test is verifying is that there is no "auto" callback for registration
         // failure because unlike other PSL registrants, this one is not called upon registration.
         assertFalse(mOnRegistrationFailedCalled);
+    }
+
+    @Test
+    public void testOnPhysicalChannelConfigurationChanged() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        assertFalse(mOnPhysicalChannelConfigurationCalled);
+        mHandler.post(() -> {
+            mListener = new PhoneStateListener() {
+                @Override
+                public void onPhysicalChannelConfigurationChanged(
+                        List<PhysicalChannelConfig> configs) {
+                    synchronized (mLock) {
+                        mOnPhysicalChannelConfigurationCalled = true;
+                        mLock.notify();
+                    }
+                }
+            };
+            mTelephonyManager.listen(PhoneStateListener.LISTEN_PHYSICAL_CHANNEL_CONFIGURATION,
+                    mListener);
+        });
+
+        synchronized (mLock) {
+            while(!mOnPhysicalChannelConfigurationCalled){
+                mLock.wait(WAIT_TIME);
+            }
+        }
+
+        assertTrue(mOnPhysicalChannelConfigurationCalled);
     }
 }
