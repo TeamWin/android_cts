@@ -29,6 +29,13 @@ public abstract class AbstractLoginActivityTestCase
 
     protected LoginActivity mActivity;
 
+    protected AbstractLoginActivityTestCase() {
+    }
+
+    protected AbstractLoginActivityTestCase(UiBot inlineUiBot) {
+        super(inlineUiBot);
+    }
+
     @Override
     protected AutofillActivityTestRule<LoginActivity> getActivityRule() {
         return new AutofillActivityTestRule<LoginActivity>(

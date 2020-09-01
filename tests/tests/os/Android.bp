@@ -18,13 +18,17 @@ android_test {
     compile_multilib: "both",
     static_libs: [
         "android.hidl.manager-V1.0-java",
+        "androidx.test.core",
+        "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "truth-prebuilt",
         "guava",
         "junit",
+        "CtsMockInputMethodLib"
     ],
+    jni_uses_platform_apis: true,
     jni_libs: [
         "libcts_jni",
         "libctsos_jni",
@@ -32,6 +36,7 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
         "src/android/os/cts/IParcelFileDescriptorPeer.aidl",
         "src/android/os/cts/IEmptyService.aidl",
         "src/android/os/cts/ISeccompIsolatedService.aidl",
@@ -47,7 +52,7 @@ android_test {
         "vts10",
         "general-tests",
     ],
-    platform_apis: true,
+    sdk_version: "test_current",
     libs: [
         "android.test.runner",
         "android.test.base",

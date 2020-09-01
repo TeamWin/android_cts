@@ -13,8 +13,10 @@
       "name": "CtsSelinuxTargetSdk28TestCases"
     },
     {
+      "name": "CtsSelinuxTargetSdk29TestCases"
+    },
+    {
       "name": "CtsSelinuxTargetSdkCurrentTestCases"
     }
   ]
 }
-

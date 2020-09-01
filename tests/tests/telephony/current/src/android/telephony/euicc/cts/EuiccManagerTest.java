@@ -17,7 +17,9 @@
 package android.telephony.euicc.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
@@ -39,6 +41,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -309,6 +314,160 @@ public class EuiccManagerTest {
         assertEquals(EuiccManager.ERROR_CONNECTION_ERROR, 10014);
         assertEquals(EuiccManager.ERROR_INVALID_RESPONSE, 10015);
         assertEquals(EuiccManager.ERROR_OPERATION_BUSY, 10016);
+    }
+
+    @Test
+    public void testSetSupportedCountries() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        // Get country list for restoring later.
+        List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
+
+        List<String> expectedCountries = Arrays.asList("US", "SG");
+        // Sets supported countries
+        mEuiccManager.setSupportedCountries(expectedCountries);
+
+        // Verify supported countries are expected
+        assertEquals(expectedCountries, mEuiccManager.getSupportedCountries());
+
+        // Restore the original country list
+        mEuiccManager.setSupportedCountries(originalSupportedCountry);
+    }
+
+    @Test
+    public void testSetUnsupportedCountries() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        // Get country list for restoring later.
+        List<String> originalUnsupportedCountry = mEuiccManager.getUnsupportedCountries();
+
+        List<String> expectedCountries = Arrays.asList("US", "SG");
+        // Sets unsupported countries
+        mEuiccManager.setUnsupportedCountries(expectedCountries);
+
+        // Verify unsupported countries are expected
+        assertEquals(expectedCountries, mEuiccManager.getUnsupportedCountries());
+
+        // Restore the original country list
+        mEuiccManager.setUnsupportedCountries(originalUnsupportedCountry);
+    }
+
+    @Test
+    public void testIsSupportedCountry_returnsTrue_ifCountryIsOnSupportedList() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        // Get country list for restoring later.
+        List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
+
+        // Sets supported countries
+        mEuiccManager.setSupportedCountries(Arrays.asList("US", "SG"));
+
+        // Verify the country is supported
+        assertTrue(mEuiccManager.isSupportedCountry("US"));
+
+        // Restore the original country list
+        mEuiccManager.setSupportedCountries(originalSupportedCountry);
+    }
+
+    @Test
+    public void testIsSupportedCountry_returnsTrue_ifCountryIsNotOnUnsupportedList() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        // Get country list for restoring later.
+        List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
+        List<String> originalUnsupportedCountry = mEuiccManager.getUnsupportedCountries();
+
+        // Sets supported countries
+        mEuiccManager.setSupportedCountries(new ArrayList<>());
+        // Sets unsupported countries
+        mEuiccManager.setUnsupportedCountries(Arrays.asList("SG"));
+
+        // Verify the country is supported
+        assertTrue(mEuiccManager.isSupportedCountry("US"));
+
+        // Restore the original country list
+        mEuiccManager.setSupportedCountries(originalSupportedCountry);
+        mEuiccManager.setUnsupportedCountries(originalUnsupportedCountry);
+    }
+
+    @Test
+    public void testIsSupportedCountry_returnsFalse_ifCountryIsNotOnSupportedList() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        // Get country list for restoring later.
+        List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
+
+        // Sets supported countries
+        mEuiccManager.setSupportedCountries(Arrays.asList("SG"));
+
+        // Verify the country is not supported
+        assertFalse(mEuiccManager.isSupportedCountry("US"));
+
+        // Restore the original country list
+        mEuiccManager.setSupportedCountries(originalSupportedCountry);
+    }
+
+    @Test
+    public void testIsSupportedCountry_returnsFalse_ifCountryIsOnUnsupportedList() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        // Get country list for restoring later.
+        List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
+        List<String> originalUnsupportedCountry = mEuiccManager.getUnsupportedCountries();
+
+        // Sets supported countries
+        mEuiccManager.setSupportedCountries(new ArrayList<>());
+        // Sets unsupported countries
+        mEuiccManager.setUnsupportedCountries(Arrays.asList("US"));
+
+        // Verify the country is not supported
+        assertFalse(mEuiccManager.isSupportedCountry("US"));
+
+        // Restore the original country list
+        mEuiccManager.setSupportedCountries(originalSupportedCountry);
+        mEuiccManager.setUnsupportedCountries(originalUnsupportedCountry);
+    }
+
+    @Test
+    public void testIsSupportedCountry_returnsFalse_ifBothListsAreEmpty() {
+        // Only test it when EuiccManager is enabled.
+        if (!mEuiccManager.isEnabled()) {
+            return;
+        }
+
+        // Get country list for restoring later.
+        List<String> originalSupportedCountry = mEuiccManager.getSupportedCountries();
+        List<String> originalUnsupportedCountry = mEuiccManager.getUnsupportedCountries();
+
+        // Sets supported countries
+        mEuiccManager.setSupportedCountries(new ArrayList<>());
+        // Sets unsupported countries
+        mEuiccManager.setUnsupportedCountries(new ArrayList<>());
+
+        // Verify the country is supported
+        assertTrue(mEuiccManager.isSupportedCountry("US"));
+
+        // Restore the original country list
+        mEuiccManager.setSupportedCountries(originalSupportedCountry);
+        mEuiccManager.setUnsupportedCountries(originalUnsupportedCountry);
     }
 
     private Context getContext() {

@@ -18,8 +18,6 @@ package android.keystore.cts;
 
 import android.security.keystore.KeyProperties;
 
-import org.junit.Test;
-
 import java.security.AlgorithmParameters;
 
 import javax.crypto.Cipher;
@@ -31,18 +29,30 @@ public class DesCipherPerformanceTest extends PerformanceTestBase {
     final int[] TEST_MESSAGE_SIZES = {1 << 6, 1 << 10, 1 << 17};
 
     public void testDESede_CBC_NoPadding() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
         testDesCipher("DESede/CBC/NoPadding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
     public void testDESede_CBC_PKCS7Padding() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
         testDesCipher("DESede/CBC/PKCS7Padding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
     public void testDESede_ECB_NoPadding() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
         testDesCipher("DESede/ECB/NoPadding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 
     public void testDESede_ECB_PKCS7Padding() throws Exception {
+        if (!TestUtils.supports3DES()) {
+            return;
+        }
         testDesCipher("DESede/ECB/PKCS7Padding", SUPPORTED_DES_KEY_SIZES, TEST_MESSAGE_SIZES);
     }
 

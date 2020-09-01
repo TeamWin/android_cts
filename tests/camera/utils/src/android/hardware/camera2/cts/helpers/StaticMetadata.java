@@ -25,6 +25,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.hardware.camera2.params.Capability;
 import android.util.Range;
 import android.util.Size;
 import android.util.Log;
@@ -75,7 +76,7 @@ public class StaticMetadata {
 
     // Last defined capability enum, for iterating over all of them
     public static final int LAST_CAPABILITY_ENUM =
-            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA;
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_OFFLINE_PROCESSING;
 
     // Access via getAeModeName() to account for vendor extensions
     public static final String[] AE_MODE_NAMES = new String[] {
@@ -1815,6 +1816,26 @@ public class StaticMetadata {
         return maxZoom;
     }
 
+    public Range<Float> getZoomRatioRangeChecked() {
+        Key<Range<Float>> key =
+                CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE;
+
+        Range<Float> zoomRatioRange = getValueFromKeyNonNull(key);
+        if (zoomRatioRange == null) {
+            return new Range<Float>(1.0f, 1.0f);
+        }
+
+        checkTrueForKey(key, String.format(" min zoom ratio %f should be no more than 1",
+                zoomRatioRange.getLower()), zoomRatioRange.getLower() <= 1.0);
+        checkTrueForKey(key, String.format(" max zoom ratio %f should be no less than 1",
+                zoomRatioRange.getUpper()), zoomRatioRange.getUpper() >= 1.0);
+        final float ZOOM_MIN_RANGE = 0.01f;
+        checkTrueForKey(key, " zoom ratio range should be reasonably large",
+                zoomRatioRange.getUpper().equals(zoomRatioRange.getLower()) ||
+                zoomRatioRange.getUpper() - zoomRatioRange.getLower() > ZOOM_MIN_RANGE);
+        return zoomRatioRange;
+    }
+
     public int[] getAvailableSceneModesChecked() {
         Key<int[]> key =
                 CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES;
@@ -1850,6 +1871,62 @@ public class StaticMetadata {
                 modeList.contains(CameraMetadata.CONTROL_EFFECT_MODE_OFF));
 
         return modes;
+    }
+
+    public Capability[] getAvailableExtendedSceneModeCapsChecked() {
+        final Size FULL_HD = new Size(1920, 1080);
+        Rect activeRect = getValueFromKeyNonNull(
+                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        Key<Capability[]> key =
+                CameraCharacteristics.CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_CAPABILITIES;
+        Capability[] caps = mCharacteristics.get(key);
+        if (caps == null) {
+            return new Capability[0];
+        }
+
+        Size[] yuvSizes = getAvailableSizesForFormatChecked(ImageFormat.YUV_420_888,
+                StaticMetadata.StreamDirection.Output);
+        List<Size> yuvSizesList = Arrays.asList(yuvSizes);
+        for (Capability cap : caps) {
+            int extendedSceneMode = cap.getMode();
+            Size maxStreamingSize = cap.getMaxStreamingSize();
+            boolean maxStreamingSizeIsZero =
+                    maxStreamingSize.getWidth() == 0 && maxStreamingSize.getHeight() == 0;
+            switch (extendedSceneMode) {
+                case CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE:
+                    // STILL_CAPTURE: Must either be (0, 0), or one of supported yuv/private sizes.
+                    // Because spec requires yuv and private sizes match, only check YUV sizes here.
+                    checkTrueForKey(key,
+                            String.format(" maxStreamingSize [%d, %d] for extended scene mode " +
+                            "%d must be a supported YCBCR_420_888 size, or (0, 0)",
+                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(),
+                            extendedSceneMode),
+                            yuvSizesList.contains(maxStreamingSize) || maxStreamingSizeIsZero);
+                    break;
+                case CameraMetadata.CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS:
+                    // CONTINUOUS: Must be one of supported yuv/private stream sizes.
+                    checkTrueForKey(key,
+                            String.format(" maxStreamingSize [%d, %d] for extended scene mode " +
+                            "%d must be a supported YCBCR_420_888 size.",
+                            maxStreamingSize.getWidth(), maxStreamingSize.getHeight(),
+                            extendedSceneMode), yuvSizesList.contains(maxStreamingSize));
+                    // Must be at least 1080p if sensor is at least 1080p.
+                    if (activeRect.width() >= FULL_HD.getWidth() &&
+                            activeRect.height() >= FULL_HD.getHeight()) {
+                        checkTrueForKey(key,
+                                String.format(" maxStreamingSize [%d, %d] for extended scene " +
+                                "mode %d must be at least 1080p", maxStreamingSize.getWidth(),
+                                maxStreamingSize.getHeight(), extendedSceneMode),
+                                maxStreamingSize.getWidth() >= FULL_HD.getWidth() &&
+                                maxStreamingSize.getHeight() >= FULL_HD.getHeight());
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return caps;
     }
 
     /**
@@ -1997,6 +2074,45 @@ public class StaticMetadata {
 
         return availableCapabilities.contains(capability);
     }
+
+    /**
+     * Determine whether the current device supports a private reprocessing capability or not.
+     *
+     * @return {@code true} if the capability is supported, {@code false} otherwise.
+     *
+     * @throws IllegalArgumentException if {@code capability} was negative
+     */
+    public boolean isPrivateReprocessingSupported() {
+        return isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
+    }
+
+    /**
+     * Get sorted (descending order) size list for given input format. Remove the sizes larger than
+     * the bound. If the bound is null, don't do the size bound filtering.
+     *
+     * @param format input format
+     * @param bound maximum allowed size bound
+     *
+     * @return Sorted input size list (descending order)
+     */
+    public List<Size> getSortedSizesForInputFormat(int format, Size bound) {
+        Size[] availableSizes = getAvailableSizesForFormatChecked(format, StreamDirection.Input);
+        if (bound == null) {
+            return CameraTestUtils.getAscendingOrderSizes(Arrays.asList(availableSizes),
+                    /*ascending*/false);
+        }
+
+        List<Size> sizes = new ArrayList<Size>();
+        for (Size sz: availableSizes) {
+            if (sz.getWidth() <= bound.getWidth() && sz.getHeight() <= bound.getHeight()) {
+                sizes.add(sz);
+            }
+        }
+
+        return CameraTestUtils.getAscendingOrderSizes(sizes, /*ascending*/false);
+    }
+
 
     /**
      * Determine whether or not all the {@code keys} are available characteristics keys
@@ -2358,6 +2474,14 @@ public class StaticMetadata {
     public boolean isDepthOutputSupported() {
         return isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT);
+    }
+
+    /**
+     * Check if offline processing is supported, based on the respective capability
+     */
+    public boolean isOfflineProcessingSupported() {
+        return isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_OFFLINE_PROCESSING);
     }
 
     /**

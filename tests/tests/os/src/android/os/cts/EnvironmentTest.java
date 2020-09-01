@@ -16,6 +16,7 @@
 package android.os.cts;
 
 import android.os.Environment;
+import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.system.Os;
 import android.system.StructStatVfs;
@@ -37,6 +38,7 @@ public class EnvironmentTest extends TestCase {
 
     @AppModeFull(reason = "External directory not accessible by instant apps")
     public void testEnvironmentExternal() {
+        assertTrue(Environment.getStorageDirectory().isDirectory());
         assertTrue(Environment.getExternalStorageDirectory().isDirectory());
     }
 

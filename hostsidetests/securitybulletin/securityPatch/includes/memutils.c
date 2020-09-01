@@ -61,6 +61,7 @@ void memutils_init(void) {
     if (NULL == real_memalign) {
         return;
     }
+#ifndef DISABLE_MALLOC_OVERLOADING
     real_calloc = dlsym(RTLD_NEXT, "calloc");
     if (NULL == real_calloc) {
         return;
@@ -73,6 +74,7 @@ void memutils_init(void) {
     if (NULL == real_realloc) {
         return;
     }
+#endif /* DISABLE_MALLOC_OVERLOADING */
     real_free = dlsym(RTLD_NEXT, "free");
     if (NULL == real_free) {
         return;
@@ -99,14 +101,6 @@ void *memalign(size_t alignment, size_t size) {
     size_t num_pages;
     size_t page_size = getpagesize();
 
-    /* User specified alignment is not respected and is overridden by
-     * "new_alignment". This is required to catch OOB read when read offset is
-     * less than user specified alignment. "new_alignment" is derived based on
-     * size_t, and helps to avoid bus errors due to non-aligned memory.
-     * "new_alignment", whenever used, is checked to ensure sizeof(size_t)
-     * has returned proper value                                            */
-    size_t new_alignment = sizeof(size_t);
-
     if (s_mem_map_index == MAX_ENTRIES) {
         return real_memalign(alignment, size);
     }
@@ -115,13 +109,16 @@ void *memalign(size_t alignment, size_t size) {
         return real_memalign(alignment, size);
     }
 
-    if ((0 == page_size) || (0 == alignment) || (0 == size)
-            || (0 == new_alignment)) {
+    if ((0 == page_size) || (0 == alignment) || (0 == size)) {
         return real_memalign(alignment, size);
     }
 #ifdef CHECK_OVERFLOW
-    if (0 != (size % new_alignment)) {
-        aligned_size = size + (new_alignment - (size % new_alignment));
+    /* User specified alignment is not respected and is overridden by
+     * MINIMUM_ALIGNMENT. This is required to catch OOB read when read offset
+     * is less than user specified alignment. "MINIMUM_ALIGNMENT" helps to
+     * avoid bus errors due to non-aligned memory.                         */
+    if (0 != (size % MINIMUM_ALIGNMENT)) {
+        aligned_size = size + (MINIMUM_ALIGNMENT - (size % MINIMUM_ALIGNMENT));
     }
 #endif
 
@@ -134,11 +131,7 @@ void *memalign(size_t alignment, size_t size) {
     total_size = (num_pages * page_size);
     start_ptr = (char *) real_memalign(page_size, total_size);
 #ifdef CHECK_OVERFLOW
-#ifdef FORCE_UNALIGN
-    mem_ptr = (char *) start_ptr + ((num_pages - 1) * page_size) - size;
-#else
     mem_ptr = (char *) start_ptr + ((num_pages - 1) * page_size) - aligned_size;
-#endif /* FORCE_UNALIGN */
     DISABLE_MEM_ACCESS((start_ptr + ((num_pages - 1) * page_size)), page_size);
 #endif /* CHECK_OVERFLOW */
 #ifdef CHECK_UNDERFLOW
@@ -154,6 +147,7 @@ void *memalign(size_t alignment, size_t size) {
     return mem_ptr;
 }
 
+#ifndef DISABLE_MALLOC_OVERLOADING
 void *malloc(size_t size) {
     if (s_memutils_initialized == 0) {
         memutils_init();
@@ -163,7 +157,7 @@ void *malloc(size_t size) {
         return real_malloc(size);
     }
 #endif /* ENABLE_SELECTIVE_OVERLOADING */
-    return memalign(sizeof(size_t), size);
+    return memalign(MINIMUM_ALIGNMENT, size);
 }
 
 void *calloc(size_t nitems, size_t size) {
@@ -210,6 +204,7 @@ void *realloc(void *ptr, size_t size) {
     }
     return real_realloc(ptr, size);
 }
+#endif /* DISABLE_MALLOC_OVERLOADING */
 
 void free(void *ptr) {
     if (s_memutils_initialized == 0) {

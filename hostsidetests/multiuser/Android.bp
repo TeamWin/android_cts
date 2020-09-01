@@ -21,6 +21,7 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "platform-test-annotations-host",
+	"compatibility-host-util",
     ],
     // tag this module as a cts test artifact
     test_suites: [

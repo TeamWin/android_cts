@@ -36,17 +36,30 @@ public class TaggingDefaultTest extends TaggingBaseTest {
         supportsMemoryTagging = !runCommand("grep 'Features.* mte' /proc/cpuinfo").isEmpty();
     }
 
-    public void testHeapTaggingCompatFeatureEnabled() throws Exception {
-        if (!supportsTaggedPointers || supportsMemoryTagging) {
-            return;
-        }
-
-        runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapTaggingEnabled",
-                /*enabledChanges*/ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
-                /*disabledChanges*/ ImmutableSet.of());
+    @Override
+    protected void tearDown() throws Exception {
+        uninstallPackage(TEST_PKG, true);
     }
 
-    public void testHeapTaggingCompatFeatureDisabled() throws Exception {
+    public void testHeapTaggingCompatFeatureEnabled() throws Exception {
+        if (supportsTaggedPointers) {
+            runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapTaggingEnabled",
+                /*enabledChanges*/ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
+                /*disabledChanges*/ ImmutableSet.of());
+        } else {
+            // Ensure that even if the compat flag is set to true, tagged pointers don't
+            // get enabled on incompatible devices. Ensure that we don't check the statsd
+            // report of the feature status, as it won't be present on kernel-unsupported
+            // devices.
+            runDeviceCompatTestReported(TEST_PKG, ".TaggingTest", "testHeapTaggingDisabled",
+                /*enabledChanges*/ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
+                /*disabledChanges*/ ImmutableSet.of(),
+                /*reportedEnabledChanges*/ ImmutableSet.of(),
+                /*reportedDisabledChanges*/ ImmutableSet.of());
+        }
+    }
+
+      public void testCompatFeatureDisabled() throws Exception {
         if (!supportsTaggedPointers || supportsMemoryTagging) {
             return;
         }

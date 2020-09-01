@@ -1,9 +1,7 @@
 # Bug component: 1344
+include ../../media/OWNERS
 andrewlewis@google.com
-chz@google.com
-dwkang@google.com
 elaurent@google.com
-essick@google.com
 etalvala@google.com
 gkasten@google.com
 hdmoon@google.com
@@ -13,7 +11,4 @@ jaewan@google.com
 jinpark@google.com
 jmtrivi@google.com
 jsharkey@android.com
-lajos@google.com
-marcone@google.com
 sungsoo@google.com
-wjia@google.com

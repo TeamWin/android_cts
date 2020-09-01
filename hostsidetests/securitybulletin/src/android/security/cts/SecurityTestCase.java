@@ -188,15 +188,9 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
 
     /**
      * Check if a driver is present on a machine.
-     * deprecated: use AdbUtils.stat() instead!
      */
-    @Deprecated
-    protected boolean containsDriver(ITestDevice mDevice, String driver) throws Exception {
-        String result = mDevice.executeShellCommand("ls -Zl " + driver);
-        if(result.contains("No such file or directory")) {
-            return false;
-        }
-        return true;
+    protected boolean containsDriver(ITestDevice device, String driver) throws Exception {
+        return AdbUtils.runCommandGetExitCode("test -r " + driver, device) == 0;
     }
 
     private long getDeviceUptime() throws DeviceNotAvailableException {

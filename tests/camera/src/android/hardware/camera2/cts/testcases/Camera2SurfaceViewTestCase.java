@@ -19,6 +19,8 @@ package android.hardware.camera2.cts.testcases;
 import static android.hardware.camera2.cts.CameraTestUtils.*;
 
 import static com.android.ex.camera2.blocking.BlockingStateCallback.STATE_CLOSED;
+import androidx.test.InstrumentationRegistry;
+import android.app.UiAutomation;
 
 import android.content.Context;
 import android.graphics.ImageFormat;
@@ -32,6 +34,7 @@ import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.Camera2SurfaceViewCtsActivity;
+import android.hardware.camera2.cts.Camera2ParameterizedTestCase;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
@@ -57,6 +60,7 @@ import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 
 import java.io.File;
@@ -64,6 +68,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
 
 /**
  * Camera2 Preview test case base class by using SurfaceView as rendering target.
@@ -75,7 +85,7 @@ import java.util.List;
  * </p>
  */
 
-public class Camera2SurfaceViewTestCase {
+public class Camera2SurfaceViewTestCase extends Camera2ParameterizedTestCase {
     private static final String TAG = "SurfaceViewTestCase";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final int WAIT_FOR_SURFACE_CHANGE_TIMEOUT_MS = 1000;
@@ -86,9 +96,6 @@ public class Camera2SurfaceViewTestCase {
     protected static final int NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY = 8;
     protected static final int MIN_FRAME_DURATION_ERROR_MARGIN = 100; // ns
 
-    protected Context mContext;
-    protected CameraManager mCameraManager;
-    protected String[] mCameraIds;
     protected HandlerThread mHandlerThread;
     protected Handler mHandler;
     protected BlockingStateCallback mCameraListener;
@@ -119,18 +126,7 @@ public class Camera2SurfaceViewTestCase {
 
     @Before
     public void setUp() throws Exception {
-        mContext = mActivityRule.getActivity().getApplicationContext();
-        /**
-         * Workaround for mockito and JB-MR2 incompatibility
-         *
-         * Avoid java.lang.IllegalArgumentException: dexcache == null
-         * https://code.google.com/p/dexmaker/issues/detail?id=2
-         */
-        System.setProperty("dexmaker.dexcache", mContext.getCacheDir().toString());
-        mCameraManager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
-        assertNotNull("Unable to get CameraManager", mCameraManager);
-        mCameraIds = mCameraManager.getCameraIdList();
-        assertNotNull("Unable to get camera ids", mCameraIds);
+        super.setUp();
         mHandlerThread = new HandlerThread(TAG);
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
@@ -145,14 +141,14 @@ public class Camera2SurfaceViewTestCase {
 
         mAllStaticInfo = new HashMap<String, StaticMetadata>();
         List<String> hiddenPhysicalIds = new ArrayList<>();
-        for (String cameraId : mCameraIds) {
+        for (String cameraId : mCameraIdsUnderTest) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(cameraId);
             StaticMetadata staticMetadata = new StaticMetadata(props,
                     CheckLevel.ASSERT, /*collector*/null);
             mAllStaticInfo.put(cameraId, staticMetadata);
 
             for (String physicalId : props.getPhysicalCameraIds()) {
-                if (!Arrays.asList(mCameraIds).contains(physicalId) &&
+                if (!Arrays.asList(mCameraIdsUnderTest).contains(physicalId) &&
                         !hiddenPhysicalIds.contains(physicalId)) {
                     hiddenPhysicalIds.add(physicalId);
                     props = mCameraManager.getCameraCharacteristics(physicalId);
@@ -169,15 +165,6 @@ public class Camera2SurfaceViewTestCase {
 
     @After
     public void tearDown() throws Exception {
-        String[] cameraIdsPostTest = mCameraManager.getCameraIdList();
-        assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
-        Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIds));
-        Log.i(TAG, "Camera ids in tearDown:" + Arrays.toString(cameraIdsPostTest));
-        assertTrue(
-                "Number of cameras changed from " + mCameraIds.length + " to " +
-                cameraIdsPostTest.length,
-                mCameraIds.length == cameraIdsPostTest.length);
-        // Teardown the camera preview required environments.
         mHandlerThread.quitSafely();
         mHandler = null;
         mCameraListener = null;
@@ -188,6 +175,7 @@ public class Camera2SurfaceViewTestCase {
             // When new Exception(e) is used, exception info will be printed twice.
             throw new Exception(e.getMessage());
         }
+        super.tearDown();
     }
 
     /**
@@ -541,7 +529,7 @@ public class Camera2SurfaceViewTestCase {
         List<Integer> expectedAeStates = new ArrayList<Integer>();
         expectedAeStates.add(new Integer(CaptureResult.CONTROL_AE_STATE_LOCKED));
         CameraTestUtils.waitForAnyResultValue(resultListener, CaptureResult.CONTROL_AE_STATE,
-                expectedAeStates, WAIT_FOR_RESULT_TIMEOUT_MS, NUM_RESULTS_WAIT_TIMEOUT);
+                expectedAeStates, NUM_RESULTS_WAIT_TIMEOUT, WAIT_FOR_RESULT_TIMEOUT_MS);
     }
 
     /**

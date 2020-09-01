@@ -298,6 +298,9 @@ public class SmsCbMessageTest {
         doReturn(-1).when(cursor).getColumnIndex(eq(
                 Telephony.CellBroadcasts.ETWS_WARNING_TYPE));
 
+        doReturn(0).when(cursor).getColumnIndex(eq(
+                Telephony.CellBroadcasts.ETWS_IS_PRIMARY));
+
         doReturn(-1).when(cursor).getColumnIndex(eq(
                 Telephony.CellBroadcasts.CMAS_MESSAGE_CLASS));
 

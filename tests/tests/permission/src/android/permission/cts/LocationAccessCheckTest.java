@@ -20,7 +20,9 @@ import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.app.Notification.EXTRA_TITLE;
 import static android.content.Context.BIND_AUTO_CREATE;
+import static android.content.Context.BIND_NOT_FOREGROUND;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
+import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.location.Criteria.ACCURACY_FINE;
 import static android.provider.Settings.RESET_MODE_PACKAGE_DEFAULTS;
 import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_DELAY_MILLIS;
@@ -33,6 +35,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -53,10 +56,10 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
+import android.permission.cts.appthataccesseslocation.IAccessLocationOnCommand;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 import android.provider.DeviceConfig;
@@ -70,6 +73,7 @@ import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ProtoUtils;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto.RegisteredJob;
 
@@ -80,8 +84,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 
@@ -103,7 +105,8 @@ public class LocationAccessCheckTest {
             "/data/local/tmp/cts/permissions/AppThatDoesNotHaveBgLocationAccess.apk";
 
     /** Whether to show location access check notifications. */
-    private static final String PROPERTY_LOCATION_ACCESS_CHECK_ENABLED = "location_access_check_enabled";
+    private static final String PROPERTY_LOCATION_ACCESS_CHECK_ENABLED =
+            "location_access_check_enabled";
 
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 10000;
     private static final long EXPECTED_TIMEOUT_MILLIS = 1000;
@@ -127,28 +130,20 @@ public class LocationAccessCheckTest {
      */
     private static Boolean sCanAccessFineLocation = null;
 
-    private ServiceConnection mConnection;
+    private static ServiceConnection sConnection;
+    private static IAccessLocationOnCommand sLocationAccessor;
+
     /**
      * Connected to {@value #TEST_APP_PKG} and make it access the location in the background
      */
-    private void accessLocation() {
-        mConnection = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                // ignore
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                // ignore
-            }
-        };
-
-        // Connect and disconnect to service. After the service is disconnected it causes a
-        // access to the location
-        Intent testAppService = new Intent();
-        testAppService.setComponent(new ComponentName(TEST_APP_PKG, TEST_APP_SERVICE));
-        sContext.bindService(testAppService, mConnection, BIND_AUTO_CREATE);
+    private void accessLocation() throws Throwable {
+        if (sConnection == null || sLocationAccessor == null) {
+            bindService();
+        }
+        eventually(() -> {
+            assertNotNull(sLocationAccessor);
+            sLocationAccessor.accessLocation();
+        }, EXPECTED_TIMEOUT_MILLIS);
     }
 
     /**
@@ -185,9 +180,7 @@ public class LocationAccessCheckTest {
      *
      * @param r       The {@link ThrowingCallable} to run.
      * @param timeout the maximum time to wait
-     *
      * @return the return value from the callable
-     *
      * @throws NullPointerException If the return value never becomes non-null
      */
     public static <T> T eventually(@NonNull ThrowingCallable<T> r, long timeout) throws Throwable {
@@ -217,26 +210,8 @@ public class LocationAccessCheckTest {
      * Get the state of the job scheduler
      */
     public static JobSchedulerServiceDumpProto getJobSchedulerDump() throws Exception {
-        ParcelFileDescriptor pfd = sUiAutomation.executeShellCommand("dumpsys jobscheduler --proto");
-
-        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-            // Copy data from 'is' into 'os'
-            try (FileInputStream is = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
-                byte[] buffer = new byte[16384];
-
-                while (true) {
-                    int numRead = is.read(buffer);
-
-                    if (numRead == -1) {
-                        break;
-                    } else {
-                        os.write(buffer, 0, numRead);
-                    }
-                }
-            }
-
-            return JobSchedulerServiceDumpProto.parseFrom(os.toByteArray());
-        }
+        return ProtoUtils.getProto(sUiAutomation, JobSchedulerServiceDumpProto.class,
+                ProtoUtils.DUMPSYS_JOB_SCHEDULER);
     }
 
     /**
@@ -245,6 +220,7 @@ public class LocationAccessCheckTest {
      * @param pkg The name of the package to be cleared
      */
     private static void clearPackageData(@NonNull String pkg) {
+        unbindService();
         runShellCommand("pm clear --user -2 " + pkg);
     }
 
@@ -274,16 +250,24 @@ public class LocationAccessCheckTest {
         return null;
     }
 
+    private StatusBarNotification getNotification(boolean cancelNotification) throws Throwable {
+        return getNotification(cancelNotification, false);
+    }
+
     /**
      * Get a location access notification that is currently visible.
      *
      * @param cancelNotification if {@code true} the notification is canceled inside this method
-     *
+     * @param returnImmediately if {@code true} this method returns immediately after checking once
+     *                          for the notification
      * @return The notification or {@code null} if there is none
      */
-    private StatusBarNotification getNotification(boolean cancelNotification) throws Throwable {
+    private StatusBarNotification getNotification(boolean cancelNotification,
+            boolean returnImmediately) throws Throwable {
         NotificationListenerService notificationService = NotificationListener.getInstance();
-        long start = System.currentTimeMillis();
+        long start = SystemClock.elapsedRealtime();
+        long timeout = returnImmediately ? 0 : LOCATION_ACCESS_TIMEOUT_MILLIS
+                + BACKGROUND_ACCESS_SETTLE_TIME;
         while (true) {
             runLocationCheck();
 
@@ -291,8 +275,7 @@ public class LocationAccessCheckTest {
             if (notification == null) {
                 // Sometimes getting a location takes some time, hence not getting a notification
                 // can be caused by not having gotten a location yet
-                if (System.currentTimeMillis() - start < LOCATION_ACCESS_TIMEOUT_MILLIS
-                        + BACKGROUND_ACCESS_SETTLE_TIME) {
+                if (SystemClock.elapsedRealtime() - start < timeout) {
                     Thread.sleep(200);
                     continue;
                 }
@@ -356,17 +339,40 @@ public class LocationAccessCheckTest {
 
     @BeforeClass
     public static void installBackgroundAccessApp() {
-        runShellCommand("pm install -r -g " + TEST_APP_LOCATION_BG_ACCESS_APK);
+        installBackgroundAccessApp(false);
+    }
+
+    private static void installBackgroundAccessApp(boolean isDowngrade) {
+        String command = "pm install -r -g ";
+        if (isDowngrade) {
+            command = command + "-d ";
+        }
+        String output = runShellCommand(command + TEST_APP_LOCATION_BG_ACCESS_APK);
+        assertTrue(output.contains("Success"));
     }
 
     @AfterClass
     public static void uninstallBackgroundAccessApp() {
+        unbindService();
         runShellCommand("pm uninstall " + TEST_APP_PKG);
+    }
+
+    private static void unbindService() {
+        if (sConnection != null) {
+            sContext.unbindService(sConnection);
+        }
+        sConnection = null;
+        sLocationAccessor = null;
     }
 
 
     private static void installForegroundAccessApp() {
+        unbindService();
         runShellCommand("pm install -r -g " + TEST_APP_LOCATION_FG_ACCESS_APK);
+    }
+
+    private static void uninstallForegroundAccessApp() {
+        runShellCommand("pm uninstall " + TEST_APP_LOCATION_FG_ACCESS_APK);
     }
 
     /**
@@ -375,6 +381,27 @@ public class LocationAccessCheckTest {
     @Before
     public void assumeIsNotLowRamDevice() {
         assumeFalse(sActivityManager.isLowRamDevice());
+    }
+
+    @Before
+    public void bindService() {
+        sConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                sLocationAccessor = IAccessLocationOnCommand.Stub.asInterface(service);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                sConnection = null;
+                sLocationAccessor = null;
+            }
+        };
+
+        Intent testAppService = new Intent();
+        testAppService.setComponent(new ComponentName(TEST_APP_PKG, TEST_APP_SERVICE));
+
+        sContext.bindService(testAppService, sConnection, BIND_AUTO_CREATE | BIND_NOT_FOREGROUND);
     }
 
     /**
@@ -470,21 +497,23 @@ public class LocationAccessCheckTest {
             String pkg = ri.activityInfo.packageName;
 
             if (pkg.equals(PERMISSION_CONTROLLER_PKG)) {
-                permissionControllerSetupIntent = new Intent();
-                permissionControllerSetupIntent.setClassName(pkg, ri.activityInfo.name);
-            }
-        }
+                permissionControllerSetupIntent = new Intent()
+                        .setClassName(pkg, ri.activityInfo.name)
+                        .setFlags(FLAG_RECEIVER_FOREGROUND)
+                        .setPackage(PERMISSION_CONTROLLER_PKG);
 
-        if (permissionControllerSetupIntent != null) {
-            sContext.sendBroadcast(permissionControllerSetupIntent);
+                sContext.sendBroadcast(permissionControllerSetupIntent);
+            }
         }
 
         // Wait until jobs are set up
         eventually(() -> {
             JobSchedulerServiceDumpProto dump = getJobSchedulerDump();
+
             for (RegisteredJob job : dump.registeredJobs) {
                 if (job.dump.sourceUserId == currentUserId
-                        && job.dump.sourcePackageName.equals(PERMISSION_CONTROLLER_PKG)) {
+                        && job.dump.sourcePackageName.equals(PERMISSION_CONTROLLER_PKG)
+                        && job.dump.jobInfo.service.className.contains("LocationAccessCheck")) {
                     return;
                 }
             }
@@ -499,7 +528,7 @@ public class LocationAccessCheckTest {
     @AfterClass
     public static void disallowNotificationAccess() {
         runShellCommand("cmd notification disallow_listener " + (new ComponentName(sContext,
-                        NotificationListener.class)).flattenToString());
+                NotificationListener.class)).flattenToString());
     }
 
     /**
@@ -528,10 +557,9 @@ public class LocationAccessCheckTest {
     }
 
     @After
-    public void locationUnbind() {
-        if (mConnection != null) {
-            sContext.unbindService(mConnection);
-        }
+    public void locationUnbind() throws Throwable {
+        unbindService();
+        getNotification(true, true);
     }
 
     @Test
@@ -541,7 +569,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel="2019-12-01")
+    @SecurityTest(minPatchLevel = "2019-12-01")
     public void notificationIsShownOnlyOnce() throws Throwable {
         accessLocation();
         getNotification(true);
@@ -550,7 +578,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel="2019-12-01")
+    @SecurityTest(minPatchLevel = "2019-12-01")
     public void notificationIsShownAgainAfterClear() throws Throwable {
         accessLocation();
         getNotification(true);
@@ -582,12 +610,12 @@ public class LocationAccessCheckTest {
 
         eventually(() -> {
             accessLocation();
-            assertNotNull(getNotification(false));
+            assertNotNull(getNotification(true));
         }, UNEXPECTED_TIMEOUT_MILLIS);
     }
 
     @Test
-    @SecurityTest(minPatchLevel="2019-12-01")
+    @SecurityTest(minPatchLevel = "2019-12-01")
     public void removeNotificationOnUninstall() throws Throwable {
         accessLocation();
         getNotification(false);
@@ -622,12 +650,12 @@ public class LocationAccessCheckTest {
 
             fail("Location access notification was shown");
         } finally {
-            installBackgroundAccessApp();
+            installBackgroundAccessApp(true);
         }
     }
 
     @Test
-    @SecurityTest(minPatchLevel="2019-12-01")
+    @SecurityTest(minPatchLevel = "2019-12-01")
     public void noNotificationIfFeatureDisabled() throws Throwable {
         disableLocationAccessCheck();
         accessLocation();
@@ -635,7 +663,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel="2019-12-01")
+    @SecurityTest(minPatchLevel = "2019-12-01")
     public void notificationOnlyForAccessesSinceFeatureWasEnabled() throws Throwable {
         // Disable the feature and access location in disabled state
         disableLocationAccessCheck();
@@ -652,8 +680,9 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel="2019-12-01")
+    @SecurityTest(minPatchLevel = "2019-12-01")
     public void noNotificationIfBlamerNotSystemOrLocationProvider() throws Throwable {
+        getNotification(true);
         // Blame the app for access from an untrusted for notification purposes package.
         runWithShellPermissionIdentity(() -> {
             AppOpsManager appOpsManager = sContext.getSystemService(AppOpsManager.class);
@@ -664,7 +693,7 @@ public class LocationAccessCheckTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel="2019-12-01")
+    @SecurityTest(minPatchLevel = "2019-12-01")
     public void testOpeningLocationSettingsDoesNotTriggerAccess() throws Throwable {
         Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

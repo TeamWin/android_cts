@@ -35,6 +35,7 @@ java_test_host {
         "CtsAppBindingService4",
         "CtsAppBindingService5",
         "CtsAppBindingService6",
+        "CtsAppBindingService7",
         "CtsAppBindingServiceB",
     ],
 }

@@ -53,7 +53,7 @@ public class AuthBoundKeyTest extends BaseAppSecurityTest {
             throws DeviceNotAvailableException, FileNotFoundException {
         assumeTrue("Device does not support secure lock",
                    getDevice().hasFeature("android.software.secure_lock_screen"));
-        new InstallMultiple().addApk(APK).run();
+        new InstallMultiple().addFile(APK).run();
         getDevice().executeShellCommand("cmd lock_settings set-pin 1234");
         runDeviceTests(PKG, CLASS, "testGenerateAuthBoundKey");
         getDevice().executeShellCommand("cmd lock_settings clear --old 1234");

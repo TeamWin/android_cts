@@ -41,6 +41,9 @@ import java.util.Set;
 @TargetApi(Build.VERSION_CODES.N)
 public class PackageDeviceInfo extends DeviceInfo {
 
+    private static final String PLATFORM = "android";
+    private static final String PLATFORM_PERMISSION_PREFIX = "android.";
+
     private static final String PACKAGE = "package";
     private static final String NAME = "name";
     private static final String VERSION_NAME = "version_name";
@@ -55,6 +58,11 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String PERMISSION_GROUP = "permission_group";
     private static final String PERMISSION_PROTECTION = "protection_level";
     private static final String PERMISSION_PROTECTION_FLAGS = "protection_level_flags";
+
+    private static final String PERMISSION_TYPE = "type";
+    private static final int PERMISSION_TYPE_SYSTEM = 1;
+    private static final int PERMISSION_TYPE_OEM = 2;
+    private static final int PERMISSION_TYPE_CUSTOM = 3;
 
     private static final String HAS_SYSTEM_UID = "has_system_uid";
 
@@ -86,13 +94,20 @@ public class PackageDeviceInfo extends DeviceInfo {
 
         final ComponentName defaultAccessibilityComponent = getDefaultAccessibilityComponent();
 
+        // Platform permission data used to tag permissions information with sourcing information
+        final PackageInfo platformInfo = pm.getPackageInfo(PLATFORM , PackageManager.GET_PERMISSIONS);
+        final Set<String> platformPermissions = new HashSet<String>();
+        for (PermissionInfo permission : platformInfo.permissions) {
+          platformPermissions.add(permission.name);
+        }
+
         store.startArray(PACKAGE);
         for (PackageInfo pkg : allPackages) {
             store.startGroup();
             store.addResult(NAME, pkg.packageName);
             store.addResult(VERSION_NAME, pkg.versionName);
 
-            collectPermissions(store, pm, pkg);
+            collectPermissions(store, pm, platformPermissions, pkg);
             collectionApplicationInfo(store, pm, pkg);
 
             store.addResult(HAS_DEFAULT_NOTIFICATION_ACCESS,
@@ -118,6 +133,7 @@ public class PackageDeviceInfo extends DeviceInfo {
 
     private static void collectPermissions(DeviceInfoStore store,
                                            PackageManager pm,
+                                           Set<String> systemPermissions,
                                            PackageInfo pkg) throws IOException
     {
         store.startArray(REQUESTED_PERMISSIONS);
@@ -129,6 +145,21 @@ public class PackageDeviceInfo extends DeviceInfo {
                     store.startGroup();
                     store.addResult(PERMISSION_NAME, permission);
                     writePermissionsDetails(pi, store);
+
+                    if (permission == null) continue;
+
+                    final boolean isPlatformPermission = systemPermissions.contains(permission);
+                    if (isPlatformPermission) {
+                      final boolean isAndroidPermission = permission.startsWith(PLATFORM_PERMISSION_PREFIX);
+                      if (isAndroidPermission) {
+                        store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_SYSTEM);
+                      } else {
+                        store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_OEM);
+                      }
+                    } else {
+                      store.addResult(PERMISSION_TYPE, PERMISSION_TYPE_CUSTOM);
+                    }
+
                     store.endGroup();
                 } catch (PackageManager.NameNotFoundException e) {
                     // ignore unrecognized permission and continue

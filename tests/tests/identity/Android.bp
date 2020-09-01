@@ -34,6 +34,7 @@ android_test {
         "cts-keystore-user-auth-helper-library",
         "platformprotosnano",
         "cbor-java",
+        "cts-wm-util",
     ],
     srcs: [
         "src/**/*.java",

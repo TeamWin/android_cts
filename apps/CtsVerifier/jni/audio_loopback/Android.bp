@@ -1,22 +1,25 @@
 cc_test_library {
     name: "libaudioloopback_jni",
     srcs: [
-        "sles.cpp",
-        "jni_sles.c",
-        "audio_utils/atomic.c",
-        "audio_utils/fifo.c",
-        "audio_utils/roundup.c",
+        "jni-bridge.cpp",
+        "NativeAudioAnalyzer.cpp",
+    ],
+    include_dirs: [
+        "frameworks/av/media/ndk/include",
+        "system/core/include/cutils",
     ],
     header_libs: ["jni_headers"],
     shared_libs: [
-        "libOpenSLES",
+        "libaaudio",
         "liblog",
     ],
+    stl: "libc++_static",
     ldflags: ["-Wl,--hash-style=sysv"],
     cflags: [
-        "-DSTDC_HEADERS",
         "-Werror",
         "-Wall",
+        // For slCreateEngine
+        "-Wno-deprecated",
     ],
-    sdk_version: "23",
+    sdk_version: "current",
 }

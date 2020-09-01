@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package android.telephony.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -28,6 +28,14 @@ public class SmsCbLocationTest {
     private static final String PLMN2 = "TEST_PLMN 2";
     private static final int LAC = -1;
     private static final int CID = -1;
+
+    @Test
+    public void testSmsCbLocation() throws Throwable {
+        SmsCbLocation cbLocation = new SmsCbLocation("94040", 1234, 5678);
+        assertEquals("94040", cbLocation.getPlmn());
+        assertEquals(1234, cbLocation.getLac());
+        assertEquals(5678, cbLocation.getCid());
+    }
 
     @Test
     public void testIsInLocationArea() {

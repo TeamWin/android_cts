@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
  * Test audio playback capture through MediaProjection.
  *
  * The tests do the following:
- *   - retrieve a MediaProjection through AudioPlaybackCaptureActivity
+ *   - retrieve a MediaProjection through MediaProjectionActivity
  *   - play some audio
  *   - use that MediaProjection to record the audio playing
  *   - check that some audio was recorded.
@@ -77,11 +77,11 @@ public class AudioPlaybackCaptureTest {
     private AudioManager mAudioManager;
     private boolean mPlaybackBeforeCapture;
     private int mUid; //< UID of this test
-    private AudioPlaybackCaptureActivity mActivity;
+    private MediaProjectionActivity mActivity;
     private MediaProjection mMediaProjection;
     @Rule
-    public ActivityTestRule<AudioPlaybackCaptureActivity> mActivityRule =
-                new ActivityTestRule<>(AudioPlaybackCaptureActivity.class);
+    public ActivityTestRule<MediaProjectionActivity> mActivityRule =
+                new ActivityTestRule<>(MediaProjectionActivity.class);
 
     private static class APCTestConfig {
         public @AttributeUsage int[] matchingUsages;
@@ -489,6 +489,8 @@ public class AudioPlaybackCaptureTest {
             // Stopping one AR must allow creating a new one
             audioRecords.peek().stop();
             audioRecords.pop().release();
+            final long SLEEP_AFTER_STOP_FOR_INACTIVITY_MS = 1000;
+            Thread.sleep(SLEEP_AFTER_STOP_FOR_INACTIVITY_MS);
             audioRecords.push(createDefaultPlaybackCaptureRecord());
 
             // That new one must still be able to capture

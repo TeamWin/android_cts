@@ -34,4 +34,5 @@ android_test {
         "mts",
     ],
     sdk_version: "test_current",
+    min_sdk_version: "29",
 }

@@ -1116,6 +1116,18 @@ public class StagefrightTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2018-11")
+    public void testStagefright_bug_68664359() throws Exception {
+        doStagefrightTest(R.raw.bug_68664359, 60000);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2018-11")
+    public void testStagefright_bug_110435401() throws Exception {
+        doStagefrightTest(R.raw.bug_110435401, 60000);
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2017-03")
     public void testStagefright_cve_2017_0474() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0474, 120000);
@@ -1464,10 +1476,10 @@ public class StagefrightTest {
         String rname = resources.getResourceEntryName(rid);
         String url = server.getAssetUrl("raw/" + rname);
         verifyServer(rid, url);
-        policy.setCleartextTrafficPermitted(false);
         doStagefrightTestMediaPlayer(url, config);
         doStagefrightTestMediaCodec(url, config);
         doStagefrightTestMediaMetadataRetriever(url, config);
+        policy.setCleartextTrafficPermitted(false);
         server.shutdown();
     }
 

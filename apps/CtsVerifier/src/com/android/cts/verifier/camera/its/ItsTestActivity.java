@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 import java.io.BufferedReader;
@@ -84,8 +85,11 @@ public class ItsTestActivity extends DialogTestListActivity {
     // Scenes
     private static final ArrayList<String> mSceneIds = new ArrayList<String> () { {
             add("scene0");
-            add("scene1");
-            add("scene2");
+            add("scene1_1");
+            add("scene1_2");
+            add("scene2_a");
+            add("scene2_b");
+            add("scene2_c");
             add("scene3");
             add("scene4");
             add("scene5");
@@ -95,8 +99,9 @@ public class ItsTestActivity extends DialogTestListActivity {
     private static final ArrayList<String> mHiddenPhysicalCameraSceneIds =
             new ArrayList<String> () { {
                     add("scene0");
-                    add("scene1");
-                    add("scene2");
+                    add("scene1_1");
+                    add("scene1_2");
+                    add("scene2_a");
                     add("scene4");
                     add("sensor_fusion");
              }};
@@ -359,6 +364,18 @@ public class ItsTestActivity extends DialogTestListActivity {
                     "PASS: all cameras on this device are exempted from ITS"
                     , 1.0, ResultType.NEUTRAL, ResultUnit.NONE);
             setTestResultAndFinish(true);
+        }
+        // Default locale must be set to "en-us"
+        Locale locale = Locale.getDefault();
+        if (!Locale.US.equals(locale)) {
+            String toastMessage = "Unsupported default language " + locale + "! " +
+                    "Please switch the default language to English (United States) in " +
+                    "Settings > Language & input > Languages";
+            Toast.makeText(ItsTestActivity.this, toastMessage, Toast.LENGTH_LONG).show();
+            ItsTestActivity.this.getReportLog().setSummary(
+                    "FAIL: Default language is not set to " + Locale.US,
+                    1.0, ResultType.NEUTRAL, ResultUnit.NONE);
+            setTestResultAndFinish(false);
         }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }

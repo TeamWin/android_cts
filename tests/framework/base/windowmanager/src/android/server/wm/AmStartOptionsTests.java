@@ -20,7 +20,6 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.wm.ComponentNameUtils.getActivityName;
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.app.Components.ENTRY_POINT_ALIAS_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_TASK_ACTIVITY;
@@ -33,8 +32,6 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
-
-import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -53,8 +50,8 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
         for (int i = 0; i < 2; i++) {
             executeShellCommand("am start -n " + getActivityName(TEST_ACTIVITY) + " -D");
 
-            mAmWmState.waitForDebuggerWindowVisible(TEST_ACTIVITY);
-            int procId = mAmWmState.getAmState().getActivityProcId(TEST_ACTIVITY);
+            mWmState.waitForDebuggerWindowVisible(TEST_ACTIVITY);
+            int procId = mWmState.getActivityProcId(TEST_ACTIVITY);
 
             assertThat("Invalid ProcId.", procId, greaterThanOrEqualTo(0));
             if (i > 0) {
@@ -70,7 +67,6 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest
     public void testDashW_Indirect() throws Exception {
         testDashW(ENTRY_POINT_ALIAS_ACTIVITY, SINGLE_TASK_ACTIVITY);
     }
@@ -82,7 +78,7 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
                 .setTargetActivity(TEST_ACTIVITY).execute();
 
         // Return to home
-        pressHomeButton();
+        launchHomeActivity();
 
         // Start LaunchingActivity again and finish TestActivity
         final int flags =
@@ -99,7 +95,7 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
         startActivityAndVerifyResult(entryActivity, actualActivity, true);
 
         // Test warm start
-        pressHomeButton();
+        launchHomeActivity();
         startActivityAndVerifyResult(entryActivity, actualActivity, false);
 
         // Test "hot" start (app already in front)
@@ -108,7 +104,7 @@ public class AmStartOptionsTests extends ActivityManagerTestBase {
 
     private void startActivityAndVerifyResult(final ComponentName entryActivity,
             final ComponentName actualActivity, boolean shouldStart) {
-        mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
         // Pass in different data only when cold starting. This is to make the intent
         // different in subsequent warm/hot launches, so that the entrypoint alias

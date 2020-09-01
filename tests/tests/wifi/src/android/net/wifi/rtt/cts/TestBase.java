@@ -24,6 +24,7 @@ import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.net.wifi.cts.WifiJUnit3TestBase;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.RangingResultCallback;
 import android.net.wifi.rtt.WifiRttManager;
@@ -43,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * Base class for Wi-Fi RTT CTS test cases. Provides a uniform configuration and event management
  * facility.
  */
-public class TestBase extends AndroidTestCase {
+public class TestBase extends WifiJUnit3TestBase {
     protected static final String TAG = "WifiRttCtsTests";
 
     // wait for Wi-Fi RTT to become available
@@ -51,6 +52,9 @@ public class TestBase extends AndroidTestCase {
 
     // wait for Wi-Fi scan results to become available
     private static final int WAIT_FOR_SCAN_RESULTS_SECS = 20;
+
+    // wait for network selection and connection finish
+    private static final int WAIT_FOR_CONNECTION_FINISH_MS = 30_000;
 
     protected WifiRttManager mWifiRttManager;
     protected WifiManager mWifiManager;
@@ -96,8 +100,10 @@ public class TestBase extends AndroidTestCase {
         mWifiLock.acquire();
         if (!mWifiManager.isWifiEnabled()) {
             SystemUtil.runShellCommand("svc wifi enable");
+            // Turn on Wi-Fi may trigger connection. Wait connection state stable.
+            scanAps();
+            Thread.sleep(WAIT_FOR_CONNECTION_FINISH_MS);
         }
-
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiRttManager.ACTION_WIFI_RTT_STATE_CHANGED);
         WifiRttBroadcastReceiver receiver = new WifiRttBroadcastReceiver();

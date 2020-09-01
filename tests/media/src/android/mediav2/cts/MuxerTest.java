@@ -990,6 +990,14 @@ public class MuxerTest {
 
         }
 
+        private boolean doesCodecRequireCSD(String aMime) {
+            return (aMime == MediaFormat.MIMETYPE_VIDEO_AVC ||
+                    aMime == MediaFormat.MIMETYPE_VIDEO_HEVC ||
+                    aMime == MediaFormat.MIMETYPE_VIDEO_MPEG4 ||
+                    aMime == MediaFormat.MIMETYPE_AUDIO_AAC);
+
+        }
+
         private native boolean nativeTestSimpleMux(String srcPath, String outPath, String mime,
                 String selector);
 

@@ -33,6 +33,10 @@ java_test_host {
         "tradefed",
         "compatibility-host-util",
     ],
+
+    static_libs: [
+        "cts-host-utils",
+    ],
 }
 
 filegroup {

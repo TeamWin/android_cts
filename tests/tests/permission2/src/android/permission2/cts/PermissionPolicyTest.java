@@ -28,7 +28,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
-import android.os.Build;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArrayMap;
@@ -66,6 +65,10 @@ public class PermissionPolicyTest {
     private static final String HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION
             = "android.permission.HIDE_NON_SYSTEM_OVERLAY_WINDOWS";
 
+    private static final Date MANAGE_COMPANION_DEVICES_PATCH_DATE = parseDate("2020-07-01");
+    private static final String MANAGE_COMPANION_DEVICES_PERMISSION
+            = "android.permission.MANAGE_COMPANION_DEVICES";
+
     private static final String LOG_TAG = "PermissionProtectionTest";
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
@@ -82,9 +85,6 @@ public class PermissionPolicyTest {
     private static final String ATTR_PERMISSION_FLAGS = "permissionFlags";
     private static final String ATTR_PROTECTION_LEVEL = "protectionLevel";
     private static final String ATTR_BACKGROUND_PERMISSION = "backgroundPermission";
-
-    private static final String CAMERA_OPEN_CLOSE_LISTENER_PERMISSION =
-            "android.permission.CAMERA_OPEN_CLOSE_LISTENER";
 
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -117,13 +117,6 @@ public class PermissionPolicyTest {
         for (ExpectedPermissionInfo expectedPermission : expectedPermissions) {
             String expectedPermissionName = expectedPermission.name;
             if (shouldSkipPermission(expectedPermissionName)) {
-                continue;
-            }
-
-            // Skip CAMERA OPEN_CLOSE_LISTENER_PERMISSION check for Android Q
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q
-                    && expectedPermissionName.equals(CAMERA_OPEN_CLOSE_LISTENER_PERMISSION)) {
-                declaredPermissionsMap.remove(expectedPermissionName);
                 continue;
             }
 
@@ -413,6 +406,12 @@ public class PermissionPolicyTest {
                 case "runtime": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_RUNTIME_ONLY;
                 } break;
+                case "companion": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_COMPANION;
+                } break;
+                case "retailDemo": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_RETAIL_DEMO;
+                } break;
             }
         }
         return protectionLevel;
@@ -442,9 +441,14 @@ public class PermissionPolicyTest {
     }
 
     private boolean shouldSkipPermission(String permissionName) {
-        return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE) &&
-                HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION.equals(permissionName);
-
+        switch (permissionName) {
+            case HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION:
+                return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE);
+            case MANAGE_COMPANION_DEVICES_PERMISSION:
+                return parseDate(SECURITY_PATCH).before(MANAGE_COMPANION_DEVICES_PATCH_DATE);
+            default:
+                return false;
+        }
     }
 
     private class ExpectedPermissionInfo {

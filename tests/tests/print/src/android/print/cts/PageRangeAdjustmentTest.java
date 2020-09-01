@@ -391,8 +391,7 @@ public class PageRangeAdjustmentTest extends BasePrintTest {
         waitForWriteAdapterCallback(1);
 
         // Cancel printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for finish.
         waitForAdapterFinishCallbackCalled();

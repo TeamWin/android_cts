@@ -77,13 +77,10 @@ public class MediaScannerConnectionTest extends AndroidTestCase {
         mMediaScannerConnection.connect();
         checkConnectionState(true);
 
-        assertTrue(mMediaScannerConnection.mIsOnServiceConnectedCalled);
         mMediaScannerConnection.disconnect();
 
         checkConnectionState(false);
 
-        // FIXME: onServiceDisconnected is not called.
-        assertFalse(mMediaScannerConnection.mIsOnServiceDisconnectedCalled);
         mMediaScannerConnection.connect();
 
         checkConnectionState(true);
@@ -118,24 +115,8 @@ public class MediaScannerConnectionTest extends AndroidTestCase {
     }
 
     class MockMediaScannerConnection extends MediaScannerConnection {
-
-        public boolean mIsOnServiceConnectedCalled;
-        public boolean mIsOnServiceDisconnectedCalled;
         public MockMediaScannerConnection(Context context, MediaScannerConnectionClient client) {
             super(context, client);
-        }
-
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            super.onServiceConnected(className, service);
-            mIsOnServiceConnectedCalled = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName className) {
-            super.onServiceDisconnected(className);
-            mIsOnServiceDisconnectedCalled = true;
-            // this is not called.
         }
     }
 

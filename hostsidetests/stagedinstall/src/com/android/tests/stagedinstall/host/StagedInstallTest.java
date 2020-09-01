@@ -48,6 +48,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
+    private static final String PACKAGE_NAME = "com.android.tests.stagedinstall";
+
+    private static final String BROADCAST_RECEIVER_COMPONENT = PACKAGE_NAME + "/"
+            + PACKAGE_NAME + ".LauncherActivity";
+
+    private String mDefaultLauncher = null;
+
     @Rule
     public final FailedTestLogHook mFailedTestLogHook = new FailedTestLogHook(this);
 
@@ -58,7 +65,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      * For example, <code>runPhase("testInstallStagedApkCommit");</code>
      */
     private void runPhase(String phase) throws Exception {
-        assertThat(runDeviceTests("com.android.tests.stagedinstall",
+        assertThat(runDeviceTests(PACKAGE_NAME,
                 "com.android.tests.stagedinstall.StagedInstallTest",
                 phase)).isTrue();
     }
@@ -66,7 +73,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     // We do not assert the success of cleanup phase since it might fail due to flaky reasons.
     private void cleanUp() throws Exception {
         try {
-            runDeviceTests("com.android.tests.stagedinstall",
+            runDeviceTests(PACKAGE_NAME,
                     "com.android.tests.stagedinstall.StagedInstallTest",
                     "cleanUp");
         } catch (AssertionError e) {
@@ -78,12 +85,14 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         cleanUp();
         uninstallShimApexIfNecessary();
+        storeDefaultLauncher();
     }
 
     @After
     public void tearDown() throws Exception {
         cleanUp();
         uninstallShimApexIfNecessary();
+        setDefaultLauncher(mDefaultLauncher);
     }
 
     /**
@@ -93,6 +102,8 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @LargeTest
     public void testInstallStagedApk() throws Exception {
         assumeSystemUser();
+
+        setDefaultLauncher(BROADCAST_RECEIVER_COMPONENT);
         runPhase("testInstallStagedApk_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApk_VerifyPostReboot");
@@ -114,8 +125,36 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     @LargeTest
+    public void testAbandonStagedApkBeforeReady() throws Exception {
+        runPhase("testAbandonStagedApkBeforeReady_CommitAndAbandon");
+        getDevice().reboot();
+        runPhase("testAbandonStagedApkBeforeReady_VerifyPostReboot");
+    }
+
+    @Test
+    public void testStageAnotherSessionImmediatelyAfterAbandon() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        runPhase("testStageAnotherSessionImmediatelyAfterAbandon");
+    }
+
+    @Test
+    public void testStageAnotherSessionImmediatelyAfterAbandonMultiPackage() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        runPhase("testStageAnotherSessionImmediatelyAfterAbandonMultiPackage");
+    }
+
+    @Test
+    public void testNoSessionUpdatedBroadcastSentForStagedSessionAbandon() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        runPhase("testNoSessionUpdatedBroadcastSentForStagedSessionAbandon");
+    }
+
+    @Test
+    @LargeTest
     public void testInstallMultipleStagedApks() throws Exception {
         assumeSystemUser();
+
+        setDefaultLauncher(BROADCAST_RECEIVER_COMPONENT);
         runPhase("testInstallMultipleStagedApks_Commit");
         getDevice().reboot();
         runPhase("testInstallMultipleStagedApks_VerifyPostReboot");
@@ -187,15 +226,18 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     public void testInstallStagedApex() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
+        setDefaultLauncher(BROADCAST_RECEIVER_COMPONENT);
         runPhase("testInstallStagedApex_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApex_VerifyPostReboot");
     }
 
     @Test
+    // Don't mark as @LargeTest since we want at least one test to install apex during pre-submit.
     public void testInstallStagedApexAndApk() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
+        setDefaultLauncher(BROADCAST_RECEIVER_COMPONENT);
         runPhase("testInstallStagedApexAndApk_Commit");
         getDevice().reboot();
         runPhase("testInstallStagedApexAndApk_VerifyPostReboot");
@@ -213,6 +255,13 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
         runPhase("testInstallStagedNonPreInstalledApex_Fails");
+    }
+
+    @Test
+    public void testInstallStagedDifferentPackageNameWithInstalledApex_Fails() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testInstallStagedDifferentPackageNameWithInstalledApex_Fails");
     }
 
     @Test
@@ -284,9 +333,20 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @LargeTest
     public void testInstallStagedApex_SameGrade() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+        installV3Apex();
+        installV3Apex();
+    }
 
-        installV3Apex();
-        installV3Apex();
+    @Test
+    @LargeTest
+    public void testInstallStagedApex_SameGrade_NewOneWins() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        installV2Apex();
+
+        runPhase("testInstallStagedApex_SameGrade_NewOneWins_Commit");
+        getDevice().reboot();
+        runPhase("testInstallStagedApex_SameGrade_NewOneWins_VerifyPostReboot");
     }
 
     @Test
@@ -337,17 +397,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    @LargeTest
-    public void testInstallStagedNoHashtreeApex() throws Exception {
+    public void testRejectsApexDifferentCertificate() throws Exception {
         assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
 
-        runPhase("testInstallStagedNoHashtreeApex_Commit");
-        getDevice().reboot();
-        runPhase("testInstallStagedNoHashtreeApex_VerifyPostReboot");
-    }
-
-    @Test
-    public void testRejectsApexDifferentCertificate() throws Exception {
         runPhase("testRejectsApexDifferentCertificate");
     }
 
@@ -476,6 +528,26 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_VerifyPostReboot");
     }
 
+    // Failure reason of staged install should be be persisted for single sessions
+    @Test
+    @LargeTest
+    public void testFailureReasonPersists_SingleSession() throws Exception {
+        assumeTrue(isCheckpointSupported());
+        runPhase("testFailureReasonPersists_SingleSession_Commit");
+        getDevice().reboot();
+        runPhase("testFailureReasonPersists_SingleSession_VerifyPostReboot");
+    }
+
+    // Failure reason of staged install should be be persisted for multi session staged install
+    @Test
+    @LargeTest
+    public void testFailureReasonPersists_MultiSession() throws Exception {
+        assumeTrue(isCheckpointSupported());
+        runPhase("testFailureReasonPersists_MultipleSession_Commit");
+        getDevice().reboot();
+        runPhase("testFailureReasonPersists_MultipleSession_VerifyPostReboot");
+    }
+
     @Test
     @LargeTest
     public void testSamegradeSystemApex() throws Exception {
@@ -487,6 +559,7 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @LargeTest
     public void testInstallApkChangingFingerprint() throws Exception {
         assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
 
@@ -498,6 +571,66 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         } finally {
             getDevice().executeShellCommand("setprop persist.pm.mock-upgrade false");
         }
+    }
+
+    @Test
+    @LargeTest
+    public void testInstallStagedNoHashtreeApex() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testInstallStagedNoHashtreeApex_Commit");
+        getDevice().reboot();
+        runPhase("testInstallStagedNoHashtreeApex_VerifyPostReboot");
+    }
+
+    /**
+     * Should fail to verify apex targeting older dev sdk
+     */
+    @Test
+    public void testApexTargetingOldDevSdkFailsVerification() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testApexTargetingOldDevSdkFailsVerification");
+    }
+
+    /**
+     * Apex should fail to install if apk-in-apex fails to get scanned
+     */
+    @Test
+    @LargeTest
+    public void testApexFailsToInstallIfApkInApexFailsToScan() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testApexFailsToInstallIfApkInApexFailsToScan_Commit");
+        getDevice().reboot();
+        runPhase("testApexFailsToInstallIfApkInApexFailsToScan_VerifyPostReboot");
+    }
+
+    @Test
+    public void testCorruptedApexFailsVerification_b146895998() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testCorruptedApexFailsVerification_b146895998");
+    }
+
+    /**
+     * Should fail to pass apk signature check
+     */
+    @Test
+    public void testApexWithUnsignedApkFailsVerification() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testApexWithUnsignedApkFailsVerification");
+    }
+
+    /**
+     * Should fail to verify apex with unsigned payload
+     */
+    @Test
+    public void testApexWithUnsignedPayloadFailsVerification() throws Exception {
+        assumeTrue("Device does not support updating APEX", isUpdatingApexSupported());
+
+        runPhase("testApexWithUnsignedPayloadFailsVerification");
     }
 
     private boolean isUpdatingApexSupported() throws Exception {
@@ -518,25 +651,52 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
             // Device doesn't support updating apex. Nothing to uninstall.
             return;
         }
-        final ITestDevice.ApexInfo shimApex = getShimApex();
-        if (shimApex.versionCode == 1) {
-            // System version is active, skipping uninstalling active apex and rebooting the device.
+        if (getShimApex().sourceDir.startsWith("/system")) {
+            // System version is active, nothing to uninstall.
             return;
         }
         // Non system version is active, need to uninstall it and reboot the device.
+        Log.i(TAG, "Uninstalling shim apex");
         final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
-        Log.i(TAG, "Uninstalling shim apex " + shimApex);
         if (errorMessage != null) {
-            throw new AssertionError("Failed to uninstall " + shimApex);
+            Log.e(TAG, "Failed to uninstall " + SHIM_APEX_PACKAGE_NAME + " : " + errorMessage);
+        } else {
+            getDevice().reboot();
+            final ITestDevice.ApexInfo shim = getShimApex();
+            assertThat(shim.versionCode).isEqualTo(1L);
+            assertThat(shim.sourceDir).startsWith("/system");
         }
-        getDevice().reboot();
-        assertThat(getShimApex().versionCode).isEqualTo(1L);
     }
 
     private ITestDevice.ApexInfo getShimApex() throws DeviceNotAvailableException {
         return getDevice().getActiveApexes().stream().filter(
                 apex -> apex.name.equals(SHIM_APEX_PACKAGE_NAME)).findAny().orElseThrow(
                 () -> new AssertionError("Can't find " + SHIM_APEX_PACKAGE_NAME));
+    }
+
+    /**
+     * Store the component name of the default launcher. This value will be used to reset the
+     * default launcher to its correct component upon test completion.
+     */
+    private void storeDefaultLauncher() throws DeviceNotAvailableException {
+        final String PREFIX = "Launcher: ComponentInfo{";
+        final String POSTFIX = "}";
+        for (String s : getDevice().executeShellCommand("cmd shortcut get-default-launcher")
+                .split("\n")) {
+            if (s.startsWith(PREFIX) && s.endsWith(POSTFIX)) {
+                mDefaultLauncher = s.substring(PREFIX.length(), s.length() - POSTFIX.length());
+            }
+        }
+    }
+
+    /**
+     * Set the default launcher to a given component.
+     * If set to the broadcast receiver component of this test app, this will allow the test app to
+     * receive SESSION_COMMITTED broadcasts.
+     */
+    private void setDefaultLauncher(String launcherComponent) throws DeviceNotAvailableException {
+        assertThat(launcherComponent).isNotEmpty();
+        getDevice().executeShellCommand("cmd package set-home-activity " + launcherComponent);
     }
 
     private static final class FailedTestLogHook extends TestWatcher {

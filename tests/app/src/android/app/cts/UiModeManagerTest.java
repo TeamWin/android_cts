@@ -22,14 +22,25 @@ import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.os.ParcelFileDescriptor;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SettingsUtils;
 
+import junit.framework.Assert;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalTime;
+
 public class UiModeManagerTest extends AndroidTestCase {
     private static final String TAG = "UiModeManagerTest";
+    private static final long MAX_WAIT_TIME = 2 * 1000;
+
+    private static final long WAIT_TIME_INCR = 100;
 
     private UiModeManager mUiModeManager;
 
@@ -38,6 +49,9 @@ public class UiModeManagerTest extends AndroidTestCase {
         super.setUp();
         mUiModeManager = (UiModeManager) getContext().getSystemService(Context.UI_MODE_SERVICE);
         assertNotNull(mUiModeManager);
+        // reset nightMode
+        setNightMode(UiModeManager.MODE_NIGHT_YES);
+        setNightMode(UiModeManager.MODE_NIGHT_NO);
     }
 
     public void testUiMode() throws Exception {
@@ -69,6 +83,58 @@ public class UiModeManagerTest extends AndroidTestCase {
                 doTestUnlockedNightMode();
             }
         }
+    }
+
+    public void testSetAndGetCustomTimeStart() {
+        LocalTime time = mUiModeManager.getCustomNightModeStart();
+        // decrease time
+        LocalTime timeNew = LocalTime.of(
+                (time.getHour() + 1) % 12,
+                (time.getMinute() + 30) % 60);
+        setStartTime(timeNew);
+        assertNotSame(time, timeNew);
+        assertEquals(timeNew, mUiModeManager.getCustomNightModeStart());
+    }
+
+    public void testSetAndGetCustomTimeEnd() {
+        LocalTime time = mUiModeManager.getCustomNightModeEnd();
+        // decrease time
+        LocalTime timeNew = LocalTime.of(
+                (time.getHour() + 1) % 12,
+                (time.getMinute() + 30) % 60);
+        setEndTime(timeNew);
+        assertNotSame(time, timeNew);
+        assertEquals(timeNew, mUiModeManager.getCustomNightModeEnd());
+    }
+
+    public void testNightModeYesPersisted() throws InterruptedException {
+        // Reset the mode to no if it is set to another value
+        setNightMode(UiModeManager.MODE_NIGHT_NO);
+
+        setNightMode(UiModeManager.MODE_NIGHT_YES);
+        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_YES);
+    }
+
+    public void testNightModeAutoPersisted() throws InterruptedException {
+        // Reset the mode to no if it is set to another value
+        setNightMode(UiModeManager.MODE_NIGHT_NO);
+
+        setNightMode(UiModeManager.MODE_NIGHT_AUTO);
+        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_AUTO);
+    }
+
+    public void testNightModeAutoNotPersistedCarMode() {
+        if (mUiModeManager.isNightModeLocked()) {
+            return;
+        }
+
+        // Reset the mode to no if it is set to another value
+        setNightMode(UiModeManager.MODE_NIGHT_NO);
+        mUiModeManager.enableCarMode(0);
+
+        setNightMode(UiModeManager.MODE_NIGHT_AUTO);
+        assertStoredNightModeSetting(UiModeManager.MODE_NIGHT_NO);
+        mUiModeManager.disableCarMode(0);
     }
 
     public void testNightModeInCarModeIsTransient() {
@@ -160,6 +226,9 @@ public class UiModeManagerTest extends AndroidTestCase {
      * while specifying a priority.
      */
     public void testEnterCarModePrioritized() {
+        if (mUiModeManager.isUiModeLocked()) {
+            return;
+        }
         // Adopt shell permission so the required permission
         // (android.permission.ENTER_CAR_MODE_PRIORITIZED) is granted.
         UiAutomation ui = getInstrumentation().getUiAutomation();
@@ -181,6 +250,9 @@ public class UiModeManagerTest extends AndroidTestCase {
      * permission to use that API.
      */
     public void testEnterCarModePrioritizedDenied() {
+        if (mUiModeManager.isUiModeLocked()) {
+            return;
+        }
         try {
             mUiModeManager.enableCarMode(100, 0);
         } catch (SecurityException se) {
@@ -272,9 +344,64 @@ public class UiModeManagerTest extends AndroidTestCase {
     }
 
     private void assertStoredNightModeSetting(int mode) {
+        int storedModeInt = -1;
         // Settings.Secure.UI_NIGHT_MODE
-        String storedMode = SettingsUtils.getSecureSetting("ui_night_mode");
-        int storedModeInt = Integer.parseInt(storedMode);
+        for (int i = 0; i < MAX_WAIT_TIME; i += WAIT_TIME_INCR) {
+            String storedMode = SettingsUtils.getSecureSetting("ui_night_mode");
+            storedModeInt = Integer.parseInt(storedMode);
+            if (mode == storedModeInt) break;
+            try {
+                Thread.sleep(WAIT_TIME_INCR);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         assertEquals(mode, storedModeInt);
     }
+
+    private void setNightMode(int mode) {
+        String modeString = "unknown";
+        switch (mode) {
+            case UiModeManager.MODE_NIGHT_AUTO:
+                modeString = "auto";
+                break;
+            case UiModeManager.MODE_NIGHT_NO:
+                modeString = "no";
+                break;
+            case UiModeManager.MODE_NIGHT_YES:
+                modeString = "yes";
+                break;
+        }
+        final String command = " cmd uimode night " + modeString;
+        applyCommand(command);
+    }
+
+    private void setStartTime(LocalTime t) {
+        final String command = " cmd uimode time start " + t.toString();
+        applyCommand(command);
+    }
+
+    private void setEndTime(LocalTime t) {
+        final String command = " cmd uimode time end " + t.toString();
+        applyCommand(command);
+    }
+
+    private void applyCommand(String command) {
+        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
+            Assert.assertNotNull("Failed to execute shell command: " + command, fd);
+            // Wait for the command to finish by reading until EOF
+            try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
+                byte[] buffer = new byte[4096];
+                while (in.read(buffer) > 0) continue;
+            } catch (IOException e) {
+                throw new IOException("Could not read stdout of command: " + command, e);
+            }
+        } catch (IOException e) {
+            fail();
+        } finally {
+            uiAutomation.destroy();
+        }
+    }
+
 }

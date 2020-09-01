@@ -17,7 +17,9 @@ LOCAL_PATH := $(call my-dir)
 all_system_api_modules :=
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
-    $(eval all_system_api_modules += system-$(ver).api)\
+    $(if $(wildcard prebuilts/sdk/$(ver)/system/api/android.txt),\
+      $(eval all_system_api_modules += system-$(ver).api)\
+    )\
   )\
 )
 all_system_api_files := $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(all_system_api_modules))

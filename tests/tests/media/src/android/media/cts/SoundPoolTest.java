@@ -39,9 +39,9 @@ abstract class SoundPoolTest extends AndroidTestCase {
 
     private static final int SOUNDPOOL_STREAMS = 4;
     private static final int PRIORITY = 1;
-    private static final int LOUD = 20;
-    private static final int QUIET = LOUD / 2;
-    private static final int SILENT = 0;
+    private static final float LOUD = 1.f;
+    private static final float QUIET = LOUD / 4.f;
+    private static final float SILENT = 0.f;
     private File mFile;
     private SoundPool mSoundPool;
 

@@ -40,7 +40,7 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 
 import android.app.KeyguardManager;
-import android.server.am.ActivityManagerTestBase;
+import android.server.wm.ActivityManagerTestBase;
 
 import org.junit.Test;
 

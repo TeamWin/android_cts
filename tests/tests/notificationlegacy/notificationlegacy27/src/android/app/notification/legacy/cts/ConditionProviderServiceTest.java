@@ -24,11 +24,8 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.TestCase.fail;
 
-import static org.junit.Assume.assumeFalse;
-
 import static java.lang.Thread.sleep;
 
-import android.app.ActivityManager;
 import android.app.AutomaticZenRule;
 import android.app.Instrumentation;
 import android.app.NotificationManager;
@@ -62,7 +59,6 @@ public class ConditionProviderServiceTest {
     private static String TAG = "CpsTest";
 
     private NotificationManager mNm;
-    private ActivityManager mActivityManager;
     private Context mContext;
     private ZenModeBroadcastReceiver mModeReceiver;
     private IntentFilter mModeFilter;
@@ -71,9 +67,6 @@ public class ConditionProviderServiceTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
-        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-        assumeFalse(mActivityManager.isLowRamDevice());
-
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
         LegacyConditionProviderService.requestRebind(LegacyConditionProviderService.getId());
@@ -114,10 +107,6 @@ public class ConditionProviderServiceTest {
 
     @Test
     public void testUnboundCPSMaintainsCondition_addsNewRule() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         // make sure service get bound
         pollForConnection(SecondaryConditionProviderService.class, true);
 
@@ -147,10 +136,6 @@ public class ConditionProviderServiceTest {
 
     @Test
     public void testUnboundCPSMaintainsCondition_otherConditionChanges() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         // make sure both services get bound
         pollForConnection(LegacyConditionProviderService.class, true);
         pollForConnection(SecondaryConditionProviderService.class, true);
@@ -184,10 +169,6 @@ public class ConditionProviderServiceTest {
 
     @Test
     public void testUnboundCPSMaintainsCondition_otherProviderRuleChanges() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         // make sure both services get bound
         pollForConnection(LegacyConditionProviderService.class, true);
         pollForConnection(SecondaryConditionProviderService.class, true);
@@ -219,10 +200,6 @@ public class ConditionProviderServiceTest {
 
     @Test
     public void testRequestRebindWhenLostAccess() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         // make sure it gets bound
         pollForConnection(LegacyConditionProviderService.class, true);
 
@@ -250,10 +227,6 @@ public class ConditionProviderServiceTest {
 
     @Test
     public void testRequestRebindWhenStillHasAccess() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         // make sure it gets bound
         pollForConnection(LegacyConditionProviderService.class, true);
 
@@ -276,12 +249,6 @@ public class ConditionProviderServiceTest {
 
     @Test
     public void testMethodsExistAndDoNotThrow() throws Exception {
-        // behavior is covered in cts verifier
-
-        if (mActivityManager.isLowRamDevice()) {
-            return;
-        }
-
         // make sure it gets bound
         pollForConnection(LegacyConditionProviderService.class, true);
 

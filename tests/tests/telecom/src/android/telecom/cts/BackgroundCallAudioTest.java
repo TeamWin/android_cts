@@ -48,11 +48,8 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
             AudioManager audioManager = mContext.getSystemService(AudioManager.class);
             audioManager.adjustStreamVolume(AudioManager.STREAM_RING,
                     AudioManager.ADJUST_UNMUTE, 0);
-            // TODO: uncomment when call screening APIs in AudioManager come to AOSP
-            /*
             doesAudioManagerSupportCallScreening =
                     audioManager.isCallScreeningModeSupported();
-            */
         }
     }
 
@@ -91,6 +88,37 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
         }
 
         verifySimulateRingAndUserPickup(call, connection);
+    }
+
+    public void testHoldAfterAudioProcessingFromCallScreening() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        setupIncomingCallWithCallScreening();
+
+        final MockConnection connection = verifyConnectionForIncomingCall();
+
+        if (!mInCallCallbacks.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
+                TimeUnit.SECONDS)) {
+            fail("No call added to InCallService.");
+        }
+
+        Call call = mInCallCallbacks.getService().getLastCall();
+        assertCallState(call, Call.STATE_AUDIO_PROCESSING);
+        assertConnectionState(connection, Connection.STATE_ACTIVE);
+
+        AudioManager audioManager = mContext.getSystemService(AudioManager.class);
+        if (doesAudioManagerSupportCallScreening) {
+            assertAudioMode(audioManager, MODE_CALL_SCREENING);
+        }
+
+        verifySimulateRingAndUserPickup(call, connection);
+
+        call.hold();
+        assertCallState(call, Call.STATE_HOLDING);
+        call.unhold();
+        assertCallState(call, Call.STATE_ACTIVE);
     }
 
     public void testAudioProcessingFromCallScreeningDisallow() throws Exception {

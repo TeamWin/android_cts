@@ -41,6 +41,7 @@ android_test {
         // TODO: remove once Android migrates to JUnit 4.12, which provides assertThrows:
         "testng",
         "androidx.legacy_legacy-support-v4",
+        "androidx.test.core",
     ],
     // Use multi-dex as the compatibility-common-util-devicesidelib dependency
     // on compatibility-device-util-axt pushes us beyond 64k methods.
@@ -71,4 +72,5 @@ android_test {
         "vts10",
         "general-tests",
     ],
+    min_sdk_version: "29",
 }

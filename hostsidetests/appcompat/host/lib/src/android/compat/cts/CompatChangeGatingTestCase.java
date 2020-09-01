@@ -108,17 +108,40 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
     /**
      * Run a device side compat test.
      *
-     * @param pkgName        Test package name, such as
-     *                       "com.android.server.cts.netstats".
-     * @param testClassName  Test class name; either a fully qualified name, or "."
-     *                       + a class name.
-     * @param testMethodName Test method name.
+     * @param pkgName         Test package name, such as
+     *                        "com.android.server.cts.netstats".
+     * @param testClassName   Test class name; either a fully qualified name, or "."
+     *                        + a class name.
+     * @param testMethodName  Test method name.
+     * @param enabledChanges  Set of compat changes to enable.
+     * @param disabledChanges Set of compat changes to disable.
      */
     protected void runDeviceCompatTest(@Nonnull String pkgName, @Nonnull String testClassName,
             @Nonnull String testMethodName,
             Set<Long> enabledChanges, Set<Long> disabledChanges)
             throws DeviceNotAvailableException {
+      runDeviceCompatTestReported(pkgName, testClassName, testMethodName, enabledChanges,
+          disabledChanges, enabledChanges, disabledChanges);
+    }
 
+    /**
+     * Run a device side compat test where not all changes are reported through statsd.
+     *
+     * @param pkgName        Test package name, such as
+     *                       "com.android.server.cts.netstats".
+     * @param testClassName  Test class name; either a fully qualified name, or "."
+     *                       + a class name.
+     * @param testMethodName Test method name.
+     * @param enabledChanges  Set of compat changes to enable.
+     * @param disabledChanges Set of compat changes to disable.
+     * @param reportedEnabledChanges Expected enabled changes in statsd report.
+     * @param reportedDisabledChanges Expected disabled changes in statsd report.
+     */
+    protected void runDeviceCompatTestReported(@Nonnull String pkgName, @Nonnull String testClassName,
+            @Nonnull String testMethodName,
+            Set<Long> enabledChanges, Set<Long> disabledChanges,
+            Set<Long> reportedEnabledChanges, Set<Long> reportedDisabledChanges)
+            throws DeviceNotAvailableException {
         // Set compat overrides
         setCompatConfig(enabledChanges, disabledChanges, pkgName);
 
@@ -166,7 +189,8 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
         }
 
         // Validate statsd report
-        validatePostRunStatsdReport(reportedChanges, enabledChanges, disabledChanges);
+        validatePostRunStatsdReport(reportedChanges, reportedEnabledChanges,
+            reportedDisabledChanges);
     }
 
     /**
@@ -202,7 +226,8 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
         StatsdConfigProto.StatsdConfig.Builder configBuilder =
                 StatsdConfigProto.StatsdConfig.newBuilder()
                         .setId(configId)
-                        .addAllowedLogSource(pkgName);
+                        .addAllowedLogSource(pkgName)
+                        .addWhitelistedAtomIds(Atom.APP_COMPATIBILITY_CHANGE_REPORTED_FIELD_NUMBER);
         StatsdConfigProto.SimpleAtomMatcher.Builder simpleAtomMatcherBuilder =
                 StatsdConfigProto.SimpleAtomMatcher
                         .newBuilder().setAtomId(
