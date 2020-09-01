@@ -114,7 +114,7 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     private Bundle mRootHints;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
@@ -135,6 +135,14 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
             mWaitLock.wait(TIME_OUT_MS);
         }
         assertNotNull(mMediaBrowserService);
+    }
+
+    @Override
+    public void tearDown() {
+        if (mMediaBrowser != null) {
+            mMediaBrowser.disconnect();
+            mMediaBrowser = null;
+        }
     }
 
     public void testGetSessionToken() {

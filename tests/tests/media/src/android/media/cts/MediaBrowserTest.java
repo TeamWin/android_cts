@@ -54,6 +54,14 @@ public class MediaBrowserTest extends InstrumentationTestCase {
 
     private MediaBrowser mMediaBrowser;
 
+    @Override
+    public void tearDown() {
+        if (mMediaBrowser != null) {
+            mMediaBrowser.disconnect();
+            mMediaBrowser = null;
+        }
+    }
+
     public void testMediaBrowser() {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
@@ -566,7 +574,7 @@ public class MediaBrowserTest extends InstrumentationTestCase {
             mLastErrorId = id;
             mLastOptions = options;
         }
-}
+    }
 
     private static class StubItemCallback extends MediaBrowser.ItemCallback {
         private volatile MediaBrowser.MediaItem mLastMediaItem;
