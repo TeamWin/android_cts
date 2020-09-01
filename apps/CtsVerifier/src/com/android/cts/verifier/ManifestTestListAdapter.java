@@ -113,6 +113,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     private static final String CONFIG_HDMI_SOURCE = "config_hdmi_source";
 
+    private static final String CONFIG_TV_PANEL = "config_tv_panel";
+
     private static final String CONFIG_QUICK_SETTINGS_SUPPORTED = "config_quick_settings_supported";
 
     private final HashSet<String> mDisabledTests;
@@ -346,16 +348,13 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         }
                         break;
                     case CONFIG_HDMI_SOURCE:
-                        final int DEVICE_TYPE_HDMI_SOURCE = 4;
-                        try {
-                            if (!getHdmiDeviceType().contains(DEVICE_TYPE_HDMI_SOURCE)) {
-                                return false;
-                            }
-                        } catch (Exception exception) {
-                            Log.e(
-                                    LOG_TAG,
-                                    "Exception while looking up HDMI device type.",
-                                    exception);
+                        if(isTvPanel()) {
+                            return false;
+                        }
+                        break;
+                    case CONFIG_TV_PANEL:
+                        if(!isTvPanel()) {
+                            return false;
                         }
                         break;
                     case CONFIG_QUICK_SETTINGS_SUPPORTED:
@@ -371,6 +370,20 @@ public class ManifestTestListAdapter extends TestListAdapter {
         return true;
     }
 
+    private boolean isTvPanel() {
+        final int DEVICE_TYPE_HDMI_SOURCE = 4;
+        try {
+            if (getHdmiDeviceType().contains(DEVICE_TYPE_HDMI_SOURCE)) {
+                return false;
+            }
+        } catch (Exception exception) {
+            Log.e(
+                    LOG_TAG,
+                    "Exception while looking up HDMI device type.",
+                    exception);
+        }
+        return true;
+    }
     private boolean getSystemResourceFlag(String key) {
         final Resources systemRes = mContext.getResources().getSystem();
         final int id = systemRes.getIdentifier(key, "bool", "android");
