@@ -49,14 +49,16 @@ public class LocationPolicyTest {
             PackageManager.PERMISSION_GRANTED,
             pm.checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION,
             mContext.getPackageName()));
-        TelephonyManager tele = mContext.getSystemService(TelephonyManager.class);
-        try {
-            tele.getCellLocation();
-        fail(
-            "ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION Permissions not granted. Should have"
-              + " received a security exception when invoking getCellLocation().");
-        } catch (SecurityException ignore) {
-          // That's what we want!
+        if (pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            TelephonyManager tele = mContext.getSystemService(TelephonyManager.class);
+            try {
+                tele.getCellLocation();
+            fail(
+                "ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION Permissions not granted. Should"
+                  + " have received a security exception when invoking getCellLocation().");
+            } catch (SecurityException ignore) {
+              // That's what we want!
+            }
         }
     }
 }

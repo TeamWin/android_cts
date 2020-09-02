@@ -17,10 +17,20 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.appenumeration.queries.nothing.haspermission">
+    <permission android:name="android.appenumeration.queries.nothing.haspermission.READ" />
+    <uses-permission android:name="android.appenumeration.queries.nothing.haspermission.READ" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <application>
         <uses-library android:name="android.test.runner" />
         <activity android:name="android.appenumeration.cts.query.TestActivity"
                   android:exported="true" />
+        <provider android:name="android.appenumeration.cts.query.TestProvider"
+                  android:exported="true"
+                  android:authorities="android.appenumeration.queries.nothing.haspermission" />
+        <provider android:name="android.appenumeration.cts.query.TestProvider"
+                  android:exported="true"
+                  android:readPermission="android.appenumeration.queries.nothing.haspermission.READ"
+                  android:grantUriPermissions="true"
+                  android:authorities="android.appenumeration.queries.nothing.haspermission2" />
     </application>
 </manifest>

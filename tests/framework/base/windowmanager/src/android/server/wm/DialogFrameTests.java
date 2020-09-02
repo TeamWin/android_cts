@@ -63,6 +63,7 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
 
     private static final ComponentName DIALOG_FRAME_TEST_ACTIVITY = new ComponentName(
             getInstrumentation().getContext(), DialogFrameTestActivity.class);
+    private Insets mContentInsets;
 
     @Rule
     public final ActivityTestRule<DialogFrameTestActivity> mDialogTestActivity =
@@ -246,12 +247,16 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
     }
 
     private Insets getActivitySystemInsets() {
-        return mDialogTestActivity
+        getInstrumentation().runOnMainSync(() -> {
+            final Insets insets = mDialogTestActivity
                 .getActivity()
                 .getWindow()
                 .getDecorView()
                 .getRootWindowInsets()
                 .getInsets(WindowInsets.Type.systemBars());
+            mContentInsets = Insets.of(insets.left, insets.top, insets.right, insets.bottom);
+      });
+      return mContentInsets;
     }
 
     private static Rect inset(Rect original, Insets insets) {

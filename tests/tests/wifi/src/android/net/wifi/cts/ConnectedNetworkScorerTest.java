@@ -175,25 +175,25 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
 
             assertThat(statsEntry.getTimeStampMillis()).isGreaterThan(0L);
             assertThat(statsEntry.getRssi()).isLessThan(0);
-            assertThat(statsEntry.getLinkSpeedMbps()).isGreaterThan(0);
-            assertThat(statsEntry.getTotalTxSuccess()).isGreaterThan(0L);
+            assertThat(statsEntry.getLinkSpeedMbps()).isAtLeast(0);
+            assertThat(statsEntry.getTotalTxSuccess()).isAtLeast(0L);
             assertThat(statsEntry.getTotalTxRetries()).isAtLeast(0L);
             assertThat(statsEntry.getTotalTxBad()).isAtLeast(0L);
             assertThat(statsEntry.getTotalRxSuccess()).isAtLeast(0L);
             if (mWifiManager.isEnhancedPowerReportingSupported()) {
-                assertThat(statsEntry.getTotalRadioOnTimeMillis()).isGreaterThan(0L);
-                assertThat(statsEntry.getTotalRadioTxTimeMillis()).isGreaterThan(0L);
-                assertThat(statsEntry.getTotalRadioRxTimeMillis()).isGreaterThan(0L);
-                assertThat(statsEntry.getTotalScanTimeMillis()).isGreaterThan(0L);
+                assertThat(statsEntry.getTotalRadioOnTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalRadioTxTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalRadioRxTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalScanTimeMillis()).isAtLeast(0L);
                 assertThat(statsEntry.getTotalNanScanTimeMillis()).isAtLeast(0L);
                 assertThat(statsEntry.getTotalBackgroundScanTimeMillis()).isAtLeast(0L);
                 assertThat(statsEntry.getTotalRoamScanTimeMillis()).isAtLeast(0L);
                 assertThat(statsEntry.getTotalPnoScanTimeMillis()).isAtLeast(0L);
                 assertThat(statsEntry.getTotalHotspot2ScanTimeMillis()).isAtLeast(0L);
                 assertThat(statsEntry.getTotalCcaBusyFreqTimeMillis()).isAtLeast(0L);
-                assertThat(statsEntry.getTotalRadioOnTimeMillis()).isGreaterThan(0L);
-                assertThat(statsEntry.getTotalRadioOnFreqTimeMillis()).isGreaterThan(0L);
-                assertThat(statsEntry.getTotalBeaconRx()).isGreaterThan(0L);
+                assertThat(statsEntry.getTotalRadioOnTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalRadioOnFreqTimeMillis()).isAtLeast(0L);
+                assertThat(statsEntry.getTotalBeaconRx()).isAtLeast(0L);
                 assertThat(statsEntry.getProbeStatusSinceLastUpdate())
                         .isAnyOf(PROBE_STATUS_SUCCESS,
                                 PROBE_STATUS_FAILURE,

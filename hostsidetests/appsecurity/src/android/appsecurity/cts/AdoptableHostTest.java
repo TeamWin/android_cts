@@ -82,6 +82,8 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
                 hasVirtualDisk = result.startsWith("disk:");
             }
             assertTrue("Virtual disk is not ready: " + result, hasVirtualDisk);
+
+            waitForVolumeReady();
         }
     }
 
