@@ -25,6 +25,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
 import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
+import static android.server.wm.app.Components.PipActivity.EXTRA_ALLOW_AUTO_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_DISMISS_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
@@ -167,6 +168,12 @@ public class PipActivity extends AbstractLifecycleLogActivity {
             } catch (Exception e) {
                 // This call can fail intentionally if the aspect ratio is too extreme
             }
+        }
+
+        if (getIntent().hasExtra(EXTRA_ALLOW_AUTO_PIP)) {
+            final PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
+            builder.setAutoEnterAllowed(true);
+            setPictureInPictureParams(builder.build());
         }
 
         // Enable tap to finish if necessary

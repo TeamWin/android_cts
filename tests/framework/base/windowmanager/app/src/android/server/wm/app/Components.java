@@ -409,6 +409,8 @@ public class Components extends ComponentsBase {
         // Calls requestAutoEnterPictureInPicture() with the value provided
         public static final String EXTRA_ENTER_PIP_ON_PIP_REQUESTED =
                 "enter_pip_on_pip_requested";
+        // Sets auto PIP allowed on the activity picture-in-picture params.
+        public static final String EXTRA_ALLOW_AUTO_PIP = "enter_pip_auto_pip_allowed";
         // Finishes the activity at the end of onResume (after EXTRA_START_ACTIVITY is handled)
         public static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
         // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
