@@ -20,7 +20,6 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
-import android.os.Environment;
 import android.os.FileUtils;
 import android.os.StrictMode;
 import android.platform.test.annotations.AppModeFull;
@@ -52,7 +51,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     private static final double DIFFERENCE_TOLERANCE = .001;
 
-    private static final String EXTERNAL_BASE_DIRECTORY = "/test/CtsMediaTestCases-1.2/images/";
+    static final String mInpPrefix = WorkDir.getMediaDirString() + "images/";
 
     // This base directory is needed for the files listed below.
     // These files will be available for download in Android O release.
@@ -396,8 +395,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
 
-        File imageFile = new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + fileName);
+        File imageFile = new File(mInpPrefix, fileName);
         String verboseTag = imageFile.getName();
 
         FileInputStream fis = new FileInputStream(imageFile);
@@ -416,7 +414,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     private void testExifInterfaceCommon(String fileName, ExpectedValue expectedValue)
             throws IOException {
-        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
+        File imageFile = new File(mInpPrefix, fileName);
         String verboseTag = imageFile.getName();
 
         // Creates via path.
@@ -453,7 +451,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     private void testExifInterfaceRange(String fileName, ExpectedValue expectedValue)
             throws IOException {
-        File imageFile = new File(Environment.getExternalStorageDirectory(), fileName);
+        File imageFile = new File(mInpPrefix, fileName);
         InputStream in = null;
         try {
             in = new BufferedInputStream(new FileInputStream(imageFile.getAbsolutePath()));
@@ -509,8 +507,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
 
-        File srcFile = new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + fileName);
+        File srcFile = new File(mInpPrefix, fileName);
         File imageFile = clone(srcFile);
         String verboseTag = imageFile.getName();
 
@@ -577,6 +574,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         } finally {
             IoUtils.closeQuietly(fd);
         }
+        imageFile.delete();
     }
 
     private void readFromFilesWithExif(String fileName, int typedArrayResourceId)
@@ -584,16 +582,15 @@ public class ExifInterfaceTest extends AndroidTestCase {
         ExpectedValue expectedValue = new ExpectedValue(
                 getContext().getResources().obtainTypedArray(typedArrayResourceId));
 
-        testExifInterfaceCommon(EXTERNAL_BASE_DIRECTORY + fileName, expectedValue);
+        testExifInterfaceCommon(fileName, expectedValue);
 
         // Test for checking expected range by retrieving raw data with given offset and length.
-        testExifInterfaceRange(EXTERNAL_BASE_DIRECTORY + fileName, expectedValue);
+        testExifInterfaceRange(fileName, expectedValue);
     }
 
     private void writeToFilesWithoutExif(String fileName) throws IOException {
         // Test for reading from external data storage.
-        File imageFile = new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + fileName);
+        File imageFile = clone(new File(mInpPrefix, fileName));
 
         ExifInterface exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         exifInterface.setAttribute(ExifInterface.TAG_MAKE, "abc");
@@ -602,6 +599,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         String make = exifInterface.getAttribute(ExifInterface.TAG_MAKE);
         assertEquals("abc", make);
+        imageFile.delete();
     }
 
     private void testThumbnail(ExpectedValue expectedValue, ExifInterface exifInterface) {
@@ -641,8 +639,6 @@ public class ExifInterfaceTest extends AndroidTestCase {
     }
 
     public void testReadExifDataFromLgG4Iso800Jpg() throws Throwable {
-        stageFile(R.raw.lg_g4_iso_800, new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + JPEG_WITH_EXIF_WITH_XMP));
         readFromFilesWithExif(JPEG_WITH_EXIF_WITH_XMP, R.array.jpeg_with_exif_with_xmp);
         writeToFilesWithExif(JPEG_WITH_EXIF_WITH_XMP, R.array.jpeg_with_exif_with_xmp);
     }
@@ -709,12 +705,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
     }
 
     public void testPngFiles() throws Throwable {
-        stageFile(R.raw.png_with_exif_byte_order_ii, new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + PNG_WITH_EXIF_BYTE_ORDER_II));
         readFromFilesWithExif(PNG_WITH_EXIF_BYTE_ORDER_II, R.array.png_with_exif_byte_order_ii);
-
-        stageFile(R.raw.png_without_exif, new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + PNG_WITHOUT_EXIF));
         writeToFilesWithoutExif(PNG_WITHOUT_EXIF);
     }
 
@@ -726,21 +717,10 @@ public class ExifInterfaceTest extends AndroidTestCase {
     }
 
     public void testWebpFiles() throws Throwable {
-        stageFile(R.raw.webp_with_exif, new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + WEBP_WITH_EXIF));
         readFromFilesWithExif(WEBP_WITH_EXIF, R.array.webp_with_exif);
         writeToFilesWithExif(WEBP_WITH_EXIF, R.array.webp_with_exif);
-
-        stageFile(R.raw.webp_with_anim_without_exif,
-                new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + WEBP_WITHOUT_EXIF_WITH_ANIM_DATA));
         writeToFilesWithoutExif(WEBP_WITHOUT_EXIF_WITH_ANIM_DATA);
-        stageFile(R.raw.webp_without_exif, new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + WEBP_WITHOUT_EXIF));
         writeToFilesWithoutExif(WEBP_WITHOUT_EXIF);
-        stageFile(R.raw.webp_lossless_without_exif,
-                new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + WEBP_WITHOUT_EXIF_WITH_LOSSLESS_ENCODING));
         writeToFilesWithoutExif(WEBP_WITHOUT_EXIF_WITH_LOSSLESS_ENCODING);
     }
 
@@ -749,9 +729,8 @@ public class ExifInterfaceTest extends AndroidTestCase {
         final String dateTimeValue = "2017:02:02 22:22:22";
         final String dateTimeOriginalValue = "2017:01:01 11:11:11";
 
-        File imageFile = new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + JPEG_WITH_DATETIME_TAG);
-        stageFile(R.raw.jpeg_with_datetime_tag, imageFile);
+        File srcFile = new File(mInpPrefix, JPEG_WITH_DATETIME_TAG);
+        File imageFile = clone(srcFile);
 
         ExifInterface exif = new ExifInterface(imageFile.getAbsolutePath());
         assertEquals(expectedDatetimeValue, exif.getDateTime());
@@ -778,16 +757,9 @@ public class ExifInterfaceTest extends AndroidTestCase {
         imageFile.delete();
     }
 
-    private void stageFile(int resId, File file) throws IOException {
-        try (InputStream source = getContext().getResources().openRawResource(resId);
-                OutputStream target = new FileOutputStream(file)) {
-            FileUtils.copy(source, target);
-        }
-    }
-
     private static File clone(File original) throws IOException {
-        final File cloned = new File(original.getParentFile(),
-                "cts_" + System.nanoTime() + "_" + original.getName());
+        final File cloned =
+                File.createTempFile("cts_", +System.nanoTime() + "_" + original.getName());
         FileUtils.copyFileOrThrow(original, cloned);
         return cloned;
     }
