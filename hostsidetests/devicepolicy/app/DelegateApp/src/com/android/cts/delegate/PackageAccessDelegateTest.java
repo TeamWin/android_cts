@@ -51,25 +51,25 @@ public class PackageAccessDelegateTest extends InstrumentationTestCase {
 
         // Exercise isApplicationHidden.
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.isApplicationHidden(null, TEST_APP_PKG);
                 });
 
         // Exercise setApplicationHidden.
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.setApplicationHidden(null, TEST_APP_PKG, true /* hide */);
                 });
 
         // Exercise isPackageSuspended.
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.isPackageSuspended(null, TEST_APP_PKG);
                 });
 
         // Exercise setPackagesSuspended.
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.setPackagesSuspended(null, new String[] {TEST_APP_PKG}, true /* suspend */);
                 });
     }
