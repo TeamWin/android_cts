@@ -18,6 +18,9 @@ package android.security.cts;
 
 import com.android.compatibility.common.util.Crash;
 import com.android.compatibility.common.util.CrashUtils;
+import com.android.compatibility.common.util.MetricsReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.NullOutputReceiver;
 import com.android.ddmlib.CollectingOutputReceiver;
@@ -144,8 +147,30 @@ public class AdbUtils {
         if (arguments == null) {
             arguments = "";
         }
-        device.executeShellCommand(TMP_PATH + pocName + " " + arguments,
+
+        // since we have to return the exit status AND the poc stdout+stderr we redirect the exit
+        // status to a file temporarily
+        String exitStatusFilepath = TMP_PATH + "exit_status";
+        runCommandLine("rm " + exitStatusFilepath, device); // remove any old exit status
+        device.executeShellCommand(TMP_PATH + pocName + " " + arguments +
+                "; echo $? > " + exitStatusFilepath, // echo exit status to file
                 receiver, timeout, TimeUnit.SECONDS, 0);
+
+        // cat the exit status
+        String exitStatusString = runCommandLine("cat " + exitStatusFilepath, device).trim();
+
+        MetricsReportLog reportLog = SecurityTestCase.buildMetricsReportLog(device);
+        reportLog.addValue("poc_name", pocName, ResultType.NEUTRAL, ResultUnit.NONE);
+        try {
+            int exitStatus = Integer.parseInt(exitStatusString);
+            reportLog.addValue("exit_status", exitStatus, ResultType.NEUTRAL, ResultUnit.NONE);
+        } catch (NumberFormatException e) {
+            // Getting the exit status is a bonus. We can continue without it.
+            CLog.w("Could not parse exit status to int: %s", exitStatusString);
+        }
+        reportLog.submit();
+
+        runCommandLine("rm " + exitStatusFilepath, device);
     }
 
     /**
@@ -300,15 +325,21 @@ public class AdbUtils {
      */
     public static int runCommandGetExitCode(String cmd, ITestDevice device) throws Exception {
         long time = System.currentTimeMillis();
-        String exitStatus = runCommandLine(
+        String exitStatusString = runCommandLine(
                 "(" + cmd + ") > /dev/null 2>&1; echo $?", device).trim();
         time = System.currentTimeMillis() - time;
+
         try {
-            return Integer.parseInt(exitStatus);
+            int exitStatus = Integer.parseInt(exitStatusString);
+            MetricsReportLog reportLog = SecurityTestCase.buildMetricsReportLog(device);
+            reportLog.addValue("command", cmd, ResultType.NEUTRAL, ResultUnit.NONE);
+            reportLog.addValue("exit_status", exitStatus, ResultType.NEUTRAL, ResultUnit.NONE);
+            reportLog.submit();
+            return exitStatus;
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(String.format(
                     "Could not get the exit status (%s) for '%s' (%d ms).",
-                    exitStatus, cmd, time));
+                    exitStatusString, cmd, time));
         }
     }
 
@@ -355,13 +386,19 @@ public class AdbUtils {
         long time = System.currentTimeMillis();
         device.executeShellCommand(cmd, receiver, timeout, TimeUnit.SECONDS, 0);
         time = System.currentTimeMillis() - time;
-        String exitStatus = receiver.getOutput().trim();
+        String exitStatusString = receiver.getOutput().trim();
+
         try {
-            return Integer.parseInt(exitStatus);
+            int exitStatus = Integer.parseInt(exitStatusString);
+            MetricsReportLog reportLog = SecurityTestCase.buildMetricsReportLog(device);
+            reportLog.addValue("poc_name", pocName, ResultType.NEUTRAL, ResultUnit.NONE);
+            reportLog.addValue("exit_status", exitStatus, ResultType.NEUTRAL, ResultUnit.NONE);
+            reportLog.submit();
+            return exitStatus;
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(String.format(
                     "Could not get the exit status (%s) for '%s' (%d ms).",
-                    exitStatus, cmd, time));
+                    exitStatusString, cmd, time));
         }
     }
 
@@ -564,6 +601,12 @@ public class AdbUtils {
 
         List<Crash> crashes = CrashUtils.getAllCrashes(logcat);
         List<Crash> securityCrashes = CrashUtils.matchSecurityCrashes(crashes, config);
+
+        MetricsReportLog reportLog = SecurityTestCase.buildMetricsReportLog(device);
+        reportLog.addValue("all_crashes", crashes.toString(), ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValue("security_crashes", securityCrashes.toString(),
+                ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.submit();
 
         if (securityCrashes.isEmpty()) {
             return; // no security crashes detected
