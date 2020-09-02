@@ -609,7 +609,6 @@ public class EncodeVirtualDisplayTest extends AndroidTestCase {
             super.onCreate(savedInstanceState);
 
             setTitle("Encode Virtual Test");
-            getWindow().setType(WindowManager.LayoutParams.TYPE_PRIVATE_PRESENTATION);
 
             // Create a solid color image to use as the content of the presentation.
             ImageView view = new ImageView(getContext());
