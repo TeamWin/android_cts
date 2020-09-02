@@ -35,10 +35,8 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.GnssAntennaInfo;
@@ -55,11 +53,8 @@ import android.location.cts.common.BroadcastCapture;
 import android.location.cts.common.GetCurrentLocationCapture;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings.Secure;
 import android.util.Log;
@@ -215,6 +210,18 @@ public class LocationManagerFineTest {
             fail("Should throw IllegalArgumentException if provider is null!");
         } catch (IllegalArgumentException e) {
             // expected
+        }
+    }
+
+    @Test
+    public void testGetCurrentLocation_FreshOldLocation() throws Exception {
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
+
+        mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+        try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
+            mManager.getCurrentLocation(TEST_PROVIDER, capture.getCancellationSignal(),
+                    Executors.newSingleThreadExecutor(), capture);
+            assertThat(capture.getLocation(TIMEOUT_MS)).isEqualTo(loc);
         }
     }
 
@@ -662,7 +669,7 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    public void testGetProviders() throws Exception {
+    public void testGetProviders() {
         List<String> providers = mManager.getProviders(false);
         assertThat(providers.contains(TEST_PROVIDER)).isTrue();
 
@@ -698,7 +705,7 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    public void testGetBestProvider() throws Exception {
+    public void testGetBestProvider() {
         List<String> allProviders = mManager.getAllProviders();
         Criteria criteria = new Criteria();
 
