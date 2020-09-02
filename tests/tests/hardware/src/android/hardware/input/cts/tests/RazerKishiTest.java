@@ -26,7 +26,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class RazerKishiTest extends InputTestCase {
+public class RazerKishiTest extends InputHidTestCase {
 
     // Simulates the behavior of Razer Kishi gamepad.
     public RazerKishiTest() {
