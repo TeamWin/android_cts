@@ -387,6 +387,13 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.view.cts.InputDeviceKeyLayoutMapTestActivity"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.view.cts.TouchDelegateTestActivity"
              android:exported="true">
             <intent-filter>
