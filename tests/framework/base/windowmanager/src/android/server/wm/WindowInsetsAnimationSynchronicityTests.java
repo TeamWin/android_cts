@@ -111,6 +111,7 @@ public class WindowInsetsAnimationSynchronicityTests {
                 }
             });
             Thread.sleep(2000);
+            activity.setEvaluator(null);
         }
     }
 
