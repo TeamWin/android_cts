@@ -100,8 +100,10 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
 
     @Test
     public void testAnimationCallbacks_overlapping() {
-        WindowInsets before = mActivity.mLastWindowInsets;
+        // Test requires navbar to create overlapping animations.
+        assumeTrue(hasWindowInsets(mRootView, navigationBars()));
 
+        WindowInsets before = mActivity.mLastWindowInsets;
         MultiAnimCallback callbackInner = new MultiAnimCallback();
         MultiAnimCallback callback = mock(MultiAnimCallback.class,
                 withSettings()
@@ -188,8 +190,10 @@ public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
 
     @Test
     public void testAnimationCallbacks_childInsetting() {
-        WindowInsets before = mActivity.mLastWindowInsets;
+        // test requires navbar.
+        assumeTrue(hasWindowInsets(mRootView, navigationBars()));
 
+        WindowInsets before = mActivity.mLastWindowInsets;
         boolean[] done = new boolean[1];
         WindowInsetsAnimation.Callback childCallback = mock(WindowInsetsAnimation.Callback.class);
         WindowInsetsAnimation.Callback callback = new Callback(DISPATCH_MODE_CONTINUE_ON_SUBTREE) {

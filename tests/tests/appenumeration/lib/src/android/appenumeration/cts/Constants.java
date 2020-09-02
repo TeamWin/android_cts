@@ -50,6 +50,11 @@ public class Constants {
     /** A package that has no queries tag or permission to query any specific packages */
     public static final String QUERIES_NOTHING = PKG_BASE + "queries.nothing";
     /** Another package that has no queries tag or permission to query any specific packages */
+    public static final String QUERIES_NOTHING_RECEIVES_URI =
+            PKG_BASE + "queries.nothing.receives.uri";
+    public static final String QUERIES_NOTHING_RECEIVES_PERM_URI =
+            PKG_BASE + "queries.nothing.receives.perm.uri";
+    /** Another package that has no queries tag or permission to query any specific packages */
     public static final String QUERIES_NOTHING_SEES_INSTALLER =
             PKG_BASE + "queries.nothing.sees.installer";
     /** A package that queries nothing, but is part of a shared user */
@@ -125,6 +130,7 @@ public class Constants {
     public static final String ACTION_GET_PACKAGE_INFO = PKG_BASE + "cts.action.GET_PACKAGE_INFO";
     public static final String ACTION_START_FOR_RESULT = PKG_BASE + "cts.action.START_FOR_RESULT";
     public static final String ACTION_START_DIRECTLY = PKG_BASE + "cts.action.START_DIRECTLY";
+    public static final String ACTION_JUST_FINISH = PKG_BASE + "cts.action.JUST_FINISH";
     public static final String ACTION_AWAIT_PACKAGE_REMOVED =
             PKG_BASE + "cts.action.AWAIT_PACKAGE_REMOVED";
     public static final String ACTION_AWAIT_PACKAGE_ADDED =
