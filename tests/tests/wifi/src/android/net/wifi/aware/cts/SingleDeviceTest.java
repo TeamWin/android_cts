@@ -480,6 +480,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         WifiAwareSession session = attachAndGetSession();
         session.close();
+        assertFalse(mWifiAwareManager.isDeviceAttached());
     }
 
     /**
@@ -873,6 +874,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         WifiAwareSession session = attachCb.getSession();
         assertNotNull("Wi-Fi Aware session", session);
+        assertTrue(mWifiAwareManager.isDeviceAttached());
 
         return session;
     }
