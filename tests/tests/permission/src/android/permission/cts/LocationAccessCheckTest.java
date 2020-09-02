@@ -111,6 +111,7 @@ public class LocationAccessCheckTest {
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 10000;
     private static final long EXPECTED_TIMEOUT_MILLIS = 1000;
     private static final long LOCATION_ACCESS_TIMEOUT_MILLIS = 15000;
+    private static final long LOCATION_ACCESS_JOB_WAIT_MILLIS = 250;
 
     // Same as in AccessLocationOnCommand
     private static final long BACKGROUND_ACCESS_SETTLE_TIME = 11000;
@@ -270,13 +271,14 @@ public class LocationAccessCheckTest {
                 + BACKGROUND_ACCESS_SETTLE_TIME;
         while (true) {
             runLocationCheck();
+            Thread.sleep(LOCATION_ACCESS_JOB_WAIT_MILLIS);
 
             StatusBarNotification notification = getPermissionControllerNotification();
             if (notification == null) {
                 // Sometimes getting a location takes some time, hence not getting a notification
                 // can be caused by not having gotten a location yet
                 if (SystemClock.elapsedRealtime() - start < timeout) {
-                    Thread.sleep(200);
+                    Thread.sleep(LOCATION_ACCESS_JOB_WAIT_MILLIS);
                     continue;
                 }
 
@@ -666,6 +668,7 @@ public class LocationAccessCheckTest {
     @SecurityTest(minPatchLevel = "2019-12-01")
     public void notificationOnlyForAccessesSinceFeatureWasEnabled() throws Throwable {
         // Disable the feature and access location in disabled state
+        getNotification(true, true);
         disableLocationAccessCheck();
         accessLocation();
         assertNull(getNotification(true));
