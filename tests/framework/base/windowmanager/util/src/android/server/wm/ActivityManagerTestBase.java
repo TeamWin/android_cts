@@ -296,7 +296,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
-    TestTaskOrganizer mTaskOrganizer = new TestTaskOrganizer();
+    // Initialized in setUp to execute with proper permission, such as MANAGE_ACTIVITY_TASKS
+    TestTaskOrganizer mTaskOrganizer;
     // If the specific test should run using the task organizer or older API.
     // TODO(b/149338177): Fix all places setting this to fail to be able to use organizer API.
     public boolean mUseTaskOrganizer = true;
@@ -514,17 +515,22 @@ public abstract class ActivityManagerTestBase {
         launchHomeActivityNoWait();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
-        // Clear launch params for all test packages to make sure each test is run in a clean state.
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.clearLaunchParamsForPackages(TEST_PACKAGES));
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // TaskOrganizer ctor requires MANAGE_ACTIVITY_TASKS permission
+            mTaskOrganizer = new TestTaskOrganizer();
+            // Clear launch params for all test packages to make sure each test is run in a clean
+            // state.
+            mAtm.clearLaunchParamsForPackages(TEST_PACKAGES);
+        });
     }
 
     /** It always executes after {@link org.junit.After}. */
     private void tearDownBase() {
         mObjectTracker.tearDown(mPostAssertionRule::addError);
 
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mTaskOrganizer.unregisterOrganizerIfNeeded());
+        if (mTaskOrganizer != null) {
+            SystemUtil.runWithShellPermissionIdentity(mTaskOrganizer::unregisterOrganizerIfNeeded);
+        }
         // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
         // home are cleaned up from the stack at the end of each test. Am force stop shell commands
         // might be asynchronous and could interrupt the stack cleanup process if executed first.
