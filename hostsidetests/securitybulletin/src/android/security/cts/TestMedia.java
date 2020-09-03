@@ -51,6 +51,18 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/134420911
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2019-09")
+    public void testPocCVE_2019_2176() throws Exception {
+        String inputFiles[] = {"cve_2019_2176.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2176",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/142602711
      * Vulnerability Behaviour: SIGSEGV in self
      */
