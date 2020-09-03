@@ -212,6 +212,47 @@ public class MediaStorageTest {
         }
     }
 
+    /**
+     * Test prefix and non-prefix uri grant for all packages
+     */
+    @Test
+    public void testGrantUriPermission() {
+        final int flagGrantRead = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        final int flagGrantWrite = Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        final int flagGrantReadPrefix =
+                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION;
+        final int flagGrantWritePrefix =
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION;
+
+        for (Uri uri : new Uri[] {
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        }) {
+            // Non-prefix grant
+            checkGrantUriPermission(uri, flagGrantRead, true);
+            checkGrantUriPermission(uri, flagGrantWrite, true);
+
+            // Prefix grant
+            checkGrantUriPermission(uri, flagGrantReadPrefix, false);
+            checkGrantUriPermission(uri, flagGrantWritePrefix, false);
+        }
+    }
+
+    private void checkGrantUriPermission(Uri uri, int mode, boolean isGrantAllowed) {
+        if (isGrantAllowed) {
+            mContext.grantUriPermission(mContext.getPackageName(), uri, mode);
+        } else {
+            try {
+                mContext.grantUriPermission(mContext.getPackageName(), uri, mode);
+                fail("Expected granting to be blocked for flag 0x" + Integer.toHexString(mode));
+            } catch (SecurityException expected) {
+            }
+        }
+    }
+
     @Test
     public void testMediaRead() throws Exception {
         doMediaRead(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, MediaStorageTest::createAudio);
