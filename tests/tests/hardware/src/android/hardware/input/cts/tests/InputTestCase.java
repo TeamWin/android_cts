@@ -32,9 +32,7 @@ import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.cts.input.HidDevice;
-import com.android.cts.input.HidJsonParser;
-import com.android.cts.input.HidTestData;
+import com.android.cts.input.InputJsonParser;
 
 import org.junit.After;
 import org.junit.Before;
@@ -53,12 +51,12 @@ public abstract class InputTestCase {
     private final BlockingQueue<InputEvent> mEvents;
 
     private InputListener mInputListener;
-    private Instrumentation mInstrumentation;
     private View mDecorView;
-    private HidDevice mHidDevice;
-    private HidJsonParser mParser;
+
+    protected Instrumentation mInstrumentation;
+    protected InputJsonParser mParser;
     // Stores the name of the currently running test
-    private String mCurrentTestCase;
+    protected String mCurrentTestCase;
     private int mRegisterResourceId; // raw resource that contains json for registering a hid device
 
     // State used for motion events
@@ -80,17 +78,24 @@ public abstract class InputTestCase {
         mActivityRule.getActivity().setInputCallback(mInputListener);
         mActivityRule.getActivity().clearUnhandleKeyCode();
         mDecorView = mActivityRule.getActivity().getWindow().getDecorView();
-        mParser = new HidJsonParser(mInstrumentation.getTargetContext());
-        int hidDeviceId = mParser.readDeviceId(mRegisterResourceId);
+        mParser = new InputJsonParser(mInstrumentation.getTargetContext());
+        int deviceId = mParser.readDeviceId(mRegisterResourceId);
         String registerCommand = mParser.readRegisterCommand(mRegisterResourceId);
-        mHidDevice = new HidDevice(mInstrumentation, hidDeviceId, registerCommand);
+        setUpDevice(deviceId, registerCommand);
         mEvents.clear();
     }
 
     @After
     public void tearDown() {
-        mHidDevice.close();
+        tearDownDevice();
     }
+
+    // To be implemented by device specific test case.
+    protected abstract void setUpDevice(int deviceId, String registerCommand);
+
+    protected abstract void tearDownDevice();
+
+    protected abstract void testInputDeviceEvents(int resourceId);
 
     /**
      * Asserts that the application received a {@link android.view.KeyEvent} with the given
@@ -178,36 +183,28 @@ public abstract class InputTestCase {
         failWithMessage("extraneous events generated: " + event);
     }
 
-    protected void testInputEvents(int resourceId) {
-        List<HidTestData> tests = mParser.getTestData(resourceId);
-
-        for (HidTestData testData: tests) {
-            mCurrentTestCase = testData.name;
-
-            // Send all of the HID reports
-            for (int i = 0; i < testData.reports.size(); i++) {
-                final String report = testData.reports.get(i);
-                mHidDevice.sendHidReport(report);
-            }
-
-            // Make sure we received the expected input events
-            for (int i = 0; i < testData.events.size(); i++) {
-                final InputEvent event = testData.events.get(i);
-                try {
-                    if (event instanceof MotionEvent) {
-                        assertReceivedMotionEvent((MotionEvent) event);
-                        continue;
-                    }
-                    if (event instanceof KeyEvent) {
-                        assertReceivedKeyEvent((KeyEvent) event);
-                        continue;
-                    }
-                } catch (AssertionError error) {
-                    throw new AssertionError("Assertion on entry " + i + " failed.", error);
+    protected void verifyEvents(List<InputEvent> events) {
+        // Make sure we received the expected input events
+        for (int i = 0; i < events.size(); i++) {
+            final InputEvent event = events.get(i);
+            try {
+                if (event instanceof MotionEvent) {
+                    assertReceivedMotionEvent((MotionEvent) event);
+                    continue;
                 }
-                fail("Entry " + i + " is neither a KeyEvent nor a MotionEvent: " + event);
+                if (event instanceof KeyEvent) {
+                    assertReceivedKeyEvent((KeyEvent) event);
+                    continue;
+                }
+            } catch (AssertionError error) {
+                throw new AssertionError("Assertion on entry " + i + " failed.", error);
             }
+            fail("Entry " + i + " is neither a KeyEvent nor a MotionEvent: " + event);
         }
+    }
+
+    protected void testInputEvents(int resourceId) {
+        testInputDeviceEvents(resourceId);
         assertNoMoreEvents();
     }
 

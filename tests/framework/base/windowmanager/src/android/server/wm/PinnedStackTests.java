@@ -43,6 +43,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
 import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_ON_PIP_REQUESTED;
+import static android.server.wm.app.Components.PipActivity.EXTRA_ALLOW_AUTO_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR;
@@ -1188,6 +1189,21 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertEquals("Must report default size after exiting PiP", initialSizes, finalSizes);
         assertEquals("Must report default app size after exiting PiP", initialAppSize,
                 finalAppSize);
+    }
+
+    @Test
+    public void testAutoPipAllowedBypassesExplicitEnterPip() {
+        // Launch a test activity so that we're not over home.
+        launchActivity(TEST_ACTIVITY);
+
+        // Launch the PIP activity and set its pip params to allow auto-pip.
+        launchActivity(PIP_ACTIVITY, EXTRA_ALLOW_AUTO_PIP, "true");
+        assertPinnedStackDoesNotExist();
+
+        // Go home and ensure that there is a pinned stack.
+        launchHomeActivity();
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
     }
 
     /** Get app bounds in last applied configuration. */

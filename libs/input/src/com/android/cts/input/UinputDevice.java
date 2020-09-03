@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.android.cts.input;
 
-
 import android.app.Instrumentation;
 import android.util.Log;
 
@@ -31,39 +30,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a virtual HID device registered through /dev/uhid.
+ * Represents a virtual UINPUT device registered through /dev/uinput.
  */
-public final class HidDevice extends VirtualInputDevice {
-    private static final String TAG = "HidDevice";
-    // hid executable expects "-" argument to read from stdin instead of a file
-    private static final String HID_COMMAND = "hid -";
+public final class UinputDevice extends VirtualInputDevice {
+    private static final String TAG = "UinputDevice";
+    // uinput executable expects "-" argument to read from stdin instead of a file
+    private static final String UINPUT_COMMAND = "uinput -";
 
     @GuardedBy("mLock")
-    private List<HidResultData> mResults = new ArrayList<HidResultData>();
+    private List<UinputResultData> mResults = new ArrayList<UinputResultData>();
 
     @Override
     protected String getShellCommand() {
-        return HID_COMMAND;
+        return UINPUT_COMMAND;
     }
 
     @Override
     protected void readResults() {
         try {
             mReader.beginObject();
-            HidResultData result = new HidResultData();
+            UinputResultData result = new UinputResultData();
             while (mReader.hasNext()) {
                 String fieldName = mReader.nextName();
-                if (fieldName.equals("eventId")) {
-                    result.eventId = Byte.decode(mReader.nextString());
+                if (fieldName.equals("reason")) {
+                    result.reason = mReader.nextString();
                 }
-                if (fieldName.equals("deviceId")) {
+                if (fieldName.equals("id")) {
                     result.deviceId = Integer.decode(mReader.nextString());
                 }
-                if (fieldName.equals("reportType")) {
-                    result.reportType = Byte.decode(mReader.nextString());
-                }
-                if (fieldName.equals("reportData")) {
-                    result.reportData = readData();
+                if (fieldName.equals("status")) {
+                    result.status = Integer.decode(mReader.nextString());
                 }
             }
             mReader.endObject();
@@ -73,21 +69,21 @@ public final class HidDevice extends VirtualInputDevice {
         }
     }
 
-    public HidDevice(Instrumentation instrumentation, int deviceId, String registerCommand) {
+    public UinputDevice(Instrumentation instrumentation, int deviceId, String registerCommand) {
         super(instrumentation, deviceId, registerCommand);
     }
 
     /**
-     * Get hid command return results as list of HidResultData
+     * Get uinput command return results as list of UinputResultData
      *
-     * @return List of HidResultData results
+     * @return List of UinputResultData results
      */
-    public synchronized List<HidResultData> getResults(int deviceId, byte eventId)
+    public synchronized List<UinputResultData> getResults(int deviceId, String reason)
             throws IOException {
-        List<HidResultData> results = new ArrayList<HidResultData>();
+        List<UinputResultData> results = new ArrayList<UinputResultData>();
         synchronized (mLock) {
-            for (HidResultData result : mResults) {
-                if (deviceId == result.deviceId && eventId == result.eventId) {
+            for (UinputResultData result : mResults) {
+                if (deviceId == result.deviceId && reason.equals(reason)) {
                     results.add(result);
                 }
             }
@@ -96,11 +92,11 @@ public final class HidDevice extends VirtualInputDevice {
     }
 
     /**
-     * Add hid command returned HidResultData result
+     * Add uinput command returned UinputResultData result
      *
-     * @param result HidResultData result
+     * @param result UinputResultData result
      */
-    public synchronized void addResult(HidResultData result) {
+    public synchronized void addResult(UinputResultData result) {
         synchronized (mLock) {
             if (mId == result.deviceId && mResults != null) {
                 mResults.add(result);
@@ -109,21 +105,22 @@ public final class HidDevice extends VirtualInputDevice {
     }
 
     /**
-     * Send a HID report to the device. The report should follow the report descriptor
-     * that was specified during device registration.
-     * An example report:
-     * String report = "[0x01, 0x00, 0x00, 0x02]";
+     * Inject array of uinput events to the device.  The events array should follow the below
+     * format:
      *
-     * @param report The report to send (a JSON-formatted array of hex)
+     * String evdevEvents = "[0x01, 0x0a, 0x01, 0x01, 0x0a, 0x00 ]"
+     * The above string represents an event array of [EV_KEY, KEY_9, DOWN,  EV_KEY, KEY_9, UP]
+     *
+     * @param evdevEvents The uinput events to be injected.  (a JSON-formatted array of hex)
      */
-    public void sendHidReport(String report) {
+    public void injectEvents(String evdevEvents) {
         JSONObject json = new JSONObject();
         try {
-            json.put("command", "report");
+            json.put("command", "inject");
             json.put("id", mId);
-            json.put("report", new JSONArray(report));
+            json.put("events", new JSONArray(evdevEvents));
         } catch (JSONException e) {
-            throw new RuntimeException("Could not process HID report: " + report);
+            throw new RuntimeException("Could not inject events: " + evdevEvents);
         }
         writeCommands(json.toString().getBytes());
     }

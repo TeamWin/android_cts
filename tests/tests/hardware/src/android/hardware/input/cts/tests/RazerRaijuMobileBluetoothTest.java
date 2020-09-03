@@ -28,7 +28,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class RazerRaijuMobileBluetoothTest extends InputTestCase {
+public class RazerRaijuMobileBluetoothTest extends InputHidTestCase {
 
     // Simulates the behavior of Razer Raiju Mobile gamepad.
     public RazerRaijuMobileBluetoothTest() {

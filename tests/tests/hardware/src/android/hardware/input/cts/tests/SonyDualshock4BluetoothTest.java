@@ -26,7 +26,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class SonyDualshock4BluetoothTest extends InputTestCase {
+public class SonyDualshock4BluetoothTest extends InputHidTestCase {
 
     // Simulates the behavior of PlayStation DualShock4 gamepad (model CUH-ZCT1U)
     public SonyDualshock4BluetoothTest() {
@@ -42,4 +42,10 @@ public class SonyDualshock4BluetoothTest extends InputTestCase {
     public void testAllMotions() {
         testInputEvents(R.raw.sony_dualshock4_bluetooth_motioneventtests);
     }
+
+    @Test
+    public void testVibrator() {
+        testInputVibratorEvents(R.raw.sony_dualshock4_bluetooth_vibratortests);
+    }
+
 }

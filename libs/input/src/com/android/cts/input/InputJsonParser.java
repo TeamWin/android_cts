@@ -16,7 +16,10 @@
 
 package com.android.cts.input;
 
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
+import android.util.ArrayMap;
 import android.view.InputDevice;
 import android.view.InputEvent;
 import android.view.KeyEvent;
@@ -69,12 +72,12 @@ import java.util.List;
  * ]
  * </code>
  */
-public class HidJsonParser {
-    private static final String TAG = "JsonParser";
+public class InputJsonParser {
+    private static final String TAG = "InputJsonParser";
 
     private Context mContext;
 
-    public HidJsonParser(Context context) {
+    public InputJsonParser(Context context) {
         mContext = context;
     }
 
@@ -141,7 +144,7 @@ public class HidJsonParser {
      * Extract the device id from the raw resource file. This is needed in order to register
      * a HidDevice.
      *
-     * @param resourceId resorce file that contains the register command.
+     * @param resourceId resource file that contains the register command.
      * @return hid device id
      */
     public int readDeviceId(int resourceId) {
@@ -154,10 +157,57 @@ public class HidJsonParser {
     }
 
     /**
+     * Extract the Vendor id from the raw resource file.
+     *
+     * @param resourceId resource file that contains the register command.
+     * @return device vendor id
+     */
+    public int readVendorId(int resourceId) {
+        try {
+            JSONObject json = new JSONObject(readRawResource(resourceId));
+            return json.getInt("vid");
+        } catch (JSONException e) {
+            throw new RuntimeException("Could not read vendor id from resource " + resourceId);
+        }
+    }
+
+    /**
+     * Extract the Product id from the raw resource file.
+     *
+     * @param resourceId resource file that contains the register command.
+     * @return device product id
+     */
+    public int readProductId(int resourceId) {
+        try {
+            JSONObject json = new JSONObject(readRawResource(resourceId));
+            return json.getInt("pid");
+        } catch (JSONException e) {
+            throw new RuntimeException("Could not read prduct id from resource " + resourceId);
+        }
+    }
+
+    private InputEvent parseInputEvent(int testCaseNumber, int source, JSONObject entry) {
+        try {
+            InputEvent event;
+            if (entry.has("keycode")) {
+                event = parseKeyEvent(source, entry);
+            } else if (entry.has("axes")) {
+                event = parseMotionEvent(source, entry);
+            } else {
+                throw new RuntimeException(
+                        "Input event is not specified correctly. Received: " + entry);
+            }
+            return event;
+        } catch (JSONException e) {
+            throw new RuntimeException("Could not process entry " + testCaseNumber + " : " + entry);
+        }
+    }
+
+    /**
      * Read json resource, and return a {@code List} of HidTestData, which contains
      * the name of each test, along with the HID reports and the expected input events.
      */
-    public List<HidTestData> getTestData(int resourceId) {
+    public List<HidTestData> getHidTestData(int resourceId) {
         JSONArray json = getJsonArrayFromResource(resourceId);
         List<HidTestData> tests = new ArrayList<HidTestData>();
         for (int testCaseNumber = 0; testCaseNumber < json.length(); testCaseNumber++) {
@@ -174,21 +224,111 @@ public class HidJsonParser {
                 }
 
                 final int source = sourceFromString(testcaseEntry.optString("source"));
+                JSONArray events = testcaseEntry.getJSONArray("events");
+                for (int i = 0; i < events.length(); i++) {
+                    testData.events.add(parseInputEvent(i, source, events.getJSONObject(i)));
+                }
+                tests.add(testData);
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not process entry " + testCaseNumber);
+            }
+        }
+        return tests;
+    }
+
+    /**
+     * Read json resource, and return a {@code List} of HidVibratorTestData, which contains
+     * the vibrator FF effect strength data index, and the hid output verification data.
+     */
+    public List<HidVibratorTestData> getHidVibratorTestData(int resourceId) {
+        JSONArray json = getJsonArrayFromResource(resourceId);
+        List<HidVibratorTestData> tests = new ArrayList<HidVibratorTestData>();
+        for (int testCaseNumber = 0; testCaseNumber < json.length(); testCaseNumber++) {
+            HidVibratorTestData testData = new HidVibratorTestData();
+            try {
+                JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
+                testData.leftFfIndex = testcaseEntry.getInt("leftFfIndex");
+                testData.rightFfIndex = testcaseEntry.getInt("rightFfIndex");
+
+                JSONArray durationsArray = testcaseEntry.getJSONArray("durations");
+                JSONArray amplitudesArray = testcaseEntry.getJSONArray("amplitudes");
+                assertTrue(durationsArray.length() == amplitudesArray.length());
+                testData.durations = new ArrayList<Long>();
+                testData.amplitudes = new ArrayList<Integer>();
+                for (int i = 0; i < durationsArray.length(); i++) {
+                    testData.durations.add(durationsArray.getLong(i));
+                    testData.amplitudes.add(amplitudesArray.getInt(i));
+                }
+
+                JSONArray outputArray = testcaseEntry.getJSONArray("output");
+                testData.verifyMap = new ArrayMap<Integer, Integer>();
+                for (int i = 0; i < outputArray.length(); i++) {
+                    JSONObject item = outputArray.getJSONObject(i);
+                    int index = item.getInt("index");
+                    int data = item.getInt("data");
+                    testData.verifyMap.put(index, data);
+                }
+                tests.add(testData);
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not process entry " + testCaseNumber);
+            }
+        }
+        return tests;
+    }
+
+    /**
+     * Read json resource, and return a {@code List} of UinputVibratorTestData, which contains
+     * the vibrator FF effect of durations and amplitudes.
+     */
+    public List<UinputVibratorTestData> getUinputVibratorTestData(int resourceId) {
+        JSONArray json = getJsonArrayFromResource(resourceId);
+        List<UinputVibratorTestData> tests = new ArrayList<UinputVibratorTestData>();
+        for (int testCaseNumber = 0; testCaseNumber < json.length(); testCaseNumber++) {
+            UinputVibratorTestData testData = new UinputVibratorTestData();
+            try {
+                JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
+
+                JSONArray durationsArray = testcaseEntry.getJSONArray("durations");
+                JSONArray amplitudesArray = testcaseEntry.getJSONArray("amplitudes");
+                assertTrue(durationsArray.length() == amplitudesArray.length());
+                testData.durations = new ArrayList<Long>();
+                testData.amplitudes = new ArrayList<Integer>();
+                for (int i = 0; i < durationsArray.length(); i++) {
+                    testData.durations.add(durationsArray.getLong(i));
+                    testData.amplitudes.add(amplitudesArray.getInt(i));
+                }
+                tests.add(testData);
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not process entry " + testCaseNumber);
+            }
+        }
+        return tests;
+    }
+
+    /**
+     * Read json resource, and return a {@code List} of UinputTestData, which contains
+     * the name of each test, along with the uinput injections and the expected input events.
+     */
+    public List<UinputTestData> getUinputTestData(int resourceId) {
+        JSONArray json = getJsonArrayFromResource(resourceId);
+        List<UinputTestData> tests = new ArrayList<UinputTestData>();
+        for (int testCaseNumber = 0; testCaseNumber < json.length(); testCaseNumber++) {
+            UinputTestData testData = new UinputTestData();
+
+            try {
+                JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
+                testData.name = testcaseEntry.getString("name");
+                JSONArray reports = testcaseEntry.getJSONArray("injections");
+                for (int i = 0; i < reports.length(); i++) {
+                    String injections = reports.getString(i);
+                    testData.evdevEvents.add(injections);
+                }
+
+                final int source = sourceFromString(testcaseEntry.optString("source"));
 
                 JSONArray events = testcaseEntry.getJSONArray("events");
                 for (int i = 0; i < events.length(); i++) {
-                    JSONObject entry = events.getJSONObject(i);
-
-                    InputEvent event;
-                    if (entry.has("keycode")) {
-                        event = parseKeyEvent(source, entry);
-                    } else if (entry.has("axes")) {
-                        event = parseMotionEvent(source, entry);
-                    } else {
-                        throw new RuntimeException(
-                                "Input event is not specified correctly. Received: " + entry);
-                    }
-                    testData.events.add(event);
+                    testData.events.add(parseInputEvent(i, source, events.getJSONObject(i)));
                 }
                 tests.add(testData);
             } catch (JSONException e) {
