@@ -192,6 +192,10 @@ public class StrictModeTest {
 
     @Test
     public void testUnclosedCloseable() throws Exception {
+        //clean before test
+        System.gc();
+        System.runFinalization();
+
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder().detectLeakedClosableObjects().build());
 
