@@ -51,6 +51,42 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/134420911
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2019-09")
+    public void testPocCVE_2019_2176() throws Exception {
+        String inputFiles[] = {"cve_2019_2176.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2176",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/142602711
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testPocCVE_2020_0002() throws Exception {
+        String inputFiles[] = {"cve_2020_0002.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0002",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/134578122
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2019-10")
+    public void testPocCVE_2019_2184() throws Exception {
+        String inputFiles[] = {"cve_2019_2184.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2184",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/17769851
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      **/
