@@ -2229,7 +2229,7 @@
 
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
             <meta-data android:name="test_excluded_features"
-                       android:value="android.hardware.type.automotive"/>
+                       android:value="android.hardware.type.automotive:android.hardware.type.television:android.software.leanback"/>
         </activity>
 
         <service android:name=".camera.intents.CameraContentJobService"
