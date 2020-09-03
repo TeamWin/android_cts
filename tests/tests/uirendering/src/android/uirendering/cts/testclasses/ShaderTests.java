@@ -256,6 +256,32 @@ public class ShaderTests extends ActivityTestBase {
             );
     }
 
+    @Test
+    public void testBlurShaderLargeRadii() {
+        // Ensure that blurring with large blur radii with clipped content shows a solid
+        // blur square.
+        // Previously blur radii that were very large would end up blurring pixels outside
+        // of the source with transparent leading to larger blur radii actually being less
+        // blurred than smaller radii.
+        // Because the internal SkTileMode is set to kClamp, the edges of the source are used in
+        // blur kernels that extend beyond the bounds of the source
+        // Note this test only runs in hardware as the Skia software backend only supports the
+        // kDecal tile mode for handling edges of blurred content outside of the blur radius
+        // see: https://bugs.chromium.org/p/skia/issues/detail?id=10145
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    final int blurRadius = 200;
+                    Paint blurPaint = new Paint();
+                    blurPaint.setShader(new BlurShader(blurRadius, blurRadius, null));
+                    blurPaint.setColor(Color.BLUE);
+                    canvas.save();
+                    canvas.clipRect(0, 0, width, height);
+                    canvas.drawRect(0, 0, width, height, blurPaint);
+                    canvas.restore();
+                }, true)
+                .runWithVerifier(new ColorVerifier(Color.BLUE));
+    }
+
     private static class BlurPixelCounter extends BitmapVerifier {
 
         private final int mDstColor;
