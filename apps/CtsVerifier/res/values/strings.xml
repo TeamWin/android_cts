@@ -2212,10 +2212,6 @@
         controls for the CTS Verifier app.
         Check that icons appear for rewind, previous track, pause, next track and fast forward.
     </string>
-    <string name="qs_media_player_compact_actions">Open Notification Shade and look at the media player
-        controls for the CTS Verifier app.
-        Check that icons appear for only previous track, pause and next track.
-    </string>
     <string name="qs_media_player_output_switcher">Open Quick Settings and look at the media player
         controls for the CTS Verifier app. Click on the button showing that the media is playing
         on the phone speaker. Check that the Output Switcher opens.
