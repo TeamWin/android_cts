@@ -117,8 +117,8 @@ public abstract class InputTestCase {
         assertSource(mCurrentTestCase, expectedKeyEvent.getSource(), receivedKeyEvent.getSource());
         assertEquals(mCurrentTestCase + " (keycode)",
                 expectedKeyEvent.getKeyCode(), receivedKeyEvent.getKeyCode());
-        assertEquals(mCurrentTestCase + " (meta state)",
-                expectedKeyEvent.getMetaState(), receivedKeyEvent.getMetaState());
+        assertMetaState(mCurrentTestCase, expectedKeyEvent.getMetaState(),
+                receivedKeyEvent.getMetaState());
     }
 
     private void assertReceivedMotionEvent(@NonNull MotionEvent expectedEvent) {
@@ -167,6 +167,17 @@ public abstract class InputTestCase {
      */
     void assertSource(String testCase, int expectedSource, int actualSource) {
         assertEquals(testCase + " (source)", expectedSource, actualSource);
+    }
+
+    /**
+     * Asserts meta states. Separate this into a different method to allow individual test case to
+     * specify it.
+     *
+     * @param expectedMetaState expected meta state specified in JSON files.
+     * @param actualMetaState actual meta state received in the test app.
+     */
+    void assertMetaState(String testCase, int expectedMetaState, int actualMetaState) {
+        assertEquals(testCase + " (meta state)", expectedMetaState, actualMetaState);
     }
 
     /**

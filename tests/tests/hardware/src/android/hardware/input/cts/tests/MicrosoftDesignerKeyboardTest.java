@@ -19,6 +19,7 @@ package android.hardware.input.cts.tests;
 import static org.junit.Assert.assertEquals;
 
 import android.hardware.cts.R;
+import android.view.KeyEvent;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -50,5 +51,17 @@ public class MicrosoftDesignerKeyboardTest extends InputHidTestCase {
     @Override
     void assertSource(String testCase, int expectedSource, int actualSource) {
         assertEquals(testCase + " (source)", expectedSource & actualSource, actualSource);
+    }
+
+    /**
+     * Microsoft Designer Keyboard has meta control keys of NUM_LOCK, CAPS_LOCK and SCROLL_LOCK.
+     * Do not verify the meta key states that have global state and initially to be on.
+     */
+    @Override
+    void assertMetaState(String testCase, int expectedMetaState, int actualMetaState) {
+        final int metaStates = KeyEvent.META_NUM_LOCK_ON | KeyEvent.META_CAPS_LOCK_ON
+                | KeyEvent.META_SCROLL_LOCK_ON;
+        actualMetaState &= ~metaStates;
+        assertEquals(testCase + " (meta state)", expectedMetaState , actualMetaState);
     }
 }
