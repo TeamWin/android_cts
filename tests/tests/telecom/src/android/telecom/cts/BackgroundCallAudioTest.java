@@ -1,11 +1,17 @@
 package android.telecom.cts;
 
+import static android.app.role.RoleManager.ROLE_CALL_SCREENING;
 import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDLE;
 import static android.telecom.cts.TestUtils.waitOnAllHandlers;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.app.role.RoleManager;
+import android.content.Context;
 import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.os.Process;
+import android.os.UserHandle;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.Call.Details;
@@ -21,11 +27,15 @@ import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
     private static final String LOG_TAG = BackgroundCallAudioTest.class.getSimpleName();
 
+    private static final int ASYNC_TIMEOUT = 10000;
+    private RoleManager mRoleManager;
     private ServiceConnection mApiCompatControlServiceConnection;
 
     // copied from AudioSystem.java -- defined here because that change isn't in AOSP yet.
@@ -40,6 +50,8 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
     protected void setUp() throws Exception {
         super.setUp();
         if (mShouldTestTelecom) {
+            mRoleManager = (RoleManager) mContext.getSystemService(Context.ROLE_SERVICE);
+            clearRoleHoldersAsUser(ROLE_CALL_SCREENING);
             mPreviousDefaultDialer = TestUtils.getDefaultDialer(getInstrumentation());
             TestUtils.setDefaultDialer(getInstrumentation(), TestUtils.PACKAGE);
             setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
@@ -647,5 +659,24 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
     private void tearDownControl() throws Exception {
         Api29InCallUtils.tearDownControl(mContext,
                 mApiCompatControlServiceConnection);
+    }
+
+    private void clearRoleHoldersAsUser(String roleName)
+            throws Exception {
+        UserHandle user = Process.myUserHandle();
+        Executor executor = mContext.getMainExecutor();
+        LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
+
+        runWithShellPermissionIdentity(() -> mRoleManager.clearRoleHoldersAsUser(roleName,
+                RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP, user, executor,
+                successful -> {
+                    try {
+                        queue.put(successful);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }));
+        boolean result = queue.poll(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+        assertTrue(result);
     }
 }
