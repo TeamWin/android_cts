@@ -27,6 +27,7 @@ import com.android.compatibility.common.util.DeviceInfoStore;
 
 /**
  * VINTF device info collector.
+ * Keep name in sync with SELinuxHostTest#VINTF_DEVICE_CLASS.
  */
 public final class VintfDeviceInfo extends DeviceInfo {
 
