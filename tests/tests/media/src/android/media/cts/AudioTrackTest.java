@@ -1560,10 +1560,12 @@ public class AudioTrackTest {
         final double TEST_FREQUENCY = 400;
         final long WAIT_TIME_MS = 150; // compensate for cold start when run in isolation.
         final double TEST_LOOP_DURATION = 0.25;
+        final int TEST_ADDITIONAL_DRAIN_MS = 300;  // as a presubmit test, 1% of the time the
+                                                   // startup is slow by 200ms.
 
         playOnceStaticData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
                 TEST_LOOPS, TEST_FORMAT, TEST_FREQUENCY, TEST_SR, TEST_CONF,
-                WAIT_TIME_MS, TEST_LOOP_DURATION);
+                WAIT_TIME_MS, TEST_LOOP_DURATION, TEST_ADDITIONAL_DRAIN_MS);
 
     }
 
@@ -1594,14 +1596,16 @@ public class AudioTrackTest {
         final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
         final double TEST_SWEEP = 100;
         final int TEST_LOOPS = 1;
-        final double TEST_LOOP_DURATION=1;
+        final double TEST_LOOP_DURATION = 1.;
+        final int TEST_ADDITIONAL_DRAIN_MS = 0;
 
         for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
             double frequency = 400; // frequency changes for each test
             for (int TEST_SR : TEST_SR_ARRAY) {
                 for (int TEST_CONF : TEST_CONF_ARRAY) {
                     playOnceStaticData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
-                            TEST_LOOPS, TEST_FORMAT, frequency, TEST_SR, TEST_CONF, WAIT_MSEC, TEST_LOOP_DURATION);
+                            TEST_LOOPS, TEST_FORMAT, frequency, TEST_SR, TEST_CONF, WAIT_MSEC,
+                            TEST_LOOP_DURATION, TEST_ADDITIONAL_DRAIN_MS);
 
                     frequency += 70; // increment test tone frequency
                 }
@@ -1611,7 +1615,7 @@ public class AudioTrackTest {
 
     private void playOnceStaticData(String testName, int testMode, int testStreamType,
             double testSweep, int testLoops, int testFormat, double testFrequency, int testSr,
-            int testConf, long waitMsec, double testLoopDuration)
+            int testConf, long waitMsec, double testLoopDuration, int additionalDrainMs)
             throws InterruptedException {
         // -------- initialization --------------
         final int channelCount = Integer.bitCount(testConf);
@@ -1674,7 +1678,7 @@ public class AudioTrackTest {
 
         track.play();
         Thread.sleep((int)(testLoopDuration * MILLISECONDS_PER_SECOND) * (testLoops + 1));
-        Thread.sleep(waitMsec);
+        Thread.sleep(waitMsec + additionalDrainMs);
 
         // Check position after looping. AudioTrack.getPlaybackHeadPosition() returns
         // the running count of frames played, not the actual static buffer position.
