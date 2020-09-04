@@ -117,6 +117,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     private static final String CONFIG_QUICK_SETTINGS_SUPPORTED = "config_quick_settings_supported";
 
+    private static final String CONFIG_NO_EMULATOR = "config_no_emulator";
+
     private final HashSet<String> mDisabledTests;
 
     private Context mContext;
@@ -360,6 +362,20 @@ public class ManifestTestListAdapter extends TestListAdapter {
                     case CONFIG_QUICK_SETTINGS_SUPPORTED:
                         if (!getSystemResourceFlag("config_quickSettingsSupported")) {
                             return false;
+                        }
+                        break;
+                    case CONFIG_NO_EMULATOR:
+                        try {
+                            Method getStringMethod = ClassLoader.getSystemClassLoader()
+                                .loadClass("android.os.SystemProperties")
+                                .getMethod("get", String.class);
+                            String emulatorKernel = (String) getStringMethod.invoke("0",
+                                    "ro.kernel.qemu");
+                            if (emulatorKernel.equals("1")) {
+                                return false;
+                            }
+                        } catch (Exception e) {
+                            Log.e(LOG_TAG, "Exception while checking for emulator support.", e);
                         }
                         break;
                     default:
