@@ -66,7 +66,7 @@ class TestTaskOrganizer extends TaskOrganizer {
 
     void dismissedSplitScreen() {
         // Re-set default launch root.
-        TaskOrganizer.setLaunchRoot(Display.DEFAULT_DISPLAY, null);
+        setLaunchRoot(Display.DEFAULT_DISPLAY, null);
 
         // Re-parent everything back to the display from the splits so that things are as they were.
         final List<ActivityManager.RunningTaskInfo> children = new ArrayList<>();
