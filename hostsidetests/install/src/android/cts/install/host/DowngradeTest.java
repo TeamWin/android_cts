@@ -18,10 +18,7 @@ package android.cts.install.host;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.hamcrest.CoreMatchers.endsWith;
-import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.cts.install.INSTALL_TYPE;
@@ -110,7 +107,7 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
     public void testNonStagedDowngrade_debugBuild() throws Exception {
         // Apex should not be committed in non-staged install, such logic covered in InstallTest.
         assumeFalse(mInstallType.containsApex());
-        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+        assumeTrue("Device is not debuggable", isDebuggable());
         runPhase(ARRANGE_PHASE);
         runPhase(ASSERT_POST_ARRANGE_PHASE);
 
@@ -120,10 +117,10 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testNonStagedDowngrade_userBuild_fail() throws Exception {
+    public void testNonStagedDowngrade_nonDebugBuild_fail() throws Exception {
         // Apex should not be committed in non-staged install, such logic covered in InstallTest.
         assumeFalse(mInstallType.containsApex());
-        assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+        assumeFalse("Device is debuggable", isDebuggable());
         runPhase(ARRANGE_PHASE);
         runPhase(ASSERT_POST_ARRANGE_PHASE);
 
@@ -143,7 +140,7 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testStagedDowngrade_debugBuild() throws Exception {
-        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+        assumeTrue("Device is not debuggable", isDebuggable());
         runStagedPhase(ARRANGE_PHASE);
         getDevice().reboot();
         runStagedPhase(ASSERT_POST_ARRANGE_PHASE);
@@ -157,8 +154,8 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
 
     @Test
     @LargeTest
-    public void testStagedDowngrade_userBuild_fail() throws Exception {
-        assumeThat(getDevice().getBuildFlavor(), endsWith("-user"));
+    public void testStagedDowngrade_nonDebugBuild_fail() throws Exception {
+        assumeFalse("Device is debuggable", isDebuggable());
         runStagedPhase(ARRANGE_PHASE);
         getDevice().reboot();
         runStagedPhase(ASSERT_POST_ARRANGE_PHASE);
@@ -185,5 +182,9 @@ public final class DowngradeTest extends BaseHostJUnit4Test {
                 String.format("%s.%s", PACKAGE_NAME, this.getClass().getSimpleName()),
                 String.format(phase + PHASE_FORMAT_SUFFIX, mInstallType, staged, mEnableRollback)))
                 .isTrue();
+    }
+
+    private boolean isDebuggable() throws Exception {
+        return getDevice().getIntProperty("ro.debuggable", 0) == 1;
     }
 }

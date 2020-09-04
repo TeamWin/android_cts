@@ -566,8 +566,7 @@ def main():
                         fov_arg = 'fov=' + camera_fov
                         cmd = ['python',
                                os.path.join(os.getcwd(), 'tools/load_scene.py'),
-                               scene_arg, chart_dist_arg, fov_arg, screen_id_arg,
-                               device_id_arg, camera_id_arg]
+                               scene_arg, chart_dist_arg, fov_arg, screen_id_arg]
                     else:
                         time.sleep(CHART_DELAY)
                 else:
@@ -578,8 +577,8 @@ def main():
                         cmd = ['python',
                                os.path.join(os.getcwd(),
                                             'tools/validate_scene.py'),
-                               camera_id_arg, out_arg, scene_arg,
-                               device_id_arg] + extra_args
+                               camera_id_arg, out_arg,
+                               scene_arg, device_id_arg] + extra_args
                 if cmd is not None:
                     valid_scene_code = subprocess.call(cmd, cwd=topdir)
                     assert valid_scene_code == 0
