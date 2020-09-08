@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.commontests.AbstractLoginActivityTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Visitor;
 import android.platform.test.annotations.AppModeFull;

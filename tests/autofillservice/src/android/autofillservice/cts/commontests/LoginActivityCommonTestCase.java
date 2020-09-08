@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.commontests;
 
 import static android.autofillservice.cts.testcore.CannedFillResponse.NO_MOAR_RESPONSES;
 import static android.autofillservice.cts.testcore.CannedFillResponse.NO_RESPONSE;

@@ -34,6 +34,7 @@ import static android.service.autofill.AutofillFieldClassificationService.REQUIR
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.autofillservice.cts.commontests.AbstractGridActivityTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper.FieldClassificationResult;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;

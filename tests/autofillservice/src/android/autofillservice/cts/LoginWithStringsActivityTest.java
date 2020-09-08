@@ -35,6 +35,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.activities.LoginWithStringsActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;

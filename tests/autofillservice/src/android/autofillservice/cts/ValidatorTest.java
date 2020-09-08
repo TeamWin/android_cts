@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import android.autofillservice.cts.commontests.AbstractLoginActivityTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.InternalValidator;

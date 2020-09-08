@@ -16,6 +16,7 @@
 package android.autofillservice.cts;
 
 import android.autofillservice.cts.activities.TimePickerClockActivity;
+import android.autofillservice.cts.commontests.TimePickerTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.platform.test.annotations.AppModeFull;
 

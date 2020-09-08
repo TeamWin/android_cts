@@ -31,6 +31,7 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.autofillservice.cts.commontests.FillEventHistoryCommonTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;

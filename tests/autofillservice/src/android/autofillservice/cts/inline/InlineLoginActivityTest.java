@@ -34,10 +34,10 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.PendingIntent;
-import android.autofillservice.cts.LoginActivityCommonTestCase;
 import android.autofillservice.cts.activities.DummyActivity;
 import android.autofillservice.cts.activities.NonAutofillableActivity;
 import android.autofillservice.cts.activities.UsernameOnlyActivity;
+import android.autofillservice.cts.commontests.LoginActivityCommonTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InlineUiBot;

@@ -28,6 +28,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.activities.PreSimpleSaveActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
 import android.content.ComponentName;

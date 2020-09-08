@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.commontests;
 
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
