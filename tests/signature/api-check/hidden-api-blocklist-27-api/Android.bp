@@ -13,10 +13,11 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsHiddenApiBlacklistCurrentApiTestCases",
+    name: "CtsHiddenApiBlocklistApi27TestCases",
     defaults: [
-        "hiddenapi-blacklist-check-defaults",
+        "hiddenapi-blocklist-check-defaults",
     ],
+    min_sdk_version: "27",
 
     use_embedded_native_libs: false,
     test_suites: [
