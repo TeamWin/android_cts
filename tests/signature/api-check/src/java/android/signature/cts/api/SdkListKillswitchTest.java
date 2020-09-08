@@ -16,7 +16,7 @@
 
 package android.signature.cts.api;
 
-public class WhitelistKillswitchTest extends BaseKillswitchTest {
+public class SdkListKillswitchTest extends BaseKillswitchTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();

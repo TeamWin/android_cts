@@ -31,7 +31,7 @@
         "name": "CtsHiddenApiKillswitchDebugClassTestCases"
     },
     {
-        "name": "CtsHiddenApiKillswitchWhitelistTestCases"
+        "name": "CtsHiddenApiKillswitchSdklistTestCases"
     },
     {
         "name": "CtsHiddenApiKillswitchWildcardTestCases"
@@ -52,19 +52,19 @@
   ],
   "postsubmit": [
     {
-      "name": "CtsHiddenApiBlacklistApi27TestCases"
+      "name": "CtsHiddenApiBlocklistApi27TestCases"
     },
     {
-        "name": "CtsHiddenApiBlacklistApi28TestCases"
+        "name": "CtsHiddenApiBlocklistApi28TestCases"
     },
     {
-      "name": "CtsHiddenApiBlacklistCurrentApiTestCases"
+      "name": "CtsHiddenApiBlocklistCurrentApiTestCases"
     },
     {
-      "name": "CtsHiddenApiBlacklistTestApiTestCases"
+      "name": "CtsHiddenApiBlocklistTestApiTestCases"
     },
     {
-      "name": "CtsHiddenApiBlacklistDebugClassTestCases"
+      "name": "CtsHiddenApiBlocklistDebugClassTestCases"
     }
   ]
 }
