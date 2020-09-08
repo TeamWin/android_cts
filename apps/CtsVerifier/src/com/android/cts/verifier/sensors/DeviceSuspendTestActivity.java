@@ -111,6 +111,9 @@ public class DeviceSuspendTestActivity
         @Override
         protected void onDestroy() {
             super.onDestroy();
+            if (mDeviceSuspendLock != null && mDeviceSuspendLock.isHeld()) {
+                mDeviceSuspendLock.release();
+            }
             if (mScreenManipulator != null) {
                 mScreenManipulator.releaseScreenOn();
                 mScreenManipulator.close();
