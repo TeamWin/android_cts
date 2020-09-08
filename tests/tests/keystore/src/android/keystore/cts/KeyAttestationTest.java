@@ -149,6 +149,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         assertEquals(0, parseSystemOsVersion("99.99.100"));
     }
 
+    @RequiresDevice
     public void testEcAttestation() throws Exception {
         // Note: Curve and key sizes arrays must correspond.
         String[] curves = {
@@ -288,6 +289,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         }
     }
 
+    @RequiresDevice
     public void testRsaAttestation() throws Exception {
         int[] keySizes = { // Smallish sizes to keep test runtimes down.
                 512, 768, 1024
