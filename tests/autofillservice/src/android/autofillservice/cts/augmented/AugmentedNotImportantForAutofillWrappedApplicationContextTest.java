@@ -17,7 +17,7 @@
 package android.autofillservice.cts.augmented;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
-import android.autofillservice.cts.LoginNotImportantForAutofillWrappedApplicationContextActivity;
+import android.autofillservice.cts.activities.LoginNotImportantForAutofillWrappedApplicationContextActivity;
 import android.platform.test.annotations.AppModeFull;
 
 @AppModeFull(reason = "AugmentedLoginActivityTest is enough")

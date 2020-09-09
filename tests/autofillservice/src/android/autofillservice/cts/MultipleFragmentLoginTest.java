@@ -17,14 +17,16 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.FragmentContainerActivity.FRAGMENT_TAG;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.activities.FragmentContainerActivity.FRAGMENT_TAG;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
+import android.autofillservice.cts.activities.FragmentContainerActivity;
+import android.autofillservice.cts.activities.FragmentWithMoreEditTexts;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.autofill.AutofillValue;

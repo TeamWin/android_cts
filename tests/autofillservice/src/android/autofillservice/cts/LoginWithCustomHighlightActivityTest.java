@@ -20,6 +20,7 @@ import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.activities.LoginWithCustomHighlightActivity;
 import android.graphics.Rect;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;

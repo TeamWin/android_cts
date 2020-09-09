@@ -25,9 +25,9 @@ import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicR
 import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.AutofillActivityTestRule;
-import android.autofillservice.cts.augmented.AugmentedAuthActivity;
+import android.autofillservice.cts.activities.AugmentedAuthActivity;
+import android.autofillservice.cts.activities.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
-import android.autofillservice.cts.augmented.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService;
 import android.content.IntentSender;

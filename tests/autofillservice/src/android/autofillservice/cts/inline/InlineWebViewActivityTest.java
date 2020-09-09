@@ -17,8 +17,8 @@
 package android.autofillservice.cts.inline;
 
 import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.WebViewActivity.HTML_NAME_PASSWORD;
-import static android.autofillservice.cts.WebViewActivity.HTML_NAME_USERNAME;
+import static android.autofillservice.cts.activities.WebViewActivity.HTML_NAME_PASSWORD;
+import static android.autofillservice.cts.activities.WebViewActivity.HTML_NAME_USERNAME;
 import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
@@ -32,8 +32,8 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
-import android.autofillservice.cts.MyWebView;
-import android.autofillservice.cts.WebViewActivity;
+import android.autofillservice.cts.activities.MyWebView;
+import android.autofillservice.cts.activities.WebViewActivity;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.KeyEvent;

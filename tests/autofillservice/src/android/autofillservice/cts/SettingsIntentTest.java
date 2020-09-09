@@ -20,6 +20,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
+import android.autofillservice.cts.activities.TrampolineForResultActivity;
 import android.content.Intent;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;

@@ -23,19 +23,19 @@ import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
 import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.autofillservice.cts.activities.LoginActivity.getWelcomeMessage;
 import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.AbstractLoginActivityTestCase;
-import android.autofillservice.cts.AuthenticationActivity;
 import android.autofillservice.cts.CannedFillResponse;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.UiBot;
+import android.autofillservice.cts.activities.AuthenticationActivity;
 import android.content.IntentSender;
 import android.platform.test.annotations.AppModeFull;
 

@@ -28,6 +28,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static org.junit.Assume.assumeTrue;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.activities.AuthenticationActivity;
 import android.content.IntentSender;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;

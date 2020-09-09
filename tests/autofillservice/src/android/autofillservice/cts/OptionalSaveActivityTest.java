@@ -17,10 +17,10 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.OptionalSaveActivity.ID_ADDRESS1;
-import static android.autofillservice.cts.OptionalSaveActivity.ID_ADDRESS2;
-import static android.autofillservice.cts.OptionalSaveActivity.ID_CITY;
-import static android.autofillservice.cts.OptionalSaveActivity.ID_FAVORITE_COLOR;
+import static android.autofillservice.cts.activities.OptionalSaveActivity.ID_ADDRESS1;
+import static android.autofillservice.cts.activities.OptionalSaveActivity.ID_ADDRESS2;
+import static android.autofillservice.cts.activities.OptionalSaveActivity.ID_CITY;
+import static android.autofillservice.cts.activities.OptionalSaveActivity.ID_FAVORITE_COLOR;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -28,6 +28,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.OptionalSaveActivity;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.annotation.NonNull;

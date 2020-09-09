@@ -20,7 +20,7 @@ import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicRequestInfo;
 import static android.autofillservice.cts.augmented.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
 
-import android.autofillservice.cts.LoginNotImportantForAutofillActivity;
+import android.autofillservice.cts.activities.LoginNotImportantForAutofillActivity;
 import android.autofillservice.cts.augmented.CtsAugmentedAutofillService.AugmentedFillRequest;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;

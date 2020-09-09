@@ -29,13 +29,13 @@ import java.util.concurrent.TimeUnit;
  * Custom {@link android.widget.CompoundButton.OnCheckedChangeListener} used to assert a
  * {@link CompoundButton} was auto-filled properly.
  */
-final class OneTimeCompoundButtonListener implements CompoundButton.OnCheckedChangeListener {
+public final class OneTimeCompoundButtonListener implements CompoundButton.OnCheckedChangeListener {
     private final String name;
     private final CountDownLatch latch = new CountDownLatch(1);
     private final CompoundButton button;
     private final boolean expected;
 
-    OneTimeCompoundButtonListener(String name, CompoundButton button,
+    public OneTimeCompoundButtonListener(String name, CompoundButton button,
             boolean expectedAutofillValue) {
         this.name = name;
         this.button = button;
@@ -47,7 +47,7 @@ final class OneTimeCompoundButtonListener implements CompoundButton.OnCheckedCha
         latch.countDown();
     }
 
-    void assertAutoFilled() throws Exception {
+    public void assertAutoFilled() throws Exception {
         final boolean set = latch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         assertWithMessage("Timeout (%s ms) on CompoundButton %s", FILL_TIMEOUT.ms(), name)
             .that(set).isTrue();

@@ -23,9 +23,9 @@ import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.SERVICE_NAME;
 import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.SERVICE_PACKAGE;
-import static android.autofillservice.cts.VirtualContainerActivity.INITIAL_URL_BAR_VALUE;
-import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR;
-import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR2;
+import static android.autofillservice.cts.activities.VirtualContainerActivity.INITIAL_URL_BAR_VALUE;
+import static android.autofillservice.cts.activities.VirtualContainerView.ID_URL_BAR;
+import static android.autofillservice.cts.activities.VirtualContainerView.ID_URL_BAR2;
 import static android.provider.Settings.Global.AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 

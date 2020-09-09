@@ -15,13 +15,13 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.AbstractDatePickerActivity.ID_DATE_PICKER;
-import static android.autofillservice.cts.AbstractDatePickerActivity.ID_OUTPUT;
 import static android.autofillservice.cts.Helper.assertDateValue;
 import static android.autofillservice.cts.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.activities.AbstractDatePickerActivity.ID_DATE_PICKER;
+import static android.autofillservice.cts.activities.AbstractDatePickerActivity.ID_OUTPUT;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -29,6 +29,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.AbstractDatePickerActivity;
 import android.icu.util.Calendar;
 
 import org.junit.Test;
