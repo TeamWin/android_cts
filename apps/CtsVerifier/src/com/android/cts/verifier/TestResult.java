@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.TestResultHistory;
 
@@ -94,6 +97,7 @@ public class TestResult {
 
     public static void addResultData(Intent intent, int testResult, String testName,
             String testDetails, ReportLog reportLog, TestResultHistoryCollection historyCollection) {
+        testName = setTestNameSuffix(sCurrentDisplayMode, testName);
         intent.putExtra(TEST_NAME, testName);
         intent.putExtra(TEST_RESULT, testResult);
         intent.putExtra(TEST_DETAILS, testDetails);
