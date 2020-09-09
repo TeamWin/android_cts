@@ -19,14 +19,21 @@ package android.systemui.cts.tv
 
 import android.app.Notification.EXTRA_TITLE
 import android.app.PendingIntent
+import android.content.Intent
 import android.service.notification.StatusBarNotification
 import android.systemui.tv.cts.TVNotificationExtender
+import com.android.compatibility.common.util.SystemUtil
 import java.net.URLEncoder
 
 /** Extract a pending intent that was put by a [android.app.Notification.TvExtender]. */
 fun StatusBarNotification.pendingTvIntent(key: String): PendingIntent =
     notification?.extras?.getBundle(TVNotificationExtender.EXTRA_TV_EXTENDER)?.getParcelable(key)
         ?: error("No pending intent found for key $key")
+
+/** Retrieve the inner intent of a pending intent. */
+val PendingIntent.innerIntent: Intent
+    get() = SystemUtil.runWithShellPermissionIdentity(::getIntent,
+        arrayOf(android.Manifest.permission.GET_INTENT_SENDER_INTENT))
 
 fun StatusBarNotification.title(): String = notification?.extras?.getString(EXTRA_TITLE) ?: ""
 
