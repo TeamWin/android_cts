@@ -2185,6 +2185,9 @@
         and disabled, and that once enabled the service is able to receive notifications and
         dismiss them.
     </string>
+    <string name="nls_anr">This test checks that notifications are not sent with content that is
+        too long. If this test causes the test app to ANR, the test has failed.
+    </string>
     <string name="action_not_sent">SecureActionOnLockScreenTest</string>
     <string name="action_received">Action Sent - SecureActionOnLockScreenTest</string>
     <string name="action_test_title">Action</string>
