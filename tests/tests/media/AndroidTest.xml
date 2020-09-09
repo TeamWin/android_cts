@@ -20,12 +20,14 @@
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="host" />
-        <option name="config-filename" value="cts" />
-        <option name="dynamic-config-name" value="cts-dynamic-config" />
+        <option name="config-filename" value="CtsMediaTestCases" />
+        <option name="dynamic-config-name" value="CtsMediaTestCases" />
         <option name="version" value="9.0_r1"/>
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.MediaPreparer">
-        <option name="images-only" value="true" />
+        <option name="push-all" value="true" />
+        <option name="media-folder-name" value="CtsMediaTestCases-1.0" />
+        <option name="dynamic-config-module" value="CtsMediaTestCases" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
