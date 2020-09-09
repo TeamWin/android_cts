@@ -16,7 +16,7 @@
 
 package android.autofillservice.cts.activities;
 
-import static android.autofillservice.cts.Helper.findViewByAutofillHint;
+import static android.autofillservice.cts.testcore.Helper.findViewByAutofillHint;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_AUTO;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_NO;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS;
@@ -26,7 +26,7 @@ import static android.view.View.IMPORTANT_FOR_AUTOFILL_YES_EXCLUDE_DESCENDANTS;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.Visitor;
+import android.autofillservice.cts.testcore.Visitor;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.AttributeSet;

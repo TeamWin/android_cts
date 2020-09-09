@@ -16,8 +16,8 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
+import static android.autofillservice.cts.testcore.Helper.getContext;
+import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.content.Context.CLIPBOARD_SERVICE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -25,13 +25,19 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.app.PendingIntent;
-import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
 import android.autofillservice.cts.activities.AugmentedAuthActivity;
 import android.autofillservice.cts.activities.AuthenticationActivity;
 import android.autofillservice.cts.activities.PreSimpleSaveActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
-import android.autofillservice.cts.inline.InlineUiBot;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.AutofillLoggingTestRule;
+import android.autofillservice.cts.testcore.AutofillTestWatcher;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.InlineUiBot;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.Replier;
+import android.autofillservice.cts.testcore.UiBot;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;

@@ -18,18 +18,18 @@ package android.autofillservice.cts.inline;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
-import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.augmented.AugmentedHelper.assertBasicRequestInfo;
+import static android.autofillservice.cts.testcore.AugmentedHelper.assertBasicRequestInfo;
+import static android.autofillservice.cts.testcore.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.autofillservice.cts.AutofillActivityTestRule;
 import android.autofillservice.cts.activities.AugmentedAuthActivity;
 import android.autofillservice.cts.activities.AugmentedLoginActivity;
 import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
-import android.autofillservice.cts.augmented.CannedAugmentedFillResponse;
-import android.autofillservice.cts.augmented.CtsAugmentedAutofillService;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;
+import android.autofillservice.cts.testcore.CtsAugmentedAutofillService;
 import android.content.IntentSender;
 import android.service.autofill.Dataset;
 import android.view.autofill.AutofillId;

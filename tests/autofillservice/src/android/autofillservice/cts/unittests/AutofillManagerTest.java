@@ -22,7 +22,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.PendingIntent;
-import android.autofillservice.cts.Helper;
+import android.autofillservice.cts.testcore.Helper;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;

@@ -15,16 +15,16 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.CustomDescriptionHelper.newCustomDescriptionWithUsernameAndPassword;
-import static android.autofillservice.cts.Helper.ID_PASSWORD;
-import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.findNodeByHtmlName;
-import static android.autofillservice.cts.Helper.getAutofillId;
 import static android.autofillservice.cts.activities.AbstractWebViewActivity.HTML_NAME_PASSWORD;
 import static android.autofillservice.cts.activities.AbstractWebViewActivity.HTML_NAME_USERNAME;
+import static android.autofillservice.cts.testcore.CustomDescriptionHelper.newCustomDescriptionWithUsernameAndPassword;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD_LABEL;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME_LABEL;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.findNodeByHtmlName;
+import static android.autofillservice.cts.testcore.Helper.getAutofillId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
@@ -32,10 +32,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.activities.MyWebView;
 import android.autofillservice.cts.activities.WebViewMultiScreenLoginActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
 import android.content.ComponentName;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.SaveInfo;

@@ -15,20 +15,20 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.AntiTrimmerTextWatcher.TRIMMER_PATTERN;
-import static android.autofillservice.cts.Helper.ID_STATIC_TEXT;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.LARGE_STRING;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.assertTextValue;
-import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.activities.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_COMMIT;
 import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_INPUT;
 import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_LABEL;
 import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_PASSWORD;
 import static android.autofillservice.cts.activities.SimpleSaveActivity.TEXT_LABEL;
+import static android.autofillservice.cts.testcore.AntiTrimmerTextWatcher.TRIMMER_PATTERN;
+import static android.autofillservice.cts.testcore.Helper.ID_STATIC_TEXT;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.LARGE_STRING;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.assertTextValue;
+import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
@@ -40,9 +40,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.activities.SecondActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
@@ -50,6 +47,19 @@ import android.autofillservice.cts.activities.SimpleSaveActivity.FillExpectation
 import android.autofillservice.cts.activities.TrampolineWelcomeActivity;
 import android.autofillservice.cts.activities.ViewActionActivity;
 import android.autofillservice.cts.activities.WelcomeActivity;
+import android.autofillservice.cts.testcore.AntiTrimmerTextWatcher;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.DismissType;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.testcore.MyAutofillCallback;
+import android.autofillservice.cts.testcore.MyAutofillId;
+import android.autofillservice.cts.testcore.Timeouts;
+import android.autofillservice.cts.testcore.UiBot;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;

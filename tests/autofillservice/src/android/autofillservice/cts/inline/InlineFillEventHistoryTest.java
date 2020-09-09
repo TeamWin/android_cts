@@ -16,23 +16,24 @@
 
 package android.autofillservice.cts.inline;
 
-import static android.autofillservice.cts.Helper.ID_PASSWORD;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.NULL_DATASET_ID;
-import static android.autofillservice.cts.Helper.assertFillEventForDatasetSelected;
-import static android.autofillservice.cts.Helper.assertFillEventForDatasetShown;
-import static android.autofillservice.cts.Helper.assertFillEventForSaveShown;
-import static android.autofillservice.cts.Helper.assertNoDeprecatedClientState;
-import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.inline.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.NULL_DATASET_ID;
+import static android.autofillservice.cts.testcore.Helper.assertFillEventForDatasetSelected;
+import static android.autofillservice.cts.testcore.Helper.assertFillEventForDatasetShown;
+import static android.autofillservice.cts.testcore.Helper.assertFillEventForSaveShown;
+import static android.autofillservice.cts.testcore.Helper.assertNoDeprecatedClientState;
+import static android.autofillservice.cts.testcore.Helper.getContext;
+import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
-import android.autofillservice.cts.CannedFillResponse;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.FillEventHistoryCommonTestCase;
-import android.autofillservice.cts.Helper;
-import android.autofillservice.cts.InstrumentedAutoFillService;
 import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.InlineUiBot;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;

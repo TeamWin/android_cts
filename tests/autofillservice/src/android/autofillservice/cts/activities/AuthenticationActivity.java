@@ -16,17 +16,17 @@
 
 package android.autofillservice.cts.activities;
 
-import static android.autofillservice.cts.CannedFillResponse.ResponseType.NULL;
+import static android.autofillservice.cts.testcore.CannedFillResponse.ResponseType.NULL;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.assist.AssistStructure;
-import android.autofillservice.cts.CannedFillResponse;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.R;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.Helper;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;

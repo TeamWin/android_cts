@@ -15,10 +15,10 @@
  */
 package android.autofillservice.cts.activities;
 
-import android.autofillservice.cts.Helper;
-import android.autofillservice.cts.OneTimeTextWatcher;
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.Visitor;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.OneTimeTextWatcher;
+import android.autofillservice.cts.testcore.Visitor;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.autofill.AutofillManager;
@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
 /**
  * Activity that contains a 4x4 grid of cells (named {@code l1c1} to {@code l4c2}) plus
  * {@code save} and {@code clear} buttons.

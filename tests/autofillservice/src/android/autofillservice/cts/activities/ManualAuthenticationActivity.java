@@ -18,13 +18,14 @@ package android.autofillservice.cts.activities;
 
 import android.app.Activity;
 import android.app.assist.AssistStructure;
-import android.autofillservice.cts.CannedFillResponse;
-import android.autofillservice.cts.Helper;
 import android.autofillservice.cts.R;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.Helper;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.view.autofill.AutofillManager;
+
 /**
  * An activity that authenticates on button press
  */

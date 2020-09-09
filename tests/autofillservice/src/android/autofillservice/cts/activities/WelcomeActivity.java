@@ -19,7 +19,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.PendingIntent;
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.UiBot;
+import android.autofillservice.cts.testcore.UiBot;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;

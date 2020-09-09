@@ -15,8 +15,8 @@
  */
 package android.autofillservice.cts.activities;
 
-import android.autofillservice.cts.OneTimeTextWatcher;
 import android.autofillservice.cts.R;
+import android.autofillservice.cts.testcore.OneTimeTextWatcher;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;

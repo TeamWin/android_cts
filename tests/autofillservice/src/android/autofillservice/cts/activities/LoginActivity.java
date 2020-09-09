@@ -17,9 +17,9 @@ package android.autofillservice.cts.activities;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.autofillservice.cts.OneTimeTextWatcher;
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.Visitor;
+import android.autofillservice.cts.testcore.OneTimeTextWatcher;
+import android.autofillservice.cts.testcore.Visitor;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;

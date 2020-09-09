@@ -15,7 +15,7 @@
  */
 package android.autofillservice.cts.activities;
 
-import android.autofillservice.cts.Timeouts;
+import android.autofillservice.cts.testcore.Timeouts;
 
 import com.android.compatibility.common.util.RetryableException;
 

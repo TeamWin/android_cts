@@ -18,7 +18,7 @@ package android.autofillservice.cts.activities;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.R;
-import android.autofillservice.cts.UiBot;
+import android.autofillservice.cts.testcore.UiBot;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
