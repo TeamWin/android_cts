@@ -16,7 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.hiddenapi_blacklist_test"
+          package="android.signature.cts.api.hiddenapi_blocklist_test"
           android:targetSandboxVersion="2">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
@@ -24,7 +24,7 @@
     <application android:extractNativeLibs="true" android:largeHeap="true"/>
 
     <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.hiddenapi_blacklist_test"
-                     android:label="Hidden API Blacklist Test for test SDK"/>
+                     android:targetPackage="android.signature.cts.api.hiddenapi_blocklist_test"
+                     android:label="Hidden API Blocklist Test for test SDK"/>
 
 </manifest>
