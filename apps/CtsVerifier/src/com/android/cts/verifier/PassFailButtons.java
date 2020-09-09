@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import com.android.compatibility.common.util.ReportLog;
 
 import android.app.AlertDialog;
@@ -162,7 +165,7 @@ public class PassFailButtons {
 
         @Override
         public String getTestId() {
-            return getClass().getName();
+            return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
         }
 
         @Override
@@ -235,7 +238,7 @@ public class PassFailButtons {
 
         @Override
         public String getTestId() {
-            return getClass().getName();
+            return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
         }
 
         @Override
@@ -307,7 +310,7 @@ public class PassFailButtons {
 
         @Override
         public String getTestId() {
-            return getClass().getName();
+            return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
         }
 
         @Override
@@ -483,7 +486,8 @@ public class PassFailButtons {
     protected static void markSeenInfoDialog(android.app.Activity activity) {
         ContentResolver resolver = activity.getContentResolver();
         ContentValues values = new ContentValues(2);
-        values.put(TestResultsProvider.COLUMN_TEST_NAME, activity.getClass().getName());
+        String activityName = setTestNameSuffix(sCurrentDisplayMode, activity.getClass().getName());
+        values.put(TestResultsProvider.COLUMN_TEST_NAME, activityName);
         values.put(TestResultsProvider.COLUMN_TEST_INFO_SEEN, 1);
         int numUpdated = resolver.update(
                 TestResultsProvider.getTestNameUri(activity), values, null, null);
