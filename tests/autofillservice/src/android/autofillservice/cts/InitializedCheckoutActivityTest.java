@@ -16,18 +16,19 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.CheckoutActivity.ID_ADDRESS;
-import static android.autofillservice.cts.CheckoutActivity.ID_CC_EXPIRATION;
-import static android.autofillservice.cts.CheckoutActivity.ID_CC_NUMBER;
-import static android.autofillservice.cts.CheckoutActivity.ID_SAVE_CC;
-import static android.autofillservice.cts.CheckoutActivity.INDEX_ADDRESS_HOME;
 import static android.autofillservice.cts.Helper.assertListValue;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertToggleValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_ADDRESS;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_EXPIRATION;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_NUMBER;
+import static android.autofillservice.cts.activities.CheckoutActivity.ID_SAVE_CC;
+import static android.autofillservice.cts.activities.CheckoutActivity.INDEX_ADDRESS_HOME;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.activities.InitializedCheckoutActivity;
 import android.platform.test.annotations.AppModeFull;
 
 import org.junit.Test;

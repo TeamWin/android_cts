@@ -28,6 +28,9 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityTaskManager;
+import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.activities.MultiWindowEmptyActivity;
+import android.autofillservice.cts.activities.MultiWindowLoginActivity;
 import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
 import android.view.View;

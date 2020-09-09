@@ -19,6 +19,9 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
+import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.activities.SimpleAfterLoginActivity;
+import android.autofillservice.cts.activities.SimpleBeforeLoginActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.View;

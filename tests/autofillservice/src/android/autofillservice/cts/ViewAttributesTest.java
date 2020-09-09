@@ -21,11 +21,11 @@ import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure;
+import android.autofillservice.cts.activities.ViewAttributesTestActivity;
 import android.platform.test.annotations.AppModeFull;
 import android.view.View;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
-
 
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;

@@ -32,6 +32,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.PasswordOnlyActivity;
+import android.autofillservice.cts.activities.UsernameOnlyActivity;
 import android.content.ComponentName;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;

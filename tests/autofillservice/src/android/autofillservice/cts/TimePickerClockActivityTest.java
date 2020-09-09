@@ -15,6 +15,7 @@
  */
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.TimePickerClockActivity;
 import android.platform.test.annotations.AppModeFull;
 
 @AppModeFull(reason = "Unit test")

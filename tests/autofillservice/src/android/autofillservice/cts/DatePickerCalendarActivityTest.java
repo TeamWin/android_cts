@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.DatePickerCalendarActivity;
 import android.platform.test.annotations.AppModeFull;
 
 @AppModeFull(reason = "Unit test")

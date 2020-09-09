@@ -18,13 +18,14 @@ package android.autofillservice.cts.unittests;
 
 import static android.autofillservice.cts.Helper.disableAutofillService;
 import static android.autofillservice.cts.Helper.enableAutofillService;
-import static android.autofillservice.cts.unittests.OnCreateServiceStatusVerifierActivity.SERVICE_NAME;
+import static android.autofillservice.cts.activities.OnCreateServiceStatusVerifierActivity.SERVICE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.AutoFillServiceTestCase;
 import android.autofillservice.cts.AutofillActivityTestRule;
 import android.autofillservice.cts.Helper;
+import android.autofillservice.cts.activities.OnCreateServiceStatusVerifierActivity;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.autofill.AutofillManager;

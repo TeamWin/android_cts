@@ -29,13 +29,14 @@ import java.util.concurrent.TimeUnit;
  * Custom {@link android.widget.RadioGroup.OnCheckedChangeListener} used to assert an
  * {@link RadioGroup} was auto-filled properly.
  */
-final class OneTimeRadioGroupListener implements RadioGroup.OnCheckedChangeListener {
+public final class OneTimeRadioGroupListener implements RadioGroup.OnCheckedChangeListener {
     private final String name;
     private final CountDownLatch latch = new CountDownLatch(1);
     private final RadioGroup radioGroup;
     private final int expected;
 
-    OneTimeRadioGroupListener(String name, RadioGroup radioGroup, int expectedAutoFilledValue) {
+    public OneTimeRadioGroupListener(String name, RadioGroup radioGroup,
+            int expectedAutoFilledValue) {
         this.name = name;
         this.radioGroup = radioGroup;
         this.expected = expectedAutoFilledValue;
@@ -46,7 +47,7 @@ final class OneTimeRadioGroupListener implements RadioGroup.OnCheckedChangeListe
         latch.countDown();
     }
 
-    void assertAutoFilled() throws Exception {
+    public void assertAutoFilled() throws Exception {
         final boolean set = latch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         assertWithMessage("Timeout (%s ms) on RadioGroup %s", FILL_TIMEOUT.ms(), name)
             .that(set).isTrue();

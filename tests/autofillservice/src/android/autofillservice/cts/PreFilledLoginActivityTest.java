@@ -28,6 +28,7 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.PreFilledLoginActivity;
 import android.platform.test.annotations.AppModeFull;
 
 import org.junit.Test;

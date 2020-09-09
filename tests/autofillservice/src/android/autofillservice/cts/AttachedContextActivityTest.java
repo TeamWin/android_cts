@@ -16,7 +16,8 @@
 
 package android.autofillservice.cts;
 
-import android.autofillservice.cts.AttachedContextActivity.FillExpectation;
+import android.autofillservice.cts.activities.AttachedContextActivity;
+import android.autofillservice.cts.activities.AttachedContextActivity.FillExpectation;
 
 import org.junit.Test;
 

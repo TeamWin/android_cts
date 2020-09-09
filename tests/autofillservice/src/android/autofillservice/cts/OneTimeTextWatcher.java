@@ -22,9 +22,9 @@ import android.widget.EditText;
 /**
  * Custom {@link TextWatcher} used to assert a {@link EditText} was auto-filled properly.
  */
-final class OneTimeTextWatcher extends MultipleTimesTextWatcher {
+public final class OneTimeTextWatcher extends MultipleTimesTextWatcher {
 
-    OneTimeTextWatcher(String name, EditText editText, CharSequence expectedAutofillValue) {
+    public OneTimeTextWatcher(String name, EditText editText, CharSequence expectedAutofillValue) {
         super(name, 1, editText, expectedAutofillValue);
     }
 }

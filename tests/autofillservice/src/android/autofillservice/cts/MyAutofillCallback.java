@@ -55,7 +55,7 @@ public final class MyAutofillCallback extends AutofillCallback {
         sMyThread.start();
     }
 
-    MyAutofillCallback() {
+    public MyAutofillCallback() {
         mHandler = Handler.createAsync(sMyThread.getLooper());
     }
 

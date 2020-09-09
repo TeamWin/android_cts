@@ -28,15 +28,15 @@ import java.util.concurrent.TimeUnit;
 /**
  * Custom {@OnDateChangedListener} used to assert a {@link TimePicker} was auto-filled properly.
  */
-final class MultipleTimesTimeListener implements TimePicker.OnTimeChangedListener {
+public final class MultipleTimesTimeListener implements TimePicker.OnTimeChangedListener {
     private final String name;
     private final CountDownLatch latch;
     private final TimePicker timePicker;
     private final int expectedHour;
     private final int expectedMinute;
 
-    MultipleTimesTimeListener(String name, int times, TimePicker timePicker, int expectedHour,
-            int expectedMinute) {
+    public MultipleTimesTimeListener(String name, int times, TimePicker timePicker,
+            int expectedHour, int expectedMinute) {
         this.name = name;
         this.timePicker = timePicker;
         this.expectedHour = expectedHour;
@@ -49,7 +49,7 @@ final class MultipleTimesTimeListener implements TimePicker.OnTimeChangedListene
         latch.countDown();
     }
 
-    void assertAutoFilled() throws Exception {
+    public void assertAutoFilled() throws Exception {
         final boolean set = latch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         assertWithMessage("Timeout (%s ms) on TimePicker %s", FILL_TIMEOUT.ms(), name)
                 .that(set).isTrue();

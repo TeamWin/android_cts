@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.AbstractAutoFillActivity;
+
 import androidx.test.rule.ActivityTestRule;
 
 /**

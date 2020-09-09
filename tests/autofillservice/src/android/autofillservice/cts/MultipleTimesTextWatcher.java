@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Custom {@link TextWatcher} used to assert a {@link EditText} was set multiple times.
  */
-class MultipleTimesTextWatcher implements TextWatcher {
+public class MultipleTimesTextWatcher implements TextWatcher {
     private static final String TAG = "MultipleTimesTextWatcher";
 
     private final String mName;
@@ -41,7 +41,7 @@ class MultipleTimesTextWatcher implements TextWatcher {
     private final EditText mEditText;
     private final CharSequence mExpected;
 
-    MultipleTimesTextWatcher(String name, int times, EditText editText,
+    public MultipleTimesTextWatcher(String name, int times, EditText editText,
             CharSequence expectedAutofillValue) {
         this.mName = name;
         this.mEditText = editText;
@@ -63,7 +63,7 @@ class MultipleTimesTextWatcher implements TextWatcher {
     public void afterTextChanged(Editable s) {
     }
 
-    void assertAutoFilled() throws Exception {
+    public void assertAutoFilled() throws Exception {
         final boolean set = mLatch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         if (!set) {
             throw new RetryableException(FILL_TIMEOUT, "Timeout (%s ms) on EditText %s",
