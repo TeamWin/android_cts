@@ -241,6 +241,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         val result = requestAppPermissions(*permissions, block = block)
         assertEquals(Activity.RESULT_OK, result.resultCode)
         assertEquals(
+            result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!.size,
+            result.resultData!!.getIntArrayExtra("$APP_PACKAGE_NAME.GRANT_RESULTS")!!.size
+        )
+
+        assertEquals(
             permissionAndExpectedGrantResults.toList(),
             result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!
                 .zip(
