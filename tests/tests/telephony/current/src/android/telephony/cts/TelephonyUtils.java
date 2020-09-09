@@ -25,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.function.BooleanSupplier;
 
 public class TelephonyUtils {
     private static final String COMMAND_ADD_TEST_EMERGENCY_NUMBER =
@@ -99,5 +100,18 @@ public class TelephonyUtils {
             } catch (Exception ignored) {
             }
         }
+    }
+
+
+    public static boolean pollUntilTrue(BooleanSupplier s, int times, int timeoutMs) {
+        boolean successful = false;
+        for (int i = 0; i < times; i++) {
+            successful = s.getAsBoolean();
+            if (successful) break;
+            try {
+                Thread.sleep(timeoutMs);
+            } catch (InterruptedException e) { }
+        }
+        return successful;
     }
 }
