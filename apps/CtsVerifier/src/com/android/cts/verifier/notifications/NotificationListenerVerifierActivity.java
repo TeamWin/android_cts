@@ -56,6 +56,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
 
@@ -117,6 +119,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
         tests.add(new NotificationReceivedTest());
+        tests.add(new LongMessageTest());
         tests.add(new DataIntactTest());
         tests.add(new AudiblyAlertedTest());
         tests.add(new DismissOneTest());
@@ -261,8 +264,73 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         protected void test() {
-            List<String> result = new ArrayList<>(MockListener.getInstance().mPosted);
-            if (result.size() > 0 && result.contains(mTag1)) {
+            if (MockListener.getInstance().getPosted(mTag1) != null) {
+                status = PASS;
+            } else {
+                logFail();
+                status = FAIL;
+            }
+        }
+    }
+
+    private class LongMessageTest extends InteractiveTestCase {
+        private ViewGroup mParent;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            mParent = createAutoItem(parent, R.string.nls_anr);
+            return mParent;
+        }
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < 20000; i++) {
+                sb.append("\u2009\u200a" + "\u200E\u200F" + "stuff");
+            }
+            Notification.Builder builder = new Notification.Builder(
+                    mContext, NOTIFICATION_CHANNEL_ID)
+                    .setSmallIcon(android.R.id.icon)
+                    .setContentTitle("This is an long notification")
+                    .setContentText("Innocuous content")
+                    .setStyle(new Notification.MessagingStyle("Fake person")
+                            .addMessage("hey how is it goin", 0, "Person 1")
+                            .addMessage("hey", 0, "Person 1")
+                            .addMessage("u there", 0, "Person 1")
+                            .addMessage("how you like tHIS", 0, "Person 1")
+                            .addMessage(sb.toString(), 0, "Person 1")
+                    );
+            mTag1 = UUID.randomUUID().toString();
+            mId1 = NOTIFICATION_ID + 1;
+            mPackageString = "com.android.cts.verifier";
+            mNm.notify(mTag1, mId1, builder.build());
+            status = READY;
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            MockListener.getInstance().resetData();
+            deleteChannels();
+        }
+
+        @Override
+        protected void test() {
+            StatusBarNotification sbn = MockListener.getInstance().getPosted(mTag1);
+            if (sbn == null) {
+                logFail();
+                status = FAIL;
+            } else {
+                ViewGroup parent = mParent.findViewById(R.id.feedback);
+                parent.setVisibility(View.VISIBLE);
+                final Notification.Builder recoveredBuilder = Notification.Builder.recoverBuilder(
+                        NotificationListenerVerifierActivity.this,
+                        sbn.getNotification());
+                RemoteViews rv = recoveredBuilder.createContentView();
+                View v = rv.apply(NotificationListenerVerifierActivity.this, parent);
+                parent.addView(v);
+            }
+            if (MockListener.getInstance().getPosted(mTag1) != null) {
                 status = PASS;
             } else {
                 logFail();
@@ -985,8 +1053,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             if (MockListener.getInstance() == null) {
                 status = PASS;
             } else {
-                List<String> result = new ArrayList<>(MockListener.getInstance().mPosted);
-                if (result.size() == 0) {
+                if (MockListener.getInstance().mPosted.size() == 0) {
                     status = PASS;
                 } else {
                     logFail();
@@ -1157,8 +1224,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                     state = READY_TO_CHECK_FOR_UNSNOOZE;
                 }
             } else {
-                List<String> result = new ArrayList<>(MockListener.getInstance().mPosted);
-                if (result.size() > 0 && result.contains(mTag1)) {
+                if (MockListener.getInstance().getPosted(mTag1) != null) {
                     status = PASS;
                 } else {
                     logFail();
