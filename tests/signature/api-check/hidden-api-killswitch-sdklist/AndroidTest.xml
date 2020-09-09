@@ -18,20 +18,21 @@
     <option name="config-descriptor:metadata" key="component" value="systems" />
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
+    <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <!-- Whitelist all APIs before running the test, then reset this afterwards. The test
-             is intended to verify the behaviour when all APIs are whitelisted. -->
+        <!-- Mark all APIs as sdk before running the test, then reset this afterwards. The test
+             is intended to verify the behaviour when all APIs are in the SDK. -->
         <option name="run-command" value="settings put global hidden_api_blacklist_exemptions L" />
         <option name="teardown-command" value="settings delete global hidden_api_blacklist_exemptions" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsHiddenApiKillswitchWhitelistTestCases.apk" />
+        <option name="test-file-name" value="CtsHiddenApiKillswitchSdkListTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.signature.cts.api.killswitch_whitelist" />
+        <option name="package" value="android.signature.cts.api.killswitch_sdklist" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
-        <option name="class" value="android.signature.cts.api.WhitelistKillswitchTest" />
+        <option name="class" value="android.signature.cts.api.SdkListKillswitchTest" />
         <option name="runtime-hint" value="60s" />
     </test>
 

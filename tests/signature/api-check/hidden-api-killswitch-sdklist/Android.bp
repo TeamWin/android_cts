@@ -13,10 +13,8 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsHiddenApiBlacklistDebugClassTestCases",
-    defaults: [
-        "hiddenapi-blacklist-check-defaults",
-    ],
+    name: "CtsHiddenApiKillswitchSdkListTestCases",
+    defaults: ["hiddenapi-killswitch-check-defaults"],
 
     use_embedded_native_libs: false,
     test_suites: [
