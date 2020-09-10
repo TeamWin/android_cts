@@ -265,10 +265,10 @@ public abstract class BasePermissionsTest {
     }
 
     protected void clickAllowButton() throws Exception {
-        scrollToBottom();
         if (isAutomotive()) {
             clickStringRes("grant_dialog_button_allow");
         } else {
+            scrollToBottom();
             click("com.android.permissioncontroller:id/permission_allow_button");
         }
     }
@@ -290,11 +290,11 @@ public abstract class BasePermissionsTest {
     }
 
     protected void clickDenyButton() throws Exception {
-        scrollToBottom();
         if (isAutomotive()) {
             clickStringRes("grant_dialog_button_deny");
             // or "Keep while-in-use access", but that's untested
         } else {
+            scrollToBottom();
             click("com.android.permissioncontroller:id/permission_deny_button");
         }
     }
