@@ -78,6 +78,7 @@ interface ITest {
   void renameBar(inout test_package.Foo foo, String name);
   int getF(in test_package.Foo foo);
   @nullable String RepeatStringNullableLater(@nullable String repeated);
+  test_package.GenericBar<int> repeatGenericBar(in test_package.GenericBar<int> bar);
   int NewMethodThatReturns10();
   const int kZero = 0;
   const int kOne = 1;
