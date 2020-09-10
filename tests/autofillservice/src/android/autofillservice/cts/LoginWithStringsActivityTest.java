@@ -16,27 +16,30 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.ID_PASSWORD;
-import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
-import static android.autofillservice.cts.Helper.assertHintFromResources;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.assertTextFromResources;
-import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-import static android.autofillservice.cts.LoginActivity.AUTHENTICATION_MESSAGE;
-import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
+import static android.autofillservice.cts.activities.LoginActivity.AUTHENTICATION_MESSAGE;
+import static android.autofillservice.cts.activities.LoginActivity.getWelcomeMessage;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD_LABEL;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME_LABEL;
+import static android.autofillservice.cts.testcore.Helper.assertHintFromResources;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.assertTextFromResources;
+import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.waitUntilConnected;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.LoginWithStringsActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.view.View;

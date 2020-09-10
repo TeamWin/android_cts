@@ -16,8 +16,8 @@
 package android.autofillservice.cts;
 
 import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
-import static android.autofillservice.cts.Helper.ID_PASSWORD;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.ShellUtils.tap;
@@ -28,6 +28,12 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityTaskManager;
+import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.activities.MultiWindowEmptyActivity;
+import android.autofillservice.cts.activities.MultiWindowLoginActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.Helper;
 import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
 import android.view.View;

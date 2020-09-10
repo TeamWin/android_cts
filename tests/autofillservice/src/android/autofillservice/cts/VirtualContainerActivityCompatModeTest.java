@@ -15,17 +15,17 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.ID_PASSWORD;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.SERVICE_NAME;
-import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.SERVICE_PACKAGE;
-import static android.autofillservice.cts.VirtualContainerActivity.INITIAL_URL_BAR_VALUE;
-import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR;
-import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR2;
+import static android.autofillservice.cts.activities.VirtualContainerActivity.INITIAL_URL_BAR_VALUE;
+import static android.autofillservice.cts.activities.VirtualContainerView.ID_URL_BAR;
+import static android.autofillservice.cts.activities.VirtualContainerView.ID_URL_BAR2;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.testcore.Helper.getContext;
+import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceCompatMode.SERVICE_NAME;
+import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceCompatMode.SERVICE_PACKAGE;
 import static android.provider.Settings.Global.AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
@@ -34,9 +34,13 @@ import static com.android.compatibility.common.util.SettingsUtils.NAMESPACE_GLOB
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.testcore.OneTimeTextWatcher;
+import android.autofillservice.cts.testcore.Timeouts;
 import android.content.AutofillOptions;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;

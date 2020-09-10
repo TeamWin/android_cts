@@ -16,20 +16,24 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.CannedFillResponse.NO_MOAR_RESPONSES;
-import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
-import static android.autofillservice.cts.Helper.ID_PASSWORD;
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.Helper.findAutofillIdByResourceId;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilConnected;
-import static android.autofillservice.cts.InstrumentedAutoFillService.waitUntilDisconnected;
+import static android.autofillservice.cts.testcore.CannedFillResponse.NO_MOAR_RESPONSES;
+import static android.autofillservice.cts.testcore.CannedFillResponse.NO_RESPONSE;
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.waitUntilConnected;
+import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.waitUntilDisconnected;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.inline.InlineLoginActivityTest;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
+import android.autofillservice.cts.testcore.MyAutofillCallback;
+import android.autofillservice.cts.testcore.UiBot;
 import android.service.autofill.FillContext;
 import android.view.View;
 

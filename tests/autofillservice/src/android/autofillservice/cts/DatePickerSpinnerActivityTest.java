@@ -16,6 +16,8 @@
 
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.DatePickerSpinnerActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.platform.test.annotations.AppModeFull;
 
 @AppModeFull(reason = "Unit test")

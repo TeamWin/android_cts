@@ -15,10 +15,10 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
-import static android.autofillservice.cts.PreSimpleSaveActivity.ID_PRE_INPUT;
-import static android.autofillservice.cts.SimpleSaveActivity.ID_INPUT;
+import static android.autofillservice.cts.activities.PreSimpleSaveActivity.ID_PRE_INPUT;
+import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_INPUT;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
@@ -26,7 +26,10 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.assist.AssistStructure;
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.PreSimpleSaveActivity;
+import android.autofillservice.cts.activities.SimpleSaveActivity;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
 import android.content.ComponentName;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.SaveInfo;

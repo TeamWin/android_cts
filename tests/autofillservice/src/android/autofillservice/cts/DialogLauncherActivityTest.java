@@ -15,12 +15,16 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
+import static android.autofillservice.cts.activities.SimpleSaveActivity.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
 
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.activities.DialogLauncherActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 

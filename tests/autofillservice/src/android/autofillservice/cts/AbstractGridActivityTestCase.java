@@ -16,6 +16,10 @@
 
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.GridActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.Timeouts;
+import android.autofillservice.cts.testcore.WindowChangeTimeoutException;
 import android.view.accessibility.AccessibilityEvent;
 
 import java.util.concurrent.TimeoutException;

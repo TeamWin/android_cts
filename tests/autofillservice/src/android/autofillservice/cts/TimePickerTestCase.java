@@ -15,20 +15,22 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.AbstractTimePickerActivity.ID_OUTPUT;
-import static android.autofillservice.cts.AbstractTimePickerActivity.ID_TIME_PICKER;
-import static android.autofillservice.cts.Helper.assertNumberOfChildren;
-import static android.autofillservice.cts.Helper.assertTextAndValue;
-import static android.autofillservice.cts.Helper.assertTextIsSanitized;
-import static android.autofillservice.cts.Helper.assertTimeValue;
-import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.activities.AbstractTimePickerActivity.ID_OUTPUT;
+import static android.autofillservice.cts.activities.AbstractTimePickerActivity.ID_TIME_PICKER;
+import static android.autofillservice.cts.testcore.Helper.assertNumberOfChildren;
+import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
+import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.testcore.Helper.assertTimeValue;
+import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.AbstractTimePickerActivity;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
 import android.icu.util.Calendar;
 
 import org.junit.Test;
@@ -62,8 +64,6 @@ abstract class TimePickerTestCase<A extends AbstractTimePickerActivity>
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_OUTPUT, ID_TIME_PICKER)
                 .build());
 
-        mActivity.expectAutoFill("4:20", 4, 20);
-
         // Trigger auto-fill.
         mActivity.onOutput((v) -> v.requestFocus());
         final FillRequest fillRequest = sReplier.getNextFillRequest();
@@ -72,6 +72,7 @@ abstract class TimePickerTestCase<A extends AbstractTimePickerActivity>
         assertTextIsSanitized(fillRequest.structure, ID_TIME_PICKER);
         assertNumberOfChildren(fillRequest.structure, ID_TIME_PICKER, 0);
         // Auto-fill it.
+        mActivity.expectAutoFill("4:20", 4, 20);
         mUiBot.selectDataset("Adventure Time");
 
         // Check the results.

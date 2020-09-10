@@ -16,6 +16,11 @@
 
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.Timeouts;
+import android.autofillservice.cts.testcore.UiBot;
+import android.autofillservice.cts.testcore.WindowChangeTimeoutException;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 

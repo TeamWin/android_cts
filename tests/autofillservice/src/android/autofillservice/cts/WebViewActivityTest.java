@@ -15,18 +15,26 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.WebViewActivity.HTML_NAME_PASSWORD;
-import static android.autofillservice.cts.WebViewActivity.HTML_NAME_USERNAME;
-import static android.autofillservice.cts.WebViewActivity.ID_OUTSIDE1;
-import static android.autofillservice.cts.WebViewActivity.ID_OUTSIDE2;
+import static android.autofillservice.cts.activities.WebViewActivity.HTML_NAME_PASSWORD;
+import static android.autofillservice.cts.activities.WebViewActivity.HTML_NAME_USERNAME;
+import static android.autofillservice.cts.activities.WebViewActivity.ID_OUTSIDE1;
+import static android.autofillservice.cts.activities.WebViewActivity.ID_OUTSIDE2;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.CannedFillResponse.CannedDataset;
-import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
-import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.activities.MyWebView;
+import android.autofillservice.cts.activities.WebViewActivity;
+import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.Helper;
+import android.autofillservice.cts.testcore.IdMode;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
+import android.autofillservice.cts.testcore.MyAutofillCallback;
+import android.autofillservice.cts.testcore.OneTimeTextWatcher;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
