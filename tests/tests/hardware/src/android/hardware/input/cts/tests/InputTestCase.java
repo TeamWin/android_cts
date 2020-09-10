@@ -152,9 +152,20 @@ public abstract class InputTestCase {
                     mLastButtonState ^ event.getButtonState(), event.getActionButton());
             mLastButtonState = event.getButtonState();
         }
+        assertAxis(mCurrentTestCase, expectedEvent, event);
+    }
+
+    /**
+     * Asserts motion event axis values. Separate this into a different method to allow individual
+     * test case to specify it.
+     *
+     * @param expectedSource expected source flag specified in JSON files.
+     * @param actualSource actual source flag received in the test app.
+     */
+    void assertAxis(String testCase, MotionEvent expectedEvent, MotionEvent actualEvent) {
         for (int axis = MotionEvent.AXIS_X; axis <= MotionEvent.AXIS_GENERIC_16; axis++) {
-            assertEquals(mCurrentTestCase + " (" + MotionEvent.axisToString(axis) + ")",
-                    expectedEvent.getAxisValue(axis), event.getAxisValue(axis), TOLERANCE);
+            assertEquals(testCase + " (" + MotionEvent.axisToString(axis) + ")",
+                    expectedEvent.getAxisValue(axis), actualEvent.getAxisValue(axis), TOLERANCE);
         }
     }
 
@@ -196,6 +207,15 @@ public abstract class InputTestCase {
 
     protected void verifyEvents(List<InputEvent> events) {
         // Make sure we received the expected input events
+        if (events.size() == 0) {
+            // If no event is expected we need to wait for event until timeout and fail on
+            // any unexpected event received caused by the HID report injection.
+            InputEvent event = waitForEvent();
+            if (event != null) {
+                fail("Received unexpected event " + event);
+            }
+            return;
+        }
         for (int i = 0; i < events.size(); i++) {
             final InputEvent event = events.get(i);
             try {
@@ -212,6 +232,7 @@ public abstract class InputTestCase {
             }
             fail("Entry " + i + " is neither a KeyEvent nor a MotionEvent: " + event);
         }
+        assertNoMoreEvents();
     }
 
     protected void testInputEvents(int resourceId) {
