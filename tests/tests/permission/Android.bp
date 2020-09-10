@@ -21,6 +21,7 @@ android_test {
         "cts",
         "vts10",
         "general-tests",
+        "sts",
     ],
     // Include both the 32 and 64 bit versions
     compile_multilib: "both",
