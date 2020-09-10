@@ -16,14 +16,15 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.killswitch_whitelist"
+          package="android.signature.cts.api.hiddenapi_blocklist_current"
           android:targetSandboxVersion="2">
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
-    <application android:debuggable="true"
-                 android:extractNativeLibs="true"
-                 android:largeHeap="true"/>
+    <application android:extractNativeLibs="true" android:largeHeap="true"/>
 
-    <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.killswitch_whitelist"
-                     android:label="Hidden API Killswitch Whitelist Test"/>
+    <instrumentation
+        android:name="repackaged.android.test.InstrumentationTestRunner"
+        android:targetPackage="android.signature.cts.api.hiddenapi_blocklist_current"
+        android:label="Hidden API Blocklist Test for current SDK"/>
 </manifest>
