@@ -452,4 +452,10 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = foo.f;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+
+  ::ndk::ScopedAStatus repeatGenericBar(const ::aidl::test_package::GenericBar<int32_t>& in_inFoo,
+                                        ::aidl::test_package::GenericBar<int32_t>* _aidl_return) {
+    *_aidl_return = in_inFoo;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
 };
