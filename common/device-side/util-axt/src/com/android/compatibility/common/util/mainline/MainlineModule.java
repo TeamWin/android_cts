@@ -19,6 +19,9 @@ package com.android.compatibility.common.util.mainline;
  * Enum containing metadata for mainline modules.
  */
 public enum MainlineModule {
+
+    // Added in Q
+
     // Security
     MEDIA_SOFTWARE_CODEC("com.google.android.media.swcodec",
             true, ModuleType.APEX,
@@ -50,10 +53,6 @@ public enum MainlineModule {
             "9A:4B:85:34:44:86:EC:F5:1F:F8:05:EB:9D:23:17:97:79:BE:B7:EC:81:91:93:5A:CA:67:F0"
                     + ":F4:09:02:52:97"),
     // Consistency
-    TZDATA("com.google.android.tzdata",
-            true, ModuleType.APEX,
-            "55:93:DD:78:CB:26:EC:9B:00:59:2A:6A:F5:94:E4:16:1F:FD:B5:E9:F3:71:A7:43:54:5F:93"
-                    + ":F2:A0:F6:53:89"),
     NETWORK_STACK("com.google.android.networkstack",
             true, ModuleType.APK,
             "5F:A4:22:12:AD:40:3E:22:DD:6E:FE:75:F3:F3:11:84:05:1F:EF:74:4C:0B:05:BE:5C:73:ED"
@@ -70,6 +69,61 @@ public enum MainlineModule {
             true, ModuleType.APK,
             "BF:62:23:1E:28:F0:85:42:75:5C:F3:3C:9D:D8:3C:5D:1D:0F:A3:20:64:50:EF:BC:4C:3F:F3"
                     + ":D5:FD:A0:33:0F"),
+
+    // Added in R
+
+    ADBD("com.google.android.adbd",
+            true, ModuleType.APEX,
+            "87:3D:4E:43:58:25:1A:25:1A:2D:9C:18:E1:55:09:45:21:88:A8:1E:FE:9A:83:9D:43:0D:E8"
+                    + ":D8:7E:C2:49:4C"),
+    NEURAL_NETWORKS("com.google.android.neuralnetworks",
+            true, ModuleType.APEX,
+            "6F:AB:D5:72:9A:90:02:6B:74:E4:87:79:8F:DF:10:BB:E3:6C:9E:6C:B7:A6:59:04:3C:D8:15"
+                    + ":61:6C:9E:60:50"),
+    CELL_BROADCAST("com.google.android.cellbroadcast",
+            true, ModuleType.APEX,
+            "A8:2C:84:7A:A3:9D:DA:19:A5:6C:9E:D3:56:50:1A:76:4F:BD:5D:C9:60:98:66:16:E3:1D:48"
+                    + ":EE:27:08:19:70"),
+    EXT_SERVICES("com.google.android.extservices",
+            true, ModuleType.APEX,
+            "10:89:F2:7C:85:6A:83:D4:02:6B:6A:49:97:15:4C:A1:70:9A:F6:93:27:C8:EF:9A:2D:1D:56"
+                    + ":AB:69:DE:07:0B"),
+    IPSEC("com.google.android.ipsec",
+            true, ModuleType.APEX,
+            "64:3D:3E:A5:B7:BF:22:E5:94:42:29:77:7C:4B:FF:C6:C8:44:14:64:4D:E0:4B:E4:90:37:57"
+                    + ":DE:83:CF:04:8B"),
+    MEDIA_PROVIDER("com.google.android.mediaprovider",
+            true, ModuleType.APEX,
+            "1A:61:93:09:6D:DC:81:58:72:45:EF:2C:07:33:73:6E:8E:FF:9D:E9:0E:51:27:4B:F8:23:AC"
+                    + ":F0:F7:49:00:A0"),
+    PERMISSION_CONTROLLER_APEX("com.google.android.permission",
+            true, ModuleType.APEX,
+            "69:AC:92:BF:BA:D5:85:4C:61:8E:AB:AE:85:7F:AB:0B:1A:65:19:44:E9:19:EA:3C:86:DB:D4"
+                    + ":07:04:1E:22:C1"),
+    SDK_EXTENSIONS("com.google.android.sdkext",
+            true, ModuleType.APEX,
+            "99:90:29:2B:22:11:D2:78:17:BF:5B:10:98:84:8F:68:44:53:37:16:2B:47:FF:D1:A0:8E:10"
+                    + ":CE:65:B1:CC:73"),
+    STATSD("com.google.android.os.statsd",
+            true, ModuleType.APEX,
+            "DA:FE:D6:20:A7:0C:98:05:A9:A2:22:04:55:6B:0E:94:E8:E3:4D:ED:F4:16:EC:58:92:C6:48"
+                    + ":86:53:39:B4:7B"),
+    TELEMETRY_TVP("com.google.mainline.telemetry",
+            true, ModuleType.APK,
+            "9D:AC:CC:AE:4F:49:5A:E6:DB:C5:8A:0E:C2:33:C6:E5:2D:31:14:33:AC:57:3C:4D:A1:C7:39"
+                    + ":DF:64:03:51:5D"),
+    TETHERING("com.google.android.tethering",
+            true, ModuleType.APEX,
+            "E5:3F:52:F4:14:15:0C:05:BA:E0:E4:CE:E2:07:3D:D0:0F:E6:44:66:1D:5F:9A:0F:BE:49:4A"
+                    + ":DC:07:F0:59:93"),
+    TZDATA2("com.google.android.tzdata2",
+            true, ModuleType.APEX,
+            "48:F3:A2:98:76:1B:6D:46:75:7C:EE:62:43:66:6A:25:B9:15:B9:42:18:A6:C2:82:72:99:BE"
+                    + ":DA:C9:92:AB:E7"),
+    WIFI("com.google.android.wifi",
+            false, ModuleType.APEX,
+            "B7:A3:DB:7A:86:6D:18:51:3F:97:6C:63:20:BC:0F:E6:E4:01:BA:2F:26:96:B1:C3:94:2A:F0"
+                    + ":FE:29:31:98:B1"),
     ;
 
     public final String packageName;

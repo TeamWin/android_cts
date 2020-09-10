@@ -36,6 +36,10 @@
         <option name="test-file-name" value="CtsNoPermissionTestCases.apk" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="appops set android.packageinstaller.nopermission.cts REQUEST_INSTALL_PACKAGES allow" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.packageinstaller.nopermission.cts" />
         <option name="runtime-hint" value="1m" />

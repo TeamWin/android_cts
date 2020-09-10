@@ -33,7 +33,9 @@ endef
 
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
-    $(eval $(call build_xml_api_file,system-$(ver).api,prebuilts/sdk/$(ver)/system/api/android.txt))\
+    $(if $(wildcard prebuilts/sdk/$(ver)/system/api/android.txt),\
+      $(eval $(call build_xml_api_file,system-$(ver).api,prebuilts/sdk/$(ver)/system/api/android.txt))\
+    )\
   )\
 )
 

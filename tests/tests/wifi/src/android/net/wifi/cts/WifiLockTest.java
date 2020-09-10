@@ -19,11 +19,12 @@ package android.net.wifi.cts;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.WorkSource;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class WifiLockTest extends AndroidTestCase {
+public class WifiLockTest extends WifiJUnit3TestBase {
 
     private static final String WIFI_TAG = "WifiLockTest";
 
@@ -50,6 +51,7 @@ public class WifiLockTest extends AndroidTestCase {
         WifiLock wl = wm.createWifiLock(lockType, WIFI_TAG);
 
         wl.setReferenceCounted(true);
+        wl.setWorkSource(new WorkSource());
         assertFalse(wl.isHeld());
         wl.acquire();
         assertTrue(wl.isHeld());

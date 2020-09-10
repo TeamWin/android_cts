@@ -16,12 +16,10 @@ android_test {
     name: "CtsAlertWindowService",
     defaults: ["cts_support_defaults"],
 
-    static_libs: [
-        "cts-wm-app-base",
-        "compatibility-device-util-axt",
+    srcs: [
+        "src/**/*.java",
+        ":cts-wm-components-base",
     ],
-
-    srcs: ["src/**/*.java"],
 
     sdk_version: "test_current",
 

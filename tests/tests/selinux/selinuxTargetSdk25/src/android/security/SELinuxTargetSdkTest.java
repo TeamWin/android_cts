@@ -68,8 +68,4 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
     public void testDex2oat() throws Exception {
         checkDex2oatAccess(true);
     }
-
-    public void testNoExecuteOnly() throws IOException {
-        noExecuteOnly();
-    }
 }

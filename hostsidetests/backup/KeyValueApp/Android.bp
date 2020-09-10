@@ -17,6 +17,7 @@ android_test_helper_app {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.rules",
+        "compatibility-device-util-axt",
         "platform-test-annotations",
     ],
     srcs: ["src/**/*.java"],
@@ -26,5 +27,5 @@ android_test_helper_app {
         "vts10",
         "general-tests",
     ],
-    sdk_version: "current",
+    platform_apis: true,
 }

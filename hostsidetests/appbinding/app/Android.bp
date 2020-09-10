@@ -32,6 +32,8 @@ java_defaults {
     static_libs: [
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "androidx.legacy_legacy-support-v4",
+        "androidx.test.rules",
     ],
 }
 
@@ -123,6 +125,23 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
+android_test_helper_app {
+    name: "CtsAppBindingService7",
+    defaults: [
+        "cts_hostside_appbinding_defaults",
+        "cts_defaults",
+    ],
+    srcs: ["src/**/*.java"],
+    manifest: "app7/AndroidManifest.xml",
+    test_suites: [
+        "cts",
+        "vts",
+        "vts10",
+        "general-tests",
+    ],
+}
+
 android_test_helper_app {
     name: "CtsAppBindingServiceB",
     defaults: [

@@ -92,45 +92,16 @@ public final class RollbackInfoSubject extends Subject<RollbackInfoSubject, Roll
         check().that(actualPackages).containsExactly((Object[]) expected);
     }
 
-    private static class VersionedPackageWithEquals {
-        private final VersionedPackage mVp;
-
-        VersionedPackageWithEquals(VersionedPackage versionedPackage) {
-            mVp = versionedPackage;
-        }
-
-        @Override
-        public String toString() {
-            return mVp.toString();
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (!(other instanceof VersionedPackageWithEquals)) {
-                return false;
-            }
-
-            VersionedPackageWithEquals r = (VersionedPackageWithEquals) other;
-            return mVp.getPackageName().equals(r.mVp.getPackageName())
-                    && mVp.getLongVersionCode() == r.mVp.getLongVersionCode();
-        }
-    }
-
     /**
      * Asserts that the RollbackInfo contains exactly the list of provided
      * cause packages. Though they may be in any order.
      */
     public void causePackagesContainsExactly(TestApp... causes) {
-        List<VersionedPackageWithEquals> expectedVps = new ArrayList<>();
+        List<VersionedPackage> expectedVps = new ArrayList<>();
         for (TestApp cause : causes) {
-            expectedVps.add(new VersionedPackageWithEquals(cause.getVersionedPackage()));
+            expectedVps.add(cause.getVersionedPackage());
         }
 
-        List<VersionedPackageWithEquals> actualVps = new ArrayList<>();
-        for (VersionedPackage vp : getSubject().getCausePackages()) {
-            actualVps.add(new VersionedPackageWithEquals(vp));
-        }
-
-        check().that(actualVps).containsExactlyElementsIn(expectedVps);
+        check().that(getSubject().getCausePackages()).containsExactlyElementsIn(expectedVps);
     }
 }

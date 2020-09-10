@@ -18,6 +18,7 @@ cc_test_library {
     srcs: [
         "appendix-b-1-1-buffer-queue.cpp",
         "appendix-b-1-2-recording.cpp",
+        "audio-metadata-native.cpp",
         "audio-record-native.cpp",
         "audio-track-native.cpp",
         "sl-utils.cpp",
@@ -29,10 +30,15 @@ cc_test_library {
         "libnativehelper_compat_libc++",
         "libOpenSLES",
     ],
+    header_libs: [
+        "libaudioutils_headers",
+    ],
     stl: "libc++_static",
     cflags: [
         "-Werror",
         "-Wall",
+        "-Wno-deprecated-declarations",
     ],
     gtest: false,
+    sdk_version: "current",
 }

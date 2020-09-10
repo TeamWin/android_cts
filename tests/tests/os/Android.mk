@@ -25,6 +25,8 @@ LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
 
 cts_platform_version_path := cts/tests/tests/os/assets/platform_versions.txt
 cts_platform_version_string := $(shell cat $(cts_platform_version_path))
+cts_platform_release_path := cts/tests/tests/os/assets/platform_releases.txt
+cts_platform_release_string := $(shell cat $(cts_platform_release_path))
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
@@ -36,6 +38,17 @@ $(LOCAL_BUILT_MODULE) : $(cts_platform_version_path) build/core/version_defaults
 		echo "	$(cts_platform_version_path)" 1>&2; \
 		echo "" 1>&2; \
 		echo "Most likely PLATFORM_VERSION in build/core/version_defaults.mk" 1>&2; \
+		echo "has changed and a new version must be added to this CTS file." 1>&2; \
+		echo "============================================================" 1>&2; \
+		exit 1; \
+	fi
+	$(hide) if [ -z "$(findstring $(PLATFORM_VERSION_LAST_STABLE),$(cts_platform_release_string))" ]; then \
+		echo "============================================================" 1>&2; \
+		echo "Could not find version \"$(PLATFORM_VERSION_LAST_STABLE)\" in CTS platform release file:" 1>&2; \
+		echo "" 1>&2; \
+		echo "	$(cts_platform_release_path)" 1>&2; \
+		echo "" 1>&2; \
+		echo "Most likely PLATFORM_VERSION_LAST_STABLE in build/core/version_defaults.mk" 1>&2; \
 		echo "has changed and a new version must be added to this CTS file." 1>&2; \
 		echo "============================================================" 1>&2; \
 		exit 1; \

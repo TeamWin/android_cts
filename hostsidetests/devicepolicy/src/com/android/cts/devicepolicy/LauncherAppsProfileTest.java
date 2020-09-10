@@ -16,9 +16,11 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.device.DeviceNotAvailableException;
+import android.platform.test.annotations.FlakyTest;
+
 import com.android.tradefed.log.LogUtil.CLog;
+
+import org.junit.Test;
 
 import java.util.Collections;
 
@@ -40,7 +42,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
     private String mMainUserSerialNumber;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
         if (mHasFeature) {
@@ -61,7 +63,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         if (mHasFeature) {
             removeUser(mProfileUserId);
             uninstallTestApps();
@@ -70,6 +72,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
         super.tearDown();
     }
 
+    @Test
     public void testGetActivitiesWithProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -105,6 +108,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                 mProfileUserId);
     }
 
+    @Test
     public void testProfileOwnerAppHiddenInPrimaryProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -117,6 +121,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                 mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mMainUserSerialNumber));
     }
 
+    @Test
     public void testNoHiddenActivityInProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -134,6 +139,8 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                 mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mMainUserSerialNumber));
     }
 
+    @FlakyTest
+    @Test
     public void testLauncherCallbackPackageAddedProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -146,6 +153,8 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                 mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber));
     }
 
+    @FlakyTest
+    @Test
     public void testLauncherCallbackPackageRemovedProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -159,6 +168,8 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                 mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber));
     }
 
+    @FlakyTest
+    @Test
     public void testLauncherCallbackPackageChangedProfile() throws Exception {
         if (!mHasFeature) {
             return;
@@ -173,6 +184,7 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
                 mParentUserId, Collections.singletonMap(PARAM_TEST_USER, mProfileSerialNumber));
     }
 
+    @Test
     public void testReverseAccessNoThrow() throws Exception {
         if (!mHasFeature) {
             return;

@@ -22,6 +22,9 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
     ],
+    static_libs: [
+        "cts-host-utils",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

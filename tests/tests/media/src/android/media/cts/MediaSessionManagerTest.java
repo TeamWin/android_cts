@@ -97,9 +97,6 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         } catch (SecurityException e) {
             // Expected
         }
-
-        // TODO enable a notification listener, test again, disable, verify
-        // updates stopped
     }
 
     private void assertKeyEventEquals(KeyEvent lhs, int keyCode, int action, int repeatCount) {
@@ -291,13 +288,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     public void testGetSession2Tokens() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
-        Executor handlerExecutor = (runnable) -> {
-            if (handler != null) {
-                handler.post(() -> {
-                    runnable.run();
-                });
-            }
-        };
+        Executor handlerExecutor = new HandlerExecutor(handler);
 
         Session2TokenListener listener = new Session2TokenListener();
         mSessionManager.addOnSession2TokensChangedListener(listener, handler);
@@ -318,13 +309,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     public void testGetSession2TokensWithTwoSessions() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
-        Executor handlerExecutor = (runnable) -> {
-            if (handler != null) {
-                handler.post(() -> {
-                    runnable.run();
-                });
-            }
-        };
+        Executor handlerExecutor = new HandlerExecutor(handler);
 
         Session2TokenListener listener = new Session2TokenListener();
         mSessionManager.addOnSession2TokensChangedListener(listener, handler);
@@ -365,13 +350,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     public void testAddAndRemoveSession2TokensListener() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
-        Executor handlerExecutor = (runnable) -> {
-            if (handler != null) {
-                handler.post(() -> {
-                    runnable.run();
-                });
-            }
-        };
+        Executor handlerExecutor = new HandlerExecutor(handler);
 
         Session2TokenListener listener1 = new Session2TokenListener();
         mSessionManager.addOnSession2TokensChangedListener(listener1, handler);
@@ -393,6 +372,30 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
             session.close();
             assertFalse(listener1.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             assertTrue(listener2.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    public void testSession2TokensNotChangedBySession1() throws Exception {
+        final Context context = getInstrumentation().getTargetContext();
+        Handler handler = createHandler();
+
+        Session2TokenListener listener = new Session2TokenListener();
+        List<Session2Token> initialSession2Tokens = mSessionManager.getSession2Tokens();
+        mSessionManager.addOnSession2TokensChangedListener(listener, handler);
+        MediaSession session = null;
+        try {
+            session = new MediaSession(context, TAG);
+            session.setActive(true);
+            session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
+                    | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+            assertFalse(listener.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            List<Session2Token> laterSession2Tokens = mSessionManager.getSession2Tokens();
+
+            assertEquals(initialSession2Tokens.size(), laterSession2Tokens.size());
+        } finally {
+            if (session != null) {
+                session.release();
+            }
         }
     }
 
@@ -517,6 +520,19 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
 
         public void resetCountDownLatch() {
             mCountDownLatch = new CountDownLatch(1);
+        }
+    }
+
+    private static class HandlerExecutor implements Executor {
+        private final Handler mHandler;
+
+        HandlerExecutor(Handler handler) {
+            mHandler = handler;
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            mHandler.post(command);
         }
     }
 }

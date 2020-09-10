@@ -39,8 +39,10 @@ cc_test_library {
     cflags: [
         "-Werror",
         "-Wall",
+        "-Wno-deprecated-declarations",
     ],
     gtest: false,
+    sdk_version: "29",
 }
 
 //

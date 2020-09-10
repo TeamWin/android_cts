@@ -41,6 +41,10 @@
         <option name="test-file-name" value="CtsPackageInstallTestCases.apk" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="appops set android.packageinstaller.install.cts REQUEST_INSTALL_PACKAGES allow" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.packageinstaller.install.cts" />
         <option name="runtime-hint" value="1m" />

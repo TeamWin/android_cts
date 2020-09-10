@@ -18,7 +18,8 @@ android_test {
 
     static_libs: [
         "cts-wm-app-base",
-        "androidx.legacy_legacy-support-v4",
+         // Used by InputMethodTestActivity for ImeAwareEditText.
+        "compatibility-device-util-axt",
     ],
 
     srcs: [

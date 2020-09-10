@@ -25,6 +25,7 @@ android_test {
     ],
     libs: ["android.test.base"],
     static_libs: [
+        "androidx.test.core",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "guava",
@@ -32,6 +33,29 @@ android_test {
         "truth-prebuilt",
         "permission-test-util-lib"
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt"
+    ],
     sdk_version: "test_current",
+    data: [
+        ":CtsLocationPermissionsUserSdk22",
+        ":CtsLocationPermissionsUserSdk29",
+        ":CtsSMSCallLogPermissionsUserSdk22",
+        ":CtsSMSCallLogPermissionsUserSdk29",
+        ":CtsStoragePermissionsUserDefaultSdk22",
+        ":CtsStoragePermissionsUserDefaultSdk28",
+        ":CtsStoragePermissionsUserDefaultSdk29",
+        ":CtsStoragePermissionsUserOptInSdk22",
+        ":CtsStoragePermissionsUserOptInSdk28",
+        ":CtsStoragePermissionsUserOptOutSdk29",
+        ":CtsStoragePermissionsPreservedUserOptOutSdk30",
+        ":CtsLegacyStorageNotIsolatedWithSharedUid",
+        ":CtsLegacyStorageIsolatedWithSharedUid",
+        ":CtsLegacyStorageRestrictedWithSharedUid",
+        ":CtsLegacyStorageRestrictedSdk28WithSharedUid",
+        ":CtsStoragePermissionsUserOptOutSdk30",
+        ":CtsSMSRestrictedWithSharedUid",
+        ":CtsSMSNotRestrictedWithSharedUid",
+    ],
 }

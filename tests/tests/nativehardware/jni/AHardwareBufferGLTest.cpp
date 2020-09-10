@@ -1561,10 +1561,7 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
             }
         }
     } else {
-        // TODO(b/123042748): The fact that glEGLImageTargetTexStorageEXT does not work for YUV
-        //                    textures is a bug. The condition for the target should be removed
-        //                    once the bug is fixed.
-        if (HasGLExtension("GL_EXT_EGL_image_storage") && mTexTarget != GL_TEXTURE_EXTERNAL_OES) {
+        if (HasGLExtension("GL_EXT_EGL_image_storage")) {
             glEGLImageTargetTexStorageEXT(mTexTarget, static_cast<GLeglImageOES>(mEGLImage),
                                           nullptr);
         } else {
@@ -1872,6 +1869,10 @@ TEST_P(ColorTest, GpuColorOutputIsRenderable) {
     desc.width = 100;
     desc.height = 100;
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT;
+    if (FormatIsYuv(desc.format)) {
+        // YUV formats are only supported for textures, so add texture usage.
+        desc.usage |= AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+    }
     // This test does not make sense for layered buffers - don't bother testing them.
     if (desc.layers > 1) return;
     if (!SetUpBuffer(desc)) return;
@@ -1913,6 +1914,10 @@ TEST_P(ColorTest, GpuColorOutputCpuRead) {
     desc.width = 16;
     desc.height = 16;
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
+    if (FormatIsYuv(desc.format)) {
+        // YUV formats are only supported for textures, so add texture usage.
+        desc.usage |= AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+    }
     // This test does not make sense for GL formats. Layered buffers do not support CPU access.
     if ((desc.stride & kGlFormat) || desc.layers > 1) {
         ALOGI("Test skipped: Test is for single-layer HardwareBuffer formats only.");

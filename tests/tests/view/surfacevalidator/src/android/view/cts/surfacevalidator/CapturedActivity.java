@@ -36,6 +36,8 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -65,6 +67,16 @@ public class CapturedActivity extends Activity {
         public int failFrames;
         public final SparseArray<Bitmap> failures = new SparseArray<>();
     }
+
+    private static class ImmersiveConfirmationSetting extends SettingsSession<String> {
+        ImmersiveConfirmationSetting() {
+            super(Settings.Secure.getUriFor(
+                Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS),
+                Settings.Secure::getString, Settings.Secure::putString);
+        }
+    }
+
+    private ImmersiveConfirmationSetting mSettingsSession;
 
     private static final String TAG = "CapturedActivity";
     private static final int PERMISSION_CODE = 1;
@@ -99,6 +111,9 @@ public class CapturedActivity extends Activity {
         // Embedded devices are significantly slower, and are given
         // longer duration to capture the expected number of frames
         mOnEmbedded = packageManager.hasSystemFeature(PackageManager.FEATURE_EMBEDDED);
+
+        mSettingsSession = new ImmersiveConfirmationSetting();
+        mSettingsSession.set("confirmed");
 
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
@@ -159,6 +174,7 @@ public class CapturedActivity extends Activity {
             unbindService(mConnection);
             mProjectionServiceBound = false;
         }
+        mSettingsSession.close();
     }
 
     @Override
@@ -200,7 +216,7 @@ public class CapturedActivity extends Activity {
 
         final long timeOutMs = mOnEmbedded ? 125000 : 62500;
         final long captureDuration = animationTestCase.hasAnimation() ?
-            getCaptureDurationMs() : 1000;
+            getCaptureDurationMs() : 0;
         final long endCaptureDelayMs = START_CAPTURE_DELAY_MS + captureDuration;
         final long endDelayMs = endCaptureDelayMs + 1000;
 
@@ -237,10 +253,10 @@ public class CapturedActivity extends Activity {
             display.getRealSize(size);
             display.getMetrics(metrics);
 
-            View decorView = getWindow().getDecorView();
-            Rect boundsToCheck = new Rect(0, 0, decorView.getWidth(), decorView.getHeight());
+            View testAreaView = findViewById(android.R.id.content);
+            Rect boundsToCheck = new Rect(0, 0, testAreaView.getWidth(), testAreaView.getHeight());
             int[] topLeft = new int[2];
-            decorView.getLocationOnScreen(topLeft);
+            testAreaView.getLocationOnScreen(topLeft);
             boundsToCheck.offset(topLeft[0], topLeft[1]);
 
             if (boundsToCheck.width() < 90 || boundsToCheck.height() < 90) {
@@ -260,8 +276,10 @@ public class CapturedActivity extends Activity {
                     null /*Handler*/);
         }, START_CAPTURE_DELAY_MS);
 
+        final int SINGLE_FRAME_TIMEOUT_MS = 1000;
         mHandler.postDelayed(() -> {
             Log.d(TAG, "Stopping capture");
+            mSurfacePixelValidator.waitForFrame(SINGLE_FRAME_TIMEOUT_MS);
             mVirtualDisplay.release();
             mVirtualDisplay = null;
         }, endCaptureDelayMs);

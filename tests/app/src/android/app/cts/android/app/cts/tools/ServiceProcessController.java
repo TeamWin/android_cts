@@ -215,6 +215,6 @@ public final class ServiceProcessController {
             throw new IllegalStateException("Unexpected importance after killing process: "
                     + importance);
         }
-        mUidWatcher.waitFor(WatchUidRunner.CMD_GONE, null, timeout);
+        mUidWatcher.waitFor(WatchUidRunner.CMD_GONE, timeout);
     }
 }

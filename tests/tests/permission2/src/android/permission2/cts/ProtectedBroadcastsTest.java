@@ -65,7 +65,7 @@ public class ProtectedBroadcastsTest extends AndroidTestCase {
         "android.net.wifi.p2p.THIS_DEVICE_CHANGED",
         "android.net.wifi.p2p.PEERS_CHANGED",
         "android.net.wifi.p2p.CONNECTION_STATE_CHANGE",
-        "android.net.wifi.p2p.PERSISTENT_GROUPS_CHANGED",
+        "android.net.wifi.p2p.action.WIFI_P2P_PERSISTENT_GROUPS_CHANGED",
         "android.net.conn.TETHER_STATE_CHANGED",
         "android.net.conn.INET_CONDITION_ACTION",
         "android.net.conn.CAPTIVE_PORTAL_TEST_COMPLETED",
@@ -79,12 +79,12 @@ public class ProtectedBroadcastsTest extends AndroidTestCase {
         "android.intent.action.RADIO_TECHNOLOGY",
         "android.intent.action.ANY_DATA_STATE",
         "android.intent.action.ACTION_MDN_STATE_CHANGED",
-        "android.provider.Telephony.SPN_STRINGS_UPDATED",
         "android.intent.action.EMERGENCY_CALLBACK_MODE_CHANGED",
         "android.intent.action.SIM_STATE_CHANGED",
+        "android.telephony.action.SERVICE_PROVIDERS_UPDATED",
         "android.telephony.action.SUBSCRIPTION_CARRIER_IDENTITY_CHANGED",
         "android.telephony.action.SUBSCRIPTION_SPECIFIC_CARRIER_IDENTITY_CHANGED",
-        "com.android.internal.intent.action.ACTION_SHOW_NOTICE_ECM_BLOCK_OTHERS",
+        "android.telephony.action.SHOW_NOTICE_ECM_BLOCK_OTHERS",
     };
 
     /**

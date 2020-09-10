@@ -18,28 +18,29 @@ package com.android.cts.verifier.tv.display;
 
 import android.view.View;
 
+import androidx.annotation.StringRes;
+
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 
 /**
- *  Encapsulates the logic of an asynchronous test step, which displays a human instructions and a
- *  button to start the test. For synchronous steps see {@link SyncTestStep}.
+ * Encapsulates the logic of an asynchronous test step, which displays human instructions and a
+ * button to start the test. For synchronous steps see {@link SyncTestStep}.
  */
-public abstract class AsyncTestStep extends TestStepBase {
+public abstract class AsyncTestStep extends OneButtonTestStep {
 
-    public AsyncTestStep(TvAppVerifierActivity context) {
-        super(context);
+    public AsyncTestStep(TvAppVerifierActivity context, @StringRes int stepNameStringId,
+            String instructionText, @StringRes int buttonStringId) {
+        super(context, stepNameStringId, instructionText, buttonStringId);
     }
 
-    /**
-     * Runs the test logic, when finished calls {@link AsyncTestStep#done()}.
-     */
+    /** Runs the test logic, when finished calls {@link AsyncTestStep#done()}. */
     public abstract void runTestAsync();
 
     @Override
     protected void onButtonClickRunTest() {
         // Disable the button, so the user can't run it twice.
-        disableButton();
+        disableInteractivity();
         showLoadingSpinner();
         runTestAsync();
     }
@@ -51,12 +52,12 @@ public abstract class AsyncTestStep extends TestStepBase {
     }
 
     private void showLoadingSpinner() {
-        View spinner = mViewItem.findViewById(R.id.loadingSpinner);
+        View spinner = mButtonView.findViewById(R.id.loadingSpinner);
         spinner.setVisibility(View.VISIBLE);
     }
 
     private void hideLoadingSpinner() {
-        View spinner = mViewItem.findViewById(R.id.loadingSpinner);
+        View spinner = mButtonView.findViewById(R.id.loadingSpinner);
         spinner.setVisibility(View.INVISIBLE);
     }
 }

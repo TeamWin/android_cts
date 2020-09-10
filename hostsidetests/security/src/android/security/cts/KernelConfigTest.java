@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.lang.String;
 import java.util.stream.Collectors;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -231,6 +232,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("Kirin970", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("Kirin810", null);
         put("Kirin710", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("SDMMAGPIE", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM6150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM7150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM7250", null);
@@ -278,5 +280,79 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
             assertTrue("Linux kernel must have KPTI enabled: CONFIG_PAGE_TABLE_ISOLATION=y",
                     configSet.contains("CONFIG_PAGE_TABLE_ISOLATION=y"));
         }
+    }
+
+    /**
+     * Test that the kernel enables static usermodehelper and sets
+     * the path to a whitelisted path.
+     *
+     * @throws Exception
+     */
+    @CddTest(requirement="9.7")
+    public void testConfigDisableUsermodehelper() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 30) {
+            return;
+        }
+
+        final String ENABLE_CONFIG = "CONFIG_STATIC_USERMODEHELPER=y";
+        final String PATH_CONFIG = "CONFIG_STATIC_USERMODEHELPER_PATH=";
+
+        final Set<String> ALLOWED_PATH_PREFIXES = new HashSet<String>();
+        ALLOWED_PATH_PREFIXES.add("/vendor/");
+        ALLOWED_PATH_PREFIXES.add("/system/");
+        ALLOWED_PATH_PREFIXES.add("/system_ext/");
+
+        assertTrue("Linux kernel must enable static usermodehelper: " + ENABLE_CONFIG,
+            configSet.contains(ENABLE_CONFIG));
+
+        String configPath = null;
+
+        for (String option : configSet) {
+            if (option.startsWith(PATH_CONFIG)) {
+                configPath = option;
+            }
+        }
+
+        int index = configPath.indexOf('=');
+        String path = configPath.substring(index+1).replace("\"", "");
+
+        assertTrue("Linux kernel must specify an absolute path for static usermodehelper path",
+            configPath.contains("..") == false);
+
+        boolean pathIsWhitelisted = false;
+
+        for (String allowedPath : ALLOWED_PATH_PREFIXES) {
+            if (path.startsWith(allowedPath)) {
+                pathIsWhitelisted = true;
+                break;
+            }
+        }
+
+        // Specifying no path, which disables usermodehelper, is also
+        // valid.
+        pathIsWhitelisted |= path.isEmpty();
+
+        String whitelistedPathPrefixExample = "'" +
+            String.join("', '", ALLOWED_PATH_PREFIXES) + "'";
+
+        assertTrue("Linux kernel must specify a whitelisted static usermodehelper path, "
+                   + "and it must be empty or start with one of the following "
+                   + "prefixes: " + whitelistedPathPrefixExample, pathIsWhitelisted);
+    }
+
+    /**
+     * Test that the kernel enables fs-verity and its built-in signature support.
+     */
+    @CddTest(requirement="9.10")
+    public void testConfigFsVerity() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 30 &&
+                PropertyUtil.getPropertyInt(mDevice, "ro.apk_verity.mode") != 2) {
+            return;
+        }
+        assertTrue("Linux kernel must have fs-verity enabled: CONFIG_FS_VERITY=y",
+                configSet.contains("CONFIG_FS_VERITY=y"));
+        assertTrue("Linux kernel must have fs-verity's builtin signature enabled: "
+                + "CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y",
+                configSet.contains("CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y"));
     }
 }

@@ -18,13 +18,14 @@ android_test {
 
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
     ],
 
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
-        "truth-prebuilt"
+        "truth-prebuilt",
     ],
 
     test_suites: [
@@ -32,5 +33,10 @@ android_test {
         "vts10",
         "general-tests",
         "mts",
+    ],
+
+    data: [
+        ":CtsRoleTestApp",
+        ":CtsRoleTestApp28",
     ],
 }

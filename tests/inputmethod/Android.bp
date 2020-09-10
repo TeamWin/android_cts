@@ -28,6 +28,7 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "CtsMockInputMethodLib",
+        "testng",
     ],
     srcs: [
         "src/**/*.java",

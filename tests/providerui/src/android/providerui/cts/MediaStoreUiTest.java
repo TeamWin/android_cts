@@ -112,15 +112,16 @@ public class MediaStoreUiTest {
             mFile.delete();
         }
 
-        final ContentResolver resolver = mActivity.getContentResolver();
-        for (UriPermission permission : resolver.getPersistedUriPermissions()) {
-            mActivity.revokeUriPermission(
-                    permission.getUri(),
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        if (mActivity != null) {
+            final ContentResolver resolver = mActivity.getContentResolver();
+            for (UriPermission permission : resolver.getPersistedUriPermissions()) {
+                mActivity.revokeUriPermission(
+                        permission.getUri(),
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            }
+            mActivity.finish();
         }
-
-        mActivity.finish();
     }
 
     @Test
@@ -192,13 +193,18 @@ public class MediaStoreUiTest {
                 && !pm.hasSystemFeature("android.hardware.type.watch");
     }
 
+    public File getVolumePath(String volumeName) {
+        return mContext.getSystemService(StorageManager.class)
+                .getStorageVolume(MediaStore.Files.getContentUri(volumeName)).getDirectory();
+    }
+
     private void prepareFile() throws Exception {
-        final File dir = new File(MediaStore.getVolumePath(mVolumeName),
+        final File dir = new File(getVolumePath(mVolumeName),
                 Environment.DIRECTORY_DOCUMENTS);
         final File file = new File(dir, "cts" + System.nanoTime() + ".txt");
 
         mFile = stageFile(R.raw.text, file);
-        mMediaStoreUri = MediaStore.scanFile(mContext, mFile);
+        mMediaStoreUri = MediaStore.scanFile(mContext.getContentResolver(), mFile);
 
         Log.v(TAG, "Staged " + mFile + " as " + mMediaStoreUri);
     }
@@ -215,6 +221,14 @@ public class MediaStoreUiTest {
         if (mTargetPackageName == null) {
             mTargetPackageName = getTargetPackageName(mActivity);
         }
+
+        // We started at the root of the storage device, and need to navigate
+        // into the requested directory
+        final BySelector directorySelector = By.pkg(mTargetPackageName)
+                .text(directoryName);
+        mDevice.wait(Until.hasObject(directorySelector), 30 * DateUtils.SECOND_IN_MILLIS);
+        mDevice.findObject(directorySelector).click();
+        mDevice.waitForIdle();
 
         // Granting the access
         BySelector buttonPanelSelector = By.pkg(mTargetPackageName)

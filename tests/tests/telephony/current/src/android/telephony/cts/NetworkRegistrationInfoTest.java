@@ -15,11 +15,15 @@
  */
 package android.telephony.cts;
 
+import android.os.Parcel;
 import android.telephony.AccessNetworkConstants;
+import android.telephony.CellIdentity;
+import android.telephony.CellIdentityLte;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.TelephonyManager;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
@@ -120,7 +124,7 @@ public class NetworkRegistrationInfoTest {
     }
 
     @Test
-    public void testRegistrationState() {
+    public void testGetRegistrationState() {
         NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
                 .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
                 .build();
@@ -133,5 +137,111 @@ public class NetworkRegistrationInfoTest {
                 .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
                 .build();
         assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, nri.getTransportType());
+    }
+
+    @Test
+    public void testGetRegisteredPlmn() {
+        final String plmn = "12345";
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setRegisteredPlmn(plmn)
+                .build();
+        assertEquals(plmn, nri.getRegisteredPlmn());
+    }
+
+    @Test
+    public void testGetRejectCause() {
+        final int fakeRejectCause = 123;
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setRejectCause(fakeRejectCause)
+                .build();
+        assertEquals(fakeRejectCause, nri.getRejectCause());
+    }
+
+    @Test
+    public void testIsEmergencyEnabled() {
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setEmergencyOnly(true)
+                .build();
+        assertTrue(nri.isEmergencyEnabled());
+    }
+
+    @Test
+    public void testGetCellIdentity() {
+        final CellIdentity ci = new CellIdentityLte(120 /* MCC */, 260 /* MNC */, 12345 /* CI */,
+                503 /* PCI */, 54321 /* TAC */);
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setCellIdentity(ci)
+                .build();
+        assertEquals(ci, nri.getCellIdentity());
+    }
+
+    @Test
+    public void testIsRegistered() {
+        final int[] registeredStates = new int[] {NetworkRegistrationInfo.REGISTRATION_STATE_HOME,
+                NetworkRegistrationInfo.REGISTRATION_STATE_ROAMING};
+        for (int state : registeredStates) {
+            NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                    .setRegistrationState(state)
+                    .build();
+            assertTrue(nri.isRegistered());
+        }
+
+        final int[] unregisteredStates = new int[] {
+            NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_OR_SEARCHING,
+                NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING,
+                NetworkRegistrationInfo.REGISTRATION_STATE_DENIED,
+                NetworkRegistrationInfo.REGISTRATION_STATE_UNKNOWN};
+        for (int state : unregisteredStates) {
+            NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                    .setRegistrationState(state)
+                    .build();
+            assertFalse(nri.isRegistered());
+        }
+    }
+
+    @Test
+    public void testIsSearching() {
+        final int[] isSearchingStates = new int[] {
+            NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING};
+        for (int state : isSearchingStates) {
+            NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                    .setRegistrationState(state)
+                    .build();
+            assertTrue(nri.isSearching());
+        }
+
+        final int[] isNotSearchingStates = new int[] {
+            NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_OR_SEARCHING,
+                NetworkRegistrationInfo.REGISTRATION_STATE_ROAMING,
+                NetworkRegistrationInfo.REGISTRATION_STATE_HOME,
+                NetworkRegistrationInfo.REGISTRATION_STATE_DENIED,
+                NetworkRegistrationInfo.REGISTRATION_STATE_UNKNOWN};
+        for (int state : isNotSearchingStates) {
+            NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                    .setRegistrationState(state)
+                    .build();
+            assertFalse(nri.isSearching());
+        }
+    }
+
+    @Test
+    public void testParcel() {
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setDomain(NetworkRegistrationInfo.DOMAIN_CS)
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setRegistrationState(NetworkRegistrationInfo.REGISTRATION_STATE_HOME)
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE)
+                .setAvailableServices(Arrays.asList(NetworkRegistrationInfo.SERVICE_TYPE_DATA))
+                .setCellIdentity(new CellIdentityLte(120 /* MCC */, 260 /* MNC */, 12345 /* CI */,
+                            503 /* PCI */, 54321 /* TAC */))
+                .setRegisteredPlmn("12345")
+                .build();
+
+        Parcel p = Parcel.obtain();
+        nri.writeToParcel(p, 0);
+        p.setDataPosition(0);
+
+        NetworkRegistrationInfo newNrs = NetworkRegistrationInfo.CREATOR.createFromParcel(p);
+        assertEquals(nri, newNrs);
     }
 }

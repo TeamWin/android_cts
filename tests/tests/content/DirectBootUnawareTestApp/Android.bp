@@ -22,4 +22,6 @@ android_test_helper_app {
         "vts10",
         "general-tests",
     ],
+    min_sdk_version: "29",
+
 }

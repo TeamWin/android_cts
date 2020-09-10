@@ -23,6 +23,7 @@
   <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
     <option name="cleanup-apks" value="true" />
     <option name="test-file-name" value="CtsContentCaptureServiceTestCases.apk" />
+    <option name="test-file-name" value="CtsOutsideOfPackageActivity.apk" />
   </target_preparer>
 
   <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">

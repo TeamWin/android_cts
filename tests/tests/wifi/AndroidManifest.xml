@@ -29,14 +29,18 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
-    <application>
+    <!-- usesCleartextTraffic is needed by WifiManagerTest#sendTraffic to send HTTP traffic
+         (as opposed to HTTPS). -->
+    <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
+        <activity android:name=".WaitForResultActivity" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

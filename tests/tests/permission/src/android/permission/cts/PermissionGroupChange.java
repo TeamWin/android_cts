@@ -30,7 +30,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.platform.test.annotations.SecurityTest;
+import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
@@ -45,6 +47,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class PermissionGroupChange {
     private static final String APP_PKG_NAME = "android.permission.cts.appthatrequestpermission";
@@ -53,14 +56,12 @@ public class PermissionGroupChange {
 
     private Context mContext;
     private UiDevice mUiDevice;
-    private boolean mIsAutomotive;
+    private String mAllowButtonText = null;
 
     @Before
     public void setContextAndUiDevice() {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mIsAutomotive = mContext.getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     @Before
@@ -103,10 +104,14 @@ public class PermissionGroupChange {
     }
 
     protected void clickAllowButton() throws Exception {
-        if (mIsAutomotive) {
-            mUiDevice.findObject(new UiSelector().textMatches("(?i)Allow")).click();
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            if (mAllowButtonText == null) {
+                mAllowButtonText = getPermissionControllerString("grant_dialog_button_allow");
+            }
+            mUiDevice.findObject(By.text(Pattern.compile(Pattern.quote(mAllowButtonText),
+                    Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE))).click();
         } else {
-            mUiDevice.findObject(new UiSelector().resourceId(
+            mUiDevice.findObject(By.res(
                     "com.android.permissioncontroller:id/permission_allow_button")).click();
         }
     }
@@ -179,6 +184,15 @@ public class PermissionGroupChange {
         } catch (Throwable expected) {
             assertEquals("android.permission.cts.C not granted", expected.getMessage());
         }
+    }
+
+    private String getPermissionControllerString(String res)
+            throws PackageManager.NameNotFoundException {
+        Resources permissionControllerResources = mContext.createPackageContext(
+                mContext.getPackageManager().getPermissionControllerPackageName(), 0)
+                .getResources();
+        return permissionControllerResources.getString(permissionControllerResources
+                .getIdentifier(res, "string", "com.android.permissioncontroller"));
     }
 
     private interface ThrowingRunnable {

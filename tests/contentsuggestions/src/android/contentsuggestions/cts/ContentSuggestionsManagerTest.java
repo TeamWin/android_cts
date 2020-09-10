@@ -19,6 +19,7 @@ import static androidx.test.InstrumentationRegistry.getContext;
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.mockito.ArgumentMatchers.any;

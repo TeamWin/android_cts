@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -36,7 +37,10 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.os.SystemClock;
 import android.text.TextUtils;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.EditText;
@@ -49,6 +53,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 
 import junit.framework.Assert;
@@ -516,5 +521,59 @@ public class NumberPickerTest {
         mNumberPicker.setTextSize(20f);
         assertEquals(20f, mNumberPicker.getTextSize(), 0.01f);
         assertEquals(20f, inputText.getTextSize(), 0.01f);
+    }
+
+    @Test
+    public void testEnterKey() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mNumberPicker.setMinValue(10);
+            mNumberPicker.setMaxValue(14);
+            mNumberPicker.setDisplayedValues(NUMBER_NAMES5);
+        });
+
+        final NumberPicker.OnValueChangeListener mockValueChangeListener =
+                mock(NumberPicker.OnValueChangeListener.class);
+        mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
+
+        final int[] numberPickerLocationOnScreen = new int[2];
+        mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
+        int screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
+        int x = numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2;
+        int y = numberPickerLocationOnScreen[1] + (int) mNumberPicker.getHeight() / 6;
+
+        // Phase 1. Check enter key
+        MotionEvent event = MotionEvent.obtain(System.currentTimeMillis(),
+                System.currentTimeMillis(), MotionEvent.ACTION_DOWN, x, y, 0);
+        mInstrumentation.sendPointerSync(event);
+
+        // Send enter key to call removeAllCallbacks including longpressed
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mNumberPicker, KeyEvent.KEYCODE_ENTER);
+        reset(mockValueChangeListener);
+
+        // Wait a second to check if value is changed or not.
+        SystemClock.sleep(1000);
+        verifyZeroInteractions(mockValueChangeListener);
+
+        event = MotionEvent.obtain(System.currentTimeMillis(), System.currentTimeMillis(),
+                MotionEvent.ACTION_UP, x, y, 0);
+        mInstrumentation.sendPointerSync(event);
+
+        // Phase 2. Check numpad enter key
+        event = MotionEvent.obtain(System.currentTimeMillis(), System.currentTimeMillis(),
+                MotionEvent.ACTION_DOWN, x, y, 0);
+        mInstrumentation.sendPointerSync(event);
+
+        // Send numpad enter key. we expect it works like enter key.
+        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mNumberPicker,
+                KeyEvent.KEYCODE_NUMPAD_ENTER);
+        reset(mockValueChangeListener);
+
+        // Wait a second to check if value is changed or not.
+        SystemClock.sleep(1000);
+        verifyZeroInteractions(mockValueChangeListener);
+
+        event = MotionEvent.obtain(System.currentTimeMillis(), System.currentTimeMillis(),
+                MotionEvent.ACTION_UP, x, y, 0);
+        mInstrumentation.sendPointerSync(event);
     }
 }

@@ -24,6 +24,7 @@ java_test_helper_library {
     libs: ["junit"],
     static_libs: [
         "androidx.annotation_annotation",
+        "androidx.autofill_autofill",
         "compatibility-device-util-axt",
     ],
 }
@@ -34,7 +35,7 @@ android_test_helper_app {
     optimize: {
         enabled: false,
     },
-    sdk_version: "test_current",
+    sdk_version: "current",
     min_sdk_version: "19",
     // tag this module as a cts test artifact
     test_suites: [

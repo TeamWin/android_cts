@@ -83,10 +83,6 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
         return R.string.sec_fingerprint_bound_key_test_info;
     }
 
-    protected String getTag() {
-        return TAG;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -273,7 +269,6 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
 
     protected void showToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-        Log.d(getTag(), message);
     }
 
     public static class FingerprintAuthDialogFragment extends DialogFragment {

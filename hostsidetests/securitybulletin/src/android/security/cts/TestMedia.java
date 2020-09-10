@@ -40,21 +40,88 @@ public class TestMedia extends SecurityTestCase {
      * existing test methods
      ******************************************************************************/
 
+    /**
+     * b/111603051
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2018-10")
+    @Test
+    public void testPocCVE_2018_9491() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2018-9491", null, getDevice());
+    }
+
+    /**
+     * b/79662501
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2018-09")
+    @Test
+    public void testPocCVE_2018_9472() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2018-9472", null, getDevice());
+    }
+
+    /**
+     * CTS test for Android Security b/79662501
+     * b/36554207
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @SecurityTest(minPatchLevel = "2017-06")
+    @Test
+    public void testPocCVE_2016_4658() throws Exception {
+        String inputFiles[] = {"cve_2016_4658.xml"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-4658",
+                AdbUtils.TMP_PATH + inputFiles[0] + " \"range(//namespace::*)\"", inputFiles,
+                AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/36554209
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @SecurityTest(minPatchLevel = "2017-06")
+    @Test
+    public void testPocCVE_2016_5131() throws Exception {
+        String inputFiles[] = {"cve_2016_5131.xml"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-5131",
+                AdbUtils.TMP_PATH + inputFiles[0] + " \"name(range-to(///doc))0+0+22\"", inputFiles,
+                AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/62800140
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2017-10")
+    @Test
+    public void testPocCVE_2017_0814() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0814", null, getDevice());
+    }
+
+    /**
+     * b/112005441
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2019-09")
+    @Test
+    public void testPocCVE_2019_9313() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-9313", null, getDevice());
+    }
+
+    /**
+     * b/112159345
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @SecurityTest(minPatchLevel = "2018-01")
+    @Test
+    public void testPocCVE_2018_9527() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2018-9527", null, getDevice());
+    }
 
     /******************************************************************************
      * To prevent merge conflicts, add tests for P below this comment, before any
      * existing test methods
      ******************************************************************************/
 
-    /**
-     * b/112662184
-     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
-     **/
-    @SecurityTest(minPatchLevel = "2018-11")
-    @Test
-    public void testPocCVE_2018_9536() throws Exception {
-        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2018-9536", getDevice(), 60);
-    }
 
     /******************************************************************************
      * To prevent merge conflicts, add tests for Q below this comment, before any
