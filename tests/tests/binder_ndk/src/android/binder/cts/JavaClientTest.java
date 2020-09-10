@@ -20,38 +20,37 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
 import android.util.Log;
-
 import androidx.test.InstrumentationRegistry;
-
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.BiPredicate;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import test_package.Bar;
 import test_package.ByteEnum;
 import test_package.Foo;
+import test_package.GenericBar;
+import test_package.GenericFoo;
 import test_package.IEmpty;
 import test_package.ITest;
 import test_package.IntEnum;
 import test_package.LongEnum;
 import test_package.RegularPolygon;
-
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.function.BiPredicate;
 
 @RunWith(Parameterized.class)
 public class JavaClientTest {
@@ -618,6 +617,20 @@ public class JavaClientTest {
         Assert.assertArrayEquals(foo.shouldContainTwoByteFoos, repeatedFoo.shouldContainTwoByteFoos);
         Assert.assertArrayEquals(foo.shouldContainTwoIntFoos, repeatedFoo.shouldContainTwoIntFoos);
         Assert.assertArrayEquals(foo.shouldContainTwoLongFoos, repeatedFoo.shouldContainTwoLongFoos);
+    }
+
+    @Test
+    public void testRepeatGenericBar() throws RemoteException {
+      GenericBar<Integer> bar = new GenericBar<Integer>();
+      bar.shouldBeGenericFoo = new GenericFoo<Integer, Bar, Integer>();
+      bar.shouldBeGenericFoo.a = 41;
+      bar.shouldBeGenericFoo.b = 42;
+      GenericBar<Integer> repeatedBar = new GenericBar<Integer>();
+      repeatedBar = mInterface.repeatGenericBar(bar);
+
+      assertEquals(bar.a, repeatedBar.a);
+      assertEquals(bar.shouldBeGenericFoo.a, repeatedBar.shouldBeGenericFoo.a);
+      assertEquals(bar.shouldBeGenericFoo.b, repeatedBar.shouldBeGenericFoo.b);
     }
 
     @Test

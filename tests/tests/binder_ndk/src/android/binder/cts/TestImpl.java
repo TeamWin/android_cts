@@ -20,17 +20,16 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import java.io.FileDescriptor;
 import java.io.IOException;
-
+import java.io.PrintWriter;
+import java.util.concurrent.CountDownLatch;
+import test_package.Bar;
+import test_package.Foo;
+import test_package.GenericBar;
 import test_package.IEmpty;
 import test_package.ITest;
 import test_package.RegularPolygon;
-import test_package.Foo;
-import test_package.Bar;
-
-import java.util.concurrent.CountDownLatch;
-import java.io.FileDescriptor;
-import java.io.PrintWriter;
 
 public class TestImpl extends ITest.Stub {
   @Override
@@ -401,5 +400,10 @@ public class TestImpl extends ITest.Stub {
   @Override
   public int NewMethodThatReturns10() {
     return 10;
+  }
+
+  @Override
+  public GenericBar<Integer> repeatGenericBar(GenericBar<Integer> bar) {
+    return bar;
   }
 }
