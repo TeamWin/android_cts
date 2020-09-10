@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.biometrics;
 
+import android.content.res.Resources;
 import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.os.Bundle;
 import android.util.Log;
@@ -55,8 +56,9 @@ public class SensorConfigurationTest extends AbstractBaseTest {
     }
 
     private boolean isSensorConfigurationValid() {
-        final String config[] = getResources()
-                .getStringArray(com.android.internal.R.array.config_biometric_sensors);
+        final Resources res = Resources.getSystem();
+        final int resId = res.getIdentifier("config_biometric_sensors", "array", "android");
+        final String config[] = res.getStringArray(resId);
 
         // Device configuration should be formatted as "ID:Modality:Strength", where
         // 1) IDs are unique, starting at 0 and increasing by 1 for each new authenticator.
