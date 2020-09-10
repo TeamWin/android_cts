@@ -94,7 +94,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.gotoKeyguard();
             keyguardLock.disableKeyguard();
 
-            lockScreenSession.setLockCredential();
+            lockScreenSession.setLockCredential().gotoKeyguard();
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
         } finally {
