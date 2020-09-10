@@ -89,6 +89,7 @@
             android:debuggable="true"
             android:largeHeap="true"
             android:requestLegacyExternalStorage="true"
+            android:allowBackup="false"
             android:theme="@android:style/Theme.DeviceDefault">
 
         <meta-data android:name="SuiteName" android:value="CTS_VERIFIER" />
