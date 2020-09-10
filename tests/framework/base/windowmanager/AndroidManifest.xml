@@ -379,6 +379,8 @@
         </activity>
 
         <activity android:name="android.server.wm.WindowInputTests$TestActivity" />
+        <service android:name="android.server.wm.WindowInputTests$TestService"
+             android:process=":SecondProcess"/>
 
         <service android:name="android.view.cts.surfacevalidator.LocalMediaProjectionService"
              android:foregroundServiceType="mediaProjection"
