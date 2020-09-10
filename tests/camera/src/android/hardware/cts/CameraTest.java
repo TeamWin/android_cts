@@ -105,8 +105,6 @@ public class CameraTest extends Assert {
     private static final int AUTOWHITEBALANCE_LOCK = 1;
 
     // For external camera recording
-    private static final int DEFAULT_VIDEO_WIDTH = 176;
-    private static final int DEFAULT_VIDEO_HEIGHT = 144;
     private static final int VIDEO_BIT_RATE_IN_BPS = 128000;
 
     // Some exif tags that are not defined by ExifInterface but supported.
@@ -1332,16 +1330,7 @@ public class CameraTest extends Assert {
     }
 
     private Camera.Size setupExternalCameraRecord(Parameters parameters) {
-        assertTrue(parameters.getSupportedVideoSizes() != null);
-        assertTrue(parameters.getSupportedVideoSizes().size() > 0);
-
-        Camera.Size videoSize = null;
-        for (Camera.Size sz : parameters.getSupportedVideoSizes()) {
-            if (sz.width >= DEFAULT_VIDEO_WIDTH && sz.height >= DEFAULT_VIDEO_HEIGHT) {
-                videoSize = sz;
-                break;
-            }
-        }
+        Camera.Size videoSize = parameters.getPreferredPreviewSizeForVideo();
         assertNotNull(videoSize);
         parameters.setPreviewSize(videoSize.width, videoSize.height);
         return videoSize;
