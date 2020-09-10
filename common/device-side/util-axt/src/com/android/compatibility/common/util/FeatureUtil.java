@@ -37,6 +37,7 @@ public class FeatureUtil {
     public static final String AUTOMOTIVE_FEATURE = "android.hardware.type.automotive";
     public static final String LEANBACK_FEATURE = "android.software.leanback";
     public static final String LOW_RAM_FEATURE = "android.hardware.ram.low";
+    public static final String PC_FEATURE = "android.hardware.type.pc";
     public static final String TELEPHONY_FEATURE = "android.hardware.telephony";
     public static final String TV_FEATURE = "android.hardware.type.television";
     public static final String WATCH_FEATURE = "android.hardware.type.watch";
@@ -91,6 +92,11 @@ public class FeatureUtil {
     /** Returns true if the device has feature WATCH_FEATURE */
     public static boolean isWatch() {
         return hasSystemFeature(WATCH_FEATURE);
+    }
+
+    /** Returns true if the device has feature PC_FEATURE */
+    public static boolean isPC() {
+        return hasSystemFeature(PC_FEATURE);
     }
 
     /** Returns true if the device has feature AUTOMOTIVE_FEATURE */
