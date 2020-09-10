@@ -63,6 +63,21 @@ public class LocalIntentSender extends BroadcastReceiver {
         return intent;
     }
 
+    /**
+     * Returns an Intent that targets the given {@code sessionId}, while discarding others.
+     */
+    public static Intent getIntentSenderResult(int sessionId) throws InterruptedException {
+        while (true) {
+            Intent intent = sIntentSenderResults.take();
+            if (intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1) == sessionId) {
+                Log.i(TAG, "Taking intent " + prettyPrint(intent));
+                return intent;
+            } else {
+                Log.i(TAG, "Discarding intent " + prettyPrint(intent));
+            }
+        }
+    }
+
     private static String prettyPrint(Intent intent) {
         int sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1);
         int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS,

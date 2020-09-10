@@ -21,14 +21,14 @@ android_test_helper_app {
     ],
     srcs: ["src/**/*.java"],
     resource_dirs: ["version1/res"],
-    static_libs: [
-        "compatibility-device-util-axt",
-    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts10",
         "general-tests",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
     ],
 }
 

@@ -15,7 +15,6 @@
  */
 package android.app.cts;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +24,6 @@ import static org.junit.Assert.fail;
 import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
 import android.app.DownloadManager.Request;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -41,7 +39,6 @@ import android.util.Log;
 import android.util.Pair;
 
 import androidx.test.filters.FlakyTest;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
@@ -50,8 +47,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 
 @RunWith(AndroidJUnit4.class)
 public class DownloadManagerTest extends DownloadManagerTestBase {
@@ -520,6 +515,30 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
     }
 
     @Test
+    public void testAddCompletedDownload_downloadDir() throws Exception {
+        final String path = createFile(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS), "file1.txt").getPath();
+
+        final String fileContents = "Test content:" + path + "_" + System.nanoTime();
+
+        final File file = new File(path);
+        writeToFile(new File(path), fileContents);
+
+        final long id = mDownloadManager.addCompletedDownload(file.getName(), "Test desc", true,
+                "text/plain", path, fileContents.getBytes().length, true);
+        final String actualContents = readFromFile(mDownloadManager.openDownloadedFile(id));
+        assertEquals(fileContents, actualContents);
+
+        final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(id);
+        mContext.grantUriPermission("com.android.shell", downloadUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        final String rawFilePath = getRawFilePath(downloadUri);
+        final String rawFileContents = readFromRawFile(rawFilePath);
+        assertEquals(fileContents, rawFileContents);
+        assertRemoveDownload(id, 0);
+    }
+
+    @Test
     public void testAddCompletedDownload_invalidPaths() throws Exception {
         final String fileContents = "RED;GREEN;BLUE";
 
@@ -534,9 +553,9 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
             // expected
         }
 
-        // Try adding path in top-level download dir
+        // Try adding path in top-level documents dir
         file = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
                 "colors.txt");
         writeToFileWithDelegator(file, fileContents);
         try {

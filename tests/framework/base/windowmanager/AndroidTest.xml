@@ -38,6 +38,8 @@
         <option name="test-file-name" value="CtsDeviceTranslucentTestApp.apk" />
         <option name="test-file-name" value="CtsDeviceTranslucentTestApp26.apk" />
         <option name="test-file-name" value="CtsMockInputMethod.apk" />
+        <option name="test-file-name" value="CtsDeviceServicesTestShareUidAppA.apk" />
+        <option name="test-file-name" value="CtsDeviceServicesTestShareUidAppB.apk" />
     </target_preparer>
     <!-- Some older apk cannot be installed as instant, so we force them full mode -->
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

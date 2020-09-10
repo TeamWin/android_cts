@@ -30,11 +30,11 @@
 #include <android/hidl/allocator/1.0/IAllocator.h>
 #include <android/hidl/memory/1.0/IMapper.h>
 #include <android/hidl/memory/1.0/IMemory.h>
-#include <android/IGraphicBufferSource.h>
+#include <android/hardware/media/omx/1.0/IGraphicBufferSource.h>
 #include <android/IOMXBufferSource.h>
 #include <media/omx/1.0/WOmx.h>
 #include <binder/MemoryDealer.h>
-#include "HardwareAPI.h"
+#include "media/hardware/HardwareAPI.h"
 #include "OMX_Component.h"
 #include <binder/ProcessState.h>
 #include <media/stagefright/foundation/ALooper.h>

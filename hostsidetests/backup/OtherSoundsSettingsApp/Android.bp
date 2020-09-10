@@ -27,5 +27,8 @@ android_test_helper_app {
         "vts10",
         "general-tests",
     ],
-    sdk_version: "test_current",
+    // Uncomment when b/78787392 is fixed
+    // sdk_version: "system_test_current",
+    platform_apis: true,
+
 }

@@ -26,5 +26,6 @@ java_test_host {
         "tradefed",
         "compatibility-host-util",
         "platformprotos",
+        "truth-prebuilt",
     ],
 }

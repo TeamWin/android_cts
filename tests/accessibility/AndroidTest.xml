@@ -31,4 +31,8 @@
         <option name="package" value="android.view.accessibility.cts" />
         <option name="runtime-hint" value="8m"/>
     </test>
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="directory-keys" value="/sdcard/android.view.accessibility.cts" />
+        <option name="collect-on-run-ended-only" value="true" />
+    </metrics_collector>
 </configuration>

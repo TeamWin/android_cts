@@ -20,10 +20,13 @@ android_test {
         "compatibility-device-util-axt",
         "truth-prebuilt",
         "ctstestrunner-axt",
-        "android.car",
+        // TODO: remove once Android migrates to JUnit 4.12,
+        // which provides assertThrows
+        "testng",
     ],
     libs: [
         "android.test.base",
+        "android.car-test-stubs",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
@@ -32,7 +35,5 @@ android_test {
         "vts10",
         "general-tests",
     ],
-    //TODO(b/72620511) Apps should not use platform APIs directly
-    //sdk_version: "current"
-    platform_apis: true,
+    sdk_version: "test_current",
 }

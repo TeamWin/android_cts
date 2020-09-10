@@ -104,9 +104,6 @@ public class SubscriptionManagerTest {
     public static void setUpClass() throws Exception {
         if (!isSupported()) return;
 
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("svc wifi disable");
-
         final TestNetworkCallback callback = new TestNetworkCallback();
         final ConnectivityManager cm = InstrumentationRegistry.getContext()
                 .getSystemService(ConnectivityManager.class);
@@ -127,9 +124,6 @@ public class SubscriptionManagerTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
         if (!isSupported()) return;
-
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand("svc wifi enable");
     }
 
     @Before
@@ -142,21 +136,27 @@ public class SubscriptionManagerTest {
     }
 
     /**
-     * Correctness check that the device has a cellular network and a valid default data subId
-     * when {@link PackageManager#FEATURE_TELEPHONY} support.
+     * Correctness check that both {@link PackageManager#FEATURE_TELEPHONY} and
+     * {@link NetworkCapabilities#TRANSPORT_CELLULAR} network must both be
+     * either defined or undefined; you can't cross the streams.
      */
     @Test
     public void testCorrectness() throws Exception {
         if (!isSupported()) return;
 
         final boolean hasCellular = findCellularNetwork() != null;
-        if (!hasCellular) {
+        if (isSupported() && !hasCellular) {
             fail("Device claims to support " + PackageManager.FEATURE_TELEPHONY
                     + " but has no active cellular network, which is required for validation");
+        } else if (!isSupported() && hasCellular) {
+            fail("Device has active cellular network, but claims to not support "
+                    + PackageManager.FEATURE_TELEPHONY);
         }
 
-        if (mSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
-            fail("Device must have a valid default data subId for validation");
+        if (isSupported()) {
+            if (mSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+                fail("Device must have a valid default data subId for validation");
+            }
         }
     }
 
@@ -170,7 +170,8 @@ public class SubscriptionManagerTest {
     @Test
     public void testGetActiveSubscriptionInfoForIcc() throws Exception {
         if (!isSupported()) return;
-        SubscriptionInfo info = mSm.getActiveSubscriptionInfo(mSubId);
+        SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfo(mSubId));
         assertNotNull(ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getActiveSubscriptionInfoForIcc(info.getIccId())));
     }
@@ -317,6 +318,8 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetDefaultVoiceSubId() {
+        if (!isSupported()) return;
+
         int oldSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity();
@@ -771,6 +774,22 @@ public class SubscriptionManagerTest {
     }
 
     @Test
+    public void testGetActiveDataSubscriptionId() {
+        if (!isSupported()) return;
+
+        int activeDataSubIdCurrent = executeWithShellPermissionAndDefault(
+                SubscriptionManager.INVALID_SUBSCRIPTION_ID, mSm,
+                (sm) -> sm.getActiveDataSubscriptionId());
+
+        if (activeDataSubIdCurrent != SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            List<SubscriptionInfo> subscriptionInfos = mSm.getCompleteActiveSubscriptionInfoList();
+            boolean foundSub = subscriptionInfos.stream()
+                    .anyMatch(x -> x.getSubscriptionId() == activeDataSubIdCurrent);
+            assertTrue(foundSub);
+        }
+    }
+
+    @Test
     public void testSetPreferredDataSubscriptionId() {
         if (!isSupported()) return;
         int preferredSubId = executeWithShellPermissionAndDefault(-1, mSm,
@@ -780,7 +799,7 @@ public class SubscriptionManagerTest {
             setPreferredDataSubId(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
         }
 
-        List<SubscriptionInfo> subscriptionInfos = mSm.getActiveAndHiddenSubscriptionInfoList();
+        List<SubscriptionInfo> subscriptionInfos = mSm.getCompleteActiveSubscriptionInfoList();
 
         for (SubscriptionInfo subInfo : subscriptionInfos) {
             // Only test on opportunistic subscriptions.

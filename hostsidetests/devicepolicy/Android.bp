@@ -21,6 +21,7 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
+	"compatibility-host-util-axt",
         "guava",
         "truth-prebuilt",
     ],

@@ -18,8 +18,12 @@ package com.android.cts.rollback.host;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
+import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -36,6 +40,8 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class RollbackManagerHostTest extends BaseHostJUnit4Test {
 
+    private static final String TAG = "RollbackManagerHostTest";
+
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
     /**
@@ -47,6 +53,16 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     private void run(String method) throws Exception {
         assertThat(runDeviceTests("com.android.cts.rollback.host.app",
                 "com.android.cts.rollback.host.app.HostTestHelper",
+                method)).isTrue();
+    }
+
+    /**
+     * Runs the helper app test method on device targeted for
+     * com.android.cts.rollback.host.app2.HostTestHelper.
+     */
+    private void run2(String method) throws Exception {
+        assertThat(runDeviceTests("com.android.cts.rollback.host.app2",
+                "com.android.cts.rollback.host.app2.HostTestHelper",
                 method)).isTrue();
     }
 
@@ -68,17 +84,16 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
             // Device doesn't support updating apex. Nothing to uninstall.
             return;
         }
-        final ITestDevice.ApexInfo shimApex = getShimApex();
-        if (shimApex.versionCode == 1) {
-            // System version is active, skipping uninstalling active apex and rebooting the device.
-            return;
+
+        if (getShimApex().sourceDir.startsWith("/data")) {
+            final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
+            if (errorMessage == null) {
+                Log.i(TAG, "Uninstalling shim apex");
+                getDevice().reboot();
+            } else {
+                Log.e(TAG, "Failed to uninstall shim APEX : " + errorMessage);
+            }
         }
-        // Non system version is active, need to uninstall it and reboot the device.
-        final String errorMessage = getDevice().uninstallPackage(SHIM_APEX_PACKAGE_NAME);
-        if (errorMessage != null) {
-            throw new AssertionError("Failed to uninstall " + shimApex);
-        }
-        getDevice().reboot();
         assertThat(getShimApex().versionCode).isEqualTo(1L);
     }
 
@@ -111,6 +126,10 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     @Before
     @After
     public void cleanUp() throws Exception {
+        getDevice().executeShellCommand("for i in $(pm list staged-sessions --only-sessionid "
+                + "--only-parent); do pm install-abandon $i; done");
+        getDevice().executeShellCommand("pm uninstall com.android.cts.install.lib.testapp.A");
+        getDevice().executeShellCommand("pm uninstall com.android.cts.install.lib.testapp.B");
         run("cleanUp");
         uninstallShimApexIfNecessary();
     }
@@ -120,11 +139,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApkOnlyStagedRollback() throws Exception {
-        run("testApkOnlyEnableRollback");
+        run("testApkOnlyStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApkOnlyCommitRollback");
+        run("testApkOnlyStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApkOnlyConfirmRollback");
+        run("testApkOnlyStagedRollback_Phase3");
     }
 
     /**
@@ -160,13 +179,13 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexOnlyStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        run("testApexOnlyInstallFirstVersion");
+        run("testApexOnlyStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApexOnlyEnableRollback");
+        run("testApexOnlyStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApexOnlyCommitRollback");
+        run("testApexOnlyStagedRollback_Phase3");
         getDevice().reboot();
-        run("testApexOnlyConfirmRollback");
+        run("testApexOnlyStagedRollback_Phase4");
     }
 
     /**
@@ -176,27 +195,27 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexOnlySystemVersionStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        run("testApexOnlySystemVersion_EnableRollback");
+        run("testApexOnlySystemVersionStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApexOnlySystemVersion_CommitRollback");
+        run("testApexOnlySystemVersionStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApexOnlySystemVersion_ConfirmRollback");
+        run("testApexOnlySystemVersionStagedRollback_Phase3");
     }
 
     /**
-     * Tests staged rollbacks involving only apex.
+     * Tests staged rollbacks involving apex and apk.
      */
     @Test
     public void testApexAndApkStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        run("testApexAndApkInstallFirstVersion");
+        run("testApexAndApkStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApexAndApkEnableRollback");
+        run("testApexAndApkStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApexAndApkCommitRollback");
+        run("testApexAndApkStagedRollback_Phase3");
         getDevice().reboot();
-        run("testApexAndApkConfirmRollback");
+        run("testApexAndApkStagedRollback_Phase4");
     }
 
     /**
@@ -206,12 +225,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexRollbackExpiration() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        uninstallShimApexIfNecessary();
-        run("testApexRollbackExpirationEnableRollback");
+        run("testApexRollbackExpiration_Phase1");
         getDevice().reboot();
-        run("testApexRollbackExpirationUpdateApex");
+        run("testApexRollbackExpiration_Phase2");
         getDevice().reboot();
-        run("testApexRollbackExpirationConfirmExpiration");
+        run("testApexRollbackExpiration_Phase3");
     }
 
     /**
@@ -221,11 +239,37 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexKeyRotationStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", isApexUpdateSupported());
 
-        run("testApexKeyRotation_EnableRollback");
+        run("testApexKeyRotationStagedRollback_Phase1");
         getDevice().reboot();
-        run("testApexKeyRotation_CommitRollback");
+        run("testApexKeyRotationStagedRollback_Phase2");
         getDevice().reboot();
-        run("testApexKeyRotation_CofirmRollback");
+        run("testApexKeyRotationStagedRollback_Phase3");
     }
 
+    /**
+     * Tests installer B can't rollback a package installed by A.
+     */
+    @Test
+    public void testApkRollbackByAnotherInstaller() throws Exception {
+        run("testApkRollbackByAnotherInstaller_Phase1");
+        run2("testApkRollbackByAnotherInstaller_Phase2");
+    }
+
+    /**
+     * Tests that rollbacks are invalidated upon fingerprint changes.
+     */
+    @Test
+    public void testFingerprintChange() throws Exception {
+        assumeThat(getDevice().getBuildFlavor(), not(endsWith("-user")));
+
+        try {
+            getDevice().executeShellCommand("setprop persist.pm.mock-upgrade true");
+
+            run("testFingerprintChange_Phase1");
+            getDevice().reboot();
+            run("testFingerprintChange_Phase2");
+        } finally {
+            getDevice().executeShellCommand("setprop persist.pm.mock-upgrade false");
+        }
+    }
 }

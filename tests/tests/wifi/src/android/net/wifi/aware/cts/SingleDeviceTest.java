@@ -16,6 +16,10 @@
 
 package android.net.wifi.aware.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.mockito.Mockito.mock;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -28,18 +32,22 @@ import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
 import android.net.wifi.aware.AttachCallback;
 import android.net.wifi.aware.Characteristics;
+import android.net.wifi.aware.DiscoverySession;
 import android.net.wifi.aware.DiscoverySessionCallback;
 import android.net.wifi.aware.IdentityChangedListener;
+import android.net.wifi.aware.ParcelablePeerHandle;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.aware.PublishConfig;
 import android.net.wifi.aware.PublishDiscoverySession;
 import android.net.wifi.aware.SubscribeConfig;
 import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareManager;
+import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
+import android.net.wifi.cts.WifiJUnit3TestBase;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.SystemClock;
+import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
@@ -58,11 +66,17 @@ import java.util.concurrent.TimeUnit;
  * device to validate Wi-Fi Aware.
  */
 @AppModeFull(reason = "Cannot get WifiAwareManager in instant app mode")
-public class SingleDeviceTest extends AndroidTestCase {
+public class SingleDeviceTest extends WifiJUnit3TestBase {
     private static final String TAG = "WifiAwareCtsTests";
 
     // wait for Wi-Fi Aware state changes & network requests callbacks
-    static private final int WAIT_FOR_AWARE_CHANGE_SECS = 10; // 10 seconds
+    private static final int WAIT_FOR_AWARE_CHANGE_SECS = 15; // 15 seconds
+    private static final int WAIT_FOR_NETWORK_STATE_CHANGE_SECS = 25; // 25 seconds
+    private static final int INTERVAL_BETWEEN_TESTS_SECS = 3; // 3 seconds
+    private static final int WAIT_FOR_AWARE_INTERFACE_CREATION_SEC = 3; // 3 seconds
+    private static final int MIN_DISTANCE_MM = 1 * 1000;
+    private static final int MAX_DISTANCE_MM = 3 * 1000;
+    private static final byte[] PMK_VALID = "01234567890123456789012345678901".getBytes();
 
     private final Object mLock = new Object();
     private final HandlerThread mHandlerThread = new HandlerThread("SingleDeviceTest");
@@ -340,7 +354,7 @@ public class SingleDeviceTest extends AndroidTestCase {
          */
         boolean waitForOnUnavailable() {
             try {
-                return mBlocker.await(WAIT_FOR_AWARE_CHANGE_SECS, TimeUnit.SECONDS);
+                return mBlocker.await(WAIT_FOR_NETWORK_STATE_CHANGE_SECS, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 return false;
             }
@@ -402,6 +416,7 @@ public class SingleDeviceTest extends AndroidTestCase {
         }
 
         super.tearDown();
+        Thread.sleep(INTERVAL_BETWEEN_TESTS_SECS * 1000);
     }
 
     /**
@@ -421,6 +436,7 @@ public class SingleDeviceTest extends AndroidTestCase {
         assertEquals("Service Specific Information Length",
                 characteristics.getMaxServiceSpecificInfoLength(), 255);
         assertEquals("Match Filter Length", characteristics.getMaxMatchFilterLength(), 255);
+        assertNotEquals("Cipher suites", characteristics.getSupportedCipherSuites(), 0);
     }
 
     /**
@@ -613,7 +629,8 @@ public class SingleDeviceTest extends AndroidTestCase {
 
         // 2. update-subscribe
         subscribeConfig = new SubscribeConfig.Builder().setServiceName(
-                serviceName).setServiceSpecificInfo("extras".getBytes()).build();
+                serviceName).setServiceSpecificInfo("extras".getBytes())
+                .setMinDistanceMm(MIN_DISTANCE_MM).build();
         discoverySession.updateSubscribe(subscribeConfig);
         assertTrue("Subscribe update", discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
@@ -709,7 +726,7 @@ public class SingleDeviceTest extends AndroidTestCase {
      * Request an Aware data-path (open) as a Responder with an arbitrary peer MAC address. Validate
      * that receive an onUnavailable() callback.
      */
-    public void testDataPathOpenOutOfBandFail() {
+    public void testDataPathOpenOutOfBandFail() throws InterruptedException {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
@@ -724,6 +741,7 @@ public class SingleDeviceTest extends AndroidTestCase {
         session.publish(publishConfig, discoveryCb, mHandler);
         assertTrue("Publish started",
                 discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+        Thread.sleep(WAIT_FOR_AWARE_INTERFACE_CREATION_SEC * 1000);
 
         // 2. request an AWARE network
         NetworkCallbackTest networkCb = new NetworkCallbackTest();
@@ -739,10 +757,11 @@ public class SingleDeviceTest extends AndroidTestCase {
     }
 
     /**
-     * Request an Aware data-path (encrypted) as a Responder with an arbitrary peer MAC address.
+     * Request an Aware data-path (encrypted with Passphrase) as a Responder with an arbitrary peer
+     * MAC address.
      * Validate that receive an onUnavailable() callback.
      */
-    public void testDataPathPassphraseOutOfBandFail() {
+    public void testDataPathPassphraseOutOfBandFail() throws InterruptedException {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
@@ -757,6 +776,7 @@ public class SingleDeviceTest extends AndroidTestCase {
         session.publish(publishConfig, discoveryCb, mHandler);
         assertTrue("Publish started",
                 discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+        Thread.sleep(WAIT_FOR_AWARE_INTERFACE_CREATION_SEC * 1000);
 
         // 2. request an AWARE network
         NetworkCallbackTest networkCb = new NetworkCallbackTest();
@@ -769,6 +789,78 @@ public class SingleDeviceTest extends AndroidTestCase {
         assertTrue("OnUnavailable not received", networkCb.waitForOnUnavailable());
 
         session.close();
+    }
+
+    /**
+     * Request an Aware data-path (encrypted with PMK) as a Responder with an arbitrary peer MAC
+     * address.
+     * Validate that receive an onUnavailable() callback.
+     */
+    public void testDataPathPmkOutOfBandFail() throws InterruptedException {
+        if (!TestUtils.shouldTestWifiAware(getContext())) {
+            return;
+        }
+        MacAddress mac = MacAddress.fromString("00:01:02:03:04:05");
+
+        // 1. initialize Aware: only purpose is to make sure it is available for OOB data-path
+        WifiAwareSession session = attachAndGetSession();
+
+        PublishConfig publishConfig = new PublishConfig.Builder().setServiceName(
+                "ValidName").build();
+        DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
+        session.publish(publishConfig, discoveryCb, mHandler);
+        assertTrue("Publish started",
+                discoveryCb.waitForCallback(DiscoverySessionCallbackTest.ON_PUBLISH_STARTED));
+        Thread.sleep(WAIT_FOR_AWARE_INTERFACE_CREATION_SEC * 1000);
+
+        // 2. request an AWARE network
+        NetworkCallbackTest networkCb = new NetworkCallbackTest();
+        NetworkRequest nr = new NetworkRequest.Builder().addTransportType(
+                NetworkCapabilities.TRANSPORT_WIFI_AWARE).setNetworkSpecifier(
+                session.createNetworkSpecifierPmk(
+                        WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_INITIATOR, mac.toByteArray(),
+                        PMK_VALID)).build();
+        mConnectivityManager.requestNetwork(nr, networkCb);
+        assertTrue("OnUnavailable not received", networkCb.waitForOnUnavailable());
+
+        session.close();
+    }
+
+    /**
+     * Test WifiAwareNetworkSpecifier.
+     */
+    public void testWifiAwareNetworkSpecifier() {
+        DiscoverySession session = mock(DiscoverySession.class);
+        PeerHandle handle = mock(PeerHandle.class);
+        WifiAwareNetworkSpecifier networkSpecifier =
+                new WifiAwareNetworkSpecifier.Builder(session, handle).build();
+        assertFalse(networkSpecifier.canBeSatisfiedBy(null));
+        assertTrue(networkSpecifier.canBeSatisfiedBy(networkSpecifier));
+
+        WifiAwareNetworkSpecifier anotherNetworkSpecifier =
+                new WifiAwareNetworkSpecifier.Builder(session, handle).setPmk(PMK_VALID).build();
+        assertFalse(networkSpecifier.canBeSatisfiedBy(anotherNetworkSpecifier));
+    }
+
+    /**
+     * Test ParcelablePeerHandle parcel.
+     */
+    public void testParcelablePeerHandle() {
+        PeerHandle peerHandle = mock(PeerHandle.class);
+        ParcelablePeerHandle parcelablePeerHandle = new ParcelablePeerHandle(peerHandle);
+        Parcel parcelW = Parcel.obtain();
+        parcelablePeerHandle.writeToParcel(parcelW, 0);
+        byte[] bytes = parcelW.marshall();
+        parcelW.recycle();
+
+        Parcel parcelR = Parcel.obtain();
+        parcelR.unmarshall(bytes, 0, bytes.length);
+        parcelR.setDataPosition(0);
+        ParcelablePeerHandle rereadParcelablePeerHandle =
+                ParcelablePeerHandle.CREATOR.createFromParcel(parcelR);
+
+        assertEquals(parcelablePeerHandle, rereadParcelablePeerHandle);
+        assertEquals(parcelablePeerHandle.hashCode(), rereadParcelablePeerHandle.hashCode());
     }
 
     // local utilities

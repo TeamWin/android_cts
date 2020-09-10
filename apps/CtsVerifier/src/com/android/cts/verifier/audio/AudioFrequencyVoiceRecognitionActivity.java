@@ -21,7 +21,6 @@ import com.android.cts.verifier.audio.wavelib.*;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
-import android.content.Context;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -32,7 +31,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 /**
@@ -81,26 +79,20 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
     private boolean mTestsDone[] = new boolean[TEST_COUNT];
     final OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
 
-    private Context mContext;
-
-    private LinearLayout mLayoutTestTone;
     private Button mButtonTestTone;
     private ProgressBar mProgressTone;
     private TextView mResultTestTone;
     private Button mButtonPlayTone;
 
-    private LinearLayout mLayoutTestNoise;
     private Button mButtonTestNoise;
     private ProgressBar mProgressNoise;
     private TextView mResultTestNoise;
     private Button mButtonPlayNoise;
 
-    private LinearLayout mLayoutTestUsbBackground;
     private Button mButtonTestUsbBackground;
     private ProgressBar mProgressUsbBackground;
     private TextView mResultTestUsbBackground;
 
-    private LinearLayout mLayoutTestUsbNoise;
     private Button mButtonTestUsbNoise;
     private ProgressBar mProgressUsbNoise;
     private TextView mResultTestUsbNoise;
@@ -141,7 +133,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.audio_frequency_voice_recognition_activity);
-        mContext = this;
 
         mSPlayer = new SoundPlayerObject();
         playerSetSource(SOURCE_TONE);
@@ -221,7 +212,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         };
 
         // Test tone
-        mLayoutTestTone = (LinearLayout) findViewById(R.id.vr_layout_test_tone);
         mButtonTestTone = (Button) findViewById(R.id.vr_button_test_tone);
         mButtonTestTone.setOnClickListener(mBtnClickListener);
         mProgressTone = (ProgressBar) findViewById(R.id.vr_test_tone_progress_bar);
@@ -231,7 +221,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         showWait(mProgressTone, false);
 
         //Test Noise
-        mLayoutTestNoise = (LinearLayout) findViewById(R.id.vr_layout_test_noise);
         mButtonTestNoise = (Button) findViewById(R.id.vr_button_test_noise);
         mButtonTestNoise.setOnClickListener(mBtnClickListener);
         mProgressNoise = (ProgressBar) findViewById(R.id.vr_test_noise_progress_bar);
@@ -241,8 +230,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         showWait(mProgressNoise, false);
 
         //USB Background
-        mLayoutTestUsbBackground = (LinearLayout)
-                findViewById(R.id.vr_layout_test_usb_background);
         mButtonTestUsbBackground = (Button) findViewById(R.id.vr_button_test_usb_background);
         mButtonTestUsbBackground.setOnClickListener(mBtnClickListener);
         mProgressUsbBackground = (ProgressBar)
@@ -251,7 +238,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
                 findViewById(R.id.vr_test_usb_background_result);
         showWait(mProgressUsbBackground, false);
 
-        mLayoutTestUsbNoise = (LinearLayout) findViewById(R.id.vr_layout_test_usb_noise);
         mButtonTestUsbNoise = (Button) findViewById(R.id.vr_button_test_usb_noise);
         mButtonTestUsbNoise.setOnClickListener(mBtnClickListener);
         mProgressUsbNoise = (ProgressBar)findViewById(R.id.vr_test_usb_noise_progress_bar);
@@ -329,6 +315,23 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         mResultsMic = new Results("mic_response", BANDS_MIC);
         mResultsTone = new Results("tone_response", BANDS_TONE);
         mResultsBack = new Results("background_response", BANDS_BACKGROUND);
+        connectRefMicUI();
+    }
+
+    //
+    // Overrides
+    //
+    void enableTestUI(boolean enable) {
+        mButtonTestTone.setEnabled(enable);
+        mButtonPlayTone.setEnabled(enable);
+
+        mButtonTestNoise.setEnabled(enable);
+        mButtonPlayNoise.setEnabled(enable);
+
+        mButtonTestUsbBackground.setEnabled(enable);
+
+        mButtonTestUsbNoise.setEnabled(enable);
+        mButtonPlayUsbNoise.setEnabled(enable);
     }
 
     private void playerToggleButton(int buttonId, int sourceId) {
@@ -384,11 +387,11 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
     private void playerSetSource(int sourceIndex) {
         switch (sourceIndex) {
             case SOURCE_TONE:
-                mSPlayer.setSoundWithResId(getApplicationContext(), R.raw.onekhztone);
+                mSPlayer.setSoundWithResId(mContext, R.raw.onekhztone);
                 break;
             default:
             case SOURCE_NOISE:
-                mSPlayer.setSoundWithResId(getApplicationContext(),
+                mSPlayer.setSoundWithResId(mContext,
                         R.raw.stereo_mono_white_noise_48);
                 break;
         }
@@ -409,16 +412,6 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
         if (mSPlayer.isAlive() && mSPlayer.isPlaying()) {
             mSPlayer.play(false);
             setButtonPlayStatus(-1);
-        }
-    }
-
-    /**
-     * enable test ui elements
-     */
-    private void enableLayout(LinearLayout layout, boolean enable) {
-        for (int i = 0; i < layout.getChildCount(); i++) {
-            View view = layout.getChildAt(i);
-            view.setEnabled(enable);
         }
     }
 
@@ -772,7 +765,7 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
             mCurrentTest = mTestId;
             sendMessage(mTestId, TEST_STARTED,"");
             mUsbMicConnected =
-                    UsbMicrophoneTester.getIsMicrophoneConnected(getApplicationContext());
+                    UsbMicrophoneTester.getIsMicrophoneConnected(mContext);
         };
         public void record(int durationMs) {
             mSRecorder.startRecording();

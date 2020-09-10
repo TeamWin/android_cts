@@ -17,12 +17,20 @@ java_test_host {
     defaults: ["cts_defaults"],
 
     // Only compile source java files in this apk.
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.java", "src/**/*.kt"],
 
     libs: [
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
+        "truth-prebuilt",
+        "hamcrest-library",
+    ],
+
+    static_libs: [
+        "CompatChangeGatingTestBase",
+        "CtsPkgInstallerConstants",
+        "cts-host-utils",
     ],
 
     java_resource_dirs: ["res"],
@@ -40,8 +48,14 @@ java_test_host {
         "CtsCorruptApkTests_b71360999",
         "CtsCorruptApkTests_b71361168",
         "CtsCorruptApkTests_b79488511",
+        "CtsCorruptApkTests_Compressed_Q",
+        "CtsCorruptApkTests_Compressed_R",
+        "CtsCorruptApkTests_Unaligned_Q",
+        "CtsCorruptApkTests_Unaligned_R",
     ],
 
+    // Prebuilts of all ABIs.
+    data: [":CtsApkVerityTestPrebuiltFiles"],
 }
 
 filegroup {

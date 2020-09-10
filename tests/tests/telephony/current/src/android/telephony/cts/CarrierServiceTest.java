@@ -18,8 +18,6 @@ package android.telephony.cts;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
-import static org.junit.Assert.fail;
-
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.PersistableBundle;

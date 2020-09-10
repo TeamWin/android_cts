@@ -200,6 +200,38 @@ public class TelephonyManagerPermissionTest {
         }
     }
 
+     /**
+     * Tests that isManualNetworkSelectionAllowed requires permission
+     * Expects a security exception since the caller does not have carrier privileges.
+     */
+    @Test
+    public void testIsManualNetworkSelectionAllowedWithoutPermission() {
+        if (!mHasTelephony) {
+            return;
+        }
+        try {
+            mTelephonyManager.isManualNetworkSelectionAllowed();
+            fail("Expected SecurityException. App does not have carrier privileges.");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    /**
+     * Tests that getManualNetworkSelectionPlmn requires permission
+     * Expects a security exception since the caller does not have carrier privileges.
+     */
+    @Test
+    public void testGetManualNetworkSelectionPlmnWithoutPermission() {
+        if (!mHasTelephony) {
+            return;
+        }
+        try {
+            mTelephonyManager.getManualNetworkSelectionPlmn();
+            fail("Expected SecurityException. App does not have carrier privileges.");
+        } catch (SecurityException expected) {
+        }
+    }
+
     /**
      * Verify that Telephony related broadcasts are protected.
      */
@@ -304,6 +336,32 @@ public class TelephonyManagerPermissionTest {
         } catch (SecurityException e) {
             // expected
         }
+    }
+
+    /**
+     * Tests that getNetworkSelectionMode requires permission
+     * Expects a security exception since the caller does not have carrier privileges.
+     */
+    @Test
+    public void testGetNetworkSelectionModeWithoutPermission() {
+        if (!mHasTelephony) {
+            return;
+        }
+        assertThrowsSecurityException(() -> mTelephonyManager.getNetworkSelectionMode(),
+                "Expected SecurityException. App does not have carrier privileges.");
+    }
+
+    /**
+     * Tests that setNetworkSelectionModeAutomatic requires permission
+     * Expects a security exception since the caller does not have carrier privileges.
+     */
+    @Test
+    public void testSetNetworkSelectionModeAutomaticWithoutPermission() {
+        if (!mHasTelephony) {
+            return;
+        }
+        assertThrowsSecurityException(() -> mTelephonyManager.setNetworkSelectionModeAutomatic(),
+                "Expected SecurityException. App does not have carrier privileges.");
     }
 
     /**

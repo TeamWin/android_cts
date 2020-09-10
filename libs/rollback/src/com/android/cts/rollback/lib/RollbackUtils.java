@@ -186,6 +186,22 @@ public class RollbackUtils {
                 "Rollback did not become unavailable");
     }
 
+    private static boolean hasRollbackInclude(List<RollbackInfo> rollbacks, String packageName) {
+        return rollbacks.stream().anyMatch(
+                ri -> ri.getPackages().stream().anyMatch(
+                        pri -> packageName.equals(pri.getPackageName())));
+    }
+
+    /**
+     * Retries until all rollbacks including {@code packageName} are gone. An assertion is raised if
+     * this does not occur after a certain number of checks.
+     */
+    public static void waitForRollbackGone(
+            Supplier<List<RollbackInfo>> supplier, String packageName) throws InterruptedException {
+        retry(supplier, rollbacks -> !hasRollbackInclude(rollbacks, packageName),
+                "Rollback containing " + packageName + " did not go away");
+    }
+
     private static <T> T retry(Supplier<T> supplier, Predicate<T> predicate, String message)
             throws InterruptedException {
         for (int i = 0; i < RETRY_MAX_INTERVALS; i++) {

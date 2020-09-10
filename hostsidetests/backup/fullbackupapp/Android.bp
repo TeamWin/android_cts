@@ -13,7 +13,7 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsFullbackupApp",
+    name: "CtsHostsideTestsFullBackupApp",
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.rules",

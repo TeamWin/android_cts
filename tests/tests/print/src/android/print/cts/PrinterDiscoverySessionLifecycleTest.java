@@ -41,8 +41,6 @@ import android.print.test.services.SecondPrintService;
 import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrinterDiscoverySession;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiSelector;
 
 import androidx.annotation.NonNull;
 import androidx.test.runner.AndroidJUnit4;
@@ -134,17 +132,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
      * @param printerName The name of the printer to select
      */
     private void selectInAllPrintersActivity(@NonNull String printerName) throws Exception {
-        while (true) {
-            UiObject printerItem = getUiDevice().findObject(
-                    new UiSelector().text(printerName));
-
-            if (printerItem.isEnabled()) {
-                printerItem.click();
-                break;
-            } else {
-                Thread.sleep(100);
-            }
-        }
+        mPrintHelper.selectPrinterWhenAvailable(printerName);
     }
 
     @Test
@@ -257,7 +245,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
     public void normalLifecycle() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
-                createFirstMockPrinterDiscoverySessionCallbacks();
+                createFirstMockPrinterDiscoverySessionCallbacks(false);
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
@@ -281,6 +269,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for write of the first page.
         waitForWriteAdapterCallback(1);
+
+        runOnMainThread(() -> {
+            addPrinter(FIRST_PRINTER_LOCAL_ID, false);
+            addPrinter(SECOND_PRINTER_LOCAL_ID, false);
+        });
 
         runOnMainThread(() -> assertFalse(sSession.isDestroyed()));
         runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
@@ -365,7 +358,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
     public void cancelPrintServicesAlertDialog() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
-                createFirstMockPrinterDiscoverySessionCallbacks();
+                createFirstMockPrinterDiscoverySessionCallbacks(false);
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
@@ -389,6 +382,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for write of the first page.
         waitForWriteAdapterCallback(1);
+
+        runOnMainThread(() -> {
+            addPrinter(FIRST_PRINTER_LOCAL_ID, false);
+            addPrinter(SECOND_PRINTER_LOCAL_ID, false);
+        });
 
         runOnMainThread(() -> assertFalse(sSession.isDestroyed()));
         runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
@@ -455,7 +453,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
     public void startPrinterDiscoveryWithHistoricalPrinters() throws Throwable {
         // Create the session callbacks that we will be checking.
         final PrinterDiscoverySessionCallbacks firstSessionCallbacks =
-                createFirstMockPrinterDiscoverySessionCallbacks();
+                createFirstMockPrinterDiscoverySessionCallbacks(false);
 
         // Create the service callbacks for the first print service.
         PrintServiceCallbacks firstServiceCallbacks = createMockPrintServiceCallbacks(
@@ -479,6 +477,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for write of the first page.
         waitForWriteAdapterCallback(1);
+
+        runOnMainThread(() -> {
+            addPrinter(FIRST_PRINTER_LOCAL_ID, false);
+            addPrinter(SECOND_PRINTER_LOCAL_ID, false);
+        });
 
         runOnMainThread(() -> assertFalse(sSession.isDestroyed()));
         runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
@@ -513,6 +516,16 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
             waitForAdapterFinishCallbackCalled();
         }, OPERATION_TIMEOUT_MILLIS * 2);
 
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        // Set up print service to immediately report the printers
+        final PrinterDiscoverySessionCallbacks firstSessionCallbacksWithPrinters =
+                createFirstMockPrinterDiscoverySessionCallbacks(true);
+        PrintServiceCallbacks firstServiceCallbacksWithPrinters = createMockPrintServiceCallbacks(
+                invocation -> firstSessionCallbacksWithPrinters,
+                invocation -> null, null);
+        FirstPrintService.setCallbacks(firstServiceCallbacksWithPrinters);
+
         // Now print again as we want to confirm that the start
         // printer discovery passes in the priority list.
         print(adapter);
@@ -524,18 +537,17 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         waitForLayoutAdapterCallbackCount(4);
 
         // Cancel the printing.
-        getUiDevice().pressBack(); // wakes up the device.
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         // Wait for all print jobs to be handled after which the is session destroyed.
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        waitForPrinterDiscoverySessionDestroyCallbackCalled(2);
 
         runOnMainThread(() -> assertTrue(sSession.isDestroyed()));
         runOnMainThread(() -> assertFalse(sSession.isPrinterDiscoveryStarted()));
         runOnMainThread(() -> assertEquals(0, sSession.getTrackedPrinters().size()));
 
         // Verify the expected calls.
-        InOrder inOrder = inOrder(firstSessionCallbacks);
+        InOrder inOrder = inOrder(firstSessionCallbacks, firstSessionCallbacksWithPrinters);
 
         // We start discovery with no printer history.
         List<PrinterId> priorityList = new ArrayList<>();
@@ -550,33 +562,26 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         inOrder.verify(firstSessionCallbacks).onStopPrinterStateTracking(
                 firstPrinterId);
 
-        // This is tricky. It is possible that the print activity was not
-        // destroyed (the platform delays destruction at convenient time as
-        // an optimization) and we get the same instance which means that
-        // the discovery session may not have been destroyed. We try the
-        // case with the activity being destroyed and if this fails the
-        // case with the activity brought to front.
+        inOrder.verify(firstSessionCallbacks).onStopPrinterDiscovery();
+        inOrder.verify(firstSessionCallbacks).onDestroy();
+
         priorityList.add(firstPrinterId);
-        try {
-            inOrder.verify(firstSessionCallbacks).onStartPrinterDiscovery(priorityList);
-        } catch (VerificationInOrderFailure error) {
-            inOrder.verify(firstSessionCallbacks).onValidatePrinters(priorityList);
-        }
+        inOrder.verify(firstSessionCallbacksWithPrinters).onStartPrinterDiscovery(priorityList);
 
         // The system selects the highest ranked historical printer.
-        inOrder.verify(firstSessionCallbacks).onStartPrinterStateTracking(
+        inOrder.verify(firstSessionCallbacksWithPrinters).onStartPrinterStateTracking(
                 firstPrinterId);
 
         // We canceled print so the first should not be tracked.
-        inOrder.verify(firstSessionCallbacks).onStopPrinterStateTracking(
+        inOrder.verify(firstSessionCallbacksWithPrinters).onStopPrinterStateTracking(
                 firstPrinterId);
 
 
         // Discovery is always stopped before the session is always destroyed.
-        inOrder.verify(firstSessionCallbacks).onStopPrinterDiscovery();
+        inOrder.verify(firstSessionCallbacksWithPrinters).onStopPrinterDiscovery();
 
         // ...last the session is destroyed.
-        inOrder.verify(firstSessionCallbacks).onDestroy();
+        inOrder.verify(firstSessionCallbacksWithPrinters).onDestroy();
     }
 
     @Test
@@ -646,7 +651,7 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         runOnMainThread(() -> session[0].removePrinters(printerIdsToRemove));
         eventually(() -> runOnMainThread(() -> assertEquals(0, session[0].getPrinters().size())));
 
-        getUiDevice().pressBack();
+        mPrintHelper.cancelPrinting();
 
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
@@ -674,7 +679,8 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
         return createMockPrintServiceCallbacks(null, null, null);
     }
 
-    private PrinterDiscoverySessionCallbacks createFirstMockPrinterDiscoverySessionCallbacks() {
+    private PrinterDiscoverySessionCallbacks createFirstMockPrinterDiscoverySessionCallbacks(
+            boolean shouldAddPrinters) {
         return createMockPrinterDiscoverySessionCallbacks(invocation -> {
             // Get the session.
             sSession = ((PrinterDiscoverySessionCallbacks)
@@ -682,8 +688,10 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
             assertTrue(sSession.isPrinterDiscoveryStarted());
 
-            addPrinter(FIRST_PRINTER_LOCAL_ID, false);
-            addPrinter(SECOND_PRINTER_LOCAL_ID, false);
+            if (shouldAddPrinters) {
+                addPrinter(FIRST_PRINTER_LOCAL_ID, false);
+                addPrinter(SECOND_PRINTER_LOCAL_ID, false);
+            }
 
             return null;
         }, invocation -> {

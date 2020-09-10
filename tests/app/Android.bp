@@ -24,12 +24,14 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "ctstestserver",
+        "cts-opengl-util",
         "cts-wm-util",
         "mockito-target-minus-junit4",
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "platform-test-annotations",
         "platformprotosnano",
+        "permission-test-util-lib"
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
@@ -79,7 +81,7 @@ android_test {
 }
 
 android_test {
-    name: "CtsDownloadManagerLegacy",
+    name: "CtsDownloadManagerInstaller",
     defaults: ["cts_defaults"],
     libs: [
         "android.test.runner",
@@ -96,7 +98,7 @@ android_test {
         "androidx.test.rules",
     ],
     srcs: [
-        "DownloadManagerLegacyTest/src/**/*.java",
+        "DownloadManagerInstallerTest/src/**/*.java",
         "src/android/app/cts/DownloadManagerTestBase.java",
     ],
     resource_dirs: ["app/res"],
@@ -109,6 +111,35 @@ android_test {
     ],
     sdk_version: "test_current",
     min_sdk_version: "14",
-    manifest: "DownloadManagerLegacyTest/AndroidManifest.xml",
-    test_config: "DownloadManagerLegacyTest/AndroidTest.xml",
+    manifest: "DownloadManagerInstallerTest/AndroidManifest.xml",
+    test_config: "DownloadManagerInstallerTest/AndroidTest.xml",
+}
+
+android_test {
+    name: "CtsAppExitTestCases",
+    defaults: ["cts_defaults"],
+    libs: [
+        "android.test.runner",
+        "org.apache.http.legacy",
+        "android.test.base",
+    ],
+    static_libs: [
+        "ub-uiautomator",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "CtsExternalServiceCommon",
+        "cts-wm-util",
+    ],
+    srcs: [
+        "AppExitTest/src/**/*.java",
+        "src/android/app/cts/android/app/cts/tools/WatchUidRunner.java",
+    ],
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+    manifest: "AppExitTest/AndroidManifest.xml",
+    test_config: "AppExitTest/AndroidTest.xml",
+    platform_apis: true,
 }

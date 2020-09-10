@@ -29,11 +29,14 @@ import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioMetadata;
+import android.media.AudioMetadataReadMap;
 import android.media.AudioPresentation;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
 import android.os.PersistableBundle;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 
@@ -48,6 +51,7 @@ import com.android.compatibility.common.util.ResultUnit;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.concurrent.Executor;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -2095,6 +2099,11 @@ public class AudioTrackTest {
                 .isLowRamDevice();
     }
 
+    private boolean isProAudioDevice() {
+        return getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUDIO_PRO);
+    }
+
     @Test
     public void testGetTimestamp() throws Exception {
         if (!hasAudioOutput()) {
@@ -2181,7 +2190,7 @@ public class AudioTrackTest {
 
             long framesWritten = 0;
             final AudioHelper.TimestampVerifier tsVerifier =
-                    new AudioHelper.TimestampVerifier(TAG, sampleRate);
+                    new AudioHelper.TimestampVerifier(TAG, sampleRate, isProAudioDevice());
             for (int i = 0; i < TEST_LOOP_CNT; ++i) {
                 final long trackWriteTimeNs = System.nanoTime();
 
@@ -2463,6 +2472,8 @@ public class AudioTrackTest {
             Thread.sleep(300 /* millis */); // warm up track
 
             int anticipatedPosition = track.getPlaybackHeadPosition();
+            long timeMs = SystemClock.elapsedRealtime();
+            final long startTimeMs = timeMs;
             for (int j = 0; j < testSteps; ++j) {
                 // set playback settings
                 final float pitch = playbackParams.getPitch();
@@ -2479,14 +2490,17 @@ public class AudioTrackTest {
 
                 // sleep for playback
                 Thread.sleep(TEST_DELTA_MS);
+                final long newTimeMs = SystemClock.elapsedRealtime();
                 // Log.d(TAG, "position[" + j + "] " + track.getPlaybackHeadPosition());
                 anticipatedPosition +=
-                        playbackParams.getSpeed() * TEST_DELTA_MS * TEST_SR / 1000;
+                        playbackParams.getSpeed() * (newTimeMs - timeMs) * TEST_SR / 1000;
+                timeMs = newTimeMs;
                 playbackParams.setPitch(playbackParams.getPitch() + pitchInc);
                 playbackParams.setSpeed(playbackParams.getSpeed() + speedInc);
             }
             final int endPosition = track.getPlaybackHeadPosition();
             final int tolerance100MsInFrames = 100 * TEST_SR / 1000;
+            Log.d(TAG, "Total playback time: " + (timeMs - startTimeMs));
             assertEquals(TAG, anticipatedPosition, endPosition, tolerance100MsInFrames);
             track.stop();
 
@@ -2655,6 +2669,193 @@ public class AudioTrackTest {
                 track.release();
             }
         }
+    }
+
+    @Test
+    public void testMaxAudioTracks() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        // The framework must not give more than MAX_TRACKS tracks per UID.
+        final int MAX_TRACKS = 512; // an arbitrary large number > 40
+        final int FRAMES = 1024;
+
+        final AudioTrack[] tracks = new AudioTrack[MAX_TRACKS];
+        final AudioTrack.Builder builder = new AudioTrack.Builder()
+            .setAudioFormat(new AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_8BIT)
+                .setSampleRate(8000)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                .build())
+            .setBufferSizeInBytes(FRAMES)
+            .setTransferMode(AudioTrack.MODE_STATIC);
+
+        int n = 0;
+        try {
+            for (; n < MAX_TRACKS; ++n) {
+                tracks[n] = builder.build();
+            }
+        } catch (UnsupportedOperationException e) {
+            ; // we expect this when we hit the uid track limit.
+        }
+
+        // release all the tracks created.
+        for (int i = 0; i < n; ++i) {
+            tracks[i].release();
+            tracks[i] = null;
+        }
+        Log.d(TAG, "" + n + " tracks were created");
+        assertTrue("should be able to create at least one static track", n > 0);
+        assertTrue("was able to create " + MAX_TRACKS + " tracks - that's too many!",
+            n < MAX_TRACKS);
+    }
+
+    @Test
+    public void testTunerConfiguration() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+                final AudioTrack.TunerConfiguration badConfig =
+                    new AudioTrack.TunerConfiguration(0 /* contentId */, 1 /* syncId */);
+            });
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+                final AudioTrack.TunerConfiguration badConfig =
+                    new AudioTrack.TunerConfiguration(1 /* contentId*/, 0 /* syncId */);
+            });
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+                final AudioTrack track = new AudioTrack.Builder()
+                    .setEncapsulationMode(-1)
+                    .build();
+                track.release();
+            });
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {
+                final AudioTrack track = new AudioTrack.Builder()
+                    .setTunerConfiguration(null)
+                    .build();
+                track.release();
+            });
+
+        // this should work.
+        final AudioTrack.TunerConfiguration tunerConfiguration =
+                new AudioTrack.TunerConfiguration(1 /* contentId */, 2 /* syncId */);
+
+        assertEquals("contentId must be set", 1, tunerConfiguration.getContentId());
+        assertEquals("syncId must be set", 2, tunerConfiguration.getSyncId());
+
+        // this may fail on creation, not in any setters.
+        try {
+            final AudioTrack track = new AudioTrack.Builder()
+                .setEncapsulationMode(AudioTrack.ENCAPSULATION_MODE_NONE)
+                .setTunerConfiguration(tunerConfiguration)
+                .build();
+            track.release();
+        } catch (UnsupportedOperationException e) {
+            ; // creation failure is OK as TunerConfiguration requires HW support,
+              // however other exception failures are not OK.
+        }
+    }
+
+    @Test
+    public void testCodecFormatChangedListener() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final AudioTrack audioTrack = new AudioTrack.Builder().build();
+
+        assertThrows(
+            NullPointerException.class,
+            () -> { audioTrack.addOnCodecFormatChangedListener(
+                    null /* executor */, null /* listener */); });
+
+        assertThrows(
+            NullPointerException.class,
+            () -> { audioTrack.removeOnCodecFormatChangedListener(null /* listener */); });
+
+
+        final AudioTrack.OnCodecFormatChangedListener listener =
+            (AudioTrack track, AudioMetadataReadMap readMap) -> {};
+
+        // add a synchronous executor.
+        audioTrack.addOnCodecFormatChangedListener(new Executor() {
+                @Override
+                public void execute(Runnable r) {
+                    r.run();
+                }
+            }, listener);
+        audioTrack.removeOnCodecFormatChangedListener(listener);
+        audioTrack.release();
+    }
+
+    @Test
+    public void testDualMonoMode() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final AudioTrack audioTrack = new AudioTrack.Builder().build();
+
+        // Note that the output device may not support Dual Mono mode.
+        // The following path should always succeed.
+        audioTrack.setDualMonoMode(AudioTrack.DUAL_MONO_MODE_OFF);
+        assertEquals(AudioTrack.DUAL_MONO_MODE_OFF, audioTrack.getDualMonoMode());
+
+        // throws IAE on invalid argument.
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> { audioTrack.setDualMonoMode(-1); }
+        );
+
+        // check behavior after release.
+        audioTrack.release();
+        assertThrows(
+            IllegalStateException.class,
+            () -> { audioTrack.setDualMonoMode(AudioTrack.DUAL_MONO_MODE_OFF); }
+        );
+        assertEquals(AudioTrack.DUAL_MONO_MODE_OFF, audioTrack.getDualMonoMode());
+    }
+
+    @Test
+    public void testAudioDescriptionMixLevel() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final AudioTrack audioTrack = new AudioTrack.Builder().build();
+
+        // Note that the output device may not support Audio Description Mix Level.
+        // The following path should always succeed.
+        audioTrack.setAudioDescriptionMixLeveldB(Float.NEGATIVE_INFINITY);
+        assertEquals(Float.NEGATIVE_INFINITY,
+                audioTrack.getAudioDescriptionMixLeveldB(), 0.f /*delta*/);
+
+        // throws IAE on invalid argument.
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> { audioTrack.setAudioDescriptionMixLeveldB(1e6f); }
+        );
+
+        // check behavior after release.
+        audioTrack.release();
+        assertThrows(
+            IllegalStateException.class,
+            () -> { audioTrack.setAudioDescriptionMixLeveldB(0.f); }
+        );
+        assertEquals(Float.NEGATIVE_INFINITY,
+            audioTrack.getAudioDescriptionMixLeveldB(), 0.f /*delta*/);
     }
 
 /* Do not run in JB-MR1. will be re-opened in the next platform release.

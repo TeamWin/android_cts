@@ -20,6 +20,7 @@ import static junit.framework.TestCase.assertEquals;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -98,6 +99,8 @@ public class ImsMmTelManagerTest {
 
     @BeforeClass
     public static void beforeAllTests() {
+        // assumeTrue() in @BeforeClass is not supported by our test runner.
+        // Resort to the early exit.
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -117,6 +120,8 @@ public class ImsMmTelManagerTest {
 
     @AfterClass
     public static void afterAllTests() {
+        // assumeTrue() in @AfterClass is not supported by our test runner.
+        // Resort to the early exit.
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -129,9 +134,7 @@ public class ImsMmTelManagerTest {
 
     @Before
     public void beforeTest() {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
+        assumeTrue(ImsUtils.shouldTestImsService());
 
         if (!SubscriptionManager.isValidSubscriptionId(sTestSub)) {
             fail("This test requires that there is a SIM in the device!");
@@ -159,9 +162,6 @@ public class ImsMmTelManagerTest {
      */
     @Test
     public void testAdvancedCallingSetting() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
         // Ensure advanced calling setting is editable.
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(CarrierConfigManager.KEY_EDITABLE_ENHANCED_4G_LTE_BOOL, true);
@@ -199,10 +199,6 @@ public class ImsMmTelManagerTest {
      */
     @Test
     public void testVtSetting() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
-
         // Register Observer
         Uri callingUri = Uri.withAppendedPath(
                 SubscriptionManager.VT_ENABLED_CONTENT_URI, "" + sTestSub);
@@ -233,10 +229,6 @@ public class ImsMmTelManagerTest {
      */
     @Test
     public void testVoWiFiSetting() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
-
         PersistableBundle bundle = new PersistableBundle();
         // Do not worry about provisioning for this test
         bundle.putBoolean(KEY_CARRIER_VOLTE_OVERRIDE_WFC_PROVISIONING_BOOL, false);
@@ -274,10 +266,6 @@ public class ImsMmTelManagerTest {
      */
     @Test
     public void testVoWiFiRoamingSetting() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
-
         Uri callingUri = Uri.withAppendedPath(
                 SubscriptionManager.WFC_ROAMING_ENABLED_CONTENT_URI, "" + sTestSub);
         CountDownLatch contentObservedLatch = new CountDownLatch(1);
@@ -306,9 +294,6 @@ public class ImsMmTelManagerTest {
      */
     @Test
     public void testGetVoWiFiModeSetting_noPermission() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
         try {
             ImsManager imsManager = getContext().getSystemService(ImsManager.class);
             ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
@@ -325,9 +310,6 @@ public class ImsMmTelManagerTest {
      */
     @Test
     public void testGetVoWiFiRoamingModeSetting_noPermission() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
         try {
             ImsManager imsManager = getContext().getSystemService(ImsManager.class);
             ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
@@ -345,10 +327,6 @@ public class ImsMmTelManagerTest {
      */
     @Test
     public void testVoWiFiModeSetting() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
-
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(KEY_EDITABLE_WFC_MODE_BOOL, true);
         overrideCarrierConfig(bundle);
@@ -383,10 +361,6 @@ public class ImsMmTelManagerTest {
      */
     @Test
     public void testVoWiFiRoamingModeSetting() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
-
         PersistableBundle bundle = new PersistableBundle();
         // Ensure the WFC roaming mode will be changed properly
         bundle.putBoolean(KEY_USE_WFC_HOME_NETWORK_MODE_IN_ROAMING_NETWORK_BOOL, false);
@@ -424,10 +398,6 @@ public class ImsMmTelManagerTest {
      */
     @Test
     public void testMethodPermissions() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
-            return;
-        }
-
         ImsManager imsManager = getContext().getSystemService(ImsManager.class);
         ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
         // setRttCapabilitySetting

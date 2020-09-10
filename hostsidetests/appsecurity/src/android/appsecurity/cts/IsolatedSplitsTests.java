@@ -69,7 +69,7 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     private void testInstallBase(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_BASE).run();
+        new InstallMultiple(instant).addFile(APK_BASE).run();
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
     }
 
@@ -86,7 +86,7 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     private void testInstallBaseAndConfigSplit(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_BASE).addApk(APK_BASE_pl).run();
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_BASE_pl).run();
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS, "shouldLoadPolishLocale");
     }
 
@@ -103,7 +103,7 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     private void testInstallMissingDependency(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_BASE).addApk(APK_FEATURE_B).runExpectingFailure();
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_FEATURE_B).runExpectingFailure();
     }
 
     @Test
@@ -114,7 +114,7 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     private void testInstallOneFeatureSplit(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_BASE).addApk(APK_FEATURE_A).run();
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_FEATURE_A).run();
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
                 "shouldLoadFeatureADefault");
@@ -135,8 +135,8 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     private void testInstallOneFeatureSplitAndConfigSplits(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_BASE_pl)
-                .addApk(APK_FEATURE_A_pl).run();
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_FEATURE_A).addFile(APK_BASE_pl)
+                .addFile(APK_FEATURE_A_pl).run();
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS, "shouldLoadPolishLocale");
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
                 "shouldLoadFeatureAPolishLocale");
@@ -151,7 +151,7 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
 
     private void testInstallDependentFeatureSplits(boolean instant) throws Exception {
         new InstallMultiple(instant)
-                .addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B).run();
+                .addFile(APK_BASE).addFile(APK_FEATURE_A).addFile(APK_FEATURE_B).run();
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
                 "shouldLoadFeatureADefault");
@@ -175,8 +175,8 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
 
     private void testInstallDependentFeatureSplitsAndConfigSplits(boolean instant)
             throws Exception {
-        new InstallMultiple(instant).addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B)
-                .addApk(APK_BASE_pl).addApk(APK_FEATURE_A_pl).addApk(APK_FEATURE_B_pl).run();
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_FEATURE_A).addFile(APK_FEATURE_B)
+                .addFile(APK_BASE_pl).addFile(APK_FEATURE_A_pl).addFile(APK_FEATURE_B_pl).run();
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS, "shouldLoadPolishLocale");
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
                 "shouldLoadFeatureAPolishLocale");
@@ -192,8 +192,8 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     private void testInstallAllFeatureSplits(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B)
-                .addApk(APK_FEATURE_C).run();
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_FEATURE_A).addFile(APK_FEATURE_B)
+                .addFile(APK_FEATURE_C).run();
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
                 "shouldLoadFeatureADefault");
@@ -218,9 +218,9 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     private void testInstallAllFeatureSplitsAndConfigSplits(boolean instant) throws Exception {
-        new InstallMultiple(instant).addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B)
-                .addApk(APK_FEATURE_C).addApk(APK_BASE_pl).addApk(APK_FEATURE_A_pl)
-                .addApk(APK_FEATURE_C_pl).run();
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_FEATURE_A).addFile(APK_FEATURE_B)
+                .addFile(APK_FEATURE_C).addFile(APK_BASE_pl).addFile(APK_FEATURE_A_pl)
+                .addFile(APK_FEATURE_C_pl).run();
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS, "shouldLoadDefault");
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
                 "shouldLoadFeatureADefault");

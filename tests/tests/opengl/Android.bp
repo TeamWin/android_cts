@@ -12,6 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+java_test_helper_library {
+    name: "cts-opengl-util",
+
+    srcs: [
+        ":cts-opengl-app-util",
+    ],
+
+    sdk_version: "test_current",
+}
+
+filegroup {
+    name: "cts-opengl-app-util",
+    srcs: [
+        "src/android/opengl/cts/Egl14Utils.java",
+    ],
+}
+
 android_test {
     name: "CtsOpenGLTestCases",
     defaults: ["cts_defaults"],

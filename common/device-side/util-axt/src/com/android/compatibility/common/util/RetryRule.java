@@ -30,6 +30,7 @@ import org.junit.runners.model.Statement;
 public class RetryRule implements TestRule {
 
     private static final String TAG = "RetryRule";
+
     private final int mMaxAttempts;
     private final Runnable mCleaner;
 

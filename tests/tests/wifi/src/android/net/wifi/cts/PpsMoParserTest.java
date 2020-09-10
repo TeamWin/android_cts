@@ -37,7 +37,7 @@ import java.util.Map;
 /**
  * CTS tests for PPS MO (PerProviderSubscription Management Object) XML string parsing API.
  */
-public class PpsMoParserTest extends AndroidTestCase {
+public class PpsMoParserTest extends WifiJUnit3TestBase {
     private static final String PPS_MO_XML_FILE = "assets/PerProviderSubscription.xml";
 
     /**

@@ -34,7 +34,6 @@ LOCAL_USE_AAPT2 := true
 LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                compatibility-common-util-devicesidelib \
                                cts-sensors-tests \
-                               cts-location-tests \
                                cts-camera-performance-tests \
                                ctstestrunner-axt \
                                apache-commons-math \
@@ -57,6 +56,7 @@ LOCAL_JAVA_LIBRARIES += telephony-common
 LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
 LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 LOCAL_JAVA_LIBRARIES += android.test.mock.stubs
+LOCAL_JAVA_LIBRARIES += android.car
 LOCAL_JAVA_LIBRARIES += voip-common
 LOCAL_JAVA_LIBRARIES += truth-prebuilt
 
@@ -113,7 +113,8 @@ pre-installed-apps := \
     CtsEmptyDeviceOwner \
     CtsPermissionApp \
     CtsForceStopHelper \
-    NotificationBot
+    NotificationBot \
+    CrossProfileTestApp
 
 # Apps to be installed as Instant App using adb install --instant
 pre-installed-instant-app := CtsVerifierInstantApp

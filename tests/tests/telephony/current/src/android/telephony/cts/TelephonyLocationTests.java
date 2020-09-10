@@ -13,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
@@ -193,8 +194,25 @@ public class TelephonyLocationTests {
                 }
             }, Manifest.permission.ACCESS_COARSE_LOCATION);
         }, Manifest.permission.ACCESS_FINE_LOCATION);
-
     }
+
+    @Test
+    public void testSdk28CellInfoUpdate() {
+        if (!mShouldTest) return;
+
+        // Verify that a target-sdk 28 app still requires fine location access
+        // to call requestCellInfoUpdate
+        withRevokedPermission(LOCATION_ACCESS_APP_SDK28_PACKAGE, () -> {
+            try {
+                List<CellInfo> cis = (List<CellInfo>) performLocationAccessCommandSdk28(
+                        CtsLocationAccessService.COMMAND_REQUEST_CELL_INFO_UPDATE);
+                assertTrue(cis == null || cis.isEmpty());
+            } catch (SecurityException e) {
+                // expected
+            }
+        }, Manifest.permission.ACCESS_FINE_LOCATION);
+    }
+
     private ICtsLocationAccessControl getLocationAccessAppControl() {
         Intent bindIntent = new Intent(CtsLocationAccessService.CONTROL_ACTION);
         bindIntent.setComponent(new ComponentName(

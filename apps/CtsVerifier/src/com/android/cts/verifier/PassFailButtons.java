@@ -35,6 +35,8 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
 import android.widget.Toast;
+import android.app.ActionBar;
+import android.view.MenuItem;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -180,6 +182,25 @@ public class PassFailButtons {
 
         @Override
         public TestResultHistoryCollection getHistoryCollection() { return mHistoryCollection; }
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            ActionBar actBar = getActionBar();
+            if (actBar != null) {
+                actBar.setDisplayHomeAsUpEnabled(true);
+            }
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            if (item.getItemId() == android.R.id.home) {
+                onBackPressed();
+                return true;
+            }
+            return super.onOptionsItemSelected(item);
+        }
+
     }
 
     public static class ListActivity extends android.app.ListActivity implements PassFailActivity {
@@ -234,6 +255,25 @@ public class PassFailButtons {
 
         @Override
         public TestResultHistoryCollection getHistoryCollection() { return mHistoryCollection; }
+
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            ActionBar actBar = getActionBar();
+            if (actBar != null) {
+                actBar.setDisplayHomeAsUpEnabled(true);
+            }
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            if (item.getItemId() == android.R.id.home) {
+                onBackPressed();
+                return true;
+            }
+            return super.onOptionsItemSelected(item);
+        }
     }
 
     public static class TestListActivity extends AbstractTestListActivity
@@ -301,6 +341,25 @@ public class PassFailButtons {
 
         public void updatePassButton() {
             getPassButton().setEnabled(mAdapter.allTestsPassed());
+        }
+
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            ActionBar actBar = getActionBar();
+            if (actBar != null) {
+                actBar.setDisplayHomeAsUpEnabled(true);
+            }
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            if (item.getItemId() == android.R.id.home) {
+                onBackPressed();
+                return true;
+            }
+            return super.onOptionsItemSelected(item);
         }
     }
 

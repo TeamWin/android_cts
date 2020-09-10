@@ -38,7 +38,11 @@ android_test {
         "libctspermission_jni",
         "libnativehelper_compat_libc++",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.aidl",
+        "src/**/*.kt",
+    ],
     sdk_version: "test_current",
     libs: [
         "android.test.runner",

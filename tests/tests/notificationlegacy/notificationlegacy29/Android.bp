@@ -31,8 +31,9 @@ android_test {
         "cts",
         "vts10",
         "general-tests",
+        "mts"
     ],
-    // TODO: replace with 29 once 29 finalized
     sdk_version: "test_current",
+    target_sdk_version: "29",
     min_sdk_version: "29",
 }
