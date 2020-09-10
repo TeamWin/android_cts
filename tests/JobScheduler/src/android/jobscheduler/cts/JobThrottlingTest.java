@@ -105,6 +105,7 @@ public class JobThrottlingTest {
     private String mInitialDisplayTimeout;
     private String mInitialRestrictedBucketEnabled;
     private boolean mAutomotiveDevice;
+    private boolean mLeanbackOnly;
 
     private TestAppInterface mTestAppInterface;
 
@@ -171,7 +172,10 @@ public class JobThrottlingTest {
         // In automotive device, always-on screen and endless battery charging are assumed.
         mAutomotiveDevice =
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
-        if (mAutomotiveDevice) {
+        // In leanback devices, it is assumed that there is no battery.
+        mLeanbackOnly =
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
+        if (mAutomotiveDevice || mLeanbackOnly) {
             setScreenState(true);
             // TODO(b/159176758): make sure that initial power supply is on.
             BatteryUtils.runDumpsysBatterySetPluggedIn(true);
@@ -296,6 +300,7 @@ public class JobThrottlingTest {
     public void testJobsInRestrictedBucket_ParoleSession() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         setRestrictedBucketEnabled(true);
 
@@ -322,6 +327,7 @@ public class JobThrottlingTest {
     public void testJobsInRestrictedBucket_NoRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         setRestrictedBucketEnabled(true);
 
@@ -360,6 +366,8 @@ public class JobThrottlingTest {
     public void testJobsInRestrictedBucket_WithRequiredNetwork() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
         assumeTrue(mHasWifi);
         ensureSavedWifiNetwork(mWifiManager);
 
@@ -410,6 +418,7 @@ public class JobThrottlingTest {
     public void testJobsInNeverApp() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         BatteryUtils.runDumpsysBatteryUnplug();
         setTestPackageStandbyBucket(Bucket.NEVER);
@@ -421,6 +430,7 @@ public class JobThrottlingTest {
     @Test
     public void testUidActiveBypassesStandby() throws Exception {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
 
         BatteryUtils.runDumpsysBatteryUnplug();
         setTestPackageStandbyBucket(Bucket.NEVER);
@@ -434,6 +444,8 @@ public class JobThrottlingTest {
     @Test
     public void testBatterySaverOff() throws Exception {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
         BatteryUtils.assumeBatterySaverFeature();
 
         BatteryUtils.runDumpsysBatteryUnplug();
@@ -446,6 +458,8 @@ public class JobThrottlingTest {
     @Test
     public void testBatterySaverOn() throws Exception {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
         BatteryUtils.assumeBatterySaverFeature();
 
         BatteryUtils.runDumpsysBatteryUnplug();
@@ -458,6 +472,8 @@ public class JobThrottlingTest {
     @Test
     public void testUidActiveBypassesBatterySaverOn() throws Exception {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
         BatteryUtils.assumeBatterySaverFeature();
 
         BatteryUtils.runDumpsysBatteryUnplug();
@@ -471,6 +487,8 @@ public class JobThrottlingTest {
     @Test
     public void testBatterySaverOnThenUidActive() throws Exception {
         assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
         BatteryUtils.assumeBatterySaverFeature();
 
         // Enable battery saver, and schedule a job. It shouldn't run.
