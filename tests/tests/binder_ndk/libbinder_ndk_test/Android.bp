@@ -23,6 +23,8 @@ filegroup {
         "test_package/IntEnum.aidl",
         "test_package/LongEnum.aidl",
         "test_package/RegularPolygon.aidl",
+        "test_package/GenericFoo.aidl",
+        "test_package/GenericBar.aidl",
     ],
     visibility: ["//visibility:private"]
 }

@@ -22,6 +22,7 @@ import test_package.IEmpty;
 import test_package.IntEnum;
 import test_package.LongEnum;
 import test_package.RegularPolygon;
+import test_package.GenericBar;
 
 // This test interface is used in order to test the all of the things that AIDL can generate which
 // build on top of the NDK.
@@ -120,6 +121,8 @@ interface ITest {
 
     // Method which is not nullable in version 1, but is nullable in version 2
     @nullable String RepeatStringNullableLater(@nullable String repeated);
+
+    GenericBar<int> repeatGenericBar(in GenericBar<int> bar);
 
     // Methods that do not exist in version 1
     int NewMethodThatReturns10();
