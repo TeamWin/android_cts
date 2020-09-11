@@ -158,10 +158,20 @@ class TestTaskOrganizer extends TaskOrganizer {
         if (windowingMode == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY) {
             mRootPrimary = taskInfo;
             processRootPrimaryTaskInfoChanged();
+            addChildTasks(taskInfo);
         }
 
         if (windowingMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY) {
             mRootSecondary = taskInfo;
+            addChildTasks(taskInfo);
+        }
+    }
+
+    private void addChildTasks(ActivityManager.RunningTaskInfo taskInfo) {
+        List<ActivityManager.RunningTaskInfo> children =
+                getChildTasks(taskInfo.getToken(), null /* activityTypes */);
+        for (ActivityManager.RunningTaskInfo child : children) {
+            mKnownTasks.put(child.taskId, child);
         }
     }
 
