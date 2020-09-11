@@ -59,7 +59,7 @@ public class TaggingDefaultTest extends TaggingBaseTest {
         }
     }
 
-      public void testCompatFeatureDisabled() throws Exception {
+    public void testHeapTaggingCompatFeatureDisabled() throws Exception {
         if (!supportsTaggedPointers || supportsMemoryTagging) {
             return;
         }
