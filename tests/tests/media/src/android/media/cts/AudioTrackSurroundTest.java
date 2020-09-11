@@ -52,6 +52,10 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
     private static final double MAX_RATE_TOLERANCE_FRACTION = 0.01;
     private static final boolean LOG_TIMESTAMPS = false; // set true for debugging
+    // just long enough to measure the rate
+    private static final long SAMPLE_RATE_SHORT_TEST_DURATION_MILLIS = 5000;
+    // AC3 and IEC61937 tracks require more time
+    private static final long SAMPLE_RATE_LONG_TEST_DURATION_MILLIS = 12000;
 
     // Set this true to prefer the device that supports the particular encoding.
     // But note that as of 3/25/2016, a bug causes Direct tracks to fail.
@@ -226,12 +230,14 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             boolean gotTimestamp = track.getTimestamp(timestamp);
             if (gotTimestamp) {
                 // Only save timestamps after the data is flowing.
-                if (mPreviousTimestamp != null
-                    && timestamp.framePosition > 0
-                    && timestamp.nanoTime != mPreviousTimestamp.nanoTime
-                    && timestamp.framePosition != mPreviousTimestamp.framePosition) {
+                boolean accepted = mPreviousTimestamp != null
+                        && timestamp.framePosition > 0
+                        && timestamp.nanoTime != mPreviousTimestamp.nanoTime
+                        && timestamp.framePosition != mPreviousTimestamp.framePosition;
+                if (accepted) {
                     mTimestamps.add(timestamp);
                 }
+                Log.d(TAG, (accepted ? "" : "NOT ") + "added ts " + timestampToString(timestamp));
                 mPreviousTimestamp = timestamp;
             }
         }
@@ -290,6 +296,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
 
         // Use collected timestamps to estimate a sample rate.
         double estimateSampleRate() {
+            Log.w(TAG, "timestamps collected: " + mTimestamps.size());
             assertTrue("expect many timestamps, got " + mTimestamps.size(),
                     mTimestamps.size() > 10);
             // Use first and last timestamp to get the most accurate rate.
@@ -381,9 +388,8 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             }
         }
 
-        public void playAndMeasureRate() throws Exception {
+        public void playAndMeasureRate(long testDurationMillis) throws Exception {
             final String TEST_NAME = "playAndMeasureRate";
-            final long TEST_DURATION_MILLIS = 5000; // just long enough to measure the rate
 
             if (mLastPlayedEncoding == AudioFormat.ENCODING_INVALID ||
                     !AudioFormat.isEncodingLinearPcm(mEncoding) ||
@@ -424,7 +430,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
                         + mTrack.getNativeOutputSampleRate(mTrack.getStreamType()));
                 long elapsedMillis = 0;
                 long startTime = System.currentTimeMillis();
-                while (elapsedMillis < TEST_DURATION_MILLIS) {
+                while (elapsedMillis < testDurationMillis) {
                     writeBlock(mBlockSize);
                     elapsedMillis = System.currentTimeMillis() - startTime;
                     mTimestampAnalyzer.addTimestamp(mTrack);
@@ -530,7 +536,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             SamplePlayerBytes player = new SamplePlayerBytes(
                     48000, AudioFormat.ENCODING_AC3, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_VOICE_48000);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_LONG_TEST_DURATION_MILLIS);
         }
     }
 
@@ -539,7 +545,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     48000, AudioFormat.ENCODING_AC3, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_VOICE_48000);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_LONG_TEST_DURATION_MILLIS);
         }
     }
 
@@ -548,7 +554,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     32000, AudioFormat.ENCODING_IEC61937, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_SPDIF_VOICE_32000);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_LONG_TEST_DURATION_MILLIS);
         }
     }
 
@@ -557,7 +563,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     44100, AudioFormat.ENCODING_IEC61937, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_SPDIF_VOICE_44100);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_LONG_TEST_DURATION_MILLIS);
         }
     }
 
@@ -566,7 +572,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     48000, AudioFormat.ENCODING_IEC61937, AudioFormat.CHANNEL_OUT_STEREO,
                     RES_AC3_SPDIF_VOICE_48000);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_LONG_TEST_DURATION_MILLIS);
         }
     }
 
@@ -609,7 +615,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             SamplePlayerShorts player = new SamplePlayerShorts(
                     44100, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
                     R.raw.sinesweepraw);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_SHORT_TEST_DURATION_MILLIS);
         }
     }
 
@@ -618,7 +624,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             SamplePlayerBytes player = new SamplePlayerBytes(
                     44100, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
                     R.raw.sinesweepraw);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_SHORT_TEST_DURATION_MILLIS);
         }
     }
 
@@ -627,7 +633,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             SamplePlayerBytes player = new SamplePlayerBytes(
                     48000, AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_STEREO,
                     R.raw.sinesweepraw);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_SHORT_TEST_DURATION_MILLIS);
         }
     }
 
@@ -636,7 +642,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             SamplePlayerShorts player = new SamplePlayerShorts(44100, AudioFormat.ENCODING_PCM_16BIT,
                     AudioFormat.CHANNEL_OUT_MONO,
                     R.raw.sinesweepraw);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_SHORT_TEST_DURATION_MILLIS);
         }
     }
 
@@ -645,7 +651,7 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
         if (isPcmTestingEnabled()) {
             SamplePlayerBytes player = new SamplePlayerBytes(44100,
                     AudioFormat.ENCODING_PCM_16BIT, AudioFormat.CHANNEL_OUT_MONO, R.raw.sinesweepraw);
-            player.playAndMeasureRate();
+            player.playAndMeasureRate(SAMPLE_RATE_SHORT_TEST_DURATION_MILLIS);
         }
     }
 
