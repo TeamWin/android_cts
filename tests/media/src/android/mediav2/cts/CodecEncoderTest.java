@@ -397,7 +397,8 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                             mOutputBuff.isOutPtsListIdenticalToInpPtsList((mMaxBFrames != 0)));
                 }
                 ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
-                assertTrue(listOfDecoders.size() > 0);
+                assertFalse("no suitable codecs found for mime: " + mMime,
+                        listOfDecoders.isEmpty());
                 for (String decoder : listOfDecoders) {
                     ByteBuffer out = decodeElementaryStream(decoder, format,
                             mOutputBuff.getBuffer(), mInfoList);
