@@ -185,11 +185,11 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
         ShortBuffer shortBuffer =
                 ByteBuffer.wrap(byteBuffer).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer();
         // Unfortunately, ShortBuffer.array() works with allocated buffers only.
-        short[] masterBuffer = new short[byteBuffer.length / 2];
-        for (int i = 0; i < masterBuffer.length; i++) {
-            masterBuffer[i] = shortBuffer.get();
+        short[] mainBuffer = new short[byteBuffer.length / 2];
+        for (int i = 0; i < mainBuffer.length; i++) {
+            mainBuffer[i] = shortBuffer.get();
         }
-        return masterBuffer;
+        return mainBuffer;
     }
 
     public void testLoadSineSweep() throws Exception {
