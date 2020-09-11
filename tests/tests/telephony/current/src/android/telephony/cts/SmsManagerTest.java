@@ -242,10 +242,12 @@ public class SmsManagerTest {
         init();
         if (addMessageId) {
             long fakeMessageId = 19812L;
-            sendTextMessageWithMessageId(mDestAddr, mDestAddr, mSentIntent, mDeliveredIntent,
-                    fakeMessageId);
+            sendTextMessageWithMessageId(mDestAddr,
+                    String.valueOf(SystemClock.elapsedRealtimeNanos()), mSentIntent,
+                    mDeliveredIntent, fakeMessageId);
         } else {
-            sendTextMessage(mDestAddr, mDestAddr, mSentIntent, mDeliveredIntent);
+            sendTextMessage(mDestAddr, String.valueOf(SystemClock.elapsedRealtimeNanos()),
+                    mSentIntent, mDeliveredIntent);
         }
         assertTrue("[RERUN] Could not send SMS. Check signal.",
                 mSendReceiver.waitForCalls(1, TIME_OUT));
@@ -342,7 +344,8 @@ public class SmsManagerTest {
 
         // single-part SMS blocking
         init();
-        sendTextMessage(mDestAddr, mDestAddr, mSentIntent, mDeliveredIntent);
+        sendTextMessage(mDestAddr, String.valueOf(SystemClock.elapsedRealtimeNanos()),
+                mSentIntent, mDeliveredIntent);
         assertTrue("[RERUN] Could not send SMS. Check signal.",
                 mSendReceiver.waitForCalls(1, TIME_OUT));
         assertTrue("Expected no messages to be received due to number blocking.",
@@ -913,7 +916,7 @@ public class SmsManagerTest {
             if (mAction.equals(Telephony.Sms.Intents.SMS_RECEIVED_ACTION)) {
                 sMessageId = intent.getLongExtra("messageId", 0L);
             }
-            Log.i(TAG, "onReceive " + intent.getAction());
+            Log.i(TAG, "onReceive " + intent.getAction() + " mAction " + mAction);
             if (intent.getAction().equals(mAction)) {
                 synchronized (mLock) {
                     mCalls += 1;
