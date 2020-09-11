@@ -23,7 +23,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -43,11 +42,13 @@ import android.telephony.PreciseDataConnectionState;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SmsManager;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyDisplayInfo;
 import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsReasonInfo;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -60,6 +61,8 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class PhoneStateListenerTest {
 
@@ -957,16 +960,17 @@ public class PhoneStateListenerTest {
         TelephonyUtils.addTestEmergencyNumber(
                 InstrumentationRegistry.getInstrumentation(), TEST_EMERGENCY_NUMBER);
 
-        assertNull(mOnOutgoingSmsEmergencyNumberChanged);
+        LinkedBlockingQueue<Pair<EmergencyNumber, Integer>> smsCallbackQueue =
+                new LinkedBlockingQueue<>(1);
 
         mHandler.post(() -> {
             mListener = new PhoneStateListener() {
                 @Override
-                public void onOutgoingEmergencySms(EmergencyNumber emergencyNumber) {
+                public void onOutgoingEmergencySms(EmergencyNumber emergencyNumber,
+                        int subscriptionId) {
                     synchronized (mLock) {
                         Log.i(TAG, "onOutgoingEmergencySms: emergencyNumber=" + emergencyNumber);
-                        mOnOutgoingSmsEmergencyNumberChanged = emergencyNumber;
-                        mLock.notify();
+                        smsCallbackQueue.offer(Pair.create(emergencyNumber, subscriptionId));
                     }
                 }
             };
@@ -978,11 +982,12 @@ public class PhoneStateListenerTest {
         });
 
         try {
-            synchronized (mLock) {
-                if (mOnOutgoingSmsEmergencyNumberChanged == null) {
-                    mLock.wait(WAIT_TIME);
-                }
-            }
+            Pair<EmergencyNumber, Integer> emergencySmsInfo =
+                    smsCallbackQueue.poll(WAIT_TIME, TimeUnit.MILLISECONDS);
+            assertNotNull("Never got emergency sms callback", emergencySmsInfo);
+            assertEquals(TEST_EMERGENCY_NUMBER, emergencySmsInfo.first.getNumber());
+            assertEquals(SubscriptionManager.getDefaultSmsSubscriptionId(),
+                    emergencySmsInfo.second.intValue());
         } catch (InterruptedException e) {
             Log.e(TAG, "Operation interrupted.");
         } finally {
@@ -990,8 +995,6 @@ public class PhoneStateListenerTest {
                     InstrumentationRegistry.getInstrumentation(), TEST_EMERGENCY_NUMBER);
         }
 
-        assertNotNull(mOnOutgoingSmsEmergencyNumberChanged);
-        assertEquals(mOnOutgoingSmsEmergencyNumberChanged.getNumber(), TEST_EMERGENCY_NUMBER);
     }
 
     @Test
