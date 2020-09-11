@@ -69,6 +69,8 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
             = getComponentName(TestLaunchingActivity.class);
     private static final ComponentName LAUNCHING_AND_FINISH_ACTIVITY
             = getComponentName(LaunchingAndFinishActivity.class);
+    private static final ComponentName CLEAR_TASK_ON_LAUNCH_ACTIVITY
+            = getComponentName(ClearTaskOnLaunchActivity.class);
 
 
     /**
@@ -467,6 +469,49 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 mWmState.getTaskByActivity(STANDARD_ACTIVITY).getTaskId());
     }
 
+    /**
+     * This test case tests behavior of activity launched with ClearTaskOnLaunch attribute and
+     * FLAG_ACTIVITY_RESET_TASK_IF_NEEDED. The activities above will be removed from the task when
+     * the clearTaskonlaunch activity is re-launched again.
+     */
+    @Test
+    public void testActivityWithClearTaskOnLaunch() {
+        // Launch a clearTaskonlaunch activity
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(CLEAR_TASK_ON_LAUNCH_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                .execute();
+        mWmState.waitForActivityState(CLEAR_TASK_ON_LAUNCH_ACTIVITY, STATE_RESUMED);
+        final int taskId = mWmState.getTaskByActivity(CLEAR_TASK_ON_LAUNCH_ACTIVITY).getTaskId();
+
+        // Launch a standard activity
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(STANDARD_ACTIVITY)
+                .execute();
+        mWmState.waitForActivityState(STANDARD_ACTIVITY, STATE_RESUMED);
+
+        // Return to home
+        launchHomeActivity();
+
+        // Launch the clearTaskonlaunch activity again
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(CLEAR_TASK_ON_LAUNCH_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                .execute();
+        mWmState.waitForActivityState(CLEAR_TASK_ON_LAUNCH_ACTIVITY, STATE_RESUMED);
+
+        // Make sure the task for the clearTaskonlaunch activity is front.
+        assertEquals("The task for the clearTaskonlaunch activity must be front.",
+                getActivityName(CLEAR_TASK_ON_LAUNCH_ACTIVITY),
+                mWmState.getTopActivityName(0));
+
+        assertEquals("Instance of the activity in its task must be cleared", 0,
+                mWmState.getActivityCountInTask(taskId, STANDARD_ACTIVITY));
+    }
+
     // Test activity
     public static class StandardActivity extends Activity {
     }
@@ -486,6 +531,10 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
             intent.addFlags(FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         }
+    }
+
+    // Test activity
+    public static class ClearTaskOnLaunchActivity extends Activity {
     }
 
     // Test activity
