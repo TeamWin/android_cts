@@ -562,6 +562,10 @@ abstract class CodecTestBase {
         return CodecTestBase.selectCodecs(mime, null, null, false).size() != 0;
     }
 
+    static boolean hasEncoder(String mime) {
+        return CodecTestBase.selectCodecs(mime, null, null, true).size() != 0;
+    }
+
     static ArrayList<String> prepareRequiredArgsList(boolean isEncoder, boolean needAudio,
             boolean needVideo) {
         Set<String> list = new HashSet<>();
@@ -657,11 +661,16 @@ abstract class CodecTestBase {
             if (isEncoder && hasCamera() && needVideo &&
                     !mimes.contains(MediaFormat.MIMETYPE_VIDEO_AVC) &&
                     !mimes.contains(MediaFormat.MIMETYPE_VIDEO_VP8)) {
-                fail("device must support at least one of VP8 or AVC video encoders");
+                // Add required cdd mimes here so that respective codec tests fail.
+                mimes.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+                mimes.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+                Log.e(LOG_TAG,"device must support at least one of VP8 or AVC video encoders");
             }
             for (String mime : cddRequiredMimeList) {
                 if (!mimes.contains(mime)) {
-                    fail("no codec found for mime " + mime + " as required by cdd");
+                    // Add required cdd mimes here so that respective codec tests fail.
+                    mimes.add(mime);
+                    Log.e(LOG_TAG, "no codec found for mime " + mime + " as required by cdd");
                 }
             }
         } else {
