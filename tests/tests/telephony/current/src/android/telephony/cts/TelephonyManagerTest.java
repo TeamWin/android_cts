@@ -429,7 +429,9 @@ public class TelephonyManagerTest {
             CellLocation.requestLocationUpdate();
             mLock.wait(TOLERANCE);
 
-            assertTrue("Test register, mOnCellLocationChangedCalled should be true.",
+            // Starting with Android S, this API will silently drop all requests from apps
+            // targeting Android S due to unfixable limitations with the API.
+            assertFalse("Test register, mOnCellLocationChangedCalled should be false.",
                     mOnCellLocationChangedCalled);
         }
 
