@@ -64,7 +64,8 @@ public class WindowManagerUtil {
             @Nonnull String expectedTitle) throws Exception {
         List<WindowStateProto> windows = getWindows(device);
         for (WindowStateProto window : windows) {
-            if (expectedTitle.equals(window.getIdentifier().getTitle())) {
+            String title = window.getWindowContainer().getIdentifier().getTitle(); 
+            if (expectedTitle.equals(title)) {
                 return window;
             }
         }
