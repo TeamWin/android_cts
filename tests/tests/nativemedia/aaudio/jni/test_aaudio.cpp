@@ -48,6 +48,53 @@ class AAudioStreamTest : public ::testing::TestWithParam<StreamTestParams> {
     const StreamBuilderHelper::Parameters& actual() const { return mHelper->actual(); }
     int32_t framesPerBurst() const { return mHelper->framesPerBurst(); }
 
+    // This checks for expected behavior after a stream has been released.
+    void checkCallsAfterRelease() {
+        // We expect these not to crash.
+        AAudioStream_setBufferSizeInFrames(stream(), 0);
+        AAudioStream_setBufferSizeInFrames(stream(), 99999999);
+
+        // We should NOT be able to start or change a stream after it has been released.
+        EXPECT_EQ(AAUDIO_ERROR_INVALID_STATE,
+                  AAudioStream_requestStart(stream()));
+        EXPECT_EQ(AAUDIO_STREAM_STATE_CLOSING, AAudioStream_getState(stream()));
+        // Pause is only implemented for OUTPUT.
+        if (AAudioStream_getDirection(stream()) == AAUDIO_DIRECTION_OUTPUT) {
+            EXPECT_EQ(AAUDIO_ERROR_INVALID_STATE,
+                      AAudioStream_requestPause(stream()));
+        }
+        EXPECT_EQ(AAUDIO_STREAM_STATE_CLOSING, AAudioStream_getState(stream()));
+        EXPECT_EQ(AAUDIO_ERROR_INVALID_STATE,
+                  AAudioStream_requestStop(stream()));
+        EXPECT_EQ(AAUDIO_STREAM_STATE_CLOSING, AAudioStream_getState(stream()));
+
+        // Do these return positive integers?
+        // Frames read or written may be zero if the stream has not had time to advance.
+        EXPECT_GE(AAudioStream_getFramesRead(stream()), 0);
+        EXPECT_GE(AAudioStream_getFramesWritten(stream()), 0);
+        EXPECT_GT(AAudioStream_getFramesPerBurst(stream()), 0);
+        EXPECT_GE(AAudioStream_getXRunCount(stream()), 0);
+        EXPECT_GT(AAudioStream_getBufferCapacityInFrames(stream()), 0);
+        EXPECT_GT(AAudioStream_getBufferSizeInFrames(stream()), 0);
+
+        int64_t timestampFrames = 0;
+        int64_t timestampNanos = 0;
+        aaudio_result_t result = AAudioStream_getTimestamp(stream(), CLOCK_MONOTONIC,
+                                           &timestampFrames, &timestampNanos);
+        EXPECT_TRUE(result == AAUDIO_ERROR_INVALID_STATE
+                        || result == AAUDIO_ERROR_UNIMPLEMENTED
+                        || result == AAUDIO_OK
+                        );
+
+        // Verify Closing State. Does this crash?
+        aaudio_stream_state_t state = AAUDIO_STREAM_STATE_UNKNOWN;
+        EXPECT_EQ(AAUDIO_OK, AAudioStream_waitForStateChange(stream(),
+                                                             AAUDIO_STREAM_STATE_UNKNOWN,
+                                                             &state,
+                                                             500 * NANOS_PER_MILLISECOND));
+        EXPECT_EQ(AAUDIO_STREAM_STATE_CLOSING, state);
+    }
+
     std::unique_ptr<T> mHelper;
     bool mSetupSuccessful = false;
     std::unique_ptr<int16_t[]> mData;
@@ -171,6 +218,9 @@ TEST_P(AAudioInputStreamTest, testRelease) {
       aaudio_stream_state_t state = AAudioStream_getState(stream());
       EXPECT_EQ(AAUDIO_STREAM_STATE_CLOSING, state);
     }
+
+    checkCallsAfterRelease();
+
 }
 
 INSTANTIATE_TEST_CASE_P(SPM, AAudioInputStreamTest,
@@ -376,11 +426,16 @@ TEST_P(AAudioOutputStreamTest, testRelease) {
     if (!mSetupSuccessful) return;
 
     mHelper->startStream();
-    aaudio_result_t result = AAudioStream_write(
-            stream(), &mData[0], framesPerBurst(),
-            DEFAULT_READ_TIMEOUT);
-    ASSERT_GT(result, 0);
+    // Write a few times so the device has time to read some of the data
+    // and maybe advance the framesRead.
+    for (int i = 0; i < 3; i++) {
+        aaudio_result_t result = AAudioStream_write(
+                stream(), &mData[0], framesPerBurst(),
+                DEFAULT_READ_TIMEOUT);
+        ASSERT_GT(result, 0);
+    }
     mHelper->stopStream();
+    EXPECT_GE(AAudioStream_getFramesRead(stream()), 0);
 
     // It should be safe to release multiple times.
     for (int i = 0; i < 3; i++) {
@@ -388,6 +443,9 @@ TEST_P(AAudioOutputStreamTest, testRelease) {
       aaudio_stream_state_t state = AAudioStream_getState(stream());
       EXPECT_EQ(AAUDIO_STREAM_STATE_CLOSING, state);
     }
+
+    checkCallsAfterRelease();
+
 }
 
 // Note that the test for EXCLUSIVE sharing mode may fail gracefully if
