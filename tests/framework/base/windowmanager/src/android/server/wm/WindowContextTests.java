@@ -40,6 +40,7 @@ public class WindowContextTests extends WindowContextTestBase {
     @Test
     @AppModeFull
     public void testWindowContextConfigChanges() {
+        createAllowSystemAlertWindowAppOpSession();
         final WindowManagerState.DisplayContent display =  createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
         final Context windowContext = createWindowContext(display.mId);
