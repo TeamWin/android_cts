@@ -129,7 +129,7 @@ public class CertInstallDelegateTest extends InstrumentationTestCase {
                 });
 
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.removeKeyPair(null, "alias");
                 });
     }
