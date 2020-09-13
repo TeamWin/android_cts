@@ -55,7 +55,7 @@ public class PermissionGrantDelegateTest extends InstrumentationTestCase {
 
         // Exercise setPermissionPolicy.
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.setPermissionPolicy(null, PERMISSION_POLICY_AUTO_GRANT);
                 });
         assertFalse("Permission policy should not have been set",
@@ -63,14 +63,14 @@ public class PermissionGrantDelegateTest extends InstrumentationTestCase {
 
         // Exercise setPermissionGrantState.
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.setPermissionGrantState(null, TEST_APP_PKG, TEST_PERMISSION,
                             PERMISSION_GRANT_STATE_GRANTED);
                 });
 
         // Exercise getPermissionGrantState.
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.getPermissionGrantState(null, TEST_APP_PKG, TEST_PERMISSION);
                 });
     }

@@ -89,12 +89,12 @@ public class AppRestrictionsDelegateTest extends InstrumentationTestCase {
                 amIAppRestrictionsDelegate());
 
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.setApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG, null);
                 });
 
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.getApplicationRestrictions(null, APP_RESTRICTIONS_TARGET_PKG);
                 });
     }
