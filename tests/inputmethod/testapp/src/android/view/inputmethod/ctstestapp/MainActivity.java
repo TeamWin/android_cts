@@ -15,13 +15,25 @@
  */
 package android.view.inputmethod.ctstestapp;
 
+import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.Gravity;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -32,34 +44,93 @@ public final class MainActivity extends Activity {
 
     private static final String EXTRA_KEY_PRIVATE_IME_OPTIONS =
             "android.view.inputmethod.ctstestapp.EXTRA_KEY_PRIVATE_IME_OPTIONS";
+    private static final String EXTRA_KEY_SHOW_DIALOG =
+            "android.view.inputmethod.ctstestapp.EXTRA_KEY_SHOW_DIALOG";
+
+    private static final String EXTRA_DISMISS_DIALOG = "extra_dismiss_dialog";
+
+    private static final String ACTION_TRIGGER = "broadcast_action_trigger";
+    private AlertDialog mDialog;
+    private final Handler mHandler = new Handler(Looper.myLooper());
+
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getBooleanExtra(EXTRA_DISMISS_DIALOG, false)) {
+                mDialog.dismiss();
+                mHandler.postDelayed(() -> finish(), 100);
+            }
+        }
+    };
 
     @Nullable
-    private String getPrivateImeOptions() {
+    private String getStringIntentExtra(String key) {
         if (getPackageManager().isInstantApp()) {
             final Uri uri = getIntent().getData();
             if (uri == null || !uri.isHierarchical()) {
                 return null;
             }
-            return uri.getQueryParameter(EXTRA_KEY_PRIVATE_IME_OPTIONS);
+            return uri.getQueryParameter(key);
         }
-        return getIntent().getStringExtra(EXTRA_KEY_PRIVATE_IME_OPTIONS);
+        return getIntent().getStringExtra(key);
+    }
+
+    private boolean getBooleanIntentExtra(String key) {
+        if (getPackageManager().isInstantApp()) {
+            final Uri uri = getIntent().getData();
+            if (uri == null || !uri.isHierarchical()) {
+                return false;
+            }
+            return uri.getBooleanQueryParameter(key, false);
+        }
+        return getIntent().getBooleanExtra(key, false);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        registerReceiver(mBroadcastReceiver, new IntentFilter(ACTION_TRIGGER));
 
         final LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
-        final EditText editText = new EditText(this);
-        editText.setHint("editText");
-        final String privateImeOptions = getPrivateImeOptions();
-        if (privateImeOptions != null) {
-            editText.setPrivateImeOptions(privateImeOptions);
+        final boolean needShowDialog = getBooleanIntentExtra(EXTRA_KEY_SHOW_DIALOG);
+
+        if (needShowDialog) {
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setGravity(Gravity.BOTTOM);
+            getWindow().setSoftInputMode(SOFT_INPUT_ADJUST_RESIZE);
+
+            final TextView textView = new TextView(this);
+            textView.setText("This is DialogActivity");
+            layout.addView(textView);
+
+            mDialog= new AlertDialog.Builder(this)
+                    .setView(new LinearLayout(this))
+                    .create();
+            mDialog.getWindow().addFlags(FLAG_ALT_FOCUSABLE_IM);
+            mDialog.getWindow().setSoftInputMode(SOFT_INPUT_ADJUST_PAN);
+            mDialog.show();
+        } else {
+            final EditText editText = new EditText(this);
+            editText.setHint("editText");
+            final String privateImeOptions = getStringIntentExtra(EXTRA_KEY_PRIVATE_IME_OPTIONS);
+            if (privateImeOptions != null) {
+                editText.setPrivateImeOptions(privateImeOptions);
+            }
+            editText.requestFocus();
+            layout.addView(editText);
+            getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
-        editText.requestFocus();
-        layout.addView(editText);
-        getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+
         setContentView(layout);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mBroadcastReceiver != null) {
+            unregisterReceiver(mBroadcastReceiver);
+            mBroadcastReceiver = null;
+        }
     }
 }
