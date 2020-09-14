@@ -37,18 +37,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.database.ContentObserver;
 import android.net.ConnectivityManager;
-import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Handler;
 import android.os.Looper;
 import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.UserManager;
-import android.provider.Settings;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -1021,6 +1017,7 @@ public class TelephonyManagerTest {
                 && !userManager.hasUserRestriction(UserManager.DISALLOW_CONFIG_MOBILE_NETWORKS);
         assertTrue("Primary user must be able to configure mobile networks to pass this test",
                 canChangeMobileNetworkSettings);
+        boolean initialDataSetting = isDataEnabled();
 
         //First check permissions are correct
         try {
@@ -1038,28 +1035,20 @@ public class TelephonyManagerTest {
             fail("TelephonyManager#resetSettings requires the"
                     + " android.Manifest.permission.NETWORK_SETTINGS permission");
         }
+        // This may timeout because the default is equal to the initial data setting, but there is
+        // no way to definitively check what the default should be, so assume the default will be
+        // set within TOLERANCE time.
+        TelephonyUtils.pollUntilTrue(() -> initialDataSetting != isDataEnabled(), 5 /*times*/,
+                TOLERANCE/5 /*timeout per poll*/);
 
-        LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue<>(2);
-        final ContentObserver mobileDataChangeObserver = new ContentObserver(
-                new Handler(Looper.getMainLooper())) {
-            @Override
-            public void onChange(boolean selfChange) {
-                queue.offer(isDataEnabled());
-            }
-        };
-
-        getContext().getContentResolver().registerContentObserver(
-                getObservableDataEnabledUri(mTestSub), /* notifyForDescendants= */ false,
-                mobileDataChangeObserver);
         boolean defaultDataSetting = isDataEnabled();
 
         // set data to not the default!
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 tm -> tm.setDataEnabled(!defaultDataSetting));
-        Boolean dataChangedResult = queue.poll(TOLERANCE, TimeUnit.MILLISECONDS);
-        assertNotNull("Data setting was not changed", dataChangedResult);
-        assertEquals("Data enable change didn't work", !defaultDataSetting,
-                dataChangedResult);
+        assertTrue("Data enable change didn't work",
+                TelephonyUtils.pollUntilTrue(() -> defaultDataSetting != isDataEnabled(),
+                        5 /*times*/, TOLERANCE/5 /*timeout per poll*/));
 
         // and then do a reset to move data to default again.
         try {
@@ -1069,10 +1058,10 @@ public class TelephonyManagerTest {
             fail("TelephonyManager#resetSettings requires the"
                     + " android.Manifest.permission.NETWORK_SETTINGS permission");
         }
-        dataChangedResult = queue.poll(TOLERANCE, TimeUnit.MILLISECONDS);
-        assertNotNull("Data setting was not changed", dataChangedResult);
-        assertEquals("resetSettings did not reset default data", defaultDataSetting,
-                dataChangedResult);
+
+        assertTrue("resetSettings did not reset default data",
+                TelephonyUtils.pollUntilTrue(() -> defaultDataSetting == isDataEnabled(),
+                        5 /*times*/, TOLERANCE/5 /*timeout per poll*/));
     }
 
     @Test
@@ -2631,18 +2620,9 @@ public class TelephonyManagerTest {
                 TelephonyManager.SIM_STATE_PRESENT).contains(simCardState));
     }
 
-
     private boolean isDataEnabled() {
         return ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 TelephonyManager::isDataEnabled);
-    }
-
-    private Uri getObservableDataEnabledUri(int subId) {
-        Uri uri = Settings.Global.getUriFor(Settings.Global.MOBILE_DATA);
-        if (mTelephonyManager.getActiveModemCount() != 1) {
-            uri = Settings.Global.getUriFor(Settings.Global.MOBILE_DATA + subId);
-        }
-        return uri;
     }
 
     /**
