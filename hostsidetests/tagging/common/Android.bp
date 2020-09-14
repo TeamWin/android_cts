@@ -18,7 +18,7 @@
 
 java_library {
     name: "tagging-common-devicesidelib",
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/Utils.java"],
     sdk_version: "current",
 }
 
@@ -32,4 +32,19 @@ cc_test_library {
     header_libs: ["jni_headers"],
     sdk_version: "current",
     gtest: false,
+}
+
+android_test_helper_app {
+    name: "DeviceKernelHelpers",
+    defaults: ["cts_defaults"],
+    compile_multilib: "both",
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
+    static_libs: ["tagging-common-devicesidelib"],
+    jni_libs: ["libtagging-common-devicesidelib-jni"],
+    srcs: ["src/**/DeviceKernelHelpers.java"],
+    sdk_version: "current",
 }

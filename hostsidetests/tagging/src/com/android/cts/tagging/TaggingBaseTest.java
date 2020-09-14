@@ -18,42 +18,75 @@ package com.android.cts.tagging;
 
 import android.compat.cts.CompatChangeGatingTestCase;
 
-import java.io.FileWriter;
+import com.android.tradefed.device.ITestDevice;
+
+import com.google.common.collect.ImmutableSet;
+
+import java.util.Scanner;
 
 public class TaggingBaseTest extends CompatChangeGatingTestCase {
+    private static final String DEVICE_KERNEL_HELPER_CLASS_NAME = "DeviceKernelHelpers";
+    private static final String DEVICE_KERNEL_HELPER_APK_NAME = "DeviceKernelHelpers.apk";
+    private static final String DEVICE_KERNEL_HELPER_PKG_NAME = "android.cts.tagging.support";
+    private static final String KERNEL_HELPER_START_COMMAND =
+            String.format(
+                    "am start -W -a android.intent.action.MAIN -n %s/.%s",
+                    DEVICE_KERNEL_HELPER_PKG_NAME, DEVICE_KERNEL_HELPER_CLASS_NAME);
 
     protected static final long NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID = 135754954;
+    protected static final String DEVICE_TEST_CLASS_NAME = ".TaggingTest";
+    protected static final String DEVICE_TAGGING_DISABLED_TEST_NAME = "testHeapTaggingDisabled";
+    protected static final String DEVICE_TAGGING_ENABLED_TEST_NAME = "testHeapTaggingEnabled";
 
-    protected boolean supportsTaggedPointers = false;
-
-    private boolean supportsTaggedPointers() throws Exception {
-        String kernelVersion = runCommand("uname -rm");
-        if (!kernelVersion.contains("aarch64")) {
-            return false;
-        }
-
-        String kernelVersionSplit[] = kernelVersion.split("\\.");
-        if (kernelVersionSplit.length < 2) {
-            return false;
-        }
-
-        int major = Integer.parseInt(kernelVersionSplit[0]);
-        if (major > 4) {
-            return true;
-        } else if (major < 4) {
-            return false;
-        }
-
-        // Major version is 4. Check that the minor is >= 14.
-        int minor = Integer.parseInt(kernelVersionSplit[1]);
-        if (minor < 14) {
-            return false;
-        }
-        return true;
-    }
+    // Initialized in setUp(), holds whether the device that this test is running on was determined
+    // to have both requirements for tagged pointers: the correct architecture (aarch64) and the
+    // full set of kernel patches (as indicated by a successful prctl(PR_GET_TAGGED_ADDR_CTRL)).
+    protected boolean deviceSupportsTaggedPointers = false;
+    // Initialized in setUp(), contains a set of pointer tagging changes that should be reported by
+    // statsd. This set contains the compat change ID for heap tagging iff the device supports
+    // tagged pointers (and is blank otherwise), as the kernel and manifest check in the zygote
+    // happens before mPlatformCompat.isChangeEnabled(), and thus there's never a statsd entry for
+    // the feature (in either the enabled or disabled state).
+    protected ImmutableSet reportedChangeSet = ImmutableSet.of();
+    // Initialized in setUp(), contains DEVICE_TAGGING_ENABLED_TEST_NAME iff the device supports
+    // tagged pointers, and DEVICE_TAGGING_DISABLED_TEST_NAME otherwise.
+    protected String testForWhenSoftwareWantsTagging = DEVICE_TAGGING_DISABLED_TEST_NAME;
 
     @Override
     protected void setUp() throws Exception {
-        supportsTaggedPointers = supportsTaggedPointers();
+        installPackage(DEVICE_KERNEL_HELPER_APK_NAME, true);
+
+        ITestDevice device = getDevice();
+        device.executeAdbCommand("logcat", "-c");
+        device.executeShellCommand(KERNEL_HELPER_START_COMMAND);
+        String logs =
+                device.executeAdbCommand(
+                        "logcat",
+                        "-v",
+                        "brief",
+                        "-d",
+                        DEVICE_KERNEL_HELPER_CLASS_NAME + ":I",
+                        "*:S");
+
+        boolean foundKernelHelperResult = false;
+        Scanner in = new Scanner(logs);
+        while (in.hasNextLine()) {
+            String line = in.nextLine();
+            if (line.contains("Kernel supports tagged pointers")) {
+                foundKernelHelperResult = true;
+                deviceSupportsTaggedPointers = line.contains("true");
+                break;
+            }
+        }
+        in.close();
+        uninstallPackage(DEVICE_KERNEL_HELPER_PKG_NAME, true);
+        if (!foundKernelHelperResult) {
+            throw new Exception("Failed to get a result from the kernel helper.");
+        }
+
+        if (deviceSupportsTaggedPointers) {
+            reportedChangeSet = ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID);
+            testForWhenSoftwareWantsTagging = DEVICE_TAGGING_ENABLED_TEST_NAME;
+        }
     }
 }
