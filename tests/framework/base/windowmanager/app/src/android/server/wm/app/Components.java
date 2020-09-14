@@ -313,6 +313,11 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_FONT_ACTIVITY_DPI = "fontActivityDpi";
     }
 
+    /** Extra key constants for {@link android.server.wm.app.NoHistoryActivity}. */
+    public static class NoHistoryActivity {
+        public static final String EXTRA_SHOW_WHEN_LOCKED = "showWhenLocked";
+    }
+
     /** Extra key constants for {@link android.server.wm.app.TurnScreenOnActivity}. */
     public static class TurnScreenOnActivity {
         // Turn on screen by window flags or APIs.
