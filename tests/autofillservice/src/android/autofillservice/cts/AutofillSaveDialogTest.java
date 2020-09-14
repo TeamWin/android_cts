@@ -22,6 +22,7 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.activities.SimpleAfterLoginActivity;
 import android.autofillservice.cts.activities.SimpleBeforeLoginActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.content.Context;
 import android.content.Intent;

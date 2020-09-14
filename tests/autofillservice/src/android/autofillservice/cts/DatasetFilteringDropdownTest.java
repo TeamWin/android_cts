@@ -16,5 +16,7 @@
 
 package android.autofillservice.cts;
 
+import android.autofillservice.cts.commontests.DatasetFilteringTest;
+
 public class DatasetFilteringDropdownTest extends DatasetFilteringTest {
 }

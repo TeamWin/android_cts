@@ -74,6 +74,7 @@ import android.app.PendingIntent;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.activities.DummyActivity;
 import android.autofillservice.cts.activities.EmptyActivity;
+import android.autofillservice.cts.commontests.LoginActivityCommonTestCase;
 import android.autofillservice.cts.testcore.BadAutofillService;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;

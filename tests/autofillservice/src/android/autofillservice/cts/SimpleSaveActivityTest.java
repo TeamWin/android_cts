@@ -47,6 +47,7 @@ import android.autofillservice.cts.activities.SimpleSaveActivity.FillExpectation
 import android.autofillservice.cts.activities.TrampolineWelcomeActivity;
 import android.autofillservice.cts.activities.ViewActionActivity;
 import android.autofillservice.cts.activities.WelcomeActivity;
+import android.autofillservice.cts.commontests.CustomDescriptionWithLinkTestCase;
 import android.autofillservice.cts.testcore.AntiTrimmerTextWatcher;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;

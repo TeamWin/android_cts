@@ -40,6 +40,7 @@ import android.autofillservice.cts.activities.VirtualContainerActivity;
 import android.autofillservice.cts.activities.VirtualContainerView;
 import android.autofillservice.cts.activities.VirtualContainerView.Line;
 import android.autofillservice.cts.activities.VirtualContainerView.VisibilityIntegrationMode;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;

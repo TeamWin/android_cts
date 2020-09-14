@@ -21,6 +21,7 @@ import static android.autofillservice.cts.testcore.AugmentedHelper.resetAugmente
 
 import android.autofillservice.cts.activities.PreSimpleSaveActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
+import android.autofillservice.cts.commontests.AugmentedAutofillManualActivityLaunchTestCase;
 import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CtsAugmentedAutofillService.AugmentedFillRequest;

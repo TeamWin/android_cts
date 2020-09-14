@@ -28,6 +28,7 @@ import static android.autofillservice.cts.testcore.Helper.assertToggleValue;
 import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 
 import android.autofillservice.cts.activities.InitializedCheckoutActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.platform.test.annotations.AppModeFull;

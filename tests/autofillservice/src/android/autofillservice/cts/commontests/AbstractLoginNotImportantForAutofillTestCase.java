@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts.augmented;
+package android.autofillservice.cts.commontests;
 
 import static android.autofillservice.cts.testcore.AugmentedHelper.assertBasicRequestInfo;
 import static android.autofillservice.cts.testcore.CannedAugmentedFillResponse.NO_AUGMENTED_RESPONSE;
@@ -31,7 +31,7 @@ import android.widget.EditText;
 
 import org.junit.Test;
 
-abstract class AbstractLoginNotImportantForAutofillTestCase<A extends
+public abstract class AbstractLoginNotImportantForAutofillTestCase<A extends
         LoginNotImportantForAutofillActivity> extends
         AugmentedAutofillAutoActivityLaunchTestCase<A> {
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.commontests;
 
 import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.SERVICE_NAME;
@@ -25,6 +25,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.app.PendingIntent;
+import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
 import android.autofillservice.cts.activities.AugmentedAuthActivity;
 import android.autofillservice.cts.activities.AuthenticationActivity;
@@ -251,7 +252,9 @@ public final class AutoFillServiceTestCase {
                 .setDumper(mLoggingRule)
                 .run(() -> sReplier.assertNoUnhandledFillRequests())
                 .run(() -> sReplier.assertNoUnhandledSaveRequests())
-                .add(() -> { return sReplier.getExceptions(); });
+                .add(() -> {
+                    return sReplier.getExceptions();
+                });
 
         @Rule
         public final RuleChain mLookAllTheseRules = RuleChain
