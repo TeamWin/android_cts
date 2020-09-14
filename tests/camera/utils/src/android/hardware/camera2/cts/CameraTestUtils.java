@@ -2234,7 +2234,8 @@ public class CameraTestUtils extends Assert {
                         " is not supported");
             }
 
-            if (srcRowStride == dstRowStride && srcPixStride == dstPixStride) {
+            if (srcRowStride == dstRowStride && srcPixStride == dstPixStride &&
+                    srcPixStride == 1) {
                 // Fast path, just copy the content in the byteBuffer all together.
                 dstBuffer.put(srcBuffer);
             } else {
@@ -2243,7 +2244,7 @@ public class CameraTestUtils extends Assert {
                 int dstRowByteCount = dstRowStride;
                 byte[] srcDataRow = new byte[srcRowByteCount];
 
-                if (srcPixStride == dstPixStride) {
+                if (srcPixStride == dstPixStride && srcPixStride == 1) {
                     // Row by row copy case
                     for (int row = 0; row < effectivePlaneSize.getHeight(); row++) {
                         if (row == effectivePlaneSize.getHeight() - 1) {
@@ -2379,10 +2380,12 @@ public class CameraTestUtils extends Assert {
             rhsBuffer = rhsPlanes[i].getBuffer();
             lhsBuffer.rewind();
             rhsBuffer.rewind();
-            // Special case for YUV420_888 buffer with different layout
+            // Special case for YUV420_888 buffer with different layout or
+            // potentially differently interleaved U/V planes.
             if (lhsImg.getFormat() == ImageFormat.YUV_420_888 &&
                     (lhsPlanes[i].getPixelStride() != rhsPlanes[i].getPixelStride() ||
-                     lhsPlanes[i].getRowStride() != rhsPlanes[i].getRowStride())) {
+                     lhsPlanes[i].getRowStride() != rhsPlanes[i].getRowStride() ||
+                     (lhsPlanes[i].getPixelStride() != 1))) {
                 int width = getEffectivePlaneSizeForImage(lhsImg, i).getWidth();
                 int height = getEffectivePlaneSizeForImage(lhsImg, i).getHeight();
                 int rowSizeL = lhsPlanes[i].getRowStride();
