@@ -54,6 +54,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -105,6 +106,10 @@ class AutoRevokeTest {
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
     fun testUnusedApp_getsPermissionRevoked() {
+        assumeFalse(
+                "AOSP TV doesn't support visible notifications",
+                context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))
+
         withUnusedThresholdMs(3L) {
             withDummyApp {
                 // Setup
