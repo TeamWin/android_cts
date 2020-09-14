@@ -45,6 +45,7 @@ public class PropertyUtil {
     private static final String MANUFACTURER_PROPERTY = "ro.product.manufacturer";
     private static final String TAG_DEV_KEYS = "dev-keys";
     private static final String VENDOR_SDK_VERSION = "ro.vendor.build.version.sdk";
+    private static final String VNDK_VERSION = "ro.vndk.version";
 
     public static final String GOOGLE_SETTINGS_QUERY =
             "content query --uri content://com.google.settings/partner";
@@ -78,13 +79,42 @@ public class PropertyUtil {
     }
 
     /**
+     * Return whether the VNDK version of the vendor partiton is newer than the given API level.
+     * If the property is set to non-integer value, this means the vendor partition is using
+     * current API level and true is returned.
+     */
+    public static boolean isVndkApiLevelNewerThan(int apiLevel) {
+        int vndkApiLevel = getPropertyInt(VNDK_VERSION);
+        if (vndkApiLevel == INT_VALUE_IF_UNSET) {
+            return true;
+        }
+        return vndkApiLevel > apiLevel;
+    }
+
+    /**
+     * Return whether the VNDK version of the vendor partiton is same or newer than the
+     * given API level.
+     * If the property is set to non-integer value, this means the vendor partition is using
+     * current API level and true is returned.
+     */
+    public static boolean isVndkApiLevelAtLeast(int apiLevel) {
+        int vndkApiLevel = getPropertyInt(VNDK_VERSION);
+        if (vndkApiLevel == INT_VALUE_IF_UNSET) {
+            return true;
+        }
+        return vndkApiLevel >= apiLevel;
+    }
+
+    /**
      * Return whether the SDK version of the vendor partiton is newer than the given API level.
      */
     public static boolean isVendorApiLevelNewerThan(int apiLevel) {
         int vendorSdkVersion = SystemProperties.getInt(VENDOR_SDK_VERSION, 0);
-
-        assertNotEquals(0, vendorSdkVersion);
-
+        // Run previous action when failed to get ro.vendor.build.version.sdk
+        // b/166800127 for details
+        if (vendorSdkVersion == 0) {
+            return isVndkApiLevelNewerThan(apiLevel);
+        }
         return vendorSdkVersion > apiLevel;
     }
 
@@ -94,9 +124,11 @@ public class PropertyUtil {
      */
     public static boolean isVendorApiLevelAtLeast(int apiLevel) {
         int vendorSdkVersion = SystemProperties.getInt(VENDOR_SDK_VERSION, 0);
-
-        assertNotEquals(0, vendorSdkVersion);
-
+        // Run previous action when failed to get ro.vendor.build.version.sdk
+        // b/166800127 for details
+        if (vendorSdkVersion == 0) {
+            return isVndkApiLevelAtLeast(apiLevel);
+        }
         return vendorSdkVersion >= apiLevel;
     }
 
