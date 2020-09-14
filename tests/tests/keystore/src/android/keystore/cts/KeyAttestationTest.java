@@ -1079,9 +1079,13 @@ public class KeyAttestationTest extends AndroidTestCase {
         return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
+    private boolean isAndroidAutomotiveDevice() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
     // TVs must support key attestation even without lock screen or device administration
     // https://source.android.com/compatibility/10/android-10-cdd#2_3_5_security_model
     private void assumeKeyAttestationEligible() {
-        assumeTrue(hasSecureLockScreen() || isTVDevice());
+        assumeTrue(hasSecureLockScreen() || isTVDevice() || isAndroidAutomotiveDevice());
     }
 }
