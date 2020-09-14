@@ -245,13 +245,12 @@ class AutoRevokeTest {
                 goToPermissions()
                 click("Calendar")
                 click("Allow")
-                Thread.sleep(500)
-                goBack()
-                goBack()
-                goBack()
                 eventually {
                     assertPermission(PERMISSION_GRANTED)
                 }
+                goBack()
+                goBack()
+                goBack()
 
                 // Run
                 runAutoRevoke()
@@ -392,6 +391,7 @@ class AutoRevokeTest {
 
     private fun click(label: String) {
         waitFindNode(hasTextThat(containsStringIgnoringCase(label))).click()
+        waitForIdle()
     }
 
     private fun assertWhitelistState(state: Boolean) {
