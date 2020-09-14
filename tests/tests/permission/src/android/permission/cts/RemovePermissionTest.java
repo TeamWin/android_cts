@@ -198,11 +198,8 @@ public class RemovePermissionTest {
         installApp(INSTALLTIME_PERMISSION_USER_APK_NAME);
         assertTrue(permissionGranted(
                 INSTALLTIME_PERMISSION_USER_PKG_NAME, TEST_INSTALLTIME_PERMISSION));
-        // Now uninstall the permission definer; the user packages' permission will not be revoked
-        uninstallApp(INSTALLTIME_PERMISSION_DEFINER_PKG_NAME);
-        assertTrue(permissionGranted(
-                INSTALLTIME_PERMISSION_USER_PKG_NAME, TEST_INSTALLTIME_PERMISSION));
 
+        uninstallApp(INSTALLTIME_PERMISSION_DEFINER_PKG_NAME);
         uninstallApp(INSTALLTIME_PERMISSION_USER_PKG_NAME);
     }
 }
