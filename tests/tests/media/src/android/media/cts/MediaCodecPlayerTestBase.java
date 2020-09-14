@@ -93,7 +93,7 @@ class MediaCodecPlayerTestBase<T extends Activity> extends ActivityInstrumentati
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
                 surfaces,
                 sessionId, scrambled,
-                mContext.getResources());
+                mContext);
 
         mMediaCodecPlayer.setAudioDataSource(audioUrl, null, audioEncrypted);
         mMediaCodecPlayer.setVideoDataSource(videoUrl, null, videoEncrypted);
