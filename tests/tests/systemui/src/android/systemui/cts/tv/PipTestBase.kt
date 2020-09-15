@@ -99,7 +99,7 @@ abstract class PipTestBase {
             state.getTaskByActivity(activityName)?.let { task ->
                 task.windowingMode == WINDOWING_MODE_PINNED
             } ?: false
-        } || error("Task $activityName is not pinned!")
+        } || error("Task ${activityName.flattenToShortString()} is not found or not pinned!")
 
         wmState
             .waitForWithAmState("checking activity windowing mode") { state: WindowManagerState ->
@@ -107,7 +107,7 @@ abstract class PipTestBase {
                     activity.windowingMode == WINDOWING_MODE_PINNED &&
                         activity.state == STATE_PAUSED
                 } ?: false
-            } || error("Activity $activityName is not pinned or not paused!")
+            } || error("Activity ${activityName.flattenToShortString()} is not found, not pinned or not paused!")
     }
 
     /** Waits until the app is in fullscreen accounting for a possible pip transition animation. */
@@ -117,13 +117,13 @@ abstract class PipTestBase {
                 state.getTaskByActivity(activityName)?.getActivity(activityName)?.let { activity ->
                     activity.windowingMode != WINDOWING_MODE_PINNED
                 } ?: false
-            } || error("Task $activityName is pinned!")
+            } || error("Task ${activityName.flattenToShortString()} is not found or pinned!")
 
         wmState.waitForWithAmState("checking task windowing mode") { state: WindowManagerState ->
             state.getTaskByActivity(activityName)?.let { task ->
                 task.windowingMode != WINDOWING_MODE_PINNED
             } ?: false
-        } || error("Activity $activityName is pinned!")
+        } || error("Activity ${activityName.flattenToShortString()} is not found or pinned!")
     }
 
     /** Waits until the given window state condition is true. Throws on timeout. */
