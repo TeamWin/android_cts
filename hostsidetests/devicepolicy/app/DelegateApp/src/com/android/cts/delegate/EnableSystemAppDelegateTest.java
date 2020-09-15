@@ -51,13 +51,13 @@ public class EnableSystemAppDelegateTest extends InstrumentationTestCase {
 
         // Exercise enableSystemApp(String).
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.enableSystemApp(null, TEST_APP_PKG);
                 });
 
         // Exercise enableSystemApp(Intent).
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.enableSystemApp(null, new Intent().setPackage(TEST_APP_PKG));
                 });
     }

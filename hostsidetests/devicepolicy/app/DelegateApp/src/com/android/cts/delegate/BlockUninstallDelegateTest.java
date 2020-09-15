@@ -48,7 +48,7 @@ public class BlockUninstallDelegateTest extends InstrumentationTestCase {
             amIBlockUninstallDelegate());
 
         assertExpectException(SecurityException.class,
-                "Caller with uid \\d+ is not a delegate of scope", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.setUninstallBlocked(null, TEST_APP_PKG, true);
                 });
     }
