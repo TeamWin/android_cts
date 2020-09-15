@@ -17,6 +17,7 @@
 @file:JvmName("NotificationUtils")
 package android.systemui.cts.tv
 
+import android.Manifest.permission.GET_INTENT_SENDER_INTENT
 import android.app.Notification.EXTRA_TITLE
 import android.app.PendingIntent
 import android.content.Intent
@@ -32,8 +33,7 @@ fun StatusBarNotification.pendingTvIntent(key: String): PendingIntent =
 
 /** Retrieve the inner intent of a pending intent. */
 val PendingIntent.innerIntent: Intent
-    get() = SystemUtil.runWithShellPermissionIdentity(::getIntent,
-        arrayOf(android.Manifest.permission.GET_INTENT_SENDER_INTENT))
+    get() = SystemUtil.runWithShellPermissionIdentity(::getIntent, GET_INTENT_SENDER_INTENT)
 
 fun StatusBarNotification.title(): String = notification?.extras?.getString(EXTRA_TITLE) ?: ""
 
