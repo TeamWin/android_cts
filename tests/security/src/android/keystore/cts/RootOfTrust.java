@@ -51,6 +51,13 @@ public class RootOfTrust {
                 Asn1Utils.getIntegerFromAsn1(sequence.getObjectAt(VERIFIED_BOOT_STATE_INDEX));
     }
 
+
+    RootOfTrust(byte[] verifiedBootKey, boolean deviceLocked, int verifiedBootState) {
+        this.verifiedBootKey = verifiedBootKey;
+        this.deviceLocked = deviceLocked;
+        this.verifiedBootState = verifiedBootState;
+    }
+
     public static String verifiedBootStateToString(int verifiedBootState) {
         switch (verifiedBootState) {
             case KM_VERIFIED_BOOT_VERIFIED:
@@ -82,11 +89,35 @@ public class RootOfTrust {
     public String toString() {
         return new StringBuilder()
                 .append("\nVerified boot Key: ")
-                .append(BaseEncoding.base64().encode(verifiedBootKey))
+                .append(verifiedBootKey != null ?
+                            BaseEncoding.base64().encode(verifiedBootKey) :
+                            "null")
                 .append("\nDevice locked: ")
                 .append(deviceLocked)
                 .append("\nVerified boot state: ")
                 .append(verifiedBootStateToString(verifiedBootState))
                 .toString();
+    }
+
+    public static class Builder {
+        private byte[] verifiedBootKey;
+        private boolean deviceLocked = false;
+        private int verifiedBootState = -1;
+
+        public Builder setVerifiedBootKey(byte[] verifiedBootKey) {
+            this.verifiedBootKey = verifiedBootKey;
+            return this;
+        }
+        public Builder setDeviceLocked(boolean deviceLocked) {
+            this.deviceLocked = deviceLocked;
+            return this;
+        }
+        public Builder setVerifiedBootState(int verifiedBootState) {
+            this.verifiedBootState = verifiedBootState;
+            return this;
+        }
+        public RootOfTrust build() {
+            return new RootOfTrust(verifiedBootKey, deviceLocked, verifiedBootState);
+        }
     }
 }
