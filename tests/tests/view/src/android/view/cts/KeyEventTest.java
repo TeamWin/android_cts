@@ -592,6 +592,23 @@ public class KeyEventTest {
     }
 
     @Test
+    public void testIsMediaSessionKey() {
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_PLAY));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_PAUSE));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MUTE));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_HEADSETHOOK));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_STOP));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_NEXT));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_PREVIOUS));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_REWIND));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_RECORD));
+        assertTrue(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_MEDIA_FAST_FORWARD));
+
+        assertFalse(KeyEvent.isMediaSessionKey(KeyEvent.KEYCODE_0));
+    }
+
+    @Test
     public void testGetMatch() {
         // Our default key event is down + 0, so we expect getMatch to return our '0' character
         assertEquals('0', mKeyEvent.getMatch(new char[] { '0', '1', '2' }));
