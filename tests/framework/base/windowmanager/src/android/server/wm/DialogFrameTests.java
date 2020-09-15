@@ -247,6 +247,7 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
     }
 
     private Insets getActivitySystemInsets() {
+        getInstrumentation().waitForIdleSync();
         getInstrumentation().runOnMainSync(() -> {
             final Insets insets = mDialogTestActivity
                 .getActivity()
