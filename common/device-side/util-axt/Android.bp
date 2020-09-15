@@ -25,6 +25,7 @@ java_library_static {
     static_libs: [
         "compatibility-common-util-devicesidelib",
         "androidx.test.rules",
+        "androidx.test.ext.junit",
         "ub-uiautomator",
         "mockito-target-minus-junit4",
         "androidx.annotation_annotation",
