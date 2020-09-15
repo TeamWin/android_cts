@@ -74,7 +74,7 @@ class CustomPipActionsTests : PipTestBase() {
 
     @After
     fun tearDown() {
-        stopPackage(PIP_ACTIVITY)
+        stopPackage(PIP_ACTIVITY.packageName)
     }
 
     /** Ensure the pip menu contains a custom action button if set by the user. */

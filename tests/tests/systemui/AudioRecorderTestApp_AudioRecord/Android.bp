@@ -12,10 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_library {
-    name: "CtsSystemUiDeviceAudioRecorderBase",
+android_test_helper_app {
+    name: "AudioRecorderTestApp_AudioRecord",
+    static_libs: ["AudioRecorderTestApp_Base"],
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
-    resource_dirs: ["res"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "vts10",
+        "general-tests",
+    ],
     sdk_version: "current",
 }

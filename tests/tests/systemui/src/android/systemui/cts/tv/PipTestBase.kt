@@ -17,55 +17,38 @@
 package android.systemui.cts.tv
 
 import android.app.ActivityTaskManager
-import android.app.Instrumentation
 import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
 import android.content.ComponentName
-import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Rect
-import android.server.wm.UiDeviceUtils
 import android.server.wm.WindowManagerState
 import android.server.wm.WindowManagerState.STATE_PAUSED
-import android.server.wm.WindowManagerStateHelper
 import android.systemui.tv.cts.Components
 import android.systemui.tv.cts.Components.activityName
 import android.systemui.tv.cts.ResourceNames.STRING_PIP_MENU_BOUNDS
 import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE
 import android.util.DisplayMetrics
-import android.util.Log
 import android.util.TypedValue
 import android.view.WindowManager
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
-import com.android.compatibility.common.util.SystemUtil
 import org.junit.Assume.assumeTrue
 import org.junit.Before
-import java.io.IOException
 import kotlin.test.assertEquals
 
-abstract class PipTestBase {
-    companion object {
-        private const val TAG: String = "PipTestBase"
-    }
-
-    protected val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
+abstract class PipTestBase : TvTestBase() {
     protected val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
-    protected val context: Context = instrumentation.context
     protected val resources: Resources = context.resources
-    protected val packageManager: PackageManager = context.packageManager
-        ?: error("Could not get a PackageManager")
     protected val windowManager: WindowManager =
         context.getSystemService(WindowManager::class.java)
             ?: error("Could not get a WindowManager")
     protected val activityTaskManager: ActivityTaskManager =
         context.getSystemService(ActivityTaskManager::class.java)
             ?: error("Could not get an ActivityManager")
-    protected val wmState: WindowManagerStateHelper = WindowManagerStateHelper()
-    protected val systemuiResources: Resources =
+    private val systemuiResources: Resources =
         packageManager.getResourcesForApplication(SYSTEM_UI_PACKAGE)
 
     /** Default timeout in milliseconds to use for wait and find operations. */
@@ -79,19 +62,13 @@ abstract class PipTestBase {
     }
 
     @Before
-    open fun setUp() {
+    override fun setUp() {
+        super.setUp()
         assumeTrue(supportsPip())
-        assumeTrue(isTelevision())
-        UiDeviceUtils.pressWakeupButton()
-        UiDeviceUtils.pressUnlockButton()
     }
 
     protected fun supportsPip(): Boolean =
         packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
-
-    protected fun isTelevision(): Boolean =
-        packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
-            packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)
 
     /** Waits until the pip animation has finished and the app is fully in pip mode. */
     protected fun waitForEnterPip(activityName: ComponentName) {
@@ -107,7 +84,8 @@ abstract class PipTestBase {
                     activity.windowingMode == WINDOWING_MODE_PINNED &&
                         activity.state == STATE_PAUSED
                 } ?: false
-            } || error("Activity ${activityName.flattenToShortString()} is not found, not pinned or not paused!")
+            } || error("Activity ${activityName.flattenToShortString()} is not found," +
+                " not pinned or not paused!")
     }
 
     /** Waits until the app is in fullscreen accounting for a possible pip transition animation. */
@@ -146,89 +124,6 @@ abstract class PipTestBase {
     protected fun locateByResourceName(resourceName: String): UiObject2 =
         uiDevice.wait(Until.findObject(By.res(resourceName)), defaultTimeout)
             ?: error("Could not locate $resourceName")
-
-    @JvmOverloads
-    protected fun launchActivity(
-        activity: ComponentName? = null,
-        action: String? = null,
-        flags: Set<Int> = setOf(),
-        boolExtras: Map<String, Boolean> = mapOf(),
-        intExtras: Map<String, Int> = mapOf(),
-        stringExtras: Map<String, String> = mapOf()
-    ) {
-        require(activity != null || !action.isNullOrBlank()) {
-            "Cannot launch an activity with neither activity name nor action!"
-        }
-        val command =
-            composeCommand("start", activity, action, flags, boolExtras, intExtras, stringExtras)
-        executeShellCommand(command)
-    }
-
-    @JvmOverloads
-    protected fun sendBroadcast(
-        action: String,
-        flags: Set<Int> = setOf(),
-        boolExtras: Map<String, Boolean> = mapOf(),
-        intExtras: Map<String, Int> = mapOf(),
-        stringExtras: Map<String, String> = mapOf()
-    ) {
-        val command =
-            composeCommand("broadcast", null, action, flags, boolExtras, intExtras, stringExtras)
-        executeShellCommand(command)
-    }
-
-    protected fun stopPackage(activity: ComponentName) {
-        val command = buildString {
-            append("am force-stop ")
-            append(activity.packageName)
-        }
-        executeShellCommand(command)
-    }
-
-    private fun composeCommand(
-        command: String,
-        activity: ComponentName?,
-        action: String?,
-        flags: Set<Int>,
-        boolExtras: Map<String, Boolean>,
-        intExtras: Map<String, Int>,
-        stringExtras: Map<String, String>
-    ): String = buildString {
-        append("am ")
-        append(command)
-        activity?.let {
-            append(" -n ")
-            append(it.flattenToShortString())
-        }
-        action?.let {
-            append(" -a ")
-            append(it)
-        }
-        flags.forEach {
-            append(" -f ")
-            append(it)
-        }
-        boolExtras.forEach {
-            append(it.withFlag("ez"))
-        }
-        intExtras.forEach {
-            append(it.withFlag("ei"))
-        }
-        stringExtras.forEach {
-            append(it.withFlag("es"))
-        }
-    }
-
-    private fun Map.Entry<String, *>.withFlag(flag: String): String = " --$flag $key $value"
-
-    protected fun executeShellCommand(cmd: String): String {
-        try {
-            return SystemUtil.runShellCommand(instrumentation, cmd)
-        } catch (e: IOException) {
-            Log.e(TAG, "Error running shell command: $cmd")
-            throw e
-        }
-    }
 
     /** @return the number of pixels for a given dip value. */
     protected fun dipToPx(dpValue: Int, dm: DisplayMetrics): Int {
