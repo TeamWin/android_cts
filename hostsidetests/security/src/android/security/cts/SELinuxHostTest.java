@@ -19,14 +19,17 @@ package android.security.cts;
 import android.platform.test.annotations.RestrictedBuildTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.tradefed.targetprep.DeviceInfoCollector;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.util.FileUtil;
 
 import com.android.compatibility.common.util.CddTest;
 
@@ -57,6 +60,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.json.JSONObject;
+
 
 /**
  * Host-side SELinux tests.
@@ -67,10 +72,22 @@ import org.w3c.dom.Element;
  */
 public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, IDeviceTest {
 
+    // Keep in sync with AndroidTest.xml
+    private static final String DEVICE_INFO_DEVICE_DIR = "/sdcard/device-info-files/";
+    // Keep in sync with com.android.compatibility.common.deviceinfo.VintfDeviceInfo
+    private static final String VINTF_DEVICE_CLASS = "VintfDeviceInfo";
+    // Keep in sync with
+    // com.android.compatibility.common.deviceinfo.DeviceInfo#testCollectDeviceInfo()
+    private static final String DEVICE_INFO_SUFFIX = ".deviceinfo.json";
+    private static final String VINTF_DEVICE_JSON = VINTF_DEVICE_CLASS + DEVICE_INFO_SUFFIX;
+    // Keep in sync with com.android.compatibility.common.deviceinfo.VintfDeviceInfo
+    private static final String SEPOLICY_VERSION_JSON_KEY = "sepolicy_version";
+
     private static final Map<ITestDevice, File> cachedDevicePolicyFiles = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDevicePlatFcFiles = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDeviceNonplatFcFiles = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDeviceVendorManifest = new HashMap<>(1);
+    private static final Map<ITestDevice, File> cachedDeviceVintfJson = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDeviceSystemPolicy = new HashMap<>(1);
 
     private File sepolicyAnalyze;
@@ -268,9 +285,76 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns the major number of sepolicy version of device's vendor implementation.
-     * TODO(b/37999212): Use VINTF object API instead of parsing vendor manifest.
      */
-    public static int getVendorSepolicyVersion(ITestDevice device) throws Exception {
+    public static int getVendorSepolicyVersion(IBuildInfo build, ITestDevice device)
+            throws Exception {
+
+        // Try different methods to get vendor SEPolicy version in the following order:
+        // 1. Retrieve from IBuildInfo as stored by DeviceInfoCollector (relies on #2)
+        // 2. If it fails, retrieve from device info JSON file stored on the device
+        //    (relies on android.os.VintfObject)
+        // 3. If it fails, retrieve from raw VINTF device manifest files by guessing its path on
+        //    the device
+        // Usually, the method #1 should work. If it doesn't, fallback to method #2 and #3. If
+        // none works, throw the error from method #1.
+        Exception buildInfoEx;
+        try {
+            return getVendorSepolicyVersionFromBuildInfo(build);
+        } catch (Exception ex) {
+            CLog.e("getVendorSepolicyVersionFromBuildInfo failed: ", ex);
+            buildInfoEx = ex;
+        }
+        try {
+            return getVendorSepolicyVersionFromDeviceJson(device);
+        } catch (Exception ex) {
+            CLog.e("getVendorSepolicyVersionFromDeviceJson failed: ", ex);
+        }
+        try {
+            return getVendorSepolicyVersionFromManifests(device);
+        } catch (Exception ex) {
+            CLog.e("getVendorSepolicyVersionFromManifests failed: ", ex);
+            throw buildInfoEx;
+        }
+    }
+
+    /**
+     * Retrieve the major number of sepolicy version from VINTF device info stored in the given
+     * IBuildInfo by {@link DeviceInfoCollector}.
+     */
+    private static int getVendorSepolicyVersionFromBuildInfo(IBuildInfo build) throws Exception {
+        File deviceInfoDir = build.getFile(DeviceInfoCollector.DEVICE_INFO_DIR);
+        File vintfJson = deviceInfoDir.toPath().resolve(VINTF_DEVICE_JSON).toFile();
+        return getVendorSepolicyVersionFromJsonFile(vintfJson);
+    }
+
+    /**
+     * Retrieve the major number of sepolicy version from VINTF device info stored on the device by
+     * VintfDeviceInfo.
+     */
+    private static int getVendorSepolicyVersionFromDeviceJson(ITestDevice device) throws Exception {
+        File vintfJson = getDeviceFile(device, cachedDeviceVintfJson,
+                DEVICE_INFO_DEVICE_DIR + VINTF_DEVICE_JSON, VINTF_DEVICE_JSON);
+        return getVendorSepolicyVersionFromJsonFile(vintfJson);
+    }
+
+    /**
+     * Retrieve the major number of sepolicy version from the given JSON string that contains VINTF
+     * device info.
+     */
+    private static int getVendorSepolicyVersionFromJsonFile(File vintfJson) throws Exception {
+        String content = FileUtil.readStringFromFile(vintfJson);
+        JSONObject object = new JSONObject(content);
+        String version = object.getString(SEPOLICY_VERSION_JSON_KEY);
+        return getVendorSepolicyVersionFromMajorMinor(version);
+    }
+
+    /**
+     * Deprecated.
+     * Retrieve the major number of sepolicy version from raw device manifest XML files.
+     * Note that this is depends on locations of VINTF devices files at Android 10 and do not
+     * search new paths, hence this may not work on devices launching Android 11 and later.
+     */
+    private static int getVendorSepolicyVersionFromManifests(ITestDevice device) throws Exception {
         String deviceManifestPath =
                 (device.doesFileExist("/vendor/etc/vintf/manifest.xml")) ?
                 "/vendor/etc/vintf/manifest.xml" :
@@ -284,7 +368,14 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         Element root = doc.getDocumentElement();
         Element sepolicy = (Element) root.getElementsByTagName("sepolicy").item(0);
         Element version = (Element) sepolicy.getElementsByTagName("version").item(0);
-        String sepolicyVersion = version.getTextContent().split("\\.")[0];
+        return getVendorSepolicyVersionFromMajorMinor(version.getTextContent());
+    }
+
+    /**
+     * Get the major number from an SEPolicy version string, e.g. "27.0" => 27.
+     */
+    private static int getVendorSepolicyVersionFromMajorMinor(String version) {
+        String sepolicyVersion = version.split("\\.")[0];
         return Integer.parseInt(sepolicyVersion);
     }
 
