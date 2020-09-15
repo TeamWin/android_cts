@@ -71,6 +71,8 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -890,6 +892,46 @@ public class PackageManagerTest {
         PermissionInfo savedInfo = mPackageManager.getPermissionInfo(permissionInfo.name, 0);
         assertEquals(PACKAGE_NAME, savedInfo.packageName);
         assertEquals(PermissionInfo.PROTECTION_NORMAL, savedInfo.protectionLevel);
+    }
+
+    @Test
+    public void testSetSystemAppHiddenUntilInstalled() {
+        String packageToManipulate = "com.android.cts.ctsshim";
+        try {
+            mPackageManager.getPackageInfo(packageToManipulate, MATCH_SYSTEM_ONLY);
+        } catch (NameNotFoundException e) {
+            Log.i(TAG, "Device doesn't have " + packageToManipulate + " installed, skipping");
+            return;
+        }
+
+        try {
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mPackageManager.setSystemAppState(packageToManipulate,
+                            PackageManager.SYSTEM_APP_STATE_UNINSTALLED));
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mPackageManager.setSystemAppState(packageToManipulate,
+                            PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_HIDDEN));
+
+            try {
+                mPackageManager.getPackageInfo(packageToManipulate, MATCH_SYSTEM_ONLY);
+                fail(packageToManipulate + " should not be found via getPackageInfo.");
+            } catch (NameNotFoundException e) {
+                // expected
+            }
+        } finally {
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mPackageManager.setSystemAppState(packageToManipulate,
+                            PackageManager.SYSTEM_APP_STATE_INSTALLED));
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    mPackageManager.setSystemAppState(packageToManipulate,
+                            PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_VISIBLE));
+            try {
+                mPackageManager.getPackageInfo(packageToManipulate, MATCH_SYSTEM_ONLY);
+            } catch (NameNotFoundException e) {
+                fail(packageToManipulate
+                        + " should be found via getPackageInfo after re-enabling.");
+            }
+        }
     }
 
     @Test
