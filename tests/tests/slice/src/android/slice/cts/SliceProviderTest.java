@@ -16,9 +16,12 @@
 
 package android.slice.cts;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.app.slice.Slice;
 import android.app.slice.SliceSpec;
 import android.content.ContentResolver;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -52,19 +55,28 @@ public class SliceProviderTest {
     private Uri shadyActionUri = Uri.parse(SHADY_ACTION_URI_STRING);
 
     private ContentResolver mContentResolver;
+    private boolean mIsSlicesDisabled;
 
     @Before
     public void setUp() {
         mContentResolver = mLauncherActivityTestRule.getActivity().getContentResolver();
+        mIsSlicesDisabled = mLauncherActivityTestRule.
+                                getActivity().
+                                getPackageManager().
+                                hasSystemFeature(PackageManager.FEATURE_SLICES_DISABLED);
     }
 
     @Test
     public void testCallSliceUri_ValidAuthority() {
+        assumeFalse(mIsSlicesDisabled);
+
         doQuery(validActionUri);
     }
 
     @Test(expected = SecurityException.class)
     public void testCallSliceUri_ShadyAuthority() {
+        assumeFalse(mIsSlicesDisabled);
+
         doQuery(shadyActionUri);
     }
 
