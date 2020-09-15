@@ -371,19 +371,21 @@ public class MediaScannerTest extends AndroidTestCase {
         checkConnectionState(true);
 
         // test unlocalizable file
-        canonicalizeTest(R.raw.testmp3);
+        // testcanonicalize_mp3 has an ID3 title that is unique to this test.
+        // Do not use this clip for any other test and do not copy this to sdcard
+        // while running the test
+        canonicalizeTest(R.raw.testcanonicalize_mp3);
 
         mMediaScannerConnectionClient.reset();
 
         // test localizable file
-        canonicalizeTest(R.raw.testmp3_4);
+        // testcanonicalize_localizable_mp3 has an ID3 title that is unique to this test.
+        // Do not use this clip for any other test and do not copy this to sdcard
+        // while running the test
+        canonicalizeTest(R.raw.testcanonicalize_localizable_mp3);
     }
 
     private void canonicalizeTest(int resId) throws Exception {
-        // erase all audio files that might confuse us below
-        mContext.getContentResolver().delete(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                null, null);
-
         // write file and scan to insert into database
         String fileDir = mFileDir + "/canonicaltest-" + System.currentTimeMillis();
         String fileName = fileDir + "/test.mp3";
