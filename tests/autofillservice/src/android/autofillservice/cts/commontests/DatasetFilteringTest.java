@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.commontests;
 
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 import static android.autofillservice.cts.testcore.Timeouts.MOCK_IME_TIMEOUT_MS;

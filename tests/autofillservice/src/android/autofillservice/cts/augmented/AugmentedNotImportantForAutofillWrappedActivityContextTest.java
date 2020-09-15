@@ -17,6 +17,7 @@
 package android.autofillservice.cts.augmented;
 
 import android.autofillservice.cts.activities.LoginNotImportantForAutofillWrappedActivityContextActivity;
+import android.autofillservice.cts.commontests.AbstractLoginNotImportantForAutofillTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.platform.test.annotations.AppModeFull;
 

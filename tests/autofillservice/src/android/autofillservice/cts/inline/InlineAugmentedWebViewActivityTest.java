@@ -24,7 +24,7 @@ import static android.autofillservice.cts.testcore.CannedFillResponse.NO_RESPONS
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.activities.MyWebView;
 import android.autofillservice.cts.activities.WebViewActivity;
-import android.autofillservice.cts.augmented.AugmentedAutofillAutoActivityLaunchTestCase;
+import android.autofillservice.cts.commontests.AugmentedAutofillAutoActivityLaunchTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse;

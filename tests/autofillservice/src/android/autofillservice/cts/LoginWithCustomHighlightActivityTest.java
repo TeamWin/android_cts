@@ -20,6 +20,7 @@ import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 
 import android.autofillservice.cts.activities.LoginWithCustomHighlightActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;

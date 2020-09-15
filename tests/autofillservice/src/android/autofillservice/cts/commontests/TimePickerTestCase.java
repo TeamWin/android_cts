@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts;
+package android.autofillservice.cts.commontests;
 
-import static android.autofillservice.cts.activities.AbstractDatePickerActivity.ID_DATE_PICKER;
-import static android.autofillservice.cts.activities.AbstractDatePickerActivity.ID_OUTPUT;
-import static android.autofillservice.cts.testcore.Helper.assertDateValue;
+import static android.autofillservice.cts.activities.AbstractTimePickerActivity.ID_OUTPUT;
+import static android.autofillservice.cts.activities.AbstractTimePickerActivity.ID_TIME_PICKER;
 import static android.autofillservice.cts.testcore.Helper.assertNumberOfChildren;
 import static android.autofillservice.cts.testcore.Helper.assertTextAndValue;
 import static android.autofillservice.cts.testcore.Helper.assertTextIsSanitized;
+import static android.autofillservice.cts.testcore.Helper.assertTimeValue;
 import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.autofillservice.cts.activities.AbstractDatePickerActivity;
+import android.autofillservice.cts.activities.AbstractTimePickerActivity;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
@@ -36,9 +36,9 @@ import android.icu.util.Calendar;
 import org.junit.Test;
 
 /**
- * Base class for {@link AbstractDatePickerActivity} tests.
+ * Base class for {@link AbstractTimePickerActivity} tests.
  */
-abstract class DatePickerTestCase<A extends AbstractDatePickerActivity>
+public abstract class TimePickerTestCase<A extends AbstractTimePickerActivity>
         extends AutoFillServiceTestCase.AutoActivityLaunch<A> {
 
     protected A mActivity;
@@ -52,36 +52,34 @@ abstract class DatePickerTestCase<A extends AbstractDatePickerActivity>
 
         // Set expectations.
         final Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, 2012);
-        cal.set(Calendar.MONTH, Calendar.DECEMBER);
-        cal.set(Calendar.DAY_OF_MONTH, 20);
+        cal.set(Calendar.HOUR_OF_DAY, 4);
+        cal.set(Calendar.MINUTE, 20);
 
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
-                    .setPresentation(createPresentation("The end of the world"))
+                    .setPresentation(createPresentation("Adventure Time"))
                     .setField(ID_OUTPUT, "Y U NO CHANGE ME?")
-                    .setField(ID_DATE_PICKER, cal.getTimeInMillis())
+                    .setField(ID_TIME_PICKER, cal.getTimeInMillis())
                     .build())
-                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_OUTPUT, ID_DATE_PICKER)
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_OUTPUT, ID_TIME_PICKER)
                 .build());
-        mActivity.expectAutoFill("2012/11/20", 2012, Calendar.DECEMBER, 20);
 
         // Trigger auto-fill.
         mActivity.onOutput((v) -> v.requestFocus());
         final FillRequest fillRequest = sReplier.getNextFillRequest();
 
-        // Assert properties of DatePicker field.
-        assertTextIsSanitized(fillRequest.structure, ID_DATE_PICKER);
-        assertNumberOfChildren(fillRequest.structure, ID_DATE_PICKER, 0);
-
+        // Assert properties of TimePicker field.
+        assertTextIsSanitized(fillRequest.structure, ID_TIME_PICKER);
+        assertNumberOfChildren(fillRequest.structure, ID_TIME_PICKER, 0);
         // Auto-fill it.
-        mUiBot.selectDataset("The end of the world");
+        mActivity.expectAutoFill("4:20", 4, 20);
+        mUiBot.selectDataset("Adventure Time");
 
         // Check the results.
         mActivity.assertAutoFilled();
 
         // Trigger save.
-        mActivity.setDate(2010, Calendar.DECEMBER, 12);
+        mActivity.setTime(10, 40);
         mActivity.tapOk();
 
         mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_GENERIC);
@@ -89,7 +87,7 @@ abstract class DatePickerTestCase<A extends AbstractDatePickerActivity>
         assertWithMessage("onSave() not called").that(saveRequest).isNotNull();
 
         // Assert sanitization on save: everything should be available!
-        assertDateValue(findNodeByResourceId(saveRequest.structure, ID_DATE_PICKER), 2010, 11, 12);
-        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_OUTPUT), "2010/11/12");
+        assertTimeValue(findNodeByResourceId(saveRequest.structure, ID_TIME_PICKER), 10, 40);
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_OUTPUT), "10:40");
     }
 }

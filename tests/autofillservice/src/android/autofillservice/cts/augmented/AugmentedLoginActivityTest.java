@@ -42,6 +42,7 @@ import static org.testng.Assert.assertThrows;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.activities.AugmentedLoginActivity;
 import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.commontests.AugmentedAutofillAutoActivityLaunchTestCase;
 import android.autofillservice.cts.testcore.AugmentedHelper;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;

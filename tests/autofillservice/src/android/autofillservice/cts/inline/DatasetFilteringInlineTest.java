@@ -19,7 +19,7 @@ package android.autofillservice.cts.inline;
 import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 
-import android.autofillservice.cts.DatasetFilteringTest;
+import android.autofillservice.cts.commontests.DatasetFilteringTest;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InlineUiBot;
 

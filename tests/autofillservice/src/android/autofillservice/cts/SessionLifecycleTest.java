@@ -45,6 +45,7 @@ import android.autofillservice.cts.activities.EmptyActivity;
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.activities.ManualAuthenticationActivity;
 import android.autofillservice.cts.activities.OutOfProcessLoginActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;

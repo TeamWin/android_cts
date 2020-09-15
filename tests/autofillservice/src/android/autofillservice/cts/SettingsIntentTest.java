@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
 import android.autofillservice.cts.activities.TrampolineForResultActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.BadAutofillService;
 import android.autofillservice.cts.testcore.Helper;

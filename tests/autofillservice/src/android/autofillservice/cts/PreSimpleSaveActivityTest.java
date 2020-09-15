@@ -33,6 +33,7 @@ import android.autofillservice.cts.activities.PreSimpleSaveActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
 import android.autofillservice.cts.activities.TrampolineWelcomeActivity;
 import android.autofillservice.cts.activities.WelcomeActivity;
+import android.autofillservice.cts.commontests.CustomDescriptionWithLinkTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
