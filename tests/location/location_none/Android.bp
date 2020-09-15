@@ -22,6 +22,8 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        // TODO: remove once Android migrates to JUnit 4.12, which provides assertThrows:
+        "testng",
         "truth-prebuilt",
     ],
     libs: [

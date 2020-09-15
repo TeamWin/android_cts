@@ -268,24 +268,18 @@ public class BatterySaverLocationTest extends BatterySavingTestBase {
                 Criteria.ACCURACY_FINE); // accuracy
         mLocationManager.setTestProviderEnabled(TEST_PROVIDER_NAME, true);
 
-        LocationRequest normalLocationRequest = LocationRequest.create()
-                .setExpireIn(300_000)
-                .setFastestInterval(0)
-                .setInterval(0)
-                .setLocationSettingsIgnored(false)
-                .setProvider(TEST_PROVIDER_NAME)
-                .setQuality(LocationRequest.ACCURACY_FINE);
-        LocationRequest ignoreSettingsLocationRequest = LocationRequest.create()
-                .setExpireIn(300_000)
-                .setFastestInterval(0)
-                .setInterval(0)
+        LocationRequest normalLocationRequest = new LocationRequest.Builder(0)
+                .setDurationMillis(300_000)
+                .build();
+        LocationRequest ignoreSettingsLocationRequest = new LocationRequest.Builder(0)
+                .setDurationMillis(300_000)
                 .setLocationSettingsIgnored(true)
-                .setProvider(TEST_PROVIDER_NAME)
-                .setQuality(LocationRequest.ACCURACY_FINE);
-        mLocationManager.requestLocationUpdates(
-                normalLocationRequest, new TestLocationListener(), Looper.getMainLooper());
-        mLocationManager.requestLocationUpdates(
-                ignoreSettingsLocationRequest, new TestLocationListener(), Looper.getMainLooper());
+                .build();
+        mLocationManager.requestLocationUpdates(TEST_PROVIDER_NAME,
+                normalLocationRequest, getContext().getMainExecutor(), new TestLocationListener());
+        mLocationManager.requestLocationUpdates(TEST_PROVIDER_NAME,
+                ignoreSettingsLocationRequest, getContext().getMainExecutor(),
+                new TestLocationListener());
         assertTrue("Not enough requests sent to provider",
                 getTestProviderCurrentRequests(TEST_PROVIDER_NAME).size() >= 2);
         assertFalse("Normal priority requests not sent to provider",
