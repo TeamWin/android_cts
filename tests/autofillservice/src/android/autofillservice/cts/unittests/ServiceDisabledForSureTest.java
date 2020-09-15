@@ -22,8 +22,8 @@ import static android.autofillservice.cts.testcore.Helper.enableAutofillService;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.autofillservice.cts.AutoFillServiceTestCase;
 import android.autofillservice.cts.activities.OnCreateServiceStatusVerifierActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.Helper;
 import android.platform.test.annotations.AppModeFull;

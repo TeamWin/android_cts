@@ -32,6 +32,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.activities.PasswordOnlyActivity;
 import android.autofillservice.cts.activities.UsernameOnlyActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.AutofillTestWatcher;
 import android.autofillservice.cts.testcore.CannedFillResponse;

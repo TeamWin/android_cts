@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts;
+package android.autofillservice.cts.commontests;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -21,6 +21,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.PendingIntent;
+import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.UiBot;
@@ -48,7 +49,7 @@ import org.junit.Test;
  * <p>The overall behavior should be the same in both cases, although the implementation of the
  * tests per se will be sligthly different.
  */
-abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFillActivity> extends
+public abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFillActivity> extends
         AutoFillServiceTestCase.AutoActivityLaunch<A> {
 
     private static final String ID_LINK = "link";
@@ -247,7 +248,7 @@ abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFillActiv
 
     protected abstract void tapLinkAfterUpdateAppliedTest(boolean updateLinkView) throws Exception;
 
-    enum PostSaveLinkTappedAction {
+    public enum PostSaveLinkTappedAction {
         TAP_BACK_BUTTON,
         ROTATE_THEN_TAP_BACK_BUTTON,
         FINISH_ACTIVITY,

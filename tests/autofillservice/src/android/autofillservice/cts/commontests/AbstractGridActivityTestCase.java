@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.commontests;
 
 import android.autofillservice.cts.activities.GridActivity;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Base class for test cases using {@link GridActivity}.
  */
-abstract class AbstractGridActivityTestCase
+public abstract class AbstractGridActivityTestCase
         extends AutoFillServiceTestCase.AutoActivityLaunch<GridActivity> {
 
     protected GridActivity mActivity;

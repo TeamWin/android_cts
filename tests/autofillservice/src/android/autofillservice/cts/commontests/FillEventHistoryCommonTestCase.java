@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package android.autofillservice.cts.commontests;
 
 import static android.autofillservice.cts.activities.CheckoutActivity.ID_CC_NUMBER;
 import static android.autofillservice.cts.activities.LoginActivity.BACKDOOR_USERNAME;

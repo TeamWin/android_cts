@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts.augmented;
+package android.autofillservice.cts.commontests;
 
 import static android.autofillservice.cts.testcore.Helper.allowOverlays;
 import static android.autofillservice.cts.testcore.Helper.disallowOverlays;
 
-import android.autofillservice.cts.AutoFillServiceTestCase;
+import android.autofillservice.cts.activities.AbstractAutoFillActivity;
 import android.autofillservice.cts.testcore.AugmentedHelper;
 import android.autofillservice.cts.testcore.AugmentedUiBot;
 import android.autofillservice.cts.testcore.CtsAugmentedAutofillService;
 import android.autofillservice.cts.testcore.CtsAugmentedAutofillService.AugmentedReplier;
+import android.autofillservice.cts.testcore.UiBot;
 import android.content.AutofillOptions;
 import android.view.autofill.AutofillManager;
 
@@ -40,8 +41,8 @@ import org.junit.rules.TestRule;
 /////       by which class it extends.
 
 // Must be public because of the @ClassRule
-public abstract class AugmentedAutofillManualActivityLaunchTestCase
-        extends AutoFillServiceTestCase.ManualActivityLaunch {
+public abstract class AugmentedAutofillAutoActivityLaunchTestCase
+        <A extends AbstractAutoFillActivity> extends AutoFillServiceTestCase.AutoActivityLaunch<A> {
 
     protected static AugmentedReplier sAugmentedReplier;
     protected AugmentedUiBot mAugmentedUiBot;
@@ -54,6 +55,12 @@ public abstract class AugmentedAutofillManualActivityLaunchTestCase
     private static final RuleChain sRequiredFeatures = RuleChain
             .outerRule(sRequiredFeatureRule)
             .around(sRequiredResource);
+
+    public AugmentedAutofillAutoActivityLaunchTestCase() {}
+
+    public AugmentedAutofillAutoActivityLaunchTestCase(UiBot uiBot) {
+        super(uiBot);
+    }
 
     @BeforeClass
     public static void allowAugmentedAutofill() {
@@ -70,6 +77,7 @@ public abstract class AugmentedAutofillManualActivityLaunchTestCase
 
     @Before
     public void setFixtures() {
+        mServiceWatcher = null;
         sAugmentedReplier = CtsAugmentedAutofillService.getAugmentedReplier();
         sAugmentedReplier.reset();
         CtsAugmentedAutofillService.resetStaticState();
@@ -88,6 +96,11 @@ public abstract class AugmentedAutofillManualActivityLaunchTestCase
     }
 
     @Override
+    protected int getNumberRetries() {
+        return 0; // A.K.A. "Optimistic Thinking"
+    }
+
+    @Override
     protected int getSmartSuggestionMode() {
         return AutofillManager.FLAG_SMART_SUGGESTION_SYSTEM;
     }
@@ -98,11 +111,6 @@ public abstract class AugmentedAutofillManualActivityLaunchTestCase
     }
 
     protected CtsAugmentedAutofillService enableAugmentedService() throws InterruptedException {
-        return enableAugmentedService(/* whitelistSelf= */ true);
-    }
-
-    protected CtsAugmentedAutofillService enableAugmentedService(boolean whitelistSelf)
-            throws InterruptedException {
         if (mServiceWatcher != null) {
             throw new IllegalStateException("There Can Be Only One!");
         }

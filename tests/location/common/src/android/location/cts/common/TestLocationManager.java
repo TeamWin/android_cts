@@ -117,15 +117,13 @@ public class TestLocationManager {
      */
     public void requestLowPowerModeGnssLocationUpdates(int minTimeMillis,
             LocationListener locationListener) {
-        LocationRequest request = LocationRequest.createFromDeprecatedProvider(
-                LocationManager.GPS_PROVIDER, /* minTime= */ minTimeMillis, /* minDistance= */0,
-                false);
-        request.setLowPowerMode(true);
         if (mLocationManager.getProvider(LocationManager.GPS_PROVIDER) != null) {
             Log.i(TAG, "Request Location updates.");
-            mLocationManager.requestLocationUpdates(request,
-                    locationListener,
-                    Looper.getMainLooper());
+            mLocationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    new LocationRequest.Builder(minTimeMillis).setLowPower(true).build(),
+                    mContext.getMainExecutor(),
+                    locationListener);
         }
     }
 

@@ -30,6 +30,7 @@ import static org.testng.Assert.assertThrows;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.activities.GridActivity.FillExpectation;
+import android.autofillservice.cts.commontests.AbstractGridActivityTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;

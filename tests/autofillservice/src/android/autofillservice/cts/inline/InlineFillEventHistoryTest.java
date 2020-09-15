@@ -27,8 +27,8 @@ import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
-import android.autofillservice.cts.FillEventHistoryCommonTestCase;
 import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.commontests.FillEventHistoryCommonTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.testcore.Helper;

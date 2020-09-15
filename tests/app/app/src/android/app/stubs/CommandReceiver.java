@@ -26,8 +26,11 @@ import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcel;
 import android.util.ArrayMap;
 import android.util.Log;
+
+import java.util.concurrent.TimeUnit;
 
 public class CommandReceiver extends BroadcastReceiver {
 
@@ -49,10 +52,20 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_CREATE_FGSL_PENDING_INTENT = 12;
     public static final int COMMAND_SEND_FGSL_PENDING_INTENT = 13;
     public static final int COMMAND_BIND_FOREGROUND_SERVICE = 14;
+    public static final int COMMAND_START_CHILD_PROCESS = 15;
+    public static final int COMMAND_STOP_CHILD_PROCESS = 16;
+    public static final int COMMAND_WAIT_FOR_CHILD_PROCESS_GONE = 17;
+
+    public static final int RESULT_CHILD_PROCESS_STARTED = IBinder.FIRST_CALL_TRANSACTION;
+    public static final int RESULT_CHILD_PROCESS_STOPPED = IBinder.FIRST_CALL_TRANSACTION + 1;
+    public static final int RESULT_CHILD_PROCESS_GONE = IBinder.FIRST_CALL_TRANSACTION + 2;
 
     public static final String EXTRA_COMMAND = "android.app.stubs.extra.COMMAND";
     public static final String EXTRA_TARGET_PACKAGE = "android.app.stubs.extra.TARGET_PACKAGE";
     public static final String EXTRA_FLAGS = "android.app.stubs.extra.FLAGS";
+    public static final String EXTRA_CALLBACK = "android.app.stubs.extra.callback";
+    public static final String EXTRA_CHILD_CMDLINE = "android.app.stubs.extra.child_cmdline";
+    public static final String EXTRA_TIMEOUT = "android.app.stubs.extra.child_cmdline";
 
     public static final String SERVICE_NAME = "android.app.stubs.LocalService";
     public static final String FG_SERVICE_NAME = "android.app.stubs.LocalForegroundService";
@@ -68,6 +81,9 @@ public class CommandReceiver extends BroadcastReceiver {
 
     // Map a packageName to a PendingIntent.
     private static ArrayMap<String, PendingIntent> sPendingIntent = new ArrayMap<>();
+
+    /** The child process, started via {@link #COMMAND_START_CHILD_PROCESS} */
+    private static Process sChildProcess;
 
     /**
      * Handle the different types of binding/unbinding requests.
@@ -123,6 +139,15 @@ public class CommandReceiver extends BroadcastReceiver {
                 break;
             case COMMAND_BIND_FOREGROUND_SERVICE:
                 doBindService(context, intent, FG_LOCATION_SERVICE_NAME);
+                break;
+            case COMMAND_START_CHILD_PROCESS:
+                doStartChildProcess(context, intent);
+                break;
+            case COMMAND_STOP_CHILD_PROCESS:
+                doStopChildProcess(context, intent);
+                break;
+            case COMMAND_WAIT_FOR_CHILD_PROCESS_GONE:
+                doWaitForChildProcessGone(context, intent);
                 break;
         }
     }
@@ -222,6 +247,71 @@ public class CommandReceiver extends BroadcastReceiver {
         } catch (PendingIntent.CanceledException e) {
             Log.e(TAG, "Caugtht exception:", e);
         }
+    }
+
+    private void doStartChildProcess(Context context, Intent intent) {
+        final Bundle extras = intent.getExtras();
+        final IBinder callback = extras.getBinder(EXTRA_CALLBACK);
+        final String[] cmdline = extras.getStringArray(EXTRA_CHILD_CMDLINE);
+        final Parcel data = Parcel.obtain();
+        final Parcel reply = Parcel.obtain();
+
+        try {
+            sChildProcess = Runtime.getRuntime().exec(cmdline);
+            if (sChildProcess != null) {
+                Log.i(TAG, "Forked child: " + sChildProcess);
+                callback.transact(RESULT_CHILD_PROCESS_STARTED, data, reply, 0);
+            } // else the remote will fail with timeout
+        } catch (Exception e) {
+            Log.e(TAG, "Unable to execute command", e);
+            sChildProcess = null;
+        } finally {
+            data.recycle();
+            reply.recycle();
+        }
+    }
+
+    private void doStopChildProcess(Context context, Intent intent) {
+        final Bundle extras = intent.getExtras();
+        final IBinder callback = extras.getBinder(EXTRA_CALLBACK);
+        final long timeout = extras.getLong(EXTRA_TIMEOUT);
+        waitForChildProcessGone(true, callback, RESULT_CHILD_PROCESS_STOPPED, timeout);
+    }
+
+    private void doWaitForChildProcessGone(Context context, Intent intent) {
+        final Bundle extras = intent.getExtras();
+        final IBinder callback = extras.getBinder(EXTRA_CALLBACK);
+        final long timeout = extras.getLong(EXTRA_TIMEOUT);
+        waitForChildProcessGone(false, callback, RESULT_CHILD_PROCESS_GONE, timeout);
+    }
+
+    private static synchronized void waitForChildProcessGone(final boolean destroy,
+            final IBinder callback, final int transactionCode, final long timeout) {
+        if (destroy) {
+            sChildProcess.destroy();
+        }
+        new Thread(() -> {
+            final Parcel data = Parcel.obtain();
+            final Parcel reply = Parcel.obtain();
+            try {
+                if (sChildProcess != null && sChildProcess.isAlive()) {
+                    final boolean exit = sChildProcess.waitFor(timeout, TimeUnit.MILLISECONDS);
+                    if (exit) {
+                        Log.i(TAG, "Child process died: " + sChildProcess);
+                        callback.transact(transactionCode, data, reply, 0);
+                    } else {
+                        Log.w(TAG, "Child process is still alive: " + sChildProcess);
+                    }
+                } else {
+                    callback.transact(transactionCode, data, reply, 0);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error", e);
+            } finally {
+                data.recycle();
+                reply.recycle();
+            }
+        }).start();
     }
 
     private String getTargetPackage(Intent intent) {

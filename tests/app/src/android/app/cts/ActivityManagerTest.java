@@ -26,6 +26,7 @@ import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
 import android.app.Instrumentation.ActivityResult;
 import android.app.PendingIntent;
+import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.app.stubs.ActivityManagerRecentOneActivity;
 import android.app.stubs.ActivityManagerRecentTwoActivity;
 import android.app.stubs.CommandReceiver;
@@ -36,13 +37,24 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.res.Resources;
+import android.os.Binder;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.os.Parcel;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.test.annotations.RestrictedBuildTest;
+import android.provider.DeviceConfig;
+import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
 import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
+
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.SystemUtil;
@@ -50,6 +62,8 @@ import com.android.compatibility.common.util.SystemUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -79,6 +93,8 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     private static final String ACTIVITY_TIME_TRACK_INFO = "com.android.cts.TIME_TRACK_INFO";
 
     private static final String PACKAGE_NAME_APP1 = "com.android.app1";
+    private static final String PACKAGE_NAME_APP2 = "com.android.app2";
+    private static final String PACKAGE_NAME_APP3 = "com.android.app3";
 
     private static final String MCC_TO_UPDATE = "987";
     private static final String MNC_TO_UPDATE = "654";
@@ -893,6 +909,333 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                 mActivityManager.forceStopPackage(SIMPLE_PACKAGE_NAME);
             });
         }
+    }
+
+    /**
+     * Verifies the system will kill app's child processes if they are using excessive cpu
+     */
+    @LargeTest
+    public void testKillingAppChildProcess() throws Exception {
+        final long powerCheckInterval = 5 * 1000;
+        final long processGoneTimeout = powerCheckInterval * 4;
+        final int waitForSec = 5 * 1000;
+        final String activityManagerConstants = "activity_manager_constants";
+
+        final SettingsSession<String> amSettings = new SettingsSession<>(
+                Settings.Global.getUriFor(activityManagerConstants),
+                Settings.Global::getString, Settings.Global::putString);
+
+        final ApplicationInfo ai = mTargetContext.getPackageManager()
+                .getApplicationInfo(PACKAGE_NAME_APP1, 0);
+        final WatchUidRunner watcher = new WatchUidRunner(mInstrumentation, ai.uid, waitForSec);
+
+        try {
+            // Shorten the power check intervals
+            amSettings.set("power_check_interval=" + powerCheckInterval);
+
+            // Make sure we could start activity from background
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
+
+            // Start an activity
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+            watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+
+            // Spawn a light weight child process
+            CountDownLatch startLatch = startChildProcessInPackage(PACKAGE_NAME_APP1,
+                    new String[] {"/system/bin/sh", "-c",  "sleep 1000"});
+
+            // Wait for the start of the child process
+            assertTrue("Failed to spawn child process",
+                    startLatch.await(waitForSec, TimeUnit.MILLISECONDS));
+
+            // Stop the activity
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+            watcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+
+            // Wait for the system to kill that light weight child (it won't happen actually)
+            CountDownLatch stopLatch = initWaitingForChildProcessGone(
+                    PACKAGE_NAME_APP1, processGoneTimeout);
+
+            assertFalse("App's light weight child process shouldn't be gone",
+                    stopLatch.await(processGoneTimeout, TimeUnit.MILLISECONDS));
+
+            // Now kill the light weight child
+            stopLatch = stopChildProcess(PACKAGE_NAME_APP1, waitForSec);
+
+            assertTrue("Failed to kill app's light weight child process",
+                    stopLatch.await(waitForSec, TimeUnit.MILLISECONDS));
+
+            // Start an activity again
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+            watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+
+            // Spawn the cpu intensive child process
+            startLatch = startChildProcessInPackage(PACKAGE_NAME_APP1,
+                    new String[] {"/system/bin/sh", "-c",  "while true; do :; done"});
+
+            // Wait for the start of the child process
+            assertTrue("Failed to spawn child process",
+                    startLatch.await(waitForSec, TimeUnit.MILLISECONDS));
+
+            // Stop the activity
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+            watcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+
+            // Wait for the system to kill that heavy child due to excessive cpu usage,
+            // as well as the parent process.
+            watcher.waitFor(WatchUidRunner.CMD_GONE, processGoneTimeout);
+
+        } finally {
+            amSettings.close();
+
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
+
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                // force stop test package, where the whole test process group will be killed.
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
+            });
+
+            watcher.finish();
+        }
+    }
+
+
+    /**
+     * Verifies the system will trim app's child processes if there are too many
+     */
+    @LargeTest
+    public void testTrimAppChildProcess() throws Exception {
+        final long powerCheckInterval = 5 * 1000;
+        final long processGoneTimeout = powerCheckInterval * 4;
+        final int waitForSec = 5 * 1000;
+        final int maxPhantomProcessesNum = 2;
+        final String namespaceActivityManager = "activity_manager";
+        final String activityManagerConstants = "activity_manager_constants";
+        final String maxPhantomProcesses = "max_phantom_processes";
+
+        final SettingsSession<String> amSettings = new SettingsSession<>(
+                Settings.Global.getUriFor(activityManagerConstants),
+                Settings.Global::getString, Settings.Global::putString);
+        final Bundle currentMax = new Bundle();
+        final String keyCurrent = "current";
+
+        ApplicationInfo ai = mTargetContext.getPackageManager()
+                .getApplicationInfo(PACKAGE_NAME_APP1, 0);
+        final WatchUidRunner watcher1 = new WatchUidRunner(mInstrumentation, ai.uid, waitForSec);
+        ai = mTargetContext.getPackageManager().getApplicationInfo(PACKAGE_NAME_APP2, 0);
+        final WatchUidRunner watcher2 = new WatchUidRunner(mInstrumentation, ai.uid, waitForSec);
+        ai = mTargetContext.getPackageManager().getApplicationInfo(PACKAGE_NAME_APP3, 0);
+        final WatchUidRunner watcher3 = new WatchUidRunner(mInstrumentation, ai.uid, waitForSec);
+
+        try {
+            // Shorten the power check intervals
+            amSettings.set("power_check_interval=" + powerCheckInterval);
+
+            // Reduce the maximum phantom processes allowance
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                int current = DeviceConfig.getInt(namespaceActivityManager,
+                        maxPhantomProcesses, -1);
+                currentMax.putInt(keyCurrent, current);
+                DeviceConfig.setProperty(namespaceActivityManager,
+                        maxPhantomProcesses,
+                        Integer.toString(maxPhantomProcessesNum), false);
+            });
+
+            // Make sure we could start activity from background
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP2);
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP3);
+
+            // Start an activity
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+            watcher1.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+
+            // Spawn a light weight child process
+            CountDownLatch startLatch = startChildProcessInPackage(PACKAGE_NAME_APP1,
+                    new String[] {"/system/bin/sh", "-c",  "sleep 1000"});
+
+            // Wait for the start of the child process
+            assertTrue("Failed to spawn child process",
+                    startLatch.await(waitForSec, TimeUnit.MILLISECONDS));
+
+            // Start an activity in another package
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
+
+            watcher2.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+
+            // Spawn a light weight child process
+            startLatch = startChildProcessInPackage(PACKAGE_NAME_APP2,
+                    new String[] {"/system/bin/sh", "-c",  "sleep 1000"});
+
+            // Wait for the start of the child process
+            assertTrue("Failed to spawn child process",
+                    startLatch.await(waitForSec, TimeUnit.MILLISECONDS));
+
+            // Finish the 1st activity
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+
+            watcher1.waitFor(WatchUidRunner.CMD_CACHED, null);
+
+            // Wait for the system to kill that light weight child (it won't happen actually)
+            CountDownLatch stopLatch = initWaitingForChildProcessGone(
+                    PACKAGE_NAME_APP1, processGoneTimeout);
+
+            assertFalse("App's light weight child process shouldn't be gone",
+                    stopLatch.await(processGoneTimeout, TimeUnit.MILLISECONDS));
+
+            // Sleep a while
+            SystemClock.sleep(powerCheckInterval);
+
+            // Now start an activity in the 3rd party
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP3, PACKAGE_NAME_APP3, 0, null);
+
+            watcher3.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+
+            // Spawn a light weight child process
+            startLatch = startChildProcessInPackage(PACKAGE_NAME_APP3,
+                    new String[] {"/system/bin/sh", "-c",  "sleep 1000"});
+
+            // Wait for the start of the child process
+            assertTrue("Failed to spawn child process",
+                    startLatch.await(waitForSec, TimeUnit.MILLISECONDS));
+
+            // Now the 1st child process should have been gone.
+            stopLatch = initWaitingForChildProcessGone(
+                    PACKAGE_NAME_APP1, processGoneTimeout);
+
+            assertTrue("1st App's child process should have been gone",
+                    stopLatch.await(processGoneTimeout, TimeUnit.MILLISECONDS));
+
+        } finally {
+            amSettings.close();
+
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                final int current = currentMax.getInt(keyCurrent);
+                if (current < 0) {
+                    // Hm, DeviceConfig doesn't have an API to delete a property,
+                    // let's set it empty so the code will use the built-in default value.
+                    DeviceConfig.setProperty(namespaceActivityManager,
+                            maxPhantomProcesses, "", false);
+                } else {
+                    DeviceConfig.setProperty(namespaceActivityManager,
+                            maxPhantomProcesses, Integer.toString(current), false);
+                }
+            });
+
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP2);
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP3);
+
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                // force stop test package, where the whole test process group will be killed.
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP2);
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP3);
+            });
+
+            watcher1.finish();
+            watcher2.finish();
+            watcher3.finish();
+        }
+    }
+
+    private CountDownLatch startChildProcessInPackage(String pkgName, String[] cmdline) {
+        final CountDownLatch startLatch = new CountDownLatch(1);
+
+        final IBinder binder = new Binder() {
+            @Override
+            protected boolean onTransact(int code, Parcel data, Parcel reply, int flags)
+                    throws RemoteException {
+                switch (code) {
+                    case CommandReceiver.RESULT_CHILD_PROCESS_STARTED:
+                        startLatch.countDown();
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        };
+        final Bundle extras = new Bundle();
+        extras.putBinder(CommandReceiver.EXTRA_CALLBACK, binder);
+        extras.putStringArray(CommandReceiver.EXTRA_CHILD_CMDLINE, cmdline);
+
+        CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_CHILD_PROCESS,
+                pkgName, pkgName, 0, extras);
+
+        return startLatch;
+    }
+
+    final CountDownLatch stopChildProcess(String pkgName, long timeout) {
+        final CountDownLatch stopLatch = new CountDownLatch(1);
+
+        final IBinder binder = new Binder() {
+            @Override
+            protected boolean onTransact(int code, Parcel data, Parcel reply, int flags)
+                    throws RemoteException {
+                switch (code) {
+                    case CommandReceiver.RESULT_CHILD_PROCESS_STOPPED:
+                        stopLatch.countDown();
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        };
+        final Bundle extras = new Bundle();
+        extras.putBinder(CommandReceiver.EXTRA_CALLBACK, binder);
+        extras.putLong(CommandReceiver.EXTRA_TIMEOUT, timeout);
+
+        CommandReceiver.sendCommand(mTargetContext,
+                CommandReceiver.COMMAND_STOP_CHILD_PROCESS, pkgName, pkgName, 0, extras);
+
+        return stopLatch;
+    }
+
+    final CountDownLatch initWaitingForChildProcessGone(String pkgName, long timeout) {
+        final CountDownLatch stopLatch = new CountDownLatch(1);
+
+        final IBinder binder = new Binder() {
+            @Override
+            protected boolean onTransact(int code, Parcel data, Parcel reply, int flags)
+                    throws RemoteException {
+                switch (code) {
+                    case CommandReceiver.RESULT_CHILD_PROCESS_GONE:
+                        stopLatch.countDown();
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        };
+        final Bundle extras = new Bundle();
+        extras.putBinder(CommandReceiver.EXTRA_CALLBACK, binder);
+        extras.putLong(CommandReceiver.EXTRA_TIMEOUT, timeout);
+
+        CommandReceiver.sendCommand(mTargetContext,
+                CommandReceiver.COMMAND_WAIT_FOR_CHILD_PROCESS_GONE, pkgName, pkgName, 0, extras);
+
+        return stopLatch;
     }
 
     private RunningAppProcessInfo getRunningAppProcessInfo(String processName) {

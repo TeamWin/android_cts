@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.activities.MyWebView;
 import android.autofillservice.cts.activities.WebViewActivity;
+import android.autofillservice.cts.commontests.AbstractWebViewTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;

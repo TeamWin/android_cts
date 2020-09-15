@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts;
+package android.autofillservice.cts.commontests;
 
 import android.autofillservice.cts.activities.AbstractWebViewActivity;
 import android.autofillservice.cts.testcore.IdMode;

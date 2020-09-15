@@ -17,6 +17,7 @@
 package android.autofillservice.cts;
 
 import android.autofillservice.cts.activities.DatePickerCalendarActivity;
+import android.autofillservice.cts.commontests.DatePickerTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.platform.test.annotations.AppModeFull;
 

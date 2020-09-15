@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.location.cts.fine;
+package android.location.cts.none;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;

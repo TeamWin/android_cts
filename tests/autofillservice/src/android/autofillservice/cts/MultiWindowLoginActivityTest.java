@@ -31,6 +31,7 @@ import android.app.ActivityTaskManager;
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.activities.MultiWindowEmptyActivity;
 import android.autofillservice.cts.activities.MultiWindowLoginActivity;
+import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper;
