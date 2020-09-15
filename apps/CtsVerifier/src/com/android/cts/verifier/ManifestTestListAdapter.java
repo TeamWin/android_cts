@@ -107,6 +107,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     private static final String TEST_REQUIRED_CONFIG_META_DATA = "test_required_configs";
 
+    private static final String CONFIG_NO_EMULATOR = "config_no_emulator";
+
     private static final String CONFIG_VOICE_CAPABLE = "config_voice_capable";
 
     private static final String CONFIG_HAS_RECENTS = "config_has_recents";
@@ -335,6 +337,20 @@ public class ManifestTestListAdapter extends TestListAdapter {
         if (configs != null) {
             for (String config : configs) {
                 switch (config) {
+                    case CONFIG_NO_EMULATOR:
+                        try {
+                            Method getStringMethod = ClassLoader.getSystemClassLoader()
+                                .loadClass("android.os.SystemProperties")
+                                .getMethod("get", String.class);
+                            String emulatorKernel = (String) getStringMethod.invoke("0",
+                                    "ro.kernel.qemu");
+                            if (emulatorKernel.equals("1")) {
+                                return false;
+                            }
+                        } catch (Exception e) {
+                            Log.e(LOG_TAG, "Exception while checking for emulator support.", e);
+                        }
+                        break;
                     case CONFIG_VOICE_CAPABLE:
                         TelephonyManager telephonyManager = mContext.getSystemService(
                                 TelephonyManager.class);
