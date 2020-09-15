@@ -19,6 +19,11 @@ package android.view.inputmethod.cts;
 import static android.view.View.VISIBLE;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED;
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
@@ -411,7 +416,31 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     }
 
     @Test
-    public void testImeVisibilityWhenEditorInDialogClearedFocusAfterUnlocked() throws Exception {
+    public void testImeState_Unspecified_EditorDialogLostFocusAfterUnlocked() throws Exception {
+        runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_UNSPECIFIED);
+    }
+
+    @Test
+    public void testImeState_Visible_EditorDialogLostFocusAfterUnlocked() throws Exception {
+        runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_VISIBLE);
+    }
+
+    @Test
+    public void testImeState_AlwaysVisible_EditorDialogLostFocusAfterUnlocked() throws Exception {
+        runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    }
+
+    @Test
+    public void testImeState_Hidden_EditorDialogLostFocusAfterUnlocked() throws Exception {
+        runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_HIDDEN);
+    }
+
+    @Test
+    public void testImeState_AlwaysHidden_EditorDialogLostFocusAfterUnlocked() throws Exception {
+        runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    private void runImeDoesntReshowAfterKeyguardTest(int softInputState) throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
@@ -434,6 +463,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 final AlertDialog dialog = new AlertDialog.Builder(testActivity)
                         .setView(editText)
                         .create();
+                dialog.getWindow().setSoftInputMode(softInputState);
                 dialog.show();
                 editText.getWindowInsetsController().show(ime());
                 editTextRef.set(editText);
