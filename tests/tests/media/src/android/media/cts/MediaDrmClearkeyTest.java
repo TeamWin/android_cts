@@ -456,7 +456,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
                 getSurfaces(),
                 mSessionId, false /*scrambled */,
-                mContext.getResources());
+                mContext);
 
         Uri audioUrl = Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH);
         mMediaCodecPlayer.setAudioDataSource(audioUrl, null, false);
@@ -541,7 +541,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
                 getSurfaces(),
                 mSessionId, false,
-                mContext.getResources());
+                mContext);
         mMediaCodecPlayer.setAudioDataSource(
                 Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), null, false);
         mMediaCodecPlayer.setVideoDataSource(
@@ -587,7 +587,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
                 getSurfaces(),
                 mSessionId, false,
-                mContext.getResources());
+                mContext);
         mMediaCodecPlayer.setAudioDataSource(
                 Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), null, false);
         mMediaCodecPlayer.setVideoDataSource(
@@ -1051,7 +1051,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             mSessionId = openSession(drm);
 
             mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
-                    getSurfaces(), mSessionId, false, mContext.getResources());
+                    getSurfaces(), mSessionId, false, mContext);
             mMediaCodecPlayer.setAudioDataSource(
                     Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), null, false);
             mMediaCodecPlayer.setVideoDataSource(
