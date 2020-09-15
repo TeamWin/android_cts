@@ -72,6 +72,8 @@ $(LOCAL_GENERATED_SOURCES) : $(selinux_neverallow_gen) $(selinux_general_policy)
 	mkdir -p $(dir $@)
 	$< $(PRIVATE_SELINUX_GENERAL_POLICY) $@
 
+LOCAL_TARGET_REQUIRED_MODULES := CtsDeviceInfo
+
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
