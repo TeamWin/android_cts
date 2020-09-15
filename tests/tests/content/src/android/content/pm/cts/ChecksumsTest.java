@@ -16,15 +16,17 @@
 
 package android.content.pm.cts;
 
+import static android.content.pm.Checksum.PARTIAL_MERKLE_ROOT_1M_SHA256;
+import static android.content.pm.Checksum.PARTIAL_MERKLE_ROOT_1M_SHA512;
+import static android.content.pm.Checksum.WHOLE_MD5;
+import static android.content.pm.Checksum.WHOLE_MERKLE_ROOT_4K_SHA256;
+import static android.content.pm.Checksum.WHOLE_SHA1;
+import static android.content.pm.Checksum.WHOLE_SHA256;
+import static android.content.pm.Checksum.WHOLE_SHA512;
 import static android.content.pm.PackageManager.EXTRA_CHECKSUMS;
-import static android.content.pm.PackageManager.PARTIAL_MERKLE_ROOT_1M_SHA256;
-import static android.content.pm.PackageManager.PARTIAL_MERKLE_ROOT_1M_SHA512;
+import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
+import static android.content.pm.PackageManager.TRUST_ALL;
 import static android.content.pm.PackageManager.TRUST_NONE;
-import static android.content.pm.PackageManager.WHOLE_MD5;
-import static android.content.pm.PackageManager.WHOLE_MERKLE_ROOT_4K_SHA256;
-import static android.content.pm.PackageManager.WHOLE_SHA1;
-import static android.content.pm.PackageManager.WHOLE_SHA256;
-import static android.content.pm.PackageManager.WHOLE_SHA512;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -37,13 +39,20 @@ import android.content.IIntentReceiver;
 import android.content.IIntentSender;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.pm.FileChecksum;
+import android.content.pm.ApkChecksum;
+import android.content.pm.Checksum;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
+import android.content.pm.PackageInstaller.Session;
+import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.platform.test.annotations.AppModeFull;
+import android.util.ExceptionUtils;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -56,12 +65,20 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -71,6 +88,7 @@ import javax.annotation.Nonnull;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 public class ChecksumsTest {
+    private static final String CTS_PACKAGE_NAME = "android.content.cts";
     private static final String V2V3_PACKAGE_NAME = "android.content.cts";
     private static final String V4_PACKAGE_NAME = "com.example.helloworld";
     private static final String FIXED_PACKAGE_NAME = "android.appsecurity.cts.tinyapp";
@@ -90,16 +108,29 @@ public class ChecksumsTest {
             "CtsPkgInstallTinyAppV2V3V4-Sha512withEC.apk";
     private static final String TEST_FIXED_APK_VERITY = "CtsPkgInstallTinyAppV2V3V4-Verity.apk";
 
+    private static final String TEST_FIXED_APK_V2_SHA256 =
+            "1eec9e86e322b8d7e48e255fc3f2df2dbc91036e63982ff9850597c6a37bbeb3";
+    private static final String TEST_FIXED_APK_SHA256 =
+            "91aa30c1ce8d0474052f71cb8210691d41f534989c5521e27e794ec4f754c5ef";
+    private static final String TEST_FIXED_APK_MD5 = "c19868da017dc01467169f8ea7c5bc57";
+    private static final Checksum[] TEST_FIXED_APK_DIGESTS = new Checksum[]{new Checksum(
+            WHOLE_SHA256, hexStringToBytes(TEST_FIXED_APK_SHA256)), new Checksum(WHOLE_MD5,
+            hexStringToBytes(TEST_FIXED_APK_MD5))};
+
     private static final int ALL_CHECKSUMS =
             WHOLE_MERKLE_ROOT_4K_SHA256 | WHOLE_MD5 | WHOLE_SHA1 | WHOLE_SHA256 | WHOLE_SHA512
                     | PARTIAL_MERKLE_ROOT_1M_SHA256 | PARTIAL_MERKLE_ROOT_1M_SHA512;
+
+    private static UiAutomation getUiAutomation() {
+        return InstrumentationRegistry.getInstrumentation().getUiAutomation();
+    }
 
     private static PackageManager getPackageManager() {
         return InstrumentationRegistry.getContext().getPackageManager();
     }
 
-    private static UiAutomation getUiAutomation() {
-        return InstrumentationRegistry.getInstrumentation().getUiAutomation();
+    private static PackageInstaller getPackageInstaller() {
+        return getPackageManager().getPackageInstaller();
     }
 
     @Before
@@ -123,7 +154,7 @@ public class ChecksumsTest {
         LocalIntentReceiver receiver = new LocalIntentReceiver();
         PackageManager pm = getPackageManager();
         pm.getChecksums(V2V3_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
         assertEquals(checksums[0].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
@@ -138,7 +169,7 @@ public class ChecksumsTest {
         LocalIntentReceiver receiver = new LocalIntentReceiver();
         PackageManager pm = getPackageManager();
         pm.getChecksums(V4_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 6);
         // v2/v3 signature use 1M merkle tree.
@@ -164,13 +195,12 @@ public class ChecksumsTest {
         LocalIntentReceiver receiver = new LocalIntentReceiver();
         PackageManager pm = getPackageManager();
         pm.getChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
         // v2/v3 signature use 1M merkle tree.
         assertEquals(checksums[0].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
-        assertEquals(bytesToHexString(checksums[0].getValue()),
-                "1eec9e86e322b8d7e48e255fc3f2df2dbc91036e63982ff9850597c6a37bbeb3");
+        assertEquals(bytesToHexString(checksums[0].getValue()), TEST_FIXED_APK_V2_SHA256);
         assertNull(checksums[0].getSourceCertificate());
     }
 
@@ -182,7 +212,7 @@ public class ChecksumsTest {
         LocalIntentReceiver receiver = new LocalIntentReceiver();
         PackageManager pm = getPackageManager();
         pm.getChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 0);
     }
@@ -195,7 +225,7 @@ public class ChecksumsTest {
         LocalIntentReceiver receiver = new LocalIntentReceiver();
         PackageManager pm = getPackageManager();
         pm.getChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
         // v2/v3 signature use 1M merkle tree.
@@ -214,7 +244,7 @@ public class ChecksumsTest {
         LocalIntentReceiver receiver = new LocalIntentReceiver();
         PackageManager pm = getPackageManager();
         pm.getChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         // No usable hashes as verity-in-v2-signature does not cover the whole file.
         assertEquals(checksums.length, 0);
@@ -226,7 +256,7 @@ public class ChecksumsTest {
         PackageManager pm = getPackageManager();
         pm.getChecksums(V2V3_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
                 receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 7);
         assertEquals(checksums[0].getKind(), WHOLE_MERKLE_ROOT_4K_SHA256);
@@ -247,27 +277,25 @@ public class ChecksumsTest {
         PackageManager pm = getPackageManager();
         pm.getChecksums(FIXED_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
                 receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 7);
         assertEquals(checksums[0].getKind(), WHOLE_MERKLE_ROOT_4K_SHA256);
         assertEquals(bytesToHexString(checksums[0].getValue()),
                 "90553b8d221ab1b900b242a93e4cc659ace3a2ff1d5c62e502488b385854e66a");
         assertEquals(checksums[1].getKind(), WHOLE_MD5);
-        assertEquals(bytesToHexString(checksums[1].getValue()), "c19868da017dc01467169f8ea7c5bc57");
+        assertEquals(bytesToHexString(checksums[1].getValue()), TEST_FIXED_APK_MD5);
         assertEquals(checksums[2].getKind(), WHOLE_SHA1);
         assertEquals(bytesToHexString(checksums[2].getValue()),
                 "331eef6bc57671de28cbd7e32089d047285ade6a");
         assertEquals(checksums[3].getKind(), WHOLE_SHA256);
-        assertEquals(bytesToHexString(checksums[3].getValue()),
-                "91aa30c1ce8d0474052f71cb8210691d41f534989c5521e27e794ec4f754c5ef");
+        assertEquals(bytesToHexString(checksums[3].getValue()), TEST_FIXED_APK_SHA256);
         assertEquals(checksums[4].getKind(), WHOLE_SHA512);
         assertEquals(bytesToHexString(checksums[4].getValue()),
                 "b59467fe578ebc81974ab3aaa1e0d2a76fef3e4ea7212a6f2885cec1af5253571"
                         + "1e2e94496224cae3eba8dc992144ade321540ebd458ec5b9e6a4cc51170e018");
         assertEquals(checksums[5].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
-        assertEquals(bytesToHexString(checksums[5].getValue()),
-                "1eec9e86e322b8d7e48e255fc3f2df2dbc91036e63982ff9850597c6a37bbeb3");
+        assertEquals(bytesToHexString(checksums[5].getValue()), TEST_FIXED_APK_V2_SHA256);
         assertEquals(checksums[6].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA512);
         assertEquals(bytesToHexString(checksums[6].getValue()),
                 "ef80a8630283f60108e8557c924307d0ccdfb6bbbf2c0176bd49af342f43bc84"
@@ -283,7 +311,7 @@ public class ChecksumsTest {
         PackageManager pm = getPackageManager();
         pm.getChecksums(FIXED_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
                 receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 5);
         assertEquals(checksums[0].getKind(), WHOLE_MERKLE_ROOT_4K_SHA256);
@@ -314,7 +342,7 @@ public class ChecksumsTest {
         LocalIntentReceiver receiver = new LocalIntentReceiver();
         PackageManager pm = getPackageManager();
         pm.getChecksums(V4_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
         assertEquals(checksums[0].getKind(), WHOLE_MERKLE_ROOT_4K_SHA256);
@@ -331,7 +359,7 @@ public class ChecksumsTest {
         LocalIntentReceiver receiver = new LocalIntentReceiver();
         PackageManager pm = getPackageManager();
         pm.getChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
         assertEquals(checksums[0].getKind(), WHOLE_MERKLE_ROOT_4K_SHA256);
@@ -351,31 +379,321 @@ public class ChecksumsTest {
         PackageManager pm = getPackageManager();
         pm.getChecksums(FIXED_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
                 receiver.getIntentSender());
-        FileChecksum[] checksums = receiver.getResult();
+        ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 7);
         assertEquals(checksums[0].getKind(), WHOLE_MERKLE_ROOT_4K_SHA256);
         assertEquals(bytesToHexString(checksums[0].getValue()),
                 "90553b8d221ab1b900b242a93e4cc659ace3a2ff1d5c62e502488b385854e66a");
         assertEquals(checksums[1].getKind(), WHOLE_MD5);
-        assertEquals(bytesToHexString(checksums[1].getValue()), "c19868da017dc01467169f8ea7c5bc57");
+        assertEquals(bytesToHexString(checksums[1].getValue()), TEST_FIXED_APK_MD5);
         assertEquals(checksums[2].getKind(), WHOLE_SHA1);
         assertEquals(bytesToHexString(checksums[2].getValue()),
                 "331eef6bc57671de28cbd7e32089d047285ade6a");
         assertEquals(checksums[3].getKind(), WHOLE_SHA256);
-        assertEquals(bytesToHexString(checksums[3].getValue()),
-                "91aa30c1ce8d0474052f71cb8210691d41f534989c5521e27e794ec4f754c5ef");
+        assertEquals(bytesToHexString(checksums[3].getValue()), TEST_FIXED_APK_SHA256);
         assertEquals(checksums[4].getKind(), WHOLE_SHA512);
         assertEquals(bytesToHexString(checksums[4].getValue()),
                 "b59467fe578ebc81974ab3aaa1e0d2a76fef3e4ea7212a6f2885cec1af5253571"
                         + "1e2e94496224cae3eba8dc992144ade321540ebd458ec5b9e6a4cc51170e018");
         assertEquals(checksums[5].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
-        assertEquals(bytesToHexString(checksums[5].getValue()),
-                "1eec9e86e322b8d7e48e255fc3f2df2dbc91036e63982ff9850597c6a37bbeb3");
+        assertEquals(bytesToHexString(checksums[5].getValue()), TEST_FIXED_APK_V2_SHA256);
         assertEquals(checksums[6].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA512);
         assertEquals(bytesToHexString(checksums[6].getValue()),
                 "ef80a8630283f60108e8557c924307d0ccdfb6bbbf2c0176bd49af342f43bc84"
                         + "5f2888afcb71524196dda0d6dd16a6a3292bb75b431b8ff74fb60d796e882f80");
+    }
+
+    @Test
+    public void testInstallerChecksumsTrustNone() throws Exception {
+        installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
+
+        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        PackageManager pm = getPackageManager();
+        pm.getChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        ApkChecksum[] checksums = receiver.getResult();
+        assertNotNull(checksums);
+        assertEquals(checksums.length, 1);
+        assertEquals(checksums[0].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+        assertEquals(bytesToHexString(checksums[0].getValue()), TEST_FIXED_APK_V2_SHA256);
+        assertNull(checksums[0].getSourceCertificate());
+    }
+
+    @Test
+    public void testInstallerChecksumsTrustAll() throws Exception {
+        installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
+
+        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        PackageManager pm = getPackageManager();
+        pm.getChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_ALL, receiver.getIntentSender());
+        ApkChecksum[] checksums = receiver.getResult();
+        assertNotNull(checksums);
+        // v2/v3+installer provided.
+        assertEquals(checksums.length, 3);
+
+        assertEquals(checksums[0].getKind(), WHOLE_MD5);
+        assertEquals(bytesToHexString(checksums[0].getValue()), TEST_FIXED_APK_MD5);
+        assertEquals(checksums[0].getSplitName(), null);
+        assertNotNull(checksums[0].getSourceCertificate());
+        assertEquals(checksums[1].getKind(), WHOLE_SHA256);
+        assertEquals(bytesToHexString(checksums[1].getValue()), TEST_FIXED_APK_SHA256);
+        assertEquals(checksums[1].getSplitName(), null);
+        assertNotNull(checksums[1].getSourceCertificate());
+        assertEquals(checksums[2].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+        assertEquals(bytesToHexString(checksums[2].getValue()), TEST_FIXED_APK_V2_SHA256);
+        assertEquals(checksums[2].getSplitName(), null);
+        assertNull(checksums[2].getSourceCertificate());
+    }
+
+    @Test
+    public void testInstallerChecksumsTrustInstaller() throws Exception {
+        installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
+
+        // Using the installer's certificate(s).
+        PackageManager pm = getPackageManager();
+        PackageInfo packageInfo = pm.getPackageInfo(CTS_PACKAGE_NAME, GET_SIGNING_CERTIFICATES);
+        final List<Certificate> signatures = convertSignaturesToCertificates(
+                packageInfo.signingInfo.getApkContentsSigners());
+
+        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        pm.getChecksums(FIXED_PACKAGE_NAME, true, 0, signatures, receiver.getIntentSender());
+        ApkChecksum[] checksums = receiver.getResult();
+        assertNotNull(checksums);
+        assertEquals(checksums.length, 3);
+        assertEquals(checksums[0].getKind(), WHOLE_MD5);
+        assertEquals(bytesToHexString(checksums[0].getValue()), TEST_FIXED_APK_MD5);
+        assertEquals(checksums[0].getSplitName(), null);
+        assertNotNull(checksums[0].getSourceCertificate());
+        assertEquals(checksums[1].getKind(), WHOLE_SHA256);
+        assertEquals(bytesToHexString(checksums[1].getValue()), TEST_FIXED_APK_SHA256);
+        assertEquals(checksums[1].getSplitName(), null);
+        assertNotNull(checksums[1].getSourceCertificate());
+        assertEquals(checksums[2].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+        assertEquals(bytesToHexString(checksums[2].getValue()), TEST_FIXED_APK_V2_SHA256);
+        assertEquals(checksums[2].getSplitName(), null);
+        assertNull(checksums[2].getSourceCertificate());
+    }
+
+    @Test
+    public void testInstallerChecksumsTrustWrongInstaller() throws Exception {
+        installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
+
+        // Using certificates from a security app, not the installer (us).
+        PackageManager pm = getPackageManager();
+        PackageInfo packageInfo = pm.getPackageInfo(FIXED_PACKAGE_NAME, GET_SIGNING_CERTIFICATES);
+        final List<Certificate> signatures = convertSignaturesToCertificates(
+                packageInfo.signingInfo.getApkContentsSigners());
+
+        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        pm.getChecksums(FIXED_PACKAGE_NAME, true, 0, signatures, receiver.getIntentSender());
+        ApkChecksum[] checksums = receiver.getResult();
+        assertNotNull(checksums);
+        assertEquals(checksums.length, 1);
+        assertEquals(checksums[0].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+        assertEquals(bytesToHexString(checksums[0].getValue()), TEST_FIXED_APK_V2_SHA256);
+        assertNull(checksums[0].getSourceCertificate());
+    }
+
+    @Test
+    public void testInstallerChecksumsTrustAllWrongName() throws Exception {
+        CommitIntentReceiver.checkFailure(
+                installApkWithChecksums(TEST_FIXED_APK, "apk", "wrong_name",
+                        TEST_FIXED_APK_DIGESTS),
+                "INSTALL_FAILED_SESSION_INVALID: Invalid checksum name(s): wrong_name");
+    }
+
+    @Test
+    public void testInstallerChecksumsUpdate() throws Exception {
+        Checksum[] digests_base = new Checksum[]{new Checksum(WHOLE_SHA256, hexStringToBytes(
+                "ed8c7ae1220fe16d558e00cfc37256e6f7088ab90eb04c1bfcb39922a8a5248e")),
+                new Checksum(WHOLE_MD5, hexStringToBytes("dd93e23bb8cdab0382fdca0d21a4f1cb"))};
+        Checksum[] digests_split0 = new Checksum[]{new Checksum(WHOLE_SHA256, hexStringToBytes(
+                "bd9b095a49a9068498b018ce8cb7cc18d411b13a5a5f7fb417d2ff9808ae838e")),
+                new Checksum(WHOLE_MD5, hexStringToBytes("f6430e1b795ce2658c49e68d15316b2d"))};
+        Checksum[] digests_split1 = new Checksum[]{new Checksum(WHOLE_SHA256, hexStringToBytes(
+                "f16898f43990c14585a900eda345c3a236c6224f63920d69cfe8a7afbc0c0ccf")),
+                new Checksum(WHOLE_MD5, hexStringToBytes("d1f4b00d034994663e84f907fe4bb664"))};
+
+        // Original package checksums: base + split0.
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+
+            final int sessionId = installer.createSession(params);
+            Session session = installer.openSession(sessionId);
+
+            writeFileToSession(session, "hw5", TEST_V4_APK);
+            session.addChecksums("hw5", Arrays.asList(digests_base));
+
+            writeFileToSession(session, "hw5_split0", TEST_V4_SPLIT0);
+            session.addChecksums("hw5_split0", Arrays.asList(digests_split0));
+
+            CommitIntentReceiver receiver = new CommitIntentReceiver();
+            session.commit(receiver.getIntentSender());
+            CommitIntentReceiver.checkSuccess(receiver.getResult());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+
+        {
+            LocalIntentReceiver receiver = new LocalIntentReceiver();
+            PackageManager pm = getPackageManager();
+            pm.getChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver.getIntentSender());
+            ApkChecksum[] checksums = receiver.getResult();
+            assertNotNull(checksums);
+            assertEquals(checksums.length, 6);
+            // base
+            assertEquals(checksums[0].getKind(), WHOLE_MD5);
+            assertEquals(checksums[0].getSplitName(), null);
+            assertEquals(bytesToHexString(checksums[0].getValue()),
+                    "dd93e23bb8cdab0382fdca0d21a4f1cb");
+            assertNotNull(checksums[0].getSourceCertificate());
+            assertEquals(checksums[1].getKind(), WHOLE_SHA256);
+            assertEquals(checksums[1].getSplitName(), null);
+            assertEquals(bytesToHexString(checksums[1].getValue()),
+                    "ed8c7ae1220fe16d558e00cfc37256e6f7088ab90eb04c1bfcb39922a8a5248e");
+            assertNotNull(checksums[1].getSourceCertificate());
+            assertEquals(checksums[2].getSplitName(), null);
+            assertEquals(checksums[2].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+            assertNull(checksums[2].getSourceCertificate());
+            // split0
+            assertEquals(checksums[3].getKind(), WHOLE_MD5);
+            assertEquals(checksums[3].getSplitName(), "config.hdpi");
+            assertEquals(bytesToHexString(checksums[3].getValue()),
+                    "f6430e1b795ce2658c49e68d15316b2d");
+            assertNotNull(checksums[3].getSourceCertificate());
+            assertEquals(checksums[4].getKind(), WHOLE_SHA256);
+            assertEquals(checksums[4].getSplitName(), "config.hdpi");
+            assertEquals(bytesToHexString(checksums[4].getValue()),
+                    "bd9b095a49a9068498b018ce8cb7cc18d411b13a5a5f7fb417d2ff9808ae838e");
+            assertNotNull(checksums[4].getSourceCertificate());
+            assertEquals(checksums[5].getSplitName(), "config.hdpi");
+            assertEquals(checksums[5].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+            assertNull(checksums[5].getSourceCertificate());
+        }
+
+        // Update the package with one split+checksums and another split without checksums.
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_INHERIT_EXISTING);
+            params.setAppPackageName(V4_PACKAGE_NAME);
+
+            final int sessionId = installer.createSession(params);
+            Session session = installer.openSession(sessionId);
+
+            writeFileToSession(session, "hw5_split1", TEST_V4_SPLIT1);
+            session.addChecksums("hw5_split1", Arrays.asList(digests_split1));
+
+            writeFileToSession(session, "hw5_split2", TEST_V4_SPLIT2);
+
+            CommitIntentReceiver receiver = new CommitIntentReceiver();
+            session.commit(receiver.getIntentSender());
+            CommitIntentReceiver.checkSuccess(receiver.getResult());
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+
+        {
+            LocalIntentReceiver receiver = new LocalIntentReceiver();
+            PackageManager pm = getPackageManager();
+            pm.getChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver.getIntentSender());
+            ApkChecksum[] checksums = receiver.getResult();
+            assertNotNull(checksums);
+            assertEquals(checksums.length, 10);
+            // base
+            assertEquals(checksums[0].getKind(), WHOLE_MD5);
+            assertEquals(checksums[0].getSplitName(), null);
+            assertEquals(bytesToHexString(checksums[0].getValue()),
+                    "dd93e23bb8cdab0382fdca0d21a4f1cb");
+            assertNotNull(checksums[0].getSourceCertificate());
+            assertEquals(checksums[1].getKind(), WHOLE_SHA256);
+            assertEquals(checksums[1].getSplitName(), null);
+            assertEquals(bytesToHexString(checksums[1].getValue()),
+                    "ed8c7ae1220fe16d558e00cfc37256e6f7088ab90eb04c1bfcb39922a8a5248e");
+            assertNotNull(checksums[1].getSourceCertificate());
+            assertEquals(checksums[2].getSplitName(), null);
+            assertEquals(checksums[2].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+            assertNull(checksums[2].getSourceCertificate());
+            // split0
+            assertEquals(checksums[3].getKind(), WHOLE_MD5);
+            assertEquals(checksums[3].getSplitName(), "config.hdpi");
+            assertEquals(bytesToHexString(checksums[3].getValue()),
+                    "f6430e1b795ce2658c49e68d15316b2d");
+            assertNotNull(checksums[3].getSourceCertificate());
+            assertEquals(checksums[4].getKind(), WHOLE_SHA256);
+            assertEquals(checksums[4].getSplitName(), "config.hdpi");
+            assertEquals(bytesToHexString(checksums[4].getValue()),
+                    "bd9b095a49a9068498b018ce8cb7cc18d411b13a5a5f7fb417d2ff9808ae838e");
+            assertNotNull(checksums[4].getSourceCertificate());
+            assertEquals(checksums[5].getSplitName(), "config.hdpi");
+            assertEquals(checksums[5].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+            assertNull(checksums[5].getSourceCertificate());
+            // split1
+            assertEquals(checksums[6].getKind(), WHOLE_MD5);
+            assertEquals(checksums[6].getSplitName(), "config.mdpi");
+            assertEquals(bytesToHexString(checksums[6].getValue()),
+                    "d1f4b00d034994663e84f907fe4bb664");
+            assertNotNull(checksums[6].getSourceCertificate());
+            assertEquals(checksums[7].getKind(), WHOLE_SHA256);
+            assertEquals(checksums[7].getSplitName(), "config.mdpi");
+            assertEquals(bytesToHexString(checksums[7].getValue()),
+                    "f16898f43990c14585a900eda345c3a236c6224f63920d69cfe8a7afbc0c0ccf");
+            assertNotNull(checksums[7].getSourceCertificate());
+            assertEquals(checksums[8].getSplitName(), "config.mdpi");
+            assertEquals(checksums[8].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+            assertNull(checksums[8].getSourceCertificate());
+            // split2
+            assertEquals(checksums[9].getSplitName(), "config.xhdpi");
+            assertEquals(checksums[9].getKind(), PARTIAL_MERKLE_ROOT_1M_SHA256);
+            assertNull(checksums[9].getSourceCertificate());
+        }
+    }
+
+    private List<Certificate> convertSignaturesToCertificates(Signature[] signatures) {
+        try {
+            final CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            ArrayList<Certificate> certs = new ArrayList<>(signatures.length);
+            for (Signature signature : signatures) {
+                final InputStream is = new ByteArrayInputStream(signature.toByteArray());
+                final X509Certificate cert = (X509Certificate) cf.generateCertificate(is);
+                certs.add(cert);
+            }
+            return certs;
+        } catch (CertificateException e) {
+            throw ExceptionUtils.propagate(e);
+        }
+    }
+
+    private void installApkWithChecksums(Checksum[] checksums) throws Exception {
+        installApkWithChecksums("file", "file", checksums);
+    }
+
+    private void installApkWithChecksums(String apkName, String checksumsName, Checksum[] checksums)
+            throws Exception {
+        CommitIntentReceiver.checkSuccess(
+                installApkWithChecksums(TEST_FIXED_APK, apkName, checksumsName, checksums));
+    }
+
+    private Intent installApkWithChecksums(String apk, String apkName,
+            String checksumsName, Checksum[] checksums) throws Exception {
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+
+            final int sessionId = installer.createSession(params);
+            Session session = installer.openSession(sessionId);
+            writeFileToSession(session, apkName, apk);
+            session.addChecksums(checksumsName, Arrays.asList(checksums));
+
+            CommitIntentReceiver receiver = new CommitIntentReceiver();
+            session.commit(receiver.getIntentSender());
+            return receiver.getResult();
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 
     private static String readFullStream(InputStream inputStream) throws IOException {
@@ -436,6 +754,15 @@ public class ChecksumsTest {
                 executeShellCommand("pm install-incremental -t -g " + String.join(" ", splits)));
     }
 
+    private static void writeFileToSession(PackageInstaller.Session session, String name,
+            String apk) throws IOException {
+        File file = new File(createApkPath(apk));
+        try (OutputStream os = session.openWrite(name, 0, file.length());
+             InputStream is = new FileInputStream(file)) {
+            writeFullStream(is, os, file.length());
+        }
+    }
+
     private String uninstallPackageSilently(String packageName) throws IOException {
         return executeShellCommand("pm uninstall " + packageName);
     }
@@ -452,13 +779,17 @@ public class ChecksumsTest {
         return HexDump.toHexString(bytes, 0, bytes.length, /*upperCase=*/ false);
     }
 
+    @Nonnull
+    private static byte[] hexStringToBytes(String hexString) {
+        return HexDump.hexStringToByteArray(hexString);
+    }
 
     private boolean checkIncrementalDeliveryFeature() {
         return getPackageManager().hasSystemFeature(PackageManager.FEATURE_INCREMENTAL_DELIVERY);
     }
 
     private static class LocalIntentReceiver {
-        private final LinkedBlockingQueue<FileChecksum[]> mResult = new LinkedBlockingQueue<>();
+        private final LinkedBlockingQueue<ApkChecksum[]> mResult = new LinkedBlockingQueue<>();
 
         private IIntentSender.Stub mLocalSender = new IIntentSender.Stub() {
             @Override
@@ -467,9 +798,9 @@ public class ChecksumsTest {
                     Bundle options) {
                 Parcelable[] parcelables = intent.getParcelableArrayExtra(EXTRA_CHECKSUMS);
                 assertNotNull(parcelables);
-                FileChecksum[] checksums = Arrays.copyOf(parcelables, parcelables.length,
-                        FileChecksum[].class);
-                Arrays.sort(checksums, (FileChecksum lhs, FileChecksum rhs) ->  {
+                ApkChecksum[] checksums = Arrays.copyOf(parcelables, parcelables.length,
+                        ApkChecksum[].class);
+                Arrays.sort(checksums, (ApkChecksum lhs, ApkChecksum rhs) ->  {
                     final String lhsSplit = lhs.getSplitName();
                     final String rhsSplit = rhs.getSplitName();
                     if (Objects.equals(lhsSplit, rhsSplit)) {
@@ -491,12 +822,56 @@ public class ChecksumsTest {
             return new IntentSender((IIntentSender) mLocalSender);
         }
 
-        public FileChecksum[] getResult() {
+        public ApkChecksum[] getResult() {
             try {
                 return mResult.poll(5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    private static class CommitIntentReceiver {
+        private final LinkedBlockingQueue<Intent> mResult = new LinkedBlockingQueue<>();
+
+        private IIntentSender.Stub mLocalSender = new IIntentSender.Stub() {
+            @Override
+            public void send(int code, Intent intent, String resolvedType, IBinder allowlistToken,
+                    IIntentReceiver finishedReceiver, String requiredPermission, Bundle options) {
+                try {
+                    mResult.offer(intent, 5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+        public IntentSender getIntentSender() {
+            return new IntentSender((IIntentSender) mLocalSender);
+        }
+
+        public Intent getResult() {
+            try {
+                return mResult.take();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public static void checkSuccess(Intent result) {
+            final int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                    PackageInstaller.STATUS_FAILURE);
+            assertEquals(status, PackageInstaller.STATUS_SUCCESS,
+                    result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) + " OR "
+                            + result.getExtras().get(Intent.EXTRA_INTENT));
+        }
+
+        public static void checkFailure(Intent result, String expectedStatus) {
+            final int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
+                    PackageInstaller.STATUS_FAILURE);
+            assertEquals(status, PackageInstaller.STATUS_FAILURE);
+            assertEquals(result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE),
+                    expectedStatus);
         }
     }
 }
