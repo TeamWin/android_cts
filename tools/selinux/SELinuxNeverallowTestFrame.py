@@ -81,7 +81,7 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
             // Caching this variable to save time.
             if (mVendorSepolicyVersion == -1) {
                 mVendorSepolicyVersion =
-                        android.security.cts.SELinuxHostTest.getVendorSepolicyVersion(mDevice);
+                        android.security.cts.SELinuxHostTest.getVendorSepolicyVersion(mBuild, mDevice);
             }
         }
     }
