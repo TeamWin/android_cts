@@ -16,6 +16,7 @@
 
 package android.permission3.cts
 
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 
@@ -23,6 +24,7 @@ import org.junit.Test
  * Runtime permission behavior tests for apps targeting API 22.
  */
 class PermissionTest22 : BaseUsePermissionTest() {
+
     @Before
     fun installApp22AndApprovePermissionReview() {
         installPackage(APP_APK_PATH_22)
@@ -31,6 +33,8 @@ class PermissionTest22 : BaseUsePermissionTest() {
 
     @Test
     fun testCompatDefault() {
+        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
+
         // Legacy permission model appears granted
         assertAppHasPermission(android.Manifest.permission.READ_CALENDAR, true)
         assertAppHasPermission(android.Manifest.permission.WRITE_CALENDAR, true)
@@ -39,6 +43,8 @@ class PermissionTest22 : BaseUsePermissionTest() {
 
     @Test
     fun testCompatRevoked() {
+        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
+
         // Revoke the permission
         revokeAppPermissions(android.Manifest.permission.WRITE_CALENDAR, isLegacyApp = true)
 
@@ -51,6 +57,8 @@ class PermissionTest22 : BaseUsePermissionTest() {
 
     @Test
     fun testNoRuntimePrompt() {
+        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
+
         // Request the permission and do nothing
         // Expect the permission is not granted
         requestAppPermissionsAndAssertResult(
