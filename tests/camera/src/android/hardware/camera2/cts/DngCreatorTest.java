@@ -80,7 +80,7 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
 
     private static final double IMAGE_DIFFERENCE_TOLERANCE = 65;
     private static final int DEFAULT_PATCH_DIMEN = 512;
-    private static final int AE_TIMEOUT_MS = 2000;
+    private static final int AE_TIMEOUT_MS = 3000;
 
     // Constants used for GPS testing.
     private static final double GPS_DIFFERENCE_TOLERANCE = 0.0001;
