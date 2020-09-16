@@ -27,6 +27,7 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "cts-wm-util",
     ],
     test_suites: [
         "cts",
