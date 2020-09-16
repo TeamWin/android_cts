@@ -11,6 +11,23 @@ import static org.junit.Assert.*;
 public class Poc20_06 extends SecurityTestCase {
 
     /**
+     * CVE-2020-3635
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testPocCVE_2020_3635() throws Exception {
+        String isApplicable = AdbUtils.runCommandLine("service list", getDevice());
+        if (isApplicable.contains("com.qualcomm.qti.IPerfManager")) {
+            AdbUtils.runCommandLine("logcat -c", getDevice());
+            AdbUtils.runCommandLine(
+                    "service call vendor.perfservice 4 i32 1 i64 4702394920265069920", getDevice());
+            String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+            assertNotMatchesMultiLine(
+                    "Fatal signal 11 \\(SIGSEGV\\).*?>>> /system/bin/perfservice <<<", logcatOut);
+        }
+    }
+
+    /**
      * CVE-2020-3626
      */
     @Test
