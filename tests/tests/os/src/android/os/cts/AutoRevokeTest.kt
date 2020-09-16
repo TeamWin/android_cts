@@ -298,8 +298,11 @@ class AutoRevokeTest {
     }
 
     private fun runAutoRevoke() {
-        runShellCommand("cmd jobscheduler run -u 0 " +
-                "-f ${context.packageManager.permissionControllerPackageName} 2")
+        for (i in 0 until 2)  {
+            runShellCommand("cmd jobscheduler run -u 0 " +
+                    "-f ${context.packageManager.permissionControllerPackageName} 2")
+            Thread.sleep(100)
+        }
     }
 
     private inline fun <T> withDeviceConfig(
