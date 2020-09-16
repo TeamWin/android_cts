@@ -20,6 +20,7 @@ import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA2;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.STR_DATA2;
+import static android.scopedstorage.cts.lib.TestUtils.allowAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameDirectory;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
 import static android.scopedstorage.cts.lib.TestUtils.assertCantRenameFile;
@@ -29,15 +30,17 @@ import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.createImageEntryAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
+import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
 import static android.scopedstorage.cts.lib.TestUtils.getContentResolver;
+import static android.scopedstorage.cts.lib.TestUtils.getDcimDir;
 import static android.scopedstorage.cts.lib.TestUtils.getFileOwnerPackageFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getFileRowIdFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
+import static android.scopedstorage.cts.lib.TestUtils.getPicturesDir;
 import static android.scopedstorage.cts.lib.TestUtils.installApp;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.openFileAs;
-import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
@@ -53,13 +56,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
+import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.TestUtils;
 import android.system.ErrnoException;
@@ -116,6 +120,9 @@ public class LegacyStorageTest {
 
     private static final TestApp TEST_APP_A = new TestApp("TestAppA",
             "android.scopedstorage.cts.testapp.A", 1, false, "CtsScopedStorageTestAppA.apk");
+
+    private static final String[] SYSTEM_GALERY_APPOPS = {
+            AppOpsManager.OPSTR_WRITE_MEDIA_IMAGES, AppOpsManager.OPSTR_WRITE_MEDIA_VIDEO};
 
     /**
      * This method needs to be called once before running the whole test.
@@ -761,6 +768,96 @@ public class LegacyStorageTest {
             } finally {
                 deleteWithMediaProviderNoThrow(uri);
             }
+        }
+    }
+
+    @Test
+    public void testLegacySystemGalleryCanRenameImagesAndVideosWithoutDbUpdates() throws Exception {
+        pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
+
+        final File otherAppVideoFile = new File(getDcimDir(), "other_" + VIDEO_FILE_NAME);
+        final File videoFile = new File(getPicturesDir(), VIDEO_FILE_NAME);
+
+        try {
+            installApp(TEST_APP_A);
+
+            try {
+                allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
+
+                // Create and write some data to the file
+                assertThat(createFileAs(TEST_APP_A, otherAppVideoFile.getPath())).isTrue();
+                try (final FileOutputStream fos = new FileOutputStream(otherAppVideoFile)) {
+                    fos.write(BYTES_DATA1);
+                }
+
+                // Assert legacy system gallery can rename the file.
+                assertCanRenameFile(otherAppVideoFile, videoFile, false /* checkDatabase */);
+                assertFileContent(videoFile, BYTES_DATA1);
+                // Database was not updated.
+                assertThat(getFileRowIdFromDatabase(otherAppVideoFile)).isNotEqualTo(-1);
+                assertThat(getFileRowIdFromDatabase(videoFile)).isEqualTo(-1);
+            }
+            finally {
+                otherAppVideoFile.delete();
+                videoFile.delete();
+                denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
+            }
+        } finally {
+            uninstallAppNoThrow(TEST_APP_A);
+        }
+    }
+
+    @Test
+    public void testLegacySystemGalleryWithoutWESCannotRename() throws Exception {
+        pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ false);
+
+        final File otherAppVideoFile = new File(getDcimDir(), "other_" + VIDEO_FILE_NAME);
+        final File videoFile = new File(getPicturesDir(), VIDEO_FILE_NAME);
+
+        try {
+            installApp(TEST_APP_A);
+
+            try {
+                allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
+
+                // Create file of other app.
+                assertThat(createFileAs(TEST_APP_A, otherAppVideoFile.getPath())).isTrue();
+
+                // Check we cannot rename it.
+                assertThat(otherAppVideoFile.renameTo(videoFile)).isFalse();
+            }
+            finally {
+                otherAppVideoFile.delete();
+                videoFile.delete();
+                denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
+            }
+        } finally {
+            uninstallAppNoThrow(TEST_APP_A);
+        }
+    }
+
+    @Test
+    public void testLegacyWESCanRenameImagesAndVideosWithDbUpdates_hasW() throws Exception {
+        pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
+
+        final File otherAppVideoFile = new File(getDcimDir(), "other_" + VIDEO_FILE_NAME);
+        final File videoFile = new File(getPicturesDir(), VIDEO_FILE_NAME);
+
+        try {
+            installApp(TEST_APP_A);
+             // Create and write some data to the file
+             assertThat(createFileAs(TEST_APP_A, otherAppVideoFile.getPath())).isTrue();
+             try (final FileOutputStream fos = new FileOutputStream(otherAppVideoFile)) {
+                 fos.write(BYTES_DATA1);
+             }
+
+             // Assert legacy WES can rename the file (including database updated).
+             assertCanRenameFile(otherAppVideoFile, videoFile);
+             assertFileContent(videoFile, BYTES_DATA1);
+        } finally {
+            otherAppVideoFile.delete();
+            videoFile.delete();
+            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
