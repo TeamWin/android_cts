@@ -237,10 +237,12 @@ public class ProviderPermissionTest extends AndroidTestCase {
     public void testWriteMediaStorage() throws Exception {
         final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         final PackageManager pm = getContext().getPackageManager();
+        final UserHandle userHandle = getContext().getUser();
         final List<PackageInfo> pkgs = pm.getInstalledPackages(
                 PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.GET_PERMISSIONS);
         for (PackageInfo pkg : pkgs) {
-            final boolean isSystem = pkg.applicationInfo.uid == android.os.Process.SYSTEM_UID;
+            final int appUid = userHandle.getAppId(pkg.applicationInfo.uid);
+            final boolean isSystem = appUid == android.os.Process.SYSTEM_UID;
             final boolean hasFrontDoor = pm.getLaunchIntentForPackage(pkg.packageName) != null;
             final boolean grantedMedia = pm.checkPermission(WRITE_MEDIA_STORAGE,
                     pkg.packageName) == PackageManager.PERMISSION_GRANTED;
