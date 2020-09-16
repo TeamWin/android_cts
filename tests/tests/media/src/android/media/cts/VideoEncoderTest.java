@@ -16,8 +16,6 @@
 
 package android.media.cts;
 
-import android.media.cts.R;
-
 import android.media.cts.CodecUtils;
 
 import android.graphics.ImageFormat;
@@ -69,8 +67,9 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
     // use larger delay before we get first frame, some encoders may need more time
     private static final long INIT_TIMEOUT_MS = 2000;
 
+    static final String mInpPrefix = WorkDir.getMediaDirString();
     private static final String SOURCE_URL =
-        "android.resource://android.media.cts/raw/video_480x360_mp4_h264_871kbps_30fps";
+            mInpPrefix + "video_480x360_mp4_h264_871kbps_30fps.mp4";
 
     private final boolean DEBUG = false;
 
