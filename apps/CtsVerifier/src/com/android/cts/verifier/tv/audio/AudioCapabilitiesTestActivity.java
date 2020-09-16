@@ -21,6 +21,7 @@ import static android.media.AudioFormat.*;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioTrack;
+import android.view.View;
 
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.tv.TestSequence;
@@ -46,23 +47,20 @@ import java.util.List;
  *   <li>Receiver or soundbar is connected
  * </ol>
  */
-public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity {
+public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
+        implements View.OnClickListener {
     private static final ImmutableList<AudioFormat> TESTED_AUDIO_FORMATS =
             ImmutableList.of(
                     // PCM formats
+                    makeAudioFormat(ENCODING_PCM_16BIT, 44100, 2),
                     makeAudioFormat(ENCODING_PCM_16BIT, 44100, 6),
-                    makeAudioFormat(ENCODING_PCM_16BIT, 44100, 8),
-
-                    // AC3 formats
-                    makeAudioFormat(ENCODING_AC3, 44100, 6),
-                    makeAudioFormat(ENCODING_AC3, 44100, 8),
 
                     // EAC3_JOC formats
-                    makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 8),
-                    // EAC3 formats
-                    makeAudioFormat(ENCODING_E_AC3, 44100, 8));
+                    makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 8));
 
     private TestSequence mTestSequence;
+    private View mSupportDolbyAtmosYesItem;
+    private View mSupportDolbyAtmosNoItem;
 
     @Override
     protected void setInfoResources() {
@@ -71,13 +69,36 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity {
     }
 
     @Override
+    public void onClick(View v) {
+        if (containsButton(mSupportDolbyAtmosYesItem, v)) {
+            setPassState(mSupportDolbyAtmosYesItem, true);
+            setButtonEnabled(mSupportDolbyAtmosNoItem, false);
+            List<TestStepBase> testSteps = new ArrayList<>();
+            testSteps.add(new TvTestStep(this));
+            testSteps.add(new ReceiverTestStep(this));
+            testSteps.add(new TvTestStep(this));
+            mTestSequence = new TestSequence(this, testSteps);
+            mTestSequence.init();
+            return;
+        } else if (containsButton(mSupportDolbyAtmosNoItem, v)) {
+            setPassState(mSupportDolbyAtmosYesItem, true);
+            setButtonEnabled(mSupportDolbyAtmosNoItem, false);
+            List<TestStepBase> testSteps = new ArrayList<>();
+            testSteps.add(new TvTestStep(this));
+            mTestSequence = new TestSequence(this, testSteps);
+            mTestSequence.init();
+            return;
+        }
+    }
+
+    @Override
     protected void createTestItems() {
-        List<TestStepBase> testSteps = new ArrayList<>();
-        testSteps.add(new TvTestStep(this));
-        testSteps.add(new ReceiverTestStep(this));
-        testSteps.add(new TvTestStep(this));
-        mTestSequence = new TestSequence(this, testSteps);
-        mTestSequence.init();
+        mSupportDolbyAtmosYesItem =
+                createUserItem(
+                        R.string.tv_audio_capabilities_atmos_supported, R.string.tv_yes, this);
+        setButtonEnabled(mSupportDolbyAtmosYesItem, true);
+        mSupportDolbyAtmosNoItem = createButtonItem(R.string.tv_no, this);
+        setButtonEnabled(mSupportDolbyAtmosNoItem, true);
     }
 
     private class TvTestStep extends TestStep {
@@ -107,9 +128,7 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity {
                     .withMessage("AudioTrack.isDirectPlaybackSupported only returns true for these")
                     .that(actualAudioFormatStrings.build())
                     .containsExactlyElementsIn(
-                            ImmutableList.of(
-                                    toStr(makeAudioFormat(ENCODING_PCM_16BIT, 44100, 6)),
-                                    toStr(makeAudioFormat(ENCODING_AC3, 44100, 6))));
+                            ImmutableList.of(toStr(makeAudioFormat(ENCODING_PCM_16BIT, 44100, 2))));
         }
     }
 
@@ -142,10 +161,8 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity {
                     .that(actualAudioFormatStrings.build())
                     .containsExactlyElementsIn(
                             ImmutableList.of(
-                                    toStr(makeAudioFormat(ENCODING_PCM_16BIT, 41000, 8)),
-                                    toStr(makeAudioFormat(ENCODING_AC3, 44100, 8)),
-                                    toStr(makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 8)),
-                                    toStr(makeAudioFormat(ENCODING_E_AC3, 44100, 8))));
+                                    toStr(makeAudioFormat(ENCODING_PCM_16BIT, 41000, 6)),
+                                    toStr(makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 8))));
         }
     }
 
@@ -166,10 +183,6 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity {
     /** Returns a displayable String message for {@code encodingCode}. */
     private static String encodingToString(int encodingCode) {
         switch (encodingCode) {
-            case ENCODING_AC3:
-                return "AC3";
-            case ENCODING_E_AC3:
-                return "E_AC3";
             case ENCODING_E_AC3_JOC:
                 return "E_AC3_JOC";
             case ENCODING_PCM_16BIT:
@@ -192,5 +205,9 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity {
                 .setSampleRate(sampleRate)
                 .setChannelMask(channelCountToMask(channelCount))
                 .build();
+    }
+
+    private static boolean containsButton(View item, View button) {
+        return item == null ? false : item.findViewById(R.id.user_action_button) == button;
     }
 }
