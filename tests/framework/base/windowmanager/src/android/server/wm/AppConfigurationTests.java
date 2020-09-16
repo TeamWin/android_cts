@@ -204,8 +204,11 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
             final SizeInfo rotatedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY);
             assertSizesRotate(prevSizes, rotatedSizes,
-                    // Skip orientation checks if we are not in fullscreen mode.
-                    task.getWindowingMode() != WINDOWING_MODE_FULLSCREEN);
+                    // Skip orientation checks if we are not in fullscreen mode, or when the display
+                    // is close to square because the app config orientation may always be landscape
+                    // excluding the system insets.
+                    task.getWindowingMode() != WINDOWING_MODE_FULLSCREEN
+                            || isCloseToSquareDisplay());
             prevSizes = rotatedSizes;
         }
     }
@@ -322,7 +325,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     @Test
     @FlakyTest(bugId = 71875755)
     public void testFullscreenAppOrientationRequests() {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
         separateTestJournal();
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
@@ -348,7 +351,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
     @Test
     public void testNonfullscreenAppOrientationRequests() {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
         separateTestJournal();
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
@@ -376,7 +379,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     @Test
     @FlakyTest
     public void testAppOrientationRequestConfigChanges() {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
         separateTestJournal();
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
@@ -416,7 +419,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      */
     @Test
     public void testAppOrientationRequestConfigClears() {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
         separateTestJournal();
         launchActivity(TEST_ACTIVITY);
@@ -470,10 +473,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
 
     @Test
     public void testNonFullscreenActivityPermitted() throws Exception {
-        if(!supportsRotation()) {
-            //cannot physically rotate the screen on automotive device, skip
-            return;
-        }
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
 
@@ -491,7 +491,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      */
     @Test
     public void testTaskCloseRestoreFixedOrientation() {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
@@ -524,7 +524,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      */
     @Test
     public void testTaskCloseRestoreFreeOrientation() {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
         // Start landscape activity.
         launchActivity(RESIZEABLE_ACTIVITY);
@@ -618,7 +618,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      */
     @Test
     public void testFixedOrientationWhenRotating() throws Exception {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
         // TODO(b/110533226): Fix test on devices with display cutout
         assumeFalse("Skipping test: display cutout present, can't predict exact lifecycle",
                 hasDisplayCutout());
@@ -662,7 +662,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
     @Test
     @FlakyTest(bugId = 71792393)
     public void testTaskMoveToBackOrientation() {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
 
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
@@ -807,8 +807,7 @@ public class AppConfigurationTests extends ActivityManagerTestBase {
      * that are smaller than the dockedSizes.
      */
     private static void assertSizesAreSane(SizeInfo fullscreenSizes, SizeInfo dockedSizes) {
-        final boolean portrait = fullscreenSizes.displayWidth < fullscreenSizes.displayHeight;
-        if (portrait) {
+        if (isDisplayPortrait()) {
             assertThat(dockedSizes.displayHeight, lessThan(fullscreenSizes.displayHeight));
             assertThat(dockedSizes.heightDp, lessThan(fullscreenSizes.heightDp));
             assertThat(dockedSizes.metricsHeight, lessThan(fullscreenSizes.metricsHeight));
