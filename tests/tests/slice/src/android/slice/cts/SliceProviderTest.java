@@ -72,6 +72,7 @@ public class SliceProviderTest {
 
     @Test(expected = SecurityException.class)
     public void testCallSliceUri_ShadyAuthority() {
+        assumeFalse(isSliceDisabled);
         doQuery(shadyActionUri);
     }
 
