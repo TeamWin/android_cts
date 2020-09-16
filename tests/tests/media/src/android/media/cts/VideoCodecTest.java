@@ -22,7 +22,6 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
-import android.media.cts.R;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -161,7 +160,7 @@ public class VideoCodecTest extends VideoCodecTestBase {
         decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS,
                 params.forceGoogleEncoder, codecConfigs);
         VideoDecodingStatistics statisticsAsync = computeDecodingStatistics(
-                params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
+                params.inputYuvFilename, "football_qvga.yuv", OUTPUT_YUV,
                 params.frameWidth, params.frameHeight);
 
 
@@ -188,7 +187,7 @@ public class VideoCodecTest extends VideoCodecTestBase {
         decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS,
                 params.forceGoogleEncoder, codecConfigs);
         VideoDecodingStatistics statisticsSync = computeDecodingStatistics(
-                params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
+                params.inputYuvFilename, "football_qvga.yuv", OUTPUT_YUV,
                 params.frameWidth, params.frameHeight);
 
         // Check PSNR difference.
@@ -384,7 +383,7 @@ public class VideoCodecTest extends VideoCodecTestBase {
                      decode(inputIvfFilename, OUTPUT_YUV, codecMimeType, FPS,
                             params.forceGoogleEncoder, codecConfigs);
                      VideoDecodingStatistics statistics = computeDecodingStatistics(
-                            params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
+                            params.inputYuvFilename, "football_qvga.yuv", OUTPUT_YUV,
                             params.frameWidth, params.frameHeight);
                      psnr[0] = statistics.mAveragePSNR;
                  } catch (Exception e) {
@@ -475,7 +474,7 @@ public class VideoCodecTest extends VideoCodecTestBase {
             decode(params.outputIvfFilename, OUTPUT_YUV, codecMimeType, FPS,
                     params.forceGoogleEncoder, codecConfigs);
             VideoDecodingStatistics statistics = computeDecodingStatistics(
-                    params.inputYuvFilename, R.raw.football_qvga, OUTPUT_YUV,
+                    params.inputYuvFilename, "football_qvga.yuv", OUTPUT_YUV,
                     params.frameWidth, params.frameHeight);
             psnrPlatformCodecAverage[i] = statistics.mAveragePSNR;
             psnrPlatformCodecMin[i] = statistics.mMinimumPSNR;
