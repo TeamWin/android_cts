@@ -265,7 +265,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         separateTestJournal();
         final int width = displayRect.width();
         final int height = displayRect.height();
-        resizeDockedStack(width /* stackWidth */, height /* stackHeight */,
+        resizePrimarySplitScreen(width /* stackWidth */, height /* stackHeight */,
                 width /* taskWidth */, height /* taskHeight */);
 
         // Move activity back to fullscreen stack.
@@ -310,7 +310,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         final int smallWidthPx = dpToPx(SMALL_WIDTH_DP, density);
         final int smallHeightPx = dpToPx(SMALL_HEIGHT_DP, density);
 
-        resizeDockedStack(0, 0, smallWidthPx, smallHeightPx);
+        resizePrimarySplitScreen(0, 0, smallWidthPx, smallHeightPx);
         mWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(DIALOG_WHEN_LARGE_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)

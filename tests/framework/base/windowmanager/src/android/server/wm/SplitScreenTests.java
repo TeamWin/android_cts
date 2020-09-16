@@ -462,13 +462,13 @@ public class SplitScreenTests extends ActivityManagerTestBase {
      * Verify split screen mode visibility after stack resize occurs.
      */
     @Test
-    public void testResizeDockedStack() throws Exception {
+    public void testResizePrimarySplitScreen() throws Exception {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
         final Rect restoreDockBounds = mWmState.getStandardRootTaskByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY) .getBounds();
-        resizeDockedStack(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
+        resizePrimarySplitScreen(STACK_SIZE, STACK_SIZE, TASK_SIZE, TASK_SIZE);
         mWmState.computeState(
                 new WaitForValidActivityState(TEST_ACTIVITY),
                 new WaitForValidActivityState(DOCKED_ACTIVITY));
@@ -480,7 +480,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         mWmState.assertVisibility(TEST_ACTIVITY, true);
         int restoreW = restoreDockBounds.width();
         int restoreH = restoreDockBounds.height();
-        resizeDockedStack(restoreW, restoreH, restoreW, restoreH);
+        resizePrimarySplitScreen(restoreW, restoreH, restoreW, restoreH);
     }
 
     @Test

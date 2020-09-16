@@ -75,7 +75,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         mWmState.computeState(pipActivityName);
         final int stackId = mWmState.getStackIdByActivity(pipActivityName);
         assertNotEquals(stackId, INVALID_STACK_ID);
-        moveTopActivityToPinnedStack(stackId);
+        moveTopActivityToPinnedRootTask(stackId);
 
         // Wait and assert lifecycle
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME), state(pipActivity, ON_PAUSE));

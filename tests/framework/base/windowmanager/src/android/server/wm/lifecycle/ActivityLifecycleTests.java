@@ -157,7 +157,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         // Move translucent activity into the stack with the first activity
         getLifecycleLog().clear();
-        moveActivityToStackOrOnTop(getComponentName(TranslucentActivity.class), firstActivityStack);
+        moveActivityToRootTaskOrOnTop(getComponentName(TranslucentActivity.class), firstActivityStack);
 
         // Wait for translucent activity to resume and first activity to pause
         waitAndAssertActivityStates(state(translucentActivity, ON_RESUME),

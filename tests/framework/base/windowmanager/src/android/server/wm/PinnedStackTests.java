@@ -169,7 +169,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testMoveTopActivityToPinnedStack() throws Exception {
+    public void testMoveTopActivityToPinnedRootTask() throws Exception {
         pinnedStackTester(getAmStartCmd(PIP_ACTIVITY), PIP_ACTIVITY, PIP_ACTIVITY,
                 true /* moveTopToPinnedStack */, false /* isFocusable */);
     }
@@ -639,7 +639,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         // Remove the stack and ensure that the task is now in the fullscreen/freeform stack (when
         // no fullscreen/freeform stack existed before)
-        removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
+        removeRootTasksInWindowingModes(WINDOWING_MODE_PINNED);
         assertPinnedStackStateOnMoveToBackStack(PIP_ACTIVITY,
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME, windowingMode);
     }
@@ -657,7 +657,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         // Remove the stack and ensure that the task is placed in the fullscreen/freeform stack,
         // behind the top fullscreen/freeform activity
-        removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
+        removeRootTasksInWindowingModes(WINDOWING_MODE_PINNED);
         assertPinnedStackStateOnMoveToBackStack(PIP_ACTIVITY,
                 testAppWindowingMode, ACTIVITY_TYPE_STANDARD, pipWindowingMode);
     }
@@ -676,7 +676,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         // Remove the stack and ensure that the task is placed on top of the hidden
         // fullscreen/freeform stack, but that the home stack is still focused
-        removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
+        removeRootTasksInWindowingModes(WINDOWING_MODE_PINNED);
         assertPinnedStackStateOnMoveToBackStack(PIP_ACTIVITY,
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME, windowingMode);
     }
@@ -684,7 +684,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testMovePipToBackWithNoFullscreenOrFreeformStack() throws Exception {
         // Start with a clean slate, remove all the stacks but home
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+        removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
         // Launch a pip activity
         launchActivity(PIP_ACTIVITY);
@@ -958,7 +958,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         // Dismiss it
         separateTestJournal();
-        removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
+        removeRootTasksInWindowingModes(WINDOWING_MODE_PINNED);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         waitForValidPictureInPictureCallbacks(PIP_ACTIVITY);
 
@@ -1503,7 +1503,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
             final int stackId = mWmState.getStackIdByActivity(topActivityName);
 
             assertNotEquals(stackId, INVALID_STACK_ID);
-            moveTopActivityToPinnedStack(stackId);
+            moveTopActivityToPinnedRootTask(stackId);
         }
 
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(topActivityName)
