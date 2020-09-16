@@ -20,7 +20,6 @@ import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
 import android.content.pm.PackageManager;
 import android.util.Log;
-import android.vendor.wm.utils.WindowConfigurationUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -53,11 +52,6 @@ public class WebViewTest extends AssistTestBase {
             return;
         }
         if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
-            return;
-        }
-        if (WindowConfigurationUtils.isInVendorWindowingMode(mContext)) {
-            Log.d(TAG, "Skipping #testWebView test in vendor windowing mode, where " +
-                       "view hierarchy has non-standard structure");
             return;
         }
         start3pApp(TEST_CASE_TYPE);

@@ -19,7 +19,6 @@ package android.assist.cts;
 import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
 import android.util.Log;
-import android.vendor.wm.utils.WindowConfigurationUtils;
 
 /**
  *  Test that the AssistStructure returned is properly formatted.
@@ -39,13 +38,6 @@ public class LargeViewHierarchyTest extends AssistTestBase {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;
         }
-
-        if (WindowConfigurationUtils.isInVendorWindowingMode(mContext)) {
-            Log.d(TAG, "Skipping #testTextView test in vendor windowing mode," +
-                       " where view hierarchy has non-standard structure");
-            return;
-        }
-
         start3pApp(TEST_CASE_TYPE);
         startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady();

@@ -21,7 +21,6 @@ import android.assist.common.Utils;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
-import android.vendor.wm.utils.WindowConfigurationUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -55,11 +54,6 @@ public class AssistantContentViewTest extends AssistTestBase {
         if (mActivityManager.isLowRamDevice()) {
           Log.d(TAG, "Not running assist tests on low-RAM device.");
           return;
-        }
-        if (WindowConfigurationUtils.isInVendorWindowingMode(mContext)) {
-            Log.d(TAG, "Skipping #testAssistantContentViewDimens test in vendor windowing mode," +
-                       " where content dimensions do not match the reported display dimensions");
-            return;
         }
         startTest(Utils.VERIFY_CONTENT_VIEW);
         waitForAssistantToBeReady();
