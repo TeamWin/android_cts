@@ -1241,6 +1241,12 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_10611() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10611);
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2019-08")
     public void testStagefright_cve_2019_10489() throws Exception {
         doStagefrightTest(R.raw.cve_2019_10489);
