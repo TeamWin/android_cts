@@ -31,8 +31,10 @@ import androidx.test.core.app.ApplicationProvider;
 import com.android.compatibility.common.util.enterprise.DeviceState;
 import com.android.compatibility.common.util.enterprise.Preconditions;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
+import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnWorkProfile;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,6 +63,46 @@ public class CrossProfileAppsTest {
     }
 
     @Test
+    @RequireRunOnWorkProfile
+    public void getTargetUserProfiles_callingFromWorkProfile_containsPrimaryUser() {
+        List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
+
+        assertThat(targetProfiles).contains(sDeviceState.getPrimaryUser());
+    }
+
+    // TODO(scottjonathan): Add
+    //  startMainActivity_callingFromWorkProfile_targetIsPrimaryUser_launches
+
+    @Test
+    @RequireRunOnWorkProfile
+    public void startMainActivity_activityNotExported_throwsSecurityException() {
+        assertThrows(SecurityException.class, () -> {
+            sCrossProfileApps.startMainActivity(
+                    new ComponentName(
+                            sContext, NonExportedActivity.class), sDeviceState.getPrimaryUser());
+        });
+    }
+
+    @Test
+    @RequireRunOnWorkProfile
+    public void startMainActivity_activityNotMain_throwsSecurityException() {
+        assertThrows(SecurityException.class, () -> {
+            sCrossProfileApps.startMainActivity(
+                    new ComponentName(
+                            sContext, NonMainActivity.class), sDeviceState.getPrimaryUser());
+        });
+    }
+
+    @Test
+    @RequireRunOnWorkProfile
+    @Ignore // TODO(scottjonathan): This requires another app to be installed which can be launched
+    public void startMainActivity_activityIncorrectPackage_throwsSecurityException() {
+        assertThrows(SecurityException.class, () -> {
+
+        });
+    }
+
+    @Test
     @RequireRunOnPrimaryUser
     public void
     startMainActivity_callingFromPrimaryUser_targetIsPrimaryUser_throwsSecurityException() {
@@ -79,11 +121,27 @@ public class CrossProfileAppsTest {
     }
 
     @Test
+    @RequireRunOnWorkProfile
+    public void getProfileSwitchingLabel_callingFromWorkUser_targetIsPrimaryUser_notNull() {
+        assertThat(
+                sCrossProfileApps.getProfileSwitchingLabel(
+                        sDeviceState.getPrimaryUser())).isNotNull();
+    }
+
+    @Test
     @RequireRunOnPrimaryUser
     public void getProfileSwitchingLabelIconDrawable_callingFromPrimaryUser_targetIsPrimaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.getProfileSwitchingIconDrawable(sDeviceState.getPrimaryUser());
         });
+    }
+
+    @Test
+    @RequireRunOnWorkProfile
+    public void getProfileSwitchingIconDrawable_callingFromWorkUser_targetIsPrimaryUser_notNull() {
+        assertThat(
+                sCrossProfileApps.getProfileSwitchingIconDrawable(
+                        sDeviceState.getPrimaryUser())).isNotNull();
     }
 
 }
