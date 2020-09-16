@@ -26,6 +26,8 @@ import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
+import org.hamcrest.CoreMatchers.containsString
+import org.junit.Assert.assertThat
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
@@ -98,5 +100,23 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
             DUMMY_MAC_ADDRESS, SHELL_PACKAGE_NAME, MANAGE_COMPANION_DEVICES,
             COMPANION_APPROVE_WIFI_CONNECTIONS))
         assertFalse(isShellAssociated(DUMMY_MAC_ADDRESS, SHELL_PACKAGE_NAME))
+    }
+
+    @AppModeFull(reason = "Companion API for non-instant apps only")
+    @Test
+    fun testDump() {
+        val userId = context.userId
+        val packageName = context.packageName
+
+        try {
+            runShellCommand(
+                    "cmd companiondevice associate $userId $packageName $DUMMY_MAC_ADDRESS")
+            val output = runShellCommand("dumpsys companiondevice")
+            assertThat(output, containsString(packageName))
+            assertThat(output, containsString(DUMMY_MAC_ADDRESS))
+        } finally {
+            runShellCommand(
+                    "cmd companiondevice disassociate $userId $packageName $DUMMY_MAC_ADDRESS")
+        }
     }
 }
