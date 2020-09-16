@@ -520,8 +520,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
         mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
-        assertEquals("Fullscreen app requested landscape orientation",
-                SCREEN_ORIENTATION_LANDSCAPE, mWmState.getLastOrientation());
+        mWmState.waitAndAssertLastOrientation("Fullscreen app requested landscape orientation",
+                SCREEN_ORIENTATION_LANDSCAPE);
 
         // Start another activity in a different task.
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
@@ -584,8 +584,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         mWmState.waitForActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
         reportedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
         assertNull("Should come back in original orientation", reportedSizes);
-        assertEquals("Should come back in original server orientation",
-                initialServerOrientation, mWmState.getLastOrientation());
+        mWmState.waitAndAssertLastOrientation("Should come back in original server orientation",
+                initialServerOrientation);
         assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY, 0 /* numRelaunch */,
                 0 /* numConfigChange */);
     }
@@ -733,8 +733,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
         mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
-        assertEquals("Fullscreen app requested landscape orientation",
-                SCREEN_ORIENTATION_LANDSCAPE, mWmState.getLastOrientation());
+        mWmState.waitAndAssertLastOrientation("Fullscreen app requested landscape orientation",
+                SCREEN_ORIENTATION_LANDSCAPE);
 
         // Start another activity in a different task.
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
