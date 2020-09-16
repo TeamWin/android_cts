@@ -11,6 +11,17 @@ import static org.junit.Assert.*;
 public class Poc20_06 extends SecurityTestCase {
 
     /**
+     * CVE-2020-3628
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testPocCVE_2020_3628() throws Exception {
+        String result = AdbUtils.runCommandLine(
+                "pm list package com.qualcomm.qti.logkit",getDevice());
+        assertFalse(result.contains("com.qualcomm.qti.logkit"));
+    }
+
+    /**
      * CVE-2020-3676
      */
     @Test
