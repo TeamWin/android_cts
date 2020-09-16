@@ -651,9 +651,10 @@ public class SmsManagerTest {
     }
 
     @Test
-    public void testGetSmscAddress() {
+    public void testGetSetSmscAddress() {
+        String smsc = null;
         try {
-            getSmsManager().getSmscAddress();
+            smsc = getSmsManager().getSmscAddress();
             fail("SmsManager.getSmscAddress() should throw a SecurityException");
         } catch (SecurityException e) {
             // expected
@@ -662,19 +663,16 @@ public class SmsManagerTest {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
         try {
-            getSmsManager().getSmscAddress();
+            smsc = getSmsManager().getSmscAddress();
         } catch (SecurityException se) {
             fail("Caller with READ_PRIVILEGED_PHONE_STATE should be able to call API");
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
         }
-    }
 
-    @Test
-    public void testSetSmscAddress() {
         try {
-            getSmsManager().setSmscAddress("fake smsc");
+            getSmsManager().setSmscAddress(smsc);
             fail("SmsManager.setSmscAddress() should throw a SecurityException");
         } catch (SecurityException e) {
             // expected
@@ -683,7 +681,7 @@ public class SmsManagerTest {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
         try {
-            getSmsManager().setSmscAddress("fake smsc");
+            getSmsManager().setSmscAddress(smsc);
         } catch (SecurityException se) {
             fail("Caller with MODIFY_PHONE_STATE should be able to call API");
         } finally {
