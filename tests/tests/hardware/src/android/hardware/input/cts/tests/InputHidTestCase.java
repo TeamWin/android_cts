@@ -80,7 +80,7 @@ public class InputHidTestCase extends InputTestCase {
     protected void setUpDevice(int deviceId, String registerCommand) {
         mDeviceId = deviceId;
         mHidDevice = new HidDevice(mInstrumentation, deviceId, registerCommand);
-        assertNotNull(mHidDevice != null);
+        assertNotNull(mHidDevice);
     }
 
     @Override
@@ -147,7 +147,7 @@ public class InputHidTestCase extends InputTestCase {
             }
 
             final Vibrator vibrator = getVibrator();
-            assertNotNull(vibrator != null);
+            assertNotNull(vibrator);
             // Start vibration
             vibrator.vibrate(effect);
             final long startTime = SystemClock.elapsedRealtime();
