@@ -11,6 +11,21 @@ import static org.junit.Assert.*;
 public class Poc20_06 extends SecurityTestCase {
 
     /**
+     * CVE-2020-3626
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testPocCVE_2020_3626() throws Exception {
+        String isApplicable =
+                AdbUtils.runCommandLine("pm list package com.qualcomm.qti.lpa", getDevice());
+        if (!isApplicable.isEmpty()) {
+            String result =
+                    AdbUtils.runCommandLine("dumpsys package com.qualcomm.qti.lpa", getDevice());
+            assertTrue(result.contains("com.qti.permission.USE_UIM_LPA_SERVICE"));
+        }
+    }
+
+    /**
      * CVE-2020-3628
      */
     @Test
