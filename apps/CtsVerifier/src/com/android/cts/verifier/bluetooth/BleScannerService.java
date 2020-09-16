@@ -37,6 +37,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class BleScannerService extends Service {
 
@@ -74,6 +75,9 @@ public class BleScannerService extends Service {
             "com.google.cts.verifier.bluetooth.EXTRA_DATA";
 
     private static final byte MANUFACTURER_TEST_ID = (byte)0x07;
+    public static final UUID ATV_REMOTE_UUID =
+            UUID.fromString("cbbfe0e1-f7f3-4206-84e0-84cbb3d09dfc");
+    public static final int MEDIUM_POWER_DBM = -7;
 
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mAdapter;
@@ -81,6 +85,7 @@ public class BleScannerService extends Service {
     private ScanCallback mCallback;
     private Handler mHandler;
     private String mOldMac;
+    private boolean mMediumRcvd;
 
     @Override
     public void onCreate() {
@@ -89,6 +94,7 @@ public class BleScannerService extends Service {
         mCallback = new BLEScanCallback();
         mHandler = new Handler();
         mOldMac = null;
+        mMediumRcvd = false;
 
         mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mAdapter = mBluetoothManager.getAdapter();
@@ -111,6 +117,9 @@ public class BleScannerService extends Service {
                             BleAdvertiserService.POWER_LEVEL_DATA,
                             BleAdvertiserService.POWER_LEVEL_MASK)
                         .build());
+                    filters.add(new ScanFilter.Builder()
+                            .setServiceUuid(new ParcelUuid(ATV_REMOTE_UUID))
+                            .build());
                     settingBuilder.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY);
                     break;
                 case COMMAND_SCAN_WITH_FILTER:
@@ -166,6 +175,7 @@ public class BleScannerService extends Service {
             ScanRecord record = result.getScanRecord();
             String mac = result.getDevice().getAddress();
             Map<ParcelUuid, byte[]> serviceData = record.getServiceData();
+            List<ParcelUuid> serviceUuids = record.getServiceUuids();
 
             if (serviceData.get(new ParcelUuid(BleAdvertiserService.POWER_LEVEL_UUID)) != null) {
                 byte[] data =
@@ -189,6 +199,24 @@ public class BleScannerService extends Service {
                             sendBroadcast(newIntent);
                         }
                     }
+                    if (data[2] == AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM) {
+                        mMediumRcvd = true;
+                    }
+                }
+            } else if (!mMediumRcvd && serviceUuids != null
+                    && serviceUuids.contains(new ParcelUuid(ATV_REMOTE_UUID))) {
+                // If we're not receiving medium power advertising, allow Android TV Remote Service
+                // advertising packets, which are medium power, to be counted
+                String deviceMac = result.getDevice().getAddress();
+                if (deviceMac != null && mOldMac != null && deviceMac.equals(mOldMac)) {
+                    Intent powerIntent = new Intent(BLE_POWER_LEVEL);
+                    powerIntent.putExtra(EXTRA_MAC_ADDRESS, deviceMac);
+                    // These packets don't include TxPower, assume a valid power level
+                    powerIntent.putExtra(EXTRA_POWER_LEVEL, MEDIUM_POWER_DBM);
+                    powerIntent.putExtra(EXTRA_RSSI, new Integer(result.getRssi()).toString());
+                    powerIntent.putExtra(EXTRA_POWER_LEVEL_BIT,
+                            AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM);
+                    sendBroadcast(powerIntent);
                 }
             }
 
