@@ -88,8 +88,8 @@ def main():
         fmts = props["android.scaler.streamConfigurationMap"]["availableStreamConfigurations"]
         fmts = sorted(fmts, key=lambda k: k["width"]*k["height"], reverse=True)
         sensor_size = props["android.sensor.info.physicalSize"]
-        pixel_pitch_h = (sensor_size["height"] / fmts[0]["height"] * 1E3)
-        pixel_pitch_w = (sensor_size["width"] / fmts[0]["width"] * 1E3)
+        pixel_pitch_h = (float(sensor_size["height"]) / fmts[0]["height"] * 1E3)
+        pixel_pitch_w = (float(sensor_size["width"]) / fmts[0]["width"] * 1E3)
         print "Assert pixel_pitch WxH: %.2f um, %.2f um" % (pixel_pitch_w,
                                                             pixel_pitch_h)
         assert 0.7 <= pixel_pitch_w <= 10
