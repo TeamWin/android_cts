@@ -19,7 +19,6 @@ package android.assist.cts;
 import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
 import android.util.Log;
-import android.vendor.wm.utils.WindowConfigurationUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -51,11 +50,6 @@ public class AssistStructureTest extends AssistTestBase {
     public void testAssistStructure() throws Throwable {
         if (!mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS)) {
             Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
-            return;
-        }
-        if (WindowConfigurationUtils.isInVendorWindowingMode(mContext)) {
-            Log.d(TAG, "Skipping #testAssistStructure test in vendor windowing mode," +
-                       " where view hierarchy has non-standard structure");
             return;
         }
         start3pApp(TEST_CASE_TYPE);

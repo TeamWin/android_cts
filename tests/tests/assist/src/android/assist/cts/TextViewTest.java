@@ -21,8 +21,6 @@ import android.assist.common.Utils;
 import android.os.Bundle;
 import android.util.Log;
 
-import android.vendor.wm.utils.WindowConfigurationUtils;
-
 /**
  *  Test that the AssistStructure returned is properly formatted.
  */
@@ -39,12 +37,6 @@ public class TextViewTest extends AssistTestBase {
     public void testTextView() throws Exception {
         if (mActivityManager.isLowRamDevice()) {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
-            return;
-        }
-
-        if (WindowConfigurationUtils.isInVendorWindowingMode(mContext)) {
-            Log.d(TAG, "Skipping #testTextView test in vendor windowing mode, where " +
-                       "view hierarchy has non-standard structure");
             return;
         }
 

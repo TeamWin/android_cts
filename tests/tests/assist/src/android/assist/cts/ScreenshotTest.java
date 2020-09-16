@@ -21,7 +21,6 @@ import android.assist.common.Utils;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
-import android.vendor.wm.utils.WindowConfigurationUtils;
 
 public class ScreenshotTest extends AssistTestBase {
     static final String TAG = "ScreenshotTest";
@@ -38,12 +37,6 @@ public class ScreenshotTest extends AssistTestBase {
     public void testRedScreenshot() throws Throwable {
         if (mActivityManager.isLowRamDevice()) {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
-            return;
-        }
-
-        if (WindowConfigurationUtils.isInVendorWindowingMode(mContext)) {
-            Log.d(TAG, "Skipping #testRedScreenshot test in vendor windowing mode, where " +
-                       "screenshot dimensions do not match the reported display dimensions");
             return;
         }
 
@@ -67,12 +60,6 @@ public class ScreenshotTest extends AssistTestBase {
             return;
         }
 
-        if (WindowConfigurationUtils.isInVendorWindowingMode(mContext)) {
-            Log.d(TAG, "Skipping #testGreenScreenshot test in vendor windowing mode, where " +
-                       "screenshot dimensions do not match the reported display dimensions");
-            return;
-        }
-
         startTest(TEST_CASE_TYPE);
         waitForAssistantToBeReady();
 
@@ -90,12 +77,6 @@ public class ScreenshotTest extends AssistTestBase {
     public void testBlueScreenshot() throws Throwable {
         if (mActivityManager.isLowRamDevice()) {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
-            return;
-        }
-
-        if (WindowConfigurationUtils.isInVendorWindowingMode(mContext)) {
-            Log.d(TAG, "Skipping #testBlueScreenshot test in vendor windowing mode, where " +
-                       "screenshot dimensions do not match the reported display dimensions");
             return;
         }
 
