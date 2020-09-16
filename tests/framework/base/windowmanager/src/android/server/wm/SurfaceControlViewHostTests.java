@@ -19,11 +19,18 @@ package android.server.wm;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
+import androidx.test.rule.ActivityTestRule;
+import org.junit.Before;
+import org.junit.Test;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -32,35 +39,24 @@ import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
 import android.graphics.PixelFormat;
-import android.graphics.Point;
-import android.graphics.Rect;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.view.Gravity;
+import android.view.SurfaceControlViewHost;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.SurfaceControl;
-import android.view.SurfaceHolder;
-import android.view.SurfaceHolder.Callback;
-import android.view.WindowInsets;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.view.SurfaceControlViewHost;
-import android.widget.FrameLayout;
 import android.widget.Button;
-
-import android.view.SurfaceView;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
-import androidx.test.rule.ActivityTestRule;
+import android.widget.FrameLayout;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
-
-import android.platform.test.annotations.Presubmit;
-
-import org.junit.Before;
-import org.junit.Test;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Ensure end-to-end functionality of SurfaceControlViewHost.
@@ -121,14 +117,54 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
     private void addViewToSurfaceView(SurfaceView sv, View v, int width, int height) {
         mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(), sv.getHostToken());
 
-        sv.setChildSurfacePackage(mVr.getSurfacePackage());
 
         if (mEmbeddedLayoutParams == null) {
             mVr.setView(v, width, height);
         } else {
             mVr.setView(v, mEmbeddedLayoutParams);
         }
+
+        sv.setChildSurfacePackage(mVr.getSurfacePackage());
+
         assertEquals(v, mVr.getView());
+    }
+
+    private void requestSurfaceViewFocus() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mSurfaceView.setFocusableInTouchMode(true);
+            mSurfaceView.requestFocusFromTouch();
+        });
+    }
+
+    private void assertWindowFocused(final View view, boolean hasWindowFocus) {
+        final CountDownLatch latch = new CountDownLatch(1);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
+                view, () -> {
+                    if (view.hasWindowFocus() == hasWindowFocus) {
+                        latch.countDown();
+                        return;
+                    }
+                    view.getViewTreeObserver().addOnWindowFocusChangeListener(
+                            new ViewTreeObserver.OnWindowFocusChangeListener() {
+                                @Override
+                                public void onWindowFocusChanged(boolean newFocusState) {
+                                    if (hasWindowFocus == newFocusState) {
+                                        view.getViewTreeObserver()
+                                                .removeOnWindowFocusChangeListener(this);
+                                        latch.countDown();
+                                    }
+                                }
+                            });
+                }
+        );
+
+        try {
+            if (!latch.await(3, TimeUnit.SECONDS)) {
+                fail();
+            }
+        } catch (InterruptedException e) {
+            fail();
+        }
     }
 
     @Override
@@ -288,5 +324,43 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
 
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
+    }
+
+    @Test
+    public void testFocusable() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+
+        // When surface view is focused, it should transfer focus to the embedded view.
+        requestSurfaceViewFocus();
+        assertWindowFocused(mEmbeddedView, true);
+        // assert host does not have focus
+        assertWindowFocused(mSurfaceView, false);
+
+        // When surface view is no longer focused, it should transfer focus back to the host window.
+        mActivityRule.runOnUiThread(() -> mSurfaceView.setFocusable(false));
+        assertWindowFocused(mEmbeddedView, false);
+        // assert host has focus
+        assertWindowFocused(mSurfaceView, true);
+    }
+
+    @Test
+    public void testNotFocusable() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mEmbeddedLayoutParams = new WindowManager.LayoutParams(mEmbeddedViewWidth,
+                mEmbeddedViewHeight, WindowManager.LayoutParams.TYPE_APPLICATION, 0,
+                PixelFormat.OPAQUE);
+        mActivityRule.runOnUiThread(() -> {
+            mEmbeddedLayoutParams.flags |= FLAG_NOT_FOCUSABLE;
+            mVr.relayout(mEmbeddedLayoutParams);
+        });
+
+        // When surface view is focused, nothing should happen since the embedded view is not
+        // focusable.
+        requestSurfaceViewFocus();
+        assertWindowFocused(mEmbeddedView, false);
+        // assert host has focus
+        assertWindowFocused(mSurfaceView, true);
     }
 }
