@@ -20,6 +20,7 @@ import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
@@ -575,7 +576,9 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY);
 
         // Launch first PIP activity
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(PIP_ACTIVITY);
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
 
         // Launch second PIP activity
@@ -586,7 +589,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertTrue(mWmState.containsActivityInWindowingMode(
                 PIP_ACTIVITY2, WINDOWING_MODE_PINNED));
         assertTrue(mWmState.containsActivityInWindowingMode(
-                PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN));
+                PIP_ACTIVITY, windowingMode));
     }
 
     @Test
@@ -625,98 +628,112 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testRemovePipWithNoFullscreenStack() throws Exception {
+    public void testRemovePipWithNoFullscreenOrFreeformStack() throws Exception {
         // Launch a pip activity
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(PIP_ACTIVITY);
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
-        // Remove the stack and ensure that the task is now in the fullscreen stack (when no
-        // fullscreen stack existed before)
+        // Remove the stack and ensure that the task is now in the fullscreen/freeform stack (when
+        // no fullscreen/freeform stack existed before)
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
+        assertPinnedStackStateOnMoveToBackStack(PIP_ACTIVITY,
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME, windowingMode);
     }
 
     @Test
-    public void testRemovePipWithVisibleFullscreenStack() throws Exception {
-        // Launch a fullscreen activity, and a pip activity over that
+    public void testRemovePipWithVisibleFullscreenOrFreeformStack() throws Exception {
+        // Launch a fullscreen/freeform activity, and a pip activity over that
         launchActivity(TEST_ACTIVITY);
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(PIP_ACTIVITY);
+        int testAppWindowingMode = mWmState.getTaskByActivity(TEST_ACTIVITY).getWindowingMode();
+        int pipWindowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
-        // Remove the stack and ensure that the task is placed in the fullscreen stack, behind the
-        // top fullscreen activity
+        // Remove the stack and ensure that the task is placed in the fullscreen/freeform stack,
+        // behind the top fullscreen/freeform activity
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+        assertPinnedStackStateOnMoveToBackStack(PIP_ACTIVITY,
+                testAppWindowingMode, ACTIVITY_TYPE_STANDARD, pipWindowingMode);
     }
 
     @Test
-    public void testRemovePipWithHiddenFullscreenStack() throws Exception {
-        // Launch a fullscreen activity, return home and while the fullscreen stack is hidden,
-        // launch a pip activity over home
+    public void testRemovePipWithHiddenFullscreenOrFreeformStack() throws Exception {
+        // Launch a fullscreen/freeform activity, return home and while the fullscreen/freeform
+        // stack is hidden, launch a pip activity over home
         launchActivity(TEST_ACTIVITY);
         launchHomeActivity();
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(PIP_ACTIVITY);
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
-        // Remove the stack and ensure that the task is placed on top of the hidden fullscreen
-        // stack, but that the home stack is still focused
+        // Remove the stack and ensure that the task is placed on top of the hidden
+        // fullscreen/freeform stack, but that the home stack is still focused
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
+        assertPinnedStackStateOnMoveToBackStack(PIP_ACTIVITY,
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME, windowingMode);
     }
 
     @Test
-    public void testMovePipToBackWithNoFullscreenStack() throws Exception {
+    public void testMovePipToBackWithNoFullscreenOrFreeformStack() throws Exception {
         // Start with a clean slate, remove all the stacks but home
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
         // Launch a pip activity
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(PIP_ACTIVITY);
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
-        // Remove the stack and ensure that the task is now in the fullscreen stack (when no
-        // fullscreen stack existed before)
+        // Remove the stack and ensure that the task is now in the fullscreen/freeform stack (when
+        // no fullscreen/freeform stack existed before)
         mBroadcastActionTrigger.doAction(ACTION_MOVE_TO_BACK);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
+        assertPinnedStackStateOnMoveToBackStack(PIP_ACTIVITY,
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME, windowingMode);
     }
 
     @Test
-    public void testMovePipToBackWithVisibleFullscreenStack() throws Exception {
-        // Launch a fullscreen activity, and a pip activity over that
+    public void testMovePipToBackWithVisibleFullscreenOrFreeformStack() throws Exception {
+        // Launch a fullscreen/freeform activity, and a pip activity over that
         launchActivity(TEST_ACTIVITY);
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(PIP_ACTIVITY);
+        int testAppWindowingMode = mWmState.getTaskByActivity(TEST_ACTIVITY).getWindowingMode();
+        int pipWindowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
-        // Remove the stack and ensure that the task is placed in the fullscreen stack, behind the
-        // top fullscreen activity
+        // Remove the stack and ensure that the task is placed in the fullscreen/freeform stack,
+        // behind the top fullscreen/freeform activity
         mBroadcastActionTrigger.doAction(ACTION_MOVE_TO_BACK);
-        assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+        assertPinnedStackStateOnMoveToBackStack(PIP_ACTIVITY,
+                testAppWindowingMode, ACTIVITY_TYPE_STANDARD, pipWindowingMode);
     }
 
     @Test
-    public void testMovePipToBackWithHiddenFullscreenStack() throws Exception {
-        // Launch a fullscreen activity, return home and while the fullscreen stack is hidden,
-        // launch a pip activity over home
+    public void testMovePipToBackWithHiddenFullscreenOrFreeformStack() throws Exception {
+        // Launch a fullscreen/freeform activity, return home and while the fullscreen/freeform
+        // stack is hidden, launch a pip activity over home
         launchActivity(TEST_ACTIVITY);
         launchHomeActivity();
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(PIP_ACTIVITY);
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
-        // Remove the stack and ensure that the task is placed on top of the hidden fullscreen
-        // stack, but that the home stack is still focused
+        // Remove the stack and ensure that the task is placed on top of the hidden
+        // fullscreen/freeform stack, but that the home stack is still focused
         mBroadcastActionTrigger.doAction(ACTION_MOVE_TO_BACK);
-        assertPinnedStackStateOnMoveToFullscreen(
-                PIP_ACTIVITY, WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
+        assertPinnedStackStateOnMoveToBackStack(
+                PIP_ACTIVITY, WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME, windowingMode);
     }
 
     @Test
@@ -818,8 +835,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testDisallowEnterPipActivityLocked() throws Exception {
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP_ON_PAUSE, "true");
-        ActivityTask task = mWmState.getStandardStackByWindowingMode(
-                WINDOWING_MODE_FULLSCREEN).getTopTask();
+        ActivityTask task = mWmState.getStackByActivity(PIP_ACTIVITY);
 
         // Lock the task and ensure that we can't enter picture-in-picture both explicitly and
         // when paused
@@ -846,18 +862,19 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // configuration change happened after the picture-in-picture and multi-window callbacks
         launchActivity(PIP_ACTIVITY);
         separateTestJournal();
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
         waitForValidPictureInPictureCallbacks(PIP_ACTIVITY);
-        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY);
+        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, windowingMode);
 
-        // Trigger it to go back to fullscreen and ensure that only triggered one configuration
+        // Trigger it to go back to original mode and ensure that only triggered one configuration
         // change as well
         separateTestJournal();
         launchActivity(PIP_ACTIVITY);
         waitForValidPictureInPictureCallbacks(PIP_ACTIVITY);
-        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY);
+        assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, windowingMode);
     }
 
     /** Helper class to save, set, and restore transition_animation_scale preferences. */
@@ -925,7 +942,14 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testStopBeforeMultiWindowCallbacksOnDismiss() throws Exception {
         // Launch a PiP activity
-        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+        launchActivity(PIP_ACTIVITY);
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+
+        // Skip the test if it's freeform, since freeform <-> PIP does not trigger any multi-window
+        // calbacks.
+        assumeTrue(windowingMode == WINDOWING_MODE_FREEFORM);
+
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         // Wait for animation complete so that system has reported pip mode change event to
         // client and the last reported pip mode has updated.
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
@@ -1204,20 +1228,19 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     /**
-     * Called after the given {@param activityName} has been moved to the fullscreen stack. Ensures
-     * that the stack matching the {@param windowingMode} and {@param activityType} is focused, and
-     * checks the top and/or bottom tasks in the fullscreen stack if
-     * {@param expectTopTaskHasActivity} or {@param expectBottomTaskHasActivity} are set
-     * respectively.
+     * Called after the given {@param activityName} has been moved to the back stack, which follows
+     * the activity's previous windowing mode. Ensures that the stack matching the
+     * {@param windowingMode} and {@param activityType} is focused, and checks PIP activity is now
+     * properly stopped and now belongs to a stack of {@param previousWindowingMode}.
      */
-    private void assertPinnedStackStateOnMoveToFullscreen(ComponentName activityName,
-            int windowingMode, int activityType) {
+    private void assertPinnedStackStateOnMoveToBackStack(ComponentName activityName,
+            int windowingMode, int activityType, int previousWindowingMode) {
         mWmState.waitForFocusedStack(windowingMode, activityType);
         mWmState.assertFocusedStack("Wrong focused stack", windowingMode, activityType);
         waitAndAssertActivityState(activityName, STATE_STOPPED,
                 "Activity should go to STOPPED");
         assertTrue(mWmState.containsActivityInWindowingMode(
-                activityName, WINDOWING_MODE_FULLSCREEN));
+                activityName, previousWindowingMode));
         assertPinnedStackDoesNotExist();
     }
 
@@ -1261,25 +1284,33 @@ public class PinnedStackTests extends ActivityManagerTestBase {
      * Asserts that the activity received exactly one of each of the callbacks when entering and
      * exiting picture-in-picture.
      */
-    private void assertValidPictureInPictureCallbackOrder(ComponentName activityName) {
+    private void assertValidPictureInPictureCallbackOrder(ComponentName activityName,
+            int windowingMode) {
         final ActivityLifecycleCounts lifecycles = new ActivityLifecycleCounts(activityName);
-
         assertEquals(getActivityName(activityName) + " onConfigurationChanged()",
                 1, lifecycles.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED));
+        assertEquals(getActivityName(activityName) + " onMultiWindowModeChanged",
+                windowingMode == WINDOWING_MODE_FULLSCREEN ? 1 : 0,
+                lifecycles.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
         assertEquals(getActivityName(activityName) + " onPictureInPictureModeChanged()",
                 1, lifecycles.getCount(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED));
-        assertEquals(getActivityName(activityName) + " onMultiWindowModeChanged",
-                1, lifecycles.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
         final int lastPipIndex = lifecycles
                 .getLastIndex(ActivityCallback.ON_PICTURE_IN_PICTURE_MODE_CHANGED);
-        final int lastMwIndex = lifecycles
-                .getLastIndex(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED);
         final int lastConfigIndex = lifecycles
                 .getLastIndex(ActivityCallback.ON_CONFIGURATION_CHANGED);
-        assertThat("onPictureInPictureModeChanged should be before onMultiWindowModeChanged",
-                lastPipIndex, lessThan(lastMwIndex));
-        assertThat("onMultiWindowModeChanged should be before onConfigurationChanged",
-                lastMwIndex, lessThan(lastConfigIndex));
+        // In the case of Freeform, there's no onMultiWindowModeChange callback, so we will only
+        // check for that callback for Fullscreen
+        if (windowingMode == WINDOWING_MODE_FULLSCREEN) {
+            final int lastMwIndex = lifecycles
+                    .getLastIndex(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED);
+            assertThat("onPictureInPictureModeChanged should be before onMultiWindowModeChanged",
+                    lastPipIndex, lessThan(lastMwIndex));
+            assertThat("onMultiWindowModeChanged should be before onConfigurationChanged",
+                    lastMwIndex, lessThan(lastConfigIndex));
+        } else {
+            assertThat("onPictureInPictureModeChanged should be before onConfigurationChanged",
+                    lastPipIndex, lessThan(lastConfigIndex));
+        }
     }
 
     /**
