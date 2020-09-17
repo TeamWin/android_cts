@@ -16,6 +16,8 @@
 
 package android.os.cts
 
+import android.app.ActivityManager
+import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING
 import android.app.Instrumentation
 import android.content.Context
 import android.content.Intent
@@ -50,6 +52,8 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.containsStringIgnoringCase
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.Matcher
+import org.hamcrest.Matchers.greaterThan
+import org.hamcrest.Matchers.lessThanOrEqualTo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
@@ -113,9 +117,7 @@ class AutoRevokeTest {
                 eventually {
                     assertPermission(PERMISSION_GRANTED)
                 }
-                goBack()
-                goHome()
-                goBack()
+                killDummyApp()
                 Thread.sleep(5)
 
                 // Run
@@ -145,7 +147,7 @@ class AutoRevokeTest {
                 eventually {
                     assertPermission(PERMISSION_GRANTED)
                 }
-                goHome()
+                killDummyApp()
                 Thread.sleep(5)
 
                 // Run
@@ -170,9 +172,7 @@ class AutoRevokeTest {
                         assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_2)
                     }
 
-                    goBack()
-                    goHome()
-                    goBack()
+                    killDummyApp(APK_PACKAGE_NAME_2)
 
                     startApp()
                     clickPermissionAllow()
@@ -180,9 +180,7 @@ class AutoRevokeTest {
                         assertPermission(PERMISSION_GRANTED)
                     }
 
-                    goBack()
-                    goHome()
-                    goBack()
+                    killDummyApp()
                     Thread.sleep(20)
 
                     // Run
@@ -332,6 +330,7 @@ class AutoRevokeTest {
 
     private fun startApp(packageName: String = APK_PACKAGE_NAME) {
         runShellCommand("am start -n $packageName/$packageName.MainActivity")
+        awaitAppState(packageName, lessThanOrEqualTo(IMPORTANCE_TOP_SLEEPING))
     }
 
     private fun goHome() {
@@ -340,6 +339,24 @@ class AutoRevokeTest {
 
     private fun goBack() {
         runShellCommand("input keyevent KEYCODE_BACK")
+    }
+
+    private fun killDummyApp(pkg: String = APK_PACKAGE_NAME) {
+        assertThat(
+                runShellCommand("killall $pkg"),
+                equalTo(""))
+        awaitAppState(pkg, greaterThan(IMPORTANCE_TOP_SLEEPING))
+    }
+
+    private fun awaitAppState(pkg: String, stateMatcher: Matcher<Int>) {
+        eventually {
+            runWithShellPermissionIdentity {
+                val packageImportance = context
+                        .getSystemService(ActivityManager::class.java)!!
+                        .getPackageImportance(pkg)
+                assertThat(packageImportance, stateMatcher)
+            }
+        }
     }
 
     private fun clickPermissionAllow() {
