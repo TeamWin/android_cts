@@ -26,7 +26,8 @@ android_test {
         "truth-prebuilt",
         "guava",
         "junit",
-        "CtsMockInputMethodLib"
+        "CtsMockInputMethodLib",
+        "hamcrest-library",
     ],
     jni_uses_platform_apis: true,
     jni_libs: [
