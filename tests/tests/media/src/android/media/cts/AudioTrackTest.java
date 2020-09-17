@@ -1602,13 +1602,17 @@ public class AudioTrackTest {
         final int TEST_LOOPS = 1;
         final double TEST_LOOP_DURATION = 1.;
         final int TEST_ADDITIONAL_DRAIN_MS = 0;
+        // Compensates for cold start when run in isolation.
+        // The cold output latency must be 500 ms less or
+        // 200 ms less for low latency devices.
+        final long WAIT_TIME_MS = isLowLatencyDevice() ? WAIT_MSEC : 500;
 
         for (int TEST_FORMAT : TEST_FORMAT_ARRAY) {
             double frequency = 400; // frequency changes for each test
             for (int TEST_SR : TEST_SR_ARRAY) {
                 for (int TEST_CONF : TEST_CONF_ARRAY) {
                     playOnceStaticData(TEST_NAME, TEST_MODE, TEST_STREAM_TYPE, TEST_SWEEP,
-                            TEST_LOOPS, TEST_FORMAT, frequency, TEST_SR, TEST_CONF, WAIT_MSEC,
+                            TEST_LOOPS, TEST_FORMAT, frequency, TEST_SR, TEST_CONF, WAIT_TIME_MS,
                             TEST_LOOP_DURATION, TEST_ADDITIONAL_DRAIN_MS);
 
                     frequency += 70; // increment test tone frequency
@@ -2092,6 +2096,11 @@ public class AudioTrackTest {
     private boolean hasAudioOutput() {
         return getContext().getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
+    }
+
+    private boolean isLowLatencyDevice() {
+        return getContext().getPackageManager()
+            .hasSystemFeature(PackageManager.FEATURE_AUDIO_LOW_LATENCY);
     }
 
     private boolean isLowRamDevice() {
