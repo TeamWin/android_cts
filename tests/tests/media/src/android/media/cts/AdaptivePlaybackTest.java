@@ -467,6 +467,9 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             warn(mDecoder.getWarnings());
                             mDecoder.clearWarnings();
                             mDecoder.flush();
+                            // First run will trigger output format change exactly once,
+                            // and subsequent runs should not trigger format change.
+                            assertEquals(1, mDecoder.getOutputFormatChangeCount());
                         }
                     });
                 if (verify) {
@@ -885,6 +888,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         int mFramesNotifiedRendered;
         // True iff previous dequeue request returned INFO_OUTPUT_FORMAT_CHANGED.
         boolean mOutputFormatChanged;
+        // Number of output format change event
+        int mOutputFormatChangeCount;
         // Save the timestamps of the first frame of each sequence.
         // Note: this is the only time output format change could happen.
         ArrayList<Long> mFirstQueueTimestamps;
@@ -906,6 +911,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
             mLastRenderNanoTime = System.nanoTime();
             mFramesNotifiedRendered = 0;
             mOutputFormatChanged = false;
+            mOutputFormatChangeCount = 0;
             mFirstQueueTimestamps = new ArrayList<Long>();
 
             codec.setOnFrameRenderedListener(this, null);
@@ -938,6 +944,10 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
 
         public void clearWarnings() {
             mWarnings.clear();
+        }
+
+        public int getOutputFormatChangeCount() {
+            return mOutputFormatChangeCount;
         }
 
         public void configureAndStart(MediaFormat format, TestSurface surface) {
@@ -997,6 +1007,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 int colorFormat = format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
                 mDoChecksum = isRecognizedFormat(colorFormat);
                 mOutputFormatChanged = true;
+                ++mOutputFormatChangeCount;
                 return null;
             } else if (ix < 0) {
                 Log.v(TAG, "no output");
