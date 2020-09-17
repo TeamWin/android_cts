@@ -48,7 +48,7 @@ public class RazerServalTest extends InputHidTestCase {
     /**
      * We cannot test the home key using "testAllKeys" because the home key does not go to the
      * apps, and therefore cannot be received in InputCtsActivity.
-     * Instead, we rely on the home button behaviour check using the wm utils.
+     * Instead, we rely on the home button behavior check using the wm utils.
      */
     @Test
     public void testHomeKey() {
