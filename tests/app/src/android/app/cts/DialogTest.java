@@ -658,8 +658,11 @@ public class DialogTest {
         assertFalse(d.isOnPanelClosedCalled);
         assertFalse(d.isOnContextMenuClosedCalled);
         // Close context menu
+        d.isOnWindowFocusChangedCalled = false;
         sendKeys(KeyEvent.KEYCODE_BACK);
         PollingCheck.waitFor(() -> d.isOnPanelClosedCalled);
+        // Wait for window focus change after pressing back
+        PollingCheck.waitFor(() -> d.isOnWindowFocusChangedCalled);
         // Here isOnContextMenuClosedCalled should be true, see bug 1716918.
         assertFalse(d.isOnContextMenuClosedCalled);
 
@@ -678,10 +681,14 @@ public class DialogTest {
         assertFalse(d.isOnCreateContextMenuCalled);
 
         // Register for context menu and open it again
+        v.isShowContextMenuCalled = false;
+        d.isOnCreateContextMenuCalled = false;
         mScenario.onActivity(activity -> {
             d.registerForContextMenu(v);
             d.openContextMenu(v);
         });
+        PollingCheck.waitFor(() -> d.isOnCreateContextMenuCalled);
+        PollingCheck.waitFor(() -> v.isShowContextMenuCalled);
         PollingCheck.waitFor(d::contextMenuHasWindowFocus);
 
         assertFalse(d.isOnContextItemSelectedCalled);
@@ -689,7 +696,7 @@ public class DialogTest {
         d.isOnPanelClosedCalled = false;
         assertFalse(d.isOnContextMenuClosedCalled);
         // select a context menu item
-        sendKeys(KeyEvent.KEYCODE_DPAD_CENTER);
+        d.selectContextMenuItem();
         assertTrue(d.isOnMenuItemSelectedCalled);
         // Here isOnContextItemSelectedCalled should be true, see bug 1716918.
         assertFalse(d.isOnContextItemSelectedCalled);
