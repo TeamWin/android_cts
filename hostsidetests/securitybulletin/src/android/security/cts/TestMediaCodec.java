@@ -118,6 +118,10 @@ public class TestMediaCodec extends SecurityTestCase {
                 getDevice());
     }
 
+    /**
+     * b/37094889
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
     @Test
     @SecurityTest(minPatchLevel = "2017-07")
     public void testPocCVE_2017_0695() throws Exception {
