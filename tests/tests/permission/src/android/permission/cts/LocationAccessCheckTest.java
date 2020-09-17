@@ -74,6 +74,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ProtoUtils;
+import com.android.compatibility.common.util.mainline.MainlineModule;
+import com.android.compatibility.common.util.mainline.ModuleDetector;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto;
 import com.android.server.job.nano.JobSchedulerServiceDumpProto.RegisteredJob;
 
@@ -133,6 +135,11 @@ public class LocationAccessCheckTest {
 
     private static ServiceConnection sConnection;
     private static IAccessLocationOnCommand sLocationAccessor;
+
+    private static void assumeNotPlayManaged() throws Exception {
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+                sContext.getPackageManager(), MainlineModule.PERMISSION_CONTROLLER));
+    }
 
     /**
      * Connected to {@value #TEST_APP_PKG} and make it access the location in the background
@@ -573,6 +580,7 @@ public class LocationAccessCheckTest {
     @Test
     @SecurityTest(minPatchLevel = "2019-12-01")
     public void notificationIsShownOnlyOnce() throws Throwable {
+        assumeNotPlayManaged();
         accessLocation();
         getNotification(true);
 
@@ -582,6 +590,7 @@ public class LocationAccessCheckTest {
     @Test
     @SecurityTest(minPatchLevel = "2019-12-01")
     public void notificationIsShownAgainAfterClear() throws Throwable {
+        assumeNotPlayManaged();
         accessLocation();
         getNotification(true);
 
@@ -619,6 +628,7 @@ public class LocationAccessCheckTest {
     @Test
     @SecurityTest(minPatchLevel = "2019-12-01")
     public void removeNotificationOnUninstall() throws Throwable {
+        assumeNotPlayManaged();
         accessLocation();
         getNotification(false);
 
@@ -659,6 +669,7 @@ public class LocationAccessCheckTest {
     @Test
     @SecurityTest(minPatchLevel = "2019-12-01")
     public void noNotificationIfFeatureDisabled() throws Throwable {
+        assumeNotPlayManaged();
         disableLocationAccessCheck();
         accessLocation();
         assertNull(getNotification(true));
@@ -667,6 +678,7 @@ public class LocationAccessCheckTest {
     @Test
     @SecurityTest(minPatchLevel = "2019-12-01")
     public void notificationOnlyForAccessesSinceFeatureWasEnabled() throws Throwable {
+        assumeNotPlayManaged();
         // Disable the feature and access location in disabled state
         getNotification(true, true);
         disableLocationAccessCheck();
@@ -685,6 +697,7 @@ public class LocationAccessCheckTest {
     @Test
     @SecurityTest(minPatchLevel = "2019-12-01")
     public void noNotificationIfBlamerNotSystemOrLocationProvider() throws Throwable {
+        assumeNotPlayManaged();
         getNotification(true);
         // Blame the app for access from an untrusted for notification purposes package.
         runWithShellPermissionIdentity(() -> {
@@ -698,6 +711,7 @@ public class LocationAccessCheckTest {
     @Test
     @SecurityTest(minPatchLevel = "2019-12-01")
     public void testOpeningLocationSettingsDoesNotTriggerAccess() throws Throwable {
+        assumeNotPlayManaged();
         Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         sContext.startActivity(intent);
