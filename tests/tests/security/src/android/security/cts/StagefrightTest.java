@@ -46,6 +46,8 @@ import android.view.Surface;
 import android.webkit.cts.CtsTestServer;
 
 import com.android.compatibility.common.util.CrashUtils;
+import com.android.compatibility.common.util.mainline.MainlineModule;
+import com.android.compatibility.common.util.mainline.ModuleDetector;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -1376,6 +1378,9 @@ public class StagefrightTest {
     @Test
     @SecurityTest(minPatchLevel = "Unknown")
     public void testStagefright_bug_142641801() throws Exception {
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA));
         doStagefrightTest(R.raw.bug_142641801);
     }
 
