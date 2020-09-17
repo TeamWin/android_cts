@@ -16,53 +16,30 @@
 
 package android.car.cts;
 
-import static android.car.cts.ShellHelper.MAX_NUMBER_USERS_DEFAULT;
-import static android.car.cts.ShellHelper.createFullUser;
-import static android.car.cts.ShellHelper.getCurrentUser;
-import static android.car.cts.ShellHelper.getMaxNumberUsers;
-import static android.car.cts.ShellHelper.isNightMode;
-import static android.car.cts.ShellHelper.removeUser;
-import static android.car.cts.ShellHelper.setDayMode;
-import static android.car.cts.ShellHelper.setMaxNumberUsers;
-import static android.car.cts.ShellHelper.setNightMode;
-import static android.car.cts.ShellHelper.switchUser;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeTrue;
 
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.regex.Pattern;
 
 /**
  * Check car config consistency across day night mode switching.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public final class UiModeHostTest extends BaseHostJUnit4Test {
+public final class UiModeHostTest extends CarHostJUnit4TestCase {
 
-    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
-
-    private static int sNumMaxUsersBefore = MAX_NUMBER_USERS_DEFAULT;
+    private static final Pattern NIGHT_MODE_REGEX = Pattern.compile("Night mode: (yes|no)");
 
     @Before
     public void setUp() throws Exception {
-        assumeTrue(hasDeviceFeature(FEATURE_AUTOMOTIVE));
         // TODO (b/167698977): Remove assumption after the user build has proper permissions.
-        assumeTrue(getDevice().isAdbRoot());
-
-        // increase max user limit by 2 to prevent create-user failure
-        sNumMaxUsersBefore = getMaxNumberUsers(getDevice());
-        setMaxNumberUsers(getDevice(), sNumMaxUsersBefore + 2);
-    }
-
-    @After
-    public void cleanUp() throws Exception {
-        setMaxNumberUsers(getDevice(), sNumMaxUsersBefore);
+        assumeTrue("Temporarily Skipping on non-root device", getDevice().isAdbRoot());
     }
 
     /**
@@ -71,37 +48,53 @@ public final class UiModeHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUserSwitchingConfigConsistency() throws Exception {
-        ITestDevice device = getDevice();
-        int originalUserId = getCurrentUser(device);
+        requiresExtraUsers(1);
 
-        // create 2 test users
-        int userIdFoo = createFullUser(device, "UserSwitchingHostTest-user-1");
-        int userIdBar = createFullUser(device, "UserSwitchingHostTest-user-2");
+        int originalUserId = getCurrentUserId();
+        int newUserId = createFullUser("UiModeHostTest");
 
-        // start with user foo in day mode
-        switchUser(device, userIdFoo);
-        setDayMode(device);
-        assertFalse(isNightMode(device));
+        // start current user in day mode
+        setDayMode();
+        assertThat(isNightMode()).isFalse();
 
         // set to night mode
-        setNightMode(device);
-        assertTrue(isNightMode(device));
+        setNightMode();
+        assertThat(isNightMode()).isTrue();
 
-        // switch to user bar and verify night mode
-        switchUser(device, userIdBar);
-        assertTrue(isNightMode(device));
+        // switch to new user and verify night mode
+        switchUser(newUserId);
+        assertThat(isNightMode()).isTrue();
 
         // set to day mode
-        setDayMode(device);
-        assertFalse(isNightMode(device));
+        setDayMode();
+        assertThat(isNightMode()).isFalse();
 
-        // switch to user foo and verify day mode
-        switchUser(device, userIdFoo);
-        assertFalse(isNightMode(device));
+        // switch bach to initial user and verify day mode
+        switchUser(originalUserId);
+        assertThat(isNightMode()).isFalse();
+    }
 
-        // switch back to original user and remove test users
-        switchUser(device, originalUserId);
-        removeUser(device, userIdFoo);
-        removeUser(device, userIdBar);
+    /**
+     * Sets the UI mode to day mode.
+     */
+    protected void setDayMode() throws Exception {
+        executeCommand("cmd car_service day-night-mode day");
+    }
+
+    /**
+     * Sets the UI mode to night mode.
+     */
+    protected void setNightMode() throws Exception {
+        executeCommand("cmd car_service day-night-mode night");
+    }
+
+    /**
+     * Returns true if the current UI mode is night mode, false otherwise.
+     */
+    protected boolean isNightMode() throws Exception {
+        return executeAndParseCommand(NIGHT_MODE_REGEX,
+                "get night mode status failed",
+                matcher -> matcher.group(1).equals("yes"),
+                "cmd uimode night");
     }
 }
