@@ -172,7 +172,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
 
         if (getIntent().hasExtra(EXTRA_ALLOW_AUTO_PIP)) {
             final PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
-            builder.setAutoEnterAllowed(true);
+            builder.setAutoEnterEnabled(true);
             setPictureInPictureParams(builder.build());
         }
 

@@ -18,6 +18,12 @@ package android.telecom.cts;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.media.AudioDeviceInfo;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.TelecomManager;
@@ -48,6 +54,46 @@ public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
         } catch (InterruptedException e) {
             fail("Couldn't get TTY mode.");
             e.printStackTrace();
+        }
+    }
+
+    public void testTtyModeBroadcasts() {
+        // We only expect the actual tty mode to change if there's a wired headset plugged in, so
+        // don't do the test if there isn't one plugged in.
+        if (!mShouldTestTelecom || !isWiredHeadsetPluggedIn()) {
+            return;
+        }
+        LinkedBlockingQueue<Intent> ttyModeQueue = new LinkedBlockingQueue<>(1);
+        BroadcastReceiver ttyModeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (TelecomManager.ACTION_CURRENT_TTY_MODE_CHANGED.equals(intent.getAction())) {
+                    ttyModeQueue.offer(intent);
+                }
+            }
+        };
+        mContext.registerReceiver(ttyModeReceiver,
+                new IntentFilter(TelecomManager.ACTION_CURRENT_TTY_MODE_CHANGED));
+        Intent changePreferredTtyMode =
+                new Intent(TelecomManager.ACTION_TTY_PREFERRED_MODE_CHANGED);
+        changePreferredTtyMode.putExtra(TelecomManager.EXTRA_TTY_PREFERRED_MODE,
+                TelecomManager.TTY_MODE_FULL);
+
+        try {
+            runWithShellPermissionIdentity(() -> mContext.sendBroadcast(changePreferredTtyMode));
+            Intent intent = ttyModeQueue.poll(
+                    TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            assertTrue(intent.hasExtra(TelecomManager.EXTRA_CURRENT_TTY_MODE));
+            assertEquals(TelecomManager.TTY_MODE_FULL,
+                    intent.getIntExtra(TelecomManager.EXTRA_CURRENT_TTY_MODE, -1));
+        } catch (InterruptedException e) {
+            fail("interrupted");
+        } finally {
+            Intent revertPreferredTtyMode =
+                    new Intent(TelecomManager.ACTION_TTY_PREFERRED_MODE_CHANGED);
+            revertPreferredTtyMode.putExtra(TelecomManager.EXTRA_TTY_PREFERRED_MODE,
+                    TelecomManager.TTY_MODE_OFF);
+            runWithShellPermissionIdentity(() -> mContext.sendBroadcast(revertPreferredTtyMode));
         }
     }
 
@@ -101,4 +147,24 @@ public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
             e.printStackTrace();
         }
     }
+
+    private boolean isWiredHeadsetPluggedIn() {
+        AudioManager audioManager = mContext.getSystemService(AudioManager.class);
+        AudioDeviceInfo[] devices = audioManager.getDevices(AudioManager.GET_DEVICES_ALL);
+        boolean isPluggedIn = false;
+        for (AudioDeviceInfo device : devices) {
+            switch (device.getType()) {
+                case AudioDeviceInfo.TYPE_WIRED_HEADPHONES:
+                case AudioDeviceInfo.TYPE_WIRED_HEADSET:
+                case AudioDeviceInfo.TYPE_USB_HEADSET:
+                case AudioDeviceInfo.TYPE_USB_DEVICE:
+                    isPluggedIn = true;
+            }
+            if (isPluggedIn) {
+                break;
+            }
+        }
+        return isPluggedIn;
+    }
+
 }

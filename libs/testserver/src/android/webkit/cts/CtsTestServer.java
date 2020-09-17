@@ -50,6 +50,7 @@ import org.apache.http.params.HttpParams;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -632,6 +633,9 @@ public class CtsTestServer {
                     throw new IOException();
                   }
                   in = mResources.openRawResource(id);
+                } else if (path.startsWith(
+                          Environment.getExternalStorageDirectory().getAbsolutePath())) {
+                    in = new FileInputStream(path);
                 } else {
                   in = mAssets.open(path);
                 }

@@ -18,5 +18,6 @@ package android.devicepolicy.cts;
 
 import android.app.Activity;
 
+/** Activity used for Cross Profile Apps Tests */
 public class MainActivity extends Activity {
 }

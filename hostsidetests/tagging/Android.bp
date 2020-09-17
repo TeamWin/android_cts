@@ -1,3 +1,43 @@
+// Full truth table of whether tagging should be enabled. Note that a report
+// from statsd is not available if the kernel or manifest flag is disabled. This
+// happens because the zygote never probes compat (i.e.
+// mPlatformCompat.isChangeEnabled(NATIVE_HEAP_POINTER_TAGGING) never gets run).
+//
+// +====================================================================+
+// | #   | Kernel  | Manifest | SDK   | Forced || Has     | Report from |
+// |     | Support | Flag     | Level | Compat || Tagging | statsd?     |
+// | --- | ------- | -------- | ----- | ------ || ------- | ----------- |
+// | 1   | No      | -        | -     | -      || No      | No          |
+// | 2   | Yes     | Off      | -     | -      || No      | No          |
+// | 3   | Yes     | None     | 29    | Off    || No      | Yes         |
+// | 4   | Yes     | None     | 29    | None   || Yes     | Yes         |
+// | 5   | Yes     | None     | 29    | On     || No      | Yes         |
+// | 6   | Yes     | None     | 30    | Off    || No      | Yes         |
+// | 7   | Yes     | None     | 30    | None   || Yes     | Yes         |
+// | 8   | Yes     | None     | 30    | On     || Yes     | Yes         |
+// | 9   | Yes     | On       | -     | Off    || No      | Yes         |
+// | 10  | Yes     | On       | 29    | None   || No      | Yes         |
+// | 11  | Yes     | On       | 30    | None   || Yes     | Yes         |
+// | 12  | Yes     | On       | -     | On     || Yes     | Yes         |
+// +====================================================================+
+//
+// And coverage of this truth table comes from:
+//  #1.  All tests on a device with an unsupported kernel.
+//  #2.  TaggingManifestDisabledTest.*
+//  #3.  TaggingSdk29Test.testCompatFeatureDisabled
+//  #4.  TaggingSdk29Test.testDefault
+//  #5.  TaggingSdk29Test.testCompatFeatureEnabled
+//  #6.  TaggingSdk30Test.testCompatFeatureDisabled
+//  #7.  TaggingSdk30Test.testDefault
+//  #8.  TaggingSdk30Test.testCompatFeatureEnabled
+//  #9.  TaggingManifestEnabledSdk*Test.testCompatFeatureDisabled
+//  #10. TaggingManifestEnabledSdk29Test.testDefault
+//  #11. TaggingManifestEnabledSdk30Test.testDefault
+//  #12. TaggingManifestEnabledSdk*Test.testCompatFeatureEnabled
+//
+// MTE tests are done at SDK level 30. The level doesn't really matter; there is
+// no manifest flag for MTE, and the compat feature is always disabled.
+
 java_test_host {
     name: "CtsTaggingHostTestCases",
     defaults: ["cts_defaults"],
@@ -6,11 +46,26 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
     ],
-    static_libs:["CompatChangeGatingTestBase"],
+    static_libs: ["CompatChangeGatingTestBase"],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
         "vts10",
     ],
+}
+
+java_defaults {
+    name: "cts_tagging_app_defaults",
+    defaults: ["cts_defaults"],
+    compile_multilib: "both",
+    static_libs: [
+        "tagging-common-devicesidelib",
+        "ctstestrunner-axt",
+        "androidx.test.rules",
+        "androidx.test.core",
+        "androidx.test.ext.junit",
+    ],
+    jni_libs: ["libtagging-common-devicesidelib-jni"],
+    sdk_version: "current",
 }

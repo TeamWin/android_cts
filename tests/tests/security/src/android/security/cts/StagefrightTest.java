@@ -1254,6 +1254,120 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2020-05")
+    public void testStagefright_cve_2020_3641() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3641);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-04")
+    public void testStagefright_cve_2019_14127() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14127);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-04")
+    public void testStagefright_cve_2019_14132() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14132);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-03")
+    public void testStagefright_cve_2019_10591() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10591);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-02")
+    public void testStagefright_cve_2019_10590() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10590);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14004() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14004);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14003() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14003);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-02")
+    public void testStagefright_cve_2019_14057() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14057);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_10532() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10532);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_10578() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10578);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-03")
+    public void testStagefright_cve_2019_14061() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14061, 180000);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_10611() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10611);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-08")
+    public void testStagefright_cve_2019_10489() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10489);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-03")
+    public void testStagefright_cve_2019_14048() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14048);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-07")
+    public void testStagefright_cve_2019_2253() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_2253);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_10579() throws Exception {
+        doStagefrightTestANR(R.raw.cve_2019_10579);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14005() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14005);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14006() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14006);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_CVE_2019_14016() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14016);
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2020-01")
     public void testStagefright_CVE_2019_14017() throws Exception {
         doStagefrightTest(R.raw.cve_2019_14017);

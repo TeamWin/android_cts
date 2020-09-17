@@ -21,6 +21,31 @@
 
     <application>
         <uses-library android:name="android.test.runner" />
+
+        <activity android:name=".MainActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".NonMainActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="nonMainActivity"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".NonExportedActivity"
+                  android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
     </application>
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.devicepolicy.cts"

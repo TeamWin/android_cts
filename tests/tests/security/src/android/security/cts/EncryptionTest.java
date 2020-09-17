@@ -17,6 +17,7 @@
 package android.security.cts;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import android.platform.test.annotations.AppModeFull;
@@ -33,25 +34,23 @@ public class EncryptionTest extends AndroidTestCase {
         System.loadLibrary("ctssecurity_jni");
     }
 
-    private static final int MIN_ENCRYPTION_REQUIRED_API_LEVEL = 23;
-
-    // First API level where there are no speed exemptions.
-    private static final int MIN_ALL_SPEEDS_API_LEVEL = Build.VERSION_CODES.Q;
-
-    // First API level at which file based encryption must be used.
-    private static final int MIN_FBE_REQUIRED_API_LEVEL = Build.VERSION_CODES.Q;
-
     private static final String TAG = "EncryptionTest";
 
     private static native boolean aesIsFast();
 
     private void handleUnencryptedDevice() {
-        if (PropertyUtil.getFirstApiLevel() < MIN_ENCRYPTION_REQUIRED_API_LEVEL) {
+        // Prior to Android M, encryption wasn't required at all.
+        if (PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.M) {
             Log.d(TAG, "Exempt from encryption due to an old starting API level.");
             return;
         }
-        // In older API levels, we grant an exemption if AES is not fast enough.
-        if (PropertyUtil.getFirstApiLevel() < MIN_ALL_SPEEDS_API_LEVEL) {
+        // Prior to Android Q, encryption wasn't required if AES performance is
+        // too low or if the device is "typically shared (e.g. Television)".
+        if (PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.Q) {
+            if (FeatureUtil.isTV()) {
+                Log.d(TAG, "Exempt from encryption because because device is TV.");
+                return;
+            }
             // Note: aesIsFast() takes ~2 second to run, so it's worth rearranging
             //     test logic to delay calling this.
             if (!aesIsFast()) {
@@ -71,7 +70,9 @@ public class EncryptionTest extends AndroidTestCase {
             // CtsNativeEncryptionTestCases.
             return;
         }
-        if (PropertyUtil.getFirstApiLevel() < MIN_FBE_REQUIRED_API_LEVEL) {
+        // Prior to Android Q, file-based encryption wasn't required
+        // (full-disk encryption was also allowed).
+        if (PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.Q) {
             Log.d(TAG, "Device is encrypted.");
             return;
         }

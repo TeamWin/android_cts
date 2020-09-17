@@ -16,11 +16,7 @@
 
 package android.media.cts;
 
-import android.media.cts.R;
-
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
@@ -56,72 +52,64 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
 
     public Iterable<Codec> H264(CodecFactory factory) {
         return factory.createCodecList(
-                mContext,
                 MediaFormat.MIMETYPE_VIDEO_AVC,
-                R.raw.video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz,
-                R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz,
-                R.raw.bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz);
+                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
+                "video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
+                "bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz.mp4");
     }
 
     public Iterable<Codec> HEVC(CodecFactory factory) {
         return factory.createCodecList(
-                mContext,
                 MediaFormat.MIMETYPE_VIDEO_HEVC,
-                R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz,
-                R.raw.bbb_s4_1280x720_mp4_hevc_mp31_4mbps_30fps_aac_he_stereo_80kbps_32000hz,
-                R.raw.bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz);
+                "bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz.mp4",
+                "bbb_s4_1280x720_mp4_hevc_mp31_4mbps_30fps_aac_he_stereo_80kbps_32000hz.mp4",
+                "bbb_s1_352x288_mp4_hevc_mp2_600kbps_30fps_aac_he_stereo_96kbps_48000hz.mp4");
     }
 
     public Iterable<Codec> Mpeg2(CodecFactory factory) {
         return factory.createCodecList(
-                mContext,
                 MediaFormat.MIMETYPE_VIDEO_MPEG2,
-                R.raw.video_640x360_mp4_mpeg2_2000kbps_30fps_aac_stereo_128kbps_48000hz,
-                R.raw.video_1280x720_mp4_mpeg2_3000kbps_30fps_aac_stereo_128kbps_48000hz);
+                "video_640x360_mp4_mpeg2_2000kbps_30fps_aac_stereo_128kbps_48000hz.mp4",
+                "video_1280x720_mp4_mpeg2_3000kbps_30fps_aac_stereo_128kbps_48000hz.mp4");
     }
 
     public Iterable<Codec> H263(CodecFactory factory) {
         return factory.createCodecList(
-                mContext,
                 MediaFormat.MIMETYPE_VIDEO_H263,
-                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz,
-                R.raw.video_352x288_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz);
+                "video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp",
+                "video_352x288_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp");
     }
 
     public Iterable<Codec> Mpeg4(CodecFactory factory) {
         return factory.createCodecList(
-                mContext,
                 MediaFormat.MIMETYPE_VIDEO_MPEG4,
-                R.raw.video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz,
-                R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz,
-                R.raw.video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz);
+                "video_1280x720_mp4_mpeg4_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
+                "video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz.mp4",
+                "video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
     }
 
     public Iterable<Codec> VP8(CodecFactory factory) {
         return factory.createCodecList(
-                mContext,
                 MediaFormat.MIMETYPE_VIDEO_VP8,
-                R.raw.video_480x360_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
-                R.raw.bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz,
-                R.raw.bbb_s1_320x180_webm_vp8_800kbps_30fps_opus_5ch_320kbps_48000hz);
+                "video_480x360_webm_vp8_333kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
+                "bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz.webm",
+                "bbb_s1_320x180_webm_vp8_800kbps_30fps_opus_5ch_320kbps_48000hz.webm");
     }
 
     public Iterable<Codec> VP9(CodecFactory factory) {
         return factory.createCodecList(
-                mContext,
                 MediaFormat.MIMETYPE_VIDEO_VP9,
-                R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz,
-                R.raw.bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz,
-                R.raw.bbb_s1_320x180_webm_vp9_0p11_600kbps_30fps_vorbis_mono_64kbps_48000hz);
+                "video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
+                "bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz.webm",
+                "bbb_s1_320x180_webm_vp9_0p11_600kbps_30fps_vorbis_mono_64kbps_48000hz.webm");
     }
 
     public Iterable<Codec> AV1(CodecFactory factory) {
         return factory.createCodecList(
-                mContext,
                 MediaFormat.MIMETYPE_VIDEO_AV1,
-                R.raw.video_480x360_webm_av1_400kbps_30fps_vorbis_stereo_128kbps_48000hz,
-                R.raw.video_1280x720_webm_av1_2000kbps_30fps_vorbis_stereo_128kbps_48000hz,
-                R.raw.video_320x180_webm_av1_200kbps_30fps_vorbis_stereo_128kbps_48000hz);
+                "video_480x360_webm_av1_400kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                "video_1280x720_webm_av1_2000kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                "video_320x180_webm_av1_200kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
     }
 
     CodecFactory ALL = new CodecFactory();
@@ -479,6 +467,9 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                             warn(mDecoder.getWarnings());
                             mDecoder.clearWarnings();
                             mDecoder.flush();
+                            // First run will trigger output format change exactly once,
+                            // and subsequent runs should not trigger format change.
+                            assertEquals(1, mDecoder.getOutputFormatChangeCount());
                         }
                     });
                 if (verify) {
@@ -897,6 +888,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         int mFramesNotifiedRendered;
         // True iff previous dequeue request returned INFO_OUTPUT_FORMAT_CHANGED.
         boolean mOutputFormatChanged;
+        // Number of output format change event
+        int mOutputFormatChangeCount;
         // Save the timestamps of the first frame of each sequence.
         // Note: this is the only time output format change could happen.
         ArrayList<Long> mFirstQueueTimestamps;
@@ -918,6 +911,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
             mLastRenderNanoTime = System.nanoTime();
             mFramesNotifiedRendered = 0;
             mOutputFormatChanged = false;
+            mOutputFormatChangeCount = 0;
             mFirstQueueTimestamps = new ArrayList<Long>();
 
             codec.setOnFrameRenderedListener(this, null);
@@ -950,6 +944,10 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
 
         public void clearWarnings() {
             mWarnings.clear();
+        }
+
+        public int getOutputFormatChangeCount() {
+            return mOutputFormatChangeCount;
         }
 
         public void configureAndStart(MediaFormat format, TestSurface surface) {
@@ -1009,6 +1007,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 int colorFormat = format.getInteger(MediaFormat.KEY_COLOR_FORMAT);
                 mDoChecksum = isRecognizedFormat(colorFormat);
                 mOutputFormatChanged = true;
+                ++mOutputFormatChangeCount;
                 return null;
             } else if (ix < 0) {
                 Log.v(TAG, "no output");
@@ -1379,12 +1378,10 @@ class Media {
         }
     }
 
-    public static Media read(Context context, int video, int numFrames)
+    public static Media read(final String video, int numFrames)
             throws java.io.IOException {
         MediaExtractor extractor = new MediaExtractor();
-        AssetFileDescriptor testFd = context.getResources().openRawResourceFd(video);
-        extractor.setDataSource(testFd.getFileDescriptor(), testFd.getStartOffset(),
-                testFd.getLength());
+        extractor.setDataSource(video);
 
         Media media = new Media(
                 extractor.getTrackFormat(0), extractor.getTrackFormat(0), numFrames);
@@ -1435,7 +1432,6 @@ class Media {
             }
         }
         extractor.release();
-        testFd.close();
 
         /* Override MAX_INPUT_SIZE in format, as CSD is being combined
          * with one of the input buffers */
@@ -1491,16 +1487,17 @@ class CodecList extends ArrayList<Codec> { };
 class CodecFamily extends CodecList {
     private final static String TAG = "AdaptiveCodecFamily";
     private static final int NUM_FRAMES = AdaptivePlaybackTest.NUM_FRAMES;
+    static final String mInpPrefix = WorkDir.getMediaDirString();
 
-    public CodecFamily(Context context, String mime, int ... resources) {
+    public CodecFamily(String mime, final String ... resources) {
         try {
             /* read all media */
             Media[] mediaList = new Media[resources.length];
             for (int i = 0; i < resources.length; i++) {
-                Log.v(TAG, "reading media " + resources[i]);
-                Media media = Media.read(context, resources[i], NUM_FRAMES);
+                Log.v(TAG, "reading media " + mInpPrefix + resources[i]);
+                Media media = Media.read(mInpPrefix + resources[i], NUM_FRAMES);
                 assert media.getMime().equals(mime):
-                        "test stream " + resources[i] + " has " + media.getMime() +
+                        "test stream " + mInpPrefix + resources[i] + " has " + media.getMime() +
                         " mime type instead of " + mime;
 
                 /* assuming the first timestamp is the smallest */
@@ -1542,9 +1539,8 @@ class CodecFamily extends CodecList {
 
 /* all codecs of mime, except named codec if exists */
 class CodecFamilySpecific extends CodecList {
-    public CodecFamilySpecific(
-            Context context, String mime, boolean isGoogle, int ... resources) {
-        for (Codec c: new CodecFamily(context, mime, resources)) {
+    public CodecFamilySpecific(String mime, boolean isGoogle, final String ... resources) {
+        for (Codec c: new CodecFamily(mime, resources)) {
             if (!c.vendor == isGoogle) {
                 add(c);
             }
@@ -1553,23 +1549,20 @@ class CodecFamilySpecific extends CodecList {
 }
 
 class CodecFactory {
-    public CodecList createCodecList(
-            Context context, String mime, int ...resources) {
-        return new CodecFamily(context, mime, resources);
+    public CodecList createCodecList(String mime, final String ...resources) {
+        return new CodecFamily(mime, resources);
     }
 }
 
 class SWCodecFactory extends CodecFactory {
-    public CodecList createCodecList(
-            Context context, String mime, int ...resources) {
-        return new CodecFamilySpecific(context, mime, true, resources);
+    public CodecList createCodecList(String mime, final String ...resources) {
+        return new CodecFamilySpecific(mime, true, resources);
     }
 }
 
 class HWCodecFactory extends CodecFactory {
-    public CodecList createCodecList(
-            Context context, String mime, int ...resources) {
-        return new CodecFamilySpecific(context, mime, false, resources);
+    public CodecList createCodecList(String mime, final String ...resources) {
+        return new CodecFamilySpecific(mime, false, resources);
     }
 }
 
