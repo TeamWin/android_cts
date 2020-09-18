@@ -20,7 +20,9 @@ android_test {
         "ctstestrunner-axt",
         "truth-prebuilt",
         "androidx.test.ext.junit",
-        "testng",
+        "testng", // used for assertThrows
+        // TODO: Remove this once we remove ui automator usage
+        "androidx.test.uiautomator_uiautomator",
     ],
     srcs: ["src/**/*.java"],
     test_suites: [

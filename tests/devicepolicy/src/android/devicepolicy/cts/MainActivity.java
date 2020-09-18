@@ -17,7 +17,31 @@
 package android.devicepolicy.cts;
 
 import android.app.Activity;
+import android.os.Bundle;
+import android.os.Process;
+import android.os.UserManager;
+import android.widget.TextView;
 
-/** Activity used for Cross Profile Apps Tests */
+/**
+ * An activity that displays the serial number of the user that it is running into.
+ */
 public class MainActivity extends Activity {
+
+    @Override
+    public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        setContentView(R.layout.main);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        TextView textView = findViewById(R.id.user_textview);
+        textView.setText(Long.toString(getCurrentUserSerialNumber()));
+    }
+
+    private long getCurrentUserSerialNumber() {
+        UserManager userManager = getSystemService(UserManager.class);
+        return userManager.getSerialNumberForUser(Process.myUserHandle());
+    }
 }
