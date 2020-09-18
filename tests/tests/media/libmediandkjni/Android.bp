@@ -22,11 +22,11 @@ cc_test_library {
         "codec-utils-jni.cpp",
         "md5_utils.cpp",
     ],
-    include_dirs: ["system/core/include"],
     shared_libs: [
         "libnativehelper_compat_libc++",
         "liblog",
     ],
+    header_libs: ["liblog_headers"],
     sdk_version: "29",
     cflags: [
         "-Werror",
@@ -47,7 +47,6 @@ cc_test_library {
         "native_media_utils.cpp",
         "native_media_decoder_source.cpp",
     ],
-    include_dirs: ["system/core/include"],
     shared_libs: [
         "libandroid",
         "libnativehelper_compat_libc++",
@@ -55,6 +54,7 @@ cc_test_library {
         "libmediandk",
         "libEGL",
     ],
+    header_libs: ["liblog_headers"],
     stl: "libc++_static",
     cflags: [
         "-Werror",
@@ -85,6 +85,7 @@ cc_test_library {
         "libdl",
         "libEGL",
     ],
+    header_libs: ["liblog_headers"],
     cflags: [
         "-Werror",
         "-Wall",
