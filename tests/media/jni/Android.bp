@@ -23,9 +23,9 @@ cc_test_library {
         "libmediandk",
         "liblog",
     ],
+    header_libs: ["liblog_headers"],
     include_dirs: [
         "frameworks/av/media/ndk/include/media",
-        "system/core/include"
     ],
     stl: "libc++_static",
     cflags: [
@@ -48,9 +48,9 @@ cc_test_library {
         "liblog",
         "libz",
     ],
+    header_libs: ["liblog_headers"],
     include_dirs: [
         "frameworks/av/media/ndk/include/media",
-        "system/core/include"
     ],
     stl: "libc++_static",
     cflags: [
@@ -77,9 +77,9 @@ cc_test_library {
         "libandroid",
         "libz",
     ],
+    header_libs: ["liblog_headers"],
     include_dirs: [
         "frameworks/av/media/ndk/include/media",
-        "system/core/include"
     ],
     stl: "libc++_static",
     cflags: [
