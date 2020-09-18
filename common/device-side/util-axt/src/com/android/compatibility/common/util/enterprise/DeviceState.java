@@ -16,20 +16,26 @@
 
 package com.android.compatibility.common.util.enterprise;
 
+import static org.junit.Assume.assumeTrue;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import android.app.Instrumentation;
+import android.content.Context;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
+import android.os.UserManager;
 
 import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -38,16 +44,78 @@ import java.util.Scanner;
  */
 public final class DeviceState extends TestWatcher {
 
-    private static final Instrumentation INSTRUMENTATION =
+    public enum UserType {
+        CURRENT_USER,
+        PRIMARY_USER,
+        SECONDARY_USER,
+        WORK_PROFILE
+    }
+
+    private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
 
     /**
      * Copied from {@link android.content.pm.UserInfo}.
-     *
-     * Primary user. Only one user can have this flag set. It identifies the first human user
-     * on a device. This flag is not supported in headless system user mode.
      */
     private static final int FLAG_PRIMARY = 0x00000001;
+
+    /**
+     * Copied from {@link android.content.pm.UserInfo}.
+     */
+    private static final int FLAG_MANAGED_PROFILE = 0x00000020;
+
+    /**
+     * Copied from {@link android.content.pm.UserInfo}.
+     */
+    private static final int FLAG_FULL = 0x00000400;
+
+    private List<Integer> createdUserIds = new ArrayList<>();
+
+    @Nullable
+    public UserHandle getWorkProfile() {
+        return getWorkProfile(/* forUser= */ UserType.CURRENT_USER);
+    }
+
+    @Nullable
+    public UserHandle getWorkProfile(UserType forUser) {
+        assumeTrue("Due to API limitations, tests cannot manage work profiles for users other " +
+                        "than the current one", forUser == UserType.CURRENT_USER);
+
+        UserManager userManager = sInstrumentation.getContext().getSystemService(UserManager.class);
+
+        for (UserHandle userHandle : userManager.getUserProfiles()) {
+            if ((getFlagsForUserID(userHandle.getIdentifier()) & FLAG_MANAGED_PROFILE) != 0) {
+                return userHandle;
+            }
+        }
+
+        return null;
+    }
+
+    public boolean isRunningOnWorkProfile() {
+        return getWorkProfile() != null
+                && getWorkProfile().getIdentifier() == android.os.UserHandle.myUserId();
+    }
+
+    private Integer getFlagsForUserID(int userId) {
+        ArrayList<String[]> users = tokenizeListUsers();
+        for (String[] user : users) {
+            int foundUserId = Integer.parseInt(user[1]);
+            if (userId == foundUserId) {
+                return Integer.parseInt(user[3], 16);
+            }
+        }
+        return null;
+    }
+
+    public boolean isRunningOnPrimaryUser() {
+        return android.os.UserHandle.myUserId() == getPrimaryUserId();
+    }
+
+    public boolean isRunningOnSecondaryUser() {
+        return UserHandle.myUserId() != getPrimaryUserId()
+                && (getFlagsForUserID(android.os.UserHandle.myUserId() & FLAG_FULL) != 0);
+    }
 
     /**
      * Get the first human user on the device.
@@ -64,17 +132,49 @@ public final class DeviceState extends TestWatcher {
     }
 
     /**
+     * Get the first human user on the device other than the primary user.
+     *
+     * <p>Returns {@code null} if there is none present.
+     */
+    @Nullable
+    public UserHandle getSecondaryUser() {
+        Integer secondaryUserId = getSecondaryUserId();
+        if (secondaryUserId == null) {
+            return null;
+        }
+        return UserHandle.of(secondaryUserId);
+    }
+
+    /**
      * Get the user ID of the first human user on the device.
      *
      * <p>Returns {@code null} if there is none present.
      */
     @Nullable
-    public static Integer getPrimaryUserId() {
+    private static Integer getPrimaryUserId() {
         // This would be cleaner if there was a test api which could find this information
         ArrayList<String[]> users = tokenizeListUsers();
         for (String[] user : users) {
             int flag = Integer.parseInt(user[3], 16);
             if ((flag & FLAG_PRIMARY) != 0) {
+                return Integer.parseInt(user[1]);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the user ID of a human user on the device other than the primary user.
+     *
+     * <p>Returns {@code null} if there is none present.
+     */
+    @Nullable
+    private static Integer getSecondaryUserId() {
+        // This would be cleaner if there was a test api which could find this information
+        ArrayList<String[]> users = tokenizeListUsers();
+        for (String[] user : users) {
+            int flag = Integer.parseInt(user[3], 16);
+            if (((flag & FLAG_PRIMARY) == 0) && ((flag & FLAG_FULL) != 0)) {
                 return Integer.parseInt(user[1]);
             }
         }
@@ -114,6 +214,94 @@ public final class DeviceState extends TestWatcher {
         return users;
     }
 
+    public void ensureHasWorkProfile(boolean installTestApp, UserType forUser) {
+        requireFeature("android.software.managed_users");
+        assumeTrue("Due to API limitations, tests cannot manage work profiles for users other " +
+                "than the current one", forUser == UserType.CURRENT_USER);
+
+        if (getWorkProfile() == null) {
+            createWorkProfile(resolveUserTypeToUserId(forUser));
+        }
+        if (installTestApp) {
+            installInProfile(getWorkProfile().getIdentifier(),
+                    sInstrumentation.getContext().getPackageName());
+        } else {
+            uninstallFromProfile(getWorkProfile().getIdentifier(),
+                    sInstrumentation.getContext().getPackageName());
+        }
+    }
+
+    public void ensureHasSecondaryUser(boolean installTestApp) {
+        // TODO: What is the requirement?
+        if (getSecondaryUser() == null) {
+            createSecondaryUser();
+        }
+        if (installTestApp) {
+            installInProfile(getSecondaryUserId(), sInstrumentation.getContext().getPackageName());
+        } else {
+            uninstallFromProfile(getSecondaryUserId(),
+                    sInstrumentation.getContext().getPackageName());
+        }
+    }
+
+    public void requireCanSupportAdditionalUser() {
+        int maxUsers = getMaxNumberOfUsersSupported();
+        int currentUsers = tokenizeListUsers().size();
+
+        assumeTrue("The device does not have space for an additional user (" + currentUsers +
+                " current users, " + maxUsers + " max users)", currentUsers + 1 <= maxUsers);
+    }
+
+    private int resolveUserTypeToUserId(UserType userType) {
+        switch (userType) {
+            case CURRENT_USER:
+                return android.os.UserHandle.myUserId();
+            case PRIMARY_USER:
+                return getPrimaryUserId();
+            case SECONDARY_USER:
+                return getSecondaryUserId();
+            case WORK_PROFILE:
+                return getWorkProfile().getIdentifier();
+            default:
+                throw new IllegalArgumentException("Unknown user type " + userType);
+        }
+    }
+
+    @Override
+    protected void finished(Description description) {
+        for (Integer userId : createdUserIds) {
+            runCommandWithOutput("pm remove-user " + userId);
+        }
+
+        createdUserIds.clear();
+    }
+
+    private void createWorkProfile(int parentUserId) {
+        final String createUserOutput =
+                runCommandWithOutput(
+                        "pm create-user --profileOf " + parentUserId + " --managed work");
+        final int profileId = Integer.parseInt(createUserOutput.split(" id ")[1].trim());
+        runCommandWithOutput("am start-user -w " + profileId);
+        createdUserIds.add(profileId);
+    }
+
+    private void createSecondaryUser() {
+        requireCanSupportAdditionalUser();
+        final String createUserOutput =
+                runCommandWithOutput("pm create-user secondary");
+        final int userId = Integer.parseInt(createUserOutput.split(" id ")[1].trim());
+        runCommandWithOutput("am start-user -w " + userId);
+        createdUserIds.add(userId);
+    }
+
+    private void installInProfile(int profileId, String packageName) {
+        runCommandWithOutput("pm install-existing --user " + profileId + " " + packageName);
+    }
+
+    private void uninstallFromProfile(int profileId, String packageName) {
+        runCommandWithOutput("pm uninstall --user " + profileId + " " + packageName);
+    }
+
     private static String runCommandWithOutput(String command) {
         ParcelFileDescriptor p = runCommand(command);
 
@@ -127,8 +315,23 @@ public final class DeviceState extends TestWatcher {
     }
 
     private static ParcelFileDescriptor runCommand(String command) {
-        return INSTRUMENTATION
+        return sInstrumentation
                 .getUiAutomation()
                 .executeShellCommand(command);
+    }
+
+    private void requireFeature(String feature) {
+        assumeTrue("Device must have feature " + feature,
+                sInstrumentation.getContext().getPackageManager().hasSystemFeature(feature));
+    }
+
+    private int getMaxNumberOfUsersSupported() {
+        String command = "pm get-max-users";
+        String commandOutput = runCommandWithOutput(command);
+        try {
+            return Integer.parseInt(commandOutput.substring(commandOutput.lastIndexOf(" ")).trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalStateException("Invalid command output", e);
+        }
     }
 }
