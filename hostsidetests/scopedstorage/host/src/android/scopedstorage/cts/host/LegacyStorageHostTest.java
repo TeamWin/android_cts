@@ -199,4 +199,20 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
     public void testInsertWithUnsupportedMimeType() throws Exception {
         runDeviceTest("testInsertWithUnsupportedMimeType");
     }
+
+    @Test
+    public void testLegacySystemGalleryCanRenameImagesAndVideosWithoutDbUpdates() throws Exception {
+        runDeviceTest("testLegacySystemGalleryCanRenameImagesAndVideosWithoutDbUpdates");
+    }
+
+    @Test
+    public void testLegacySystemGalleryWithoutWESCannotRename() throws Exception {
+        revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE");
+        runDeviceTest("testLegacySystemGalleryWithoutWESCannotRename");
+    }
+
+    @Test
+    public void testLegacyWESCanRenameImagesAndVideosWithDbUpdates_hasW() throws Exception {
+        runDeviceTest("testLegacyWESCanRenameImagesAndVideosWithDbUpdates_hasW");
+    }
 }
