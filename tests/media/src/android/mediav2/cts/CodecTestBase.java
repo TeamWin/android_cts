@@ -409,14 +409,24 @@ class OutputManager {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OutputManager that = (OutputManager) o;
+        // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+        // produce multiple progressive frames?) For now, do not verify timestamps.
+        boolean isEqual = this.equalsInterlaced(o);
+        if (!outPtsList.equals(that.outPtsList)) {
+            isEqual = false;
+            Log.e(LOG_TAG, "ref and test presentation timestamp mismatch");
+        }
+        return isEqual;
+    }
+
+    public boolean equalsInterlaced(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OutputManager that = (OutputManager) o;
         boolean isEqual = true;
         if (!crc32List.equals(that.crc32List)) {
             isEqual = false;
             Log.e(LOG_TAG, "ref and test crc32 checksums mismatch");
-        }
-        if (!outPtsList.equals(that.outPtsList)) {
-            isEqual = false;
-            Log.e(LOG_TAG, "ref and test presentation timestamp mismatch");
         }
         if (memIndex == that.memIndex) {
             int count = 0;
@@ -845,6 +855,7 @@ class CodecDecoderTestBase extends CodecTestBase {
 
     String mMime;
     String mTestFile;
+    boolean mIsInterlaced;
 
     ArrayList<ByteBuffer> mCsdBuffers;
     private int mCurrCsdIdx;
@@ -875,6 +886,8 @@ class CodecDecoderTestBase extends CodecTestBase {
                     // This call shouldn't effect configure() call for any codec
                     format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatYUV420Flexible);
                 }
+                // TODO: determine this from the extractor format when it becomes exposed.
+                mIsInterlaced = srcFile.contains("_interlaced_");
                 return format;
             }
         }
