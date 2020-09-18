@@ -32,6 +32,7 @@ cc_test_library {
     ],
     header_libs: [
         "libaudioutils_headers",
+        "liblog_headers",
     ],
     stl: "libc++_static",
     cflags: [
