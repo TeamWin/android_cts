@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListActivity.sInitialLaunch;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -26,6 +29,8 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.ListView;
+
+import com.android.cts.verifier.TestListActivity.DisplayMode;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -53,6 +58,15 @@ import java.util.stream.Collectors;
  *                <action android:name="android.intent.action.MAIN" />
  *                <category android:name="android.cts.intent.category.MANUAL_TEST" />
  *             </intent-filter>
+ *         </pre>
+ *     </li>
+ *     <li>REQUIRED: Add a meta data attribute to indicate which display modes of tests the activity
+ *         should belong to. "single_display_mode" indicates a test is only needed to run on the
+ *         main display mode (i.e. unfolded), and "multi_display_mode" indicates a test is required
+ *         to run under both modes (i.e. both folded and unfolded).If you don't add this attribute,
+ *         your test will show up in both unfolded and folded modes.
+ *         <pre>
+ *             <meta-data android:name="display_mode" android:value="multi_display_mode" />
  *         </pre>
  *     </li>
  *     <li>OPTIONAL: Add a meta data attribute to indicate what category of tests the activity
@@ -107,6 +121,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     private static final String TEST_REQUIRED_CONFIG_META_DATA = "test_required_configs";
 
+    private static final String TEST_DISPLAY_MODE_META_DATA = "display_mode";
+
     private static final String CONFIG_NO_EMULATOR = "config_no_emulator";
 
     private static final String CONFIG_VOICE_CAPABLE = "config_voice_capable";
@@ -116,6 +132,14 @@ public class ManifestTestListAdapter extends TestListAdapter {
     private static final String CONFIG_HDMI_SOURCE = "config_hdmi_source";
 
     private static final String CONFIG_QUICK_SETTINGS_SUPPORTED = "config_quick_settings_supported";
+
+    /** The config to represent that a test is only needed to run in the main display mode
+     * (i.e. unfolded) */
+    private static final String SINGLE_DISPLAY_MODE = "single_display_mode";
+
+    /** The config to represent that a test is needed to run in the multiple display modes
+     * (i.e. both unfolded and folded) */
+    private static final String MULTIPLE_DISPLAY_MODE = "multi_display_mode";
 
     private final HashSet<String> mDisabledTests;
 
@@ -131,6 +155,15 @@ public class ManifestTestListAdapter extends TestListAdapter {
         for (int i = 0; i < disabledTestArray.length; i++) {
             mDisabledTests.add(disabledTestArray[i]);
         }
+
+        // Configs to distinct that the adapter is for top-level tests or subtests.
+        if (testParent == null) {
+            // For top-level tests.
+            hasTestParentInManifestAdapter = false;
+        } else {
+            hasTestParentInManifestAdapter = true;
+        }
+        adapterFromManifest = true;
     }
 
     public ManifestTestListAdapter(Context context, String testParent) {
@@ -139,22 +172,40 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     @Override
     protected List<TestListItem> getRows() {
+        // When launching at the first time or after killing the process, needs to fetch the
+        // test items of all display modes as the bases for switching.
+        if (!sInitialLaunch) {
+            return getRowsWithDisplayMode(sCurrentDisplayMode);
+        }
 
+        List<TestListItem> allRows = new ArrayList<TestListItem>();
+        for (DisplayMode mode: DisplayMode.values()) {
+            allRows = getRowsWithDisplayMode(mode.toString());
+            mDisplayModesTests.put(mode.toString(), allRows);
+        }
+        return allRows;
+    }
+
+    /**
+     * Gets all rows based on the specific display mode.
+     *
+     * @param mode Given display mode.
+     * @return A list containing all test itmes in the given display mode.
+     */
+    private List<TestListItem> getRowsWithDisplayMode (String mode) {
         /*
          * 1. Get all the tests belonging to the test parent.
          * 2. Get all the tests keyed by their category.
          * 3. Flatten the tests and categories into one giant list for the list view.
          */
-
+        List<TestListItem> allRows = new ArrayList<TestListItem>();
         List<ResolveInfo> infos = getResolveInfosForParent();
         Map<String, List<TestListItem>> testsByCategory = getTestsByCategory(infos);
 
         List<String> testCategories = new ArrayList<String>(testsByCategory.keySet());
         Collections.sort(testCategories);
-
-        List<TestListItem> allRows = new ArrayList<TestListItem>();
         for (String testCategory : testCategories) {
-            List<TestListItem> tests = filterTests(testsByCategory.get(testCategory));
+            List<TestListItem> tests = filterTests(testsByCategory.get(testCategory), mode);
             if (!tests.isEmpty()) {
                 allRows.add(TestListItem.newCategory(testCategory));
                 Collections.sort(tests, Comparator.comparing(item -> item.title));
@@ -203,8 +254,9 @@ public class ManifestTestListAdapter extends TestListAdapter {
             String[] requiredConfigs = getRequiredConfigs(info.activityInfo.metaData);
             String[] excludedFeatures = getExcludedFeatures(info.activityInfo.metaData);
             String[] applicableFeatures = getApplicableFeatures(info.activityInfo.metaData);
+            String displayMode = getDisplayMode(info.activityInfo.metaData);
             TestListItem item = TestListItem.newTest(title, testName, intent, requiredFeatures,
-                     requiredConfigs, excludedFeatures, applicableFeatures);
+                     requiredConfigs, excludedFeatures, applicableFeatures, displayMode);
 
             String testCategory = getTestCategory(mContext, info.activityInfo.metaData);
             addTestToCategory(testsByCategory, testCategory, item);
@@ -279,6 +331,20 @@ public class ManifestTestListAdapter extends TestListAdapter {
                 return value.split(":");
             }
         }
+    }
+
+    /**
+     * Gets the configuration of the display mode per test. The default value is multi_display_mode.
+     *
+     * @param metaData Given metadata of the display mode.
+     * @return A string representing the display mode of the test.
+     */
+    static String getDisplayMode(Bundle metaData) {
+        if (metaData == null) {
+            return MULTIPLE_DISPLAY_MODE;
+        }
+        String displayMode = metaData.getString(TEST_DISPLAY_MODE_META_DATA);
+        return displayMode == null ? MULTIPLE_DISPLAY_MODE : displayMode;
     }
 
     static String getTitle(Context context, ActivityInfo activityInfo) {
@@ -387,6 +453,27 @@ public class ManifestTestListAdapter extends TestListAdapter {
         return true;
     }
 
+    /**
+     * Check if the test should be ran by the given display mode.
+     *
+     * @param mode Configs of the display mode.
+     * @param currentMode Given display mode.
+     * @return True if the given display mode matches the configs, otherwise, return false;
+     */
+    private boolean matchDisplayMode(String mode, String currentMode) {
+        if (mode == null) {
+            return false;
+        }
+        switch (mode) {
+            case SINGLE_DISPLAY_MODE:
+                return currentMode.equals(DisplayMode.UNFOLDED.toString());
+            case MULTIPLE_DISPLAY_MODE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     private boolean getSystemResourceFlag(String key) {
         final Resources systemRes = mContext.getResources().getSystem();
         final int id = systemRes.getIdentifier(key, "bool", "android");
@@ -414,12 +501,15 @@ public class ManifestTestListAdapter extends TestListAdapter {
                 .collect(Collectors.toList());
     }
 
-    List<TestListItem> filterTests(List<TestListItem> tests) {
+    List<TestListItem> filterTests(List<TestListItem> tests, String mode) {
         List<TestListItem> filteredTests = new ArrayList<>();
         for (TestListItem test : tests) {
             if (!hasAnyFeature(test.excludedFeatures) && hasAllFeatures(test.requiredFeatures)
-                    && matchAllConfigs(test.requiredConfigs)) {
+                && matchAllConfigs(test.requiredConfigs)
+                && matchDisplayMode(test.displayMode, mode)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
+                    // Add suffix in test name if the test is in the folded mode.
+                    test.testName = setTestNameSuffix(mode, test.testName);
                     filteredTests.add(test);
                 }
             }
