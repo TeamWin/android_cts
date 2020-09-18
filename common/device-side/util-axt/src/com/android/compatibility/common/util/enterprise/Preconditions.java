@@ -18,16 +18,15 @@ package com.android.compatibility.common.util.enterprise;
 
 import static org.junit.Assume.assumeTrue;
 
-import android.app.admin.DevicePolicyManager;
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.os.Build;
-import android.os.UserManager;
 
 import androidx.test.core.app.ApplicationProvider;
 
+import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
+import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
+import com.android.compatibility.common.util.enterprise.annotations.RequireFeatures;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
+import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnSecondaryUser;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnWorkProfile;
 
 import org.junit.rules.TestRule;
@@ -36,15 +35,19 @@ import org.junit.runners.model.Statement;
 
 
 /**
- * A Junit rule which enforces the following preconditions:
- *  * @RequireRunOnWorkProfile - the test must be running within a work profile
- *  * @RequireRunOnPrimaryUser - the test must be running on the primary user
+ * A Junit rule which enforces preconditions in annotations from the
+ * {@code com.android.comaptibility.common.util.enterprise.annotations} package.
  *
  * {@code assumeTrue} will be used, so tests which do not meet preconditions will be skipped.
  */
 public final class Preconditions implements TestRule {
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
+    private final DeviceState mDeviceState;
+
+    public Preconditions(DeviceState deviceState) {
+        mDeviceState = deviceState;
+    }
 
     @Override public Statement apply(final Statement base,
             final Description description) {
@@ -52,11 +55,37 @@ public final class Preconditions implements TestRule {
             @Override public void evaluate() throws Throwable {
                 if (description.getAnnotation(RequireRunOnPrimaryUser.class) != null) {
                     assumeTrue("@RequireRunOnPrimaryUser tests only run on primary user",
-                            isRunningOnPrimaryUser());
+                            mDeviceState.isRunningOnPrimaryUser());
                 }
                 if (description.getAnnotation(RequireRunOnWorkProfile.class) != null) {
                     assumeTrue("@RequireRunOnWorkProfile tests only run on work profile",
-                            isRunningOnWorkProfile());
+                            mDeviceState.isRunningOnWorkProfile());
+                }
+                if (description.getAnnotation(RequireRunOnSecondaryUser.class) != null) {
+                    assumeTrue("@RequireRunOnSecondaryUser tests only run on secondary user",
+                            mDeviceState.isRunningOnSecondaryUser());
+                }
+                EnsureHasWorkProfile ensureHasWorkAnnotation =
+                        description.getAnnotation(EnsureHasWorkProfile.class);
+                if (ensureHasWorkAnnotation != null) {
+                    mDeviceState.ensureHasWorkProfile(
+                            /* installTestApp= */ ensureHasWorkAnnotation.installTestApp(),
+                            /* forUser= */ ensureHasWorkAnnotation.forUser()
+                    );
+                }
+                EnsureHasSecondaryUser ensureHasSecondaryUserAnnotation =
+                        description.getAnnotation(EnsureHasSecondaryUser.class);
+                if (ensureHasSecondaryUserAnnotation != null) {
+                    mDeviceState.ensureHasSecondaryUser(
+                            /* installTestApp= */ ensureHasSecondaryUserAnnotation.installTestApp()
+                    );
+                }
+                RequireFeatures requireFeaturesAnnotation =
+                        description.getAnnotation(RequireFeatures.class);
+                if (requireFeaturesAnnotation != null) {
+                    for (String feature: requireFeaturesAnnotation.featureNames()) {
+                        requireFeature(feature);
+                    }
                 }
 
                 base.evaluate();
@@ -64,30 +93,8 @@ public final class Preconditions implements TestRule {
         };
     }
 
-    private boolean isRunningOnWorkProfile() {
-        UserManager userManager = mContext.getSystemService(UserManager.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            return userManager.isManagedProfile();
-        }
-
-        if (userManager.getUserProfiles().size() < 2) {
-            return false; // Don't accidentally approve a managed primary profile
-        }
-
-        DevicePolicyManager devicePolicyManager =
-                mContext.getSystemService(DevicePolicyManager.class);
-        PackageManager packageManager = mContext.getPackageManager();
-
-        for (PackageInfo pkg : packageManager.getInstalledPackages(/* flags= */ 0)) {
-            if (devicePolicyManager.isProfileOwnerApp(pkg.packageName)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private boolean isRunningOnPrimaryUser() {
-        return android.os.UserHandle.myUserId() == DeviceState.getPrimaryUserId();
+    private void requireFeature(String feature) {
+        assumeTrue("Device must have feature " + feature,
+                mContext.getPackageManager().hasSystemFeature(feature));
     }
 }
