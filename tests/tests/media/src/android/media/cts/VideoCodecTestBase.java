@@ -28,6 +28,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
 import android.os.Handler;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -51,6 +52,7 @@ import java.util.concurrent.CountDownLatch;
  * The stream is later decoded by the decoder to verify frames are decodable and to
  * calculate PSNR values for various bitrates.
  */
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 public class VideoCodecTestBase extends AndroidTestCase {
 
     protected static final String TAG = "VideoCodecTestBase";
