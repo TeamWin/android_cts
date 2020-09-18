@@ -48,6 +48,7 @@ import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -60,6 +61,7 @@ public class WindowFocusHandleService extends Service {
 
     private EditText mPopupTextView;
     private Handler mThreadHandler;
+    private CountDownLatch mUiThreadSignal;
 
     @Override
     public void onCreate() {
@@ -98,6 +100,18 @@ public class WindowFocusHandleService extends Service {
                     Log.v(TAG, "onWindowFocusChanged for view=" + this
                             + ", hasWindowfocus: " + hasWindowFocus);
                 }
+            }
+
+            @Override
+            public boolean onCheckIsTextEditor() {
+                super.onCheckIsTextEditor();
+                if (getHandler() != null && mUiThreadSignal != null) {
+                    if (Thread.currentThread().getId()
+                            == getHandler().getLooper().getThread().getId()) {
+                        mUiThreadSignal.countDown();
+                    }
+                }
+                return true;
             }
         };
         editText.setOnFocusChangeListener((v, hasFocus) -> {
@@ -157,6 +171,17 @@ public class WindowFocusHandleService extends Service {
             });
         }
         return mPopupTextView;
+    }
+
+    /**
+     * Tests can set a {@link CountDownLatch} to wait until associated action performed on
+     * UI thread.
+     *
+     * @param uiThreadSignal the {@link CountDownLatch} used to countdown.
+     */
+    @AnyThread
+    public void setUiThreadSignal(CountDownLatch uiThreadSignal) {
+        mUiThreadSignal = uiThreadSignal;
     }
 
     @MainThread
