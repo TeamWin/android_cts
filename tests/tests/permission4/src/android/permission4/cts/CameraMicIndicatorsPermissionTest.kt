@@ -26,6 +26,7 @@ import android.hardware.camera2.CameraManager
 import android.os.Process
 import android.provider.DeviceConfig
 import android.provider.Settings
+import android.server.wm.WindowManagerStateHelper
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiSelector
@@ -51,6 +52,7 @@ private const val PERMISSION_INDICATORS_NOT_PRESENT = 162547999L
 private const val IDLE_TIMEOUT_MILLIS: Long = 1000
 private const val UNEXPECTED_TIMEOUT_MILLIS = 1000
 private const val TIMEOUT_MILLIS: Long = 20000
+private const val TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator"
 
 class CameraMicIndicatorsPermissionTest {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -144,7 +146,30 @@ class CameraMicIndicatorsPermissionTest {
             val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
             assertTrue("View with text $APP_LABEL not found", appView.exists())
         }
-        uiDevice.openNotification()
+
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            assertTvIndicatorsShown(useMic, useCamera)
+        } else {
+            uiDevice.openNotification()
+            assertPrivacyChipAndIndicatorsPresent(useMic, useCamera)
+        }
+
+        pressBack()
+    }
+
+    private fun assertTvIndicatorsShown(useMic: Boolean, useCamera: Boolean) {
+        if (useMic) {
+            WindowManagerStateHelper().waitFor("Waiting for the mic indicator window to come up") {
+                it.containsWindow(TV_MIC_INDICATOR_WINDOW_TITLE) &&
+                        it.isWindowVisible(TV_MIC_INDICATOR_WINDOW_TITLE)
+            }
+        }
+        if (useCamera) {
+            // There is no camera indicator on TVs.
+        }
+    }
+
+    private fun assertPrivacyChipAndIndicatorsPresent(useMic: Boolean, useCamera: Boolean) {
         // Ensure the privacy chip is present
         eventually {
             val privacyChip = uiDevice.findObject(UiSelector().resourceId(PRIVACY_CHIP_ID))
@@ -163,7 +188,6 @@ class CameraMicIndicatorsPermissionTest {
             val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
             assertTrue("View with text $APP_LABEL not found", appView.exists())
         }
-        pressBack()
     }
 
     private fun pressBack() {

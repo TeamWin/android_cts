@@ -264,6 +264,14 @@ TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
   ASSERT_OK(iface->RepeatBinder(binder, &ret));
   EXPECT_EQ(binder.get(), ret.get());
 
+  if (shouldBeWrapped) {
+    ndk::ScopedAStatus status = iface->RepeatBinder(nullptr, &ret);
+    ASSERT_EQ(STATUS_UNEXPECTED_NULL, AStatus_getStatus(status.get()));
+  } else {
+    ASSERT_OK(iface->RepeatBinder(nullptr, &ret));
+    EXPECT_EQ(nullptr, ret.get());
+  }
+
   ASSERT_OK(iface->RepeatNullableBinder(binder, &ret));
   EXPECT_EQ(binder.get(), ret.get());
 
@@ -279,6 +287,11 @@ TEST_P(NdkBinderTest_Aidl, RepeatInterface) {
   std::shared_ptr<IEmpty> ret;
   ASSERT_OK(iface->RepeatInterface(empty, &ret));
   EXPECT_EQ(empty.get(), ret.get());
+
+  // interfaces are always nullable in AIDL C++, and that behavior was carried
+  // over to the NDK backend for consistency
+  ASSERT_OK(iface->RepeatInterface(nullptr, &ret));
+  EXPECT_EQ(nullptr, ret.get());
 
   ASSERT_OK(iface->RepeatNullableInterface(empty, &ret));
   EXPECT_EQ(empty.get(), ret.get());
