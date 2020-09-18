@@ -650,6 +650,7 @@ public abstract class BaseSensorTestActivity
             @Override
             public void run() {
                 mNextButton.setVisibility(View.GONE);
+                mRetryButton.setVisibility(View.GONE);
                 button.setText(textResId);
                 button.setOnClickListener(listener);
                 button.setVisibility(View.VISIBLE);
