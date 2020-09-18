@@ -25,6 +25,7 @@ import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
 import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 
+import static org.junit.Assume.assumeTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -160,6 +161,9 @@ public class AccessibilityGestureDetectorTest {
     @Test
     @AppModeFull
     public void testRecognizeGesturePathOnVirtualDisplay() throws Exception {
+        assumeTrue(sInstrumentation.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
+
         if (!mHasTouchScreen || !mScreenBigEnough) {
             return;
         }
