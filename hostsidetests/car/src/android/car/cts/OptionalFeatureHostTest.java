@@ -20,12 +20,9 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.junit.Assume.assumeThat;
-import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -39,9 +36,7 @@ import java.util.regex.Pattern;
  * Check Optional Feature related car configs.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class OptionalFeatureHostTest extends BaseHostJUnit4Test {
-
-    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
+public class OptionalFeatureHostTest extends CarHostJUnit4TestCase {
 
     private static final String[] MANDATORY_FEATURES = {
             "android.car.input",
@@ -66,11 +61,6 @@ public class OptionalFeatureHostTest extends BaseHostJUnit4Test {
             "uxrestriction",
             "vendor_extension"
     };
-
-    @Before
-    public void setUp() throws Exception {
-        assumeTrue(hasDeviceFeature(FEATURE_AUTOMOTIVE));
-    }
 
     /**
      * Partners can use the same system image for multiple product configs with variation in
