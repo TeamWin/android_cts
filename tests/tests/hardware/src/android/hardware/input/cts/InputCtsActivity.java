@@ -61,13 +61,13 @@ public class InputCtsActivity extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent ev) {
-        if (mInputCallback != null) {
-            mInputCallback.onKeyEvent(ev);
-        }
         // Do not handle keys in UnhandledKeys list, let it fallback
         if (mUnhandledKeys.contains(ev.getKeyCode())) {
             Log.i(TAG, "Unhandled keyEvent: "  + ev);
             return false;
+        }
+        if (mInputCallback != null) {
+            mInputCallback.onKeyEvent(ev);
         }
         return true;
     }
