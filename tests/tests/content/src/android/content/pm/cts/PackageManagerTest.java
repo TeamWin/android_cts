@@ -43,6 +43,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
+import static org.testng.Assert.assertThrows;
 
 import android.content.ComponentName;
 import android.content.Intent;
@@ -328,6 +329,14 @@ public class PackageManagerTest {
         // Test isSafeMode. Because the test case will not run in safe mode, so
         // the return will be false.
         assertFalse(mPackageManager.isSafeMode());
+
+        // Test getTargetSdkVersion
+        int expectedTargetSdk = mPackageManager.getApplicationInfo(PACKAGE_NAME, 0)
+                .targetSdkVersion;
+        assertEquals(expectedTargetSdk, mPackageManager.getTargetSdkVersion(PACKAGE_NAME));
+        assertThrows(PackageManager.NameNotFoundException.class,
+                () -> mPackageManager.getTargetSdkVersion(
+                        "android.content.cts.non_existent_package"));
     }
 
     private void checkPackagesNameForUid(String expectedName, String[] uid) {

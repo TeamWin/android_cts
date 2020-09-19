@@ -29,7 +29,7 @@ android_test {
         "general-tests",
     ],
     test_options: {
-        extra_test_configs: ["WorkProfileAndroidTest.xml"]
+    extra_test_configs: ["DevicePolicyWorkProfileTest.xml"]
     },
     sdk_version: "test_current",
 }
