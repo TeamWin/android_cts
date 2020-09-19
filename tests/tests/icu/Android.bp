@@ -15,6 +15,8 @@
 android_test {
     name: "CtsIcuTestCases",
     defaults: ["cts_support_defaults"],
+    test_config: "CtsIcuTestCases.xml",
+    manifest: "AndroidManifest.xml",
     java_resource_dirs: ["resources"],
     static_libs: [
         "cts-core-test-runner-axt",
@@ -25,7 +27,23 @@ android_test {
         "cts",
         "vts10",
         "general-tests",
-	"mts",
+        "mts",
     ],
     platform_apis: true,
+}
+
+java_test_host {
+    name: "CtsIcu4cTestCases",
+    defaults: ["cts_support_defaults"],
+    test_config: "CtsIcu4cTestCases.xml",
+    data: [
+        ":cintltst",
+        ":intltest",
+        ":icu4c_test_data",
+        ":ICU4CTestRunner",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
 }
