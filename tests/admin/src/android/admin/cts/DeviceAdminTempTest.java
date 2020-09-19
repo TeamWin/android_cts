@@ -43,7 +43,7 @@ public class DeviceAdminTempTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     @Rule
-    public final Preconditions mPreconditions = new Preconditions();
+    public final Preconditions mPreconditions = new Preconditions(sDeviceState);
 
     @RequireRunOnWorkProfile
     @Test

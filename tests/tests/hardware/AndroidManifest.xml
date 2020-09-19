@@ -75,7 +75,8 @@
             android:label="InputCtsActivity"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation
                     |screenLayout|fontScale|uiMode|orientation|density|screenSize
-                    |smallestScreenSize"/>
+                    |smallestScreenSize">
+        </activity>
 
         <activity android:name="android.hardware.cts.FingerprintTestActivity"
             android:label="FingerprintTestActivity">
