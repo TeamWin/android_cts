@@ -52,6 +52,7 @@ import android.telephony.AccessNetworkConstants;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.AvailableNetworkInfo;
 import android.telephony.CallAttributes;
+import android.telephony.CallForwardingInfo;
 import android.telephony.CallQuality;
 import android.telephony.CarrierConfigManager;
 import android.telephony.CellLocation;
@@ -95,8 +96,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -123,6 +126,7 @@ public class TelephonyManagerTest {
     private String mSelfCertHash;
 
     private static final int TOLERANCE = 1000;
+    private static final int TIMEOUT_FOR_NETWORK_OPS = TOLERANCE * 10;
     private PhoneStateListener mListener;
     private static ConnectivityManager mCm;
     private static final String TAG = "TelephonyManagerTest";
@@ -564,12 +568,8 @@ public class TelephonyManagerTest {
                 TelephonyManager::getAndUpdateDefaultRespondViaMessageApplication);
     }
 
-    /**
-     * Due to the corresponding API is hidden in R and will be public in S, this test
-     * is commented and will be un-commented in Android S.
-     *
     @Test
-    public void testGetCallForwarding() {
+    public void testGetCallForwarding() throws Exception {
         List<Integer> callForwardingReasons = new ArrayList<>();
         callForwardingReasons.add(CallForwardingInfo.REASON_UNCONDITIONAL);
         callForwardingReasons.add(CallForwardingInfo.REASON_BUSY);
@@ -578,35 +578,55 @@ public class TelephonyManagerTest {
         callForwardingReasons.add(CallForwardingInfo.REASON_ALL);
         callForwardingReasons.add(CallForwardingInfo.REASON_ALL_CONDITIONAL);
 
-        Set<Integer> callForwardingStatus = new HashSet<Integer>();
-        callForwardingStatus.add(CallForwardingInfo.STATUS_INACTIVE);
-        callForwardingStatus.add(CallForwardingInfo.STATUS_ACTIVE);
-        callForwardingStatus.add(CallForwardingInfo.STATUS_FDN_CHECK_FAILURE);
-        callForwardingStatus.add(CallForwardingInfo.STATUS_UNKNOWN_ERROR);
-        callForwardingStatus.add(CallForwardingInfo.STATUS_NOT_SUPPORTED);
+        Set<Integer> callForwardingErrors = new HashSet<Integer>();
+        callForwardingErrors.add(CallForwardingInfo.ERROR_FDN_CHECK_FAILURE);
+        callForwardingErrors.add(CallForwardingInfo.ERROR_UNKNOWN);
+        callForwardingErrors.add(CallForwardingInfo.ERROR_NOT_SUPPORTED);
 
         for (int callForwardingReasonToGet : callForwardingReasons) {
             Log.d(TAG, "[testGetCallForwarding] callForwardingReasonToGet: "
                     + callForwardingReasonToGet);
-            CallForwardingInfo callForwardingInfo =
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                            (tm) -> tm.getCallForwarding(callForwardingReasonToGet));
+            AtomicReference<CallForwardingInfo> receivedForwardingInfo = new AtomicReference<>();
+            AtomicReference<Integer> receivedErrorCode = new AtomicReference<>();
+            CountDownLatch latch = new CountDownLatch(1);
+            TelephonyManager.CallForwardingInfoCallback callback =
+                    new TelephonyManager.CallForwardingInfoCallback() {
+                        @Override
+                        public void onCallForwardingInfoAvailable(CallForwardingInfo info) {
+                            receivedForwardingInfo.set(info);
+                            latch.countDown();
+                        }
 
-            assertNotNull(callForwardingInfo);
-            assertTrue(callForwardingStatus.contains(callForwardingInfo.getStatus()));
-            assertTrue(callForwardingReasons.contains(callForwardingInfo.getReason()));
-            callForwardingInfo.getNumber();
-            assertTrue(callForwardingInfo.getTimeoutSeconds() >= 0);
+                        @Override
+                        public void onError(int error) {
+                            receivedErrorCode.set(error);
+                            latch.countDown();
+                        }
+            };
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.getCallForwarding(callForwardingReasonToGet,
+                            getContext().getMainExecutor(), callback));
+
+            assertTrue(latch.await(TIMEOUT_FOR_NETWORK_OPS, TimeUnit.MILLISECONDS));
+            // Make sure only one of the callbacks gets invoked
+            assertTrue((receivedForwardingInfo.get() != null) ^ (receivedErrorCode.get() != null));
+            if (receivedForwardingInfo.get() != null) {
+                CallForwardingInfo info = receivedForwardingInfo.get();
+                assertTrue(callForwardingReasons.contains(info.getReason()));
+                if (info.isEnabled()) {
+                    assertNotNull(info.getNumber());
+                    assertTrue(info.getTimeoutSeconds() >= 0);
+                }
+            }
+
+            if (receivedErrorCode.get() != null) {
+                assertTrue(callForwardingErrors.contains(receivedErrorCode.get()));
+            }
         }
     }
-     */
 
-    /**
-     * Due to the corresponding API is hidden in R and will be public in S, this test
-     * is commented and will be un-commented in Android S.
-     *
     @Test
-    public void testSetCallForwarding() {
+    public void testSetCallForwarding() throws Exception {
         List<Integer> callForwardingReasons = new ArrayList<>();
         callForwardingReasons.add(CallForwardingInfo.REASON_UNCONDITIONAL);
         callForwardingReasons.add(CallForwardingInfo.REASON_BUSY);
@@ -617,68 +637,99 @@ public class TelephonyManagerTest {
 
         // Enable Call Forwarding
         for (int callForwardingReasonToEnable : callForwardingReasons) {
+            CountDownLatch latch = new CountDownLatch(1);
+            // Disregard success or failure; just make sure it reports back.
+            Consumer<Integer> ignoringResultListener = (x) -> latch.countDown();
+
             final CallForwardingInfo callForwardingInfoToEnable = new CallForwardingInfo(
-                    CallForwardingInfo.STATUS_ACTIVE,
+                    true,
                     callForwardingReasonToEnable,
                     TEST_FORWARD_NUMBER,
                     // time seconds
                     1);
-            Log.d(TAG, "[testSetCallForwarding] Enable Call Forwarding. Status: "
-                    + CallForwardingInfo.STATUS_ACTIVE + " Reason: "
+            Log.d(TAG, "[testSetCallForwarding] Enable Call Forwarding. Reason: "
                     + callForwardingReasonToEnable + " Number: " + TEST_FORWARD_NUMBER
                     + " Time Seconds: 1");
-            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.setCallForwarding(callForwardingInfoToEnable));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setCallForwarding(callForwardingInfoToEnable,
+                            getContext().getMainExecutor(), ignoringResultListener));
+            // TODO: this takes way too long on a real network (upwards of 40s).
+            // assertTrue("No response for forwarding for reason " + callForwardingReasonToEnable,
+            //        latch.await(TIMEOUT_FOR_NETWORK_OPS * 3, TimeUnit.MILLISECONDS));
         }
 
         // Disable Call Forwarding
         for (int callForwardingReasonToDisable : callForwardingReasons) {
+            CountDownLatch latch = new CountDownLatch(1);
+            // Disregard success or failure; just make sure it reports back.
+            Consumer<Integer> ignoringResultListener = (x) -> latch.countDown();
+
             final CallForwardingInfo callForwardingInfoToDisable = new CallForwardingInfo(
-                    CallForwardingInfo.STATUS_INACTIVE,
+                    false,
                     callForwardingReasonToDisable,
                     TEST_FORWARD_NUMBER,
                     // time seconds
                     1);
-            Log.d(TAG, "[testSetCallForwarding] Disable Call Forwarding. Status: "
-                    + CallForwardingInfo.STATUS_INACTIVE + " Reason: "
+            Log.d(TAG, "[testSetCallForwarding] Disable Call Forwarding. Reason: "
                     + callForwardingReasonToDisable + " Number: " + TEST_FORWARD_NUMBER
                     + " Time Seconds: 1");
-            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.setCallForwarding(callForwardingInfoToDisable));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setCallForwarding(callForwardingInfoToDisable,
+                            getContext().getMainExecutor(), ignoringResultListener));
+            // TODO: this takes way too long on a real network (upwards of 40s).
+            //assertTrue("No response for forwarding for reason " + callForwardingReasonToDisable,
+            //        latch.await(TIMEOUT_FOR_NETWORK_OPS * 3, TimeUnit.MILLISECONDS));
         }
     }
-    */
 
-    /**
-     * Due to the corresponding API is hidden in R and will be public in S, this test
-     * is commented and will be un-commented in Android S.
-     *
     @Test
-    public void testGetCallWaitingStatus() {
-        Set<Integer> callWaitingStatus = new HashSet<Integer>();
-        callWaitingStatus.add(TelephonyManager.CALL_WAITING_STATUS_ACTIVE);
-        callWaitingStatus.add(TelephonyManager.CALL_WAITING_STATUS_INACTIVE);
-        callWaitingStatus.add(TelephonyManager.CALL_WAITING_STATUS_UNKNOWN_ERROR);
-        callWaitingStatus.add(TelephonyManager.CALL_WAITING_STATUS_NOT_SUPPORTED);
+    public void testGetCallWaitingStatus() throws Exception {
+        Set<Integer> validCallWaitingStatuses = new HashSet<Integer>();
+        validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_ENABLED);
+        validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_DISABLED);
+        validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_UNKNOWN_ERROR);
+        validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_NOT_SUPPORTED);
 
-        int status = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelephonyManager, (tm) -> tm.getCallWaitingStatus());
-        assertTrue(callWaitingStatus.contains(status));
+        LinkedBlockingQueue<Integer> callWaitingStatusResult = new LinkedBlockingQueue<>(1);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.getCallWaitingStatus(getContext().getMainExecutor(),
+                        callWaitingStatusResult::offer));
+        assertTrue(validCallWaitingStatuses.contains(
+                callWaitingStatusResult.poll(TIMEOUT_FOR_NETWORK_OPS, TimeUnit.MILLISECONDS)));
     }
-     */
 
-    /**
-     * Due to the corresponding API is hidden in R and will be public in S, this test
-     * is commented and will be un-commented in Android S.
-     *
     @Test
-    public void testSetCallWaitingStatus() {
-        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                (tm) -> tm.setCallWaitingStatus(true));
-        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                (tm) -> tm.setCallWaitingStatus(false));
+    public void testSetCallWaitingStatus() throws Exception {
+        Set<Integer> validCallWaitingErrors = new HashSet<Integer>();
+        validCallWaitingErrors.add(TelephonyManager.CALL_WAITING_STATUS_UNKNOWN_ERROR);
+        validCallWaitingErrors.add(TelephonyManager.CALL_WAITING_STATUS_NOT_SUPPORTED);
+        Executor executor = getContext().getMainExecutor();
+        {
+            LinkedBlockingQueue<Integer> callWaitingResult = new LinkedBlockingQueue<>(1);
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setCallWaitingStatus(true, executor, callWaitingResult::offer));
+            Integer result = callWaitingResult.poll(TIMEOUT_FOR_NETWORK_OPS, TimeUnit.MILLISECONDS);
+            assertNotNull("Never got callback from set call waiting", result);
+            if (result != TelephonyManager.CALL_WAITING_STATUS_ENABLED) {
+                assertTrue("Call waiting callback got an invalid value: " + result,
+                        validCallWaitingErrors.contains(result));
+            }
+        }
+
+        {
+            LinkedBlockingQueue<Integer> callWaitingResult = new LinkedBlockingQueue<>(1);
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setCallWaitingStatus(false, executor, callWaitingResult::offer));
+            Integer result = callWaitingResult.poll(TIMEOUT_FOR_NETWORK_OPS, TimeUnit.MILLISECONDS);
+            assertNotNull("Never got callback from set call waiting", result);
+            if (result != TelephonyManager.CALL_WAITING_STATUS_DISABLED) {
+                assertTrue("Call waiting callback got an invalid value: " + result,
+                        validCallWaitingErrors.contains(result));
+            }
+        }
     }
-     */
 
     @Test
     public void testGetRadioHalVersion() {
