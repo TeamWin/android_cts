@@ -28,9 +28,10 @@ import android.media.MediaCrypto;
 import android.media.MediaDrm;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.cts.R;
 import android.net.Uri;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
@@ -43,6 +44,8 @@ import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.IOException;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,6 +63,7 @@ import java.util.function.BooleanSupplier;
  * MediaCodec tests with CONFIGURE_FLAG_USE_BLOCK_MODEL.
  */
 @NonMediaMainlineTest
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 public class MediaCodecBlockModelTest extends AndroidTestCase {
     private static final String TAG = "MediaCodecBlockModelTest";
     private static final boolean VERBOSE = false;           // lots of logging
@@ -71,8 +75,8 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
 
     // Input buffers from this input video are queued up to and including the video frame with
     // timestamp LAST_BUFFER_TIMESTAMP_US.
-    private static final int INPUT_RESOURCE_ID =
-            R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
+    private static final String INPUT_RESOURCE =
+            "video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4";
     private static final long LAST_BUFFER_TIMESTAMP_US = 166666;
 
     // The test should fail if the codec never produces output frames for the truncated input.
@@ -80,6 +84,17 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     private static final int TIMEOUT_MS = 60000;  // 1 minute
 
     private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+
+    static final String mInpPrefix = WorkDir.getMediaDirString();
+
+    protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
+            throws FileNotFoundException {
+        File inpFile = new File(mInpPrefix + res);
+        ParcelFileDescriptor parcelFD =
+                ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
+        return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
+    }
+
     /**
      * Tests whether decoding a short group-of-pictures succeeds. The test queues a few video frames
      * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
@@ -90,11 +105,11 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     public void testDecodeShortVideo() throws InterruptedException {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runDecodeShortVideo(
-                INPUT_RESOURCE_ID,
+                INPUT_RESOURCE,
                 LAST_BUFFER_TIMESTAMP_US,
                 true /* obtainBlockForEachBuffer */));
         runThread(() -> runDecodeShortVideo(
-                INPUT_RESOURCE_ID,
+                INPUT_RESOURCE,
                 LAST_BUFFER_TIMESTAMP_US,
                 false /* obtainBlockForEachBuffer */));
     }
@@ -122,11 +137,11 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     public void testDecodeShortAudio() throws InterruptedException {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         runThread(() -> runDecodeShortAudio(
-                INPUT_RESOURCE_ID,
+                INPUT_RESOURCE,
                 LAST_BUFFER_TIMESTAMP_US,
                 true /* obtainBlockForEachBuffer */));
         runThread(() -> runDecodeShortAudio(
-                INPUT_RESOURCE_ID,
+                INPUT_RESOURCE,
                 LAST_BUFFER_TIMESTAMP_US,
                 false /* obtainBlockForEachBuffer */));
     }
@@ -165,7 +180,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         List<FormatChangeEvent> events = new ArrayList<>();
         runThread(() -> runDecodeShortVideo(
-                getMediaExtractorForMimeType(INPUT_RESOURCE_ID, "video/"),
+                getMediaExtractorForMimeType(INPUT_RESOURCE, "video/"),
                 LAST_BUFFER_TIMESTAMP_US,
                 true /* obtainBlockForEachBuffer */,
                 MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 320, 240),
@@ -438,11 +453,11 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     }
 
     private boolean runDecodeShortVideo(
-            int inputResourceId,
+            String inputResource,
             long lastBufferTimestampUs,
             boolean obtainBlockForEachBuffer) {
         return runDecodeShortVideo(
-                getMediaExtractorForMimeType(inputResourceId, "video/"),
+                getMediaExtractorForMimeType(inputResource, "video/"),
                 lastBufferTimestampUs, obtainBlockForEachBuffer, null, null, null);
     }
 
@@ -608,13 +623,13 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     }
 
     private boolean runDecodeShortAudio(
-            int inputResourceId,
+            String inputResource,
             long lastBufferTimestampUs,
             boolean obtainBlockForEachBuffer) {
         MediaExtractor mediaExtractor = null;
         MediaCodec mediaCodec = null;
         try {
-            mediaExtractor = getMediaExtractorForMimeType(inputResourceId, "audio/");
+            mediaExtractor = getMediaExtractorForMimeType(inputResource, "audio/");
             MediaFormat mediaFormat =
                     mediaExtractor.getTrackFormat(mediaExtractor.getSampleTrackIndex());
             // TODO: b/147748978
@@ -664,7 +679,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         MediaCodec mediaCodec = null;
         try {
             mediaExtractor = getMediaExtractorForMimeType(
-                    R.raw.okgoogle123_good, MediaFormat.MIMETYPE_AUDIO_RAW);
+                    "okgoogle123_good.wav", MediaFormat.MIMETYPE_AUDIO_RAW);
             MediaFormat mediaFormat = new MediaFormat(
                     mediaExtractor.getTrackFormat(mediaExtractor.getSampleTrackIndex()));
             mediaFormat.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_AAC);
@@ -940,9 +955,10 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         return eos;
     }
 
-    private MediaExtractor getMediaExtractorForMimeType(int resourceId, String mimeTypePrefix) {
+    private MediaExtractor getMediaExtractorForMimeType(final String resource,
+            String mimeTypePrefix) {
         MediaExtractor mediaExtractor = new MediaExtractor();
-        try (AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(resourceId)) {
+        try (AssetFileDescriptor afd = getAssetFileDescriptorFor(resource)) {
             mediaExtractor.setDataSource(
                     afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
         } catch (IOException e) {
