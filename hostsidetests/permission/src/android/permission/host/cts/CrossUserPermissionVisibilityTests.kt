@@ -55,4 +55,9 @@ class CrossUserPermissionVisibilityTests : PermissionMultiUserTestBase() {
                 "appops set --user $user --uid $TEST_PACKAGE INTERACT_ACROSS_PROFILES allow")
         runDeviceTest("canCheckPermissionInDifferentProfile")
     }
+
+    @Test
+    fun permissionCacheGetsInvalidatedWhenCrossProfileAppOpIsDenied() {
+        runDeviceTest("permissionCacheGetsInvalidatedWhenCrossProfileAppOpIsDenied")
+    }
 }
