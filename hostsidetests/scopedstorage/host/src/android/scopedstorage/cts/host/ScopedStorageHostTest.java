@@ -164,6 +164,11 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testCantRenameToTopLevelDirectory() throws Exception {
+        runDeviceTest("testCantRenameToTopLevelDirectory");
+    }
+
+    @Test
     public void testManageExternalStorageCanDeleteOtherAppsContents() throws Exception {
         allowAppOps("android:manage_external_storage");
         try {
