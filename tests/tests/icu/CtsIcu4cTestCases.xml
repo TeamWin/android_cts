@@ -37,6 +37,15 @@
         <option name="teardown-command" value="rm -r /data/local/tmp/test/testdata" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <option name="test-file-name" value="CtsIcu4cTestApp.apk" />
+    </target_preparer>
+
+    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+        <option name="package" value="android.icu4c.cts" />
+        <option name="runtime-hint" value="5s" />
+    </test>
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="jar" value="ICU4CTestRunner.jar" />
         <option name="set-option" value="module-name:cintltst" />
