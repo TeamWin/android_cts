@@ -32,6 +32,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.hardware.display.DisplayManager;
 import android.net.TrafficStats;
 import android.net.Uri;
@@ -627,6 +628,7 @@ public class StrictModeTest {
         }
     }
 
+    // TODO(b/166538303): refactor the test to context based.
     @Test
     public void testIncorrectContextUse_GetSystemService() throws Exception {
         StrictMode.setVmPolicy(
@@ -636,22 +638,38 @@ public class StrictModeTest {
                         .build());
 
         final String wmClassName = WindowManager.class.getSimpleName();
-        inspectViolation(
-                () -> getContext().getApplicationContext().getSystemService(WindowManager.class),
-                info -> assertThat(info.getStackTrace()).contains(
-                        "Tried to access visual service " + wmClassName));
+        assertViolation("Tried to access visual service " + wmClassName,
+                () -> getContext().getApplicationContext().getSystemService(WindowManager.class));
 
         final Display display = getContext().getSystemService(DisplayManager.class)
                 .getDisplay(DEFAULT_DISPLAY);
-        final Context visualContext = getContext().createDisplayContext(display)
+        final Context displayContext = getContext().createDisplayContext(display);
+        assertViolation("Tried to access visual service " + wmClassName,
+                () -> displayContext.getSystemService(WindowManager.class));
+
+        final Context windowContext = displayContext
                 .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
-        assertNoViolation(() -> visualContext.getSystemService(WINDOW_SERVICE));
+        assertNoViolation(() -> windowContext.getSystemService(WINDOW_SERVICE));
 
         final Activity activity = mActivityRule.launchActivity(
                 new Intent(getContext(), SimpleTestActivity.class));
         assertNoViolation(() -> activity.getSystemService(WINDOW_SERVICE));
+
+        final Configuration config = new Configuration();
+        config.setToDefaults();
+        final Context uiDerivedConfigContext = windowContext.createConfigurationContext(config);
+        assertNoViolation(() -> uiDerivedConfigContext.getSystemService(WINDOW_SERVICE));
+
+        final Context uiDerivedAttrContext = windowContext
+                .createAttributionContext(null /* attributeTag */);
+        assertNoViolation(() -> uiDerivedAttrContext.getSystemService(WINDOW_SERVICE));
+
+        final Context uiDerivedDisplayContext = windowContext.createDisplayContext(display);
+        assertViolation("Tried to access visual service " + wmClassName,
+                () -> uiDerivedDisplayContext.getSystemService(WindowManager.class));
     }
 
+    // TODO(b/166538303): refactor the test to context based.
     @Test
     public void testIncorrectContextUse_GetViewConfiguration() throws Exception {
         StrictMode.setVmPolicy(
@@ -679,8 +697,23 @@ public class StrictModeTest {
         final Activity activity = mActivityRule.launchActivity(
                 new Intent(getContext(), SimpleTestActivity.class));
         assertNoViolation(() -> ViewConfiguration.get(activity));
+
+        final Configuration config = new Configuration();
+        config.setToDefaults();
+        final Context uiDerivedConfigContext = windowContext.createConfigurationContext(config);
+        assertNoViolation(() -> ViewConfiguration.get(uiDerivedConfigContext));
+
+        final Context uiDerivedAttrContext = windowContext
+                .createAttributionContext(null /* attributeTag */);
+        assertNoViolation(() -> ViewConfiguration.get(uiDerivedAttrContext));
+
+        final Context uiDerivedDisplayContext = windowContext.createDisplayContext(display);
+        assertViolation(
+                "Tried to access UI constants from a non-visual Context:",
+                () -> ViewConfiguration.get(uiDerivedDisplayContext));
     }
 
+    // TODO(b/166538303): refactor the test to context based.
     @Test
     public void testIncorrectContextUse_GetGestureDetector() throws Throwable {
         StrictMode.setVmPolicy(
@@ -710,6 +743,20 @@ public class StrictModeTest {
                 assertNoViolation(() -> new GestureDetector(windowContext, listener));
 
                 assertNoViolation(() -> new GestureDetector(activity, listener));
+
+                final Configuration config = new Configuration();
+                config.setToDefaults();
+                final Context uiDerivedConfigContext = windowContext
+                        .createConfigurationContext(config);
+                assertNoViolation(() -> new GestureDetector(uiDerivedConfigContext, listener));
+
+                final Context uiDerivedAttrContext = windowContext
+                        .createAttributionContext(null /* attributeTag */);
+                assertNoViolation(() -> new GestureDetector(uiDerivedAttrContext, listener));
+
+                final Context uiDerivedDisplayContext = windowContext.createDisplayContext(display);
+                assertViolation("Tried to access UI constants from a non-visual Context.",
+                        () -> new GestureDetector(uiDerivedDisplayContext, listener));
             } catch (Exception e) {
                 fail("Failed because of " + e);
             }
