@@ -29,12 +29,15 @@ import static org.junit.Assume.assumeTrue;
 import android.app.DreamManager;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.view.Surface;
 
 import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 @Presubmit
@@ -49,9 +52,32 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
     private ComponentName mDreamActivityName;
 
+    private boolean mDefaultDreamServiceEnabled = true;
+
     private static final ComponentName getDreamActivityName(ComponentName dream) {
         return new ComponentName(dream.getPackageName(),
                                  "android.service.dreams.DreamActivity");
+    }
+
+    @Before
+    public void setDreamEnabled() {
+        mDefaultDreamServiceEnabled =
+                Settings.Secure.getInt(mContext.getContentResolver(),
+                                "screensaver_enabled", 1) != 0;
+        if (!mDefaultDreamServiceEnabled) {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                Settings.Secure.putInt(mContext.getContentResolver(), "screensaver_enabled", 1);
+            });
+        }
+    }
+
+    @After
+    public void resetDreamEnabled()  {
+        if (!mDefaultDreamServiceEnabled) {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                Settings.Secure.putInt(mContext.getContentResolver(), "screensaver_enabled", 0);
+            });
+        }
     }
 
     private void startDream(ComponentName name) {
