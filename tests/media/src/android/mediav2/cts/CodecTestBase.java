@@ -557,15 +557,19 @@ abstract class CodecTestBase {
         return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
+    static boolean isPc() {
+        return pm.hasSystemFeature(PackageManager.FEATURE_PC);
+    }
+
     static boolean hasAudioOutput() {
         return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
     }
 
     static boolean isHandheld() {
         // handheld nature is not exposed to package manager, for now
-        // we check for touchscreen and NOT watch and NOT tv
+        // we check for touchscreen and NOT watch and NOT tv and NOT pc
         return pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) && !isWatch() && !isTv() &&
-                !isAutomotive();
+                !isAutomotive() && !isPc();
     }
 
     static boolean hasDecoder(String mime) {
