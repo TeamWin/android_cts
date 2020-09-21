@@ -202,8 +202,12 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         for (String decoder : listOfDecoders) {
             decodeAndSavePts(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
             ref = mOutputBuff;
-            assertTrue("input pts list and output pts list are not identical",
-                    ref.isOutPtsListIdenticalToInpPtsList(false));
+            // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+            // produce multiple progressive frames?) For now, do not verify timestamps.
+            if (!mIsInterlaced) {
+                assertTrue("input pts list and output pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
             MediaFormat format = setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(decoder);
             setUpSurface();
@@ -225,7 +229,13 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                 assertTrue(log + " unexpected error", !mAsyncHandle.hasSeenError());
                 assertTrue(log + "no input sent", 0 != mInputCount);
                 assertTrue(log + "output received", 0 != mOutputCount);
-                assertTrue(log + "decoder output is flaky", ref.equals(test));
+                // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+                // produce multiple progressive frames?) For now, do not verify timestamps.
+                if (mIsInterlaced) {
+                    assertTrue(log + "decoder output is flaky", ref.equalsInterlaced(test));
+                } else {
+                    assertTrue(log + "decoder output is flaky", ref.equals(test));
+                }
             }
             mCodec.release();
             mExtractor.release();
@@ -262,8 +272,12 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
         for (String decoder : listOfDecoders) {
             decodeAndSavePts(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
-            assertTrue("input pts list and output pts list are not identical",
-                    ref.isOutPtsListIdenticalToInpPtsList(false));
+            // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+            // produce multiple progressive frames?) For now, do not verify timestamps.
+            if (!mIsInterlaced) {
+                assertTrue("input pts list and output pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+            }
             mOutputBuff = test;
             setUpSource(mTestFile);
             mCodec = MediaCodec.createByCodecName(decoder);
@@ -353,10 +367,14 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
             OutputManager ref = mOutputBuff;
             decodeAndSavePts(mReconfigFile, decoder, pts, mode, Integer.MAX_VALUE);
             OutputManager configRef = mOutputBuff;
-            assertTrue("input pts list and reference pts list are not identical",
-                    ref.isOutPtsListIdenticalToInpPtsList(false));
-            assertTrue("input pts list and reconfig ref output pts list are not identical",
-                    configRef.isOutPtsListIdenticalToInpPtsList(false));
+            // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+            // produce multiple progressive frames?) For now, do not verify timestamps.
+            if (!mIsInterlaced) {
+                assertTrue("input pts list and reference pts list are not identical",
+                        ref.isOutPtsListIdenticalToInpPtsList(false));
+                assertTrue("input pts list and reconfig ref output pts list are not identical",
+                        configRef.isOutPtsListIdenticalToInpPtsList(false));
+            }
             mOutputBuff = test;
             mCodec = MediaCodec.createByCodecName(decoder);
             setUpSurface();
