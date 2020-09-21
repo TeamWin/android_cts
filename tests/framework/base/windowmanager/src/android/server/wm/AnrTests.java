@@ -166,9 +166,12 @@ public class AnrTests extends ActivityManagerTestBase {
 
     private void clickCloseAppOnAnrDialog() {
         // Find anr dialog and kill app
+        // Waiting up to 25 seconds, because the ANR dump process may take a while to complete
+        // so there will be a long delay before the ANR dialog actually shows up
+        int waitTime = 25000;
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         UiObject2 closeAppButton = uiDevice.wait(Until.findObject(By.res("android:id/aerr_close")),
-                20000);
+                waitTime);
         if (closeAppButton != null) {
             Log.d(TAG, "found permission dialog after searching all windows, clicked");
             closeAppButton.click();
