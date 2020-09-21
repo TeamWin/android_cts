@@ -4030,6 +4030,20 @@
             </intent-filter>
         </activity-alias>
 
+        <service android:name=
+            "com.android.cts.verifier.car.GarageModeChecker"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <activity android:name=".car.GarageModeTestActivity"
+                android:label="@string/car_garage_mode_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_car" />
+            <meta-data android:name="test_required_features"
+                android:value="android.hardware.type.automotive"/>
+        </activity>
+
         <activity-alias android:name=".car.CarDockActivity2"
             android:targetActivity=".car.CarDockActivity"
             android:enabled="false" >
