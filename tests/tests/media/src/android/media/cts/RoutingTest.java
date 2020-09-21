@@ -32,6 +32,7 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.media.cts.TestUtils.Monitor;
 
+import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -73,6 +74,7 @@ public class RoutingTest extends AndroidTestCase {
     private static final int RECORD_TIME_MS = 3000;
     private static final Set<Integer> AVAILABLE_INPUT_DEVICES_TYPE = new HashSet<>(
         Arrays.asList(AudioDeviceInfo.TYPE_BUILTIN_MIC));
+    static final String mInpPrefix = WorkDir.getMediaDirString();
 
     private boolean mRoutingChanged;
     private boolean mRoutingChangedDetected;
@@ -571,8 +573,9 @@ public class RoutingTest extends AndroidTestCase {
     }
 
     private MediaPlayer allocMediaPlayer(AudioDeviceInfo device, boolean start) {
-        final int resid = R.raw.testmp3_2;
-        MediaPlayer mediaPlayer = MediaPlayer.create(mContext, resid);
+        final String res = "testmp3_2.mp3";
+        MediaPlayer mediaPlayer = MediaPlayer.create(mContext, Uri
+                .fromFile(new File(mInpPrefix + res)));
         mediaPlayer.setAudioAttributes(
                 new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build());
         if (device != null) {
