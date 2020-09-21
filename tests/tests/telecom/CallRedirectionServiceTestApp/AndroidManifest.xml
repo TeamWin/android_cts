@@ -16,8 +16,6 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.telecom.cts.redirectiontestapp">
-    <permission android:name="android.telecom.cts.redirectiontestapp.CTS_SERVICE_PERMISSION"
-                android.protectionLevel="signature"/>
     <application android:label="CTSCRTest">
         <service android:name=".CtsCallRedirectionService"
                  android:permission="android.permission.BIND_CALL_REDIRECTION_SERVICE">
