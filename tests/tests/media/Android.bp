@@ -43,6 +43,7 @@ android_test {
         "truth-prebuilt",
         "mockito-target-minus-junit4",
         "androidx.heifwriter_heifwriter",
+        "CtsCameraUtils",
     ],
     jni_libs: [
         "libaudio_jni",

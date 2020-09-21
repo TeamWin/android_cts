@@ -16,11 +16,11 @@
 
 package android.media.cts;
 
-
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
+import android.hardware.cts.helpers.CameraUtils;
 import android.media.CamcorderProfile;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -351,7 +351,16 @@ public class CamcorderProfileTest extends AndroidTestCase {
     public void testGetWithId() {
         int nCamera = Camera.getNumberOfCameras();
         for (int cameraId = 0; cameraId < nCamera; cameraId++) {
-            checkGet(cameraId);
+            boolean isExternal = false;
+            try {
+                isExternal = CameraUtils.isExternal(mContext, cameraId);
+            } catch (Exception e) {
+                Log.e(TAG, "Unable to query external camera: " + e);
+            }
+
+            if (!isExternal) {
+                checkGet(cameraId);
+            }
         }
     }
 
