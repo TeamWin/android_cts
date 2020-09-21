@@ -20,6 +20,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.*;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Presentation;
@@ -40,6 +41,7 @@ import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.Display.HdrCapabilities;
 import android.view.View;
@@ -58,14 +60,21 @@ import org.junit.runner.RunWith;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class DisplayTest {
+    private static final String TAG = "DisplayTest";
+
     // The CTS package brings up an overlay display on the target device (see AndroidTest.xml).
     // The overlay display parameters must match the ones defined there which are
     // 181x161/214 (wxh/dpi).  It only matters that these values are different from any real
@@ -111,6 +120,8 @@ public class DisplayTest {
         mUiModeManager = (UiModeManager) mContext.getSystemService(Context.UI_MODE_SERVICE);
         mDefaultDisplay = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
         mSupportedWideGamuts = mDefaultDisplay.getSupportedWideColorGamut();
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS);
     }
 
     @After
@@ -118,6 +129,9 @@ public class DisplayTest {
         if (mScreenOnActivity != null) {
             mScreenOnActivity.finish();
         }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+
     }
 
     private void enableAppOps() {
@@ -200,8 +214,7 @@ public class DisplayTest {
      */
     @Test
     public void testDefaultDisplayHdrCapability() {
-        Display display = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
-        HdrCapabilities cap = display.getHdrCapabilities();
+        HdrCapabilities cap = mDefaultDisplay.getHdrCapabilities();
         int[] hdrTypes = cap.getSupportedHdrTypes();
         for (int type : hdrTypes) {
             assertTrue(type >= 1 && type <= 4);
@@ -212,9 +225,9 @@ public class DisplayTest {
         assertTrue(cap.getDesiredMinLuminance() <= cap.getDesiredMaxAverageLuminance());
         assertTrue(cap.getDesiredMaxAverageLuminance() <= cap.getDesiredMaxLuminance());
         if (hdrTypes.length > 0) {
-            assertTrue(display.isHdr());
+            assertTrue(mDefaultDisplay.isHdr());
         } else {
-            assertFalse(display.isHdr());
+            assertFalse(mDefaultDisplay.isHdr());
         }
     }
 
@@ -306,6 +319,98 @@ public class DisplayTest {
     }
 
     /**
+     * Test that a mode switch to every reported display mode is successful.
+     */
+    @Test
+    public void testModeSwitchOnPrimaryDisplay() throws Exception {
+        Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
+        if (modes.length == 1) {
+            // If there's only one mode we can't do mode switches.
+            return;
+        }
+
+        // Create a deterministically shuffled list of display modes, which ends with the
+        // current active mode. We'll switch to the modes in this order. The active mode is last
+        // so we don't need an extra mode switch in case the test completes successfully.
+        Display.Mode activeMode = mDefaultDisplay.getMode();
+        List<Display.Mode> modesList = new ArrayList<>(modes.length);
+        for (Display.Mode mode : modes) {
+            if (mode.getModeId() != activeMode.getModeId()) {
+                modesList.add(mode);
+            }
+        }
+        Random random = new Random(42);
+        Collections.shuffle(modesList, random);
+        modesList.add(activeMode);
+
+        try {
+            mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
+            assertTrue(mDisplayManager.shouldAlwaysRespectAppRequestedMode());
+            final Activity activity = launchActivity(mDisplayTestActivity);
+            for (Display.Mode mode : modesList) {
+                testSwitchToModeId(activity, mode);
+            }
+        } finally {
+            mDisplayManager.setShouldAlwaysRespectAppRequestedMode(false);
+        }
+    }
+
+    private void testSwitchToModeId(Activity activity, Display.Mode mode) throws Exception {
+        Log.i(TAG, "Switching to mode " + mode);
+
+        final CountDownLatch changeSignal = new CountDownLatch(1);
+        final AtomicInteger changeCounter = new AtomicInteger(0);
+        final int activeModeId = mDefaultDisplay.getMode().getModeId();
+
+        DisplayListener listener = new DisplayListener() {
+            private int mLastModeId = activeModeId;
+            @Override
+            public void onDisplayAdded(int displayId) {}
+
+            @Override
+            public void onDisplayChanged(int displayId) {
+                if (displayId != mDefaultDisplay.getDisplayId()) {
+                    return;
+                }
+                int newModeId = mDefaultDisplay.getMode().getModeId();
+                if (mLastModeId == newModeId) {
+                    // We assume this display change is caused by an external factor so it's
+                    // unrelated.
+                    return;
+                }
+                changeCounter.incrementAndGet();
+                changeSignal.countDown();
+
+                mLastModeId = newModeId;
+            }
+
+            @Override
+            public void onDisplayRemoved(int displayId) {}
+        };
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        mDisplayManager.registerDisplayListener(listener, handler);
+
+        final CountDownLatch presentationSignal = new CountDownLatch(1);
+        handler.post(() -> {
+            WindowManager.LayoutParams params = activity.getWindow().getAttributes();
+            params.preferredDisplayModeId = mode.getModeId();
+            activity.getWindow().setAttributes(params);
+            presentationSignal.countDown();
+        });
+
+        assertTrue(presentationSignal.await(5, TimeUnit.SECONDS));
+
+        // Wait until the display change is effective.
+        assertTrue(changeSignal.await(5, TimeUnit.SECONDS));
+        assertEquals(mode.getModeId(), mDefaultDisplay.getMode().getModeId());
+
+        // Make sure no more display mode changes are registered.
+        Thread.sleep(Duration.ofSeconds(3).toMillis());
+        assertEquals(1, changeCounter.get());
+    }
+
+    /**
      * Tests that the mode-related attributes and methods work as expected.
      */
     @Test
@@ -320,10 +425,10 @@ public class DisplayTest {
     }
 
     /**
-     * Tests that mode switch requests are correctly executed.
+     * Test that refresh rate switch app requests are correctly executed on a secondary display.
      */
     @Test
-    public void testModeSwitch() throws Exception {
+    public void testRefreshRateSwitchOnSecondaryDisplay() throws Exception {
         // Standalone VR devices globally ignore SYSTEM_ALERT_WINDOW via AppOps.
         // Skip this test, which depends on a Presentation SYSTEM_ALERT_WINDOW to pass.
         if (mUiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_VR_HEADSET) {
@@ -359,15 +464,12 @@ public class DisplayTest {
 
         // Show the presentation.
         final CountDownLatch presentationSignal = new CountDownLatch(1);
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                mPresentation = new TestPresentation(
-                        InstrumentationRegistry.getInstrumentation().getContext(),
-                        display, newMode.getModeId());
-                mPresentation.show();
-                presentationSignal.countDown();
-            }
+        handler.post(() -> {
+            mPresentation = new TestPresentation(
+                    InstrumentationRegistry.getInstrumentation().getContext(),
+                    display, newMode.getModeId());
+            mPresentation.show();
+            presentationSignal.countDown();
         });
         assertTrue(presentationSignal.await(5, TimeUnit.SECONDS));
 
@@ -375,12 +477,7 @@ public class DisplayTest {
         assertTrue(changeSignal.await(5, TimeUnit.SECONDS));
 
         assertEquals(newMode, display.getMode());
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                mPresentation.dismiss();
-            }
-        });
+        handler.post(() -> mPresentation.dismiss());
     }
 
     /**
