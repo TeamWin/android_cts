@@ -95,6 +95,8 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     private static final String ARG_BATCH_NUMBER = "batchNumber";
     private static final String PREF_KEY_PREFIX = "batch-last-id-";
     private static final String PREF_NAME = "batchIds";
+    // system/core/liblog/event.logtags: 1006  liblog (dropped|1)
+    private static final int TAG_LIBLOG_DROPPED = 1006;
 
     // For brevity.
     private static final Class<String> S = String.class;
@@ -401,6 +403,11 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         // We don't know much about the events, so just call public API methods.
         for (int i = 0; i < events.size(); i++) {
             final SecurityEvent event = events.get(i);
+
+            // Skip liblog dropped event.
+            if (event.getTag() == TAG_LIBLOG_DROPPED) {
+                continue;
+            }
 
             verifyPayloadTypes(event);
 
