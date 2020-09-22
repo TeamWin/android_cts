@@ -127,6 +127,11 @@ public class AccessibilityWindowReportingTest {
         mActivityTitle = getActivityTitle(sInstrumentation, mActivity);
     }
 
+    private static boolean perDisplayFocusEnabled() {
+        return sInstrumentation.getTargetContext().getResources()
+                .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
+    }
+
     @Test
     public void testUpdatedWindowTitle_generatesEventAndIsReturnedByGetTitle() {
         final String updatedTitle = "Updated Title";
@@ -297,8 +302,13 @@ public class AccessibilityWindowReportingTest {
             // Windows may have changed - refresh.
             activityWindow = findWindowByTitle(sUiAutomation, mActivityTitle);
             try {
-                assertFalse(activityWindow.isActive());
-                assertFalse(activityWindow.isFocused());
+                if (!perDisplayFocusEnabled()) {
+                    assertFalse(activityWindow.isActive());
+                    assertFalse(activityWindow.isFocused());
+                } else {
+                    assertTrue(activityWindow.isActive());
+                    assertTrue(activityWindow.isFocused());
+                }
                 assertTrue(activityWindowOnVirtualDisplay.isActive());
                 assertTrue(activityWindowOnVirtualDisplay.isFocused());
             } finally {
