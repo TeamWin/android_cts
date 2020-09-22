@@ -20,8 +20,10 @@ import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait
 import static android.server.wm.BarTestUtils.assumeHasStatusBar;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
 import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -31,11 +33,13 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
@@ -101,7 +105,6 @@ public class WindowInputTests {
         mActivity.getDisplay().getSize(displaySize);
 
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
-        mClickCount = 0;
 
         // Set up window.
         mActivityRule.runOnUiThread(() -> {
@@ -146,11 +149,10 @@ public class WindowInputTests {
     }
 
     @Test
-    public void testFilterTouchesWhenObscured() throws Throwable {
+    public void testTouchModalWindow() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
-        mClickCount = 0;
 
-        // Set up window.
+        // Set up 2 touch modal windows, expect the last one will receive all touch events.
         mActivityRule.runOnUiThread(() -> {
             mView = new View(mActivity);
             p.width = 20;
@@ -162,10 +164,10 @@ public class WindowInputTests {
             });
             mActivity.addWindow(mView, p);
 
-            View viewOverlap = new View(mActivity);
+            View view2 = new View(mActivity);
             p.gravity = Gravity.RIGHT | Gravity.TOP;
             p.type = WindowManager.LayoutParams.TYPE_APPLICATION;
-            mActivity.addWindow(viewOverlap, p);
+            mActivity.addWindow(view2, p);
         });
         mInstrumentation.waitForIdleSync();
 
@@ -173,10 +175,92 @@ public class WindowInputTests {
         assertEquals(0, mClickCount);
     }
 
+    // If a window is obscured by another window from the same app (same process), touches should
+    // still get delivered to the bottom window, and the FLAG_WINDOW_IS_OBSCURED should not be set.
+    // We do not consider windows from the same process to be obscuring each other.
     @Test
-    public void testOverlapWindow() throws Throwable {
+    public void testFilterTouchesWhenWindowHasSamePid() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
-        mClickCount = 0;
+
+        // Set up a touchable window.
+        mActivityRule.runOnUiThread(() -> {
+            mView = new View(mActivity);
+            p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
+            p.width = 100;
+            p.height = 100;
+            p.gravity = Gravity.LEFT | Gravity.TOP;
+            mView.setFilterTouchesWhenObscured(true);
+            mView.setOnClickListener((v) -> {
+                mClickCount++;
+            });
+            mView.setOnTouchListener((v, ev) -> {
+                assertEquals((ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED), 0);
+                return false;
+            });
+            mActivity.addWindow(mView, p);
+
+            // Set up an overlap window, use same process.
+            View overlay = new View(mActivity);
+            p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN | FLAG_NOT_TOUCHABLE;
+            p.width = 100;
+            p.height = 100;
+            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.type = WindowManager.LayoutParams.TYPE_APPLICATION;
+            mActivity.addWindow(overlay, p);
+        });
+        mInstrumentation.waitForIdleSync();
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+
+        assertEquals(1, mClickCount);
+    }
+
+    @Test
+    public void testFilterTouchesWhenObscured() throws Throwable {
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+
+        final Intent intent = new Intent(mActivity, TestService.class);
+        final String windowName = "Test Overlay";
+        try {
+            // Set up a touchable window.
+            mActivityRule.runOnUiThread(() -> {
+                mView = new View(mActivity);
+                p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
+                p.width = 100;
+                p.height = 100;
+                p.gravity = Gravity.LEFT | Gravity.TOP;
+                mView.setFilterTouchesWhenObscured(true);
+                mView.setOnClickListener((v) -> {
+                    mClickCount++;
+                });
+                mView.setOnTouchListener((v, ev) -> {
+                    assertEquals((ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED),
+                            MotionEvent.FLAG_WINDOW_IS_OBSCURED);
+                    return false;
+                });
+                mActivity.addWindow(mView, p);
+
+                // Set up an overlap window from service, use different process.
+                intent.putExtra(TestService.EXTRA_WINDOW_NAME, windowName);
+                mActivity.startService(intent);
+            });
+            mInstrumentation.waitForIdleSync();
+
+            final WindowManagerStateHelper wmState = new WindowManagerStateHelper();
+            wmState.waitForWithAmState(state -> {
+                return state.isWindowSurfaceShown(windowName);
+            }, windowName + "'s surface is appeared");
+
+            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+
+            assertEquals(0, mClickCount);
+        } finally {
+            mActivity.stopService(intent);
+        }
+    }
+
+    @Test
+    public void testTrustedOverlapWindow() throws Throwable {
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
         try (final PointerLocationSession session = new PointerLocationSession()) {
             session.set(true);
             session.waitForReady(mActivity.getDisplayId());
@@ -205,7 +289,6 @@ public class WindowInputTests {
     public void testWindowBecomesUnTouchable() throws Throwable {
         final WindowManager wm = mActivity.getWindowManager();
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
-        mClickCount = 0;
 
         final View viewOverlap = new View(mActivity);
 
@@ -372,6 +455,52 @@ public class WindowInputTests {
         protected void onPause() {
             super.onPause();
             removeAllWindows();
+        }
+    }
+
+    public static class TestService extends Service {
+        private static final String EXTRA_WINDOW_NAME = "WINDOW_NAME";
+        private WindowManager mWindowManager;
+        private View mView;
+
+        @Override
+        public void onCreate() {
+            super.onCreate();
+            mWindowManager = getSystemService(WindowManager.class);
+        }
+
+        @Override
+        public IBinder onBind(Intent intent) {
+            return null;
+        }
+
+        @Override
+        public int onStartCommand(Intent intent, int flags, int startId) {
+            if (intent != null && intent.hasExtra(EXTRA_WINDOW_NAME)) {
+                addWindow(intent.getStringExtra(EXTRA_WINDOW_NAME));
+            }
+            return START_NOT_STICKY;
+        }
+
+        private void addWindow(final String windowName) {
+            mView = new View(this);
+            WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+            p.setTitle(windowName);
+            p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN | FLAG_NOT_TOUCHABLE;
+            p.width = 100;
+            p.height = 100;
+            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+            mWindowManager.addView(mView, p);
+        }
+
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+            if (mView != null) {
+                mWindowManager.removeViewImmediate(mView);
+                mView = null;
+            }
         }
     }
 
