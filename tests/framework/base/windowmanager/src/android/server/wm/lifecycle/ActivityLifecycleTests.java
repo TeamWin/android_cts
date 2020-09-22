@@ -538,6 +538,32 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    public void testLaunchActivityWithFlagForwardResult() throws Exception {
+        final ActivityMonitor resultMonitor = getInstrumentation().addMonitor(
+                ResultActivity.class.getName(), null /* result */, false /* block */);
+
+        new Launcher(LaunchForwardResultActivity.class)
+                .setExpectedState(ON_STOP)
+                .setNoInstance()
+                .launch();
+
+        final Activity resultActivity = getInstrumentation()
+                .waitForMonitorWithTimeout(resultMonitor, 5000);
+        getInstrumentation().runOnMainSync(resultActivity::finish);
+        waitAndAssertActivityStates(state(LaunchForwardResultActivity.class,
+                ON_TOP_POSITION_GAINED));
+
+        // verify the result have sent back to original activity
+        final List<LifecycleLog.ActivityCallback> expectedSequence =
+                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                        ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP,
+                        ON_ACTIVITY_RESULT, ON_RESTART, ON_START, ON_RESUME,
+                        ON_TOP_POSITION_GAINED);
+        LifecycleVerifier.assertSequence(LaunchForwardResultActivity.class, getLifecycleLog(),
+                expectedSequence, "becomingVisibleResumed");
+    }
+
+    @Test
     public void testOnActivityResult() throws Exception {
         new Launcher(LaunchForResultActivity.class)
                 .customizeIntent(LaunchForResultActivity.forwardFlag(EXTRA_FINISH_IN_ON_RESUME))

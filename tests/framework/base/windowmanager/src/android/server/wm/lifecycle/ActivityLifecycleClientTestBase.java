@@ -17,6 +17,7 @@
 package android.server.wm.lifecycle;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.StateLogger.log;
@@ -485,6 +486,29 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setShowWhenLocked(true);
+        }
+    }
+
+    /**
+     * Test activity that launches {@link TrampolineActivity} for result.
+     */
+    public static class LaunchForwardResultActivity extends CallbackTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            final Intent intent = new Intent(this, TrampolineActivity.class);
+            startActivityForResult(intent, 1 /* requestCode */);
+        }
+    }
+
+    public static class TrampolineActivity extends CallbackTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            final Intent intent = new Intent(this, ResultActivity.class);
+            intent.setFlags(FLAG_ACTIVITY_FORWARD_RESULT);
+            startActivity(intent);
+            finish();
         }
     }
 
