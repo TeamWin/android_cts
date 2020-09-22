@@ -290,8 +290,12 @@ class AutoRevokeTest {
     }
 
     private fun runAutoRevoke() {
-        runShellCommand("cmd jobscheduler run -u 0 " +
-                "-f ${context.packageManager.permissionControllerPackageName} 2")
+        // Sometimes first run observes stale package data
+        // so run twice to prevent that
+        repeat(2) {
+            runShellCommand("cmd jobscheduler run -u 0 " +
+                    "-f ${context.packageManager.permissionControllerPackageName} 2")
+        }
     }
 
     private inline fun <T> withDeviceConfig(
