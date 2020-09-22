@@ -1222,6 +1222,11 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
 
         setWebViewSize(64, 64);
 
+        // Set the webview non-focusable to avoid drawing the focus highlight.
+        WebkitUtils.onMainThreadSync(() -> {
+            mOnUiThread.getWebView().setFocusable(false);
+        });
+
         Map<Integer, Integer> histogram;
         Integer[] colourValues;
 
