@@ -100,7 +100,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
-    public void getTargetUserProfiles_callingFromPrimaryProfile_containsWorkProfile() {
+    public void getTargetUserProfiles_callingFromPrimaryUser_containsWorkProfile() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
         assertThat(targetProfiles).contains(sDeviceState.getWorkProfile());
@@ -109,7 +109,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile(installTestApp = false)
-    public void getTargetUserProfiles_callingFromPrimaryProfile_appNotInstalledInWorkProfile_doesNotContainWorkProfile() {
+    public void getTargetUserProfiles_callingFromPrimaryUser_appNotInstalledInWorkProfile_doesNotContainWorkProfile() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
         assertThat(targetProfiles).doesNotContain(sDeviceState.getWorkProfile());
@@ -161,7 +161,6 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnWorkProfile
     public void startMainActivity_activityNotExported_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.startMainActivity(
@@ -171,7 +170,6 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnWorkProfile
     public void startMainActivity_activityNotMain_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.startMainActivity(
@@ -181,7 +179,6 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @RequireRunOnWorkProfile
     @Ignore // TODO(scottjonathan): This requires another app to be installed which can be launched
     public void startMainActivity_activityIncorrectPackage_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
