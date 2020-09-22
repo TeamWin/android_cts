@@ -35,7 +35,7 @@ import com.google.common.collect.ImmutableList;
 
 import junit.framework.AssertionFailedError;
 
-import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,9 +48,10 @@ public class AppSearchManagerTest {
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private final AppSearchManager mAppSearch = mContext.getSystemService(AppSearchManager.class);
 
-    @After
-    public void tearDown() {
-        mAppSearch.deleteAll();
+    @Before
+    public void setUp() {
+        // Remove all documents from any instances that may have been created in the tests.
+        checkIsSuccess(mAppSearch.setSchema(ImmutableList.of(), /*forceOverride=*/ true));
     }
 
     @Test
@@ -149,7 +150,15 @@ public class AppSearchManagerTest {
     @Test
     public void testQuery_TypeFilter() {
         // Schema registration
-        checkIsSuccess(mAppSearch.setSchema(AppSearchEmail.SCHEMA));
+        AppSearchSchema genericSchema = new AppSearchSchema.Builder("Generic")
+                .addProperty(new PropertyConfig.Builder("foo")
+                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
+                        .build()
+                ).build();
+        checkIsSuccess(mAppSearch.setSchema(AppSearchEmail.SCHEMA, genericSchema));
 
         // Index a document
         AppSearchEmail inEmail =
@@ -159,8 +168,8 @@ public class AppSearchManagerTest {
                         .setSubject("testPut example")
                         .setBody("This is the body of the testPut email")
                         .build();
-        AppSearchDocument inDoc =
-                new AppSearchDocument.Builder("uri2", "Test").setProperty("foo", "body").build();
+        AppSearchDocument inDoc = new AppSearchDocument.Builder<>("uri2", "Generic")
+                .setProperty("foo", "body").build();
         checkIsSuccess(mAppSearch.putDocuments(ImmutableList.of(inEmail, inDoc)));
 
         // Query for the documents
@@ -169,7 +178,7 @@ public class AppSearchManagerTest {
         assertThat(results).containsExactly(inEmail, inDoc);
 
         // Query only for Document
-        results = doQuery("body", "Test");
+        results = doQuery("body", "Generic");
         assertThat(results).hasSize(1);
         assertThat(results).containsExactly(inDoc);
     }
@@ -213,9 +222,11 @@ public class AppSearchManagerTest {
     }
 
     @Test
-    public void testDeleteByTypes() {
+    public void testRemoveByTypes() {
         // Schema registration
-        checkIsSuccess(mAppSearch.setSchema(AppSearchEmail.SCHEMA));
+        AppSearchSchema genericSchema = new AppSearchSchema.Builder("Generic").build();
+        checkIsSuccess(mAppSearch.setSchema(
+                ImmutableList.of(AppSearchEmail.SCHEMA, genericSchema), /*forceOverride=*/ false));
 
         // Index documents
         AppSearchEmail email1 =
@@ -233,8 +244,7 @@ public class AppSearchManagerTest {
                         .setBody("This is the body of the testPut second email")
                         .build();
         AppSearchDocument document1 =
-                new AppSearchDocument.Builder("uri3", "schemaType")
-                        .setProperty("foo", "bar").build();
+                new AppSearchDocument.Builder<>("uri3", "Generic").build();
         checkIsSuccess(mAppSearch.putDocuments(ImmutableList.of(email1, email2, document1)));
 
         // Check the presence of the documents
