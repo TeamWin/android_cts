@@ -93,7 +93,12 @@ android_test_helper_app {
 java_library {
     name: "cts-install-lib",
     srcs: ["src/**/*.java"],
-    static_libs: ["androidx.test.rules", "compatibility-device-util-axt", "truth-prebuilt"],
+    static_libs: [
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "cts-shim-lib",
+        "truth-prebuilt"
+    ],
     sdk_version: "test_current",
     java_resources: [
         ":TestAppAv1",
