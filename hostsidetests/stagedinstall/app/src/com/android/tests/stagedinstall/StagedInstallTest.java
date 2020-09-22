@@ -330,7 +330,7 @@ public class StagedInstallTest {
 
     @Test
     public void testStageAnotherSessionImmediatelyAfterAbandonMultiPackage() throws Exception {
-        assertThat(getInstalledVersion(TestApp.Apex)).isEqualTo(1);
+        assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
         int sessionId = stageMultipleApks(TestApp.Apex2, TestApp.A1, TestApp.B1)
                 .assertSuccessful().getSessionId();
         abandonSession(sessionId);
