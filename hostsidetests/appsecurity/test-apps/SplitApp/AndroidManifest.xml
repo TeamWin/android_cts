@@ -22,10 +22,10 @@
 
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
 
     <application android:label="SplitApp"
-         android:multiArch="true"
-         android:forceQueryable="true">
+         android:multiArch="true">
         <activity android:name=".MyActivity"
              android:exported="true">
             <intent-filter>
