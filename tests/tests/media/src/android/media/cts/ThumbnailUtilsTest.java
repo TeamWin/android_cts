@@ -20,7 +20,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.annotation.ColorInt;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.ThumbnailUtils;
@@ -35,6 +34,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,29 +56,29 @@ public class ThumbnailUtilsTest {
 
     private Object[] getSampleWithThumbnailForCreateImageThumbnail() {
         return new Object[] {
-                R.raw.orientation_0,
-                R.raw.orientation_90,
-                R.raw.orientation_180,
-                R.raw.orientation_270,
+                "orientation_0.jpg",
+                "orientation_90.jpg",
+                "orientation_180.jpg",
+                "orientation_270.jpg",
         };
     }
 
     private Object[] getStrippedSampleForCreateImageThumbnail() {
         return new Object[] {
-                R.raw.orientation_stripped_0,
-                R.raw.orientation_stripped_90,
-                R.raw.orientation_stripped_180,
-                R.raw.orientation_stripped_270
+                "orientation_stripped_0.jpg",
+                "orientation_stripped_90.jpg",
+                "orientation_stripped_180.jpg",
+                "orientation_stripped_270.jpg"
 
         };
     }
 
     private Object[] getHEICSampleForCreateImageThumbnail() {
         return new Object[] {
-                R.raw.orientation_heic_0,
-                R.raw.orientation_heic_90,
-                R.raw.orientation_heic_180,
-                R.raw.orientation_heic_270
+                "orientation_heic_0.HEIC",
+                "orientation_heic_90.HEIC",
+                "orientation_heic_180.HEIC",
+                "orientation_heic_270.HEIC"
 
         };
     }
@@ -97,7 +97,7 @@ public class ThumbnailUtilsTest {
 
     @Test
     public void testCreateAudioThumbnail() throws Exception {
-        final File file = stageFile(R.raw.testmp3, new File(mDir, "cts.mp3"));
+        final File file = stageFile("testmp3.mp3", new File(mDir, "cts.mp3"));
         for (Size size : TEST_SIZES) {
             assertSaneThumbnail(size, ThumbnailUtils.createAudioThumbnail(file, size, null));
         }
@@ -105,8 +105,8 @@ public class ThumbnailUtilsTest {
 
     @Test
     public void testCreateAudioThumbnail_SeparateFile() throws Exception {
-        final File file = stageFile(R.raw.monotestmp3, new File(mDir, "audio.mp3"));
-        stageFile(R.raw.volantis, new File(mDir, "AlbumArt.jpg"));
+        final File file = stageFile("monotestmp3.mp3", new File(mDir, "audio.mp3"));
+        stageFile("volantis.jpg", new File(mDir, "AlbumArt.jpg"));
 
         for (Size size : TEST_SIZES) {
             assertSaneThumbnail(size, ThumbnailUtils.createAudioThumbnail(file, size, null));
@@ -115,7 +115,7 @@ public class ThumbnailUtilsTest {
 
     @Test
     public void testCreateAudioThumbnail_None() throws Exception {
-        final File file = stageFile(R.raw.monotestmp3, new File(mDir, "cts.mp3"));
+        final File file = stageFile("monotestmp3.mp3", new File(mDir, "cts.mp3"));
         try {
             ThumbnailUtils.createAudioThumbnail(file, TEST_SIZES[0], null);
             fail("Somehow made a thumbnail out of nothing?");
@@ -125,7 +125,7 @@ public class ThumbnailUtilsTest {
 
     @Test
     public void testCreateImageThumbnail() throws Exception {
-        final File file = stageFile(R.raw.volantis, new File(mDir, "cts.jpg"));
+        final File file = stageFile("volantis.jpg", new File(mDir, "cts.jpg"));
         for (Size size : TEST_SIZES) {
             assertSaneThumbnail(size, ThumbnailUtils.createImageThumbnail(file, size, null));
         }
@@ -142,8 +142,8 @@ public class ThumbnailUtilsTest {
 
     @Test
     @Parameters(method = "getSampleWithThumbnailForCreateImageThumbnail")
-    public void testCreateImageThumbnail_sampleWithThumbnail(int resId) throws Exception {
-        final File file = stageFile(resId, new File(mDir, "cts.jpg"));
+    public void testCreateImageThumbnail_sampleWithThumbnail(final String res) throws Exception {
+        final File file = stageFile(res, new File(mDir, "cts.jpg"));
         final Bitmap bitmap = ThumbnailUtils.createImageThumbnail(file, TEST_SIZES[0], null);
 
         assertOrientationForThumbnail(bitmap);
@@ -151,8 +151,8 @@ public class ThumbnailUtilsTest {
 
     @Test
     @Parameters(method = "getStrippedSampleForCreateImageThumbnail")
-    public void testCreateImageThumbnail_strippedSample(int resId) throws Exception {
-        final File file = stageFile(resId, new File(mDir, "cts.jpg"));
+    public void testCreateImageThumbnail_strippedSample(final String res) throws Exception {
+        final File file = stageFile(res, new File(mDir, "cts.jpg"));
         final Bitmap bitmap = ThumbnailUtils.createImageThumbnail(file, TEST_SIZES[0], null);
 
         assertOrientationForThumbnail(bitmap);
@@ -160,8 +160,8 @@ public class ThumbnailUtilsTest {
 
     @Test
     @Parameters(method = "getHEICSampleForCreateImageThumbnail")
-    public void testCreateImageThumbnail_HEICSample(int resId) throws Exception {
-        final File file = stageFile(resId, new File(mDir, "cts.heic"));
+    public void testCreateImageThumbnail_HEICSample(final String res) throws Exception {
+        final File file = stageFile(res, new File(mDir, "cts.heic"));
         final Bitmap bitmap = ThumbnailUtils.createImageThumbnail(file, TEST_SIZES[0], null);
 
         assertOrientationForThumbnail(bitmap);
@@ -170,16 +170,16 @@ public class ThumbnailUtilsTest {
     @Test
     public void testCreateVideoThumbnail() throws Exception {
         final File file = stageFile(
-                R.raw.bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz,
+                "bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz.mp4",
                 new File(mDir, "cts.mp4"));
         for (Size size : TEST_SIZES) {
             assertSaneThumbnail(size, ThumbnailUtils.createVideoThumbnail(file, size, null));
         }
     }
 
-    private static File stageFile(int resId, File file) throws IOException {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        try (InputStream source = context.getResources().openRawResource(resId);
+    private static File stageFile(final String res, File file) throws IOException {
+        final String mInpPrefix = WorkDir.getMediaDirString();
+        try (InputStream source = new FileInputStream(mInpPrefix + res);
                 OutputStream target = new FileOutputStream(file)) {
             android.os.FileUtils.copy(source, target);
         }

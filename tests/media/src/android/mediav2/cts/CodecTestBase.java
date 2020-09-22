@@ -429,6 +429,20 @@ class OutputManager {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         OutputManager that = (OutputManager) o;
+        // TODO: Timestamps for deinterlaced content are under review. (E.g. can decoders
+        // produce multiple progressive frames?) For now, do not verify timestamps.
+        boolean isEqual = this.equalsInterlaced(o);
+        if (!outPtsList.equals(that.outPtsList)) {
+            isEqual = false;
+            Log.e(LOG_TAG, "ref and test presentation timestamp mismatch");
+        }
+        return isEqual;
+    }
+
+    public boolean equalsInterlaced(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OutputManager that = (OutputManager) o;
         boolean isEqual = true;
         if (mCrc32UsingImage.getValue() != that.mCrc32UsingImage.getValue()) {
             isEqual = false;
@@ -456,10 +470,6 @@ class OutputManager {
             } else {
                 Log.e(LOG_TAG, "ref and test o/p sizes mismatch " + memIndex + '/' + that.memIndex);
             }
-        }
-        if (!outPtsList.equals(that.outPtsList)) {
-            isEqual = false;
-            Log.e(LOG_TAG, "ref and test presentation timestamp mismatch");
         }
         return isEqual;
     }
@@ -547,15 +557,19 @@ abstract class CodecTestBase {
         return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
+    static boolean isPc() {
+        return pm.hasSystemFeature(PackageManager.FEATURE_PC);
+    }
+
     static boolean hasAudioOutput() {
         return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
     }
 
     static boolean isHandheld() {
         // handheld nature is not exposed to package manager, for now
-        // we check for touchscreen and NOT watch and NOT tv
+        // we check for touchscreen and NOT watch and NOT tv and NOT pc
         return pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) && !isWatch() && !isTv() &&
-                !isAutomotive();
+                !isAutomotive() && !isPc();
     }
 
     static boolean hasDecoder(String mime) {
@@ -976,6 +990,7 @@ class CodecDecoderTestBase extends CodecTestBase {
 
     String mMime;
     String mTestFile;
+    boolean mIsInterlaced;
 
     ArrayList<ByteBuffer> mCsdBuffers;
     private int mCurrCsdIdx;
@@ -1011,6 +1026,8 @@ class CodecDecoderTestBase extends CodecTestBase {
                         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, COLOR_FormatSurface);
                     }
                 }
+                // TODO: determine this from the extractor format when it becomes exposed.
+                mIsInterlaced = srcFile.contains("_interlaced_");
                 return format;
             }
         }

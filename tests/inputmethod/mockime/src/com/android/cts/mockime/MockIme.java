@@ -154,14 +154,16 @@ public final class MockIme extends InputMethodService {
                     throw new IllegalStateException("command " + command
                             + " should be handled on the main thread");
                 }
-                // The context which created from
-                // InputMethodService#createConfigurationContext(Configuration)
-                // must behave like an UI context, which can obtain a display, a window manager,
+                // The context which created from InputMethodService#createXXXContext must behave
+                // like an UI context, which can obtain a display, a window manager,
                 // a view configuration and a gesture detector instance without strict mode
                 // violation.
                 final Configuration testConfig = new Configuration();
                 testConfig.setToDefaults();
                 final Context configContext = createConfigurationContext(testConfig);
+                final Context attrContext = createAttributionContext(null /* attributionTag */);
+                // UI component accesses on a display context must throw strict mode violations.
+                final Context displayContext = createDisplayContext(getDisplay());
                 switch (command.getName()) {
                     case "getTextBeforeCursor": {
                         final int n = command.getExtras().getInt("n");
@@ -326,17 +328,59 @@ public final class MockIme extends InputMethodService {
                         } catch (UnsupportedOperationException e) {
                             return e;
                         }
-                    case "verifyGetWindowManager":
-                        return getSystemService(WindowManager.class) != null
-                                && configContext.getSystemService(WindowManager.class) != null;
-                    case "verifyGetViewConfiguration":
-                        return ViewConfiguration.get(this) != null
-                                && ViewConfiguration.get(configContext) != null;
-                    case "verifyGetGestureDetector":
-                        final GestureDetector.SimpleOnGestureListener listener =
+                    case "verifyGetWindowManager": {
+                        final WindowManager imsWm = getSystemService(WindowManager.class);
+                        final WindowManager configContextWm =
+                                configContext.getSystemService(WindowManager.class);
+                        final WindowManager attrContextWm =
+                                attrContext.getSystemService(WindowManager.class);
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "verifyGetViewConfiguration": {
+                        final ViewConfiguration imsViewConfig = ViewConfiguration.get(this);
+                        final ViewConfiguration configContextViewConfig =
+                                ViewConfiguration.get(configContext);
+                        final ViewConfiguration attrContextViewConfig =
+                                ViewConfiguration.get(attrContext);
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "verifyGetGestureDetector": {
+                        GestureDetector.SimpleOnGestureListener listener =
                                 new GestureDetector.SimpleOnGestureListener();
-                        return new GestureDetector(this, listener) != null
-                                && new GestureDetector(configContext, listener) != null;
+                        final GestureDetector imsGestureDetector =
+                                new GestureDetector(this, listener);
+                        final GestureDetector configContextGestureDetector =
+                                new GestureDetector(configContext, listener);
+                        final GestureDetector attrGestureDetector =
+                                new GestureDetector(attrContext, listener);
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "verifyGetWindowManagerOnDisplayContext": {
+                        // Obtaining a WindowManager on a display context must throw a strict mode
+                        // violation.
+                        final WindowManager wm = displayContext
+                                .getSystemService(WindowManager.class);
+
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "verifyGetViewConfigurationOnDisplayContext": {
+                        // Obtaining a ViewConfiguration on a display context must throw a strict
+                        // mode violation.
+                        final ViewConfiguration viewConfiguration =
+                                ViewConfiguration.get(displayContext);
+
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "verifyGetGestureDetectorOnDisplayContext": {
+                        // Obtaining a GestureDetector on a display context must throw a strict mode
+                        // violation.
+                        GestureDetector.SimpleOnGestureListener listener =
+                                new GestureDetector.SimpleOnGestureListener();
+                        final GestureDetector gestureDetector =
+                                new GestureDetector(displayContext, listener);
+
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
                 }
             }
             return ImeEvent.RETURN_VALUE_UNAVAILABLE;

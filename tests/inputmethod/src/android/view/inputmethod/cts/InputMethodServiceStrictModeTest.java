@@ -18,6 +18,7 @@ package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.EventFilterMode.CHECK_ALL;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.clearAllEvents;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
@@ -126,26 +127,67 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
             expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
 
             final ImeEventStream forkedStream = clearAllEvents(stream, "onStrictModeViolated");
-            final ImeEvent imeEvent;
             switch (mode) {
                 case VERIFY_MODE_GET_WINDOW_MANAGER:
-                    imeEvent = expectCommand(forkedStream, imeSession.callVerifyGetWindowManager(),
-                            TIMEOUT);
+                    expectCommand(forkedStream, imeSession.callVerifyGetWindowManager(), TIMEOUT);
                     break;
                 case VERIFY_MODE_GET_VIEW_CONFIGURATION:
-                    imeEvent = expectCommand(forkedStream,
+                    expectCommand(forkedStream,
                             imeSession.callVerifyGetViewConfiguration(), TIMEOUT);
                     break;
                 case VERIFY_MODE_GET_GESTURE_DETECTOR:
-                    imeEvent = expectCommand(forkedStream,
-                            imeSession.callVerifyGetGestureDetector(), TIMEOUT);
+                    expectCommand(forkedStream, imeSession.callVerifyGetGestureDetector(), TIMEOUT);
                     break;
                 default:
-                    imeEvent = null;
+                    // do nothing here.
+                    break;
             }
-            assertTrue(imeEvent.getReturnBooleanValue());
             notExpectEvent(stream, event -> "onStrictModeViolated".equals(event.getEventName()),
                     EXPECTED_TIMEOUT);
+        }
+    }
+
+    /**
+     * Test if UI component accesses from display context derived from {@link InputMethodService}
+     * throw strict mode violations.
+     */
+    @Test
+    public void testIncorrectContextUseOnImsDerivedDisplayContext() throws Exception{
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder().setStrictModeEnabled(true))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+
+            // Verify if obtaining a WindowManager on an InputMethodService derived display context
+            // throws a strict mode violation.
+            ImeEventStream forkedStream = clearAllEvents(stream, "onStrictModeViolated");
+            expectCommand(forkedStream, imeSession.callVerifyGetWindowManagerOnDisplayContext(),
+                    TIMEOUT);
+
+            expectEvent(stream, event -> "onStrictModeViolated".equals(event.getEventName()),
+                   CHECK_ALL, TIMEOUT);
+
+            // Verify if obtaining a ViewConfiguration on an InputMethodService derived display
+            // context throws a strict mode violation.
+            forkedStream = clearAllEvents(stream, "onStrictModeViolated");
+            expectCommand(forkedStream, imeSession.callVerifyGetViewConfigurationOnDisplayContext(),
+                    TIMEOUT);
+
+            expectEvent(stream, event -> "onStrictModeViolated".equals(event.getEventName()),
+                    CHECK_ALL, TIMEOUT);
+
+            // Verify if obtaining a GestureDetector on an InputMethodService derived display
+            // context throws a strict mode violation.
+            forkedStream = clearAllEvents(stream, "onStrictModeViolated");
+            expectCommand(forkedStream, imeSession.callVerifyGetGestureDetectorOnDisplayContext(),
+                    TIMEOUT);
+
+            expectEvent(stream, event -> "onStrictModeViolated".equals(event.getEventName()),
+                    CHECK_ALL, TIMEOUT);
         }
     }
 
