@@ -16,6 +16,8 @@
 
 package android.media.tv.tuner.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
@@ -55,7 +57,9 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -525,9 +529,16 @@ public class TunerFrontendTest {
     public void testFrontendInfo() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
+        List<FrontendInfo> infos = mTuner.getFrontendInfoList();
+        Map<Integer, FrontendInfo> infoMap = new HashMap<>();
+        for (FrontendInfo info : infos) {
+            infoMap.put(info.getId(), info);
+        }
         for (int id : ids) {
             FrontendInfo info = mTuner.getFrontendInfoById(id);
+            FrontendInfo infoFromMap = infoMap.get(id);
             assertNotNull(info);
+            assertThat(info).isEqualTo(infoFromMap);
             assertEquals(id, info.getId());
             assertTrue(info.getFrequencyRange().getLower() > 0);
             assertTrue(info.getSymbolRateRange().getLower() >= 0);
@@ -536,7 +547,9 @@ public class TunerFrontendTest {
             info.getStatusCapabilities();
 
             FrontendCapabilities caps = info.getFrontendCapabilities();
-            assertNotNull(caps);
+            if (info.getType() <= FrontendSettings.TYPE_ISDBT) {
+                assertNotNull(caps);
+            }
             switch(info.getType()) {
                 case FrontendSettings.TYPE_ANALOG:
                     testAnalogFrontendCapabilities(caps);
@@ -571,7 +584,9 @@ public class TunerFrontendTest {
                 default:
                     break;
             }
+            infoMap.remove(id);
         }
+        assertTrue(infoMap.isEmpty());
     }
 
     private void testAnalogFrontendCapabilities(FrontendCapabilities caps) throws Exception {
