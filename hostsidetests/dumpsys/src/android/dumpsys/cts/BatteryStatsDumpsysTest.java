@@ -758,7 +758,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void validateProfileData(String profileData) throws IOException {
-        final int TIMESTAMP_COUNT = 14;
+        final int TIMESTAMP_COUNT = 15;
         boolean foundAtLeastOneRow = false;
         try (BufferedReader reader = new BufferedReader(
                 new StringReader(profileData))) {
@@ -768,10 +768,10 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
 
             assertNotNull(line);
             assertTrue("First line was not the expected header",
-                    line.startsWith("Flags,IntendedVsync,Vsync,OldestInputEvent" +
-                            ",NewestInputEvent,HandleInputStart,AnimationStart" +
-                            ",PerformTraversalsStart,DrawStart,SyncQueued,SyncStart" +
-                            ",IssueDrawCommandsStart,SwapBuffers,FrameCompleted"));
+                    line.startsWith("Flags,FrameTimelineVsyncId,IntendedVsync,Vsync" +
+                            ",OldestInputEvent,NewestInputEvent,HandleInputStart" +
+                            ",AnimationStart,PerformTraversalsStart,DrawStart,SyncQueued" +
+                            ",SyncStart,IssueDrawCommandsStart,SwapBuffers,FrameCompleted"));
 
             long[] numparts = new long[TIMESTAMP_COUNT];
             while ((line = reader.readLine()) != null && !line.isEmpty()) {
@@ -786,16 +786,16 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
                     continue;
                 }
                 // assert VSYNC >= INTENDED_VSYNC
-                assertTrue(numparts[2] >= numparts[1]);
-                // assert time is flowing forwards, skipping index 3 & 4
+                assertTrue(numparts[3] >= numparts[2]);
+                // assert time is flowing forwards, skipping index 4 & 5
                 // as those are input timestamps that may or may not be present
-                assertTrue(numparts[5] >= numparts[2]);
-                for (int i = 6; i < TIMESTAMP_COUNT; i++) {
+                assertTrue(numparts[6] >= numparts[3]);
+                for (int i = 7; i < TIMESTAMP_COUNT; i++) {
                     assertTrue("Index " + i + " did not flow forward, " +
                             numparts[i] + " not larger than " + numparts[i - 1],
                             numparts[i] >= numparts[i-1]);
                 }
-                long totalDuration = numparts[13] - numparts[1];
+                long totalDuration = numparts[14] - numparts[2];
                 assertTrue("Frame did not take a positive amount of time to process",
                         totalDuration > 0);
                 assertTrue("Bogus frame duration, exceeds 100 seconds",
