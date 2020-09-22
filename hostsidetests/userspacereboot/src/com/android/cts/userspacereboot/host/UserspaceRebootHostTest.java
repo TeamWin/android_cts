@@ -68,7 +68,10 @@ public class UserspaceRebootHostTest extends BaseHostJUnit4Test  {
 
     private void installApk(String apkFileName) throws Exception {
         CompatibilityBuildHelper helper = new CompatibilityBuildHelper(getBuild());
-        getDevice().installPackage(helper.getTestFile(apkFileName), false, true);
+        getDevice().installPackage(helper.getTestFile(apkFileName), false, true,
+                getDevice().isAppEnumerationSupported()
+                        ? new String[]{"--force-queryable"}
+                        : new String[]{});
     }
 
     /**
