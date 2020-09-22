@@ -432,6 +432,8 @@ public class TunerFrontendTest {
         assertTrue(caps instanceof DvbcFrontendCapabilities);
         DvbcFrontendCapabilities dvbcCaps = (DvbcFrontendCapabilities) caps;
         dvbcCaps.getModulationCapability();
+        // getFecCapability is deprecated starting Android 12. Use getCodeRateCapability instead.
+        dvbcCaps.getCodeRateCapability();
         dvbcCaps.getFecCapability();
         dvbcCaps.getAnnexCapability();
     }
