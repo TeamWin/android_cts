@@ -16,11 +16,16 @@
 
 package android.car.cts;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.car.cts.CarHostJUnit4TestCase.UserInfo;
+
 import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.ITestInformationReceiver;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -34,6 +39,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,9 +50,25 @@ import java.util.regex.Pattern;
 // NOTE: must be public because of @Rules
 public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
 
-    private static final int DEFAULT_TIMEOUT_SEC = 10;
+    private static final int DEFAULT_TIMEOUT_SEC = 20;
 
     private static final Pattern CREATE_USER_OUTPUT_REGEX = Pattern.compile("id=(\\d+)");
+
+    /**
+     * User pattern in the output of "cmd user list --all -v" = TEXT id=<id> TEXT name=<name>, TEXT
+     * flags=<flags> TEXT group 1: id group 2: name group 3: flags group 4: other state(like
+     * "(running)")
+     */
+    private static final Pattern USER_PATTERN = Pattern.compile(
+            ".*id=(\\d+).*name=([^\\s,]+).*flags=(\\S+)(.*)");
+
+    private static final int USER_PATTERN_GROUP_ID = 1;
+    private static final int USER_PATTERN_GROUP_NAME = 2;
+    private static final int USER_PATTERN_GROUP_FLAGS = 3;
+    private static final int USER_PATTERN_GROUP_OTHER_STATE = 4;
+
+    protected static final String APP_APK = "CtsCarApp.apk";
+    protected static final String APP_PKG = "android.car.cts.app";
 
     @Rule
     public final RequiredFeatureRule mHasAutomotiveRule = new RequiredFeatureRule(this,
@@ -141,25 +163,68 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     }
 
     /**
-     * Executes the adb shell command and returns the output.
+     * Executes the shell command and returns the output.
      */
-    protected String executeCommand(String command, Object...args) throws Exception {
+    protected String executeCommand(String command, Object... args) throws Exception {
         String fullCommand = String.format(command, args);
         return getDevice().executeShellCommand(fullCommand);
     }
 
     /**
-     * Executes the adb shell command and parses the Matcher output with {@code resultParser}.
+     * Executes the shell command and parses output with {@code resultParser}.
+     */
+    protected <T> T executeAndParseCommand(Function<String, T> resultParser,
+            String command, Object... args) throws Exception {
+        String output = executeCommand(command, args);
+        return resultParser.apply(output);
+    }
+
+    /**
+     * Executes the shell command and parses the Matcher output with {@code resultParser}, failing
+     * with {@code matchNotFoundErrorMessage} if it didn't match the {@code regex}.
      */
     protected <T> T executeAndParseCommand(Pattern regex, String matchNotFoundErrorMessage,
             Function<Matcher, T> resultParser,
-            String command, Object...args) throws Exception {
+            String command, Object... args) throws Exception {
         String output = executeCommand(command, args);
         Matcher matcher = regex.matcher(output);
         if (!matcher.find()) {
             fail(matchNotFoundErrorMessage);
         }
         return resultParser.apply(matcher);
+    }
+
+    /**
+     * Executes the shell command and parses the Matcher output with {@code resultParser}.
+     */
+    protected <T> T executeAndParseCommand(Pattern regex, Function<Matcher, T> resultParser,
+            String command, Object... args) throws Exception {
+        String output = executeCommand(command, args);
+        return resultParser.apply(regex.matcher(output));
+    }
+
+    /**
+     * Executes the shell command that returns all users and returns {@code function} applied to
+     * them.
+     */
+    public <T> T onAllUsers(Function<List<UserInfo>, T> function) throws Exception {
+        ArrayList<UserInfo> allUsers = executeAndParseCommand(USER_PATTERN, (matcher) -> {
+            ArrayList<UserInfo> users = new ArrayList<>();
+            while (matcher.find()) {
+                users.add(new UserInfo(matcher));
+            }
+            return users;
+        }, "cmd user list --all -v");
+        return function.apply(allUsers);
+    }
+
+    /**
+     * Gets the info for the given user.
+     */
+    public UserInfo getUserInfo(int userId) throws Exception {
+        return onAllUsers((allUsers) -> allUsers.stream()
+                .filter((u) -> u.id == userId))
+                        .findFirst().get();
     }
 
     /**
@@ -185,13 +250,51 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * Creates a full user with car service shell command.
      */
     protected int createFullUser(String name) throws Exception {
-        int userId = executeAndParseCommand(CREATE_USER_OUTPUT_REGEX,
-                "Could not create user with name " + name,
-                matcher -> Integer.parseInt(matcher.group(1)),
-                "cmd car_service create-user %s", name);
+        return createUser(name, /* flags= */ 0, "android.os.usertype.full.SECONDARY");
+    }
 
-        mCreatedUserIds.add(userId);
+    /**
+     * Creates a full guest with car service shell command.
+     */
+    protected int createGuestUser(String name) throws Exception {
+        return createUser(name, /* flags= */ 2, "android.os.usertype.full.GUEST");
+    }
+
+    /**
+     * Creates a flexible user with car service shell command.
+     *
+     * <p><b>NOTE: </b>it uses User HAL flags, not core Android's.
+     */
+    protected int createUser(String name, int flags, String type) throws Exception {
+        int userId = executeAndParseCommand(CREATE_USER_OUTPUT_REGEX,
+                "Could not create user with name " + name + ", flags " + flags + ", type" + type,
+                matcher -> Integer.parseInt(matcher.group(1)),
+                "cmd car_service create-user --flags %d --type %s %s",
+                flags, type, name);
+        markUserForRemovalAfterTest(userId);
         return userId;
+    }
+
+    /**
+     * Marks a user to be removed at the end of the tests.
+     */
+    protected void markUserForRemovalAfterTest(int userId) {
+        mCreatedUserIds.add(userId);
+    }
+
+    /**
+     * Waits until the given user is initialized.
+     */
+    protected void waitForUserInitialized(int userId) throws Exception {
+        CommonTestUtils.waitUntil("timed out waiting for user " + userId + " initialization",
+                DEFAULT_TIMEOUT_SEC, () -> isUserInitialized(userId));
+    }
+
+    /**
+     * Checks if the given user is initialized.
+     */
+    protected boolean isUserInitialized(int userId) throws Exception {
+        return getUserInfo(userId).flags.contains("INITIALIZED");
     }
 
     /**
@@ -205,6 +308,9 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         waitUntilCurrentUser(userId);
     }
 
+    /**
+     * Waits until the given user is the current foreground user.
+     */
     protected void waitUntilCurrentUser(int userId) throws Exception {
         CommonTestUtils.waitUntil("timed out (" + DEFAULT_TIMEOUT_SEC
                 + "s) waiting for current user to be " + userId
@@ -218,6 +324,45 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      */
     protected void removeUser(int userId) throws Exception {
         executeCommand("cmd car_service remove-user %d", userId);
+    }
+
+    /**
+     * Checks if an app is installed for a given user.
+     */
+    protected boolean isAppInstalledForUser(String packageName, int userId)
+            throws DeviceNotAvailableException {
+        return getDevice().isPackageInstalled(packageName, Integer.toString(userId));
+    }
+
+    /**
+     * Fails the test if the app is installed for the given user.
+     */
+    protected void assertAppInstalledForUser(String packageName, int userId)
+            throws DeviceNotAvailableException {
+        assertWithMessage("%s should BE installed for user %s", packageName, userId).that(
+                isAppInstalledForUser(packageName, userId)).isTrue();
+    }
+
+    /**
+     * Fails the test if the app is NOT installed for the given user.
+     */
+    protected void assertAppNotInstalledForUser(String packageName, int userId)
+            throws DeviceNotAvailableException {
+        assertWithMessage("%s should NOT be installed for user %s", packageName, userId).that(
+                isAppInstalledForUser(packageName, userId)).isFalse();
+    }
+
+    /**
+     * Restarts the system server process.
+     *
+     * <p>Useful for cases where the test case changes system properties, as
+     * {@link ITestDevice#reboot()} would reset them.
+     */
+    protected void restartSystemServer() throws DeviceNotAvailableException {
+        final ITestDevice device = getDevice();
+        device.executeShellCommand("stop");
+        device.executeShellCommand("start");
+        device.waitForDeviceAvailable();
     }
 
     // TODO: move to common infra code
@@ -250,9 +395,8 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
                         CLog.d("skipping %s#%s"
                                 + " because device does not have feature '%s'",
                                 description.getClassName(), description.getMethodName(), mFeature);
-                        assumeTrue("Device does not have feature '" + mFeature + "'",
-                                hasFeature);
-                        return;
+                        throw new AssumptionViolatedException("Device does not have feature '"
+                                + mFeature + "'");
                     }
                     base.evaluate();
                 }
@@ -262,6 +406,29 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         @Override
         public String toString() {
             return "RequiredFeatureRule[" + mFeature + "]";
+        }
+    }
+
+    /**
+     * Represents a user as returned by {@code cmd user list -v}.
+     */
+    public static final class UserInfo {
+        public final int id;
+        public final String flags;
+        public final String name;
+        public final String otherState;
+
+        private UserInfo(Matcher matcher) {
+            id = Integer.parseInt(matcher.group(USER_PATTERN_GROUP_ID));
+            flags = matcher.group(USER_PATTERN_GROUP_FLAGS);
+            name = matcher.group(USER_PATTERN_GROUP_NAME);
+            otherState = matcher.group(USER_PATTERN_GROUP_OTHER_STATE);
+        }
+
+        @Override
+        public String toString() {
+            return "[UserInfo: id=" + id + ", flags=" + flags + ", name=" + name
+                    + ", otherState=" + otherState + "]";
         }
     }
 }
