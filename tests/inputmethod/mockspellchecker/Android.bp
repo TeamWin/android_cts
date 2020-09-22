@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,34 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsInputMethodTestCases",
+java_test_helper_library {
+    name: "CtsMockSpellCheckerLib",
+    sdk_version: "test_current",
+
+    srcs: [
+        "src/**/*.kt",
+        "src/**/*.proto",
+    ],
+    libs: ["junit"],
+    proto: {
+        type: "lite",
+    },
+    static_libs: [
+        "androidx.annotation_annotation",
+        "compatibility-device-util-axt",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsMockSpellChecker",
     defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
+    optimize: {
+        enabled: false,
+    },
+    sdk_version: "current",
+    min_sdk_version: "19",
+    // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts10",
         "general-tests",
     ],
-    compile_multilib: "both",
-    libs: ["android.test.runner"],
     static_libs: [
-        "androidx.test.rules",
-        "androidx.test.uiautomator_uiautomator",
-        "compatibility-device-util-axt",
-        "ctstestrunner-axt",
-        "CtsMockInputMethodLib",
+        "androidx.annotation_annotation",
         "CtsMockSpellCheckerLib",
-        "testng",
-        "kotlin-test",
     ],
-    srcs: [
-        "src/**/*.java",
-        "src/**/*.kt",
-        "src/**/I*.aidl",
-    ],
-    aidl: {
-        local_include_dirs: ["src"],
-    },
-    sdk_version: "test_current",
 }
