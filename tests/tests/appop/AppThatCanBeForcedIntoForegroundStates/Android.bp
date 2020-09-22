@@ -25,5 +25,6 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
+        "mts",
     ]
 }
