@@ -33,9 +33,16 @@ import static android.autofillservice.cts.testcore.Helper.assertFillEventForSave
 import static android.autofillservice.cts.testcore.Helper.assertNoDeprecatedClientState;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.waitUntilDisconnected;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_DATASET_MATCH;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_FIELD_VALIDATION_FAILED;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_HAS_EMPTY_REQUIRED;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_NO_SAVE_INFO;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_NO_VALUE_CHANGED;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.autofillservice.cts.activities.AuthenticationActivity;
@@ -52,12 +59,17 @@ import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
+import android.service.autofill.RegexValidator;
+import android.service.autofill.SaveInfo;
+import android.service.autofill.Validator;
 import android.view.View;
+import android.view.autofill.AutofillId;
 
 import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 /**
  * This is the common test cases with {@link FillEventHistoryTest} and
@@ -527,5 +539,243 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
             assertFillEventForDatasetShown(events.get(0));
             assertFillEventForDatasetSelected(events.get(1), "id2");
         }
+    }
+
+    /**
+     * Tests scenario where the context was committed, the save dialog was not shown because the
+     * SaveInfo associated with the FillResponse is null.
+     */
+    @Test
+    public void testContextCommitted_noSaveUi_whileNoSaveInfo() throws Exception {
+        enableService();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder = createTestResponseBuilder();
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill and set the save UI not show reason with
+        // NO_SAVE_REASON_NO_SAVE_INFO.
+        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_NO_SAVE_INFO);
+
+        // Finish the context by login in and it will trigger to check if the save UI should be
+        // shown.
+        tapLogin();
+
+        // Verify that the save UI should not be shown and the history should include the reason.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
+        final Event event = verifyEvents.get(1);
+
+        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_NO_SAVE_INFO);
+    }
+
+    /**
+     * Tests scenario where the context was committed, the save dialog was not shown because the
+     * service asked to delay save.
+     */
+    @Test
+    public void testContextCommitted_noSaveUi_whileDelaySave() throws Exception {
+        enableService();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder = createTestResponseBuilder();
+        builder.setSaveInfoFlags(SaveInfo.FLAG_DELAY_SAVE);
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill and set the save UI not show reason with
+        // NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG.
+        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG);
+
+        // Finish the context by login in and it will trigger to check if the save UI should be
+        // shown.
+        tapLogin();
+
+        // Verify that the save UI should not be shown and the history should include the reason.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
+        final Event event = verifyEvents.get(1);
+
+        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG);
+    }
+
+    /**
+     * Tests scenario where the context was committed, the save dialog was not shown because there
+     * was empty value for required ids.
+     */
+    @Test
+    public void testContextCommitted_noSaveUi_whileEmptyValueForRequiredIds() throws Exception {
+        enableService();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder = createTestResponseBuilder();
+        builder.setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill and set the save UI not show reason with
+        // NO_SAVE_REASON_HAS_EMPTY_REQUIRED.
+        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_HAS_EMPTY_REQUIRED);
+
+        // Finish the context by login in and it will trigger to check if the save UI should be
+        // shown.
+        tapLogin();
+
+        // Verify that the save UI should not be shown and the history should include the reason.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
+        final Event event = verifyEvents.get(1);
+
+        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_HAS_EMPTY_REQUIRED);
+    }
+
+    /**
+     * Tests scenario where the context was committed, the save dialog was not shown because no
+     * value has been changed.
+     */
+    @Test
+    public void testContextCommitted_noSaveUi_whileNoValueChanged() throws Exception {
+        enableService();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder = createTestResponseBuilder();
+        builder.setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill and set the save UI not show reason with
+        // NO_SAVE_REASON_HAS_EMPTY_REQUIRED.
+        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_NO_VALUE_CHANGED);
+
+        // Finish the context by login in and it will trigger to check if the save UI should be
+        // shown.
+        tapLogin();
+
+        // Verify that the save UI should not be shown and the history should include the reason.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(3);
+        final Event event = verifyEvents.get(2);
+
+        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_NO_VALUE_CHANGED);
+    }
+
+    /**
+     * Tests scenario where the context was committed, the save dialog was not shown because fields
+     * failed validation.
+     */
+    @Test
+    public void testContextCommitted_noSaveUi_whileFieldsFailedValidation() throws Exception {
+        enableService();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder = createTestResponseBuilder();
+        builder.setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .setSaveInfoVisitor((contexts, saveInfoBuilder) -> {
+                    final Validator validator =
+                            new RegexValidator(new AutofillId(1), Pattern.compile(".*"));
+                    saveInfoBuilder.setValidator(validator);
+                });
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill and set the save UI not show reason with
+        // NO_SAVE_REASON_FIELD_VALIDATION_FAILED.
+        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_FIELD_VALIDATION_FAILED);
+
+        // Finish the context by login in and it will trigger to check if the save UI should be
+        // shown.
+        tapLogin();
+
+        // Verify that the save UI should not be shown and the history should include the reason.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
+        final Event event = verifyEvents.get(1);
+
+        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_FIELD_VALIDATION_FAILED);
+    }
+
+    /**
+     * Tests scenario where the context was committed, the save dialog was not shown because all
+     * fields matched contents of datasets.
+     */
+    @Test
+    public void testContextCommitted_noSaveUi_whileFieldsMatchedDatasets() throws Exception {
+        enableService();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder = createTestResponseBuilder();
+        builder.setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD);
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill and set the save UI not show reason with
+        // NO_SAVE_REASON_DATASET_MATCH.
+        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_DATASET_MATCH);
+
+        // Finish the context by login in and it will trigger to check if the save UI should be
+        // shown.
+        tapLogin();
+
+        // Verify that the save UI should not be shown and the history should include the reason.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+
+        final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
+        final Event event = verifyEvents.get(1);
+
+        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_DATASET_MATCH);
+    }
+
+    private CannedFillResponse.Builder createTestResponseBuilder() {
+        return new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setId("id1")
+                        .setField(ID_USERNAME, BACKDOOR_USERNAME)
+                        .setField(ID_PASSWORD, "whatever")
+                        .setPresentation("dataset1", isInlineMode())
+                        .build())
+                .setFillResponseFlags(FillResponse.FLAG_TRACK_CONTEXT_COMMITED);
+    }
+
+    /**
+     * Triggers autofill on username first and set the behavior of the different conditions so that
+     * the save UI should not be shown.
+     */
+    private void triggerAutofillForSaveUiCondition(int reason) throws Exception {
+        // Trigger autofill on username and check the suggestion is shown.
+        mUiBot.focusByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertDatasets("dataset1");
+
+        if (reason == NO_SAVE_REASON_HAS_EMPTY_REQUIRED) {
+            // Set empty value on password to meet that there was empty value for required ids.
+            mActivity.onUsername((v) -> v.setText(BACKDOOR_USERNAME));
+            mActivity.onPassword((v) -> v.setText(""));
+        } else if (reason == NO_SAVE_REASON_NO_VALUE_CHANGED) {
+            // Select the suggestion to fill the data into username and password, then it will be
+            // able to get the data from ViewState.getCurrentValue() and
+            // ViewState.getAutofilledValue().
+            mActivity.expectAutoFill(BACKDOOR_USERNAME, "whatever");
+            mUiBot.selectDataset("dataset1");
+            mActivity.assertAutoFilled();
+        } else if (reason == NO_SAVE_REASON_NO_SAVE_INFO
+                || reason == NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG
+                || reason == NO_SAVE_REASON_FIELD_VALIDATION_FAILED
+                || reason == NO_SAVE_REASON_DATASET_MATCH) {
+            // Use the setText to fill the data into username and password, then it will only be
+            // able to get the data from ViewState.getCurrentValue(), but get empty value from
+            // ViewState.getAutofilledValue().
+            mActivity.onUsername((v) -> v.setText(BACKDOOR_USERNAME));
+            mActivity.onPassword((v) -> v.setText("whatever"));
+        } else {
+            throw new AssertionError("Can not identify the reason");
+        }
+    }
+
+    private void tapLogin() throws Exception {
+        final String expectedMessage = getWelcomeMessage(BACKDOOR_USERNAME);
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
     }
 }
