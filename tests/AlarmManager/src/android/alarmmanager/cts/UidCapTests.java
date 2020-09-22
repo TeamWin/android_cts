@@ -24,6 +24,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -103,8 +105,11 @@ public class UidCapTests {
     }
 
     private void setMaxAlarmsPerUid(int maxAlarmsPerUid) {
-        SystemUtil.runShellCommand("settings put global alarm_manager_constants max_alarms_per_uid="
-                + maxAlarmsPerUid);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "max_alarms_per_uid",
+                    String.valueOf(maxAlarmsPerUid), /* makeDefault */ false);
+        });
     }
 
     @After
@@ -117,6 +122,8 @@ public class UidCapTests {
 
     @After
     public void deleteAlarmManagerConstants() {
-        SystemUtil.runShellCommand("settings delete global alarm_manager_constants");
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
+                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
     }
 }
