@@ -23,10 +23,11 @@ import static org.junit.Assume.assumeTrue;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import android.app.Instrumentation;
-import android.content.Context;
+import android.app.UiAutomation;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -53,6 +54,8 @@ public final class DeviceState extends TestWatcher {
         WORK_PROFILE
     }
 
+    private static final String LOG_TAG = "DeviceState";
+
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
 
@@ -72,6 +75,9 @@ public final class DeviceState extends TestWatcher {
     private static final int FLAG_FULL = 0x00000400;
 
     private List<Integer> createdUserIds = new ArrayList<>();
+
+    private UiAutomation mUiAutomation;
+    private final int MAX_UI_AUTOMATION_RETRIES = 5;
 
     @Nullable
     public UserHandle getWorkProfile() {
@@ -153,7 +159,7 @@ public final class DeviceState extends TestWatcher {
      * <p>Returns {@code null} if there is none present.
      */
     @Nullable
-    private static Integer getPrimaryUserId() {
+    private Integer getPrimaryUserId() {
         // This would be cleaner if there was a test api which could find this information
         ArrayList<String[]> users = tokenizeListUsers();
         for (String[] user : users) {
@@ -171,7 +177,7 @@ public final class DeviceState extends TestWatcher {
      * <p>Returns {@code null} if there is none present.
      */
     @Nullable
-    private static Integer getSecondaryUserId() {
+    private Integer getSecondaryUserId() {
         // This would be cleaner if there was a test api which could find this information
         ArrayList<String[]> users = tokenizeListUsers();
         for (String[] user : users) {
@@ -190,7 +196,7 @@ public final class DeviceState extends TestWatcher {
      * @return a list of arrays of strings, each element of the list representing the tokens
      * for a user, or {@code null} if there was an error while tokenizing the adb command output.
      */
-    private static ArrayList<String[]> tokenizeListUsers() {
+    private ArrayList<String[]> tokenizeListUsers() {
         String command = "pm list users";
         String commandOutput = runCommandWithOutput(command);
         // Extract the id of all existing users.
@@ -304,7 +310,7 @@ public final class DeviceState extends TestWatcher {
         runCommandWithOutput("pm uninstall --user " + profileId + " " + packageName);
     }
 
-    private static String runCommandWithOutput(String command) {
+    private String runCommandWithOutput(String command) {
         ParcelFileDescriptor p = runCommand(command);
 
         InputStream inputStream = new FileInputStream(p.getFileDescriptor());
@@ -316,10 +322,29 @@ public final class DeviceState extends TestWatcher {
         }
     }
 
-    private static ParcelFileDescriptor runCommand(String command) {
-        return sInstrumentation
-                .getUiAutomation(FLAG_DONT_USE_ACCESSIBILITY)
+    private ParcelFileDescriptor runCommand(String command) {
+        return getAutomation()
                 .executeShellCommand(command);
+    }
+
+    private UiAutomation getAutomation() {
+        if (mUiAutomation != null) {
+            return mUiAutomation;
+        }
+
+        int retries = MAX_UI_AUTOMATION_RETRIES;
+        mUiAutomation = sInstrumentation.getUiAutomation(FLAG_DONT_USE_ACCESSIBILITY);
+        while (mUiAutomation == null && retries > 0) {
+            Log.e(LOG_TAG, "Failed to get UiAutomation");
+            retries--;
+            mUiAutomation = sInstrumentation.getUiAutomation(FLAG_DONT_USE_ACCESSIBILITY);
+        }
+
+        if (mUiAutomation == null) {
+            throw new AssertionError("Could not get UiAutomation");
+        }
+
+        return mUiAutomation;
     }
 
     private void requireFeature(String feature) {
