@@ -257,7 +257,7 @@ public class ShaderTests extends ActivityTestBase {
     }
 
     @Test
-    public void testBlurShaderLargeRadii() {
+    public void testBlurShaderLargeRadiiEdgeReplication() {
         // Ensure that blurring with large blur radii with clipped content shows a solid
         // blur square.
         // Previously blur radii that were very large would end up blurring pixels outside
@@ -272,7 +272,8 @@ public class ShaderTests extends ActivityTestBase {
                 .addCanvasClient((canvas, width, height) -> {
                     final int blurRadius = 200;
                     Paint blurPaint = new Paint();
-                    blurPaint.setShader(new BlurShader(blurRadius, blurRadius, null));
+                    blurPaint.setShader(new BlurShader(blurRadius, blurRadius, null,
+                            Shader.TileMode.CLAMP));
                     blurPaint.setColor(Color.BLUE);
                     canvas.save();
                     canvas.clipRect(0, 0, width, height);
@@ -280,6 +281,40 @@ public class ShaderTests extends ActivityTestBase {
                     canvas.restore();
                 }, true)
                 .runWithVerifier(new ColorVerifier(Color.BLUE));
+    }
+
+    @Test
+    public void testBlurShaderLargeRadiiSrcOnly() {
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    final int blurRadius = 200;
+                    Paint blurPaint = new Paint();
+                    blurPaint.setShader(new BlurShader(blurRadius, blurRadius, null,
+                            Shader.TileMode.DECAL));
+                    blurPaint.setColor(Color.BLUE);
+                    canvas.save();
+                    canvas.clipRect(0, 0, width, height);
+                    canvas.drawRect(0, 0, width, height, blurPaint);
+                    canvas.restore();
+                }, true)
+                .runWithVerifier(new ColorVerifier(Color.WHITE));
+    }
+
+    @Test
+    public void testBlurShaderLargeRadiiDefault() {
+        // Verify that the default behavior matches that of TREATMENT_SRC_ONLY
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    final int blurRadius = 200;
+                    Paint blurPaint = new Paint();
+                    blurPaint.setShader(new BlurShader(blurRadius, blurRadius, null));
+                    blurPaint.setColor(Color.BLUE);
+                    canvas.save();
+                    canvas.clipRect(0, 0, width, height);
+                    canvas.drawRect(0, 0, width, height, blurPaint);
+                    canvas.restore();
+                }, true)
+                .runWithVerifier(new ColorVerifier(Color.WHITE));
     }
 
     private static class BlurPixelCounter extends BitmapVerifier {
