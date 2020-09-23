@@ -61,6 +61,8 @@ const val SYSTEM_PACKAGE_NAME = "android"
 const val TIMEOUT = 60000L
 const val APP_OP_STR = "REQUEST_INSTALL_PACKAGES"
 
+const val INSTALL_INSTANT_APP = 0x00000800
+
 open class PackageInstallerTestBase {
     @get:Rule
     val installDialogStarter = ActivityTestRule(FutureResultActivity::class.java)
@@ -130,10 +132,20 @@ open class PackageInstallerTestBase {
      * Start an installation via a session
      */
     protected fun startInstallationViaSession(): CompletableFuture<Int> {
+        return startInstallationViaSession(0 /* installFlags */)
+    }
+
+    protected fun startInstallationViaSession(installFlags: Int): CompletableFuture<Int> {
         val pi = pm.packageInstaller
 
         // Create session
-        val sessionId = pi.createSession(PackageInstaller.SessionParams(MODE_FULL_INSTALL))
+        val sessionParam = PackageInstaller.SessionParams(MODE_FULL_INSTALL)
+        // Handle additional install flags
+        if (installFlags and INSTALL_INSTANT_APP != 0) {
+            sessionParam.setInstallAsInstantApp(true)
+        }
+
+        val sessionId = pi.createSession(sessionParam)
         val session = pi.openSession(sessionId)!!
 
         // Write data to session
