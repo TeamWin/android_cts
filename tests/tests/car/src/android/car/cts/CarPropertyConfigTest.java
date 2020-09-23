@@ -21,6 +21,7 @@ import android.car.VehiclePropertyType;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.property.CarPropertyManager;
 
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -38,6 +39,7 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RequiresDevice
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant apps cannot get car related permissions.")
 public class CarPropertyConfigTest extends CarApiTestBase {
     private CarPropertyManager mCarPropertyManager;
     private List<CarPropertyConfig> mConfigs = new ArrayList<>();
