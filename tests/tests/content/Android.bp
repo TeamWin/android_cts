@@ -63,6 +63,7 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
         "BinderPermissionTestService/**/I*.aidl",
     ],
     data: [
