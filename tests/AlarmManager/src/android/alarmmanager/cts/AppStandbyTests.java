@@ -33,6 +33,8 @@ import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 import android.util.LongArray;
@@ -42,6 +44,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -83,35 +86,15 @@ public class AppStandbyTests {
 
     private static final long APP_STANDBY_WINDOW = 10_000;
     private static final String[] APP_BUCKET_QUOTA_KEYS = {
-            "standby_working_quota",
-            "standby_frequent_quota",
-            "standby_rare_quota",
+            "standby_quota_working",
+            "standby_quota_frequent",
+            "standby_quota_rare",
     };
     private static final int[] APP_STANDBY_QUOTAS = {
             5,  // Working set
             3,  // Frequent
             1,  // Rare
     };
-
-    // Settings common for all tests
-    private static final String COMMON_SETTINGS;
-
-    static {
-        final StringBuilder settings = new StringBuilder();
-        settings.append("min_futurity=");
-        settings.append(MIN_FUTURITY);
-        settings.append(",allow_while_idle_short_time=");
-        settings.append(ALLOW_WHILE_IDLE_SHORT_TIME);
-        settings.append(",app_standby_window=");
-        settings.append(APP_STANDBY_WINDOW);
-        for (int i = 0; i < APP_STANDBY_QUOTAS.length; i++) {
-            settings.append(",");
-            settings.append(APP_BUCKET_QUOTA_KEYS[i]);
-            settings.append("=");
-            settings.append(APP_STANDBY_QUOTAS[i]);
-        }
-        COMMON_SETTINGS = settings.toString();
-    }
 
     // Save the state before running tests to restore it after we finish testing.
     private static boolean sOrigAppStandbyEnabled;
@@ -318,10 +301,23 @@ public class AppStandbyTests {
         }
     }
 
-    private void updateAlarmManagerConstants() throws IOException {
-        final StringBuffer cmd = new StringBuffer("settings put global alarm_manager_constants ");
-        cmd.append(COMMON_SETTINGS);
-        executeAndLog(cmd.toString());
+    private void updateAlarmManagerConstants() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
+                    String.valueOf(MIN_FUTURITY), /* makeDefault */ false);
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "allow_while_idle_short_time",
+                    String.valueOf(ALLOW_WHILE_IDLE_SHORT_TIME), /* makeDefault */ false);
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "app_standby_window",
+                    String.valueOf(APP_STANDBY_WINDOW), /* makeDefault */ false);
+            for (int i = 0; i < APP_STANDBY_QUOTAS.length; i++) {
+                DeviceConfig.setProperty(
+                        DeviceConfig.NAMESPACE_ALARM_MANAGER, APP_BUCKET_QUOTA_KEYS[i],
+                        String.valueOf(APP_STANDBY_QUOTAS[i]), /* makeDefault */ false);
+            }
+        });
     }
 
     private void setPowerWhitelisted(boolean whitelist) throws IOException {
@@ -331,8 +327,10 @@ public class AppStandbyTests {
         executeAndLog(cmd.toString());
     }
 
-    private void deleteAlarmManagerConstants() throws IOException {
-        executeAndLog("settings delete global alarm_manager_constants");
+    private void deleteAlarmManagerConstants() {
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
+                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
     }
 
     private void setAppStandbyBucket(String bucket) throws IOException {

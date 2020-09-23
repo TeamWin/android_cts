@@ -22,7 +22,6 @@ import static com.android.compatibility.common.util.AmUtils.runKill;
 import static com.android.compatibility.common.util.AmUtils.runMakeUidIdle;
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
-import static com.android.compatibility.common.util.SettingsUtils.putGlobalSetting;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import static org.junit.Assert.assertEquals;
@@ -41,12 +40,15 @@ import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestSe
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest.SetAlarmRequest;
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest.StartServiceRequest;
 import android.os.cts.batterysaving.common.Values;
+import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThreadUtils;
 
 import org.junit.After;
@@ -76,16 +78,27 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
     private static final long ALLOW_WHILE_IDLE_LONG_TIME = 20_000;
     private static final long MIN_FUTURITY = 2_000;
 
-    private void updateAlarmManagerConstants() throws IOException {
-        putGlobalSetting("alarm_manager_constants",
-                "min_interval=" + MIN_REPEATING_INTERVAL + ","
-                + "min_futurity=" + MIN_FUTURITY + ","
-                + "allow_while_idle_short_time=" + ALLOW_WHILE_IDLE_SHORT_TIME + ","
-                + "allow_while_idle_long_time=" + ALLOW_WHILE_IDLE_LONG_TIME);
+    private void updateAlarmManagerConstants() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_interval",
+                    String.valueOf(MIN_REPEATING_INTERVAL), /* makeDefault */ false);
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
+                    String.valueOf(MIN_FUTURITY), /* makeDefault */ false);
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "allow_while_idle_short_time",
+                    String.valueOf(ALLOW_WHILE_IDLE_SHORT_TIME), /* makeDefault */ false);
+            DeviceConfig.setProperty(
+                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "allow_while_idle_long_time",
+                    String.valueOf(ALLOW_WHILE_IDLE_LONG_TIME), /* makeDefault */ false);
+        });
     }
 
-    private void resetAlarmManagerConstants() throws IOException {
-        putGlobalSetting("alarm_manager_constants", "null");
+    private void resetAlarmManagerConstants() {
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
+                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
     }
 
     // Use a different broadcast action every time.
