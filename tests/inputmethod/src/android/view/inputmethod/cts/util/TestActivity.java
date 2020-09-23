@@ -137,6 +137,19 @@ public final class TestActivity extends Activity {
                 .getInstrumentation().startActivitySync(intent);
     }
 
+    public static TestActivity startNewTaskSync(
+            @NonNull Function<TestActivity, View> activityInitializer) {
+        sInitializer.set(activityInitializer);
+        final Intent intent = new Intent()
+                .setAction(Intent.ACTION_MAIN)
+                .setClass(InstrumentationRegistry.getInstrumentation().getContext(),
+                        TestActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        return (TestActivity) InstrumentationRegistry
+                .getInstrumentation().startActivitySync(intent);
+    }
+
     /**
      * Updates {@link WindowManager.LayoutParams#softInputMode}.
      *
