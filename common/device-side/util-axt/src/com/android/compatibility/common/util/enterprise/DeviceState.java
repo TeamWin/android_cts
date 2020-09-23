@@ -16,6 +16,8 @@
 
 package com.android.compatibility.common.util.enterprise;
 
+import static android.app.UiAutomation.FLAG_DONT_USE_ACCESSIBILITY;
+
 import static org.junit.Assume.assumeTrue;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -316,7 +318,7 @@ public final class DeviceState extends TestWatcher {
 
     private static ParcelFileDescriptor runCommand(String command) {
         return sInstrumentation
-                .getUiAutomation()
+                .getUiAutomation(FLAG_DONT_USE_ACCESSIBILITY)
                 .executeShellCommand(command);
     }
 
