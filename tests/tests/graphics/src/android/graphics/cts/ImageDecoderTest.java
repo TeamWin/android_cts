@@ -69,6 +69,8 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
@@ -366,9 +368,25 @@ public class ImageDecoderTest {
         }
     }
 
+    private Collection<Object[]> paramsForTestSetAllocatorDecodeBitmap() {
+        boolean[] trueFalse = new boolean[] { true, false };
+        List<Object[]> temp = new ArrayList<>();
+        for (Object record : getRecords()) {
+            for (int allocator : ALLOCATORS) {
+                for (boolean doCrop : trueFalse) {
+                    for (boolean doScale : trueFalse) {
+                        temp.add(new Object[]{record, allocator, doCrop, doScale});
+                    }
+                }
+            }
+        }
+        return temp;
+    }
+
     @Test
-    @Parameters(method = "getRecords")
-    public void testSetAllocatorDecodeBitmap(Record record) {
+    @Parameters(method = "paramsForTestSetAllocatorDecodeBitmap")
+    public void testSetAllocatorDecodeBitmap(Record record, int allocator, boolean doCrop,
+                                             boolean doScale) {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public int allocator;
             public boolean doCrop;
@@ -388,51 +406,44 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
 
-        boolean trueFalse[] = new boolean[] { true, false };
         Resources res = getResources();
         ImageDecoder.Source src = ImageDecoder.createSource(res, record.resId);
         assertNotNull(src);
-        for (int allocator : ALLOCATORS) {
-            for (boolean doCrop : trueFalse) {
-                for (boolean doScale : trueFalse) {
-                    l.doCrop = doCrop;
-                    l.doScale = doScale;
-                    l.allocator = allocator;
+        l.doCrop = doCrop;
+        l.doScale = doScale;
+        l.allocator = allocator;
 
-                    Bitmap bm = null;
-                    try {
-                        bm = ImageDecoder.decodeBitmap(src, l);
-                    } catch (IOException e) {
-                        fail("Failed " + Utils.getAsResourceUri(record.resId)
-                                + " with exception " + e);
-                    }
-                    assertNotNull(bm);
+        Bitmap bm = null;
+        try {
+            bm = ImageDecoder.decodeBitmap(src, l);
+        } catch (IOException e) {
+            fail("Failed " + Utils.getAsResourceUri(record.resId)
+                    + " with exception " + e);
+        }
+        assertNotNull(bm);
 
-                    switch (allocator) {
-                        case ImageDecoder.ALLOCATOR_SOFTWARE:
-                        // TODO: Once Bitmap provides access to its
-                        // SharedMemory, confirm that ALLOCATOR_SHARED_MEMORY
-                        // worked.
-                        case ImageDecoder.ALLOCATOR_SHARED_MEMORY:
-                            assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
+        switch (allocator) {
+            case ImageDecoder.ALLOCATOR_SOFTWARE:
+            // TODO: Once Bitmap provides access to its
+            // SharedMemory, confirm that ALLOCATOR_SHARED_MEMORY
+            // worked.
+            case ImageDecoder.ALLOCATOR_SHARED_MEMORY:
+                assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
 
-                            if (!doScale && !doCrop) {
-                                BitmapFactory.Options options = new BitmapFactory.Options();
-                                options.inScaled = false;
-                                Bitmap reference = BitmapFactory.decodeResource(res,
-                                        record.resId, options);
-                                assertNotNull(reference);
-                                assertTrue(BitmapUtils.compareBitmaps(bm, reference));
-                            }
-                            break;
-                        default:
-                            String name = Utils.getAsResourceUri(record.resId).toString();
-                            assertEquals("image " + name + "; allocator: " + allocator,
-                                         Bitmap.Config.HARDWARE, bm.getConfig());
-                            break;
-                    }
+                if (!doScale && !doCrop) {
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inScaled = false;
+                    Bitmap reference = BitmapFactory.decodeResource(res,
+                            record.resId, options);
+                    assertNotNull(reference);
+                    assertTrue(BitmapUtils.compareBitmaps(bm, reference));
                 }
-            }
+                break;
+            default:
+                String name = Utils.getAsResourceUri(record.resId).toString();
+                assertEquals("image " + name + "; allocator: " + allocator,
+                             Bitmap.Config.HARDWARE, bm.getConfig());
+                break;
         }
     }
 
