@@ -699,7 +699,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
      */
     private void setDefaultLauncher(String launcherComponent) throws DeviceNotAvailableException {
         assertThat(launcherComponent).isNotEmpty();
-        getDevice().executeShellCommand("cmd package set-home-activity " + launcherComponent);
+        int user = getDevice().getCurrentUser();
+        getDevice().executeShellCommand(
+                "cmd package set-home-activity --user " + user + " " + launcherComponent);
     }
 
     private static final class FailedTestLogHook extends TestWatcher {
