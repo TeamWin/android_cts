@@ -416,11 +416,13 @@ public class ImageDecoderTest {
         assertNotNull(bm);
 
         switch (allocator) {
-            case ImageDecoder.ALLOCATOR_SOFTWARE:
-            // TODO: Once Bitmap provides access to its
-            // SharedMemory, confirm that ALLOCATOR_SHARED_MEMORY
-            // worked.
             case ImageDecoder.ALLOCATOR_SHARED_MEMORY:
+                // For a Bitmap backed by shared memory, asShared will return
+                // the same Bitmap.
+                assertSame(bm, bm.asShared());
+
+                // fallthrough
+            case ImageDecoder.ALLOCATOR_SOFTWARE:
                 assertNotEquals(Bitmap.Config.HARDWARE, bm.getConfig());
 
                 if (!doScale && !doCrop) {
