@@ -24,6 +24,7 @@ import android.car.Car;
 import android.car.content.pm.CarPackageManager;
 import android.content.Intent;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 
@@ -35,6 +36,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant apps cannot see other packages")
 public class CarPackageManagerTest extends CarApiTestBase {
 
     private CarPackageManager mCarPm;

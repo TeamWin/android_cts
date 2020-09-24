@@ -23,6 +23,7 @@ import android.car.EvConnectorType;
 import android.car.FuelType;
 import android.car.PortLocationType;
 import android.car.VehicleAreaSeat;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 
@@ -38,6 +39,7 @@ import java.util.List;
 @SmallTest
 @RequiresDevice
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant apps cannot get car related permissions.")
 public class CarInfoManagerTest extends CarApiTestBase {
 
     private CarInfoManager mCarInfoManager;
