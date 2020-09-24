@@ -81,4 +81,13 @@ public class TextPaintTest extends AndroidTestCase {
         } catch (NullPointerException e) {
         }
     }
+
+    // b/169080922
+    public void testInfinityTextSize_doesntCrash() {
+        Paint paint = new Paint();
+        paint.setTextSize(Float.POSITIVE_INFINITY);
+
+        // Making sure following measureText is not crashing
+        paint.measureText("Hello \uD83D\uDC4B");  // Latin characters and emoji
+    }
 }
