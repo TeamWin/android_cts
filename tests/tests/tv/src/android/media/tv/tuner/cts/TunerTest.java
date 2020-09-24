@@ -29,6 +29,7 @@ import android.media.tv.tuner.Descrambler;
 import android.media.tv.tuner.LnbCallback;
 import android.media.tv.tuner.Lnb;
 import android.media.tv.tuner.Tuner;
+import android.media.tv.tuner.TunerVersionChecker;
 import android.media.tv.tuner.dvr.DvrPlayback;
 import android.media.tv.tuner.dvr.DvrRecorder;
 import android.media.tv.tuner.dvr.OnPlaybackStatusChangedListener;
@@ -127,6 +128,15 @@ public class TunerTest {
     public void testTunerConstructor() throws Exception {
         if (!hasTuner()) return;
         assertNotNull(mTuner);
+    }
+
+    @Test
+    public void testTunerVersion() {
+        if (!hasTuner()) return;
+        assertNotNull(mTuner);
+        int version = TunerVersionChecker.getTunerVersion();
+        assertTrue(version >= TunerVersionChecker.TUNER_VERSION_1_0);
+        assertTrue(version <= TunerVersionChecker.TUNER_VERSION_1_1);
     }
 
     @Test
