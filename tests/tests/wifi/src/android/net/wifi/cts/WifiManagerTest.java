@@ -59,6 +59,7 @@ import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.ProvisioningCallback;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
@@ -3031,5 +3032,59 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
         }
         return null;
+    }
+
+    /**
+     * Test that {@link WifiManager#is60GHzBandSupported()} throws UnsupportedOperationException
+     * if the release is older than S.
+     */
+    // TODO(b/167575586): Wait for S SDK finalization before changing
+    // to `maxSdkVersion = Build.VERSION_CODES.R`
+    @SdkSuppress(maxSdkVersion = -1, codeName = "REL")
+    public void testIs60GhzBandSupportedOnROrOlder() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        // check for 60ghz support with wifi enabled
+        try {
+            boolean isSupported = mWifiManager.is60GHzBandSupported();
+            fail("Expected UnsupportedOperationException");
+        } catch (UnsupportedOperationException ex) {
+        }
+
+    }
+
+    /**
+     * Test that {@link WifiManager#is60GHzBandSupported()} returns successfully in
+     * both Wifi enabled/disabled states for release newer than R.
+     * Note that the response depends on device support and hence both true/false
+     * are valid responses.
+     */
+    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testIs60GhzBandSupportedOnSOrNewer() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        // check for 60ghz support with wifi enabled
+        boolean isSupportedWhenWifiEnabled = mWifiManager.is60GHzBandSupported();
+
+        // Check for 60GHz support with wifi disabled
+        setWifiEnabled(false);
+        PollingCheck.check(
+                "Wifi not disabled!",
+                20000,
+                () -> !mWifiManager.isWifiEnabled());
+        boolean isSupportedWhenWifiDisabled = mWifiManager.is60GHzBandSupported();
+
+        // If Support is true when WiFi is disable, then it has to be true when it is enabled.
+        // Note, the reverse is a valid case.
+        if (isSupportedWhenWifiDisabled) {
+            assertTrue(isSupportedWhenWifiEnabled);
+        }
     }
 }
