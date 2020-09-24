@@ -28,6 +28,7 @@ import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.CarPropertyManager.CarPropertyEventCallback;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.ArraySet;
@@ -51,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 @RequiresDevice
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant apps cannot get car related permissions.")
 public class CarPropertyManagerTest extends CarApiTestBase {
 
     private static final String TAG = CarPropertyManagerTest.class.getSimpleName();
