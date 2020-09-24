@@ -64,9 +64,7 @@ public abstract class CarApiTestBase {
     }
 
     protected void setUp() throws Exception {
-        mCar = Car.createCar(sContext, mConnectionListener, null);
-        mCar.connect();
-        mConnectionListener.waitForConnection(DEFAULT_WAIT_TIMEOUT_MS);
+        mCar = Car.createCar(sContext);
     }
 
     @After
