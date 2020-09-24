@@ -180,6 +180,12 @@ public class MultiUserTest extends BaseHostJUnit4Test {
 
         switchUser(primaryUserId);
 
+        // For devices that have config_multiuserDelayUserDataLocking set to true, the
+        // secondaryUserId will be stopped after switching to the primaryUserId. This means that
+        // the InputMethodManager can no longer query for the Input Method Services since they have
+        // all been stopped.
+        getDevice().startUser(secondaryUserId, true /* waitFlag */);
+
         assertIme1NotExistInApiResult(primaryUserId);
         assertIme1ExistsInApiResult(secondaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
