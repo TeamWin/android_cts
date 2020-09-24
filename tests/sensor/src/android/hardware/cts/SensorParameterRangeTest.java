@@ -56,7 +56,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
     private static final double GYRO_HIFI_MAX_FREQUENCY_BEFORE_N = 200.0;
 
     private static final double MAGNETOMETER_MAX_RANGE = 900.0;   // micro telsa
-    private static final double MAGNETOMETER_MAX_FREQUENCY = 50.0;
+    private static final double MAGNETOMETER_MAX_FREQUENCY = 10.0;
     private static final double MAGNETOMETER_HIFI_MAX_RANGE = 900.0;   // micro telsa
     private static final double MAGNETOMETER_HIFI_MIN_FREQUENCY = 5.0;
     private static final double MAGNETOMETER_HIFI_MAX_FREQUENCY = 50.0;
