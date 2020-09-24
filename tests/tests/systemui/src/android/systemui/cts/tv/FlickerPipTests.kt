@@ -30,8 +30,11 @@ import android.systemui.tv.cts.KeyboardActivity.ACTION_SHOW_KEYBOARD
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
 import android.systemui.tv.cts.ResourceNames.WINDOW_NAME_INPUT_METHOD
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.cts.mockime.ImeSettings
+import com.android.cts.mockime.MockImeSessionRule
 import com.android.server.wm.flicker.dsl.FlickerBuilder
 import com.android.server.wm.flicker.dsl.runWithFlicker
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -45,6 +48,14 @@ import org.junit.runner.RunWith
 @Group2
 @RunWith(AndroidJUnit4::class)
 class FlickerPipTests : PipTestBase() {
+
+    @get:Rule
+    val rule = MockImeSessionRule(
+        context,
+        instrumentation.uiAutomation,
+        ImeSettings.Builder()
+            .setInputViewHeight(windowManager.maximumWindowMetrics.bounds.height() / 3)
+    )
 
     private val testRepetitions = 10
 
