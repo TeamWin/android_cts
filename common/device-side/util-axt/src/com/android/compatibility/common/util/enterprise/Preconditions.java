@@ -19,6 +19,8 @@ package com.android.compatibility.common.util.enterprise;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
+import android.os.Bundle;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -44,9 +46,13 @@ public final class Preconditions implements TestRule {
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
     private final DeviceState mDeviceState;
+    private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
+    private final boolean mSkipTestTeardown;
 
     public Preconditions(DeviceState deviceState) {
         mDeviceState = deviceState;
+        Bundle arguments = InstrumentationRegistry.getArguments();
+        mSkipTestTeardown = Boolean.parseBoolean(arguments.getString(SKIP_TEST_TEARDOWN_KEY, "false"));
     }
 
     @Override public Statement apply(final Statement base,
@@ -89,8 +95,11 @@ public final class Preconditions implements TestRule {
                 }
 
                 base.evaluate();
-            }
-        };
+
+                if (!mSkipTestTeardown) {
+                    mDeviceState.teardown();
+                }
+        }};
     }
 
     private void requireFeature(String feature) {
