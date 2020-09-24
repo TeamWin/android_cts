@@ -16,6 +16,7 @@
 
 package android.view.inputmethod.cts;
 
+import static android.content.Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS;
 import static android.view.View.VISIBLE;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
@@ -24,6 +25,8 @@ import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.ex
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
@@ -34,11 +37,17 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.AlertDialog;
 import android.app.Instrumentation;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import android.support.test.uiautomator.UiObject2;
 import android.text.TextUtils;
 import android.util.Pair;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowInsetsController;
@@ -55,9 +64,14 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.Until;
 
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -77,6 +91,18 @@ import java.util.function.Predicate;
 public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
+
+    private static final ComponentName TEST_ACTIVITY = new ComponentName(
+            "android.view.inputmethod.ctstestapp",
+            "android.view.inputmethod.ctstestapp.MainActivity");
+    private static final Uri TEST_ACTIVITY_URI =
+            Uri.parse("https://example.com/android/view/inputmethod/ctstestapp");
+    private static final String EXTRA_KEY_SHOW_DIALOG =
+            "android.view.inputmethod.ctstestapp.EXTRA_KEY_SHOW_DIALOG";
+
+    private static final String ACTION_TRIGGER = "broadcast_action_trigger";
+    private static final String EXTRA_DISMISS_DIALOG = "extra_dismiss_dialog";
+    private static final int NEW_KEYBOARD_HEIGHT = 400;
 
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
@@ -473,6 +499,118 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
             expectImeInvisible(TIMEOUT);
         }
+    }
+
+    @AppModeFull
+    @Test
+    public void testImeVisibilityWhenImeTransitionBetweenActivities_Full() throws Exception {
+        runImeVisibilityWhenImeTransitionBetweenActivities(false /* instant */);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testImeVisibilityWhenImeTransitionBetweenActivities_Instant() throws Exception {
+        runImeVisibilityWhenImeTransitionBetweenActivities(true /* instant */);
+    }
+
+    private void runImeVisibilityWhenImeTransitionBetweenActivities(boolean instant)
+            throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder()
+                        .setInputViewHeight(NEW_KEYBOARD_HEIGHT)
+                        .setDrawsBehindNavBar(true))) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+
+            AtomicReference<EditText> editTextRef = new AtomicReference<>();
+            // Launch test activity with focusing editor
+            final TestActivity testActivity =
+                    TestActivity.startSync(activity -> {
+                        final LinearLayout layout = new LinearLayout(activity);
+                        layout.setOrientation(LinearLayout.VERTICAL);
+                        layout.setGravity(Gravity.BOTTOM);
+                        final EditText editText = new EditText(activity);
+                        editTextRef.set(editText);
+                        editText.setHint("focused editText");
+                        editText.setPrivateImeOptions(marker);
+                        editText.requestFocus();
+                        layout.addView(editText);
+                        activity.getWindow().getDecorView().setFitsSystemWindows(true);
+                        activity.getWindow().getDecorView().getWindowInsetsController().show(ime());
+                        return layout;
+                    });
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.VISIBLE, TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Launcher another test activity from another process with popup dialog.
+            launchRemoteDialogActivitySync(TEST_ACTIVITY, instant, TIMEOUT);
+            // Dismiss dialog and back to original test activity
+            triggerActionWithBroadcast(ACTION_TRIGGER, TEST_ACTIVITY.getPackageName(),
+                    EXTRA_DISMISS_DIALOG);
+
+            // Verify keyboard visibility should aligned with IME insets visibility.
+            TestUtils.waitOnMainUntil(
+                    () -> testActivity.getWindow().getDecorView().getVisibility() == VISIBLE
+                            && testActivity.getWindow().getDecorView().hasWindowFocus(), TIMEOUT);
+
+            AtomicReference<Boolean> imeInsetsVisible = new AtomicReference<>();
+            TestUtils.runOnMainSync(() ->
+                    imeInsetsVisible.set(editTextRef.get().getRootWindowInsets().isVisible(ime())));
+
+            if (imeInsetsVisible.get()) {
+                expectImeVisible(TIMEOUT);
+            } else {
+                expectImeInvisible(TIMEOUT);
+            }
+        }
+    }
+
+    private void launchRemoteDialogActivitySync(ComponentName componentName, boolean instant,
+            long timeout) {
+        final StringBuilder commandBuilder = new StringBuilder();
+        if (instant) {
+            final Uri uri = formatStringIntentParam(
+                    TEST_ACTIVITY_URI, EXTRA_KEY_SHOW_DIALOG, "true");
+            commandBuilder.append(String.format("am start -a %s -c %s %s",
+                    Intent.ACTION_VIEW, Intent.CATEGORY_BROWSABLE, uri.toString()));
+        } else {
+            commandBuilder.append("am start -n ").append(componentName.flattenToShortString());
+        }
+
+        runWithShellPermissionIdentity(() -> {
+            runShellCommand(commandBuilder.toString());
+        });
+        UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        BySelector activitySelector = By.pkg(componentName.getPackageName()).depth(0);
+        uiDevice.wait(Until.hasObject(activitySelector), timeout);
+        assertNotNull(uiDevice.findObject(activitySelector));
+    }
+
+    @NonNull
+    private static Uri formatStringIntentParam(@NonNull Uri uri, @NonNull String key,
+            @Nullable String value) {
+        if (value == null) {
+            return uri;
+        }
+        return uri.buildUpon().appendQueryParameter(key, value).build();
+    }
+
+    private void triggerActionWithBroadcast(String action, String receiverPackage, String extra) {
+        final StringBuilder commandBuilder = new StringBuilder();
+        commandBuilder.append("am broadcast -a ").append(action).append(" -p ").append(
+                receiverPackage);
+        commandBuilder.append(" -f 0x").append(
+                Integer.toHexString(FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS));
+        commandBuilder.append(" --ez " + extra + " true");
+        runWithShellPermissionIdentity(() -> {
+            runShellCommand(commandBuilder.toString());
+        });
     }
 
     private static ImeSettings.Builder getFloatingImeSettings(@ColorInt int navigationBarColor) {

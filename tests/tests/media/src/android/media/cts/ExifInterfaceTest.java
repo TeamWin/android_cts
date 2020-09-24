@@ -79,6 +79,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
             "webp_lossless_without_exif.webp";
     private static final String PNG_WITH_EXIF_BYTE_ORDER_II = "png_with_exif_byte_order_ii.png";
     private static final String PNG_WITHOUT_EXIF = "png_without_exif.png";
+    private static final String JPEG_WITH_DATETIME_TAG = "jpeg_with_datetime_tag.jpg";
 
     private static final String[] EXIF_TAGS = {
             ExifInterface.TAG_MAKE,
@@ -743,16 +744,21 @@ public class ExifInterfaceTest extends AndroidTestCase {
         writeToFilesWithoutExif(WEBP_WITHOUT_EXIF_WITH_LOSSLESS_ENCODING);
     }
 
-    public void testSetDateTime() throws IOException {
+    public void testGetSetDateTime() throws IOException {
+        final long expectedDatetimeValue = 1454059947000L;
         final String dateTimeValue = "2017:02:02 22:22:22";
         final String dateTimeOriginalValue = "2017:01:01 11:11:11";
 
-        File srcFile = new File(Environment.getExternalStorageDirectory(),
-                EXTERNAL_BASE_DIRECTORY + JPEG_WITH_EXIF_BYTE_ORDER_II);
-        File imageFile = clone(srcFile);
+        File imageFile = new File(Environment.getExternalStorageDirectory(),
+                EXTERNAL_BASE_DIRECTORY + JPEG_WITH_DATETIME_TAG);
+        stageFile(R.raw.jpeg_with_datetime_tag, imageFile);
 
-        FileUtils.copyFileOrThrow(srcFile, imageFile);
         ExifInterface exif = new ExifInterface(imageFile.getAbsolutePath());
+        assertEquals(expectedDatetimeValue, exif.getDateTime());
+        assertEquals(expectedDatetimeValue, exif.getDateTimeOriginal());
+        assertEquals(expectedDatetimeValue, exif.getDateTimeDigitized());
+        assertEquals(expectedDatetimeValue, exif.getGpsDateTime());
+
         exif.setAttribute(ExifInterface.TAG_DATETIME, dateTimeValue);
         exif.setAttribute(ExifInterface.TAG_DATETIME_ORIGINAL, dateTimeOriginalValue);
         exif.saveAttributes();
