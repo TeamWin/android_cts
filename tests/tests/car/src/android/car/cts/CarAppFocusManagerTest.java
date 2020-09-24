@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 import android.car.Car;
 import android.car.CarAppFocusManager;
 import android.content.Context;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
@@ -124,6 +125,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         mManager.removeFocusListener(listener2);
     }
 
+    @AppModeFull(reason = "Test relies on other server to connect to.")
     @Test
     public void testFocusChange() throws Exception {
         DefaultServiceConnectionListener connectionListener =
@@ -237,6 +239,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
     }
 
+    @AppModeFull(reason = "Test relies on other server to connect to.")
     @Test
     public void testFilter() throws Exception {
         DefaultServiceConnectionListener connectionListener =
