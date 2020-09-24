@@ -40,6 +40,7 @@ import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UiAutomatorUtils
@@ -92,18 +93,18 @@ class AutoRevokeTest {
     fun setup() {
         // Kill Permission Controller
         assertThat(
-                runShellCommand("killall " +
+                runShellCommandOrThrow("killall " +
                         context.packageManager.permissionControllerPackageName),
                 equalTo(""))
 
         // Collapse notifications
         assertThat(
-                runShellCommand("cmd statusbar collapse"),
+                runShellCommandOrThrow("cmd statusbar collapse"),
                 equalTo(""))
 
         // Wake up the device
-        runShellCommand("input keyevent KEYCODE_WAKEUP")
-        runShellCommand("input keyevent 82")
+        runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
+        runShellCommandOrThrow("input keyevent 82")
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
@@ -127,7 +128,7 @@ class AutoRevokeTest {
                 eventually {
                     assertPermission(PERMISSION_DENIED)
                 }
-                runShellCommand("cmd statusbar expand-notifications")
+                runShellCommandOrThrow("cmd statusbar expand-notifications")
                 waitFindObject(By.textContains("unused app"))
                         .click()
                 waitFindObject(By.text(APK_PACKAGE_NAME))
@@ -293,8 +294,10 @@ class AutoRevokeTest {
         // Sometimes first run observes stale package data
         // so run twice to prevent that
         repeat(2) {
-            runShellCommand("cmd jobscheduler run -u 0 " +
+            eventually {
+                runShellCommandOrThrow("cmd jobscheduler run -u 0 " +
                     "-f ${context.packageManager.permissionControllerPackageName} 2")
+            }
         }
     }
 
@@ -325,24 +328,25 @@ class AutoRevokeTest {
     }
 
     private fun installApp(apk: String = APK_PATH) {
-        assertThat(runShellCommand("pm install -r $apk"), containsString("Success"))
+        assertThat(runShellCommandOrThrow("pm install -r $apk"), containsString("Success"))
     }
 
     private fun uninstallApp(packageName: String = APK_PACKAGE_NAME) {
-        assertThat(runShellCommand("pm uninstall $packageName"), containsString("Success"))
+        assertThat(runShellCommandOrThrow("pm uninstall $packageName"), containsString("Success"))
     }
 
     private fun startApp(packageName: String = APK_PACKAGE_NAME) {
+        // Don't throw on stderr - command may print a warning if app already running
         runShellCommand("am start -n $packageName/$packageName.MainActivity")
         awaitAppState(packageName, lessThanOrEqualTo(IMPORTANCE_TOP_SLEEPING))
     }
 
     private fun goHome() {
-        runShellCommand("input keyevent KEYCODE_HOME")
+        runShellCommandOrThrow("input keyevent KEYCODE_HOME")
     }
 
     private fun goBack() {
-        runShellCommand("input keyevent KEYCODE_BACK")
+        runShellCommandOrThrow("input keyevent KEYCODE_BACK")
     }
 
     private fun killDummyApp(pkg: String = APK_PACKAGE_NAME) {
