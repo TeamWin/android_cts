@@ -681,6 +681,7 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         }
     }
 
+    @AppModeFull(reason = "Instant app cannot get package installer service")
     public void testCannotSamegradeStaticSharedLibByInstaller() throws Exception {
         runDeviceTests("android.os.lib.app",
                 "android.os.lib.app.StaticSharedLibsTests",
