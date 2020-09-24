@@ -220,6 +220,26 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         }
     }
 
+    @Test
+    public void testStartActivityOnKeyguardLocked() {
+        assumeTrue(supportsLockScreen());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.setLockCredential();
+        try (DreamingState state = new DreamingState(TEST_DREAM_SERVICE)) {
+            launchActivityNoWait(Components.TEST_ACTIVITY);
+            waitAndAssertActivityState(Components.TEST_ACTIVITY, STATE_STOPPED,
+                "Activity must be started and stopped");
+            assertTrue(getIsDreaming());
+
+            launchActivity(Components.TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
+            state.waitForDreamGone();
+            waitAndAssertTopResumedActivity(Components.TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY,
+                    DEFAULT_DISPLAY, "TurnScreenOnShowOnLockActivity should resume through dream");
+            assertFalse(getIsDreaming());
+        }
+    }
+
     private class DreamingState implements AutoCloseable {
         public DreamingState(ComponentName dream) {
             setActiveDream(dream);
