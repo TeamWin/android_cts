@@ -791,8 +791,9 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     }
 
     private void assertOrganizationOwnedProfileOwnerMessage(String message) {
-        assertTrue("message is: "+ message,
-                message.contains("Calling identity is not authorized"));
+        assertTrue("message is: " + message, message.contains(
+                "is not the profile owner on organization-owned device")
+                || message.contains("Calling identity is not authorized"));
     }
 
     private void assertDeviceOwnerOrManageUsersMessage(String message) {
