@@ -21,6 +21,7 @@ cc_library_shared {
     ],
     srcs: [
         "file_descriptor_ndk_test.cpp",
+        "jni_invocation_api_ndk_test.cpp",
         "libnativehelper_test.cpp",
     ],
     shared_libs: [
