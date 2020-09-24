@@ -56,7 +56,6 @@ public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
         assertFalse(mDevicePolicyManager.isSecondaryLockscreenEnabled(Process.myUserHandle()));
         mDevicePolicyManager.setSecondaryLockscreenEnabled(ADMIN_RECEIVER_COMPONENT, true);
         assertTrue(mDevicePolicyManager.isSecondaryLockscreenEnabled(Process.myUserHandle()));
-        Log.d(TAG, "isSecondaryLockscreenEnabled = true");
     }
 
     @After
@@ -66,7 +65,6 @@ public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.setSecondaryLockscreenEnabled(ADMIN_RECEIVER_COMPONENT, false);
         assertFalse(mDevicePolicyManager.isSecondaryLockscreenEnabled(Process.myUserHandle()));
         runShellCommand("locksettings clear --old 1234");
-        Log.d(TAG, "isSecondaryLockscreenEnabled = false");
     }
 
     public void testSetSecondaryLockscreenEnabled() throws Exception {
