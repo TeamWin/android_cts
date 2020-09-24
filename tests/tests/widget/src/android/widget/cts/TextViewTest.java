@@ -323,6 +323,90 @@ public class TextViewTest {
     }
 
     @Test
+    public void testForceBoldText_textIsBolded() throws Throwable {
+        mActivityRule.runOnUiThread(() -> mTextView = findTextView(R.id.textview_text));
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(400, mTextView.getTypeface().getWeight());
+
+        Configuration cf = new Configuration();
+        cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_YES;
+        mActivityRule.runOnUiThread(() -> mTextView.dispatchConfigurationChanged(cf));
+        mInstrumentation.waitForIdleSync();
+
+        Typeface forceBoldedPaintTf = mTextView.getPaint().getTypeface();
+        assertEquals(700, forceBoldedPaintTf.getWeight());
+        assertEquals(400, mTextView.getTypeface().getWeight());
+    }
+
+    @Test
+    public void testForceBoldText_textIsUnbolded() throws Throwable {
+        Configuration cf = new Configuration();
+        cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_YES;
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            mTextView.dispatchConfigurationChanged(cf);
+            cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_NO;
+            mTextView.dispatchConfigurationChanged(cf);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        Typeface forceUnboldedPaintTf = mTextView.getPaint().getTypeface();
+        assertEquals(400, forceUnboldedPaintTf.getWeight());
+        assertEquals(400, mTextView.getTypeface().getWeight());
+    }
+
+    @Test
+    public void testForceBoldText_originalTypefaceKeptWhenEnabled() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_YES;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(Typeface.MONOSPACE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Typeface.MONOSPACE, mTextView.getTypeface());
+
+        Typeface forceBoldedPaintTf = mTextView.getPaint().getTypeface();
+        assertTrue(forceBoldedPaintTf.isBold());
+        assertEquals(Typeface.create(Typeface.MONOSPACE, 700, false), forceBoldedPaintTf);
+    }
+
+
+    @Test
+    public void testForceBoldText_originalTypefaceIsKeptWhenDisabled() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_NO;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(Typeface.MONOSPACE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Typeface.MONOSPACE, mTextView.getTypeface());
+        assertEquals(Typeface.MONOSPACE, mTextView.getPaint().getTypeface());
+    }
+
+    @Test
+    public void testForceBoldText_boldTypefaceIsBoldedWhenEnabled() throws Throwable {
+        Typeface originalTypeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD);
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_YES;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(originalTypeface);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(originalTypeface, mTextView.getTypeface());
+        assertEquals(1000, mTextView.getPaint().getTypeface().getWeight());
+    }
+
+    @Test
     public void testAccessMovementMethod() throws Throwable {
         final CharSequence LONG_TEXT = "Scrolls the specified widget to the specified "
                 + "coordinates, except constrains the X scrolling position to the horizontal "
