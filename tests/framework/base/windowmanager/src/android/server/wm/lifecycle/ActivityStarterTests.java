@@ -35,6 +35,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -148,6 +149,34 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 .setUseInstrumentation().execute();
         waitAndAssertActivityState(NO_HISTORY_ACTIVITY, STATE_RESUMED,
             "Activity should be resumed");
+    }
+
+    /**
+     * This test case tests the behavior for a "no-history" activity after turning the screen off.
+     * The no-history activity must be resumed over lockscreen when launched again.
+     */
+    @Test
+    public void testNoHistoryActivityNotFinished() {
+        assumeTrue(supportsLockScreen());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        // Launch a no-history activity
+        getLaunchActivityBuilder().setTargetActivity(NO_HISTORY_ACTIVITY)
+                .setIntentExtra(extra -> extra.putBoolean(
+                        Components.NoHistoryActivity.EXTRA_SHOW_WHEN_LOCKED, true))
+                .setUseInstrumentation().execute();
+
+        // Wait for the activity resumed.
+        mWmState.waitForActivityState(NO_HISTORY_ACTIVITY, STATE_RESUMED);
+
+        lockScreenSession.sleepDevice();
+
+        // Launch a no-history activity
+        launchActivity(NO_HISTORY_ACTIVITY);
+
+        // Wait for the activity resumed
+        waitAndAssertActivityState(NO_HISTORY_ACTIVITY, STATE_RESUMED,
+                "Activity must be resumed");
     }
 
     /**
