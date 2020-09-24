@@ -298,9 +298,6 @@ public class ScanResultTest extends WifiJUnit3TestBase {
         assertThat(scanResult2.timestamp).isEqualTo(TEST_TIMESTAMP);
     }
 
-    // TODO(b/168340859): re-enable once we figure out why it takes > 1 min to complete on virtual
-    //  devices.
-    @VirtualDeviceNotSupported
     public void testScanResultMatchesWifiInfo() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
