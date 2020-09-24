@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_DREAM;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
@@ -760,6 +761,14 @@ public class WindowManagerState {
             return null;
         }
         return ComponentName.unflattenFromString(activity.name);
+    }
+
+    ActivityTask getDreamTask() {
+        final ActivityTask dreamStack = getStackByActivityType(ACTIVITY_TYPE_DREAM);
+        if (dreamStack != null) {
+            return dreamStack.getTopTask();
+        }
+        return null;
     }
 
     ActivityTask getHomeTask() {
