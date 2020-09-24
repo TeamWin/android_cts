@@ -55,7 +55,9 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         final BatteryStatsServiceDumpProto dump = getDump(BatteryStatsServiceDumpProto.parser(),
                 "dumpsys batterystats --proto");
 
-        verifyBatteryStatsServiceDumpProto(dump, PRIVACY_NONE);
+        if (BatteryIncidentTest.hasBattery(getDevice())) {
+            verifyBatteryStatsServiceDumpProto(dump, PRIVACY_NONE);
+        }
 
         batteryOffScreenOn();
     }
