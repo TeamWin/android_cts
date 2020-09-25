@@ -69,7 +69,7 @@ class PipNotificationTests : PipTestBase() {
 
     @After
     fun tearDown() {
-        stopPackage(PIP_ACTIVITY)
+        stopPackage(PIP_ACTIVITY.packageName)
         toggleListenerAccess(allow = false)
     }
 
