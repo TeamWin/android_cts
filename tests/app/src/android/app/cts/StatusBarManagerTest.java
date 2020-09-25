@@ -18,22 +18,20 @@ package android.app.cts;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import android.Manifest;
 import android.app.StatusBarManager;
 import android.app.StatusBarManager.DisableInfo;
 import android.content.Context;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
@@ -99,7 +97,7 @@ public class StatusBarManagerTest {
 
     @Test
     public void testDisableForSimLock_setDisabledTrue() throws Exception {
-        mStatusBarManager.setDisabledForSimNetworkLock(true);
+        mStatusBarManager.setExpansionDisabledForSimNetworkLock(true);
 
         // Check for the default set of disable flags
         assertTrue(mStatusBarManager.getDisableInfo().isStatusBarExpansionDisabled());
@@ -108,8 +106,8 @@ public class StatusBarManagerTest {
     @Test
     public void testDisableForSimLock_setDisabledFalse() throws Exception {
         // First disable, then re-enable
-        mStatusBarManager.setDisabledForSimNetworkLock(true);
-        mStatusBarManager.setDisabledForSimNetworkLock(false);
+        mStatusBarManager.setExpansionDisabledForSimNetworkLock(true);
+        mStatusBarManager.setExpansionDisabledForSimNetworkLock(false);
 
         DisableInfo info = mStatusBarManager.getDisableInfo();
         assertTrue("Invalid disableFlags", info.areAllComponentsEnabled());

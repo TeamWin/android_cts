@@ -460,6 +460,29 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     /**
+     * Asserts that a no-history activity is not stopped and removed after a translucent activity
+     * above becomes resumed.
+     */
+    @Test
+    public void testNoHistoryActivityNotFinishedBehindTranslucentActivity() {
+        // Launch a no-history activity
+        launchActivity(NO_HISTORY_ACTIVITY);
+
+        // Launch a translucent activity
+        launchActivity(TRANSLUCENT_ACTIVITY);
+
+        // Wait for the activity resumed
+        mWmState.waitForActivityState(TRANSLUCENT_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(NO_HISTORY_ACTIVITY, true);
+
+        pressBackButton();
+
+        // Wait for the activity resumed
+        mWmState.waitForActivityState(NO_HISTORY_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(NO_HISTORY_ACTIVITY, true);
+    }
+
+    /**
      *  If the next activity hasn't reported idle but it has drawn and the transition has done, the
      *  previous activity should be stopped and invisible without waiting for idle timeout.
      */
