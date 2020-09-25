@@ -65,6 +65,7 @@ import static android.scopedstorage.cts.lib.TestUtils.getFileOwnerPackageFromDat
 import static android.scopedstorage.cts.lib.TestUtils.getFileRowIdFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getFileSizeFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getFileUri;
+import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
 import static android.scopedstorage.cts.lib.TestUtils.getMoviesDir;
 import static android.scopedstorage.cts.lib.TestUtils.getMusicDir;
 import static android.scopedstorage.cts.lib.TestUtils.getNotificationsDir;
@@ -1844,6 +1845,42 @@ public class ScopedStorageTest {
             imageFile.delete();
             videoFile.delete();
             directoryNoMedia.delete();
+        }
+    }
+
+    /**
+     * b/168830497: Test that app can write to file in DCIM/Camera even with .nomedia presence
+     */
+    @Test
+    public void testCanWriteToDCIMCameraWithNomedia() throws Exception {
+        final File cameraDir = new File(getDcimDir(), "Camera");
+        final File nomediaFile = new File(cameraDir, ".nomedia");
+        Uri targetUri = null;
+
+        try {
+            if (!cameraDir.exists()) {
+                assertTrue(cameraDir.mkdirs());
+            }
+            if (!nomediaFile.exists()) {
+                executeShellCommand("touch " + nomediaFile.getAbsolutePath());
+                assertTrue(nomediaFile.exists());
+            }
+
+            ContentValues values = new ContentValues();
+            values.put(MediaColumns.RELATIVE_PATH, "DCIM/Camera");
+            targetUri = getContentResolver().insert(getImageContentUri(), values, Bundle.EMPTY);
+            assertNotNull(targetUri);
+
+            try (ParcelFileDescriptor pfd =
+                         getContentResolver().openFileDescriptor(targetUri, "w")) {
+                assertThat(pfd).isNotNull();
+                Os.write(pfd.getFileDescriptor(), ByteBuffer.wrap(BYTES_DATA1));
+            }
+
+            assertFileContent(new File(getFilePathFromUri(targetUri)), BYTES_DATA1);
+        } finally {
+            deleteWithMediaProviderNoThrow(targetUri);
+            executeShellCommand("rm " + nomediaFile.getAbsolutePath());
         }
     }
 
