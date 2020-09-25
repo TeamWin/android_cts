@@ -22,7 +22,6 @@ android_test_import {
     test_suites: [
         "cts",
         "general-tests",
-        "cts-instant",
     ],
     // Make sure the build system doesn't try to resign the APK
     presigned: true,
