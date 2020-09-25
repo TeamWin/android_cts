@@ -610,15 +610,15 @@ public class WindowManagerState {
         return -1;
     }
 
-    /** Get the stack position on its display. */
-    int getStackIndexByActivity(ComponentName activityName) {
+    /** Get the stack on its display. */
+    ActivityTask getStackByActivity(ComponentName activityName) {
         for (DisplayContent display : mDisplays) {
             for (int i = display.mRootTasks.size() - 1; i >= 0; --i) {
                 final ActivityTask stack = display.mRootTasks.get(i);
-                if (stack.containsActivity(activityName)) return i;
+                if (stack.containsActivity(activityName)) return stack;
             }
         }
-        return -1;
+        return null;
     }
 
     /** Get display id by activity on it. */
