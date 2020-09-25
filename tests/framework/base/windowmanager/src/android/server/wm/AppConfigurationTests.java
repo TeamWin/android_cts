@@ -40,6 +40,7 @@ import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_APP_CONFIG_INFO;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_CONFIG_INFO_IN_ON_CREATE;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_DISPLAY_REAL_SIZE;
+import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_SYSTEM_RESOURCES_CONFIG_INFO;
 import static android.server.wm.translucentapp26.Components.SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
@@ -59,6 +60,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
@@ -68,6 +70,7 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ConfigInfo;
 import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
+import android.util.DisplayMetrics;
 import android.view.Display;
 
 import org.junit.Test;
@@ -469,6 +472,9 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         final Point onCreateRealDisplaySize = extras.getParcelable(EXTRA_DISPLAY_REAL_SIZE);
         final ConfigInfo onCreateConfigInfo = extras.getParcelable(EXTRA_CONFIG_INFO_IN_ON_CREATE);
         final SizeInfo onCreateSize = onCreateConfigInfo.sizeInfo;
+        final ConfigInfo globalConfigInfo =
+                extras.getParcelable(EXTRA_SYSTEM_RESOURCES_CONFIG_INFO);
+        final SizeInfo globalSizeInfo = globalConfigInfo.sizeInfo;
 
         assertEquals("The last reported size should be the same as the one from onCreate",
                 reportedSizes, onCreateConfigInfo.sizeInfo);
@@ -482,6 +488,10 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                 expectedRotation, onCreateConfigInfo.rotation);
         assertEquals("The application should get the final display rotation in onCreate",
                 expectedRotation, appConfigInfo.rotation);
+        assertEquals("The orientation of application must be landscape",
+                ORIENTATION_LANDSCAPE, appConfigInfo.sizeInfo.orientation);
+        assertEquals("The orientation of system resources must be landscape",
+                ORIENTATION_LANDSCAPE, globalSizeInfo.orientation);
         assertEquals("The activity should get the final display size in onCreate",
                 expectedRealDisplaySize, onCreateRealDisplaySize);
 
@@ -490,6 +500,13 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                 onCreateSize.displayWidth > onCreateSize.displayHeight);
         assertEquals("The application should get the same orientation", isLandscape,
                 appConfigInfo.sizeInfo.displayWidth > appConfigInfo.sizeInfo.displayHeight);
+        assertEquals("The app display metrics must be landscape", isLandscape,
+                appConfigInfo.sizeInfo.metricsWidth > appConfigInfo.sizeInfo.metricsHeight);
+
+        final DisplayMetrics globalMetrics = Resources.getSystem().getDisplayMetrics();
+        assertEquals("The display metrics of system resources must be landscape",
+                new Point(globalMetrics.widthPixels, globalMetrics.heightPixels),
+                new Point(globalSizeInfo.metricsWidth, globalSizeInfo.metricsHeight));
     }
 
     @Test
