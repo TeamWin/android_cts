@@ -83,8 +83,8 @@ class FlickerPipTests : PipTestBase() {
             }
             teardown {
                 test {
-                    stopPackage(PIP_ACTIVITY)
-                    stopPackage(KEYBOARD_ACTIVITY)
+                    stopPackage(PIP_ACTIVITY.packageName)
+                    stopPackage(KEYBOARD_ACTIVITY.packageName)
                 }
             }
         }
