@@ -19,7 +19,7 @@ LOCAL_STATIC_LIBRARIES += \
   libsimpleperf_etm_decoder \
   libbacktrace \
   libunwindstack \
-  libdexfile_support_static \
+  libdexfile_external_static \
   libziparchive \
   libz \
   libgtest \
