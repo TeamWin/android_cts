@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -64,12 +65,11 @@ import android.view.ViewConfiguration;
 import android.view.WindowManager;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.rule.ActivityTestRule;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -101,10 +101,10 @@ public class StrictModeTest {
     private StrictMode.ThreadPolicy mThreadPolicy;
     private StrictMode.VmPolicy mVmPolicy;
 
-    @Rule
-    public ActivityTestRule<SimpleTestActivity> mActivityRule =
-            new ActivityTestRule<>(SimpleTestActivity.class, true /* initialTouchMode */,
-                    false /* launchActivity */);
+    private Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
+    private GestureDetector.OnGestureListener mGestureListener =
+            new GestureDetector.SimpleOnGestureListener();
+    private static final String WM_CLASS_NAME = WindowManager.class.getSimpleName();
 
     private Context getContext() {
         return ApplicationProvider.getApplicationContext();
@@ -632,139 +632,187 @@ public class StrictModeTest {
         }
     }
 
-    // TODO(b/166538303): refactor the test to context based.
     @Test
-    public void testIncorrectContextUse_GetSystemService() throws Exception {
+    public void testIncorrectContextUse_Application_ThrowViolation() throws Exception {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder()
                         .detectIncorrectContextUse()
                         .penaltyLog()
                         .build());
 
-        final String wmClassName = WindowManager.class.getSimpleName();
-        assertViolation("Tried to access visual service " + wmClassName,
-                () -> getContext().getApplicationContext().getSystemService(WindowManager.class));
+        final Context applicationContext = getContext();
 
-        final Display display = getContext().getSystemService(DisplayManager.class)
-                .getDisplay(DEFAULT_DISPLAY);
-        final Context displayContext = getContext().createDisplayContext(display);
-        assertViolation("Tried to access visual service " + wmClassName,
-                () -> displayContext.getSystemService(WindowManager.class));
+        assertViolation("Tried to access visual service " + WM_CLASS_NAME,
+                () -> applicationContext.getSystemService(WindowManager.class));
 
-        final Context windowContext = displayContext
-                .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
-        assertNoViolation(() -> windowContext.getSystemService(WINDOW_SERVICE));
-
-        final Activity activity = mActivityRule.launchActivity(
-                new Intent(getContext(), SimpleTestActivity.class));
-        assertNoViolation(() -> activity.getSystemService(WINDOW_SERVICE));
-
-        final Configuration config = new Configuration();
-        config.setToDefaults();
-        final Context uiDerivedConfigContext = windowContext.createConfigurationContext(config);
-        assertNoViolation(() -> uiDerivedConfigContext.getSystemService(WINDOW_SERVICE));
-
-        final Context uiDerivedAttrContext = windowContext
-                .createAttributionContext(null /* attributeTag */);
-        assertNoViolation(() -> uiDerivedAttrContext.getSystemService(WINDOW_SERVICE));
-
-        final Context uiDerivedDisplayContext = windowContext.createDisplayContext(display);
-        assertViolation("Tried to access visual service " + wmClassName,
-                () -> uiDerivedDisplayContext.getSystemService(WindowManager.class));
-    }
-
-    // TODO(b/166538303): refactor the test to context based.
-    @Test
-    public void testIncorrectContextUse_GetViewConfiguration() throws Exception {
-        StrictMode.setVmPolicy(
-                new StrictMode.VmPolicy.Builder()
-                        .detectIncorrectContextUse()
-                        .penaltyLog()
-                        .build());
-
-        final Context baseContext = getContext();
         assertViolation(
                 "Tried to access UI constants from a non-visual Context:",
-                () -> ViewConfiguration.get(baseContext));
+                () -> ViewConfiguration.get(applicationContext));
 
-        final Display display = baseContext.getSystemService(DisplayManager.class)
-                .getDisplay(DEFAULT_DISPLAY);
-        final Context displayContext = baseContext.createDisplayContext(display);
-        assertViolation(
-                "Tried to access UI constants from a non-visual Context:",
-                () -> ViewConfiguration.get(displayContext));
-
-        final Context windowContext =
-                displayContext.createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
-        assertNoViolation(() -> ViewConfiguration.get(windowContext));
-
-        final Activity activity = mActivityRule.launchActivity(
-                new Intent(getContext(), SimpleTestActivity.class));
-        assertNoViolation(() -> ViewConfiguration.get(activity));
-
-        final Configuration config = new Configuration();
-        config.setToDefaults();
-        final Context uiDerivedConfigContext = windowContext.createConfigurationContext(config);
-        assertNoViolation(() -> ViewConfiguration.get(uiDerivedConfigContext));
-
-        final Context uiDerivedAttrContext = windowContext
-                .createAttributionContext(null /* attributeTag */);
-        assertNoViolation(() -> ViewConfiguration.get(uiDerivedAttrContext));
-
-        final Context uiDerivedDisplayContext = windowContext.createDisplayContext(display);
-        assertViolation(
-                "Tried to access UI constants from a non-visual Context:",
-                () -> ViewConfiguration.get(uiDerivedDisplayContext));
-    }
-
-    // TODO(b/166538303): refactor the test to context based.
-    @Test
-    public void testIncorrectContextUse_GetGestureDetector() throws Throwable {
-        StrictMode.setVmPolicy(
-                new StrictMode.VmPolicy.Builder()
-                        .detectIncorrectContextUse()
-                        .penaltyLog()
-                        .build());
-        final Activity activity = mActivityRule.launchActivity(
-                new Intent(getContext(), SimpleTestActivity.class));
-        mActivityRule.runOnUiThread(() -> {
+        mInstrumentation.runOnMainSync(() -> {
             try {
-                final Context baseContext = getContext();
-                final GestureDetector.SimpleOnGestureListener listener
-                        = new GestureDetector.SimpleOnGestureListener();
-
                 assertViolation("Tried to access UI constants from a non-visual Context.",
-                        () -> new GestureDetector(baseContext, listener));
-
-                final Display display = baseContext.getSystemService(DisplayManager.class)
-                        .getDisplay(DEFAULT_DISPLAY);
-                final Context displayContext = baseContext.createDisplayContext(display);
-                assertViolation("Tried to access UI constants from a non-visual Context.",
-                        () -> new GestureDetector(displayContext, listener));
-
-                final Context windowContext = displayContext
-                        .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
-                assertNoViolation(() -> new GestureDetector(windowContext, listener));
-
-                assertNoViolation(() -> new GestureDetector(activity, listener));
-
-                final Configuration config = new Configuration();
-                config.setToDefaults();
-                final Context uiDerivedConfigContext = windowContext
-                        .createConfigurationContext(config);
-                assertNoViolation(() -> new GestureDetector(uiDerivedConfigContext, listener));
-
-                final Context uiDerivedAttrContext = windowContext
-                        .createAttributionContext(null /* attributeTag */);
-                assertNoViolation(() -> new GestureDetector(uiDerivedAttrContext, listener));
-
-                final Context uiDerivedDisplayContext = windowContext.createDisplayContext(display);
-                assertViolation("Tried to access UI constants from a non-visual Context.",
-                        () -> new GestureDetector(uiDerivedDisplayContext, listener));
+                        () -> new GestureDetector(applicationContext, mGestureListener));
             } catch (Exception e) {
                 fail("Failed because of " + e);
             }
         });
+    }
+
+    @Test
+    public void testIncorrectContextUse_DisplayContext_ThrowViolation() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Display display = getContext().getSystemService(DisplayManager.class)
+                .getDisplay(DEFAULT_DISPLAY);
+        final Context displayContext = getContext().createDisplayContext(display);
+
+        assertViolation("Tried to access visual service " + WM_CLASS_NAME,
+                () -> displayContext.getSystemService(WindowManager.class));
+
+        assertViolation(
+                "Tried to access UI constants from a non-visual Context:",
+                () -> ViewConfiguration.get(displayContext));
+
+        mInstrumentation.runOnMainSync(() -> {
+            try {
+                assertViolation("Tried to access UI constants from a non-visual Context.",
+                        () -> new GestureDetector(displayContext, mGestureListener));
+            } catch (Exception e) {
+                fail("Failed because of " + e);
+            }
+        });
+    }
+
+    @Test
+    public void testIncorrectContextUse_WindowContext_NoViolation() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Context windowContext = createWindowContext();
+
+        assertNoViolation(() -> windowContext.getSystemService(WINDOW_SERVICE));
+
+        assertNoViolation(() -> ViewConfiguration.get(windowContext));
+
+        mInstrumentation.runOnMainSync(() -> {
+            try {
+                assertNoViolation(() -> new GestureDetector(windowContext, mGestureListener));
+            } catch (Exception e) {
+                fail("Failed because of " + e);
+            }
+        });
+    }
+
+    @Test
+    public void testIncorrectContextUse_Activity_NoViolation() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        Intent intent = new Intent(getContext(), SimpleTestActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Activity activity = mInstrumentation.startActivitySync(intent);
+
+        assertNoViolation(() -> activity.getSystemService(WINDOW_SERVICE));
+
+        assertNoViolation(() -> ViewConfiguration.get(activity));
+
+        mInstrumentation.runOnMainSync(() -> {
+            try {
+                assertNoViolation(() -> new GestureDetector(activity, mGestureListener));
+            } catch (Exception e) {
+                fail("Failed because of " + e);
+            }
+        });
+    }
+
+    @Test
+    public void testIncorrectContextUse_UiDerivedContext_NoViolation() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Configuration config = new Configuration();
+        config.setToDefaults();
+        final Context uiDerivedConfigContext =
+                createWindowContext().createConfigurationContext(config);
+
+        assertNoViolation(() -> uiDerivedConfigContext.getSystemService(WINDOW_SERVICE));
+
+        assertNoViolation(() -> ViewConfiguration.get(uiDerivedConfigContext));
+
+        mInstrumentation.runOnMainSync(() -> {
+            try {
+                assertNoViolation(() ->
+                        new GestureDetector(uiDerivedConfigContext, mGestureListener));
+            } catch (Exception e) {
+                fail("Failed because of " + e);
+            }
+        });
+
+        final Context uiDerivedAttrContext = createWindowContext()
+                .createAttributionContext(null /* attributeTag */);
+
+        assertNoViolation(() -> uiDerivedAttrContext.getSystemService(WINDOW_SERVICE));
+
+        assertNoViolation(() -> ViewConfiguration.get(uiDerivedAttrContext));
+
+        mInstrumentation.runOnMainSync(() -> {
+            try {
+                assertNoViolation(() ->
+                        new GestureDetector(uiDerivedAttrContext, mGestureListener));
+            } catch (Exception e) {
+                fail("Failed because of " + e);
+            }
+        });
+    }
+
+    @Test
+    public void testIncorrectContextUse_UiDerivedDisplayContext_ThrowViolation() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Display display = getContext().getSystemService(DisplayManager.class)
+                .getDisplay(DEFAULT_DISPLAY);
+        final Context uiDerivedDisplayContext = createWindowContext().createDisplayContext(display);
+
+        assertViolation("Tried to access visual service " + WM_CLASS_NAME,
+                () -> uiDerivedDisplayContext.getSystemService(WindowManager.class));
+
+        assertViolation(
+                "Tried to access UI constants from a non-visual Context:",
+                () -> ViewConfiguration.get(uiDerivedDisplayContext));
+
+        mInstrumentation.runOnMainSync(() -> {
+            try {
+                assertViolation("Tried to access UI constants from a non-visual Context.",
+                        () -> new GestureDetector(uiDerivedDisplayContext, mGestureListener));
+            } catch (Exception e) {
+                fail("Failed because of " + e);
+            }
+        });
+    }
+
+    private Context createWindowContext() {
+        final Display display = getContext().getSystemService(DisplayManager.class)
+                .getDisplay(DEFAULT_DISPLAY);
+        return getContext().createDisplayContext(display)
+                .createWindowContext(TYPE_APPLICATION_OVERLAY, null /* options */);
     }
 
     private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)
