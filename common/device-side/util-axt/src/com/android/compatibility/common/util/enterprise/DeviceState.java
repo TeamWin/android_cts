@@ -24,6 +24,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -275,8 +276,7 @@ public final class DeviceState extends TestWatcher {
         }
     }
 
-    @Override
-    protected void finished(Description description) {
+    void teardown() {
         for (Integer userId : createdUserIds) {
             runCommandWithOutput("pm remove-user " + userId);
         }
