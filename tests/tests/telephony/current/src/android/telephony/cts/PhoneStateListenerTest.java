@@ -678,16 +678,14 @@ public class PhoneStateListenerTest {
         mPreciseDataConnectionState.getLastCauseCode();
         mPreciseDataConnectionState.getLinkProperties();
         mPreciseDataConnectionState.getApnSetting();
+        mPreciseDataConnectionState.getTransportType();
+        mPreciseDataConnectionState.getId();
 
         // Deprecated in R
         assertEquals(mPreciseDataConnectionState.getDataConnectionState(),
                 mPreciseDataConnectionState.getState());
-        assertEquals(mPreciseDataConnectionState.getDataConnectionNetworkType(),
-                mPreciseDataConnectionState.getNetworkType());
         assertEquals(mPreciseDataConnectionState.getDataConnectionFailCause(),
                 mPreciseDataConnectionState.getLastCauseCode());
-        assertEquals(mPreciseDataConnectionState.getDataConnectionLinkProperties(),
-                mPreciseDataConnectionState.getLinkProperties());
 
         // Superseded in R by getApnSetting()
         mPreciseDataConnectionState.getDataConnectionApnTypeBitMask();
