@@ -978,7 +978,7 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
 
     private void prepareTestUser() throws Exception {
         // Create the test user
-        mOtherUserId = createUser("TestUser_" + SystemClock.uptimeMillis(), true);
+        mOtherUserId = createUser("TestUser_" + SystemClock.uptimeMillis(), false);
         mOtherUserHandle = UserHandle.of(mOtherUserId);
         // Start the other user
         assertTrue(startUser(mOtherUserId, true));
