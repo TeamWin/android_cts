@@ -22,6 +22,7 @@ import android.content.ContentResolver;
 import android.net.Uri;
 import android.os.Bundle;
 
+import android.platform.test.annotations.SecurityTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -59,11 +60,13 @@ public class SliceProviderTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2019-11-01")
     public void testCallSliceUri_ValidAuthority() {
         doQuery(validActionUri);
     }
 
     @Test(expected = SecurityException.class)
+    @SecurityTest(minPatchLevel = "2019-11-01")
     public void testCallSliceUri_ShadyAuthority() {
         doQuery(shadyActionUri);
     }
