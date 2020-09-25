@@ -302,6 +302,7 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_APP_CONFIG_INFO = "app_config_info";
         public static final String EXTRA_CONFIG_INFO_IN_ON_CREATE = "config_info_in_on_create";
         public static final String EXTRA_DISPLAY_REAL_SIZE = "display_real_size";
+        public static final String EXTRA_SYSTEM_RESOURCES_CONFIG_INFO = "sys_config_info";
     }
 
     /** Extra key constants for {@link android.server.wm.app.FontScaleActivity}. */
