@@ -90,33 +90,8 @@ public class MediaStorageTest {
     }
 
     @Test
-    public void testSandboxed() throws Exception {
-        doSandboxed(true);
-    }
-
-    @Test
-    public void testNotSandboxed() throws Exception {
-        doSandboxed(false);
-    }
-
-    @Test
-    public void testStageFiles() throws Exception {
-        final File jpg = stageFile(TEST_JPG);
-        assertTrue(jpg.exists());
-        final File pdf = stageFile(TEST_PDF);
-        assertTrue(pdf.exists());
-    }
-
-    @Test
-    public void testClearFiles() throws Exception {
-        TEST_JPG.delete();
-        assertNull(MediaStore.scanFile(mContentResolver, TEST_JPG));
-        TEST_PDF.delete();
-        assertNull(MediaStore.scanFile(mContentResolver, TEST_PDF));
-    }
-
-    private void doSandboxed(boolean sandboxed) throws Exception {
-        assertEquals(!sandboxed, Environment.isExternalStorageLegacy());
+    public void testLegacy() throws Exception {
+        assertTrue(Environment.isExternalStorageLegacy());
 
         // We can always see mounted state
         assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
@@ -124,10 +99,8 @@ public class MediaStorageTest {
         // We might have top-level access
         final File probe = new File(Environment.getExternalStorageDirectory(),
                 "cts" + System.nanoTime());
-        if (!sandboxed) {
-            assertTrue(probe.createNewFile());
-            assertNotNull(Environment.getExternalStorageDirectory().list());
-        }
+        assertTrue(probe.createNewFile());
+        assertNotNull(Environment.getExternalStorageDirectory().list());
 
         // We always have our package directories
         final File probePackage = new File(mContext.getExternalFilesDir(null),
@@ -149,15 +122,24 @@ public class MediaStorageTest {
             }
         }
 
-        if (sandboxed) {
-            // If we're sandboxed, we should only see the image
-            assertTrue(seen.contains(ContentUris.parseId(jpgUri)));
-            assertFalse(seen.contains(ContentUris.parseId(pdfUri)));
-        } else {
-            // If we're not sandboxed, we should see both
-            assertTrue(seen.contains(ContentUris.parseId(jpgUri)));
-            assertTrue(seen.contains(ContentUris.parseId(pdfUri)));
-        }
+        assertTrue(seen.contains(ContentUris.parseId(jpgUri)));
+        assertTrue(seen.contains(ContentUris.parseId(pdfUri)));
+    }
+
+    @Test
+    public void testStageFiles() throws Exception {
+        final File jpg = stageFile(TEST_JPG);
+        assertTrue(jpg.exists());
+        final File pdf = stageFile(TEST_PDF);
+        assertTrue(pdf.exists());
+    }
+
+    @Test
+    public void testClearFiles() throws Exception {
+        TEST_JPG.delete();
+        assertNull(MediaStore.scanFile(mContentResolver, TEST_JPG));
+        TEST_PDF.delete();
+        assertNull(MediaStore.scanFile(mContentResolver, TEST_PDF));
     }
 
     @Test
@@ -591,7 +573,7 @@ public class MediaStorageTest {
     }
 
     static File stageFile(File file) throws Exception {
-        // Sometimes file creation fails due to slow permission update, try more times 
+        // Sometimes file creation fails due to slow permission update, try more times
         while(currentAttempt < MAX_NUMBER_OF_ATTEMPT) {
             try {
                 file.getParentFile().mkdirs();
@@ -602,7 +584,7 @@ public class MediaStorageTest {
                 // wait 500ms
                 Thread.sleep(500);
             }
-        } 
+        }
         throw new TimeoutException("File creation failed due to slow permission update");
     }
 }

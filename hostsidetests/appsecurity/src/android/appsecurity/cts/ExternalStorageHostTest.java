@@ -473,19 +473,15 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testMediaSandboxed() throws Exception {
-        doMediaSandboxed(MEDIA, true);
+    public void testMediaLegacy28() throws Exception {
+        doMediaLegacy(MEDIA_28);
     }
     @Test
-    public void testMediaSandboxed28() throws Exception {
-        doMediaSandboxed(MEDIA_28, false);
-    }
-    @Test
-    public void testMediaSandboxed29() throws Exception {
-        doMediaSandboxed(MEDIA_29, false);
+    public void testMediaLegacy29() throws Exception {
+        doMediaLegacy(MEDIA_29);
     }
 
-    private void doMediaSandboxed(Config config, boolean sandboxed) throws Exception {
+    private void doMediaLegacy(Config config) throws Exception {
         installPackage(config.apk);
         installPackage(MEDIA_29.apk);
         // Make sure user initialization is complete before updating permission
@@ -503,13 +499,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             // Create the files needed for the test from MEDIA_29 pkg since shell
             // can't access secondary user's storage.
             runDeviceTests(MEDIA_29.pkg, MEDIA_29.clazz, "testStageFiles", user);
-
-            if (sandboxed) {
-                runDeviceTests(config.pkg, config.clazz, "testSandboxed", user);
-            } else {
-                runDeviceTests(config.pkg, config.clazz, "testNotSandboxed", user);
-            }
-
+            runDeviceTests(config.pkg, config.clazz, "testLegacy", user);
             runDeviceTests(MEDIA_29.pkg, MEDIA_29.clazz, "testClearFiles", user);
         }
     }
