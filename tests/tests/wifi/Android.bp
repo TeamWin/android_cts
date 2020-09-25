@@ -24,7 +24,7 @@ android_test {
     ],
 
     srcs: [ "src/**/*.java" ],
-
+    jarjar_rules: "jarjar-rules.txt",
     static_libs: [
         "androidx.appcompat_appcompat",
         "androidx.test.rules",
@@ -32,6 +32,7 @@ android_test {
         "ctstestrunner-axt",
         "junit",
         "junit-params",
+        "net-utils-framework-common",
         "truth-prebuilt",
     ],
 
