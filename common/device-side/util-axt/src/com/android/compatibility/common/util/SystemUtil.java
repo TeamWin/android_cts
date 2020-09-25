@@ -35,6 +35,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
@@ -99,14 +100,18 @@ public class SystemUtil {
      */
     static byte[] runShellCommandByteOutput(UiAutomation automation, String cmd)
             throws IOException {
+        checkCommandBeforeRunning(cmd);
+        ParcelFileDescriptor pfd = automation.executeShellCommand(cmd);
+        try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
+            return FileUtils.readInputStreamFully(fis);
+        }
+    }
+
+    private static void checkCommandBeforeRunning(String cmd) {
         Log.v(TAG, "Running command: " + cmd);
         if (cmd.startsWith("pm grant ") || cmd.startsWith("pm revoke ")) {
             throw new UnsupportedOperationException("Use UiAutomation.grantRuntimePermission() "
                     + "or revokeRuntimePermission() directly, which are more robust.");
-        }
-        ParcelFileDescriptor pfd = automation.executeShellCommand(cmd);
-        try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
-            return FileUtils.readInputStreamFully(fis);
         }
     }
 
@@ -116,6 +121,48 @@ public class SystemUtil {
     public static String runShellCommand(String cmd) {
         try {
             return runShellCommand(InstrumentationRegistry.getInstrumentation(), cmd);
+        } catch (IOException e) {
+            fail("Failed reading command output: " + e);
+            return "";
+        }
+    }
+
+    /**
+     * Like {@link #runShellCommand(String)} but throws if anything was printed to stderr.
+     */
+    public static String runShellCommandOrThrow(String cmd) {
+        UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            checkCommandBeforeRunning(cmd);
+
+            ParcelFileDescriptor[] fds = automation.executeShellCommandRwe(cmd);
+            ParcelFileDescriptor fdOut = fds[0];
+            ParcelFileDescriptor fdIn = fds[1];
+            ParcelFileDescriptor fdErr = fds[2];
+
+            if (fdIn != null) {
+                try {
+                    // not using stdin
+                    fdIn.close();
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }
+
+            String out;
+            String err;
+            try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(fdOut)) {
+                out = new String(FileUtils.readInputStreamFully(fis));
+            }
+            try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(fdErr)) {
+                err = new String(FileUtils.readInputStreamFully(fis));
+            }
+            if (!err.isEmpty()) {
+                fail("Command failed:\n$ " + cmd +
+                        "\n\nstderr:\n" + err +
+                        "\n\nstdout:\n" + out);
+            }
+            return out;
         } catch (IOException e) {
             fail("Failed reading command output: " + e);
             return "";

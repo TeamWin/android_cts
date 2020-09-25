@@ -17,30 +17,28 @@ package android.host.multiuser;
 
 import android.platform.test.annotations.Presubmit;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * Test verifies that ephemeral users are removed after switched away and after reboot.
+ *
  * Run: atest android.host.multiuser.EphemeralTest
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class EphemeralTest extends BaseMultiUserTest {
 
+    @Rule
+    public final SupportsMultiUserRule mSupportsMultiUserRule = new SupportsMultiUserRule(this);
+
     /** Test to verify ephemeral user is removed after switch out to another user. */
     @Presubmit
     @Test
     public void testSwitchAndRemoveEphemeralUser() throws Exception {
-        if (!mSupportsMultiUser) {
-            return;
-        }
         int ephemeralUserId = -1;
         try {
             ephemeralUserId = getDevice().createUser(
@@ -61,9 +59,6 @@ public class EphemeralTest extends BaseMultiUserTest {
     @Presubmit
     @Test
     public void testRebootAndRemoveEphemeralUser() throws Exception {
-        if (!mSupportsMultiUser) {
-            return;
-        }
         int ephemeralUserId = -1;
         try {
             ephemeralUserId = getDevice().createUser(

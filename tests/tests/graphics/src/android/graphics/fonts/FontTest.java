@@ -26,6 +26,9 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.graphics.cts.R;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
@@ -999,5 +1002,105 @@ public class FontTest {
     public void testMinFontWeight() throws IOException {
         final Resources res = InstrumentationRegistry.getTargetContext().getResources();
         new Font.Builder(res, R.font.ascii).setWeight(FontStyle.FONT_WEIGHT_MIN - 1).build();
+    }
+
+    @Test
+    public void builder_with_font_with_axis() throws IOException {
+        AssetManager assets = InstrumentationRegistry.getTargetContext().getAssets();
+
+        // WeightEqualsEmVariableFont adjust glyph advance as follows
+        //  glyph advance = 'wght' value / 1000
+        // Thus, by setting text size to 1000px, the glyph advance will equals to passed wght value.
+        Font baseFont = new Font.Builder(assets, "fonts/var_fonts/WeightEqualsEmVariableFont.ttf")
+                .build();
+
+        FontStyle style = new FontStyle(123, FontStyle.FONT_SLANT_ITALIC);
+
+        for (int weight = 50; weight < 1000; weight += 50) {
+            Font clonedFont = new Font.Builder(baseFont)
+                    .setWeight(style.getWeight())
+                    .setSlant(style.getSlant())
+                    .setFontVariationSettings("'wght' " + weight)
+                    .build();
+
+            // New font should have the same style passed.
+            assertEquals(style.getWeight(), clonedFont.getStyle().getWeight());
+            assertEquals(style.getSlant(), clonedFont.getStyle().getSlant());
+
+            Paint p = new Paint();
+            p.setTextSize(1000);  // make 1em = 1000px = weight
+            p.setTypeface(new Typeface.CustomFallbackBuilder(
+                    new FontFamily.Builder(clonedFont).build()
+            ).build());
+            assertEquals(weight, p.measureText("a"), 0);
+
+        }
+    }
+
+    @Test
+    public void builder_with_explicit_style() throws IOException {
+        AssetManager assets = InstrumentationRegistry.getTargetContext().getAssets();
+
+        Font baseFont = new Font.Builder(assets, "fonts/others/samplefont.ttf").build();
+        FontStyle style = new FontStyle(123, FontStyle.FONT_SLANT_ITALIC);
+        Font clonedFont = new Font.Builder(baseFont)
+                .setWeight(style.getWeight())
+                .setSlant(style.getSlant())
+                .build();
+
+        assertEquals(style.getWeight(), clonedFont.getStyle().getWeight());
+        assertEquals(style.getSlant(), clonedFont.getStyle().getSlant());
+    }
+
+    @Test
+    public void builder_style_resolve_default() throws IOException {
+        AssetManager assets = InstrumentationRegistry.getTargetContext().getAssets();
+
+        Font baseFont = new Font.Builder(assets,
+                "fonts/family_selection/ttf/ascii_l3em_weight600_italic.ttf").build();
+        Font clonedFont = new Font.Builder(baseFont).build();
+
+        assertEquals(600, clonedFont.getStyle().getWeight());
+        assertEquals(FontStyle.FONT_SLANT_ITALIC, clonedFont.getStyle().getSlant());
+    }
+
+    @Test
+    public void getBoundingBox() throws IOException {
+        AssetManager assets = InstrumentationRegistry.getTargetContext().getAssets();
+
+        Font font = new Font.Builder(assets, "fonts/measurement/a3em.ttf").build();
+        Paint paint = new Paint();
+        paint.setTextSize(100);  // make 1em = 100px
+
+        int glyphID = 1;  // See a3em.ttx file for the Glyph ID.
+
+        RectF rect = new RectF();
+        float advance = font.getGlyphBounds(glyphID, paint, rect);
+
+        assertEquals(100f, advance, 0f);
+        // Glyph bbox is 0.1em shifted to right. See lsb value in hmtx in ttx file.
+        assertEquals(rect.left, 10f, 0f);
+        assertEquals(rect.top, -100f, 0f);
+        assertEquals(rect.right, 110f, 0f);
+        assertEquals(rect.bottom, 0f, 0f);
+    }
+
+    @Test
+    public void getFontMetrics() throws IOException {
+        AssetManager assets = InstrumentationRegistry.getTargetContext().getAssets();
+
+        Font font = new Font.Builder(assets, "fonts/measurement/a3em.ttf").build();
+        Paint paint = new Paint();
+        paint.setTextSize(100);  // make 1em = 100px
+
+        Paint.FontMetrics metrics = new Paint.FontMetrics();
+        font.getMetrics(paint, metrics);
+
+        assertEquals(-100f, metrics.ascent, 0f);
+        assertEquals(20f, metrics.descent, 0f);
+        // This refers head.yMax which is not explicitly visible in ttx file.
+        assertEquals(-300f, metrics.top, 0f);
+        // This refers head.yMin which is not explicitly visible in ttx file.
+        assertEquals(0f, metrics.bottom, 0f);
     }
 }

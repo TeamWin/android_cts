@@ -150,6 +150,11 @@ public class WindowManagerStateHelper extends WindowManagerState {
         }
     }
 
+    public void waitForDreamGone() {
+        assertTrue("Dream must be gone",
+                waitForWithAmState(state -> state.getDreamTask() == null, "DreamActivity gone"));
+    }
+
     public void waitForKeyguardShowingAndNotOccluded() {
         waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
                         && !state.getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY),
