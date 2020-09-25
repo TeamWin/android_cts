@@ -41,7 +41,9 @@ import android.app.Instrumentation;
 import android.content.Intent;
 import android.graphics.Matrix;
 import android.inputmethodservice.InputMethodService;
+import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.test.uiautomator.UiObject2;
 import android.text.TextUtils;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
@@ -54,7 +56,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
+import android.view.inputmethod.cts.util.TestWebView;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
+import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -74,12 +78,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -88,7 +90,7 @@ import java.util.function.Predicate;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceTest extends EndToEndImeTestBase {
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
 
     @Rule
@@ -333,6 +335,10 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     expectedKeyCode, uptimeStart, uptimeEnd);
             assertSynthesizedSoftwareKeyEvent(keyEvents.get(1), KeyEvent.ACTION_UP,
                     expectedKeyCode, uptimeStart, uptimeEnd);
+            final Bundle arguments = expectEvent(stream,
+                    event -> "onUpdateSelection".equals(event.getEventName()),
+                    TIMEOUT).getArguments();
+            expectOnUpdateSelectionArguments(arguments, 0, 0, 1, 1, -1, -1);
         }
     }
 
@@ -512,6 +518,310 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
             assertEquals(newSelectionStart, newCursorPosition + COMMIT_MSG.length());
             assertEquals(newSelectionEnd, newCursorPosition + COMMIT_MSG.length());
+        }
+    }
+
+    @Test
+    public void testBatchEdit_commitAndSetComposingRegion_textView() throws Exception {
+        getCommitAndSetComposingRegionTest(TIMEOUT,
+                "testBatchEdit_commitAndSetComposingRegion_textView/")
+                .setTestTextView(true)
+                .runTest();
+    }
+
+    @Test
+    public void testBatchEdit_commitAndSetComposingRegion_webView() throws Exception {
+        getCommitAndSetComposingRegionTest(TIMEOUT,
+                "testBatchEdit_commitAndSetComposingRegion_webView/")
+                .setTestTextView(false)
+                .runTest();
+    }
+
+    @Test
+    public void testBatchEdit_commitSpaceThenSetComposingRegion_textView() throws Exception {
+        getCommitSpaceAndSetComposingRegionTest(TIMEOUT,
+                "testBatchEdit_commitSpaceThenSetComposingRegion_textView/")
+                .setTestTextView(true)
+                .runTest();
+    }
+
+    @Test
+    public void testBatchEdit_commitSpaceThenSetComposingRegion_webView() throws Exception {
+        getCommitSpaceAndSetComposingRegionTest(TIMEOUT,
+                "testBatchEdit_commitSpaceThenSetComposingRegion_webView/")
+                .setTestTextView(false)
+                .runTest();
+    }
+
+    @Test
+    public void testBatchEdit_getCommitSpaceAndSetComposingRegionTestInSelectionTest_textView()
+            throws Exception {
+        getCommitSpaceAndSetComposingRegionInSelectionTest(TIMEOUT,
+                "testBatchEdit_getCommitSpaceAndSetComposingRegionTestInSelectionTest_textView/")
+                .setTestTextView(true)
+                .runTest();
+    }
+
+    @Test
+    public void testBatchEdit_getCommitSpaceAndSetComposingRegionTestInSelectionTest_webView()
+            throws Exception {
+        getCommitSpaceAndSetComposingRegionInSelectionTest(TIMEOUT,
+                "testBatchEdit_getCommitSpaceAndSetComposingRegionTestInSelectionTest_webView/")
+                .setTestTextView(false)
+                .runTest();
+    }
+
+    /** Test case for committing and setting composing region after cursor. */
+    private static UpdateSelectionTest getCommitAndSetComposingRegionTest(
+            long timeout, String makerPrefix) throws Exception {
+        UpdateSelectionTest test = new UpdateSelectionTest(timeout, makerPrefix) {
+            @Override
+            public void testMethodImpl() throws Exception {
+                // "abc|"
+                expectCommand(stream, imeSession.callCommitText("abc", 1), timeout);
+                verifyText("abc", 3, 3);
+                final Bundle arguments1 = expectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        timeout).getArguments();
+                expectOnUpdateSelectionArguments(arguments1, 0, 0, 3, 3, -1, -1);
+                notExpectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        EXPECTED_TIMEOUT);
+
+                // "|abc"
+                expectCommand(stream, imeSession.callSetSelection(0, 0), timeout);
+                verifyText("abc", 0, 0);
+                final Bundle arguments2 = expectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        timeout).getArguments();
+                expectOnUpdateSelectionArguments(arguments2, 3, 3, 0, 0, -1, -1);
+                notExpectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        EXPECTED_TIMEOUT);
+
+                // "Back |abc"
+                //        ---
+                expectCommand(stream, imeSession.callBeginBatchEdit(), timeout);
+                expectCommand(stream, imeSession.callCommitText("Back ", 1), timeout);
+                expectCommand(stream, imeSession.callSetComposingRegion(5, 8), timeout);
+                expectCommand(stream, imeSession.callEndBatchEdit(), timeout);
+                verifyText("Back abc", 5, 5);
+                final Bundle arguments3 = expectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        timeout).getArguments();
+                expectOnUpdateSelectionArguments(arguments3, 0, 0, 5, 5, 5, 8);
+                notExpectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        EXPECTED_TIMEOUT);
+            }
+        };
+        return test;
+    }
+
+    /** Test case for committing space and setting composing region after cursor. */
+    private static UpdateSelectionTest getCommitSpaceAndSetComposingRegionTest(
+            long timeout, String makerPrefix) throws Exception {
+        UpdateSelectionTest test = new UpdateSelectionTest(timeout, makerPrefix) {
+            @Override
+            public void testMethodImpl() throws Exception {
+                // "Hello|"
+                //  -----
+                expectCommand(stream, imeSession.callSetComposingText("Hello", 1), timeout);
+                verifyText("Hello", 5, 5);
+                final Bundle arguments1 = expectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        timeout).getArguments();
+                expectOnUpdateSelectionArguments(arguments1, 0, 0, 5, 5, 0, 5);
+                notExpectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        EXPECTED_TIMEOUT);
+
+                // "|Hello"
+                //   -----
+                expectCommand(stream, imeSession.callSetSelection(0, 0), timeout);
+                verifyText("Hello", 0, 0);
+                final Bundle arguments2 = expectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        timeout).getArguments();
+                expectOnUpdateSelectionArguments(arguments2, 5, 5, 0, 0, 0, 5);
+                notExpectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        EXPECTED_TIMEOUT);
+
+                // " |Hello"
+                //    -----
+                expectCommand(stream, imeSession.callBeginBatchEdit(), timeout);
+                expectCommand(stream, imeSession.callFinishComposingText(), timeout);
+                expectCommand(stream, imeSession.callCommitText(" ", 1), timeout);
+                expectCommand(stream, imeSession.callSetComposingRegion(1, 6), timeout);
+                expectCommand(stream, imeSession.callEndBatchEdit(), timeout);
+
+                verifyText(" Hello", 1, 1);
+                final Bundle arguments3 = expectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        timeout).getArguments();
+                expectOnUpdateSelectionArguments(arguments3, 0, 0, 1, 1, 1, 6);
+                notExpectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        EXPECTED_TIMEOUT);
+            }
+        };
+        return test;
+    }
+
+    /**
+     * Test case for committing space in the middle of selection and setting composing region after
+     * cursor.
+     */
+    private static UpdateSelectionTest getCommitSpaceAndSetComposingRegionInSelectionTest(
+            long timeout, String makerPrefix) throws Exception {
+        UpdateSelectionTest test = new UpdateSelectionTest(timeout, makerPrefix) {
+            @Override
+            public void testMethodImpl() throws Exception {
+                // "2005abc|"
+                expectCommand(stream, imeSession.callCommitText("2005abc", 1), timeout);
+                verifyText("2005abc", 7, 7);
+                final Bundle arguments1 = expectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        timeout).getArguments();
+                expectOnUpdateSelectionArguments(arguments1, 0, 0, 7, 7, -1, -1);
+                notExpectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        EXPECTED_TIMEOUT);
+
+                // "2005|abc"
+                expectCommand(stream, imeSession.callSetSelection(4, 4), timeout);
+                verifyText("2005abc", 4, 4);
+                final Bundle arguments2 = expectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        timeout).getArguments();
+                expectOnUpdateSelectionArguments(arguments2, 7, 7, 4, 4, -1, -1);
+                notExpectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        EXPECTED_TIMEOUT);
+
+                // "2005 |abc"
+                //        ---
+                expectCommand(stream, imeSession.callBeginBatchEdit(), timeout);
+                expectCommand(stream, imeSession.callCommitText(" ", 1), timeout);
+                expectCommand(stream, imeSession.callSetComposingRegion(5, 8), timeout);
+                expectCommand(stream, imeSession.callEndBatchEdit(), timeout);
+
+                verifyText("2005 abc", 5, 5);
+                final Bundle arguments3 = expectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        timeout).getArguments();
+                expectOnUpdateSelectionArguments(arguments3, 4, 4, 5, 5, 5, 8);
+                notExpectEvent(stream,
+                        event -> "onUpdateSelection".equals(event.getEventName()),
+                        EXPECTED_TIMEOUT);
+            }
+        };
+        return test;
+    }
+
+    private static void expectOnUpdateSelectionArguments(Bundle arguments,
+            int expectedOldSelStart, int expectedOldSelEnd, int expectedNewSelStart,
+            int expectedNewSelEnd, int expectedCandidateStart, int expectedCandidateEnd) {
+        assertEquals(expectedOldSelStart, arguments.getInt("oldSelStart"));
+        assertEquals(expectedOldSelEnd, arguments.getInt("oldSelEnd"));
+        assertEquals(expectedNewSelStart, arguments.getInt("newSelStart"));
+        assertEquals(expectedNewSelEnd, arguments.getInt("newSelEnd"));
+        assertEquals(expectedCandidateStart, arguments.getInt("candidatesStart"));
+        assertEquals(expectedCandidateEnd, arguments.getInt("candidatesEnd"));
+    }
+
+    /**
+     * Helper class for wrapping tests for {@link android.widget.TextView} and @{@link WebView}
+     * relates to batch edit and update selection change.
+     */
+    private abstract static class UpdateSelectionTest {
+        private final long mTimeout;
+        private final String mMaker;
+        private final AtomicReference<EditText> mEditTextRef = new AtomicReference<>();
+        private final AtomicReference<UiObject2> mInputTextFieldRef = new AtomicReference<>();
+
+        public final MockImeSession imeSession;
+        public final ImeEventStream stream;
+
+        // True if testing TextView, otherwise test WebView
+        private boolean mIsTestingTextView;
+
+        UpdateSelectionTest(long timeout, String makerPrefix) throws Exception {
+            this.mTimeout = timeout;
+            this.mMaker = makerPrefix + SystemClock.elapsedRealtimeNanos();
+            imeSession = MockImeSession.create(
+                    InstrumentationRegistry.getInstrumentation().getContext(),
+                    InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                    new ImeSettings.Builder());
+            stream = imeSession.openEventStream();
+        }
+
+        /**
+         * Runs the real test logic, which would test onStartInput event first, then test the logic
+         * in {@link #testMethodImpl()}.
+         *
+         * @throws Exception if timeout or assert fails
+         */
+        public void runTest() throws Exception {
+            if (mIsTestingTextView) {
+                TestActivity.startSync(activity -> {
+                    final LinearLayout layout = new LinearLayout(activity);
+                    layout.setOrientation(LinearLayout.VERTICAL);
+                    final EditText editText = new EditText(activity);
+                    layout.addView(editText);
+                    editText.requestFocus();
+                    editText.setPrivateImeOptions(mMaker);
+                    mEditTextRef.set(editText);
+                    return layout;
+                });
+                assertNotNull(mEditTextRef.get());
+            } else {
+                final UiObject2 inputTextField = TestWebView.launchTestWebViewActivity(
+                        mTimeout, mMaker);
+                assertNotNull("Editor must exists on WebView", inputTextField);
+                mInputTextFieldRef.set(inputTextField);
+                inputTextField.click();
+            }
+            expectEvent(stream, editorMatcher("onStartInput", mMaker), TIMEOUT);
+
+            // Code for testing input connection logic.
+            testMethodImpl();
+        }
+
+        /**
+         * Test method to be overridden by implementation class.
+         */
+        public abstract void testMethodImpl() throws Exception;
+
+        /**
+         * Verifies text and selection range in the edit text if this is running tests for TextView;
+         * otherwise verifies the text (no selection) in the WebView.
+         * @param expectedText expected text in the TextView or WebView
+         * @param selStart expected start position of the selection in the TextView; will be ignored
+         *                 for WebView
+         * @param selEnd expected end position of the selection in the WebView; will be ignored for
+         *               WebView
+         * @throws Exception if timeout or assert fails
+         */
+        public void verifyText(String expectedText, int selStart, int selEnd) throws Exception {
+            if (mIsTestingTextView) {
+                EditText editText = mEditTextRef.get();
+                assertNotNull(editText);
+                waitOnMainUntil(()->
+                        expectedText.equals(editText.getText().toString())
+                                && selStart == editText.getSelectionStart()
+                                && selEnd == editText.getSelectionEnd(), mTimeout);
+            } else {
+                UiObject2 inputTextField = mInputTextFieldRef.get();
+                assertNotNull(inputTextField);
+                waitOnMainUntil(()-> expectedText.equals(inputTextField.getText()), mTimeout);
+            }
+        }
+
+        public UpdateSelectionTest setTestTextView(boolean isTestingTextView) {
+            this.mIsTestingTextView = isTestingTextView;
+            return this;
         }
     }
 }
