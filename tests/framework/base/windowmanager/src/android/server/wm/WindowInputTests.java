@@ -36,6 +36,7 @@ import android.app.Instrumentation;
 import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -157,7 +158,7 @@ public class WindowInputTests {
             mView = new View(mActivity);
             p.width = 20;
             p.height = 20;
-            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
             mView.setFilterTouchesWhenObscured(true);
             mView.setOnClickListener((v) -> {
                 mClickCount++;
@@ -165,7 +166,7 @@ public class WindowInputTests {
             mActivity.addWindow(mView, p);
 
             View view2 = new View(mActivity);
-            p.gravity = Gravity.RIGHT | Gravity.TOP;
+            p.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
             p.type = WindowManager.LayoutParams.TYPE_APPLICATION;
             mActivity.addWindow(view2, p);
         });
@@ -188,7 +189,7 @@ public class WindowInputTests {
             p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
             p.width = 100;
             p.height = 100;
-            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.gravity = Gravity.CENTER;
             mView.setFilterTouchesWhenObscured(true);
             mView.setOnClickListener((v) -> {
                 mClickCount++;
@@ -204,7 +205,7 @@ public class WindowInputTests {
             p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN | FLAG_NOT_TOUCHABLE;
             p.width = 100;
             p.height = 100;
-            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.gravity = Gravity.CENTER;
             p.type = WindowManager.LayoutParams.TYPE_APPLICATION;
             mActivity.addWindow(overlay, p);
         });
@@ -227,7 +228,7 @@ public class WindowInputTests {
                 p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
                 p.width = 100;
                 p.height = 100;
-                p.gravity = Gravity.LEFT | Gravity.TOP;
+                p.gravity = Gravity.CENTER;
                 mView.setFilterTouchesWhenObscured(true);
                 mView.setOnClickListener((v) -> {
                     mClickCount++;
@@ -270,7 +271,7 @@ public class WindowInputTests {
                 mView = new View(mActivity);
                 p.width = 20;
                 p.height = 20;
-                p.gravity = Gravity.LEFT | Gravity.TOP;
+                p.gravity = Gravity.CENTER;
                 mView.setFilterTouchesWhenObscured(true);
                 mView.setOnClickListener((v) -> {
                     mClickCount++;
@@ -297,7 +298,7 @@ public class WindowInputTests {
             mView = new View(mActivity);
             p.width = 20;
             p.height = 20;
-            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.gravity = Gravity.CENTER;
             mView.setOnClickListener((v) -> {
                 mClickCount++;
             });
@@ -305,7 +306,7 @@ public class WindowInputTests {
 
             p.width = 100;
             p.height = 100;
-            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.gravity = Gravity.CENTER;
             p.type = WindowManager.LayoutParams.TYPE_APPLICATION;
             mActivity.addWindow(viewOverlap, p);
         });
@@ -333,7 +334,7 @@ public class WindowInputTests {
             mView = new View(mActivity);
             p.width = 20;
             p.height = 20;
-            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.gravity = Gravity.CENTER;
             p.flags = FLAG_NOT_TOUCHABLE | FLAG_WATCH_OUTSIDE_TOUCH;
             mView.setOnTouchListener((v, e) -> {
                 // Copying to make sure we are not dealing with a reused object
@@ -361,7 +362,7 @@ public class WindowInputTests {
             mView = new View(mActivity);
             p.width = size;
             p.height = size;
-            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.gravity = Gravity.CENTER;
             p.flags = FLAG_NOT_TOUCHABLE | FLAG_WATCH_OUTSIDE_TOUCH;
             mView.setOnTouchListener((v, e) -> {
                 // Copying to make sure we are not dealing with a reused object
@@ -484,12 +485,14 @@ public class WindowInputTests {
 
         private void addWindow(final String windowName) {
             mView = new View(this);
+            mView.setBackgroundColor(Color.RED);
             WindowManager.LayoutParams p = new WindowManager.LayoutParams();
             p.setTitle(windowName);
             p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN | FLAG_NOT_TOUCHABLE;
             p.width = 100;
             p.height = 100;
-            p.gravity = Gravity.LEFT | Gravity.TOP;
+            p.alpha = 0.5f;
+            p.gravity = Gravity.CENTER;
             p.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
             mWindowManager.addView(mView, p);
         }
