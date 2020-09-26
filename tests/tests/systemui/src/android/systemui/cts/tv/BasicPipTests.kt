@@ -91,7 +91,7 @@ class BasicPipTests : PipTestBase() {
 
     @After
     fun tearDown() {
-        stopPackage(PIP_ACTIVITY)
+        stopPackage(PIP_ACTIVITY.packageName)
     }
 
     /** Open an app in pip mode and ensure it has a window but is not focused. */

@@ -930,6 +930,16 @@ public class RoleManagerTest {
                 APP_PACKAGE_NAME)).isEqualTo(PackageManager.PERMISSION_GRANTED);
     }
 
+    @Test
+    public void smsRoleHolderAvailableWithoutObserveRoleHolders() throws Exception {
+        assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
+
+        addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
+
+        assertThat(sRoleManager.getDefaultSmsPackage(Process.myUserHandle().getIdentifier()))
+                .isEqualTo(APP_PACKAGE_NAME);
+    }
+
     private List<String> getRoleHolders(@NonNull String roleName) throws Exception {
         return callWithShellPermissionIdentity(() -> sRoleManager.getRoleHolders(roleName));
     }

@@ -13,8 +13,8 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsSystemUiDeviceAudioRecorderAppAudioRecord",
-    static_libs: ["CtsSystemUiDeviceAudioRecorderBase"],
+    name: "AudioRecorderTestApp_MediaRecorder",
+    static_libs: ["AudioRecorderTestApp_Base"],
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
     // tag this module as a cts test artifact
