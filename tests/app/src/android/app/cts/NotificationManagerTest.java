@@ -190,6 +190,9 @@ public class NotificationManagerTest extends AndroidTestCase {
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mRuleIds = new ArrayList<>();
 
+        // ensure listener access isn't allowed before test runs (other tests could put
+        // TestListener in an unexpected state)
+        toggleListenerAccess(false);
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
         mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
@@ -612,8 +615,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         NotificationManager nm = mContext.getSystemService(NotificationManager.class);
         assertEquals("Notification Policy Access Grant is "
-                        + nm.isNotificationPolicyAccessGranted() + " not " + on, on,
-                nm.isNotificationPolicyAccessGranted());
+                + nm.isNotificationPolicyAccessGranted() + " not " + on + " for "
+                + packageName,  on, nm.isNotificationPolicyAccessGranted());
     }
 
     private void suspendPackage(String packageName,
@@ -2093,8 +2096,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                     mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
             // Test requires that the phone's default state has no channels that can bypass dnd
-            assertTrue("Ringer stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            // which we can't currently guarantee (b/169267379)
+            // assertTrue("Ringer stream should be muted",
+            //        mAudioManager.isStreamMute(AudioManager.STREAM_RING));
         } finally {
             mNotificationManager.setInterruptionFilter(originalFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
@@ -2134,8 +2138,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                     mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
             // Test requires that the phone's default state has no channels that can bypass dnd
-            assertTrue("Ringer stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_RING));
+            // which we can't currently guarantee (b/169267379)
+            // assertTrue("Ringer stream should be muted",
+            //  mAudioManager.isStreamMute(AudioManager.STREAM_RING));
         } finally {
             mNotificationManager.setInterruptionFilter(originalFilter);
             mNotificationManager.setNotificationPolicy(origPolicy);
