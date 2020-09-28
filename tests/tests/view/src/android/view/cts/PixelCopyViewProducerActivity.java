@@ -21,7 +21,6 @@ import static org.junit.Assert.fail;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -31,6 +30,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewTreeObserver.OnDrawListener;
 import android.view.WindowInsets;
+import android.view.cts.util.DisplayUtils;
 import android.widget.FrameLayout;
 
 import java.util.concurrent.CountDownLatch;
@@ -56,9 +56,7 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
         super.onCreate(savedInstanceState);
 
         // Check if the device supports both of portrait and landscape orientation screens.
-        final PackageManager pm = getPackageManager();
-        mSupportsRotation = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)
-                    && pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT);
+        mSupportsRotation = DisplayUtils.supportOrientationRequest(this);
         if (mSupportsRotation) {
             setRequestedOrientation(ORIENTATIONS[mCurrentOrientation]);
         }
@@ -74,11 +72,10 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
     @Override
     public void onDraw() {
         final int requestedOrientation = ORIENTATIONS[mCurrentOrientation];
-        boolean screenPortrait =
+        boolean isRequestingPortrait =
                 requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                 || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
-        boolean contentPortrait = mContent.getHeight() > mContent.getWidth();
-        if (mSupportsRotation && (screenPortrait != contentPortrait)) {
+        if (mSupportsRotation && (isRequestingPortrait != DisplayUtils.isDevicePortrait(this))) {
             return;
         }
         mContent.post(() -> {
