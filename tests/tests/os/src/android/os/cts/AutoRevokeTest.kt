@@ -16,6 +16,7 @@
 
 package android.os.cts
 
+import android.app.ActivityManager
 import android.app.Instrumentation
 import android.content.Context
 import android.content.Intent
@@ -89,12 +90,6 @@ class AutoRevokeTest {
     @Before
     fun setup() {
         assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-
-        // Kill Permission Controller
-        assertThat(
-                runShellCommand("killall " +
-                        context.packageManager.permissionControllerPackageName),
-                equalTo(""))
 
         // Collapse notifications
         assertThat(
