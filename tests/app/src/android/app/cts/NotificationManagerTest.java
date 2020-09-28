@@ -2054,7 +2054,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             // ensure volume is not muted/0 to start test
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
+            // exception for presidential alert
+            //mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, 1, 0);
             mAudioManager.setStreamVolume(AudioManager.STREAM_SYSTEM, 1, 0);
             mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, 0);
 
@@ -2074,8 +2075,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                     mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
             assertTrue("System stream should be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_SYSTEM));
-            assertTrue("Alarm stream should be muted",
-                    mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
+            // exception for presidential alert
+            //assertTrue("Alarm stream should be muted",
+            //        mAudioManager.isStreamMute(AudioManager.STREAM_ALARM));
 
             // Test requires that the phone's default state has no channels that can bypass dnd
             assertTrue("Ringer stream should be muted",
