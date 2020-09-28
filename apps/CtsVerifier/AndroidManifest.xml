@@ -3023,10 +3023,14 @@
 
         </activity>
 
-       <activity
-            android:name="com.android.cts.verifier.sensors.HingeAngleTestActivity"
-            android:label="@string/snsr_hinge_angle_test"
-            android:screenOrientation="nosensor" >
+        <!-- Set the HingeAngleTestActivity as not resizeable and with a max aspect ratio to prevent
+             the activity from restarting when the device folds -->
+       <activity android:name="com.android.cts.verifier.sensors.HingeAngleTestActivity"
+                 android:label="@string/snsr_hinge_angle_test"
+                 android:exported="true"
+                 android:screenOrientation="nosensor"
+                 android:resizeableActivity="false"
+                 android:maxAspectRatio="2.4">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
