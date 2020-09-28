@@ -68,6 +68,13 @@ class AppOpEventCollectionTest {
     }
 
     @Test
+    fun ensureCorrectOpStr() {
+        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
+        val opEntry = getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
+        assertThat(opEntry.opStr).isEqualTo(OPSTR_WIFI_SCAN)
+    }
+
+    @Test
     fun switchUidStateWhileOpsAreRunning() {
         val before = System.currentTimeMillis()
 
