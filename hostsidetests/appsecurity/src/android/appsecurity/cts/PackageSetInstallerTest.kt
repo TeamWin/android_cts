@@ -30,7 +30,6 @@ import android.appsecurity.cts.PackageSetInstallerConstants.WHITELIST_PKG
 import android.cts.host.utils.DeviceJUnit4ClassRunnerWithParameters
 import android.cts.host.utils.DeviceJUnit4Parameterized
 import com.google.common.truth.Truth.assertThat
-import com.google.common.truth.Truth.assertWithMessage
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -198,8 +197,7 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
     }
 
     private fun assertPermission(granted: Boolean, permission: String) {
-        assertThat(device.executeShellCommand("dumpsys package $TARGET_PKG | grep $permission"))
-                .contains("$permission: granted=$granted")
+        assertThat(getPermissionString(permission)).contains("granted=$granted")
     }
 
     private fun grantPermission(permission: String) {
@@ -211,11 +209,7 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
     }
 
     private fun assertGrantState(state: GrantState, permission: String) {
-        val output = device.executeShellCommand(
-                "dumpsys package $TARGET_PKG | grep \"$permission: granted\"").trim()
-
-        // Make sure only the expected output line is returned
-        assertWithMessage(output).that(output.lines().size).isEqualTo(1)
+        val output = getPermissionString(permission)
 
         when (state) {
             GrantState.TRUE -> {
@@ -237,6 +231,18 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
             }
         }
     }
+
+    private fun getPermissionString(permission: String) =
+            device.executeShellCommand("dumpsys package $TARGET_PKG")
+                    .lineSequence()
+                    .dropWhile { !it.startsWith("Packages:") } // Wait for package header
+                    .drop(1) // Drop the package header itself
+                    .takeWhile { it.isEmpty() || it.first().isWhitespace() } // Until next header
+                    .dropWhile { !it.trim().startsWith("User $mPrimaryUserId:") } // Find user
+                    .drop(1) // Drop the user header itself
+                    .takeWhile { !it.trim().startsWith("User") } // Until next user
+                    .filter { it.contains("$permission: granted=") }
+                    .single()
 
     enum class GrantState {
         // Granted in full, unrestricted
