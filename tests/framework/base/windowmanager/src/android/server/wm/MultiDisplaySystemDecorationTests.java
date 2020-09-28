@@ -618,9 +618,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // Activity is no longer on the secondary display
         assertThat(mWmState.hasActivityInDisplay(newDisplay.mId, imeTestActivityName)).isFalse();
 
-        // Verify if tapping default display to request focus on EditText can show soft input.
+        // Verify if tapping the test activity on default display to request focus on EditText can
+        // show soft input.
         final ImeEventStream stream = mockImeSession.openEventStream();
-        tapOnDisplayCenter(defDisplay.mId);
+        tapOnCenter(imeTestActivitySession.getActivity().getBoundsOnScreen(), defDisplay.mId);
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
         waitOrderedImeEventsThenAssertImeShown(stream, defDisplay.mId,
@@ -631,6 +632,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
     public static class ImeTestActivity extends Activity {
         ImeAwareEditText mEditText;
+        private LinearLayout mLayout;
 
         @Override
         protected void onCreate(Bundle icicle) {
@@ -639,11 +641,11 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             // Set private IME option for editorMatcher to identify which TextView received
             // onStartInput event.
             resetPrivateImeOptionsIdentifier();
-            final LinearLayout layout = new LinearLayout(this);
-            layout.setOrientation(LinearLayout.VERTICAL);
-            layout.addView(mEditText);
+            mLayout = new LinearLayout(this);
+            mLayout.setOrientation(LinearLayout.VERTICAL);
+            mLayout.addView(mEditText);
             mEditText.requestFocus();
-            setContentView(layout);
+            setContentView(mLayout);
         }
 
         void showSoftInput() {
@@ -653,6 +655,13 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         void resetPrivateImeOptionsIdentifier() {
             mEditText.setPrivateImeOptions(
                     getClass().getName() + "/" + Long.toString(SystemClock.elapsedRealtimeNanos()));
+        }
+
+        Rect getBoundsOnScreen() {
+            final int[] location = new int[2];
+            mLayout.getLocationOnScreen(location);
+            return new Rect(location[0], location[1], location[0] + mLayout.getWidth(),
+                    location[1] + mLayout.getHeight());
         }
     }
 
