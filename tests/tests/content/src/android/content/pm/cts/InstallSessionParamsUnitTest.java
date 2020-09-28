@@ -32,7 +32,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
 
-import android.content.Context;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionInfo;
 import android.content.pm.PackageInstaller.SessionParams;
@@ -43,6 +42,8 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -80,6 +81,13 @@ public class InstallSessionParamsUnitTest {
     public Optional<Integer> installReason;
     @Parameterized.Parameter(10)
     public boolean expectFailure;
+
+    private PackageInstaller mInstaller = InstrumentationRegistry.getInstrumentation()
+            .getTargetContext()
+            .getPackageManager()
+            .getPackageInstaller();
+
+    private int mSessionId = -1;
 
     /**
      * Generate test-parameters where all params are the same, but one param cycles through all
@@ -181,9 +189,7 @@ public class InstallSessionParamsUnitTest {
      * owned by the this package.
      */
     private SessionInfo getSessionInfo(int sessionId) {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageInstaller installer = context.getPackageManager().getPackageInstaller();
-        List<SessionInfo> mySessionInfos = installer.getMySessions();
+        List<SessionInfo> mySessionInfos = mInstaller.getMySessions();
 
         for (SessionInfo sessionInfo : mySessionInfos) {
             if (sessionInfo.getSessionId() == sessionId) {
@@ -194,16 +200,19 @@ public class InstallSessionParamsUnitTest {
         return null;
     }
 
-    /**
-     * Create a new installer session.
-     *
-     * @return The new session
-     */
-    private int createSession(SessionParams params) throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageInstaller installer = context.getPackageManager().getPackageInstaller();
+    @Before
+    public void resetSessionId() {
+        mSessionId = 1;
+    }
 
-        return installer.createSession(params);
+    @After
+    public void abandonSession() {
+        if (mSessionId != -1) {
+            try {
+                mInstaller.abandonSession(mSessionId);
+            } catch (SecurityException ignored) {
+            }
+        }
     }
 
     @Test
@@ -225,9 +234,8 @@ public class InstallSessionParamsUnitTest {
         referredUri.ifPresent(params::setReferrerUri);
         installReason.ifPresent(params::setInstallReason);
 
-        int sessionId;
         try {
-            sessionId = createSession(params);
+            mSessionId = mInstaller.createSession(params);
 
             if (expectFailure) {
                 fail("Creating session did not fail");
@@ -240,7 +248,7 @@ public class InstallSessionParamsUnitTest {
             throw e;
         }
 
-        SessionInfo info = getSessionInfo(sessionId);
+        SessionInfo info = getSessionInfo(mSessionId);
 
         assertThat(info.getMode()).isEqualTo(mode.get());
         installLocation.ifPresent(i -> assertThat(info.getInstallLocation()).isEqualTo(i));

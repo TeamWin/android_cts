@@ -38,6 +38,8 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.internal.util.FunctionalUtils;
+
 import libcore.io.Streams;
 
 import org.junit.Test;
@@ -109,21 +111,6 @@ public class InstallSessionTransferTest {
         }
     }
 
-    /**
-     * Create a new installer session.
-     *
-     * @return The new session
-     */
-    private Session createSession() throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-
-        PackageInstaller installer = context.getPackageManager().getPackageInstaller();
-
-        SessionParams params = new SessionParams(MODE_FULL_INSTALL);
-        int sessionId = installer.createSession(params);
-        return installer.openSession(sessionId);
-    }
-
     @Test
     public void transferSession() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -133,140 +120,152 @@ public class InstallSessionTransferTest {
 
         PackageInstaller installer = context.getPackageManager().getPackageInstaller();
 
-        SessionParams params = new SessionParams(MODE_FULL_INSTALL);
-        int sessionId = installer.createSession(params);
-        Session session = installer.openSession(sessionId);
+        openAndCloseSession((sessionId, session) -> {
+            writeApk(session, "CtsContentTestCases");
 
-        writeApk(session, "CtsContentTestCases");
+            InputStream danglingReadStream = session.openRead("CtsContentTestCases");
 
-        InputStream danglingReadStream = session.openRead("CtsContentTestCases");
+            SessionInfo info = getSessionInfo(installer, sessionId);
+            assertThat(info.getInstallerPackageName()).isEqualTo(context.getPackageName());
+            assertThat(info.isSealed()).isFalse();
 
-        SessionInfo info = getSessionInfo(installer, sessionId);
-        assertThat(info.getInstallerPackageName()).isEqualTo(context.getPackageName());
-        assertThat(info.isSealed()).isFalse();
+            // This transfers the session to the new owner
+            session.transfer(packageInstallerPackage);
+            assertThat(getSessionInfo(installer, sessionId)).isNull();
 
-        // This transfers the session to the new owner
-        session.transfer(packageInstallerPackage);
-        assertThat(getSessionInfo(installer, sessionId)).isNull();
+            try {
+                // Session is transferred, all operations on the session are invalid
+                session.getNames();
+                fail();
+            } catch (SecurityException e) {
+                // expected
+            }
 
-        try {
-            // Session is transferred, all operations on the session are invalid
-            session.getNames();
-            fail();
-        } catch (SecurityException e) {
-            // expected
-        }
+            // Even when the session is transferred read streams still work and contain the same
+            // content that we initially wrote into it.
+            try (InputStream originalContent = new FileInputStream(
+                    "/data/local/tmp/cts/content/CtsContentTestCases.apk")) {
+                try (InputStream sessionContent = danglingReadStream) {
+                    byte[] buffer = new byte[4096];
+                    while (true) {
+                        int numReadOriginal = originalContent.read(buffer);
+                        int numReadSession = sessionContent.read(buffer);
 
-        // Even when the session is transferred read streams still work and contain the same content
-        // that we initially wrote into it.
-        try (InputStream originalContent = new FileInputStream(
-                "/data/local/tmp/cts/content/CtsContentTestCases.apk")) {
-            try (InputStream sessionContent = danglingReadStream) {
-                byte[] buffer = new byte[4096];
-                while (true) {
-                    int numReadOriginal = originalContent.read(buffer);
-                    int numReadSession = sessionContent.read(buffer);
-
-                    assertThat(numReadOriginal).isEqualTo(numReadSession);
-                    if (numReadOriginal == -1) {
-                        break;
+                        assertThat(numReadOriginal).isEqualTo(numReadSession);
+                        if (numReadOriginal == -1) {
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-        danglingReadStream.close();
+            danglingReadStream.close();
+        });
     }
 
     @Test
     public void transferToInvalidNewOwner() throws Exception {
-        Session session = createSession();
-        writeApk(session, "CtsContentTestCases");
+        openAndCloseSession((sessionId, session) -> {
+            writeApk(session, "CtsContentTestCases");
 
-        try {
-            // This will fail as the name of the new owner is invalid
-            session.transfer("android.content.cts.invalid.package");
-            fail();
-        } catch (PackageManager.NameNotFoundException e) {
-            // Expected
-        }
-
-        session.abandon();
+            try {
+                // This will fail as the name of the new owner is invalid
+                session.transfer("android.content.cts.invalid.package");
+                fail();
+            } catch (PackageManager.NameNotFoundException e) {
+                // Expected
+            }
+        });
     }
 
     @Test
     public void transferToOwnerWithoutInstallPermission() throws Exception {
-        Session session = createSession();
-        writeApk(session, "CtsContentTestCases");
+        openAndCloseSession((sessionId, session) -> {
+            writeApk(session, "CtsContentTestCases");
 
-        try {
-            // This will fail as the current package does not own the install-packages permission
-            session.transfer(InstrumentationRegistry.getInstrumentation().getTargetContext()
-                    .getPackageName());
-            fail();
-        } catch (SecurityException e) {
-            // Expected
-        }
-
-        session.abandon();
+            try {
+                // This will fail as the current package does not own the install-packages
+                // permission
+                session.transfer(InstrumentationRegistry.getInstrumentation().getTargetContext()
+                        .getPackageName());
+                fail();
+            } catch (SecurityException e) {
+                // Expected
+            }
+        });
     }
 
     @Test
     public void transferWithOpenWrite() throws Exception {
-        Session session = createSession();
-        String packageInstallerPackage = getPackageInstallerPackageName();
-        assumeNotNull(packageInstallerPackage);
+        openAndCloseSession((sessionId, session) -> {
+            String packageInstallerPackage = getPackageInstallerPackageName();
+            assumeNotNull(packageInstallerPackage);
 
-        session.openWrite("danglingWriteStream", 0, 1);
-        try {
-            // This will fail as the danglingWriteStream is still open
-            session.transfer(packageInstallerPackage);
-            fail();
-        } catch (SecurityException e) {
-            // Expected
-        }
-
-        session.abandon();
+            session.openWrite("danglingWriteStream", 0, 1);
+            try {
+                // This will fail as the danglingWriteStream is still open
+                session.transfer(packageInstallerPackage);
+                fail();
+            } catch (SecurityException e) {
+                // Expected
+            }
+        });
     }
 
     @Test
     public void transferSessionWithInvalidApk() throws Exception {
-        Session session = createSession();
-        String packageInstallerPackage = getPackageInstallerPackageName();
-        assumeNotNull(packageInstallerPackage);
+        openAndCloseSession((sessionId, session) -> {
+            String packageInstallerPackage = getPackageInstallerPackageName();
+            assumeNotNull(packageInstallerPackage);
 
-        try (OutputStream out = session.openWrite("invalid", 0, 2)) {
-            out.write(new byte[]{23, 42});
-            out.flush();
-        }
+            try (OutputStream out = session.openWrite("invalid", 0, 2)) {
+                out.write(new byte[]{23, 42});
+                out.flush();
+            }
 
-        try {
-            // This will fail as the content of 'invalid' is not a valid APK
-            session.transfer(packageInstallerPackage);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
-
-        session.abandon();
+            try {
+                // This will fail as the content of 'invalid' is not a valid APK
+                session.transfer(packageInstallerPackage);
+                fail();
+            } catch (IllegalArgumentException e) {
+                // expected
+            }
+        });
     }
 
     @Test
     public void transferWithApkFromWrongPackage() throws Exception {
-        Session session = createSession();
-        String packageInstallerPackage = getPackageInstallerPackageName();
-        assumeNotNull(packageInstallerPackage);
+        openAndCloseSession((sessionId, session) -> {
+            String packageInstallerPackage = getPackageInstallerPackageName();
+            assumeNotNull(packageInstallerPackage);
 
-        writeApk(session, "CtsContentEmptyTestApp");
+            writeApk(session, "CtsContentEmptyTestApp");
 
+            try {
+                // This will fail as the session contains the a apk from the wrong package
+                session.transfer(packageInstallerPackage);
+                fail();
+            } catch (SecurityException e) {
+                // expected
+            }
+        });
+    }
+
+    private void openAndCloseSession(FunctionalUtils.ThrowingBiConsumer<Integer, Session> block)
+            throws IOException {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        PackageInstaller installer = context.getPackageManager().getPackageInstaller();
+
+        SessionParams params = new SessionParams(MODE_FULL_INSTALL);
+        int sessionId = installer.createSession(params);
         try {
-            // This will fail as the session contains the a apk from the wrong package
-            session.transfer(packageInstallerPackage);
-            fail();
-        } catch (SecurityException e) {
-            // expected
+            block.accept(sessionId, installer.openSession(sessionId));
+        } finally {
+            try {
+                installer.abandonSession(sessionId);
+            } catch (SecurityException ignored) {
+            }
         }
-
-        session.abandon();
     }
 }
