@@ -16,7 +16,11 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.cts.encryptionapp">
-    <application android:label="EncryptionApp" android:forceQueryable="true">
+    <queries>
+        <package android:name="com.android.cts.splitapp" />
+    </queries>
+
+    <application android:label="EncryptionApp">
         <activity android:name=".UnawareActivity"
                 android:exported="true">
             <intent-filter>
