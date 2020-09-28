@@ -171,7 +171,8 @@ public class TestUtils {
     /**
      * Executes a shell command.
      */
-    public static String executeShellCommand(String command) throws IOException {
+    public static String executeShellCommand(String pattern, Object...args) throws IOException {
+        String command = String.format(pattern, args);
         int attempt = 0;
         while (attempt++ < 5) {
             try {

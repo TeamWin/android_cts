@@ -18,12 +18,9 @@ package android.scopedstorage.cts.host;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertTrue;
-
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,20 +32,17 @@ import org.junit.runner.RunWith;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
-public class LegacyStorageHostTest extends BaseHostJUnit4Test {
-    private boolean isExternalStorageSetup = false;
+public class LegacyStorageHostTest extends BaseHostTestCase {
 
-    private String executeShellCommand(String cmd) throws Exception {
-        return getDevice().executeShellCommand(cmd);
-    }
+    private boolean mIsExternalStorageSetup;
 
     /**
      * Runs the given phase of LegacyFileAccessTest by calling into the device.
      * Throws an exception if the test phase fails.
      */
     void runDeviceTest(String phase) throws Exception {
-        assertTrue(runDeviceTests("android.scopedstorage.cts.legacy",
-                "android.scopedstorage.cts.legacy.LegacyStorageTest", phase));
+        assertThat(runDeviceTests("android.scopedstorage.cts.legacy",
+                "android.scopedstorage.cts.legacy.LegacyStorageTest", phase)).isTrue();
     }
 
     /**
@@ -56,14 +50,18 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
      * so in order to test a case where the reader has only WRITE, we must explicitly revoke READ.
      */
     private void grantPermissions(String... perms) throws Exception {
+        int currentUserId = getCurrentUserId();
         for (String perm : perms) {
-            executeShellCommand("pm grant android.scopedstorage.cts.legacy " + perm);
+            executeShellCommand("pm grant --user %d android.scopedstorage.cts.legacy %s",
+                    currentUserId, perm);
         }
     }
 
     private void revokePermissions(String... perms) throws Exception {
+        int currentUserId = getCurrentUserId();
         for (String perm : perms) {
-            executeShellCommand("pm revoke android.scopedstorage.cts.legacy " + perm);
+            executeShellCommand("pm revoke --user %d android.scopedstorage.cts.legacy %s",
+                    currentUserId, perm);
         }
     }
 
@@ -72,14 +70,14 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
      * creating file.
      */
     private void createFileAsShell(String filePath) throws Exception {
-        executeShellCommand("touch " + filePath);
+        executeShellCommand("touch %s", filePath);
         assertThat(getDevice().doesFileExist(filePath)).isTrue();
     }
 
     private void setupExternalStorage() throws Exception {
-        if (!isExternalStorageSetup) {
+        if (!mIsExternalStorageSetup) {
             runDeviceTest("setupExternalStorage");
-            isExternalStorageSetup = true;
+            mIsExternalStorageSetup = true;
         }
     }
 
