@@ -20,10 +20,6 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
-import com.android.cts.verifier.audio.audiolib.SignalGenerator;
-import com.android.cts.verifier.audio.audiolib.StreamPlayer;
-import com.android.cts.verifier.audio.audiolib.WaveTableFloatFiller;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -48,6 +44,12 @@ import android.widget.TextView;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
+
+// MegaPlayer
+import org.hyphonate.megaaudio.player.AudioSourceProvider;
+import org.hyphonate.megaaudio.player.JavaPlayer;
+import org.hyphonate.megaaudio.player.PlayerBuilder;
+import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
 
 public class AnalogHeadsetAudioActivity
         extends PassFailButtons.Activity
@@ -89,13 +91,12 @@ public class AnalogHeadsetAudioActivity
 
     // Player
     protected boolean mIsPlaying = false;
-    protected StreamPlayer mPlayer = null;
-    protected WaveTableFloatFiller mFiller = null;
 
-    protected float[] mWavBuffer = null;
+    // Mega Player
+    static final int NUM_CHANNELS = 2;
+    static final int SAMPLE_RATE = 48000;
 
-    // A more than adequate (and non-critical) size.
-    private static final int WAVBUFF_SIZE_IN_SAMPLES = 2048;
+    JavaPlayer mAudioPlayer;
 
     public AnalogHeadsetAudioActivity() {
         super();
@@ -266,28 +267,35 @@ public class AnalogHeadsetAudioActivity
     // Player
     //
     protected void setupPlayer() {
-        // the +1 is so we can repeat the 0th sample and simplify the interpolation calculation.
-        mWavBuffer = new float[WAVBUFF_SIZE_IN_SAMPLES + 1];
-
-        SignalGenerator.fillFloatSine(mWavBuffer);
-        mFiller = new WaveTableFloatFiller(mWavBuffer);
-
-        mPlayer = new StreamPlayer(this);
+        //
+        // Allocate the source provider for the sort of signal we want to play
+        //
+        AudioSourceProvider sourceProvider = new SinAudioSourceProvider();
+        try {
+            PlayerBuilder builder = new PlayerBuilder();
+            mAudioPlayer = (JavaPlayer)builder
+                    // choose one or the other of these for a Java or an Oboe player
+                    .setPlayerType(PlayerBuilder.TYPE_JAVA)
+                    // .setPlayerType(PlayerBuilder.PLAYER_OBOE)
+                    .setSourceProvider(sourceProvider)
+                    .build();
+        } catch (PlayerBuilder.BadStateException ex) {
+            Log.e(TAG, "Failed MegaPlayer build.");
+        }
     }
 
     protected void startPlay() {
         if (!mIsPlaying) {
-            int numChans = 2;
-            mPlayer.open(numChans, mFiller);
-            mPlayer.start();
+            mAudioPlayer.setupAudioStream(NUM_CHANNELS, SAMPLE_RATE, 96);
+            mAudioPlayer.startStream();
             mIsPlaying = true;
         }
     }
 
     protected void stopPlay() {
         if (mIsPlaying) {
-            mPlayer.stop();
-            mPlayer.close();
+            mAudioPlayer.stopStream();
+            mAudioPlayer.teardownAudioStream();
             mIsPlaying = false;
         }
     }
