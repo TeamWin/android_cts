@@ -27,10 +27,13 @@ import static com.google.common.collect.Iterables.getLast;
 import static org.junit.Assert.assertNotNull;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.Instrumentation;
+import android.app.WindowConfiguration;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.server.wm.WindowManagerStateHelper;
 import android.server.wm.WindowManagerState;
@@ -244,7 +247,7 @@ public class LaunchRunner {
         Instrumentation.ActivityMonitor monitor = getInstrumentation()
                 .addMonitor((String) null, null, false);
 
-        context.startActivity(intent);
+        context.startActivity(intent, getLaunchOptions());
         Activity activity = monitor.waitForActivityWithTimeout(ACTIVITY_LAUNCH_TIMEOUT);
         waitAndAssertActivityLaunched(activity, intent);
 
@@ -256,9 +259,9 @@ public class LaunchRunner {
                 .addMonitor((String) null, null, false);
 
         if (startForResult) {
-            activityContext.startActivityForResult(intent, 1);
+            activityContext.startActivityForResult(intent, 1, getLaunchOptions());
         } else {
-            activityContext.startActivity(intent);
+            activityContext.startActivity(intent, getLaunchOptions());
         }
         Activity activity = monitor.waitForActivityWithTimeout(ACTIVITY_LAUNCH_TIMEOUT);
 
@@ -327,5 +330,11 @@ public class LaunchRunner {
         WindowManagerStateHelper amWmState = mTestBase.getWmState();
         amWmState.computeState(new ComponentName[]{});
         return amWmState.getRootTasks();
+    }
+
+    private static Bundle getLaunchOptions() {
+        ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(WindowConfiguration.WINDOWING_MODE_FULLSCREEN);
+        return options.toBundle();
     }
 }
