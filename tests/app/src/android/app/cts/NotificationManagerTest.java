@@ -291,6 +291,19 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    private void deleteSingleContact(Uri uri) {
+        final ArrayList<ContentProviderOperation> operationList =
+                new ArrayList<ContentProviderOperation>();
+        operationList.add(ContentProviderOperation.newDelete(uri).build());
+        try {
+            mContext.getContentResolver().applyBatch(ContactsContract.AUTHORITY, operationList);
+        } catch (RemoteException e) {
+            Log.e(TAG, String.format("%s: %s", e.toString(), e.getMessage()));
+        } catch (OperationApplicationException e) {
+            Log.e(TAG, String.format("%s: %s", e.toString(), e.getMessage()));
+        }
+    }
+
     private Uri lookupContact(String phone) {
         Cursor c = null;
         try {
@@ -2629,6 +2642,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Policy origPolicy = mNotificationManager.getNotificationPolicy();
+        Uri aliceUri = null;
         try {
             NotificationManager.Policy currPolicy = mNotificationManager.getNotificationPolicy();
             NotificationManager.Policy newPolicy = new NotificationManager.Policy(
@@ -2648,13 +2662,17 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             final Bundle peopleExtras = new Bundle();
             ArrayList<Person> personList = new ArrayList<>();
-            personList.add(
-                    new Person.Builder().setUri(lookupContact(ALICE_PHONE).toString()).build());
+            aliceUri = lookupContact(ALICE_PHONE);
+            personList.add(new Person.Builder().setUri(aliceUri.toString()).build());
             peopleExtras.putParcelableArrayList(Notification.EXTRA_PEOPLE_LIST, personList);
             SystemUtil.runWithShellPermissionIdentity(() ->
                     assertTrue(mNotificationManager.matchesCallFilter(peopleExtras)));
         } finally {
             mNotificationManager.setNotificationPolicy(origPolicy);
+            if (aliceUri != null) {
+                // delete the contact
+                deleteSingleContact(aliceUri);
+            }
         }
 
     }
