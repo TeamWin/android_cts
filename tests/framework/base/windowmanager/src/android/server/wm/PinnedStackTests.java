@@ -996,7 +996,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
     @Test
     public void testSetRequestedOrientationWhilePinned() throws Exception {
-        assumeTrue("Skipping test: no rotation support", supportsRotation());
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
         // Launch the PiP activity fixed as portrait, and enter picture-in-picture
         launchActivity(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
                 EXTRA_PIP_ORIENTATION, String.valueOf(ORIENTATION_PORTRAIT),
