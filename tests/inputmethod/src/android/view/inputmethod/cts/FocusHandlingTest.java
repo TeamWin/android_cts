@@ -152,7 +152,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             final ImeEvent onStart =
                     expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
 
-            assertFalse(stream.dump(), onStart.getEnterState().hasDummyInputConnection());
+            assertFalse(stream.dump(), onStart.getEnterState().hasFallbackInputConnection());
             assertFalse(stream.dump(), onStart.getArguments().getBoolean("restarting"));
 
             // There shouldn't be onStartInput any more.
