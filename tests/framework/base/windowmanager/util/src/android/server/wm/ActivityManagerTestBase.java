@@ -138,6 +138,7 @@ import android.server.wm.CommandSession.LaunchProxy;
 import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.settings.SettingsSession;
+import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.EventLog.Event;
 import android.view.Display;
@@ -1152,9 +1153,45 @@ public abstract class ActivityManagerTestBase {
                 || (!supportsLandscape && !supportsPortrait);
     }
 
+    /**
+     * The device should support orientation request from apps if it supports rotation and the
+     * display is not close to square.
+     */
+    protected boolean supportsOrientationRequest() {
+        return supportsRotation() && !isCloseToSquareDisplay();
+    }
+
+    /** Checks whether the display dimension is close to square. */
+    protected boolean isCloseToSquareDisplay() {
+        final Resources resources = mContext.getResources();
+        final float closeToSquareMaxAspectRatio;
+        try {
+            closeToSquareMaxAspectRatio = resources.getFloat(resources.getIdentifier(
+                    "config_closeToSquareDisplayMaxAspectRatio", "dimen", "android"));
+        } catch (Resources.NotFoundException e) {
+            // Assume device is not close to square.
+            return false;
+        }
+        final DisplayMetrics displayMetrics = new DisplayMetrics();
+        mDm.getDisplay(DEFAULT_DISPLAY).getRealMetrics(displayMetrics);
+        final int w = displayMetrics.widthPixels;
+        final int h = displayMetrics.heightPixels;
+        final float aspectRatio = Math.max(w, h) / (float) Math.min(w, h);
+        return aspectRatio <= closeToSquareMaxAspectRatio;
+    }
+
     protected boolean hasDeviceFeature(final String requiredFeature) {
         return mContext.getPackageManager()
                 .hasSystemFeature(requiredFeature);
+    }
+
+    protected static boolean isDisplayPortrait() {
+        final DisplayManager displayManager = getInstrumentation()
+                .getContext().getSystemService(DisplayManager.class);
+        final Display display = displayManager.getDisplay(DEFAULT_DISPLAY);
+        final DisplayMetrics displayMetrics = new DisplayMetrics();
+        display.getRealMetrics(displayMetrics);
+        return displayMetrics.widthPixels < displayMetrics.heightPixels;
     }
 
     protected static boolean isDisplayOn(int displayId) {
