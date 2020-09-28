@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.hyphonate.megaaudio.recorder;
 
-package com.android.cts.verifier.audio.audiolib;
-
-/**
- * An interface for objects which provide streamed audio data to a StreamPlayer instance.
- */
-public interface AudioFiller {
-    /**
-     * Reset a stream to the beginning.
-     */
-    public void reset();
+public abstract class AudioSink {
+    public void start() {}
+    public void stop(int lastBufferFrames) {}
 
     /**
-     * Process a request for audio data.
-     * @param buffer The buffer to be filled.
+     * Process incoming audio data.
+     * @param audioData The buffer to be filled.
      * @param numFrames The number of frames of audio to provide.
      * @param numChans The number of channels (in the buffer) required by the player.
-     * @return The number of frames actually generated. If this value is less than that
-     * requested, it may be interpreted by the player as the end of playback.
+     * Note that the recorder will be blocked by this call.
+     * Note that the data is assumed to be *interleaved*.
      */
-    public int fill(float[] buffer, int numFrames, int numChans);
+    abstract public void process(final float[] audioData, int numFrames, int numChans);
 }
