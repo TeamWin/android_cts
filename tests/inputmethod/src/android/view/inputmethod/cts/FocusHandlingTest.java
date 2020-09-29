@@ -78,6 +78,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -87,6 +88,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RunWith(AndroidJUnit4.class)
 public class FocusHandlingTest extends EndToEndImeTestBase {
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    static final long EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
     static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
 
     @Rule
@@ -629,6 +631,30 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             // "onStartInput", and "showSoftInput" must happen when editText became IME focusable.
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testOnCheckIsTextEditorRunOnUIThread() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final CountDownLatch uiThreadSignal = new CountDownLatch(1);
+        try (CloseOnce session = CloseOnce.of(new ServiceSession(instrumentation.getContext()))) {
+            final AtomicBoolean popupTextHasWindowFocus = new AtomicBoolean(false);
+
+            // Create a popupTextView which from Service with different UI thread and set a
+            // countDownLatch to verify onCheckIsTextEditor run on UI thread.
+            final ServiceSession serviceSession = (ServiceSession) session.mAutoCloseable;
+            serviceSession.getService().setUiThreadSignal(uiThreadSignal);
+            final EditText popupTextView = serviceSession.getService().getPopupTextView(
+                    popupTextHasWindowFocus);
+            assertTrue(popupTextView.getHandler().getLooper()
+                    != serviceSession.getService().getMainLooper());
+
+            // Emulate tap event
+            CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, popupTextView);
+
+            // Wait until the UI thread countDownLatch reach to 0 or timeout
+            assertTrue(uiThreadSignal.await(EXPECT_TIMEOUT, TimeUnit.MILLISECONDS));
         }
     }
 
