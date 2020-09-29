@@ -330,6 +330,11 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testCanWriteToDCIMCameraWithNomedia() throws Exception {
+        runDeviceTest("testCanWriteToDCIMCameraWithNomedia");
+    }
+
+    @Test
     public void testHiddenDirectory_nomedia() throws Exception {
         runDeviceTest("testHiddenDirectory_nomedia");
     }
