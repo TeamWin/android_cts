@@ -28,6 +28,7 @@ import android.net.wifi.hotspot2.pps.HomeSp;
 import android.platform.test.annotations.AppModeFull;
 import android.telephony.TelephonyManager;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.filters.SmallTest;
 
 import java.io.ByteArrayInputStream;
@@ -547,6 +548,9 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
         builder.setCredentialSharedWithUser(true);
         builder.setIsInitialAutojoinEnabled(true);
         builder.setUntrusted(false);
+        if (BuildCompat.isAtLeastS()) {
+            builder.setOemPaid(false);
+        }
         return builder;
     }
 
@@ -570,6 +574,9 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
         assertTrue(suggestion.isCredentialSharedWithUser());
         assertTrue(suggestion.isInitialAutojoinEnabled());
         assertFalse(suggestion.isUntrusted());
+        if (BuildCompat.isAtLeastS()) {
+            assertFalse(suggestion.isOemPaid());
+        }
         assertEquals(TEST_PRIORITY_GROUP, suggestion.getPriorityGroup());
     }
 
