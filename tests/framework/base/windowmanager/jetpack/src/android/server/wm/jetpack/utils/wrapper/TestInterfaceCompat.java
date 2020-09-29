@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.wrapper;
+package android.server.wm.jetpack.utils.wrapper;
 
 import android.os.IBinder;
-import android.server.wm.jetpack.wrapper.extensionwrapperimpl.TestExtensionCompat;
-import android.server.wm.jetpack.wrapper.sidecarwrapperimpl.TestSidecarCompat;
+import android.server.wm.jetpack.utils.wrapper.extensionwrapperimpl.TestExtensionCompat;
+import android.server.wm.jetpack.utils.wrapper.sidecarwrapperimpl.TestSidecarCompat;
 
 import androidx.annotation.NonNull;
 

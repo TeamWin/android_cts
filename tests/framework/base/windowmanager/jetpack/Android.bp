@@ -42,6 +42,21 @@ java_library {
     installable: false,
 }
 
+java_library {
+    name: "cts_window_jetpack_utils",
+    srcs: [
+        "src/android/server/wm/jetpack/utils/**/*.java"
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+    ],
+    libs: [
+        "cts_window-extensions",
+        "cts_window-sidecar",
+    ],
+    sdk_version: "test_current",
+}
+
 android_test {
     name: "CtsWindowManagerJetpackTestCases",
     defaults: ["cts_defaults"],
