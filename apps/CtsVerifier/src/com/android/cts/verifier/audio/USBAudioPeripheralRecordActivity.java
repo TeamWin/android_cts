@@ -16,32 +16,31 @@
 
 package com.android.cts.verifier.audio;
 
-import android.content.Context;
 import android.graphics.Color;
-import android.media.AudioManager;
 import android.os.Bundle;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import com.android.cts.verifier.audio.audiolib.StreamPlayer;
-import com.android.cts.verifier.audio.audiolib.StreamRecorder;
-import com.android.cts.verifier.audio.audiolib.StreamRecorderListener;
+import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
-import com.android.cts.verifier.audio.peripheralprofile.PeripheralProfile;
-import com.android.cts.verifier.audio.peripheralprofile.USBDeviceInfoHelper;
+// MegaAudio imports
+import org.hyphonate.megaaudio.common.BuilderBase;
+import org.hyphonate.megaaudio.recorder.JavaRecorder;
+import org.hyphonate.megaaudio.recorder.RecorderBuilder;
+import org.hyphonate.megaaudio.recorder.sinks.AppCallback;
+import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
 
 public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerActivity {
     private static final String TAG = "USBAudioPeripheralRecordActivity";
 
-    // Recorder
-    private StreamRecorder mRecorder = null;
-    private RecordListener mRecordListener = null;
+    // MegaRecorder
+    private static final int NUM_CHANNELS = 2;
+    private JavaRecorder    mRecorder;
+
     private boolean mIsRecording = false;
 
     // Widgets
@@ -56,59 +55,46 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
         super(false); // Mandated peripheral is NOT required
     }
 
-    private void connectWaveView() {
-        // Log.i(TAG, "connectWaveView() rec:" + (mRecorder != null));
-        if (mRecorder != null) {
-            float[] smplFloatBuff = mRecorder.getBurstBuffer();
-            int numChans = mRecorder.getNumChannels();
-            int numFrames = smplFloatBuff.length / numChans;
-            mWaveView.setPCMFloatBuff(smplFloatBuff, numChans, numFrames);
-            mWaveView.invalidate();
-
-            mRecorder.setListener(mRecordListener);
-        }
-    }
-
     public boolean startRecording(boolean withLoopback) {
         if (mInputDevInfo == null) {
             return false;
         }
 
-        if (mRecorder == null) {
-            mRecorder = new StreamRecorder(this);
-        } else if (mRecorder.isRecording()) {
-            mRecorder.stop();
-        }
+        AudioSystemParams audioSystemParams = new AudioSystemParams();
+        audioSystemParams.init(this);
 
-        // no reason to do more than 2
-        int numChans = USBDeviceInfoHelper.calcMaxChannelCount(mInputDevInfo);
-        if (numChans > 2) {
-            numChans = 2;
-        }
-        Log.i(TAG, "  numChans:" + numChans);
+        int systemSampleRate = audioSystemParams.getSystemSampleRate();
+        int numBufferFrames = audioSystemParams.getSystemBufferFrames();
 
-        if (mRecorder.open(numChans)) {
-            connectWaveView();  // Setup the WaveView
+        try {
+            RecorderBuilder builder = new RecorderBuilder();
+            mRecorder = (JavaRecorder)builder
+                    .setRecorderType(BuilderBase.TYPE_JAVA)
+                    .setAudioSinkProvider(new AppCallbackAudioSinkProvider(new ScopeRefreshCallback()))
+                    .build();
+            mRecorder.setupAudioStream(NUM_CHANNELS, systemSampleRate, numBufferFrames);
 
-            mIsRecording = mRecorder.start();
+            mIsRecording = mRecorder.startStream();
 
             if (withLoopback) {
                 startPlay();
             }
-
-            return mIsRecording;
-        } else {
-            return false;
+        } catch (RecorderBuilder.BadStateException ex) {
+            Log.e(TAG, "Failed MegaRecorder build.");
+            mIsRecording = false;
         }
+
+        return mIsRecording;
     }
 
     public void stopRecording() {
         if (mRecorder != null) {
-            mRecorder.stop();
+            mRecorder.stopStream();
+            mRecorder.teardownAudioStream();
         }
 
-        if (mPlayer != null && mPlayer.isPlaying()) {
-            mPlayer.stop();
+        if (mAudioPlayer != null && mAudioPlayer.isPlaying()) {
+            mAudioPlayer.stopStream();
         }
 
         mIsRecording = false;
@@ -132,9 +118,6 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
         mRecordLoopbackBtn.setOnClickListener(mButtonClickListener);
 
         setupPlayer();
-
-        mRecorder = new StreamRecorder(this);
-        mRecordListener = new RecordListener();
 
         mWaveView = (WaveScopeView)findViewById(R.id.uap_recordWaveView);
         mWaveView.setBackgroundColor(Color.DKGRAY);
@@ -198,33 +181,17 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
         }
     }
 
-    private class RecordListener extends StreamRecorderListener {
-        /*package*/ RecordListener() {
-            super(Looper.getMainLooper());
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            // Log.i(TAG, "RecordListener.HandleMessage(" + msg.what + ")");
-            switch (msg.what) {
-                case MSG_START:
-                    break;
-
-                case MSG_BUFFER_FILL:
-                    mWaveView.invalidate();
-                    break;
-
-                case MSG_STOP:
-                    break;
-            }
-        }
-    }
-
     @Override
     protected void onPause() {
         super.onPause();
 
         stopPlay();
     }
-}
 
+    class ScopeRefreshCallback implements AppCallback {
+        @Override
+        public void onDataReady(float[] audioData, int numFrames) {
+            mWaveView.setPCMFloatBuff(audioData, NUM_CHANNELS, numFrames);
+        }
+    }
+}

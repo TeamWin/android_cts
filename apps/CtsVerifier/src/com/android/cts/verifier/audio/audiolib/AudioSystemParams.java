@@ -19,7 +19,7 @@ package com.android.cts.verifier.audio.audiolib;
 import android.content.Context;
 import android.media.AudioManager;
 
-class AudioSystemParams {
+public class AudioSystemParams {
     // This value will be calculated in init()
     private int mSystemSampleRate;
 

@@ -79,6 +79,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MotionEvent;
+import android.view.OnReceiveContentCallback;
 import android.view.PointerIcon;
 import android.view.SoundEffectConstants;
 import android.view.TouchDelegate;
@@ -1249,6 +1250,20 @@ public class ViewTest {
 
         view.setContextClickable(false);
         assertFalse(view.isContextClickable());
+    }
+
+    @Test
+    public void testSetOnReceiveContentCallback() {
+        View view = new View(mActivity);
+        assertNull(view.getOnReceiveContentCallback());
+
+        @SuppressWarnings("unchecked")
+        OnReceiveContentCallback<View> callback = mock(OnReceiveContentCallback.class);
+        view.setOnReceiveContentCallback(callback);
+        assertSame(callback, view.getOnReceiveContentCallback());
+
+        view.setOnReceiveContentCallback(null);
+        assertNull(view.getOnReceiveContentCallback());
     }
 
     @Test
