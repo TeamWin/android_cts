@@ -156,6 +156,34 @@ public class SmsManagerTest {
             String mccmnc = mTelephonyManager.getSimOperator();
             mDeliveryReportSupported = !(CarrierCapability.NO_DELIVERY_REPORTS.contains(mccmnc));
         }
+
+        // register receivers
+        mSendIntent = new Intent(SMS_SEND_ACTION);
+        mDeliveryIntent = new Intent(SMS_DELIVERY_ACTION);
+
+        IntentFilter sendIntentFilter = new IntentFilter(SMS_SEND_ACTION);
+        IntentFilter deliveryIntentFilter = new IntentFilter(SMS_DELIVERY_ACTION);
+        IntentFilter dataSmsReceivedIntentFilter = new IntentFilter(DATA_SMS_RECEIVED_ACTION);
+        IntentFilter smsDeliverIntentFilter = new IntentFilter(SMS_DELIVER_DEFAULT_APP_ACTION);
+        IntentFilter smsReceivedIntentFilter =
+                new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+        IntentFilter smsRetrieverIntentFilter = new IntentFilter(SMS_RETRIEVER_ACTION);
+        dataSmsReceivedIntentFilter.addDataScheme("sms");
+        dataSmsReceivedIntentFilter.addDataAuthority("localhost", "19989");
+
+        mSendReceiver = new SmsBroadcastReceiver(SMS_SEND_ACTION);
+        mDeliveryReceiver = new SmsBroadcastReceiver(SMS_DELIVERY_ACTION);
+        mDataSmsReceiver = new SmsBroadcastReceiver(DATA_SMS_RECEIVED_ACTION);
+        mSmsDeliverReceiver = new SmsBroadcastReceiver(SMS_DELIVER_DEFAULT_APP_ACTION);
+        mSmsReceivedReceiver = new SmsBroadcastReceiver(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+        mSmsRetrieverReceiver = new SmsBroadcastReceiver(SMS_RETRIEVER_ACTION);
+
+        mContext.registerReceiver(mSendReceiver, sendIntentFilter);
+        mContext.registerReceiver(mDeliveryReceiver, deliveryIntentFilter);
+        mContext.registerReceiver(mDataSmsReceiver, dataSmsReceivedIntentFilter);
+        mContext.registerReceiver(mSmsDeliverReceiver, smsDeliverIntentFilter);
+        mContext.registerReceiver(mSmsReceivedReceiver, smsReceivedIntentFilter);
+        mContext.registerReceiver(mSmsRetrieverReceiver, smsRetrieverIntentFilter);
     }
 
     @After
@@ -166,6 +194,26 @@ public class SmsManagerTest {
         }
         if (mTestAppSetAsDefaultSmsApp) {
             setDefaultSmsApp(false);
+        }
+
+        // unregister receivers
+        if (mSendReceiver != null) {
+            mContext.unregisterReceiver(mSendReceiver);
+        }
+        if (mDeliveryReceiver != null) {
+            mContext.unregisterReceiver(mDeliveryReceiver);
+        }
+        if (mDataSmsReceiver != null) {
+            mContext.unregisterReceiver(mDataSmsReceiver);
+        }
+        if (mSmsDeliverReceiver != null) {
+            mContext.unregisterReceiver(mSmsDeliverReceiver);
+        }
+        if (mSmsReceivedReceiver != null) {
+            mContext.unregisterReceiver(mSmsReceivedReceiver);
+        }
+        if (mSmsRetrieverReceiver != null) {
+            mContext.unregisterReceiver(mSmsRetrieverReceiver);
         }
     }
 
@@ -213,7 +261,6 @@ public class SmsManagerTest {
                 TextUtils.isEmpty(mDestAddr));
 
         String mccmnc = mTelephonyManager.getSimOperator();
-        setupBroadcastReceivers();
         init();
 
         CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
@@ -306,7 +353,6 @@ public class SmsManagerTest {
                 TextUtils.isEmpty(mDestAddr));
 
         String mccmnc = mTelephonyManager.getSimOperator();
-        setupBroadcastReceivers();
 
         // send/receive single text sms with and without messageId
         sendAndReceiveSms(/* addMessageId= */ true);
@@ -340,7 +386,6 @@ public class SmsManagerTest {
         // Setting default SMS App is needed to be able to block numbers.
         setDefaultSmsApp(true);
         blockNumber(mDestAddr);
-        setupBroadcastReceivers();
 
         // single-part SMS blocking
         init();
@@ -587,35 +632,6 @@ public class SmsManagerTest {
                 PendingIntent.FLAG_ONE_SHOT);
         mDeliveredIntent = PendingIntent.getBroadcast(mContext, 0, mDeliveryIntent,
                 PendingIntent.FLAG_ONE_SHOT);
-    }
-
-    private void setupBroadcastReceivers() {
-        mSendIntent = new Intent(SMS_SEND_ACTION);
-        mDeliveryIntent = new Intent(SMS_DELIVERY_ACTION);
-
-        IntentFilter sendIntentFilter = new IntentFilter(SMS_SEND_ACTION);
-        IntentFilter deliveryIntentFilter = new IntentFilter(SMS_DELIVERY_ACTION);
-        IntentFilter dataSmsReceivedIntentFilter = new IntentFilter(DATA_SMS_RECEIVED_ACTION);
-        IntentFilter smsDeliverIntentFilter = new IntentFilter(SMS_DELIVER_DEFAULT_APP_ACTION);
-        IntentFilter smsReceivedIntentFilter =
-                new IntentFilter(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
-        IntentFilter smsRetrieverIntentFilter = new IntentFilter(SMS_RETRIEVER_ACTION);
-        dataSmsReceivedIntentFilter.addDataScheme("sms");
-        dataSmsReceivedIntentFilter.addDataAuthority("localhost", "19989");
-
-        mSendReceiver = new SmsBroadcastReceiver(SMS_SEND_ACTION);
-        mDeliveryReceiver = new SmsBroadcastReceiver(SMS_DELIVERY_ACTION);
-        mDataSmsReceiver = new SmsBroadcastReceiver(DATA_SMS_RECEIVED_ACTION);
-        mSmsDeliverReceiver = new SmsBroadcastReceiver(SMS_DELIVER_DEFAULT_APP_ACTION);
-        mSmsReceivedReceiver = new SmsBroadcastReceiver(Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
-        mSmsRetrieverReceiver = new SmsBroadcastReceiver(SMS_RETRIEVER_ACTION);
-
-        mContext.registerReceiver(mSendReceiver, sendIntentFilter);
-        mContext.registerReceiver(mDeliveryReceiver, deliveryIntentFilter);
-        mContext.registerReceiver(mDataSmsReceiver, dataSmsReceivedIntentFilter);
-        mContext.registerReceiver(mSmsDeliverReceiver, smsDeliverIntentFilter);
-        mContext.registerReceiver(mSmsReceivedReceiver, smsReceivedIntentFilter);
-        mContext.registerReceiver(mSmsRetrieverReceiver, smsRetrieverIntentFilter);
     }
 
     /**
