@@ -100,7 +100,6 @@ public class WebViewMultiScreenLoginActivityTest
         /*
          * First screen: username
          */
-
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME, HTML_NAME_USERNAME)
                 .setSaveInfoDecorator((builder, nodeResolver) -> {
@@ -112,11 +111,14 @@ public class WebViewMultiScreenLoginActivityTest
                             .build());
                 })
                 .build());
+
         // Trigger autofill.
         mActivity.getUsernameInput().click();
+        mUiBot.waitForIdle();
+
+        // check received request and no suggestion shown
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         assertThat(fillRequest1.contexts).hasSize(1);
-
         mUiBot.assertNoDatasetsEver();
 
         // Now trigger save.
@@ -130,24 +132,24 @@ public class WebViewMultiScreenLoginActivityTest
             mActivity.getUsernameInput().setText("dude");
         }
         mActivity.getNextButton().click();
+        mUiBot.waitForIdle();
 
-        // Assert UI
+        // Assert save UI shown.
         final UiObject2 saveUi1 = mUiBot.assertSaveShowing(
                 SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, null, SAVE_DATA_TYPE_USERNAME);
-
         mUiBot.assertChildText(saveUi1, ID_USERNAME_LABEL, "User:");
         mUiBot.assertChildText(saveUi1, ID_USERNAME, "dude");
 
-        // Assert save request
+        // Save then assert save request and saveui disappear.
         mUiBot.saveForAutofill(saveUi1, true);
         final SaveRequest saveRequest1 = sReplier.getNextSaveRequest();
         assertThat(saveRequest1.contexts).hasSize(1);
         assertTextAndValue(findNodeByHtmlName(saveRequest1.structure, HTML_NAME_USERNAME), "dude");
+        mUiBot.assertSaveNotShowing();
 
         /*
          * Second screen: password
          */
-
         mActivity.waitForPasswordScreen(mUiBot);
 
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -161,11 +163,16 @@ public class WebViewMultiScreenLoginActivityTest
                             .build());
                 })
                 .build());
+
         // Trigger autofill.
         mActivity.getPasswordInput().click();
+        mUiBot.waitForIdle();
+
+        // check received request and no suggestion shown
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
         assertThat(fillRequest2.contexts).hasSize(1);
         mUiBot.assertNoDatasetsEver();
+
         // Now trigger save.
         if (INJECT_EVENTS) {
             mActivity.getPasswordInput().click();
@@ -177,8 +184,8 @@ public class WebViewMultiScreenLoginActivityTest
         } else {
             mActivity.getPasswordInput().setText("sweet");
         }
-
         mActivity.getLoginButton().click();
+        mUiBot.waitForIdle();
 
         // Assert save UI shown.
         final UiObject2 saveUi2 = mUiBot.assertSaveShowing(
@@ -186,11 +193,12 @@ public class WebViewMultiScreenLoginActivityTest
         mUiBot.assertChildText(saveUi2, ID_PASSWORD_LABEL, "Pass:");
         mUiBot.assertChildText(saveUi2, ID_PASSWORD, "sweet");
 
-        // Assert save request
+        // Save then assert save request and saveui disappear.
         mUiBot.saveForAutofill(saveUi2, true);
         final SaveRequest saveRequest2 = sReplier.getNextSaveRequest();
         assertThat(saveRequest2.contexts).hasSize(1);
         assertTextAndValue(findNodeByHtmlName(saveRequest2.structure, HTML_NAME_PASSWORD), "sweet");
+        mUiBot.assertSaveNotShowing();
     }
 
     @Test
@@ -215,14 +223,17 @@ public class WebViewMultiScreenLoginActivityTest
 
                 })
                 .build());
+
         // Trigger autofill.
         mActivity.getUsernameInput().click();
+        mUiBot.waitForIdle();
+
+        // check received request and no suggestion shown
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         assertThat(fillRequest1.contexts).hasSize(1);
-
         mUiBot.assertNoDatasetsEver();
 
-        // Change username
+        // Change username to trigger save.
         if (INJECT_EVENTS) {
             mActivity.getUsernameInput().click();
             mActivity.dispatchKeyPress(KeyEvent.KEYCODE_D);
@@ -232,16 +243,15 @@ public class WebViewMultiScreenLoginActivityTest
         } else {
             mActivity.getUsernameInput().setText("dude");
         }
-
         mActivity.getNextButton().click();
+        mUiBot.waitForIdle();
 
-        // Assert UI
+        // Assert save UI was not shown.
         mUiBot.assertSaveNotShowing();
 
         /*
          * Second screen: password
          */
-
         mActivity.waitForPasswordScreen(mUiBot);
 
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -260,11 +270,14 @@ public class WebViewMultiScreenLoginActivityTest
                             .build());
                 })
                 .build());
+
         // Trigger autofill.
         mActivity.getPasswordInput().click();
+        mUiBot.waitForIdle();
+
+        // check received request and no suggestion shown
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
         assertThat(fillRequest2.contexts).hasSize(2);
-
         mUiBot.assertNoDatasetsEver();
 
         // Now trigger save.
@@ -278,8 +291,8 @@ public class WebViewMultiScreenLoginActivityTest
         } else {
             mActivity.getPasswordInput().setText("sweet");
         }
-
         mActivity.getLoginButton().click();
+        mUiBot.waitForIdle();
 
         // Assert save UI shown.
         final UiObject2 saveUi = mUiBot.assertSaveShowing(
@@ -290,9 +303,10 @@ public class WebViewMultiScreenLoginActivityTest
         mUiBot.assertChildText(saveUi, ID_USERNAME_LABEL, "User:");
         mUiBot.assertChildText(saveUi, ID_USERNAME, "dude");
 
-        // Assert save request
+        // Save then assert save request and saveui disappear.
         mUiBot.saveForAutofill(saveUi, true);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        mUiBot.assertSaveNotShowing();
 
         // Username is set in the 1st context
         final AssistStructure previousStructure = saveRequest.contexts.get(0).getStructure();
