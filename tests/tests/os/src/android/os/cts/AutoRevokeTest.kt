@@ -91,12 +91,6 @@ class AutoRevokeTest {
 
     @Before
     fun setup() {
-        // Kill Permission Controller
-        assertThat(
-                runShellCommandOrThrow("killall " +
-                        context.packageManager.permissionControllerPackageName),
-                equalTo(""))
-
         // Collapse notifications
         assertThat(
                 runShellCommandOrThrow("cmd statusbar collapse"),
@@ -351,7 +345,7 @@ class AutoRevokeTest {
 
     private fun killDummyApp(pkg: String = APK_PACKAGE_NAME) {
         assertThat(
-                runShellCommand("killall $pkg"),
+                runShellCommandOrThrow("am force-stop " + pkg),
                 equalTo(""))
         awaitAppState(pkg, greaterThan(IMPORTANCE_TOP_SLEEPING))
     }
