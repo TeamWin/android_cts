@@ -19,7 +19,7 @@
           package="com.android.cts.userspacereboot.basic" >
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <application android:forceQueryable="true">
+    <application>
         <activity android:name=".LauncherActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
