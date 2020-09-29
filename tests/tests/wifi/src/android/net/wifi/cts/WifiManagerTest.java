@@ -73,6 +73,7 @@ import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.net.module.util.MacAddressUtils;
@@ -3006,6 +3007,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             mWifiManager.isP2pSupported();
         }
 
+    }
+
+    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion?
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testIsMultiStaConcurrencySupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // ensure no crash.
+        mWifiManager.isStaApConcurrencySupported();
     }
 
     private PasspointConfiguration getTargetPasspointConfiguration(
