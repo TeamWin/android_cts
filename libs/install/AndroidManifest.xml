@@ -13,19 +13,17 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-       package="com.android.cts.sessioninspector.b">
+          package="com.android.cts.install.lib"
+          android:versionCode="1"
+          android:versionName="1.0">
 
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.android.cts.sessioninspector.b" />
+    <queries>
+        <package android:name="com.android.cts.install.lib.testapp.A"/>
+        <package android:name="com.android.cts.install.lib.testapp.B"/>
+        <package android:name="com.android.cts.install.lib.testapp.C"/>
+    </queries>
 
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-
-    <application>
-        <uses-library android:name="android.test.runner" />
-        <activity android:name="com.android.cts.sessioninspector.SessionInspectorActivity"
-                  android:exported="true"/>
-    </application>
-
+    <uses-sdk android:minSdkVersion="8"/>
 </manifest>
