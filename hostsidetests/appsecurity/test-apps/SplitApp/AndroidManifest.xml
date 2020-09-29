@@ -20,10 +20,11 @@
 
     <uses-sdk android:minSdkVersion="4" />
 
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
 
-    <application android:label="SplitApp" android:multiArch="true" android:forceQueryable="true">
+    <application android:label="SplitApp" android:multiArch="true">
         <activity android:name=".MyActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
