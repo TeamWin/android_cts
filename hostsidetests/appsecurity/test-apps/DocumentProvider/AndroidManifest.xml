@@ -19,8 +19,8 @@
 
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="29"/>
 
-    <application android:forceQueryable="true">
-        <uses-library android:name="android.test.runner" />
+    <application>
+        <uses-library android:name="android.test.runner"/>
 
         <provider android:name=".MyDocumentsProvider"
                 android:authorities="com.android.cts.documentprovider"
