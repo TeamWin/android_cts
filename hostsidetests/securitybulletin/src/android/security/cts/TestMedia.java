@@ -18,6 +18,7 @@ package android.security.cts;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.compatibility.common.util.CrashUtils;
 
 import android.platform.test.annotations.SecurityTest;
 import org.junit.Test;
@@ -27,6 +28,8 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import org.junit.Assert;
 import static org.junit.Assert.*;
 import java.util.regex.Pattern;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class TestMedia extends SecurityTestCase {
@@ -49,6 +52,125 @@ public class TestMedia extends SecurityTestCase {
      * To prevent merge conflicts, add tests for O below this comment, before any
      * existing test methods
      ******************************************************************************/
+
+    /**
+     * b/64340921
+     * Vulnerability Behaviour: SIGABRT in audioserver
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testPocCVE_2017_0837() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2017-0837", getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns("audioserver");
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
+     * b/62151041 - Has 4 CVEs filed together
+     */
+    /** 1. CVE-2017-9047
+     * Vulnerability Behaviour: SIGABRT by -fstack-protector
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testPocCVE_2018_9466_CVE_2017_9047() throws Exception {
+        String binaryName = "CVE-2018-9466-CVE-2017-9047";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /** 2. CVE-2017-9048
+     * Vulnerability Behaviour: SIGABRT by -fstack-protector
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testPocCVE_2018_9466_CVE_2017_9048() throws Exception {
+        String binaryName = "CVE-2018-9466-CVE-2017-9048";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /** 3. CVE-2017-9049
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testPocCVE_2018_9466_CVE_2017_9049() throws Exception {
+        String binaryName = "CVE-2018-9466-CVE-2017-9049";
+        String inputFiles[] = {"cve_2018_9466_cve_2017_9049.xml"};
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination  = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /** 4. CVE-2017-9050
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testPocCVE_2018_9466_CVE_2017_9050() throws Exception {
+        String binaryName = "CVE-2018-9466-CVE-2017-9049";
+        String inputFiles[] = {"cve_2018_9466_cve_2017_9050.xml"};
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination  = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
+     * b/23247055
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2015-10")
+    public void testPocCVE_2015_3873() throws Exception {
+        String inputFiles[] = {"cve_2015_3873.mp4"};
+        String binaryName = "CVE-2015-3873";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination  = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
+     * b/24441553
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2015-12")
+    public void testPocCVE_2015_6616_2() throws Exception {
+        String inputFiles[] = {"cve_2015_6616_2.mp4"};
+        String binaryName = "CVE-2015-6616-2";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination  = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
 
     /**
      * b/134420911

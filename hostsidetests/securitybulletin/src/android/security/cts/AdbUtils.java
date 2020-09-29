@@ -41,6 +41,7 @@ import java.util.Scanner;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
+import java.util.Collections;
 
 import java.util.regex.Pattern;
 import java.lang.Thread;
@@ -52,6 +53,20 @@ public class AdbUtils {
     final static String TMP_PATH = "/data/local/tmp/";
     final static int TIMEOUT_SEC = 9 * 60;
     final static String RESOURCE_ROOT = "/";
+
+    public static class pocConfig {
+        String binaryName;
+        String arguments;
+        String inputFilesDestination;
+        ITestDevice device;
+        CrashUtils.Config config;
+        List<String> inputFiles = Collections.emptyList();
+
+        pocConfig(String binaryName, ITestDevice device) {
+            this.binaryName = binaryName;
+            this.device = device;
+        }
+    }
 
     /** Runs a commandline on the specified device
      *
@@ -278,10 +293,12 @@ public class AdbUtils {
      */
     public static void pushResources(String[] inputFiles, String inputFilesDestination,
             ITestDevice device) throws Exception {
-        if ( (inputFiles != null) && (inputFilesDestination != null)) {
-            for (String tempFile : inputFiles) {
-                pushResource(RESOURCE_ROOT + tempFile, inputFilesDestination + tempFile, device);
-            }
+        if (inputFiles == null || inputFilesDestination == null) {
+            throw new IllegalArgumentException(
+                    "Can't push resources: input files or destination is null");
+        }
+        for (String tempFile : inputFiles) {
+            pushResource(RESOURCE_ROOT + tempFile, inputFilesDestination + tempFile, device);
         }
     }
 
@@ -295,10 +312,12 @@ public class AdbUtils {
      */
     public static void removeResources(String[] inputFiles, String inputFilesDestination,
             ITestDevice device) throws Exception {
-        if ( (inputFiles != null) && (inputFilesDestination != null)) {
-            for (String tempFile : inputFiles) {
-                runCommandLine("rm " + inputFilesDestination + tempFile, device);
-            }
+        if (inputFiles == null || inputFilesDestination == null) {
+            throw new IllegalArgumentException(
+                    "Can't remove resources: input files or destination is null");
+        }
+        for (String tempFile : inputFiles) {
+            runCommandLine("rm " + inputFilesDestination + tempFile, device);
         }
     }
 
@@ -552,10 +571,45 @@ public class AdbUtils {
     public static void runPocAssertNoCrashesNotVulnerable(String binaryName, String arguments,
             String inputFiles[], String inputFilesDestination, ITestDevice device,
             String processPatternStrings[]) throws Exception {
-        pushResources(inputFiles, inputFilesDestination, device);
-        runCommandLine("logcat -c", device);
+        pocConfig testConfig = new pocConfig(binaryName, device);
+        testConfig.arguments = arguments;
+
+        if (inputFiles != null) {
+            testConfig.inputFiles = Arrays.asList(inputFiles);
+            testConfig.inputFilesDestination = inputFilesDestination;
+        }
+
+        List<String> processPatternList = new ArrayList<>();
+        if (processPatternStrings != null) {
+            processPatternList.addAll(Arrays.asList(processPatternStrings));
+        }
+        processPatternList.add(binaryName);
+        String[] processPatternStringsWithSelf = new String[processPatternList.size()];
+        processPatternList.toArray(processPatternStringsWithSelf);
+        testConfig.config =
+                new CrashUtils.Config().setProcessPatterns(processPatternStringsWithSelf);
+
+        runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
+     * Runs the poc binary and asserts following 3 conditions.
+     *  1. There are no security crashes in the binary.
+     *  2. There are no security crashes that match the expected process pattern.
+     *  3. The exit status isn't 113 (Code 113 is used to indicate the vulnerability condition).
+     *
+     * @param testConfig test configuration
+     */
+    public static void runPocAssertNoCrashesNotVulnerable(pocConfig testConfig) throws Exception {
+        String[] inputFiles = null;
+        if(!testConfig.inputFiles.isEmpty()) {
+            inputFiles = testConfig.inputFiles.toArray(new String[testConfig.inputFiles.size()]);
+            pushResources(inputFiles, testConfig.inputFilesDestination, testConfig.device);
+        }
+        runCommandLine("logcat -c", testConfig.device);
         try {
-            runPocAssertExitStatusNotVulnerable(binaryName, arguments, device, TIMEOUT_SEC);
+            runPocAssertExitStatusNotVulnerable(testConfig.binaryName, testConfig.arguments,
+                    testConfig.device, TIMEOUT_SEC);
         } catch (IllegalArgumentException e) {
             /*
              * Since 'runPocGetExitStatus' method raises IllegalArgumentException upon
@@ -565,16 +619,14 @@ public class AdbUtils {
              */
             CLog.w("Ignoring IllegalArgumentException: " + e);
         } finally {
-            removeResources(inputFiles, inputFilesDestination, device);
+            if (!testConfig.inputFiles.isEmpty()) {
+                removeResources(inputFiles, testConfig.inputFilesDestination, testConfig.device);
+            }
         }
-        List<String> processPatternList = new ArrayList<>();
-        if (processPatternStrings != null) {
-            processPatternList.addAll(Arrays.asList(processPatternStrings));
+        if (testConfig.config == null) {
+            testConfig.config = new CrashUtils.Config();
         }
-        processPatternList.add(binaryName);
-        String[] processPatternStringsWithSelf = new String[processPatternList.size()];
-        processPatternList.toArray(processPatternStringsWithSelf);
-        assertNoCrashes(device, processPatternStringsWithSelf);
+        assertNoCrashes(testConfig.device, testConfig.config);
     }
 
     /**

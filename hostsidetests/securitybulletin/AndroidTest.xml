@@ -40,6 +40,10 @@
         <option name="push" value="CVE-2016-8432->/data/local/tmp/CVE-2016-8432" />
         <option name="push" value="CVE-2016-8434->/data/local/tmp/CVE-2016-8434" />
 
+        <!-- Bulletin 2015-10 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2015-3873->/data/local/tmp/CVE-2015-3873" />
+
         <!-- Bulletin 2015-12 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2015-6616->/data/local/tmp/CVE-2015-6616" />
@@ -185,6 +189,7 @@
         <!--__________________-->
         <!-- Bulletin 2018-02 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-0837->/data/local/tmp/CVE-2017-0837" />
         <option name="push" value="CVE-2017-13273->/data/local/tmp/CVE-2017-13273" />
         <option name="push" value="CVE-2017-13232->/data/local/tmp/CVE-2017-13232" />
         <option name="push" value="CVE-2017-17767->/data/local/tmp/CVE-2017-17767" />
@@ -202,6 +207,9 @@
         <!--__________________-->
         <!-- Bulletin 2018-09 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2018-9466-CVE-2017-9047->/data/local/tmp/CVE-2018-9466-CVE-2017-9047" />
+        <option name="push" value="CVE-2018-9466-CVE-2017-9048->/data/local/tmp/CVE-2018-9466-CVE-2017-9048" />
+        <option name="push" value="CVE-2018-9466-CVE-2017-9049->/data/local/tmp/CVE-2018-9466-CVE-2017-9049" />
         <option name="push" value="CVE-2018-9472->/data/local/tmp/CVE-2018-9472" />
         <option name="push" value="CVE-2018-11261->/data/local/tmp/CVE-2018-11261" />
 
@@ -280,6 +288,7 @@
         <option name="cleanup" value="true" />
 
         <!-- Please add 32-bit binary tests below to avoid merge conflict -->
+        <option name="push" value="CVE-2015-6616-232->/data/local/tmp/CVE-2015-6616-2" />
         <option name="push" value="CVE-2019-217632->/data/local/tmp/CVE-2019-2176" />
         <option name="push" value="CVE-2020-000232->/data/local/tmp/CVE-2020-0002" />
         <option name="push" value="CVE-2017-1317932->/data/local/tmp/CVE-2017-13179" />
