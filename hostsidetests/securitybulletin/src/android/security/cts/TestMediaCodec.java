@@ -18,6 +18,7 @@ package android.security.cts;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.compatibility.common.util.CrashUtils;
 
 import android.platform.test.annotations.SecurityTest;
 import org.junit.Test;
@@ -25,6 +26,8 @@ import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import static org.junit.Assert.*;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class TestMediaCodec extends SecurityTestCase {
