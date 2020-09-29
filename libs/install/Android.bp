@@ -91,7 +91,7 @@ android_test_helper_app {
 }
 
 java_library {
-    name: "cts-install-lib",
+    name: "cts-install-lib-java",
     srcs: ["src/**/*.java"],
     static_libs: [
         "androidx.test.rules",
@@ -113,5 +113,13 @@ java_library {
         ":StagedInstallTestApexV1",
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV3",
+    ],
+}
+
+android_library {
+    name: "cts-install-lib",
+    manifest: "AndroidManifest.xml",
+    static_libs: [
+        "cts-install-lib-java",
     ],
 }
