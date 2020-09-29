@@ -39,7 +39,10 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,12 +55,12 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
 
     private static final int DEFAULT_TIMEOUT_SEC = 20;
 
-    private static final Pattern CREATE_USER_OUTPUT_REGEX = Pattern.compile("id=(\\d+)");
+    private static final Pattern CREATE_USER_OUTPUT_PATTERN = Pattern.compile("id=(\\d+)");
 
     /**
-     * User pattern in the output of "cmd user list --all -v" = TEXT id=<id> TEXT name=<name>, TEXT
-     * flags=<flags> TEXT group 1: id group 2: name group 3: flags group 4: other state(like
-     * "(running)")
+     * User pattern in the output of "cmd user list --all -v"
+     * TEXT id=<id> TEXT name=<name>, TEX flags=<flags> TEXT
+     * group 1: id group 2: name group 3: flags group 4: other state(like "(running)")
      */
     private static final Pattern USER_PATTERN = Pattern.compile(
             ".*id=(\\d+).*name=([^\\s,]+).*flags=(\\S+)(.*)");
@@ -67,6 +70,20 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     private static final int USER_PATTERN_GROUP_FLAGS = 3;
     private static final int USER_PATTERN_GROUP_OTHER_STATE = 4;
 
+    /**
+     * Permission pattern in the output of "dumpsys package PKG_NAME" =
+     * <permission_name>: TEXT granted=<true/false> TEXT flags=<flags> TEXT
+     * group 1: permission_name group 2: true/false group 3: flags
+     */
+    private static final String PERMISSION_REGEX =
+            "([\\w\\.^:]+).*granted=(true|false).*flags=(.*)";
+    private static final Pattern PERMISSION_PATTERN = Pattern.compile(PERMISSION_REGEX);
+
+    /**
+     * User's package permission pattern string format in the output of "dumpsys package PKG_NAME"
+    */
+    private static final String USER_PERMISSIONS_REGEX_FORMAT =
+            "User\\s%d(?:\\s*(:|/|overlay|runtime|gids).*\n)*((\\s*" + PERMISSION_REGEX + ")*)";
     protected static final String APP_APK = "CtsCarApp.apk";
     protected static final String APP_PKG = "android.car.cts.app";
 
@@ -266,7 +283,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * <p><b>NOTE: </b>it uses User HAL flags, not core Android's.
      */
     protected int createUser(String name, int flags, String type) throws Exception {
-        int userId = executeAndParseCommand(CREATE_USER_OUTPUT_REGEX,
+        int userId = executeAndParseCommand(CREATE_USER_OUTPUT_PATTERN,
                 "Could not create user with name " + name + ", flags " + flags + ", type" + type,
                 matcher -> Integer.parseInt(matcher.group(1)),
                 "cmd car_service create-user --flags %d --type %s %s",
@@ -294,7 +311,8 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * Checks if the given user is initialized.
      */
     protected boolean isUserInitialized(int userId) throws Exception {
-        return getUserInfo(userId).flags.contains("INITIALIZED");
+        UserInfo userInfo = getUserInfo(userId);
+        return userInfo.flags.contains("INITIALIZED");
     }
 
     /**
@@ -363,6 +381,61 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         device.executeShellCommand("stop");
         device.executeShellCommand("start");
         device.waitForDeviceAvailable();
+    }
+
+    /**
+     * Get mapping of package and permissions granted for user.
+     *
+     * @param userId: the user to query permissions for
+     * @return Map<String, Map<String, Boolean>> where key is the package name and value is
+     * map of permissions
+     */
+    protected Map<String, Map<String, Boolean>> getPackagesAndPermissions(int userId)
+            throws Exception {
+        Map<String, Map<String, Boolean>> pkgMap = new HashMap<>();
+        Set<String> installedPackages = getDevice().getInstalledPackageNames();
+        CLog.v("Device has %d packages: %s", installedPackages.size(), installedPackages);
+        for (String pkg : installedPackages) {
+            if (isAppInstalledForUser(pkg, userId)) {
+                Map<String, Boolean> permMap = getPackagePermissionsForUser(pkg, userId);
+                pkgMap.put(pkg, permMap);
+                CLog.v("User %d package %s has %d permissions", userId, pkg, permMap.size());
+            }
+        }
+        return pkgMap;
+    }
+
+    // TODO(b/167454361): use dumpsys as proto
+    /**
+     * Gets package's permissions and whether it's granted for user.
+     *
+     * @param pkg: name of package to check for permission
+     * @param userId: the user to query permissions for
+     * @return Map<String, Boolean> where key is the permission name and value is whether granted
+     * @throws DeviceNotAvailableException
+     */
+    protected Map<String, Boolean> getPackagePermissionsForUser(String pkg, int userId)
+            throws Exception {
+        String command = String.format("dumpsys package %s", pkg);
+        String output = getDevice().executeShellCommand(command);
+        Map<String, Boolean> permissionMap = new HashMap<>();
+
+        String userPermissionsRegex = String.format(USER_PERMISSIONS_REGEX_FORMAT, userId);
+        Pattern userPermissionsPattern = Pattern.compile(userPermissionsRegex);
+        Matcher userPermissionsMatcher = userPermissionsPattern.matcher(output);
+
+        if (userPermissionsMatcher.find()) {
+            Matcher permissionMatcher = PERMISSION_PATTERN.matcher(userPermissionsMatcher.group(0));
+            while (permissionMatcher.find()) {
+                permissionMap.put(permissionMatcher.group(1),
+                        permissionMatcher.group(2).equals("true"));
+            }
+            CLog.d("No more permission found for package %s user %d.", pkg, userId);
+            return permissionMap;
+        }
+
+        CLog.d("No matcher permissions found for package %s user %d.", pkg, userId);
+        return permissionMap;
     }
 
     // TODO: move to common infra code
