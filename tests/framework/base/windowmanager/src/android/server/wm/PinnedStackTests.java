@@ -820,7 +820,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
          *    fullscreen stack
          * 3) Bring the activity in the dynamic stack forward to trigger PiP
          */
-        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY);
+        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         // Launch an activity that will enter PiP when it is paused with a delay that is long enough
         // for the next resumeWhilePausing activity to finish resuming, but slow enough to not
         // trigger the current system pause timeout (currently 500ms)
