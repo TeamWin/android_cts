@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.wrapper.extensionwrapperimpl;
+package android.server.wm.jetpack.utils.wrapper.extensionwrapperimpl;
 
 import android.graphics.Rect;
-import android.server.wm.jetpack.wrapper.TestDisplayFeature;
+import android.server.wm.jetpack.utils.wrapper.TestDisplayFeature;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
