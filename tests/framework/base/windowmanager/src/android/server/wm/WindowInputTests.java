@@ -44,6 +44,7 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.wm.app.Components;
 import android.server.wm.settings.SettingsSession;
 import android.util.ArraySet;
 import android.view.Gravity;
@@ -176,11 +177,10 @@ public class WindowInputTests {
         assertEquals(0, mClickCount);
     }
 
-    // If a window is obscured by another window from the same app (same process), touches should
-    // still get delivered to the bottom window, and the FLAG_WINDOW_IS_OBSCURED should not be set.
-    // We do not consider windows from the same process to be obscuring each other.
+    // If a window is obscured by another window from the same app, touches should still get
+    // delivered to the bottom window, and the FLAG_WINDOW_IS_OBSCURED should not be set.
     @Test
-    public void testFilterTouchesWhenWindowHasSamePid() throws Throwable {
+    public void testFilterTouchesWhenObscuredByWindowFromSameUid() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
 
         // Set up a touchable window.
@@ -216,10 +216,11 @@ public class WindowInputTests {
     }
 
     @Test
-    public void testFilterTouchesWhenObscured() throws Throwable {
+    public void testFilterTouchesWhenObscuredByWindowFromDifferentUid() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
 
-        final Intent intent = new Intent(mActivity, TestService.class);
+        final Intent intent = new Intent();
+        intent.setComponent(Components.OVERLAY_TEST_SERVICE);
         final String windowName = "Test Overlay";
         try {
             // Set up a touchable window.
@@ -241,8 +242,8 @@ public class WindowInputTests {
                 mActivity.addWindow(mView, p);
 
                 // Set up an overlap window from service, use different process.
-                intent.putExtra(TestService.EXTRA_WINDOW_NAME, windowName);
-                mActivity.startService(intent);
+                intent.putExtra(Components.OverlayTestService.EXTRA_WINDOW_NAME, windowName);
+                mActivity.startForegroundService(intent);
             });
             mInstrumentation.waitForIdleSync();
 
@@ -456,54 +457,6 @@ public class WindowInputTests {
         protected void onPause() {
             super.onPause();
             removeAllWindows();
-        }
-    }
-
-    public static class TestService extends Service {
-        private static final String EXTRA_WINDOW_NAME = "WINDOW_NAME";
-        private WindowManager mWindowManager;
-        private View mView;
-
-        @Override
-        public void onCreate() {
-            super.onCreate();
-            mWindowManager = getSystemService(WindowManager.class);
-        }
-
-        @Override
-        public IBinder onBind(Intent intent) {
-            return null;
-        }
-
-        @Override
-        public int onStartCommand(Intent intent, int flags, int startId) {
-            if (intent != null && intent.hasExtra(EXTRA_WINDOW_NAME)) {
-                addWindow(intent.getStringExtra(EXTRA_WINDOW_NAME));
-            }
-            return START_NOT_STICKY;
-        }
-
-        private void addWindow(final String windowName) {
-            mView = new View(this);
-            mView.setBackgroundColor(Color.RED);
-            WindowManager.LayoutParams p = new WindowManager.LayoutParams();
-            p.setTitle(windowName);
-            p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN | FLAG_NOT_TOUCHABLE;
-            p.width = 100;
-            p.height = 100;
-            p.alpha = 0.5f;
-            p.gravity = Gravity.CENTER;
-            p.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-            mWindowManager.addView(mView, p);
-        }
-
-        @Override
-        public void onDestroy() {
-            super.onDestroy();
-            if (mView != null) {
-                mWindowManager.removeViewImmediate(mView);
-                mView = null;
-            }
         }
     }
 
