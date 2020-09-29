@@ -36,6 +36,15 @@
         <option name="force-install-mode" value="FULL"/>
         <option name="test-file-name" value="CtsMockInputMethod.apk" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <!--
+            MockSpellChecker always needs to be instaleld as a full package, even when CTS is
+            running for instant apps.
+        -->
+        <option name="force-install-mode" value="FULL"/>
+        <option name="test-file-name" value="CtsMockSpellChecker.apk" />
+    </target_preparer>
     <!--
         TODO(yukawa): come up with a proper way to take care of devices that do not support
         installable IMEs.  Ideally target_preparer should have an option to annotate required
