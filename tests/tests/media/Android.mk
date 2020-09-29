@@ -59,6 +59,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     mockito-target-minus-junit4 \
     cts.media.heifwriter_heifwriter \
     androidx.media2_media2 \
+    CtsCameraUtils \
 
 LOCAL_JNI_SHARED_LIBRARIES := \
     libaudio_jni \

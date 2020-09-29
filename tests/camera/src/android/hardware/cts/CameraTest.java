@@ -102,8 +102,6 @@ public class CameraTest extends Assert {
     private static final int AUTOWHITEBALANCE_LOCK = 1;
 
     // For external camera recording
-    private static final int DEFAULT_VIDEO_WIDTH = 176;
-    private static final int DEFAULT_VIDEO_HEIGHT = 144;
     private static final int VIDEO_BIT_RATE_IN_BPS = 128000;
 
     // Some exif tags that are not defined by ExifInterface but supported.
@@ -1260,10 +1258,12 @@ public class CameraTest extends Assert {
         surfaceHolder = mActivityRule.getActivity().getSurfaceView().getHolder();
         CamcorderProfile profile = null; // Used for built-in camera
         Camera.Size videoSize = null; // Used for external camera
+        int frameRate = -1; // Used for external camera
 
         // Set the preview size.
         if (mIsExternalCamera) {
             videoSize = setupExternalCameraRecord(parameters);
+            frameRate = parameters.getPreviewFrameRate();
         } else {
             profile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_LOW);
             setPreviewSizeByProfile(parameters, profile);
@@ -1275,7 +1275,7 @@ public class CameraTest extends Assert {
         mCamera.lock();  // Locking again from the same process has no effect.
         try {
             if (mIsExternalCamera) {
-                recordVideoBySize(videoSize, surfaceHolder);
+                recordVideoBySize(videoSize, frameRate, surfaceHolder);
             } else {
                 recordVideo(profile, surfaceHolder);
             }
@@ -1293,7 +1293,7 @@ public class CameraTest extends Assert {
         }
 
         if (mIsExternalCamera) {
-            recordVideoBySize(videoSize, surfaceHolder);
+            recordVideoBySize(videoSize, frameRate, surfaceHolder);
         } else {
             recordVideo(profile, surfaceHolder);  // should not throw exception
         }
@@ -1306,16 +1306,7 @@ public class CameraTest extends Assert {
     }
 
     private Camera.Size setupExternalCameraRecord(Parameters parameters) {
-        assertTrue(parameters.getSupportedVideoSizes() != null);
-        assertTrue(parameters.getSupportedVideoSizes().size() > 0);
-
-        Camera.Size videoSize = null;
-        for (Camera.Size sz : parameters.getSupportedVideoSizes()) {
-            if (sz.width >= DEFAULT_VIDEO_WIDTH && sz.height >= DEFAULT_VIDEO_HEIGHT) {
-                videoSize = sz;
-                break;
-            }
-        }
+        Camera.Size videoSize = parameters.getPreferredPreviewSizeForVideo();
         assertNotNull(videoSize);
         parameters.setPreviewSize(videoSize.width, videoSize.height);
         return videoSize;
@@ -1338,7 +1329,7 @@ public class CameraTest extends Assert {
         }
     }
 
-    private void recordVideoBySize(Camera.Size size,
+    private void recordVideoBySize(Camera.Size size, int frameRate,
             SurfaceHolder holder) throws Exception {
         MediaRecorder recorder = new MediaRecorder();
         try {
@@ -1351,6 +1342,7 @@ public class CameraTest extends Assert {
             recorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
             recorder.setVideoSize(size.width, size.height);
+            recorder.setVideoFrameRate(frameRate);
             recorder.setOutputFile("/dev/null");
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
@@ -2849,9 +2841,11 @@ public class CameraTest extends Assert {
         SurfaceHolder holder = mActivityRule.getActivity().getSurfaceView().getHolder();
         CamcorderProfile profile = null; // for built-in camera
         Camera.Size videoSize = null; // for external camera
+        int frameRate = -1; // for external camera
 
         if (mIsExternalCamera) {
             videoSize = setupExternalCameraRecord(parameters);
+            frameRate = parameters.getPreviewFrameRate();
         } else {
             profile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_LOW);
             setPreviewSizeByProfile(parameters, profile);
@@ -2864,7 +2858,7 @@ public class CameraTest extends Assert {
             mCamera.setParameters(parameters);
             mCamera.startPreview();
             if (mIsExternalCamera) {
-                recordVideoSimpleBySize(videoSize, holder);
+                recordVideoSimpleBySize(videoSize, frameRate, holder);
             } else {
                 recordVideoSimple(profile, holder);
             }
@@ -2882,7 +2876,7 @@ public class CameraTest extends Assert {
         terminateMessageLooper();
     }
 
-    private void recordVideoSimpleBySize(Camera.Size size,
+    private void recordVideoSimpleBySize(Camera.Size size, int frameRate,
             SurfaceHolder holder) throws Exception {
         mCamera.unlock();
         MediaRecorder recorder = new MediaRecorder();
@@ -2895,6 +2889,7 @@ public class CameraTest extends Assert {
             recorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
             recorder.setVideoSize(size.width, size.height);
+            recorder.setVideoFrameRate(frameRate);
             recorder.setOutputFile("/dev/null");
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
