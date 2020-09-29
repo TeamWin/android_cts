@@ -100,6 +100,7 @@ public class MediaStore_Audio_Artists_AlbumsTest {
             assertEquals(1, c.getCount());
             c.moveToFirst();
 
+            assertFalse(c.isNull(c.getColumnIndex(Albums._ID)));
             assertFalse(c.isNull(c.getColumnIndex(Albums.ALBUM_ID)));
             assertEquals(Audio1.ALBUM, c.getString(c.getColumnIndex(Albums.ALBUM)));
             assertNull(c.getString(c.getColumnIndex(Albums.ALBUM_ART)));
