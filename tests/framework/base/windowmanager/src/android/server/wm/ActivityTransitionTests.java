@@ -52,7 +52,7 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     // See WindowManagerService.DISABLE_CUSTOM_TASK_ANIMATION_PROPERTY
     static final String DISABLE_CUSTOM_TASK_ANIMATION_PROPERTY =
             "persist.wm.disable_custom_task_animation";
-    static final boolean DISABLE_CUSTOM_TASK_ANIMATION_DEFAULT = false;
+    static final boolean DISABLE_CUSTOM_TASK_ANIMATION_DEFAULT = true;
 
     private static boolean customTaskAnimationDisabled() {
         try {
