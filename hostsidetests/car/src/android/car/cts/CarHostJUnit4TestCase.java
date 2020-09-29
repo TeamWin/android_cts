@@ -40,6 +40,7 @@ import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,7 +92,8 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     public final RequiredFeatureRule mHasAutomotiveRule = new RequiredFeatureRule(this,
             "android.hardware.type.automotive");
 
-    private final ArrayList<Integer> mCreatedUserIds = new ArrayList<>();
+    private final HashSet<Integer> mUsersToBeRemoved = new HashSet<>();
+
     private int mInitialUserId;
     private Integer mInitialMaximumNumberOfUsers;
 
@@ -111,14 +113,15 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         int currentUserId = getCurrentUserId();
         CLog.d("restoreUsersState(): initial user: %d, current user: %d, created users: %s "
                 + "max number of users: %d",
-                mInitialUserId, currentUserId, mCreatedUserIds, mInitialMaximumNumberOfUsers);
+                mInitialUserId, currentUserId, mUsersToBeRemoved, mInitialMaximumNumberOfUsers);
         if (currentUserId != mInitialUserId) {
             CLog.i("Switching back from %d to %d", currentUserId, mInitialUserId);
             switchUser(mInitialUserId);
         }
-        if (!mCreatedUserIds.isEmpty()) {
-            CLog.i("Removing users %s", mCreatedUserIds);
-            for (int userId : mCreatedUserIds) {
+        if (!mUsersToBeRemoved.isEmpty()) {
+            CLog.i("Removing users %s", mUsersToBeRemoved);
+
+            for (int userId : mUsersToBeRemoved) {
                 removeUser(userId);
             }
         }
@@ -296,7 +299,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * Marks a user to be removed at the end of the tests.
      */
     protected void markUserForRemovalAfterTest(int userId) {
-        mCreatedUserIds.add(userId);
+        mUsersToBeRemoved.add(userId);
     }
 
     /**
@@ -308,10 +311,20 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     }
 
     /**
+     * Asserts that the given user is initialized.
+     */
+    protected void assertUserInitialized(int userId) throws Exception {
+        assertWithMessage("User %s not initialized", userId).that(isUserInitialized(userId))
+                .isTrue();
+        CLog.v("User %d is initialized", userId);
+    }
+
+    /**
      * Checks if the given user is initialized.
      */
     protected boolean isUserInitialized(int userId) throws Exception {
         UserInfo userInfo = getUserInfo(userId);
+        CLog.v("isUserInitialized(%d): %s", userId, userInfo);
         return userInfo.flags.contains("INITIALIZED");
     }
 
@@ -438,7 +451,16 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
         return permissionMap;
     }
 
-    // TODO: move to common infra code
+    /**
+     * Sleeps for the given amount of milliseconds.
+     */
+    protected void sleep(long ms) throws InterruptedException {
+        CLog.v("Sleeping for %dms", ms);
+        Thread.sleep(ms);
+        CLog.v("Woke up; Little Susie woke up!");
+    }
+
+    // TODO(b/169341308): move to common infra code
     private static final class RequiredFeatureRule implements TestRule {
 
         private final ITestInformationReceiver mReceiver;
