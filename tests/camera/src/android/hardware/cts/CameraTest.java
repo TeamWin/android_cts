@@ -3339,6 +3339,10 @@ public class CameraTest extends Assert {
             return;
         }
 
+        if (mIsExternalCamera) {
+            return;
+        }
+
         SurfaceHolder holder = mActivityRule.getActivity().getSurfaceView().getHolder();
 
         for (int profileId: mCamcorderProfileList) {
