@@ -180,7 +180,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
         // Request the permission and allow it
         // Make sure the permission is granted
         requestAppPermissionsAndAssertResult(android.Manifest.permission.CAMERA to true) {
-            clickPermissionRequestAllowButton()
+            clickPermissionRequestAllowForegroundButton()
         }
     }
 
@@ -284,7 +284,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
             null to false,
             android.Manifest.permission.RECORD_AUDIO to true
         ) {
-            clickPermissionRequestAllowButton()
+            clickPermissionRequestAllowForegroundButton()
             clickPermissionRequestAllowButton()
         }
     }
