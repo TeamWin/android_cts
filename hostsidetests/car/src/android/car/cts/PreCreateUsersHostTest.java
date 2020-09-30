@@ -34,7 +34,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -42,6 +45,8 @@ import java.util.stream.Collectors;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
+
+    private static final int SMALL_ELAPSE_SEC = 2_000;
 
     /**
      * Uninstalls the test app.
@@ -109,16 +114,7 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         assertAppNotInstalledForUser(APP_PKG, preCreatedUserId);
 
         if (afterReboot) {
-            // CarUserService creates / remove pre-created users on boot to keep the pool constant,
-            // based on system properties. We need to tune then so the pre-created users set by this
-            // test are not changed when the system restarts.
-            if (isGuest) {
-                setPreCreatedGuestsProperties(1);
-                setPreCreatedUsersProperties(0);
-            } else {
-                setPreCreatedUsersProperties(1);
-                setPreCreatedGuestsProperties(0);
-            }
+            setSystemProperties(isGuest);
 
             // Restart the system to make sure PackageManager preserves the installed bit
             restartSystemServer();
@@ -127,16 +123,118 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
             assertAppInstalledForUser(APP_PKG, initialUserId);
             assertAppNotInstalledForUser(APP_PKG, preCreatedUserId);
         }
-
-        // Convert the user as a "full" user
-        int convertedUserId = isGuest
-                ? createGuestUser("PreCreatedUsersTest_Guest")
-                : createFullUser("PreCreatedUsersTest_User");
-        assertWithMessage("Id of converted user doesn't match").that(convertedUserId)
-                .isEqualTo(preCreatedUserId);
-
+        convertUser(preCreatedUserId, isGuest);
         assertAppNotInstalledForUser(APP_PKG, preCreatedUserId);
     }
+
+    /**
+     * Verifies a pre-created user have same packages as non-precreated users.
+     */
+    @Presubmit
+    @Test
+    public void testAppPermissionsPreCreatedUserPackages() throws Exception {
+        preCreatedUserPackagesTest(/* isGuest= */ false, /* afterReboot= */ false);
+    }
+
+    /**
+     * Verifies a pre-created guest have same packages as non-precreated users.
+     */
+    @Presubmit
+    @Test
+    public void testAppPermissionsPreCreatedGuestPackages() throws Exception {
+        preCreatedUserPackagesTest(/* isGuest= */ true, /* afterReboot= */ false);
+    }
+
+    /**
+     * Verifies a pre-created user have same packages as non-precreated users.
+     */
+    @Presubmit
+    @Test
+    public void testAppPermissionsPreCreatedUserPackagesAfterReboot() throws Exception {
+        preCreatedUserPackagesTest(/* isGuest= */ false, /* afterReboot= */ true);
+    }
+
+    /**
+     * Verifies a pre-created guest have same packages as non-precreated users.
+     */
+    @Presubmit
+    @Test
+    public void testAppPermissionsPreCreatedGuestPackagesAfterReboot() throws Exception {
+        preCreatedUserPackagesTest(/* isGuest= */ true, /* afterReboot= */ true);
+    }
+
+    private void preCreatedUserPackagesTest(boolean isGuest, boolean afterReboot)
+            throws Exception {
+        // Create a normal reference user
+        int referenceUserId = isGuest
+                ? createGuestUser("PreCreatedUsersTest_Reference_Guest")
+                : createFullUser("PreCreatedUsersTest_Reference_User");
+        Thread.sleep(SMALL_ELAPSE_SEC);
+        Map<String, Map<String, Boolean>> pkgMapRef = getPackagesAndPermissions(referenceUserId);
+
+        int preCreatedUserId;
+        if (afterReboot) {
+            deletePreCreatedUsers();
+            setSystemProperties(isGuest);
+            restartSystemServer();
+
+            preCreatedUserId = getPreCreatedUsers().get(0);
+            waitForUserInitialized(preCreatedUserId);
+            Thread.sleep(SMALL_ELAPSE_SEC);
+        } else {
+            // Pre-creates the user
+            preCreatedUserId = preCreateUser(isGuest);
+            Thread.sleep(SMALL_ELAPSE_SEC);
+        }
+
+        int convertedUserId = convertUser(preCreatedUserId, isGuest);
+
+        // Checks the packages and permissions match
+        Map<String, Map<String, Boolean>> pkgMapConverted =
+                getPackagesAndPermissions(convertedUserId);
+
+        comparePackages("converted user", pkgMapRef, pkgMapConverted);
+    }
+
+    private void comparePackages(String name, Map<String, Map<String, Boolean>> ref,
+            Map<String, Map<String, Boolean>> actual) {
+        // TODO: figure out a if Truth or other tool provides an easier way to compare maps
+        List<String> errors = new ArrayList<>();
+        addError(errors,
+                () -> assertWithMessage("packages mismatch for %s", name).that(actual.keySet())
+                        .containsAllIn(ref.keySet()));
+        Set<String> pkgsOnlyOnActual = actual.keySet();
+        for (String refPackage: ref.keySet()) {
+            if (pkgsOnlyOnActual.contains(refPackage)) {
+                Map<String, Boolean> refPermissions = ref.get(refPackage);
+                Map<String, Boolean> actualPermissions = actual.get(refPackage);
+                pkgsOnlyOnActual.remove(refPackage);
+
+                addError(errors, () ->
+                        assertWithMessage("permissions list mismatch for %s on %s",
+                                refPackage, name)
+                                .that(actualPermissions.keySet())
+                                .isEqualTo(refPermissions.keySet()));
+
+                addError(errors, () ->
+                        assertWithMessage("permissions state mismatch for %s on %s",
+                                refPackage, name)
+                                .that(actualPermissions).isEqualTo(refPermissions));
+            } else {
+                errors.add("Package " + refPackage + " not found on " + actual);
+            }
+        }
+        assertWithMessage("found %s error", errors.size()).that(errors).isEmpty();
+    }
+
+    private void addError(List<String> error, Runnable r) {
+        try {
+            r.run();
+        } catch (Throwable t) {
+            error.add(t.getMessage());
+        }
+    }
+
 
     private List<Integer> getPreCreatedUsers() throws Exception {
         return onAllUsers((allUsers) -> allUsers.stream()
@@ -177,5 +275,33 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
 
     private void setPreCreatedGuestsProperties(int value) throws DeviceNotAvailableException {
         getDevice().setProperty("android.car.number_pre_created_guests", Integer.toString(value));
+    }
+
+    // Convert the user as a "full" user
+    private int convertUser(int preCreatedUserId, boolean isGuest) throws Exception {
+        int convertedUserId = isGuest
+                ? createGuestUser("PreCreatedUsersTest_Guest")
+                : createFullUser("PreCreatedUsersTest_User");
+        assertWithMessage("Id of converted user doesn't match").that(convertedUserId)
+                .isEqualTo(preCreatedUserId);
+
+        Thread.sleep(SMALL_ELAPSE_SEC);
+
+        return convertedUserId;
+    }
+
+    /**
+     * CarUserService creates / remove pre-created users on boot to keep the pool constant,
+     * based on system properties. We need to tune then so the pre-created users set by this
+     * test are not changed when the system restarts.
+     */
+    private void setSystemProperties(boolean isGuest) throws DeviceNotAvailableException  {
+        if (isGuest) {
+            setPreCreatedGuestsProperties(1);
+            setPreCreatedUsersProperties(0);
+        } else {
+            setPreCreatedUsersProperties(1);
+            setPreCreatedGuestsProperties(0);
+        }
     }
 }
