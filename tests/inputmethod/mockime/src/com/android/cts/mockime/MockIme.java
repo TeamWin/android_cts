@@ -750,6 +750,15 @@ public final class MockIme extends InputMethodService {
                 () -> super.onUpdateCursorAnchorInfo(cursorAnchorInfo));
     }
 
+    @Override
+    public void onUpdateSelection(int oldSelStart, int oldSelEnd, int newSelStart, int newSelEnd,
+            int candidatesStart, int candidatesEnd) {
+        getTracer().onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
+                candidatesStart, candidatesEnd,
+                () -> super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
+                        candidatesStart, candidatesEnd));
+    }
+
     @CallSuper
     public boolean onEvaluateInputViewShown() {
         return getTracer().onEvaluateInputViewShown(() -> {
@@ -1078,6 +1087,23 @@ public final class MockIme extends InputMethodService {
             final Bundle arguments = new Bundle();
             arguments.putParcelable("cursorAnchorInfo", cursorAnchorInfo);
             recordEventInternal("onUpdateCursorAnchorInfo", runnable, arguments);
+        }
+
+        void onUpdateSelection(int oldSelStart,
+                int oldSelEnd,
+                int newSelStart,
+                int newSelEnd,
+                int candidatesStart,
+                int candidatesEnd,
+                @NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            arguments.putInt("oldSelStart", oldSelStart);
+            arguments.putInt("oldSelEnd", oldSelEnd);
+            arguments.putInt("newSelStart", newSelStart);
+            arguments.putInt("newSelEnd", newSelEnd);
+            arguments.putInt("candidatesStart", candidatesStart);
+            arguments.putInt("candidatesEnd", candidatesEnd);
+            recordEventInternal("onUpdateSelection", runnable, arguments);
         }
 
         boolean onShowInputRequested(int flags, boolean configChange,
