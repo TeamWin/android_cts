@@ -140,6 +140,18 @@ public class TestMediaCodec extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/63122634
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-01")
+    public void testPocCVE_2017_13203() throws Exception {
+        String inputFiles[] = {"cve_2017_13203.h264"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13203",
+               "--num_frames -1 -i " + AdbUtils.TMP_PATH + inputFiles[0], inputFiles,
+               AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/33621215
      **/
     @Test
