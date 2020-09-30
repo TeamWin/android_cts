@@ -331,6 +331,9 @@ public class SmsManagerTest {
         assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
                 TextUtils.isEmpty(mDestAddr));
 
+        // disable suppressing blocking.
+        TelephonyUtils.endBlockSuppression(getInstrumentation());
+
         String mccmnc = mTelephonyManager.getSimOperator();
         // Setting default SMS App is needed to be able to block numbers.
         setDefaultSmsApp(true);
