@@ -40,6 +40,7 @@
         <activity android:name=".HdmiControlManagerHelper" >
             <intent-filter>
                 <action android:name="android.hdmicec.app.OTP" />
+                <action android:name="android.hdmicec.app.VENDOR_CMD" />
             </intent-filter>
         </activity>
     </application>
