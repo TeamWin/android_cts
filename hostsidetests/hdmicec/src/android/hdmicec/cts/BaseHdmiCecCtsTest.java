@@ -41,7 +41,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
      * @param clientParams Extra parameters to use when launching cec-client
      */
     public BaseHdmiCecCtsTest(LogicalAddress dutLogicalAddress, String ...clientParams) {
-        this.hdmiCecClient = new HdmiCecClientWrapper(dutLogicalAddress, clientParams);
+        this.hdmiCecClient = new HdmiCecClientWrapper(this, dutLogicalAddress, clientParams);
     }
 
     /** Class with predefined rules which can be used by HDMI CEC CTS tests. */
