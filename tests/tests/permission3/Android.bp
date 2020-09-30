@@ -37,8 +37,9 @@ android_test {
         ":CtsUsePermissionApp26",
         ":CtsUsePermissionApp28",
         ":CtsUsePermissionApp29",
+        ":CtsUsePermissionApp30",
+        ":CtsUsePermissionApp30WithBackground",
         ":CtsUsePermissionAppLatest",
-        ":CtsUsePermissionAppLatestWithBackground",
         ":CtsUsePermissionAppWithOverlay",
     ],
     test_suites: [

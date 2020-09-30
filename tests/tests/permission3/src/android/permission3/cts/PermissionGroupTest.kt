@@ -41,8 +41,8 @@ class PermissionGroupTest : BaseUsePermissionTest() {
     }
 
     @Test
-    fun testRuntimeGroupGrantExpansionLatest() {
-        installPackage(APP_APK_PATH_LATEST)
+    fun testRuntimeGroupGrantExpansion30() {
+        installPackage(APP_APK_PATH_30)
         testRuntimeGroupGrantExpansion(false)
     }
 
