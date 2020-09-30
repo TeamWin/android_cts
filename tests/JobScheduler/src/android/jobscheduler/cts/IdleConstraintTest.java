@@ -176,9 +176,14 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
      * Check if dock state is supported.
      */
     private boolean isDockStateSupported() {
-        // Car does not support dock state.
-        return !getContext().getPackageManager().hasSystemFeature(
+        final boolean isCar = getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_AUTOMOTIVE);
+
+        final boolean isLeanback = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_LEANBACK_ONLY);
+
+        // Car and Leanback do not support dock state.
+        return !isCar && !isLeanback;
     }
 
     /**
