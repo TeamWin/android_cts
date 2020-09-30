@@ -49,6 +49,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -57,6 +58,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class WindowFocusHandleService extends Service {
     private @Nullable static WindowFocusHandleService sInstance = null;
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final String TAG = WindowFocusHandleService.class.getSimpleName();
 
     private EditText mPopupTextView;
@@ -161,8 +163,12 @@ public class WindowFocusHandleService extends Service {
     }
 
     @AnyThread
-    public EditText getPopupTextView(@Nullable AtomicBoolean outPopupTextHasWindowFocusRef) {
+    public EditText getPopupTextView(
+            @Nullable AtomicBoolean outPopupTextHasWindowFocusRef) throws Exception {
         if (outPopupTextHasWindowFocusRef != null) {
+            TestUtils.waitOnMainUntil(() -> mPopupTextView != null,
+                    TIMEOUT, "PopupTextView should be created");
+
             mPopupTextView.post(() -> {
                 final ViewTreeObserver observerForPopupTextView =
                         mPopupTextView.getViewTreeObserver();
