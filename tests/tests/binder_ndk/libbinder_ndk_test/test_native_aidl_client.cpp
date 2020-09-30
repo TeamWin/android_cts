@@ -18,6 +18,7 @@
 #include <aidl/test_package/BnEmpty.h>
 #include <aidl/test_package/BpTest.h>
 #include <aidl/test_package/ByteEnum.h>
+#include <aidl/test_package/FixedSize.h>
 #include <aidl/test_package/Foo.h>
 #include <aidl/test_package/IntEnum.h>
 #include <aidl/test_package/LongEnum.h>
@@ -32,10 +33,12 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <type_traits>
 
 using ::aidl::test_package::Bar;
 using ::aidl::test_package::BpTest;
 using ::aidl::test_package::ByteEnum;
+using ::aidl::test_package::FixedSize;
 using ::aidl::test_package::Foo;
 using ::aidl::test_package::GenericBar;
 using ::aidl::test_package::IntEnum;
@@ -56,6 +59,16 @@ TEST_F(NdkBinderTest_AidlLocal, FromBinder) {
   EXPECT_EQ(test, ITest::fromBinder(binder));
 
   EXPECT_FALSE(test->isRemote());
+}
+
+TEST_F(NdkBinderTest_AidlLocal, ConfirmFixedSizeTrue) {
+  bool res = std::is_same<FixedSize::fixed_size, std::true_type>::value;
+  EXPECT_EQ(res, true);
+}
+
+TEST_F(NdkBinderTest_AidlLocal, ConfirmFixedSizeFalse) {
+  bool res = std::is_same<RegularPolygon::fixed_size, std::true_type>::value;
+  EXPECT_EQ(res, false);
 }
 
 struct Params {
