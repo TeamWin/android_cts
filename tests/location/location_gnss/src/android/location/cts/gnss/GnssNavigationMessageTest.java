@@ -24,6 +24,7 @@ import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
 import android.os.Build;
 import android.os.Parcel;
+import android.util.Log;
 
 import java.util.List;
 
@@ -80,6 +81,11 @@ public class GnssNavigationMessageTest extends GnssTestCase {
         if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N,
                 mTestLocationManager,
                 TAG)) {
+            return;
+        }
+
+        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
             return;
         }
 
