@@ -17,6 +17,7 @@ filegroup {
     srcs: [
         "test_package/Bar.aidl",
         "test_package/ByteEnum.aidl",
+        "test_package/FixedSize.aidl",
         "test_package/Foo.aidl",
         "test_package/IEmpty.aidl",
         "test_package/ITest.aidl",
