@@ -587,6 +587,7 @@
     <string name="ble_read_descriptor_name">Bluetooth LE Read Descriptor</string>
     <string name="ble_write_descriptor_name">Bluetooth LE Write Descriptor</string>
     <string name="ble_read_rssi_name">Bluetooth LE Read RSSI</string>
+    <string name="ble_on_service_changed">Bluetooth LE On Service Changed</string>
     <string name="ble_client_disconnect_name">Bluetooth LE Client Disconnect</string>
     <string name="ble_insecure_client_test_info">
         The Bluetooth LE test must be done simultaneously on two devices. This device is the client.
@@ -635,6 +636,7 @@
     <string name="ble_server_read_descriptor">Waiting on read descriptor request</string>
     <string name="ble_server_reliable_write">Waiting on reliable write from client</string>
     <string name="ble_server_reliable_write_bad_resp">Waiting on reliable write from client (send bad response)</string>
+    <string name="ble_server_service_changed_indication">Waiting on service changed indication</string>
     <string name="ble_server_receiving_disconnect">Waiting on disconnection from Bluetooth LE client</string>
     <string name="ble_connection_priority_server_name">02 Bluetooth LE Connection Priority Server Test</string>
     <string name="ble_connection_priority_server_info">Bluetooth LE Connection Priority Server receive message from message in 3 different priority.</string>
