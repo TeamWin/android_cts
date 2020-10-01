@@ -18,11 +18,19 @@ package android.view.cts;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.View;
+
+import com.android.compatibility.common.util.FeatureUtil;
 
 public class SystemGestureExclusionActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.gesture_exclusion_basic);
+        // Some automotive devices have a left-side navigation bar. It needs to be removed
+        // to pass the test which assumes the activity is on the left side of the display.
+        if (FeatureUtil.isAutomotive()) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
     }
 }
