@@ -21,7 +21,6 @@ import static com.android.tradefed.device.NativeDevice.INVALID_USER_ID;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 
@@ -55,8 +54,6 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
     @Before
     @After
     public void uninstallTestApp() throws Exception {
-        // TODO (b/167698977): Remove assumption after the user build has proper permissions.
-        assumeTrue("Temporarily Skipping on non-root device", getDevice().isAdbRoot());
         assumeSupportsMultipleUsers();
         getDevice().uninstallPackage(APP_PKG);
     }
