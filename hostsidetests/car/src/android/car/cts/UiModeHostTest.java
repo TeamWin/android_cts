@@ -18,11 +18,8 @@ package android.car.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeTrue;
-
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -35,12 +32,6 @@ import java.util.regex.Pattern;
 public final class UiModeHostTest extends CarHostJUnit4TestCase {
 
     private static final Pattern NIGHT_MODE_REGEX = Pattern.compile("Night mode: (yes|no)");
-
-    @Before
-    public void setUp() throws Exception {
-        // TODO (b/167698977): Remove assumption after the user build has proper permissions.
-        assumeTrue("Temporarily Skipping on non-root device", getDevice().isAdbRoot());
-    }
 
     /**
      * Test day/night mode consistency across user switching. Day/night mode config should be

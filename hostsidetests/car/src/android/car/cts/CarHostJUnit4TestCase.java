@@ -277,7 +277,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * Creates a full guest with car service shell command.
      */
     protected int createGuestUser(String name) throws Exception {
-        return createUser(name, /* flags= */ 2, "android.os.usertype.full.GUEST");
+        return createUser(name, /* flags= */ 0, "android.os.usertype.full.GUEST");
     }
 
     /**
