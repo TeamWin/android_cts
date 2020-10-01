@@ -109,8 +109,8 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         mWmState.computeState(TEST_ACTIVITY);
         mWmState.assertContainsStack("Must contain home stack.",
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
-        mWmState.assertContainsStack("Must contain fullscreen stack.",
-                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+        mWmState.assertContainsStack("Must contain standard stack.",
+                WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_STANDARD);
         mWmState.assertDoesNotContainStack("Must not contain docked stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
     }
@@ -188,12 +188,24 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         mWmState.assertContainsStack("Must contain docked stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
-        // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
+        int displayWindowingMode = mWmState.getDisplay(
+                mWmState.getDisplayByActivity(TEST_ACTIVITY)).getWindowingMode();
         separateTestJournal();
         SystemUtil.runWithShellPermissionIdentity(() -> mTaskOrganizer.dismissedSplitScreen());
-        final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
-                NO_RELAUNCH_ACTIVITY);
-        assertEquals(1, lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
+        if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
+            // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
+            final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
+                    NO_RELAUNCH_ACTIVITY);
+            assertEquals(1,
+                    lifecycleCounts.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
+        } else {
+            // Display is not a fullscreen display, so there won't be a multi-window callback.
+            // Instead just verify that windows are not in split-screen anymore.
+            waitForIdle();
+            mWmState.computeState();
+            mWmState.assertDoesNotContainStack("Must have exited split-screen",
+                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        }
     }
 
     @Test
@@ -491,39 +503,6 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         assertEquals("There must be only two resumed activities in the package.", 2,
                 mWmState.getResumedActivitiesCountInPackage(
                         SDK_27_TEST_ACTIVITY.getPackageName()));
-    }
-
-    @Test
-    @FlakyTest(bugId = 131005232)
-    public void testActivityLifeCycleOnResizeDockedStack() throws Exception {
-        launchActivity(TEST_ACTIVITY);
-        mWmState.computeState(TEST_ACTIVITY);
-        final Rect fullScreenBounds = mWmState.getStandardRootTaskByWindowingMode(
-                WINDOWING_MODE_FULLSCREEN).getBounds();
-
-        setActivityTaskWindowingMode(TEST_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        mWmState.computeState(TEST_ACTIVITY);
-        launchActivity(NO_RELAUNCH_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-
-        mWmState.computeState(TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY);
-        final Rect initialDockBounds = mWmState.getStandardRootTaskByWindowingMode(
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY) .getBounds();
-
-        separateTestJournal();
-
-        Rect newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, true);
-        resizeDockedStack(
-                newBounds.width(), newBounds.height(), newBounds.width(), newBounds.height());
-        mWmState.computeState(TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY);
-
-        // We resize twice to make sure we cross an orientation change threshold for both
-        // activities.
-        newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, false);
-        resizeDockedStack(
-                newBounds.width(), newBounds.height(), newBounds.width(), newBounds.height());
-        mWmState.computeState(TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY);
-        assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */);
-        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false /* relaunched */);
     }
 
     @Test
