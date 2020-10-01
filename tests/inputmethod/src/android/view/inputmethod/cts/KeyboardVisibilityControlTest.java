@@ -32,6 +32,7 @@ import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
@@ -301,20 +302,16 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
-
+            final String marker = getTestMarker();
             final UiObject2 inputTextField = TestWebView.launchTestWebViewActivity(
-                    TimeUnit.SECONDS.toMillis(5));
+                    TIMEOUT, marker);
             assertNotNull("Editor must exists on WebView", inputTextField);
-
-            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
-            notExpectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
-                    TIMEOUT);
             expectImeInvisible(TIMEOUT);
 
             inputTextField.click();
             expectEvent(stream.copy(), showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
-            expectEvent(stream.copy(), event -> "onStartInputView".equals(event.getEventName()),
-                    TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
             expectImeVisible(TIMEOUT);
         }
     }

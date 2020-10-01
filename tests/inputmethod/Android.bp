@@ -29,10 +29,13 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "CtsMockInputMethodLib",
+        "CtsMockSpellCheckerLib",
         "testng",
+        "kotlin-test",
     ],
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
         "src/**/I*.aidl",
     ],
     aidl: {

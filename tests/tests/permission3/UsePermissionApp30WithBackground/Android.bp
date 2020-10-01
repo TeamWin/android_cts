@@ -15,7 +15,7 @@
 //
 
 android_test_helper_app {
-    name: "CtsUsePermissionAppLatestWithBackground",
+    name: "CtsUsePermissionApp30WithBackground",
     srcs: [
         "src/**/*.kt",
     ],
@@ -23,4 +23,6 @@ android_test_helper_app {
         "kotlin-stdlib",
     ],
     certificate: ":cts-testkey2",
+
+    min_sdk_version: "30",
 }

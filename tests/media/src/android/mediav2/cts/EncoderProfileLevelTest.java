@@ -227,9 +227,7 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                         MPEG4ProfileAdvancedCore, MPEG4ProfileAdvancedScalable,
                         MPEG4ProfileAdvancedSimple});
         mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{VP8ProfileMain});
-        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_VP9,
-                new int[]{VP9Profile0, VP9Profile1, VP9Profile2, VP9Profile3, VP9Profile2HDR,
-                        VP9Profile3HDR, VP9Profile2HDR10Plus, VP9Profile3HDR10Plus});
+        mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{VP9Profile0, VP9Profile1});
         mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_AV1,
                 new int[]{AV1ProfileMain8, AV1ProfileMain10, AV1ProfileMain10HDR10,
                         AV1ProfileMain10HDR10Plus});
