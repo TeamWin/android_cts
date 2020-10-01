@@ -16,11 +16,13 @@
 #include <cstring>
 #include <pthread.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #define TAG "MidiTestManager"
 #include <android/log.h>
 #define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 
 #include "MidiTestManager.h"
 
@@ -131,6 +133,20 @@ void MidiTestManager::buildTestStream() {
     mReceiveStreamPos = 0;
 }
 
+static void logBytes(uint8_t* bytes, int count) {
+    int buffSize = (count * 6) + 1; // count of "0x??, " + '\0';
+
+    char* logBuff = new char[buffSize];
+    for (int dataIndex = 0; dataIndex < count; dataIndex++) {
+        sprintf(logBuff + (dataIndex * 6), "0x%.2X", bytes[dataIndex]);
+        if (dataIndex < count - 1) {
+            sprintf(logBuff + (dataIndex * 6) + 4, ", ");
+        }
+    }
+    ALOGD("%s", logBuff);
+    delete[] logBuff;
+}
+
 /**
  * Compares the supplied bytes against the sent message stream at the current postion
  * and advances the stream position.
@@ -139,21 +155,43 @@ bool MidiTestManager::matchStream(uint8_t* bytes, int count) {
     if (DEBUG) {
         ALOGI("---- matchStream() count:%d", count);
     }
+
+    // a little bit of checking here...
+    if (count < 0) {
+        ALOGE("Negative Byte Count in MidiTestManager::matchStream()");
+        return false;
+    }
+
+    if (count > MESSAGE_MAX_BYTES) {
+        ALOGE("Too Large Byte Count (%d) in MidiTestManager::matchStream()", count);
+        return false;
+    }
+
     bool matches = true;
 
     for (int index = 0; index < count; index++) {
+        // Check for buffer overflow
+        if (mReceiveStreamPos >= mNumTestStreamBytes) {
+            ALOGD("matchStream() out-of-bounds @%d", mReceiveStreamPos);
+            matches = false;
+            break;
+        }
+
         if (bytes[index] != mTestStream[mReceiveStreamPos]) {
             matches = false;
-            if (DEBUG) {
-                ALOGI("---- mismatch @%d [%d : %d]",
-                        index, bytes[index], mTestStream[mReceiveStreamPos]);
-            }
+            ALOGD("---- mismatch @%d [%d : %d]",
+                    index, bytes[index], mTestStream[mReceiveStreamPos]);
         }
         mReceiveStreamPos++;
     }
 
     if (DEBUG) {
         ALOGI("  returns:%d", matches);
+    }
+
+    if (!matches) {
+        ALOGD("Mismatched Received Data:");
+        logBytes(bytes, count);
     }
     return matches;
 }

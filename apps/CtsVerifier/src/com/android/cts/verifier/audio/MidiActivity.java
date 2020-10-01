@@ -512,6 +512,20 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         return (byte)((cmd << 4) | (channel & 0x0F));
     }
 
+    //
+    // Logging Utility
+    //
+    static void logByteArray(String prefix, byte[] value, int offset, int count) {
+        StringBuilder builder = new StringBuilder(prefix);
+        for (int i = 0; i < count; i++) {
+            builder.append(String.format("0x%02X", value[offset + i]));
+            if (i != value.length - 1) {
+                builder.append(", ");
+            }
+        }
+        Log.d(TAG, builder.toString());
+    }
+
     /**
      * A class to control and represent the state of a given test.
      * It hold the data needed for IO, and the logic for sending, receiving and matching
@@ -537,8 +551,10 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         private TestMessage[] mTestMessages;
 
         // - The stream of message data to walk through when MIDI data is received.
+        private int mMIDIDataStreamSize;
         private byte[] mMIDIDataStream;
         private int mReceiveStreamPos;
+        private static final int MESSAGE_MAX_BYTES = 1024;
 
         public MidiTestModule(int deviceType) {
             mIODevice = new MidiIODevice(deviceType);
@@ -694,7 +710,8 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
                 streamSize += mTestMessages[msgIndex].mMsgBytes.length;
             }
 
-            mMIDIDataStream = new byte[streamSize];
+            mMIDIDataStreamSize = streamSize;
+            mMIDIDataStream = new byte[mMIDIDataStreamSize];
 
             int offset = 0;
             for (int msgIndex = 0; msgIndex < mTestMessages.length; msgIndex++) {
@@ -714,9 +731,31 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
             if (DEBUG) {
                 Log.i(TAG, "---- matchStream() offset:" + offset + " count:" + count);
             }
+            // a little bit of checking here...
+            if (count < 0) {
+                Log.e(TAG, "Negative Byte Count in MidiActivity::matchStream()");
+                return false;
+            }
+
+            if (count > MESSAGE_MAX_BYTES) {
+                Log.e(TAG, "Too Large Byte Count (" + count + ") in MidiActivity::matchStream()");
+                return false;
+            }
+
             boolean matches = true;
 
             for (int index = 0; index < count; index++) {
+                // Avoid a buffer overrun. Still don't understand why it happens
+                if (mReceiveStreamPos >= mMIDIDataStreamSize) {
+                    // report an error here
+                    Log.d(TAG, "matchStream buffer overrun @" + index +
+                            " of " + mMIDIDataStreamSize);
+                    // Dump the bufer here
+                    logByteArray("Expected: ", mMIDIDataStream, 0, mMIDIDataStreamSize);
+                    matches = false;
+                    break;  // bail
+                }
+
                 if (bytes[offset + index] != mMIDIDataStream[mReceiveStreamPos]) {
                     matches = false;
                     if (DEBUG) {
@@ -730,6 +769,11 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
             if (DEBUG) {
                 Log.i(TAG, "  returns:" + matches);
             }
+
+            if (!matches) {
+                logByteArray("Received: ", bytes, offset, count);
+            }
+
             return matches;
         }
 
@@ -780,6 +824,9 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
 
             @Override
             public void onSend(byte[] msg, int offset, int count, long timestamp) throws IOException {
+                if (DEBUG) {
+                    Log.d(TAG, "---- onSend() offset:" + offset + " count:" + count);
+                }
                 if (!matchStream(msg, offset, count)) {
                     mTestMismatched = true;
                 }
