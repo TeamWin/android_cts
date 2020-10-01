@@ -79,7 +79,7 @@ public class MediaStoreTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
 
-        Log.d(TAG, "Using volume " + mVolumeName);
+        Log.d(TAG, "Using volume " + mVolumeName + " for user " + mContext.getUserId());
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
     }
 
