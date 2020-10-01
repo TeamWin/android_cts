@@ -62,7 +62,11 @@ public class TaggingSdk30Test extends TaggingBaseTest {
                 /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 
-    public void testHeapTaggingCompatFeatureDisabled() throws Exception {
+    public void testCompatFeatureDisabledUserdebugBuild() throws Exception {
+        // Userdebug build - check that we can force disable the compat feature at runtime.
+        if (!getDevice().getBuildFlavor().contains("userdebug")) {
+            return;
+        }
         runDeviceCompatTestReported(
                 TEST_PKG,
                 DEVICE_TEST_CLASS_NAME,
@@ -71,6 +75,22 @@ public class TaggingSdk30Test extends TaggingBaseTest {
                 /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*reportedEnabledChanges*/ ImmutableSet.of(),
                 /*reportedDisabledChanges*/ reportedChangeSet);
+    }
+
+    public void testCompatFeatureDisabledUserBuild() throws Exception {
+        // Non-userdebug build - we're not allowed to disable compat features. Check to ensure that
+        // even if we try that we still get pointer tagging.
+        if (getDevice().getBuildFlavor().contains("userdebug")) {
+            return;
+        }
+        runDeviceCompatTestReported(
+                TEST_PKG,
+                DEVICE_TEST_CLASS_NAME,
+                testForWhenSoftwareWantsTagging,
+                /*enabledChanges*/ ImmutableSet.of(),
+                /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
+                /*reportedEnabledChanges*/ reportedChangeSet,
+                /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 
     public void testMemoryTagChecksCompatFeatureEnabled() throws Exception {
