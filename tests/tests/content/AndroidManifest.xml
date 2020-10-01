@@ -60,6 +60,9 @@
     <permission android:name="android.content.cts.REQUIRED_FEATURE_DEFINED"
          android:protectionLevel="normal"/>
 
+    <permission android:name="android.content.cts.REQUIRED_FEATURE_DEFINED_2"
+         android:protectionLevel="normal"/>
+
     <permission android:name="android.content.cts.REQUIRED_FEATURE_UNDEFINED"
          android:protectionLevel="normal"/>
 
@@ -69,24 +72,55 @@
     <permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_UNDEFINED"
          android:protectionLevel="normal"/>
 
+    <permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_UNDEFINED_2"
+         android:protectionLevel="normal"/>
+
     <permission android:name="android.content.cts.REQUIRED_MULTI_DENY"
          android:protectionLevel="normal"/>
+
+    <permission android:name="android.content.cts.REQUIRED_MULTI_DENY_2"
+                android:protectionLevel="normal"/>
+
+    <permission android:name="android.content.cts.REQUIRED_MULTI_DENY_3"
+                android:protectionLevel="normal"/>
 
     <permission android:name="android.content.cts.REQUIRED_MULTI_GRANT"
          android:protectionLevel="normal"/>
 
+    <permission android:name="android.content.cts.REQUIRED_MULTI_GRANT_2"
+         android:protectionLevel="normal"/>
+
+    <permission android:name="android.content.cts.REQUIRED_MULTI_GRANT_3"
+                android:protectionLevel="normal"/>
+
     <uses-permission android:name="android.content.cts.REQUIRED_FEATURE_DEFINED"
          android:requiredFeature="android.software.cts"/>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_FEATURE_DEFINED_2">
+        <required-feature android:name="android.software.cts"/>
+    </uses-permission>
 
     <uses-permission android:name="android.content.cts.REQUIRED_FEATURE_UNDEFINED"
          android:requiredFeature="android.software.cts.undefined"/>
 
+    <uses-permission android:name="android.content.cts.REQUIRED_FEATURE_UNDEFINED">
+        <required-feature android:name="android.software.cts.undefined"/>
+    </uses-permission>
+
     <uses-permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_DEFINED"
          android:requiredNotFeature="android.software.cts"/>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_DEFINED">
+        <required-not-feature android:name="android.software.cts"/>
+    </uses-permission>
 
     <uses-permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_UNDEFINED"
          android:requiredNotFeature="android.software.cts.undefined"/>
 
+    <uses-permission android:name="android.content.cts.REQUIRED_NOT_FEATURE_UNDEFINED_2">
+        <required-not-feature android:name="android.software.cts.undefined"/>
+    </uses-permission>
+
     <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY"
          android:requiredFeature="android.software.cts.undefined"
          android:requiredNotFeature="android.software.cts"/>
@@ -98,10 +132,73 @@
     <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY"
          android:requiredFeature="android.software.cts.undefined"
          android:requiredNotFeature="android.software.cts.undefined"/>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_2">
+        <required-feature android:name="android.software.cts.undefined"/>
+        <required-not-feature android:name="android.software.cts"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_2">
+        <required-feature android:name="android.software.cts"/>
+        <required-not-feature android:name="android.software.cts"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_2">
+        <required-feature android:name="android.software.cts.undefined"/>
+        <required-not-feature android:name="android.software.cts.undefined"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_2">
+        <required-feature android:name="android.software.cts"/>
+        <required-feature android:name="android.software.cts.undefined"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_2">
+        <required-not-feature android:name="android.software.cts"/>
+        <required-not-feature android:name="android.software.cts.undefined"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_2">
+        <required-feature android:name="android.software.cts"/>
+        <required-feature android:name="android.software.cts.another.undefined"/>
+        <required-not-feature android:name="android.software.cts.undefined"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_3"
+         android:requiredFeature="android.software.cts">
+        <required-not-feature android:name="android.software.cts"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_3"
+         android:requiredFeature="android.software.cts.undefined">
+        <required-not-feature android:name="android.software.cts.undefined"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_3"
+         android:requiredNotFeature="android.software.cts">
+        <required-feature android:name="android.software.cts"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_DENY_3"
+         android:requiredNotFeature="android.software.cts.undefined">
+        <required-feature android:name="android.software.cts.undefined"/>
+    </uses-permission>
 
     <uses-permission android:name="android.content.cts.REQUIRED_MULTI_GRANT"
          android:requiredFeature="android.software.cts"
          android:requiredNotFeature="android.software.cts.undefined"/>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_GRANT_2">
+        <required-feature android:name="android.software.cts"/>
+        <required-not-feature android:name="android.software.cts.undefined"/>
+        <required-not-feature android:name="android.software.cts.another.undefined"/>
+    </uses-permission>
+
+    <uses-permission android:name="android.content.cts.REQUIRED_MULTI_GRANT_3"
+         android:requiredFeature="android.software.cts"
+         android:requiredNotFeature="android.software.cts.undefined">
+        <required-not-feature android:name="android.software.cts.another.undefined"/>
+    </uses-permission>
 
     <permission android:name="android.content.cts.SIGNATURE_PERMISSION"
          android:protectionLevel="signature"/>
