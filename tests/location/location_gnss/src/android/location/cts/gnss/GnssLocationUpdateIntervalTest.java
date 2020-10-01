@@ -45,6 +45,11 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
     private static final int LOCATION_TO_COLLECT_COUNT = 8;
     private static final int PASSIVE_LOCATION_TO_COLLECT_COUNT = 100;
     private static final int TIMEOUT_IN_SEC = 120;
+    private static final long MILLIS_PER_NANO = 1_000_000;
+
+    // Maximum time drift between elapsedRealtime (Android SystemClock time) and utcTime (gps
+    // time calculated from the chipset).
+    private static final long MAX_TIME_DRIFT_MILLIS = 1000;
 
     // Minimum time interval between fixes in milliseconds.
     private static final int[] FIX_INTERVALS_MILLIS = {0, 1000, 5000, 15000};
@@ -116,6 +121,23 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
         List<Location> activeLocations = activeLocationListener.getReceivedLocationList();
         List<Location> passiveLocations = passiveLocationListener.getReceivedLocationList();
         validateLocationUpdateInterval(activeLocations, passiveLocations, fixIntervalMillis);
+        validateTimeDriftBetweenUtcTimeAndElapsedRealtime(activeLocations);
+    }
+
+    private static void validateTimeDriftBetweenUtcTimeAndElapsedRealtime(
+            List<Location> activeLocations) {
+        SoftAssert softAssert = new SoftAssert(TAG);
+        long firstTimeDiff = (activeLocations.get(0).getElapsedRealtimeNanos()
+                / MILLIS_PER_NANO) - activeLocations.get(0).getTime();
+        for (int i = 1; i < activeLocations.size(); i++) {
+            long timeDiff = (activeLocations.get(i).getElapsedRealtimeNanos() / MILLIS_PER_NANO)
+                    - activeLocations.get(i).getTime();
+            long timeDrift = Math.abs(timeDiff - firstTimeDiff);
+            softAssert.assertTrue("Time drift between elapsedRealtime and utcTime must be bounded: "
+                            + timeDrift + " (max: " + MAX_TIME_DRIFT_MILLIS + ")",
+                    timeDrift < MAX_TIME_DRIFT_MILLIS);
+        }
+        softAssert.assertAll();
     }
 
     private static void validateLocationUpdateInterval(List<Location> activeLocations,
