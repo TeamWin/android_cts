@@ -78,6 +78,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -947,7 +948,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         // Skip the test if it's freeform, since freeform <-> PIP does not trigger any multi-window
         // calbacks.
-        assumeTrue(windowingMode == WINDOWING_MODE_FREEFORM);
+        assumeTrue(windowingMode == WINDOWING_MODE_FULLSCREEN);
 
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         // Wait for animation complete so that system has reported pip mode change event to
