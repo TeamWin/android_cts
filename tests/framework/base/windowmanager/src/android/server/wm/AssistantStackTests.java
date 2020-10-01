@@ -209,7 +209,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
 
         // Launch an assistant activity on top of an existing fullscreen activity, and ensure that
         // the fullscreen activity is still visible and on top after the assistant activity finishes
-        launchActivityOnDisplay(TEST_ACTIVITY, mAssistantDisplayId);
+        launchActivityOnDisplay(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN, mAssistantDisplayId);
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
@@ -265,7 +265,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             // Launch a fullscreen app and then launch the assistant and check to see that it is
             // also visible
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
-            launchActivityOnDisplay(TEST_ACTIVITY, mAssistantDisplayId);
+            launchActivityOnDisplay(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN, mAssistantDisplayId);
             launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
             waitForValidStateWithActivityType(
@@ -336,7 +336,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
 
             // Launch a new fullscreen activity
             // Using Animation Test Activity because it is opaque on all devices.
-            launchActivityOnDisplay(ANIMATION_TEST_ACTIVITY, mAssistantDisplayId);
+            launchActivityOnDisplay(ANIMATION_TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN, mAssistantDisplayId);
             // Wait for animation finished.
             mWmState.waitForActivityState(ANIMATION_TEST_ACTIVITY, STATE_RESUMED);
             mWmState.assertVisibility(ASSISTANT_ACTIVITY, isAssistantOnTop());
@@ -367,7 +367,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
 
             // Launch a fullscreen activity and a PIP activity, then launch the assistant, and
             // ensure that the test activity is still visible
-            launchActivity(TEST_ACTIVITY);
+            launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
             launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
             launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_IS_TRANSLUCENT, String.valueOf(true));
