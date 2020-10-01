@@ -54,6 +54,20 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/74122779
+     * Vulnerability Behaviour: SIGABRT in audioserver
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testPocCVE_2018_9428() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig("CVE-2018-9428", getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns("audioserver");
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/64340921
      * Vulnerability Behaviour: SIGABRT in audioserver
      */
