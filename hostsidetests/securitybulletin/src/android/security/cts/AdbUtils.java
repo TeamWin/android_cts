@@ -453,23 +453,6 @@ public class AdbUtils {
     }
 
     /**
-     * Runs the pacrunner utility against a given proxyautoconfig file, asserting that it doesn't
-     * crash
-     * @param pacName the name of the proxy autoconfig script from the /res folder
-     * @param device device to be ran on
-     */
-    public static int runProxyAutoConfig(String pacName, ITestDevice device) throws Exception {
-        pacName += ".pac";
-        String targetPath = TMP_PATH + pacName;
-        AdbUtils.pushResource("/" + pacName, targetPath, device);
-        runPocAssertNoCrashes(
-                "pacrunner", device, targetPath,
-                new CrashUtils.Config().setProcessPatterns("pacrunner"));
-        runCommandLine("rm " + targetPath, device);
-        return 0; // b/157172329 fix tests that manually check the result; remove return statement
-    }
-
-    /**
      * Runs the poc binary and asserts that there are no security crashes that match the expected
      * process pattern.
      * @param pocName a string path to poc from the /res folder
