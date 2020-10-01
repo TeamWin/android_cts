@@ -50,6 +50,11 @@ using ::ndk::ScopedFileDescriptor;
 using ::ndk::SharedRefBase;
 using ::ndk::SpAIBinder;
 
+// This client is built for 32 and 64-bit targets. The size of FixedSize must remain the same.
+static_assert(sizeof(FixedSize) == 16);
+static_assert(offsetof(FixedSize, a) == 0);
+static_assert(offsetof(FixedSize, b) == 8);
+
 // AIDL tests which are independent of the service
 class NdkBinderTest_AidlLocal : public NdkBinderTest {};
 
