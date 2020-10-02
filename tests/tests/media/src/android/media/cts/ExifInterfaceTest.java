@@ -52,7 +52,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     private static final double DIFFERENCE_TOLERANCE = .001;
 
-    private static final String EXTERNAL_BASE_DIRECTORY = "/test/CtsMediaTestCases-1.0/images/";
+    private static final String EXTERNAL_BASE_DIRECTORY = "/test/CtsMediaTestCases-1.1/images/";
 
     // This base directory is needed for the files listed below.
     // These files will be available for download in Android O release.
