@@ -287,8 +287,8 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
         configuration.SSID = "\"TestSsid1\"";
         configuration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
         configuration.wepKeys = new String[4];
-        configuration.wepKeys[0] = "\"WepAscii1\"";
-        configuration.wepKeys[1] = "\"WepAscii2\"";
+        configuration.wepKeys[0] = "\"WepAscii12345\"";
+        configuration.wepKeys[1] = "\"WepAs\"";
         configuration.wepKeys[2] = "45342312ab";
         configuration.wepKeys[3] = "45342312ab45342312ab34ac12";
         configuration.wepTxKeyIndex = 1;

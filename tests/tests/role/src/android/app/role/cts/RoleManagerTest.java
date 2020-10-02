@@ -936,7 +936,7 @@ public class RoleManagerTest {
 
         addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
 
-        assertThat(sRoleManager.getDefaultSmsPackage(Process.myUserHandle().getIdentifier()))
+        assertThat(sRoleManager.getSmsRoleHolder(Process.myUserHandle().getIdentifier()))
                 .isEqualTo(APP_PACKAGE_NAME);
     }
 
