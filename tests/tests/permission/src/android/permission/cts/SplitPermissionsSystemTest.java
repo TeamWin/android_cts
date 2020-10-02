@@ -20,11 +20,15 @@ import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.ACCESS_MEDIA_LOCATION;
+import static android.Manifest.permission.BACKGROUND_CAMERA;
+import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE;
+import static android.Manifest.permission.RECORD_AUDIO;
+import static android.Manifest.permission.RECORD_BACKGROUND_AUDIO;
 import static android.Manifest.permission.WRITE_CALL_LOG;
 import static android.Manifest.permission.WRITE_CONTACTS;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -113,10 +117,18 @@ public class SplitPermissionsSystemTest {
                 case READ_PRIVILEGED_PHONE_STATE:
                     assertSplit(split, READ_PHONE_STATE, NO_TARGET);
                     break;
+                case RECORD_AUDIO:
+                    // Written this way so that when the sdk int is set for S the test fails
+                    // When this fails verify that the targetSdk is correct in platform.xml
+                    assertSplit(split, RECORD_BACKGROUND_AUDIO, Build.VERSION_CODES.S - 9969);
+                    break;
+                case CAMERA:
+                    assertSplit(split, BACKGROUND_CAMERA, Build.VERSION_CODES.S - 9969);
+                    break;
             }
         }
 
-        assertEquals(8, seenSplits.size());
+        assertEquals(10, seenSplits.size());
     }
 
     private void assertSplit(SplitPermissionInfo split, String permission, int targetSdk) {
