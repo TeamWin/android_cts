@@ -61,6 +61,7 @@ def main():
             print "Capture an image to check the test scene"
             cap = cam.do_capture(req)
             img = its.image.convert_capture_to_rgb_image(cap)
+            its.image.validate_lighting(img)
             if out_path != "":
                 its.image.write_image(img, out_path)
             print "Please check scene setup in", out_path
