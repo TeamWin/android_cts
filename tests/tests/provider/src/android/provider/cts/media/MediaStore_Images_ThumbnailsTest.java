@@ -113,7 +113,7 @@ public class MediaStore_Images_ThumbnailsTest {
 
         mRowsAdded = new ArrayList<Uri>();
 
-        Log.d(TAG, "Using volume " + mVolumeName);
+        Log.d(TAG, "Using volume " + mVolumeName + " for user " + mContext.getUserId());
         mExternalImages = MediaStore.Images.Media.getContentUri(mVolumeName);
 
         final Resources res = mContext.getResources();
