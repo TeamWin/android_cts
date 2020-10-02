@@ -14,7 +14,6 @@
 
 import matplotlib
 matplotlib.use('Agg')
-
 import its.error
 import sys
 from PIL import Image
@@ -44,6 +43,12 @@ MAX_LUT_SIZE = 65536
 
 NUM_TRYS = 2
 NUM_FRAMES = 4
+G_CHANNEL = 1
+LIGHT_ON_THRESHOLD = 0.1
+IMG_L = 0
+IMG_R = 1
+IMG_T = 0
+IMG_B = 1
 
 
 def convert_capture_to_rgb_image(cap,
@@ -668,6 +673,41 @@ def get_image_patch(img, xnorm, ynorm, wnorm, hnorm):
         return img[ytile:ytile+htile,xtile:xtile+wtile].copy()
     else:
         return img[ytile:ytile+htile,xtile:xtile+wtile,:].copy()
+
+def validate_lighting(img):
+    """Evaluate four corner patches of image to check if light is ON or OFF.
+    Args:
+        img: numpy float array of RGB image, with pixel values in [0, 1].
+
+    Returns:
+        True if the G channel of the RGB mean is <LIGHT_ON_THRESHOLD;
+        otherwise assertion fails.
+    """
+
+    patch_w = 0.05
+    patch_h = 0.05
+    img_b = IMG_B - patch_h
+    img_r = IMG_R - patch_w
+
+    patch_tl = its.image.get_image_patch(img, IMG_L, IMG_T, patch_w, patch_h)
+    patch_tr = its.image.get_image_patch(img, img_r, IMG_T, patch_w, patch_h)
+    patch_bl = its.image.get_image_patch(img, IMG_L, img_b, patch_w, patch_h)
+    patch_br = its.image.get_image_patch(img, img_r, img_b, patch_w, patch_h)
+    g_mean_tl = its.image.compute_image_means(patch_tl)[G_CHANNEL]
+    g_mean_tr = its.image.compute_image_means(patch_tr)[G_CHANNEL]
+    g_mean_bl = its.image.compute_image_means(patch_bl)[G_CHANNEL]
+    g_mean_br = its.image.compute_image_means(patch_br)[G_CHANNEL]
+    print "Corner patch green values. TL: %3.3f, TR: %.3f, BL: %.3f, BR: %.3f" % (
+            g_mean_tl, g_mean_tr, g_mean_bl, g_mean_br)
+    if (g_mean_tl > LIGHT_ON_THRESHOLD or
+        g_mean_tr > LIGHT_ON_THRESHOLD or
+        g_mean_bl > LIGHT_ON_THRESHOLD or
+        g_mean_br > LIGHT_ON_THRESHOLD):
+        print "Lights are ON in test rig."
+        return True
+    else:
+        assert 0, "Lights are OFF in test rig. Please turn lights on and retry."
+        return False
 
 
 def compute_image_means(img):
