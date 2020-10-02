@@ -50,6 +50,7 @@ import android.content.pm.PackageInstaller.Session;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
@@ -67,6 +68,7 @@ import com.android.server.pm.PackageManagerShellCommandDataLoader.Metadata;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -137,6 +139,9 @@ public class ChecksumsTest {
     private static PackageInstaller getPackageInstaller() {
         return getPackageManager().getPackageInstaller();
     }
+
+    @Rule
+    public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
     @Before
     public void onBefore() throws Exception {
