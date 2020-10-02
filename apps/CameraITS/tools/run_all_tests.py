@@ -566,7 +566,8 @@ def main():
                         fov_arg = 'fov=' + camera_fov
                         cmd = ['python',
                                os.path.join(os.getcwd(), 'tools/load_scene.py'),
-                               scene_arg, chart_dist_arg, fov_arg, screen_id_arg]
+                               scene_arg, chart_dist_arg, fov_arg, screen_id_arg,
+                               device_id_arg, camera_id_arg]
                     else:
                         time.sleep(CHART_DELAY)
                 else:
