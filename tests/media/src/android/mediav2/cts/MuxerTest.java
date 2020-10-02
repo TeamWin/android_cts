@@ -1045,6 +1045,15 @@ public class MuxerTest {
             }
         }
 
+        @Test
+        public void testSimpleMuxNative() {
+            Assume.assumeTrue("TODO(b/146421018)",
+                    !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
+            Assume.assumeTrue("TODO(b/146923287)",
+                    !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
+            assertTrue(nativeTestSimpleMux(mInpPath, mOutPath, mMime, selector));
+        }
+
         /* Does MediaMuxer throw IllegalStateException on missing codec specific data when required.
          * Check if relevant exception is thrown for AAC, AVC, HEVC, and MPEG4
          * codecs that require CSD in MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4.
@@ -1077,14 +1086,161 @@ public class MuxerTest {
                 }
             }
         }
+    }
+
+    @LargeTest
+    @RunWith(Parameterized.class)
+    public static class TestAddEmptyTracks {
+        private final List<String> mimeListforTypeMp4 =
+                Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
+                        MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_VIDEO_HEVC,
+                        MediaFormat.MIMETYPE_AUDIO_AAC, MediaFormat.MIMETYPE_IMAGE_ANDROID_HEIC,
+                        MediaFormat.MIMETYPE_TEXT_SUBRIP);
+        private final List<String> mimeListforTypeWebm =
+                Arrays.asList(MediaFormat.MIMETYPE_VIDEO_VP8, MediaFormat.MIMETYPE_VIDEO_VP9,
+                        MediaFormat.MIMETYPE_AUDIO_VORBIS, MediaFormat.MIMETYPE_AUDIO_OPUS);
+        private final List<String> mimeListforType3gp =
+                Arrays.asList(MediaFormat.MIMETYPE_VIDEO_MPEG4, MediaFormat.MIMETYPE_VIDEO_H263,
+                        MediaFormat.MIMETYPE_VIDEO_AVC, MediaFormat.MIMETYPE_AUDIO_AAC,
+                        MediaFormat.MIMETYPE_AUDIO_AMR_NB, MediaFormat.MIMETYPE_AUDIO_AMR_WB);
+        private final List<String> mimeListforTypeOgg =
+                Arrays.asList(MediaFormat.MIMETYPE_AUDIO_OPUS);
+        private String mMime;
+        private String mOutPath;
+
+        public TestAddEmptyTracks(String mime) {
+            mMime = mime;
+        }
+
+        @Before
+        public void prologue() throws IOException {
+            mOutPath = File.createTempFile("tmp", ".out").getAbsolutePath();
+        }
+
+        @After
+        public void epilogue() {
+            new File(mOutPath).delete();
+        }
+
+        private boolean isMimeContainerPairValid(int format) {
+            boolean result = false;
+            if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+                result = mimeListforTypeMp4.contains(mMime);
+            else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM) {
+                return mimeListforTypeWebm.contains(mMime);
+            } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
+                result = mimeListforType3gp.contains(mMime);
+            } else if (format == MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG) {
+                result = mimeListforTypeOgg.contains(mMime);
+            }
+            return result;
+        }
+
+        @Parameterized.Parameters(name = "{index}({0})")
+        public static Collection<Object[]> input() {
+            return Arrays.asList(new Object[][]{
+                    // Video
+                    {MediaFormat.MIMETYPE_VIDEO_H263},
+                    {MediaFormat.MIMETYPE_VIDEO_AVC},
+                    {MediaFormat.MIMETYPE_VIDEO_HEVC},
+                    {MediaFormat.MIMETYPE_VIDEO_MPEG4},
+                    {MediaFormat.MIMETYPE_VIDEO_VP8},
+                    {MediaFormat.MIMETYPE_VIDEO_VP9},
+                    // Audio
+                    {MediaFormat.MIMETYPE_AUDIO_AAC},
+                    {MediaFormat.MIMETYPE_AUDIO_AMR_NB},
+                    {MediaFormat.MIMETYPE_AUDIO_AMR_WB},
+                    {MediaFormat.MIMETYPE_AUDIO_OPUS},
+                    {MediaFormat.MIMETYPE_AUDIO_VORBIS},
+                    // Metadata
+                    {MediaFormat.MIMETYPE_TEXT_SUBRIP},
+                    // Image
+                    {MediaFormat.MIMETYPE_IMAGE_ANDROID_HEIC}
+            });
+        }
 
         @Test
-        public void testSimpleMuxNative() {
-            Assume.assumeTrue("TODO(b/146421018)",
-                    !mMime.equals(MediaFormat.MIMETYPE_AUDIO_OPUS));
-            Assume.assumeTrue("TODO(b/146923287)",
-                    !mMime.equals(MediaFormat.MIMETYPE_AUDIO_VORBIS));
-            assertTrue(nativeTestSimpleMux(mInpPath, mOutPath, mMime, selector));
+        public void testEmptyVideoTrack() {
+            for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; ++format) {
+                if (!mMime.startsWith("video/")) continue;
+                if (!isMimeContainerPairValid(format)) continue;
+                if (format != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4) continue;
+                try {
+                    MediaMuxer mediaMuxer = new MediaMuxer(mOutPath, format);
+                    MediaFormat mediaFormat = new MediaFormat();
+                    mediaFormat.setString(MediaFormat.KEY_MIME, mMime);
+                    mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, 480);
+                    mediaFormat.setInteger(MediaFormat.KEY_WIDTH, 640);
+                    mediaMuxer.addTrack(mediaFormat);
+                    mediaMuxer.start();
+                    mediaMuxer.stop();
+                    mediaMuxer.release();
+                } catch (Exception e) {
+                    fail("testEmptyVideoTrack : unexpected exception : " + e.getMessage());
+                }
+            }
+        }
+
+        @Test
+        public void testEmptyAudioTrack() {
+            for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; ++format) {
+                if (!mMime.startsWith("audio/")) continue;
+                if (!isMimeContainerPairValid(format)) continue;
+                if (format != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4) continue;
+                try {
+                    MediaMuxer mediaMuxer = new MediaMuxer(mOutPath, format);
+                    MediaFormat mediaFormat = new MediaFormat();
+                    mediaFormat.setString(MediaFormat.KEY_MIME, mMime);
+                    mediaFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 12000);
+                    mediaFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
+                    mediaMuxer.addTrack(mediaFormat);
+                    mediaMuxer.start();
+                    mediaMuxer.stop();
+                    mediaMuxer.release();
+                } catch (Exception e) {
+                    fail("testEmptyAudioTrack : unexpected exception : " + e.getMessage());
+                }
+            }
+        }
+
+        @Test
+        public void testEmptyMetaDataTrack() {
+            for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; ++format) {
+                if (!mMime.startsWith("application/")) continue;
+                if (!isMimeContainerPairValid(format)) continue;
+                try {
+                    MediaMuxer mediaMuxer = new MediaMuxer(mOutPath, format);
+                    MediaFormat mediaFormat = new MediaFormat();
+                    mediaFormat.setString(MediaFormat.KEY_MIME, mMime);
+                    mediaMuxer.addTrack(mediaFormat);
+                    mediaMuxer.start();
+                    mediaMuxer.stop();
+                    mediaMuxer.release();
+                } catch (Exception e) {
+                    fail("testEmptyMetaDataTrack : unexpected exception : " + e.getMessage());
+                }
+            }
+        }
+
+        @Test
+        public void testEmptyImageTrack() {
+            for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; ++format) {
+                if (!mMime.startsWith("image/")) continue;
+                if (!isMimeContainerPairValid(format)) continue;
+                try {
+                    MediaMuxer mediaMuxer = new MediaMuxer(mOutPath, format);
+                    MediaFormat mediaFormat = new MediaFormat();
+                    mediaFormat.setString(MediaFormat.KEY_MIME, mMime);
+                    mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, 480);
+                    mediaFormat.setInteger(MediaFormat.KEY_WIDTH, 640);
+                    mediaMuxer.addTrack(mediaFormat);
+                    mediaMuxer.start();
+                    mediaMuxer.stop();
+                    mediaMuxer.release();
+                } catch (Exception e) {
+                    fail("testEmptyImageTrack : unexpected exception : " + e.getMessage());
+                }
+            }
         }
     }
 }
