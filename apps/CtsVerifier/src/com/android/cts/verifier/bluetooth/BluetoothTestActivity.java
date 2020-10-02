@@ -74,6 +74,10 @@ public class BluetoothTestActivity extends PassFailButtons.TestListActivity {
                   "com.android.cts.verifier.bluetooth.BleInsecureServerTestListActivity");
             disabledTestArray.add(
                   "com.android.cts.verifier.bluetooth.BleSecureServerTestListActivity");
+            disabledTestArray.add(
+                  "com.android.cts.verifier.bluetooth.BleCocSecureServerTestListActivity");
+            disabledTestArray.add(
+                  "com.android.cts.verifier.bluetooth.BleCocInsecureServerTestListActivity");
         }
         if (this.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             disabledTestArray.add(
