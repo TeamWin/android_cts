@@ -421,6 +421,10 @@
 
         <activity android:name="android.server.wm.ForceRelayoutTestBase$TestActivity"
                   android:exported="true" />
+
+        <activity android:name="android.server.wm.ActivityTransitionTests$LauncherActivity"/>
+
+        <activity android:name="android.server.wm.ActivityTransitionTests$TransitionActivity"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
