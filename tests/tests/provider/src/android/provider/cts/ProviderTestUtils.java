@@ -397,7 +397,11 @@ public class ProviderTestUtils {
 
     public static void assertExists(String msg, String path) throws IOException {
         if (!access(path)) {
-            fail(msg);
+            if (msg != null) {
+                fail(path + ": " + msg);
+            } else {
+                fail("File " + path + " does not exist");
+            }
         }
     }
 
