@@ -20,6 +20,8 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.RunUtil;
 
+import org.junit.rules.ExternalResource;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStreamReader;
@@ -28,9 +30,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-
-import org.junit.rules.ExternalResource;
 
 /** Class that helps communicate with the cec-client */
 public final class HdmiCecClientWrapper extends ExternalResource {
@@ -45,26 +46,29 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     private BufferedReader mInputConsole;
     private boolean mCecClientInitialised = false;
 
-    private LogicalAddress targetDevice;
+    private LogicalAddress targetDevice = LogicalAddress.UNKNOWN;
     private String clientParams[];
 
-    public HdmiCecClientWrapper(LogicalAddress targetDevice, String ...clientParams) {
-        this.targetDevice = targetDevice;
+    public HdmiCecClientWrapper(String ...clientParams) {
         this.clientParams = clientParams;
     }
-
-    @Override
-    protected void before() throws Throwable {
-        this.init();
-    };
 
     @Override
     protected void after() {
         this.killCecProcess();
     };
 
+
+    void setTargetLogicalAddress(LogicalAddress dutLogicalAddress) {
+        targetDevice = dutLogicalAddress;
+    }
+
     /** Initialise the client */
-    private void init() throws Exception {
+    void init() throws Exception {
+        if (targetDevice == LogicalAddress.UNKNOWN) {
+            throw new IllegalStateException("Missing logical address of the target device.");
+        }
+
         List<String> commands = new ArrayList();
 
         commands.add("cec-client");
@@ -72,9 +76,6 @@ public final class HdmiCecClientWrapper extends ExternalResource {
          * address 2.0.0.0 */
         commands.add("-p");
         commands.add("2");
-        /* "-t x" starts the client as a TV device */
-        commands.add("-t");
-        commands.add("x");
         commands.addAll(Arrays.asList(clientParams));
 
         mCecClient = RunUtil.getDefault().runCmdInBackground(commands);
@@ -134,7 +135,9 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     public void sendCecMessage(LogicalAddress source, LogicalAddress destination,
             CecOperand message, String params) throws Exception {
         checkCecClient();
-        mOutputConsole.write("tx " + source + destination + ":" + message + params);
+        String sendMessageString = "tx " + source + destination + ":" + message + params;
+        CLog.e("Sending message: " + sendMessageString);
+        mOutputConsole.write(sendMessageString);
         mOutputConsole.newLine();
         mOutputConsole.flush();
     }
