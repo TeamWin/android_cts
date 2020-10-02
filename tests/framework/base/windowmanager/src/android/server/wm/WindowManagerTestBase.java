@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
@@ -57,8 +58,20 @@ public class WindowManagerTestBase extends MultiDisplayTestBase {
 
     static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId,
             boolean hasFocus) {
-        final Bundle options = (displayId == DEFAULT_DISPLAY
-                ? null : ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle());
+        return startActivity(cls, displayId, hasFocus, WINDOWING_MODE_UNDEFINED);
+    }
+
+    static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId,
+            boolean hasFocus, int windowingMode) {
+        final Bundle options;
+        if (displayId == DEFAULT_DISPLAY && windowingMode == WINDOWING_MODE_UNDEFINED) {
+            options = null;
+        } else {
+            final ActivityOptions ap= ActivityOptions.makeBasic();
+            if (displayId != DEFAULT_DISPLAY) ap.setLaunchDisplayId(displayId);
+            if (windowingMode != WINDOWING_MODE_UNDEFINED) ap.setLaunchWindowingMode(windowingMode);
+            options = ap.toBundle();
+        }
         final T[] activity = (T[]) Array.newInstance(FocusableActivity.class, 1);
         SystemUtil.runWithShellPermissionIdentity(() -> {
             activity[0] = (T) getInstrumentation().startActivitySync(
