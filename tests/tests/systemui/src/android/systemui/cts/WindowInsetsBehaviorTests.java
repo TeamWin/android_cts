@@ -16,6 +16,8 @@
 
 package android.systemui.cts;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.provider.DeviceConfig.NAMESPACE_ANDROID;
 import static android.provider.AndroidDeviceConfig.KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP;
 import static android.view.View.SYSTEM_UI_CLEARABLE_FLAGS;
@@ -34,6 +36,7 @@ import static org.junit.Assume.assumeTrue;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -73,6 +76,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -312,11 +316,24 @@ public class WindowInsetsBehaviorTests {
 
         // launch the Activity and wait until Activity onAttach
         CountDownLatch latch = new CountDownLatch(1);
-        mActivity = mActivityRule.launchActivity(null);
+        mActivity = launchActivity();
         mActivity.setInitialFinishCallBack(isFinish -> latch.countDown());
         mDevice.waitForIdle();
 
         latch.await(5, SECONDS);
+    }
+
+    private WindowInsetsActivity launchActivity() {
+        final ActivityOptions options= ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        final WindowInsetsActivity[] activity = (WindowInsetsActivity[]) Array.newInstance(
+                WindowInsetsActivity.class, 1);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            activity[0] = (WindowInsetsActivity) getInstrumentation().startActivitySync(
+                    new Intent(getInstrumentation().getTargetContext(), WindowInsetsActivity.class)
+                            .addFlags(FLAG_ACTIVITY_NEW_TASK), options.toBundle());
+        });
+        return activity[0];
     }
 
     /**
