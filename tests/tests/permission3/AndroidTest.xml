@@ -38,6 +38,7 @@
         <option name="push" value="CtsPermissionPolicyApp25.apk->/data/local/tmp/cts/permission3/CtsPermissionPolicyApp25.apk" />
         <option name="push" value="CtsUsePermissionApp22.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp22.apk" />
         <option name="push" value="CtsUsePermissionApp22CalendarOnly.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp22CalendarOnly.apk" />
+        <option name="push" value="CtsUsePermissionApp22None.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp22None.apk" />
         <option name="push" value="CtsUsePermissionApp23.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp23.apk" />
         <option name="push" value="CtsUsePermissionApp25.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp25.apk" />
         <option name="push" value="CtsUsePermissionApp26.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp26.apk" />
@@ -46,6 +47,7 @@
         <option name="push" value="CtsUsePermissionApp30.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp30.apk" />
         <option name="push" value="CtsUsePermissionApp30WithBackground.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp30WithBackground.apk" />
         <option name="push" value="CtsUsePermissionAppLatest.apk->/data/local/tmp/cts/permission3/CtsUsePermissionAppLatest.apk" />
+        <option name="push" value="CtsUsePermissionAppLatestNone.apk->/data/local/tmp/cts/permission3/CtsUsePermissionAppLatestNone.apk" />
         <option name="push" value="CtsUsePermissionAppWithOverlay.apk->/data/local/tmp/cts/permission3/CtsUsePermissionAppWithOverlay.apk" />
     </target_preparer>
 
