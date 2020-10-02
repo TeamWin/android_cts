@@ -23,10 +23,10 @@ import numpy as np
 
 LOAD_SCENE_DELAY = 2  # seconds
 
-
 def main():
     """Load charts on device and display."""
     scene = None
+    out_path = ""
     for s in sys.argv[1:]:
         if s[:6] == 'scene=' and len(s) > 6:
             scene = s[6:]
@@ -36,10 +36,15 @@ def main():
             chart_distance = float(re.sub('cm', '', s[5:]))
         elif s[:4] == 'fov=' and len(s) > 4:
             camera_fov = float(s[4:])
+        elif s[:7] == "camera=" and len(s) > 7:
+            camera_id = s[7:]
 
     cmd = ('adb -s %s shell am force-stop com.google.android.apps.docs' %
            screen_id)
     subprocess.Popen(cmd.split())
+
+    if out_path != "":
+        scene_name = re.split("/|\.", out_path)[-2]
 
     if not scene:
         print 'Error: need to specify which scene to load'
@@ -72,6 +77,24 @@ def main():
     cmd = ("adb -s %s wait-for-device shell am start -d 'file://%s'"
            " -a android.intent.action.VIEW" % (screen_id, dst_scene_file))
     subprocess.Popen(cmd.split())
+
+    with its.device.ItsSession() as cam:
+        props = cam.get_camera_properties()
+        cam.do_3a()
+        req = its.objects.fastest_auto_capture_request(props)
+        print "Capture an image to validate the light level"
+        cap = cam.do_capture(req)
+        img = its.image.convert_capture_to_rgb_image(cap)
+        its.image.write_image(
+            img, os.path.join(out_path, camera_id, scene, "validate_lighting.jpg"))
+        # Check if ITS is being run in WFoV or RFoV ITS rigs, and DUT's FoV.
+        if (np.isclose(chart_distance, its.cv2image.CHART_DISTANCE_RFOV, rtol=0.1) and
+            its.cv2image.FOV_THRESH_TELE <= camera_fov and
+            camera_fov <= its.cv2image.FOV_THRESH_WFOV):
+                its.image.validate_lighting(img)
+        elif (np.isclose(chart_distance, its.cv2image.CHART_DISTANCE_WFOV, rtol=0.1) and
+            camera_fov > its.cv2image.FOV_THRESH_WFOV):
+                its.image.validate_lighting(img)
 
 if __name__ == '__main__':
     main()
