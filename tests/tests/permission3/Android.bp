@@ -32,6 +32,7 @@ android_test {
         ":CtsPermissionPolicyApp25",
         ":CtsUsePermissionApp22",
         ":CtsUsePermissionApp22CalendarOnly",
+        ":CtsUsePermissionApp22None",
         ":CtsUsePermissionApp23",
         ":CtsUsePermissionApp25",
         ":CtsUsePermissionApp26",
@@ -40,6 +41,7 @@ android_test {
         ":CtsUsePermissionApp30",
         ":CtsUsePermissionApp30WithBackground",
         ":CtsUsePermissionAppLatest",
+        ":CtsUsePermissionAppLatestNone",
         ":CtsUsePermissionAppWithOverlay",
     ],
     test_suites: [

@@ -45,6 +45,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_22 = "$APK_DIRECTORY/CtsUsePermissionApp22.apk"
         const val APP_APK_PATH_22_CALENDAR_ONLY =
             "$APK_DIRECTORY/CtsUsePermissionApp22CalendarOnly.apk"
+        const val APP_APK_PATH_22_NONE = "$APK_DIRECTORY/CtsUsePermissionApp22None.apk"
         const val APP_APK_PATH_23 = "$APK_DIRECTORY/CtsUsePermissionApp23.apk"
         const val APP_APK_PATH_25 = "$APK_DIRECTORY/CtsUsePermissionApp25.apk"
         const val APP_APK_PATH_26 = "$APK_DIRECTORY/CtsUsePermissionApp26.apk"
@@ -54,6 +55,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_30_WITH_BACKGROUND =
                 "$APK_DIRECTORY/CtsUsePermissionApp30WithBackground.apk"
         const val APP_APK_PATH_LATEST = "$APK_DIRECTORY/CtsUsePermissionAppLatest.apk"
+        const val APP_APK_PATH_LATEST_NONE = "$APK_DIRECTORY/CtsUsePermissionAppLatestNone.apk"
         const val APP_APK_PATH_WITH_OVERLAY = "$APK_DIRECTORY/CtsUsePermissionAppWithOverlay.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
 
