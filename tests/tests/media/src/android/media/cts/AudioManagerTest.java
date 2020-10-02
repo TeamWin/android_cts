@@ -53,10 +53,13 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.media.AudioAttributes;
+import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.media.MicrophoneInfo;
+import android.media.audiopolicy.AudioProductStrategy;
 import android.os.Build;
 import android.os.SystemClock;
 import android.os.Vibrator;
@@ -73,9 +76,11 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.internal.annotations.GuardedBy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 @NonMediaMainlineTest
 public class AudioManagerTest extends InstrumentationTestCase {
@@ -1661,6 +1666,118 @@ public class AudioManagerTest extends InstrumentationTestCase {
             assertTrue("getMaxAdditionalOutputDeviceDelay() = " + delay +" (should be >= 0)",
                     delay >= 0);
         }
+    }
+
+    static class MyPrevDevForStrategyListener implements
+            AudioManager.OnPreferredDevicesForStrategyChangedListener {
+        @Override
+        public void onPreferredDevicesForStrategyChanged(AudioProductStrategy strategy,
+                List<AudioDeviceAttributes> devices) {
+            fail("onPreferredDevicesForStrategyChanged must not be called");
+        }
+    }
+
+    public void testPreferredDevicesForStrategy() {
+        // setPreferredDeviceForStrategy
+        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        if (devices.length <= 0) {
+            Log.i(TAG, "Skip testPreferredDevicesForStrategy as there is no output device");
+            return;
+        }
+        final AudioDeviceAttributes ada = new AudioDeviceAttributes(devices[0]);
+
+        final AudioAttributes mediaAttr = new AudioAttributes.Builder().setUsage(
+                AudioAttributes.USAGE_MEDIA).build();
+        final List<AudioProductStrategy> strategies =
+                AudioProductStrategy.getAudioProductStrategies();
+        AudioProductStrategy strategyForMedia = null;
+        for (AudioProductStrategy strategy : strategies) {
+            if (strategy.supportsAudioAttributes(mediaAttr)) {
+                strategyForMedia = strategy;
+                break;
+            }
+        }
+        if (strategyForMedia == null) {
+            Log.i(TAG, "Skip testPreferredDevicesForStrategy as there is no strategy for media");
+            return;
+        }
+
+        try {
+            mAudioManager.setPreferredDeviceForStrategy(strategyForMedia, ada);
+            fail("setPreferredDeviceForStrategy must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+        try {
+            mAudioManager.getPreferredDeviceForStrategy(strategyForMedia);
+            fail("getPreferredDeviceForStrategy must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+        final List<AudioDeviceAttributes> adas = new ArrayList<>();
+        adas.add(ada);
+        try {
+            mAudioManager.setPreferredDevicesForStrategy(strategyForMedia, adas);
+            fail("setPreferredDevicesForStrategy must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+        try {
+            mAudioManager.getPreferredDevicesForStrategy(strategyForMedia);
+            fail("getPreferredDevicesForStrategy must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+        MyPrevDevForStrategyListener listener = new MyPrevDevForStrategyListener();
+        try {
+            mAudioManager.addOnPreferredDevicesForStrategyChangedListener(
+                    Executors.newSingleThreadExecutor(), listener);
+            fail("addOnPreferredDevicesForStrategyChangedListener must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+        // There is not listener added at server side. Nothing to remove.
+        mAudioManager.removeOnPreferredDevicesForStrategyChangedListener(listener);
+    }
+
+    static class MyPrevDevicesForCapturePresetChangedListener implements
+            AudioManager.OnPreferredDevicesForCapturePresetChangedListener {
+        @Override
+        public void onPreferredDevicesForCapturePresetChanged(
+                int capturePreset, List<AudioDeviceAttributes> devices) {
+            fail("onPreferredDevicesForCapturePresetChanged must not be called");
+        }
+    }
+
+    public void testPreferredDeviceForCapturePreset() {
+        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_INPUTS);
+        if (devices.length <= 0) {
+            Log.i(TAG, "Skip testPreferredDevicesForStrategy as there is no input device");
+            return;
+        }
+        final AudioDeviceAttributes ada = new AudioDeviceAttributes(devices[0]);
+
+        try {
+            mAudioManager.setPreferredDeviceForCapturePreset(MediaRecorder.AudioSource.MIC, ada);
+            fail("setPreferredDeviceForCapturePreset must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+        try {
+            mAudioManager.getPreferredDevicesForCapturePreset(MediaRecorder.AudioSource.MIC);
+            fail("getPreferredDevicesForCapturePreset must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+        try {
+            mAudioManager.clearPreferredDevicesForCapturePreset(MediaRecorder.AudioSource.MIC);
+            fail("clearPreferredDevicesForCapturePreset must fail due to no permission");
+        } catch (SecurityException e) {
+        }
+        MyPrevDevicesForCapturePresetChangedListener listener =
+                new MyPrevDevicesForCapturePresetChangedListener();
+        try {
+            mAudioManager.addOnPreferredDevicesForCapturePresetChangedListener(
+                Executors.newSingleThreadExecutor(), listener);
+            fail("addOnPreferredDevicesForCapturePresetChangedListener must fail"
+                    + "due to no permission");
+        } catch (SecurityException e) {
+        }
+        // There is not listener added at server side. Nothing to remove.
+        mAudioManager.removeOnPreferredDevicesForCapturePresetChangedListener(listener);
     }
 
     private void assertStreamVolumeEquals(int stream, int expectedVolume) throws Exception {
