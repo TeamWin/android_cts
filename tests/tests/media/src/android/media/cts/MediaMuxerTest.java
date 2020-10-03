@@ -71,21 +71,27 @@ public class MediaMuxerTest extends AndroidTestCase {
     /**
      * Test: make sure the muxer handles both video and audio tracks correctly.
      */
-    public void testVideoAudio() throws Exception {
+    public void SKIP_testVideoAudio() throws Exception {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*]
+        // numTracks @ {1, 1}
         final String source = "video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz.3gp";
         String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioVideo", ".mp4")
                 .getAbsolutePath();
         cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
-    public void testDualVideoTrack() throws Exception {
+    public void SKIP_testDualVideoTrack() throws Exception {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*]
+        // numTracks @ {2, 0}
         final String source = "video_176x144_h264_408kbps_30fps_352x288_h264_122kbps_30fps.mp4";
         String outputFilePath = File.createTempFile("MediaMuxerTest_testDualVideo", ".mp4")
                 .getAbsolutePath();
         cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
-    public void testDualAudioTrack() throws Exception {
+    public void SKIP_testDualAudioTrack() throws Exception {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*]
+        // numTracks @ {0, 2}
         if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
 
         final String source = "audio_aac_mono_70kbs_44100hz_aac_mono_70kbs_44100hz.mp4";
@@ -94,7 +100,9 @@ public class MediaMuxerTest extends AndroidTestCase {
         cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
     }
 
-    public void testDualVideoAndAudioTrack() throws Exception {
+    public void SKIP_testDualVideoAndAudioTrack() throws Exception {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*]
+        // numTracks @ {2, 2}
         if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
 
         final String source = "video_h264_30fps_video_h264_30fps_aac_44100hz_aac_44100hz.mp4";
@@ -111,7 +119,10 @@ public class MediaMuxerTest extends AndroidTestCase {
      * to make sure the new file's metadata track matches the source file's metadata track for the
      * mime format and data payload.
      */
-    public void testVideoAudioMedatadataWithNonCompliantMetadataTrack() throws Exception {
+    public void SKIP_testVideoAudioMedatadataWithNonCompliantMetadataTrack() throws Exception {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[application/gyro]
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/h263]
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[audio/aac]
         final String source =
                 "video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro_non_compliant.3gp";
         String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
@@ -127,7 +138,10 @@ public class MediaMuxerTest extends AndroidTestCase {
      * the new file's metadata track matches the source file's metadata track for the mime format
      * and data payload.
      */
-     public void testVideoAudioMedatadataWithCompliantMetadataTrack() throws Exception {
+     public void SKIP_testVideoAudioMedatadataWithCompliantMetadataTrack() throws Exception {
+         // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[application/gyro]
+         // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/h263]
+         // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[audio/aac]
          final String source =
                  "video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro_compliant.3gp";
         String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
@@ -138,7 +152,8 @@ public class MediaMuxerTest extends AndroidTestCase {
     /**
      * Test: make sure the muxer handles audio track only file correctly.
      */
-    public void testAudioOnly() throws Exception {
+    public void SKIP_testAudioOnly() throws Exception {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[audio/*]
         final String source = "sinesweepm4a.m4a";
         String outputFilePath = File.createTempFile("MediaMuxerTest_testAudioOnly", ".mp4")
                 .getAbsolutePath();
@@ -148,7 +163,8 @@ public class MediaMuxerTest extends AndroidTestCase {
     /**
      * Test: make sure the muxer handles video track only file correctly.
      */
-    public void testVideoOnly() throws Exception {
+        public void SKIP_testVideoOnly() throws Exception {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/*]
         final String source = "video_only_176x144_3gp_h263_25fps.mp4";
         String outputFilePath = File.createTempFile("MediaMuxerTest_videoOnly", ".mp4")
                 .getAbsolutePath();
@@ -163,7 +179,8 @@ public class MediaMuxerTest extends AndroidTestCase {
         cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
     }
 
-    public void testThreegppOutput() throws Exception {
+    public void SKIP_testThreegppOutput() throws Exception {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[*]
         final String source = "video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz.3gp";
         String outputFilePath = File.createTempFile("testThreegppOutput", ".3gp")
                 .getAbsolutePath();
@@ -179,7 +196,9 @@ public class MediaMuxerTest extends AndroidTestCase {
      * <br> Throws exception b/c no tracks was added.
      * <br> Throws exception b/c a wrong format.
      */
-    public void testIllegalStateExceptions() throws IOException {
+    public void SKIP_testIllegalStateExceptions() throws IOException {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestMultiTrack#testMultiTrack[*] and
+        // duplicate of CtsMediaV2TestCases:MuxerUnitTest$TestApi
         String outputFilePath = File.createTempFile("MediaMuxerTest_testISEs", ".mp4")
                 .getAbsolutePath();
         MediaMuxer muxer;
@@ -319,7 +338,9 @@ public class MediaMuxerTest extends AndroidTestCase {
     /**
      * Test: makes sure if video only muxing using MPEG4Writer works well when there are B Frames.
      */
-    public void testAllTimestampsBVideoOnly() throws Exception {
+    public void SKIP_testAllTimestampsBVideoOnly() throws Exception {
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/avc] and
+        // duplicate of CtsMediaV2TestCases:MuxerTest$TestSimpleMux#testSimpleMux[video/hevc]
         final String source = "video_480x360_mp4_h264_bframes_495kbps_30fps_editlist.mp4";
         String outputFilePath = File.createTempFile("MediaMuxerTest_testAllTimestampsBVideoOnly",
             ".mp4").getAbsolutePath();
