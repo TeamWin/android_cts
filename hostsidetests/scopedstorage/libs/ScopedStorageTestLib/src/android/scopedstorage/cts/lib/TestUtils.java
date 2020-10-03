@@ -754,7 +754,7 @@ public class TestUtils {
      */
     public static void assertDirectoryContains(@NonNull File dir, File... expectedContent) {
         assertThat(dir.isDirectory()).isTrue();
-        assertThat(Arrays.asList(dir.listFiles())).containsAllIn(expectedContent);
+        assertThat(Arrays.asList(dir.listFiles())).containsAtLeastElementsIn(expectedContent);
     }
 
     public static File getExternalStorageDir() {

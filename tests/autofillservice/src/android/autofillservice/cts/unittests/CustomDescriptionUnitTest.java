@@ -104,7 +104,7 @@ public class CustomDescriptionUnitTest {
         final SparseArray<InternalOnClickAction> actions = customDescription.getActions();
         assertThat(actions.size()).isEqualTo(1);
         assertThat(actions.keyAt(0)).isEqualTo(42);
-        assertThat(actions.valueAt(0)).isSameAs(mValidAction);
+        assertThat(actions.valueAt(0)).isSameInstanceAs(mValidAction);
     }
 
     @Test
