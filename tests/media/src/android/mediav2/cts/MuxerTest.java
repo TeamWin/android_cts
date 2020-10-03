@@ -1175,16 +1175,16 @@ public class MuxerTest {
 
         @Test
         public void testEmptyVideoTrack() {
+            if (!mMime.startsWith("video/")) return;
             for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; ++format) {
-                if (!mMime.startsWith("video/")) continue;
                 if (!isMimeContainerPairValid(format)) continue;
                 if (format != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4) continue;
                 try {
                     MediaMuxer mediaMuxer = new MediaMuxer(mOutPath, format);
                     MediaFormat mediaFormat = new MediaFormat();
                     mediaFormat.setString(MediaFormat.KEY_MIME, mMime);
-                    mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, 480);
-                    mediaFormat.setInteger(MediaFormat.KEY_WIDTH, 640);
+                    mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, 96);
+                    mediaFormat.setInteger(MediaFormat.KEY_WIDTH, 128);
                     mediaMuxer.addTrack(mediaFormat);
                     mediaMuxer.start();
                     mediaMuxer.stop();
@@ -1197,16 +1197,20 @@ public class MuxerTest {
 
         @Test
         public void testEmptyAudioTrack() {
+            if (!mMime.startsWith("audio/")) return;
             for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; ++format) {
-                if (!mMime.startsWith("audio/")) continue;
-                if (!isMimeContainerPairValid(format)) continue;
                 if (format != MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4) continue;
+                if (!isMimeContainerPairValid(format)) continue;
                 try {
                     MediaMuxer mediaMuxer = new MediaMuxer(mOutPath, format);
                     MediaFormat mediaFormat = new MediaFormat();
                     mediaFormat.setString(MediaFormat.KEY_MIME, mMime);
-                    mediaFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 12000);
-                    mediaFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
+                    if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AMR_WB)) {
+                        mediaFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 16000);
+                    } else {
+                        mediaFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 8000);
+                    }
+                    mediaFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
                     mediaMuxer.addTrack(mediaFormat);
                     mediaMuxer.start();
                     mediaMuxer.stop();
@@ -1219,8 +1223,8 @@ public class MuxerTest {
 
         @Test
         public void testEmptyMetaDataTrack() {
+            if (!mMime.startsWith("application/")) return;
             for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; ++format) {
-                if (!mMime.startsWith("application/")) continue;
                 if (!isMimeContainerPairValid(format)) continue;
                 try {
                     MediaMuxer mediaMuxer = new MediaMuxer(mOutPath, format);
@@ -1238,15 +1242,15 @@ public class MuxerTest {
 
         @Test
         public void testEmptyImageTrack() {
+            if (!mMime.startsWith("image/")) return;
             for (int format = MUXER_OUTPUT_FIRST; format <= MUXER_OUTPUT_LAST; ++format) {
-                if (!mMime.startsWith("image/")) continue;
                 if (!isMimeContainerPairValid(format)) continue;
                 try {
                     MediaMuxer mediaMuxer = new MediaMuxer(mOutPath, format);
                     MediaFormat mediaFormat = new MediaFormat();
                     mediaFormat.setString(MediaFormat.KEY_MIME, mMime);
-                    mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, 480);
-                    mediaFormat.setInteger(MediaFormat.KEY_WIDTH, 640);
+                    mediaFormat.setInteger(MediaFormat.KEY_HEIGHT, 96);
+                    mediaFormat.setInteger(MediaFormat.KEY_WIDTH, 128);
                     mediaMuxer.addTrack(mediaFormat);
                     mediaMuxer.start();
                     mediaMuxer.stop();
