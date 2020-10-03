@@ -422,24 +422,32 @@ class ImsServiceConnector {
         // No need to clear SMS App, only replace when necessary.
     }
 
-    boolean connectCarrierImsService(ImsFeatureConfiguration config) throws Exception {
+    /**
+     * Binds to the local implementation of ImsService but does not trigger ImsService bind from
+     * telephony to allow additional configuration steps.
+     * @return true if this request succeeded, false otherwise.
+     */
+    boolean connectCarrierImsServiceLocally() {
         if (!setupLocalCarrierImsService()) {
             Log.w(TAG, "connectCarrierImsService: couldn't set up service.");
             return false;
         }
         mCarrierService.resetState();
+        return true;
+    }
+
+    /**
+     * Trigger the telephony framework to bind to the local ImsService implementation.
+     * @return true if this request succeeded, false otherwise.
+     */
+    boolean triggerFrameworkConnectionToCarrierImsService(
+            ImsFeatureConfiguration config) throws Exception {
         return mCarrierServiceConnection.overrideService(config);
     }
 
-    boolean connectCarrierImsServiceNullRcsBinding(ImsFeatureConfiguration config)
-            throws Exception {
-        if (!setupLocalCarrierImsService()) {
-            Log.w(TAG, "connectCarrierImsService: couldn't set up service.");
-            return false;
-        }
-        mCarrierService.resetState();
-        mCarrierService.setNullRcsBinding();
-        return mCarrierServiceConnection.overrideService(config);
+    boolean connectCarrierImsService(ImsFeatureConfiguration config) throws Exception {
+        if (!connectCarrierImsServiceLocally()) return false;
+        return triggerFrameworkConnectionToCarrierImsService(config);
     }
 
     boolean connectDeviceImsService(ImsFeatureConfiguration config) throws Exception {

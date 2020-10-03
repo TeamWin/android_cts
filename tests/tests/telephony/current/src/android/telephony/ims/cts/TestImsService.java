@@ -27,8 +27,11 @@ import android.telephony.ims.feature.RcsFeature;
 import android.telephony.ims.stub.ImsConfigImplBase;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
+import android.telephony.ims.stub.SipTransportImplBase;
 import android.util.Log;
 
+
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -45,9 +48,12 @@ public class TestImsService extends Service {
     private TestRcsFeature mTestRcsFeature;
     private TestMmTelFeature mTestMmTelFeature;
     private TestImsConfig mTestImsConfig;
+    private TestSipTransport mTestSipTransport;
     private ImsService mTestImsService;
     private boolean mIsEnabled = false;
     private boolean mSetNullRcsBinding = false;
+    private boolean mIsSipTransportImplemented = false;
+    private long mCapabilities = 0;
     private ImsFeatureConfiguration mFeatureConfig;
     private final Object mLock = new Object();
 
@@ -92,11 +98,18 @@ public class TestImsService extends Service {
                 attachBaseContext(context);
             }
             mTestImsConfig = new TestImsConfig();
+            // For testing, just run on binder thread until required otherwise.
+            mTestSipTransport = new TestSipTransport(Runnable::run);
         }
 
         @Override
         public ImsFeatureConfiguration querySupportedImsFeatures() {
             return getFeatureConfig();
+        }
+
+        @Override
+        public long getImsServiceCapabilities() {
+            return mCapabilities;
         }
 
         @Override
@@ -192,6 +205,16 @@ public class TestImsService extends Service {
         public ImsRegistrationImplBase getRegistration(int slotId) {
             return sImsRegistrationImplBase;
         }
+
+        @Nullable
+        @Override
+        public SipTransportImplBase getSipTransport(int slotId) {
+            if (mIsSipTransportImplemented) {
+                return mTestSipTransport;
+            } else {
+                return null;
+            }
+        }
     }
 
     private final LocalBinder mBinder = new LocalBinder();
@@ -232,6 +255,8 @@ public class TestImsService extends Service {
             mTestRcsFeature = null;
             mIsEnabled = false;
             mSetNullRcsBinding = false;
+            mIsSipTransportImplemented = false;
+            mCapabilities = 0;
             for (int i = 0; i < LATCH_MAX; i++) {
                 sLatches[i] = new CountDownLatch(1);
             }
@@ -267,6 +292,18 @@ public class TestImsService extends Service {
     public void setIsEnabled(boolean isEnabled) {
         synchronized (mLock) {
             mIsEnabled = isEnabled;
+        }
+    }
+
+    public void addCapabilities(long capabilities) {
+        synchronized (mLock) {
+            mCapabilities |= capabilities;
+        }
+    }
+
+    public void setSipTransportImplemented() {
+        synchronized (mLock) {
+            mIsSipTransportImplemented = true;
         }
     }
 
