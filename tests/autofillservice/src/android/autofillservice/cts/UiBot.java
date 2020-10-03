@@ -293,7 +293,7 @@ public class UiBot {
     public UiObject2 assertDatasetsContains(String...names) throws Exception {
         final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
         assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
-                .containsAllIn(Arrays.asList(names)).inOrder();
+                .containsAtLeastElementsIn(Arrays.asList(names)).inOrder();
         return picker;
     }
 
