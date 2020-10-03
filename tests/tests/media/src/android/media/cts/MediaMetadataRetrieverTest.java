@@ -145,6 +145,39 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         return ds;
     }
 
+    public void testAudioMetadata() {
+        setDataSourceCallback(R.raw.audio_with_metadata);
+
+        assertEquals("Title was other than expected",
+            "Chimey Phone",
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE));
+
+        assertEquals("Artist was other than expected",
+            "Some artist",
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST));
+
+        assertNull("Album artist was unexpectedly present",
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUMARTIST));
+
+        assertNull("Author was unexpectedly present",
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR));
+
+        assertNull("Composer was unexpectedly present",
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_COMPOSER));
+
+        assertEquals("Number of tracks was other than expected",
+            "1",
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_NUM_TRACKS));
+
+        assertEquals("Has audio was other than expected",
+            "yes",
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO));
+
+        assertEquals("Mime type was other than expected",
+            "audio/mpeg",
+            mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
+    }
+
     public void test3gppMetadata() {
         setDataSourceCallback(R.raw.testvideo);
 
