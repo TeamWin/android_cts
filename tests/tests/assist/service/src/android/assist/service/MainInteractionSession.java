@@ -31,6 +31,7 @@ import android.os.RemoteCallback;
 import android.service.voice.VoiceInteractionSession;
 import android.util.Log;
 import android.view.Display;
+import android.view.DisplayCutout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -121,6 +122,17 @@ public class MainInteractionSession extends VoiceInteractionSession {
                     Display d = mContentView.getDisplay();
                     Point displayPoint = new Point();
                     d.getRealSize(displayPoint);
+                    DisplayCutout dc = d.getCutout();
+                    if (dc != null) {
+                        // Means the device has a cutout area
+                        android.graphics.Insets wi = d.getCutout().getWaterfallInsets();
+
+                        if (wi != android.graphics.Insets.NONE) {
+                            // Waterfall cutout. Considers only the display
+                            // useful area discarding the cutout.
+                            displayPoint.x -= (wi.left + wi.right);
+                        }
+                    }
                     Bundle bundle = new Bundle();
                     bundle.putString(Utils.EXTRA_REMOTE_CALLBACK_ACTION, Utils.BROADCAST_CONTENT_VIEW_HEIGHT);
                     bundle.putInt(Utils.EXTRA_CONTENT_VIEW_HEIGHT, mContentView.getHeight());
