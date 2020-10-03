@@ -208,7 +208,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
      * The device may contain extra changes, but none may be removed.
      */
     public void testDeviceContainsExpectedConfig() throws Exception {
-        assertThat(getOnDeviceCompatConfig()).containsAllIn(getExpectedCompatConfig());
+        assertThat(getOnDeviceCompatConfig()).containsAtLeastElementsIn(getExpectedCompatConfig());
     }
 
 }

@@ -233,7 +233,7 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
                 .build();
 
         // different instances
-        assertThat(info1).isNotSameAs(info2);
+        assertThat(info1).isNotSameInstanceAs(info2);
 
         // assert that info1 didn't change
         assertThat(info1.getSSID()).isEqualTo("\"" + TEST_SSID + "\"");
