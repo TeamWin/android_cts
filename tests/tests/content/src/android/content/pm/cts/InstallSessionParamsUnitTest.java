@@ -35,6 +35,7 @@ import static org.junit.Assert.fail;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionInfo;
 import android.content.pm.PackageInstaller.SessionParams;
+import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
@@ -42,8 +43,7 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -58,6 +58,9 @@ import java.util.function.Consumer;
 public class InstallSessionParamsUnitTest {
     private static final String LOG_TAG = InstallSessionParamsUnitTest.class.getSimpleName();
     private static Optional UNSET = new Optional(false, null);
+
+    @Rule
+    public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
     @Parameterized.Parameter(0)
     public Optional<Integer> mode;
@@ -86,8 +89,6 @@ public class InstallSessionParamsUnitTest {
             .getTargetContext()
             .getPackageManager()
             .getPackageInstaller();
-
-    private int mSessionId = -1;
 
     /**
      * Generate test-parameters where all params are the same, but one param cycles through all
@@ -200,21 +201,6 @@ public class InstallSessionParamsUnitTest {
         return null;
     }
 
-    @Before
-    public void resetSessionId() {
-        mSessionId = 1;
-    }
-
-    @After
-    public void abandonSession() {
-        if (mSessionId != -1) {
-            try {
-                mInstaller.abandonSession(mSessionId);
-            } catch (SecurityException ignored) {
-            }
-        }
-    }
-
     @Test
     public void checkSessionParams() throws Exception {
         Log.i(LOG_TAG, "mode=" + mode + " installLocation=" + installLocation + " size=" + size
@@ -234,8 +220,9 @@ public class InstallSessionParamsUnitTest {
         referredUri.ifPresent(params::setReferrerUri);
         installReason.ifPresent(params::setInstallReason);
 
+        int sessionId;
         try {
-            mSessionId = mInstaller.createSession(params);
+            sessionId = mInstaller.createSession(params);
 
             if (expectFailure) {
                 fail("Creating session did not fail");
@@ -248,7 +235,7 @@ public class InstallSessionParamsUnitTest {
             throw e;
         }
 
-        SessionInfo info = getSessionInfo(mSessionId);
+        SessionInfo info = getSessionInfo(sessionId);
 
         assertThat(info.getMode()).isEqualTo(mode.get());
         installLocation.ifPresent(i -> assertThat(info.getInstallLocation()).isEqualTo(i));

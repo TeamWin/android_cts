@@ -32,6 +32,7 @@ import android.content.pm.DataLoaderParams;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
+import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 
@@ -39,6 +40,7 @@ import androidx.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -52,9 +54,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -78,6 +78,9 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_HW7_SPLIT3 = "HelloWorld7_xxhdpi-v4.apk";
     private static final String TEST_HW7_SPLIT4 = "HelloWorld7_xxxhdpi-v4.apk";
 
+    @Rule
+    public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
+
     @Parameter
     public int mDataLoaderType;
 
@@ -90,7 +93,6 @@ public class PackageManagerShellCommandTest {
     private boolean mStreaming = false;
     private boolean mIncremental = false;
     private String mInstall = "";
-    private List<Integer> mSessionIds = new ArrayList<>();
 
     private static PackageInstaller getPackageInstaller() {
         return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
@@ -166,8 +168,6 @@ public class PackageManagerShellCommandTest {
 
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
-
-        mSessionIds.clear();
     }
 
     @After
@@ -175,13 +175,6 @@ public class PackageManagerShellCommandTest {
         uninstallPackageSilently(TEST_APP_PACKAGE);
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
-
-        for (int sessionId : mSessionIds) {
-            try {
-                getPackageInstaller().abandonSession(sessionId);
-            } catch (SecurityException ignored) {
-            }
-        }
     }
 
     private boolean checkIncrementalDeliveryFeature() {
@@ -429,7 +422,7 @@ public class PackageManagerShellCommandTest {
 
             final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
 
-            final int sessionId = createSession(params);
+            final int sessionId = installer.createSession(params);
             PackageInstaller.Session session = installer.openSession(sessionId);
 
             assertEquals(null, session.getDataLoaderParams());
@@ -457,7 +450,7 @@ public class PackageManagerShellCommandTest {
                     mIncremental ? DataLoaderParams.forIncremental(componentName, args)
                             : DataLoaderParams.forStreaming(componentName, args));
 
-            final int sessionId = createSession(params);
+            final int sessionId = installer.createSession(params);
             PackageInstaller.Session session = installer.openSession(sessionId);
 
             DataLoaderParams dataLoaderParams = session.getDataLoaderParams();
@@ -491,7 +484,7 @@ public class PackageManagerShellCommandTest {
                     mIncremental ? DataLoaderParams.forIncremental(componentName, args)
                             : DataLoaderParams.forStreaming(componentName, args));
 
-            final int sessionId = createSession(params);
+            final int sessionId = installer.createSession(params);
             PackageInstaller.Session session = installer.openSession(sessionId);
 
             session.addFile(LOCATION_DATA_APP, "base.apk", 123, "123".getBytes(), null);
@@ -511,12 +504,6 @@ public class PackageManagerShellCommandTest {
         }
     }
 
-    private int createSession(SessionParams params) throws IOException {
-        int sessionId = getPackageInstaller().createSession(params);
-        mSessionIds.add(sessionId);
-        return sessionId;
-    }
-
     private String createUpdateSession(String packageName) throws IOException {
         return createSession("-p " + packageName);
     }
@@ -527,10 +514,7 @@ public class PackageManagerShellCommandTest {
         final String commandResult = executeShellCommand("pm install-create " + arg);
         assertTrue(commandResult, commandResult.startsWith(prefix));
         assertTrue(commandResult, commandResult.endsWith(suffix));
-        String sessionId = commandResult.substring(prefix.length(),
-                commandResult.length() - suffix.length());
-        mSessionIds.add(Integer.parseInt(sessionId));
-        return sessionId;
+        return commandResult.substring(prefix.length(), commandResult.length() - suffix.length());
     }
 
     private void addSplits(String sessionId, String[] splitNames) throws IOException {
