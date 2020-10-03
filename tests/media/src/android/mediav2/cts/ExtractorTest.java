@@ -736,8 +736,10 @@ public class ExtractorTest {
                             "bbb_cif_768kbps_30fps_mpeg2.ts" */}},
                     {MediaFormat.MIMETYPE_VIDEO_H263, new String[]{
                             "bbb_cif_768kbps_30fps_h263.mp4",
+                            "bbb_cif_768kbps_30fps_h263_stereo_48kHz_192kbps_flac.mkv",
                             "bbb_cif_768kbps_30fps_h263_mono_8kHz_12kbps_amrnb.3gp",}},
                     {MediaFormat.MIMETYPE_VIDEO_MPEG4, new String[]{
+                            "bbb_cif_768kbps_30fps_mpeg4.mkv",
                             "bbb_cif_768kbps_30fps_mpeg4_stereo_48kHz_192kbps_flac.mp4",
                             "bbb_cif_768kbps_30fps_mpeg4_mono_16kHz_20kbps_amrwb.3gp",}},
                     {MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
