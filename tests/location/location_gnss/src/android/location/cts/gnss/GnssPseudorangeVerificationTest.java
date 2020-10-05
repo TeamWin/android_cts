@@ -116,6 +116,11 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
       return;
     }
 
+    if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+        Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
+        return;
+    }
+
     mLocationListener = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
     mTestLocationManager.requestLocationUpdates(mLocationListener);
 
@@ -259,6 +264,11 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
         if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N,
                 mTestLocationManager,
                 TAG)) {
+            return;
+        }
+
+        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
             return;
         }
 
