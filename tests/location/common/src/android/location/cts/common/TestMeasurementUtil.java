@@ -16,6 +16,8 @@
 
 package android.location.cts.common;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
@@ -117,6 +119,13 @@ public final class TestMeasurementUtil {
         SoftAssert.failOrWarning(true, " GPS location disabled on the device. "
                 + "Enable location in settings to continue test.", gpsProviderEnabled);
         return gpsProviderEnabled;
+    }
+
+    /**
+     * Check if current device is an Android Automotive OS device.
+     */
+    public static boolean isAutomotiveDevice(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
     /**

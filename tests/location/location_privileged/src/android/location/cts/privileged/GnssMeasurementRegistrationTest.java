@@ -97,6 +97,11 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
             return;
         }
 
+        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
+            return;
+        }
+
         // Register for GPS measurements.
         mMeasurementListener = new TestGnssMeasurementListener(TAG, GPS_EVENTS_COUNT);
         mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener,
