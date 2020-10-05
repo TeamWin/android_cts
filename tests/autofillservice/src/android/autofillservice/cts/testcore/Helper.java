@@ -38,6 +38,7 @@ import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
 import android.autofillservice.cts.R;
+import android.content.AutofillOptions;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -1572,6 +1573,15 @@ public final class Helper {
         final ContentResolver cr = context.getContentResolver();
         final int subtype = Settings.Secure.getInt(cr, SELECTED_INPUT_METHOD_SUBTYPE);
         Settings.Secure.putInt(cr, SELECTED_INPUT_METHOD_SUBTYPE, subtype);
+    }
+
+    /**
+     * Reset AutofillOptions to avoid cts package was added to augmented autofill allowlist.
+     */
+    public static void resetApplicationAutofillOptions(@NonNull Context context) {
+        AutofillOptions options = AutofillOptions.forWhitelistingItself();
+        options.augmentedAutofillEnabled = false;
+        context.getApplicationContext().setAutofillOptions(options);
     }
 
     private Helper() {
