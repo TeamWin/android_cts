@@ -230,6 +230,9 @@ public abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFi
     @Test
     public final void testTapLink_launchTrampolineActivityThenTapBackAndStartNewSession()
             throws Exception {
+        // Reset AutofillOptions to avoid cts package was added to augmented autofill allowlist.
+        Helper.resetApplicationAutofillOptions(sContext);
+
         tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest();
     }
 

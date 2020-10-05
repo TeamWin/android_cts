@@ -25,6 +25,7 @@ import android.autofillservice.cts.activities.SimpleSaveActivity;
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -33,6 +34,7 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.RetryableException;
 
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -174,6 +176,12 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
             activity.finish();
         }
         return SystemClock.elapsedRealtime() - before;
+    }
+
+    @Before
+    public void resetAutofillOptions() throws Exception {
+        // Reset AutofillOptions to avoid cts package was added to augmented autofill allowlist.
+        Helper.resetApplicationAutofillOptions(sContext);
     }
 
     @Test
