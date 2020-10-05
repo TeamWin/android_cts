@@ -37,7 +37,6 @@ import org.junit.runner.RunWith;
 /**
  * HDMI CEC tests verifying power status related messages of the device (CEC 2.0 CTS Section 7.6)
  */
-@Ignore("b/166227834")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
