@@ -74,7 +74,7 @@ public abstract class InputTestCase {
         new ActivityTestRule<>(InputCtsActivity.class);
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivityRule.getActivity().setInputCallback(mInputListener);
         mActivityRule.getActivity().clearUnhandleKeyCode();
@@ -87,7 +87,7 @@ public abstract class InputTestCase {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         tearDownDevice();
     }
 
@@ -217,7 +217,7 @@ public abstract class InputTestCase {
             // any unexpected event received caused by the HID report injection.
             InputEvent event = waitForEvent();
             if (event != null) {
-                fail("Received unexpected event " + event);
+                fail(mCurrentTestCase + " : Received unexpected event " + event);
             }
             return;
         }
