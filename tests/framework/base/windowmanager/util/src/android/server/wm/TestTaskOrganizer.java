@@ -156,12 +156,14 @@ class TestTaskOrganizer extends TaskOrganizer {
 
         final int windowingMode =
                 taskInfo.getConfiguration().windowConfiguration.getWindowingMode();
-        if (windowingMode == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY) {
+        if (windowingMode == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY
+                && (mRootPrimary == null || mRootPrimary.taskId == taskInfo.taskId)) {
             mRootPrimary = taskInfo;
             processRootPrimaryTaskInfoChanged();
         }
 
-        if (windowingMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY) {
+        if (windowingMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY
+                && (mRootSecondary == null || mRootSecondary.taskId == taskInfo.taskId)) {
             mRootSecondary = taskInfo;
         }
     }
