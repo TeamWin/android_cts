@@ -312,9 +312,6 @@ public class SettingsPanelTest {
         assumeTrue(mHasTouchScreen);
         pressSeeMore();
 
-        // Assert that we're still in Settings, on a different page.
-        currentPackage = mDevice.getCurrentPackageName();
-        assertThat(currentPackage).isEqualTo(mSettingsPackage);
         UiObject2 titleView = mDevice.findObject(By.res(mSettingsPackage, RESOURCE_TITLE));
         assertThat(titleView).isNull();
     }
