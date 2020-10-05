@@ -62,7 +62,6 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Executor;
 
 @RunWith(AndroidJUnit4.class)
 public class LocationManagerCoarseTest {
