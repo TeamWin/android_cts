@@ -47,6 +47,7 @@ public class TestImsService extends Service {
     private TestImsConfig mTestImsConfig;
     private ImsService mTestImsService;
     private boolean mIsEnabled = false;
+    private boolean mSetNullRcsBinding = false;
     private ImsFeatureConfiguration mFeatureConfig;
     private final Object mLock = new Object();
 
@@ -146,6 +147,9 @@ public class TestImsService extends Service {
                             }
                         }
                         );
+                if (mSetNullRcsBinding) {
+                    return null;
+                }
                 return mTestRcsFeature;
             }
         }
@@ -227,6 +231,7 @@ public class TestImsService extends Service {
             mTestMmTelFeature = null;
             mTestRcsFeature = null;
             mIsEnabled = false;
+            mSetNullRcsBinding = false;
             for (int i = 0; i < LATCH_MAX; i++) {
                 sLatches[i] = new CountDownLatch(1);
             }
@@ -250,6 +255,12 @@ public class TestImsService extends Service {
     public boolean isEnabled() {
         synchronized (mLock) {
             return mIsEnabled;
+        }
+    }
+
+    public void setNullRcsBinding() {
+        synchronized (mLock) {
+            mSetNullRcsBinding = true;
         }
     }
 
