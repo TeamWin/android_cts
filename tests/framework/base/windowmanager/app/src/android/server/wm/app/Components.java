@@ -216,6 +216,9 @@ public class Components extends ComponentsBase {
     public static final ComponentName TEST_STUBBORN_DREAM_SERVICE =
             component("TestStubbornDream");
 
+    public static final ComponentName OVERLAY_TEST_SERVICE =
+            component("OverlayTestService");
+
     /**
      * Action and extra key constants for {@link #INPUT_METHOD_TEST_ACTIVITY}.
      */
@@ -508,6 +511,15 @@ public class Components extends ComponentsBase {
 
     public static class LaunchingActivity {
         public static final String KEY_FINISH_BEFORE_LAUNCH = "finish_before_launch";
+    }
+
+    public static class OverlayTestService {
+        public static final String EXTRA_WINDOW_NAME = "window_name";
+    }
+
+    public static class Notifications {
+        public static final String CHANNEL_MAIN = "main";
+        public static final int ID_OVERLAY_TEST_SERVICE = 1;
     }
 
     private static ComponentName component(String className) {
