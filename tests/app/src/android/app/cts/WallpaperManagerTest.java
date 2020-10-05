@@ -305,7 +305,7 @@ public class WallpaperManagerTest {
 
             // Check that the secondary color is almost blue
             Color secondary = colors.getSecondaryColor();
-            final float delta = 0.1f;
+            final float delta = 0.15f;
             Assert.assertEquals("red", 0f, secondary.red(), delta);
             Assert.assertEquals("green", 0f, secondary.green(), delta);
             Assert.assertEquals("blue", 1f, secondary.blue(), delta);
