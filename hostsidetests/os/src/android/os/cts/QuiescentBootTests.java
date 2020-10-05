@@ -23,9 +23,11 @@ import static android.os.PowerManagerInternalProto.Wakefulness.WAKEFULNESS_AWAKE
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.os.PowerManagerInternalProto.Wakefulness;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ProtoUtils;
 import com.android.server.power.PowerManagerServiceDumpProto;
 import com.android.tradefed.device.ITestDevice;
@@ -53,6 +55,8 @@ public class QuiescentBootTests extends BaseHostJUnit4Test {
     public synchronized void setUp() throws Exception {
         mDevice = getDevice();
         assumeTrue("Test only applicable to TVs.", hasDeviceFeature(FEATURE_LEANBACK_ONLY));
+        assumeFalse("Test only applicable to devices launching on android R or later.",
+            (PropertyUtil.getFirstApiLevel(mDevice) < 30));
     }
 
     @After
