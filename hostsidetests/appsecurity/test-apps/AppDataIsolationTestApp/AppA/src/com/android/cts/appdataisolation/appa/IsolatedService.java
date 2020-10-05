@@ -89,7 +89,6 @@ public class IsolatedService extends Service {
         assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
         assertDirDoesNotExist("/data/data/" + getPackageName());
         assertDirDoesNotExist("/data/misc/profiles/cur/0/" + getPackageName());
-        assertDirDoesNotExist("/data/misc/profiles/ref");
 
         assertDirDoesNotExist(FileUtils.replacePackageAWithPackageB(
                 applicationInfo.dataDir));
