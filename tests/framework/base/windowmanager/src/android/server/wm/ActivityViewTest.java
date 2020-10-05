@@ -224,7 +224,7 @@ public class ActivityViewTest extends ActivityManagerTestBase {
         final ImeEventStream stream = imeSession.openEventStream();
         launchActivityInActivityView(INPUT_METHOD_TEST_ACTIVITY, extras);
 
-        tapOnDisplayCenter(mActivityView.getVirtualDisplayId());
+        tapOnCenter(getActivityViewBoundsOnScreen(), mActivityView.getVirtualDisplayId());
 
         // IME's seeing uniqueStringValue means that a valid connection is successfully
         // established from INPUT_METHOD_TEST_ACTIVITY the MockIme.
@@ -269,6 +269,15 @@ public class ActivityViewTest extends ActivityManagerTestBase {
         intent.putExtras(extras);
         SystemUtil.runWithShellPermissionIdentity(() -> mActivityView.startActivity(intent));
         mWmState.waitForValidState(activity);
+    }
+
+    private Rect getActivityViewBoundsOnScreen() {
+        final int[] location = new int[2];
+        mInstrumentation.runOnMainSync(() -> {
+            mActivityView.getLocationOnScreen(location);
+        });
+        return new Rect(location[0], location[1], location[0] + mActivityView.getWidth(),
+                location[1] + mActivityView.getHeight());
     }
 
     // Test activity
