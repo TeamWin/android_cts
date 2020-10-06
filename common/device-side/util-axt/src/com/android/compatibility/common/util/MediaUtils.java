@@ -465,6 +465,35 @@ public class MediaUtils {
         return false;
     }
 
+    private static boolean hasCodecsForResourceCombo(final String resource, int track,
+            String mimePrefix) {
+        try {
+            AssetFileDescriptor afd = null;
+            MediaExtractor ex = null;
+            try {
+                ex = new MediaExtractor();
+                ex.setDataSource(resource);
+                if (mimePrefix != null) {
+                    return hasCodecForMediaAndDomain(ex, mimePrefix);
+                } else if (track == ALL_AV_TRACKS) {
+                    return hasCodecsForMedia(ex);
+                } else {
+                    return hasCodecForTrack(ex, track);
+                }
+            } finally {
+                if (ex != null) {
+                    ex.release();
+                }
+                if (afd != null) {
+                    afd.close();
+                }
+            }
+        } catch (IOException e) {
+            Log.i(TAG, "could not open resource");
+        }
+        return false;
+    }
+
     private static boolean hasCodecsForResourceCombo(
             Context context, int resourceId, int track, String mimePrefix) {
         try {
@@ -506,6 +535,14 @@ public class MediaUtils {
         return check(hasCodecsForResource(context, resourceId), "no decoder found");
     }
 
+    public static boolean hasCodecsForResource(final String resource) {
+        return hasCodecsForResourceCombo(resource, ALL_AV_TRACKS, null /* mimePrefix */);
+    }
+
+    public static boolean checkCodecsForResource(final String resource) {
+        return check(hasCodecsForResource(resource), "no decoder found");
+    }
+
     /**
      * return true iff track is supported.
      */
@@ -515,6 +552,14 @@ public class MediaUtils {
 
     public static boolean checkCodecForResource(Context context, int resourceId, int track) {
         return check(hasCodecForResource(context, resourceId, track), "no decoder found");
+    }
+
+    public static boolean hasCodecForResource(final String resource, int track) {
+        return hasCodecsForResourceCombo(resource, track, null /* mimePrefix */);
+    }
+
+    public static boolean checkCodecForResource(final String resource, int track) {
+        return check(hasCodecForResource(resource, track), "no decoder found");
     }
 
     /**
@@ -711,6 +756,18 @@ public class MediaUtils {
             extractor.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
         } finally {
             afd.close();
+        }
+        return getTrackFormatForExtractor(extractor, mimeTypePrefix);
+    }
+
+    public static MediaFormat getTrackFormatForResource(
+            final String resource,
+            String mimeTypePrefix) throws IOException {
+        MediaExtractor extractor = new MediaExtractor();
+        try {
+            extractor.setDataSource(resource);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return getTrackFormatForExtractor(extractor, mimeTypePrefix);
     }
