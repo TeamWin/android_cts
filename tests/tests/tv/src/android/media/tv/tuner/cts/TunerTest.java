@@ -751,6 +751,12 @@ public class TunerTest {
 
             @Override
             public void onSignalTypeReported(int signalType) {}
+
+            @Override
+            public void onModulationReported(int modulation) {}
+
+            @Override
+            public void onPriorityReported(boolean isHighPriority) {}
         };
     }
 }
