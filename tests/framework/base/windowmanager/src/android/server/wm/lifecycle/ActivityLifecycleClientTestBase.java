@@ -690,9 +690,34 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         moveTaskToPrimarySplitScreen(activity.getTaskId());
 
         final Class<? extends Activity> activityClass = activity.getClass();
-        waitAndAssertActivityTransitions(activityClass,
-                LifecycleVerifier.getSplitScreenTransitionSequence(activityClass),
-                "enterSplitScreen");
+        waitAndAssertActivityEnterSplitScreenTransitions(activityClass, "enterSplitScreen");
+    }
+
+    /**
+     * Blocking call that will wait for activities to perform the entering split screen sequence of
+     * transitions.
+     * @see LifecycleTracker#waitForActivityTransitions(Class, List)
+     */
+    final void waitAndAssertActivityEnterSplitScreenTransitions(
+            Class<? extends Activity> activityClass, String message) {
+        log("Start waitAndAssertActivitySplitScreenTransitions");
+
+        final List<LifecycleLog.ActivityCallback> expectedTransitions =
+                LifecycleVerifier.getSplitScreenTransitionSequence(activityClass);
+
+        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+        if (!expectedTransitions.contains(ON_MULTI_WINDOW_MODE_CHANGED)) {
+            LifecycleVerifier.assertSequence(activityClass, getLifecycleLog(),
+                    expectedTransitions, message);
+        } else {
+            final List<LifecycleLog.ActivityCallback> extraSequence =
+                    Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST,
+                            ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE,
+                            ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
+                            ON_TOP_POSITION_LOST, ON_PAUSE);
+            LifecycleVerifier.assertSequenceMatchesOneOf(activityClass, getLifecycleLog(),
+                    Arrays.asList(expectedTransitions, extraSequence), message);
+        }
     }
 
     final ActivityOptions getLaunchOptionsForFullscreen() {
