@@ -16,6 +16,7 @@
 
 package android.server.wm.lifecycle;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.StateLogger.log;
@@ -692,5 +693,11 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         waitAndAssertActivityTransitions(activityClass,
                 LifecycleVerifier.getSplitScreenTransitionSequence(activityClass),
                 "enterSplitScreen");
+    }
+
+    final ActivityOptions getLaunchOptionsForFullscreen() {
+        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+        launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        return launchOptions;
     }
 }
