@@ -426,7 +426,7 @@ public class AnimatedImageDrawableTest {
         assertTrue(drawable.isRunning());
     }
 
-    private static Object[] parametersForTestEncodedRepeats() {
+    public static Object[] parametersForTestEncodedRepeats() {
         return new Object[] {
             new Object[] { R.drawable.animated, AnimatedImageDrawable.REPEAT_INFINITE },
             new Object[] { R.drawable.animated_one_loop, 1 },

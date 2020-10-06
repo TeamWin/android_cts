@@ -33,6 +33,7 @@ import android.graphics.ColorSpace;
 import android.graphics.ColorSpace.Named;
 import android.graphics.ImageDecoder;
 import android.graphics.Rect;
+import android.graphics.drawable.cts.AnimatedImageDrawableTest;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.system.ErrnoException;
@@ -1028,6 +1029,44 @@ public class AImageDecoderTest {
         nCloseAsset(asset);
     }
 
+    @Test
+    @Parameters(method = "getAssetRecords")
+    public void testNotAnimatedAssets(ImageDecoderTest.AssetRecord record) {
+        long asset = nOpenAsset(getAssetManager(), record.name);
+        long aimagedecoder = nCreateFromAsset(asset);
+
+        nTestIsAnimated(aimagedecoder, false);
+        nCloseAsset(asset);
+    }
+
+    @Test
+    @Parameters(method = "getRecords")
+    public void testNotAnimated(ImageDecoderTest.Record record) throws IOException {
+        try (ParcelFileDescriptor pfd = open(record.resId)) {
+            long aimagedecoder = nCreateFromFd(pfd.getFd());
+
+            nTestIsAnimated(aimagedecoder, false);
+        } catch (FileNotFoundException e) {
+            fail("Could not open " + Utils.getAsResourceUri(record.resId));
+        }
+    }
+
+    private static Object[] getAnimatedImagesPlusRepeatCounts() {
+        return AnimatedImageDrawableTest.parametersForTestEncodedRepeats();
+    }
+
+    @Test
+    @Parameters(method = "getAnimatedImagesPlusRepeatCounts")
+    public void testAnimated(int resId, int unused) throws IOException {
+        try (ParcelFileDescriptor pfd = open(resId)) {
+            long aimagedecoder = nCreateFromFd(pfd.getFd());
+
+            nTestIsAnimated(aimagedecoder, true);
+        } catch (FileNotFoundException e) {
+            fail("Could not open " + Utils.getAsResourceUri(resId));
+        }
+    }
+
     // Return a pointer to the native AAsset named |file|. Must be closed with nCloseAsset.
     // Throws an Exception on failure.
     private static native long nOpenAsset(AssetManager assets, String file);
@@ -1070,4 +1109,5 @@ public class AImageDecoderTest {
             int cropLeft, int cropTop, int cropRight, int cropBottom);
     private static native void nTestScalePlusUnpremul(long aimagedecoder);
     private static native void nTestDecode(long aimagedecoder, Bitmap bm, int dataSpace);
+    private static native void nTestIsAnimated(long aimagedecoder, boolean animated);
 }
