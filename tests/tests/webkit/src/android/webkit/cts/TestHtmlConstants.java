@@ -59,8 +59,6 @@ public class TestHtmlConstants {
 
     public static final String EXT_WEB_URL1 = "http://www.example.com/";
 
-    public static final String LOCAL_FILESYSTEM_URL = "file:///etc/hosts";
-
     public static final String PARAM_ASSET_URL = "webkit/test_queryparam.html";
     public static final String ANCHOR_ASSET_URL = "webkit/test_anchor.html";
     public static final String IMAGE_ACCESS_URL = "webkit/test_imageaccess.html";
@@ -73,10 +71,6 @@ public class TestHtmlConstants {
     // Not a real page, just triggers a 404 response.
     public static final String NON_EXISTENT_PAGE_URL = "webkit/generate_404.html";
     public static final String BAD_IMAGE_PAGE_URL = "webkit/test_bad_image_url.html";
-
-    // Must match the title of the page at
-    // android/frameworks/base/core/res/res/raw/loaderror.html
-    public static final String WEBPAGE_NOT_AVAILABLE_TITLE = "Webpage not available";
 
     public static final String getFileUrl(String assetName) {
         if (assetName.contains(":") || assetName.startsWith("/")) {
