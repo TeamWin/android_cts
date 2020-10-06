@@ -54,6 +54,10 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.junit.Assert.assertThat;
+
+import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AutomaticZenRule;
 import android.app.Instrumentation;
@@ -81,6 +85,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.OperationApplicationException;
 import android.content.ServiceConnection;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
@@ -3756,6 +3761,37 @@ public class NotificationManagerTest extends AndroidTestCase {
                 callback.waitFor(EventCallback.SERVICE_STARTED, TIMEOUT_MS));
         assertTrue("Activity not started",
                 callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
+    public void testGrantRevokeNotificationManagerApis_works() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            ComponentName componentName = TestNotificationListener.getComponentName();
+            mNotificationManager.setNotificationListenerAccessGranted(
+                    componentName, true);
+
+            assertThat(
+                    mNotificationManager.getEnabledNotificationListeners(),
+                    hasItem(componentName));
+        });
+    }
+
+    public void testGrantRevokeNotificationManagerApis_exclusiveToPermissionController() {
+        List<PackageInfo> allPackages = mPackageManager.getInstalledPackages(
+                PackageManager.MATCH_DISABLED_COMPONENTS
+                        | PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS);
+        List<String> allowedPackages = Arrays.asList(
+                mPackageManager.getPermissionControllerPackageName(),
+                "com.android.shell");
+        for (PackageInfo pkg : allPackages) {
+            if (!pkg.applicationInfo.isSystemApp()
+                    && mPackageManager.checkPermission(
+                            Manifest.permission.MANAGE_NOTIFICATION_LISTENERS, pkg.packageName)
+                            == PackageManager.PERMISSION_GRANTED
+                    && !allowedPackages.contains(pkg.packageName)) {
+                fail(pkg.packageName + " can't hold "
+                        + Manifest.permission.MANAGE_NOTIFICATION_LISTENERS);
+            }
+        }
     }
 
     private static class FutureServiceConnection implements ServiceConnection {
