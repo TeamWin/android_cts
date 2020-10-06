@@ -15,14 +15,14 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.telephony.cts.locationaccessingapp">
+        package="android.telephony.cts.locationaccessingapp.sdk28">
 
+  <uses-sdk android:targetSdkVersion="28"/>
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
   <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
-  <application android:label="LocationAccessingApp">
+  <application android:label="LocationAccessingAppSdk28">
     <service android:name="android.telephony.cts.locationaccessingapp.CtsLocationAccessService"
              android:launchMode="singleInstance">
       <intent-filter>
