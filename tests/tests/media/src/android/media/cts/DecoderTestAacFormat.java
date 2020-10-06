@@ -30,6 +30,7 @@ import android.media.MediaFormat;
 import android.media.cts.DecoderTest.AudioParameter;
 import android.media.cts.R;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -44,6 +45,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+@AppModeFull(reason = "DecoderTest is non-instant")
 public class DecoderTestAacFormat {
     private static final String TAG = "DecoderTestAacFormat";
 
