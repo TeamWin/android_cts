@@ -25,23 +25,19 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.Manifest;
 import android.Manifest.permission;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.IBinder;
 import android.os.Looper;
-import android.os.RemoteException;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -56,8 +52,6 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.UiccCardInfo;
 import android.telephony.UiccSlotInfo;
-import android.telephony.cts.locationaccessingapp.CtsLocationAccessService;
-import android.telephony.cts.locationaccessingapp.ICtsLocationAccessControl;
 import android.telephony.emergency.EmergencyNumber;
 import android.text.TextUtils;
 import android.util.Log;
@@ -330,155 +324,6 @@ public class TelephonyManagerTest {
         mTelephonyManager.getVoicemailRingtoneUri(defaultAccount);
         mTelephonyManager.isVoicemailVibrationEnabled(defaultAccount);
         mTelephonyManager.getCarrierConfig();
-    }
-
-    @Test
-    public void testCellLocationFinePermission() {
-        withRevokedPermission(() -> {
-            try {
-                CellLocation cellLocation = (CellLocation) performLocationAccessCommand(
-                        CtsLocationAccessService.COMMAND_GET_CELL_LOCATION);
-                assertTrue(cellLocation == null || cellLocation.isEmpty());
-            } catch (SecurityException e) {
-                // expected
-            }
-
-            try {
-                List cis = (List) performLocationAccessCommand(
-                        CtsLocationAccessService.COMMAND_GET_CELL_INFO);
-                assertTrue(cis == null || cis.isEmpty());
-            } catch (SecurityException e) {
-                // expected
-            }
-        }, Manifest.permission.ACCESS_FINE_LOCATION);
-    }
-
-    @Test
-    public void testServiceStateLocationSanitization() {
-        withRevokedPermission(() -> {
-                    ServiceState ss = (ServiceState) performLocationAccessCommand(
-                            CtsLocationAccessService.COMMAND_GET_SERVICE_STATE);
-                    assertServiceStateSanitization(ss, true);
-
-                    withRevokedPermission(() -> {
-                                ServiceState ss1 = (ServiceState) performLocationAccessCommand(
-                                        CtsLocationAccessService.COMMAND_GET_SERVICE_STATE);
-                                assertServiceStateSanitization(ss1, false);
-                            },
-                            Manifest.permission.ACCESS_COARSE_LOCATION);
-                },
-                Manifest.permission.ACCESS_FINE_LOCATION);
-    }
-
-    @Test
-    public void testServiceStateListeningWithoutPermissions() {
-            if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
-
-            withRevokedPermission(() -> {
-                    ServiceState ss = (ServiceState) performLocationAccessCommand(
-                            CtsLocationAccessService.COMMAND_GET_SERVICE_STATE_FROM_LISTENER);
-                    assertServiceStateSanitization(ss, true);
-
-                    withRevokedPermission(() -> {
-                                ServiceState ss1 = (ServiceState) performLocationAccessCommand(
-                                        CtsLocationAccessService
-                                                .COMMAND_GET_SERVICE_STATE_FROM_LISTENER);
-                                assertServiceStateSanitization(ss1, false);
-                            },
-                            Manifest.permission.ACCESS_COARSE_LOCATION);
-                },
-                Manifest.permission.ACCESS_FINE_LOCATION);
-    }
-
-    @Test
-    public void testRegistryPermissionsForCellLocation() {
-        withRevokedPermission(() -> {
-                    CellLocation cellLocation = (CellLocation) performLocationAccessCommand(
-                            CtsLocationAccessService.COMMAND_LISTEN_CELL_LOCATION);
-                    assertNull(cellLocation);
-                },
-                Manifest.permission.ACCESS_FINE_LOCATION);
-    }
-
-    @Test
-    public void testRegistryPermissionsForCellInfo() {
-        withRevokedPermission(() -> {
-                    CellLocation cellLocation = (CellLocation) performLocationAccessCommand(
-                            CtsLocationAccessService.COMMAND_LISTEN_CELL_INFO);
-                    assertNull(cellLocation);
-                },
-                Manifest.permission.ACCESS_FINE_LOCATION);
-    }
-
-    private ICtsLocationAccessControl getLocationAccessAppControl() {
-        Intent bindIntent = new Intent(CtsLocationAccessService.CONTROL_ACTION);
-        bindIntent.setComponent(new ComponentName(CtsLocationAccessService.class.getPackageName$(),
-                CtsLocationAccessService.class.getName()));
-
-        LinkedBlockingQueue<ICtsLocationAccessControl> pipe =
-                new LinkedBlockingQueue<>();
-        getContext().bindService(bindIntent, new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                pipe.offer(ICtsLocationAccessControl.Stub.asInterface(service));
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-
-            }
-        }, Context.BIND_AUTO_CREATE);
-
-        try {
-            return pipe.poll(TOLERANCE, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            fail("interrupted");
-        }
-        fail("Unable to connect to location access test app");
-        return null;
-    }
-
-    private Object performLocationAccessCommand(String command) {
-        ICtsLocationAccessControl control = getLocationAccessAppControl();
-        try {
-            List ret = control.performCommand(command);
-            if (!ret.isEmpty()) return ret.get(0);
-        } catch (RemoteException e) {
-            fail("Remote exception");
-        }
-        return null;
-    }
-
-    private void withRevokedPermission(Runnable r, String permission) {
-        InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().revokeRuntimePermission(
-                CtsLocationAccessService.class.getPackageName$(), permission);
-        try {
-            r.run();
-        } finally {
-            InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().grantRuntimePermission(
-                    CtsLocationAccessService.class.getPackageName$(), permission);
-        }
-    }
-
-    private void assertServiceStateSanitization(ServiceState state, boolean sanitizedForFineOnly) {
-        if (state == null) return;
-
-        if (state.getNetworkRegistrationInfoList() != null) {
-            for (NetworkRegistrationInfo nrs : state.getNetworkRegistrationInfoList()) {
-                assertNull(nrs.getCellIdentity());
-            }
-        }
-
-        if (sanitizedForFineOnly) return;
-
-        assertTrue(TextUtils.isEmpty(state.getDataOperatorAlphaLong()));
-        assertTrue(TextUtils.isEmpty(state.getDataOperatorAlphaShort()));
-        assertTrue(TextUtils.isEmpty(state.getDataOperatorNumeric()));
-        assertTrue(TextUtils.isEmpty(state.getVoiceOperatorAlphaLong()));
-        assertTrue(TextUtils.isEmpty(state.getVoiceOperatorAlphaShort()));
-        assertTrue(TextUtils.isEmpty(state.getVoiceOperatorNumeric()));
     }
 
     @Test
