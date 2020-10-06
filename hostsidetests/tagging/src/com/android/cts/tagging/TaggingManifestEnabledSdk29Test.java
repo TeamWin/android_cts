@@ -35,6 +35,8 @@ public class TaggingManifestEnabledSdk29Test extends TaggingBaseTest {
     }
 
     public void testDefault() throws Exception {
+        // Even though the manifest enables tagged pointers, the targetSdkVersion still needs to be
+        // >= 30.
         runDeviceCompatTestReported(
                 TEST_PKG,
                 DEVICE_TEST_CLASS_NAME,
@@ -54,16 +56,5 @@ public class TaggingManifestEnabledSdk29Test extends TaggingBaseTest {
                 /*disabledChanges*/ ImmutableSet.of(),
                 /*reportedEnabledChanges*/ reportedChangeSet,
                 /*reportedDisabledChanges*/ ImmutableSet.of());
-    }
-
-    public void testCompatFeatureDisabled() throws Exception {
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
-                DEVICE_TAGGING_DISABLED_TEST_NAME,
-                /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
-                /*reportedEnabledChanges*/ ImmutableSet.of(),
-                /*reportedDisabledChanges*/ reportedChangeSet);
     }
 }
