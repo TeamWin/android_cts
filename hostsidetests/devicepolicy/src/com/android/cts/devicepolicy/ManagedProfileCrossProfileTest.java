@@ -618,7 +618,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
             throws Exception {
         Set<String> currentPids = new HashSet<>(
                 Arrays.asList(getAppPid(packageName).split(" ")));
-        assertThat(currentPids).containsAllIn(pids);
+        assertThat(currentPids).containsAtLeastElementsIn(pids);
     }
 
     private void assertAppKilledInBothProfiles(String packageName,  List<String> pids)

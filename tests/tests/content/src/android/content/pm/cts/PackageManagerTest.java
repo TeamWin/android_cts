@@ -692,7 +692,7 @@ public class PackageManagerTest {
 
         // Check required permissions
         List<String> requestedPermissions = Arrays.asList(pkgInfo.requestedPermissions);
-        assertThat(requestedPermissions).containsAllOf(
+        assertThat(requestedPermissions).containsAtLeast(
                 "android.permission.MANAGE_ACCOUNTS",
                 "android.permission.ACCESS_NETWORK_STATE",
                 "android.content.cts.permission.TEST_GRANTED");

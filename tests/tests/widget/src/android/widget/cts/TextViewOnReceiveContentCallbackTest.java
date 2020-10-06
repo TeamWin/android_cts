@@ -135,7 +135,7 @@ public class TextViewOnReceiveContentCallbackTest {
 
         // Verify that after setting a custom receiver, the getter returns it.
         mTextView.setOnReceiveContentCallback(mMockReceiverWrapper);
-        assertThat(mTextView.getOnReceiveContentCallback()).isSameAs(mMockReceiverWrapper);
+        assertThat(mTextView.getOnReceiveContentCallback()).isSameInstanceAs(mMockReceiverWrapper);
 
         // Verify that setting a null receiver clears the previously set custom receiver.
         mTextView.setOnReceiveContentCallback(null);

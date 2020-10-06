@@ -211,7 +211,7 @@ public class DisplayHdrCapabilitiesTestActivity extends TvAppVerifierActivity {
                 display.isHdr();
                 display.getHdrCapabilities();
             } catch (Exception e) {
-                getAsserter().fail(Throwables.getStackTraceAsString(e));
+                getAsserter().withMessage(Throwables.getStackTraceAsString(e)).fail();
             }
             done();
         }
