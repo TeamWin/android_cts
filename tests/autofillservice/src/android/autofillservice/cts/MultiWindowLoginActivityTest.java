@@ -90,10 +90,9 @@ public class MultiWindowLoginActivityTest
     /**
      * Put activity in TOP, will be followed by amStartActivity()
      */
-    protected void splitWindow(Activity activity) throws Exception {
+    protected void splitWindow(Activity activity) {
         mAtm.setTaskWindowingModeSplitScreenPrimary(activity.getTaskId(),
                 SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true, false, null, true);
-        mUiBot.waitForWindowSplit();
     }
 
     protected void amStartActivity(Class<? extends Activity> activity2) {
