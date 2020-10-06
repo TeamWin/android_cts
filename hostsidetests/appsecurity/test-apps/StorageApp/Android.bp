@@ -21,7 +21,6 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "AndroidManifestA.xml",
@@ -39,7 +38,6 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "AndroidManifestB.xml",
