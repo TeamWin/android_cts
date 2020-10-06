@@ -18,6 +18,7 @@ package android.telephony.cts.locationaccessingapp;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -27,6 +28,8 @@ import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
+import android.telephony.cdma.CdmaCellLocation;
+import android.telephony.gsm.GsmCellLocation;
 
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +64,17 @@ public class CtsLocationAccessService extends Service {
                     result = mTelephonyManager.getAllCellInfo();
                     break;
                 case COMMAND_GET_CELL_LOCATION:
-                    result = mTelephonyManager.getCellLocation();
+                    result = new Bundle();
+                    CellLocation cellLocation = mTelephonyManager.getCellLocation();
+                    if (cellLocation instanceof GsmCellLocation) {
+                        ((GsmCellLocation) cellLocation).fillInNotifierBundle((Bundle) result);
+                    } else if (cellLocation instanceof CdmaCellLocation) {
+                        ((CdmaCellLocation) cellLocation).fillInNotifierBundle((Bundle) result);
+                    } else if (cellLocation == null) {
+                        result = null;
+                    } else {
+                        throw new RuntimeException("Unexpected celllocation type");
+                    }
                     break;
                 case COMMAND_GET_SERVICE_STATE_FROM_LISTENER:
                     result = listenForServiceState();
