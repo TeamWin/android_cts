@@ -43,6 +43,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     CtsSurfaceValidatorLib \
     CtsMockInputMethodLib \
     metrics-helper-lib \
+    truth-prebuilt \
 
 LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
 
