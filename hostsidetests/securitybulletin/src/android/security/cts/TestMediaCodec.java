@@ -169,6 +169,45 @@ public class TestMediaCodec extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/33551775
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @Test
+    @SecurityTest(minPatchLevel = "2017-04")
+    public void testPocCVE_2017_0555() throws Exception {
+        String inputFiles[] = {"cve_2017_0555.h264"};
+        runAvcDecodeMemTest(inputFiles,
+                "-i " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1", getDevice());
+    }
+
+    /**
+     * b/38496660
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @Test
+    @SecurityTest(minPatchLevel = "2017-09")
+    public void testPocCVE_2017_0776() throws Exception {
+        String inputFiles[] = {"cve_2017_0776.h264"};
+        runAvcDecodeMemTest(inputFiles,
+                "-i " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1 --num_cores 4",
+                getDevice());
+    }
+
+    /**
+     * b/71375536
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @Test
+    @SecurityTest(minPatchLevel = "2018-13")
+    public void testPocCVE_2017_13250() throws Exception {
+        String inputFiles[] = {"cve_2017_13250.h264"};
+        runAvcDecodeMemTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --save_output 0 --num_frames -1 "
+                        + "--chroma_format YUV_420P --share_display_buf 1 --num_cores 1",
+                getDevice());
+    }
+
+    /**
      * b/62896384
      * Vulnerability Behaviour: SIGSEGV in self
      **/
