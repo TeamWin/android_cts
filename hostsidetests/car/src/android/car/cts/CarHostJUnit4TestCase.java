@@ -21,9 +21,12 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import android.car.cts.CarHostJUnit4TestCase.UserInfo;
+import android.service.pm.PackageProto;
+import android.service.pm.PackageProto.UserPermissionsProto;
+import android.service.pm.PackageServiceDumpProto;
 
 import com.android.compatibility.common.util.CommonTestUtils;
+import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -43,7 +46,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,19 +74,8 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     private static final int USER_PATTERN_GROUP_OTHER_STATE = 4;
 
     /**
-     * Permission pattern in the output of "dumpsys package PKG_NAME" =
-     * <permission_name>: TEXT granted=<true/false> TEXT flags=<flags> TEXT
-     * group 1: permission_name group 2: true/false group 3: flags
-     */
-    private static final String PERMISSION_REGEX =
-            "([\\w\\.^:]+).*granted=(true|false).*flags=(.*)";
-    private static final Pattern PERMISSION_PATTERN = Pattern.compile(PERMISSION_REGEX);
-
-    /**
      * User's package permission pattern string format in the output of "dumpsys package PKG_NAME"
     */
-    private static final String USER_PERMISSIONS_REGEX_FORMAT =
-            "User\\s%d(?:\\s*(:|/|overlay|runtime|gids).*\n)*((\\s*" + PERMISSION_REGEX + ")*)";
     protected static final String APP_APK = "CtsCarApp.apk";
     protected static final String APP_PKG = "android.car.cts.app";
 
@@ -118,13 +109,14 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
             CLog.i("Switching back from %d to %d", currentUserId, mInitialUserId);
             switchUser(mInitialUserId);
         }
+
         if (!mUsersToBeRemoved.isEmpty()) {
             CLog.i("Removing users %s", mUsersToBeRemoved);
-
             for (int userId : mUsersToBeRemoved) {
                 removeUser(userId);
             }
         }
+
         if (mInitialMaximumNumberOfUsers != null) {
             CLog.i("Restoring max number of users to %d", mInitialMaximumNumberOfUsers);
             setMaxNumberUsers(mInitialMaximumNumberOfUsers);
@@ -286,6 +278,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * <p><b>NOTE: </b>it uses User HAL flags, not core Android's.
      */
     protected int createUser(String name, int flags, String type) throws Exception {
+        waitForCarServiceReady();
         int userId = executeAndParseCommand(CREATE_USER_OUTPUT_PATTERN,
                 "Could not create user with name " + name + ", flags " + flags + ", type" + type,
                 matcher -> Integer.parseInt(matcher.group(1)),
@@ -311,6 +304,25 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     }
 
     /**
+     * Waits until the system server is ready.
+     */
+    protected void waitForCarServiceReady() throws Exception {
+        CommonTestUtils.waitUntil("timed out waiting for system server ",
+                DEFAULT_TIMEOUT_SEC, () -> isCarServiceReady());
+    }
+
+    protected boolean isCarServiceReady() {
+        String cmd = "service check car_service";
+        try {
+            String output = getDevice().executeShellCommand(cmd);
+            return !output.endsWith("not found");
+        } catch (Exception e) {
+            CLog.i("%s failed: %s", cmd, e.getMessage());
+        }
+        return false;
+    }
+
+    /**
      * Asserts that the given user is initialized.
      */
     protected void assertUserInitialized(int userId) throws Exception {
@@ -332,6 +344,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * Switches the current user.
      */
     protected void switchUser(int userId) throws Exception {
+        waitForCarServiceReady();
         String output = executeCommand("cmd car_service switch-user %d", userId);
         if (!output.contains("STATUS_SUCCESSFUL")) {
             throw new IllegalStateException("Failed to switch to user " + userId + ": " + output);
@@ -351,7 +364,7 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
     }
 
     /**
-     * Removes a user by user ID.
+     * Removes a user by user ID and update the list of users to be removed.
      */
     protected void removeUser(int userId) throws Exception {
         executeCommand("cmd car_service remove-user %d", userId);
@@ -389,66 +402,40 @@ public abstract class CarHostJUnit4TestCase extends BaseHostJUnit4Test {
      * <p>Useful for cases where the test case changes system properties, as
      * {@link ITestDevice#reboot()} would reset them.
      */
-    protected void restartSystemServer() throws DeviceNotAvailableException {
+    protected void restartSystemServer() throws Exception {
         final ITestDevice device = getDevice();
         device.executeShellCommand("stop");
         device.executeShellCommand("start");
         device.waitForDeviceAvailable();
+        waitForCarServiceReady();
     }
 
     /**
-     * Get mapping of package and permissions granted for user.
+     * Gets mapping of package and permissions granted for requested user id.
      *
-     * @param userId: the user to query permissions for
-     * @return Map<String, Map<String, Boolean>> where key is the package name and value is
-     * map of permissions
+     * @return Map<String, List<String>> where key is the package name and
+     * the value is list of permissions granted for this user.
      */
-    protected Map<String, Map<String, Boolean>> getPackagesAndPermissions(int userId)
+    protected Map<String, List<String>> getPackagesAndPermissionsForUser(int userId)
             throws Exception {
-        Map<String, Map<String, Boolean>> pkgMap = new HashMap<>();
-        Set<String> installedPackages = getDevice().getInstalledPackageNames();
-        CLog.v("Device has %d packages: %s", installedPackages.size(), installedPackages);
-        for (String pkg : installedPackages) {
-            if (isAppInstalledForUser(pkg, userId)) {
-                Map<String, Boolean> permMap = getPackagePermissionsForUser(pkg, userId);
-                pkgMap.put(pkg, permMap);
-                CLog.v("User %d package %s has %d permissions", userId, pkg, permMap.size());
+        CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
+        getDevice().executeShellCommand("dumpsys package --proto", receiver);
+
+        PackageServiceDumpProto dump = PackageServiceDumpProto.parser()
+                .parseFrom(receiver.getOutput());
+
+        CLog.v("Device has %d packages while getPackagesAndPermissions", dump.getPackagesCount());
+        Map<String, List<String>> pkgMap = new HashMap<>();
+        for (PackageProto pkg : dump.getPackagesList()) {
+            String pkgName = pkg.getName();
+            for (UserPermissionsProto userPermissions : pkg.getUserPermissionsList()) {
+                if (userPermissions.getId() == userId) {
+                    pkgMap.put(pkg.getName(), userPermissions.getGrantedPermissionsList());
+                    break;
+                }
             }
         }
         return pkgMap;
-    }
-
-    // TODO(b/167454361): use dumpsys as proto
-    /**
-     * Gets package's permissions and whether it's granted for user.
-     *
-     * @param pkg: name of package to check for permission
-     * @param userId: the user to query permissions for
-     * @return Map<String, Boolean> where key is the permission name and value is whether granted
-     * @throws DeviceNotAvailableException
-     */
-    protected Map<String, Boolean> getPackagePermissionsForUser(String pkg, int userId)
-            throws Exception {
-        String command = String.format("dumpsys package %s", pkg);
-        String output = getDevice().executeShellCommand(command);
-        Map<String, Boolean> permissionMap = new HashMap<>();
-
-        String userPermissionsRegex = String.format(USER_PERMISSIONS_REGEX_FORMAT, userId);
-        Pattern userPermissionsPattern = Pattern.compile(userPermissionsRegex);
-        Matcher userPermissionsMatcher = userPermissionsPattern.matcher(output);
-
-        if (userPermissionsMatcher.find()) {
-            Matcher permissionMatcher = PERMISSION_PATTERN.matcher(userPermissionsMatcher.group(0));
-            while (permissionMatcher.find()) {
-                permissionMap.put(permissionMatcher.group(1),
-                        permissionMatcher.group(2).equals("true"));
-            }
-            CLog.d("No more permission found for package %s user %d.", pkg, userId);
-            return permissionMap;
-        }
-
-        CLog.d("No matcher permissions found for package %s user %d.", pkg, userId);
-        return permissionMap;
     }
 
     /**
