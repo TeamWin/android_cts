@@ -16,10 +16,13 @@
 package android.security.cts;
 
 import android.app.ActivityManager;
+import android.app.ApplicationExitInfo;
+import android.content.Context;
 import android.os.IBinder;
 import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
 import junit.framework.TestCase;
 
 import java.lang.reflect.InvocationTargetException;
@@ -75,5 +78,43 @@ public class ActivityManagerTest extends TestCase {
         }
 
         assertNotNull("Expect SecurityException by attaching null application", securityException);
+    }
+
+    // b/165595677
+    @SecurityTest(minPatchLevel = "2020-10")
+    public void testActivityManager_appExitReasonPackageNames() {
+        final String mockPackage = "com.foo.bar";
+        final String realPackage = "com.android.compatibility.common.deviceinfo";
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final ActivityManager am = context.getSystemService(ActivityManager.class);
+        try {
+            am.getHistoricalProcessExitReasons(mockPackage, 0, 0);
+            fail("Expecting SecurityException");
+        } catch (SecurityException e) {
+            // expected
+        }
+
+        final int totalLoops = 10000;
+        int mockPackagescores = 0;
+        final double tolerance = 0.2d;
+        for (int i = 0; i < totalLoops; i++) {
+            final long realPackageTiming = measureGetHistoricalProcessExitReasons(am, realPackage);
+            final long mockPackageTiming = measureGetHistoricalProcessExitReasons(am, mockPackage);
+            mockPackagescores += mockPackageTiming < realPackageTiming ? 1 : 0;
+        }
+
+        assertTrue(Math.abs((double) mockPackagescores / totalLoops - 0.5d) < tolerance);
+    }
+
+    /**
+     * Run ActivityManager.getHistoricalProcessExitReasons once, return the time spent on it.
+     */
+    private long measureGetHistoricalProcessExitReasons(ActivityManager am, String pkg) {
+        final long start = System.nanoTime();
+        try {
+            am.getHistoricalProcessExitReasons(pkg, 0, 0);
+        } catch (Exception e) {
+        }
+        return System.nanoTime() - start;
     }
 }
