@@ -488,11 +488,12 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
      */
     @Test
     public void testActivityStoppedWhileNextActivityNotIdle() {
-        launchActivity(LAUNCHING_ACTIVITY);
+        final ComponentName activityWithSameAffinity = TURN_SCREEN_ON_ATTR_ACTIVITY;
+        launchActivity(activityWithSameAffinity);
         launchNoIdleActivity();
-        waitAndAssertActivityState(LAUNCHING_ACTIVITY, STATE_STOPPED,
+        waitAndAssertActivityState(activityWithSameAffinity, STATE_STOPPED,
                 "Activity should be stopped before idle timeout");
-        mWmState.assertVisibility(LAUNCHING_ACTIVITY, false);
+        mWmState.assertVisibility(activityWithSameAffinity, false);
     }
 
     private void launchNoIdleActivity() {

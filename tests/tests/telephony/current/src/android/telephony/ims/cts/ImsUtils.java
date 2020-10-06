@@ -120,8 +120,18 @@ public class ImsUtils {
      * Retry every 5 seconds until the condition is true or fail after TEST_TIMEOUT_MS seconds.
      */
     public static boolean retryUntilTrue(Callable<Boolean> condition) throws Exception {
+        return retryUntilTrue(condition, TEST_TIMEOUT_MS, 14 /*numTries*/);
+    }
+
+    /**
+     * Retry every timeoutMs/numTimes until the condition is true or fail if the condition is never
+     * met.
+     */
+    public static boolean retryUntilTrue(Callable<Boolean> condition,
+            int timeoutMs, int numTimes) throws Exception {
+        int sleepTime = timeoutMs / numTimes;
         int retryCounter = 0;
-        while (retryCounter < (TEST_TIMEOUT_MS / 5000)) {
+        while (retryCounter < numTimes) {
             try {
                 Boolean isSuccessful = condition.call();
                 isSuccessful = (isSuccessful == null) ? false : isSuccessful;
@@ -129,7 +139,7 @@ public class ImsUtils {
             } catch (Exception e) {
                 // we will retry
             }
-            Thread.sleep(5000);
+            Thread.sleep(sleepTime);
             retryCounter++;
         }
         return false;
