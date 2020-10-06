@@ -389,7 +389,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 pair(newDisplay.mId, TEST_ACTIVITY));
 
         // Move activity from secondary display to primary.
-        moveActivityToStackOrOnTop(TEST_ACTIVITY, defaultDisplayStackId);
+        moveActivityToRootTaskOrOnTop(TEST_ACTIVITY, defaultDisplayStackId);
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                 "Moved activity must be on top");
     }

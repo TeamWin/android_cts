@@ -204,7 +204,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
         // started in setUp() will not allow any other activities to start. Therefore we should
         // remove it before launching a fullscreen activity.
         if (isAssistantOnTop()) {
-            removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
+            removeRootTasksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
         }
 
         // Launch an assistant activity on top of an existing fullscreen activity, and ensure that
@@ -248,7 +248,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             // Go home, launch the assistant and check to see that home is visible
-            removeStacksInWindowingModes(WINDOWING_MODE_FULLSCREEN,
+            removeRootTasksInWindowingModes(WINDOWING_MODE_FULLSCREEN,
                     WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
             pressHomeButton();
             resumeAppSwitches();
@@ -264,7 +264,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
 
             // Launch a fullscreen app and then launch the assistant and check to see that it is
             // also visible
-            removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
+            removeRootTasksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
             launchActivityOnDisplay(TEST_ACTIVITY, mAssistantDisplayId);
             launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
@@ -275,7 +275,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
 
             // Go home, launch assistant, launch app into fullscreen with activity present, and go
             // back.Ensure home is visible.
-            removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
+            removeRootTasksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
             pressHomeButton();
             resumeAppSwitches();
             launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
@@ -298,7 +298,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             // that it
             // is also visible
             if (supportsSplitScreenMultiWindow() &&  assistantRunsOnPrimaryDisplay()) {
-                removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
+                removeRootTasksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
                 launchActivitiesInSplitScreen(
                         getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                         getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));

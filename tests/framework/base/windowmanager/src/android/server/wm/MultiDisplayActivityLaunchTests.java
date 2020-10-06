@@ -278,7 +278,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         nonResizeableSession.takeCallbackHistory();
 
         // Try to move the non-resizeable activity to the top of stack on secondary display.
-        moveActivityToStackOrOnTop(NON_RESIZEABLE_ACTIVITY, externalFrontStackId);
+        moveActivityToRootTaskOrOnTop(NON_RESIZEABLE_ACTIVITY, externalFrontStackId);
         // Wait for a while to check that it will move.
         assertTrue("Non-resizeable activity should be moved",
                 mWmState.waitForWithAmState(

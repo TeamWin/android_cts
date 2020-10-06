@@ -109,7 +109,7 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
             launchActivitiesInSplitScreen(
                     getLaunchActivityBuilder().setTargetActivity(BOTTOM_RIGHT_LAYOUT_ACTIVITY),
                     getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-            resizeDockedStack(1, 1, 1, 1);
+            resizePrimarySplitScreen(1, 1, 1, 1);
         }
         getDisplayAndWindowState(BOTTOM_RIGHT_LAYOUT_ACTIVITY, false);
 
