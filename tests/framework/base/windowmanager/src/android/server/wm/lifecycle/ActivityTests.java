@@ -246,8 +246,9 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testFinishAffinity_differentAffinity() throws Exception {
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
-        final Activity differentAffinityActivity =
-                launchActivityAndWait(DifferentAffinityActivity.class);
+        final Activity differentAffinityActivity = new Launcher(DifferentAffinityActivity.class)
+                .setOptions(getLaunchOptionsForFullscreen())
+                .launch();
         waitAndAssertActivityStates(state(differentAffinityActivity, ON_RESUME),
                 state(firstActivity, ON_STOP));
 
@@ -265,9 +266,10 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testFinishAffinity_multiTask() throws Exception {
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
-        // Launch activity in a new task
+        // Launch fullscreen activity in a new task to stop first activity
         final Activity secondActivity = new Launcher(SecondActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                .setOptions(getLaunchOptionsForFullscreen())
                 .launch();
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
                 state(firstActivity, ON_STOP));
