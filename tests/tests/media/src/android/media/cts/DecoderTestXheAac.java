@@ -33,6 +33,7 @@ import android.media.cts.DecoderTest.AudioParameter;
 import android.media.cts.DecoderTestAacDrc.DrcParams;
 import android.media.cts.R;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.os.Bundle;
 
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@AppModeFull(reason = "DecoderTest is non-instant")
 public class DecoderTestXheAac {
     private static final String TAG = "DecoderTestXheAac";
 
