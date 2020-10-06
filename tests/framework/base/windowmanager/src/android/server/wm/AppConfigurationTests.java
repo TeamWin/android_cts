@@ -739,20 +739,20 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Start portrait-fixed activity
         separateTestJournal();
-        launchActivity(RESIZEABLE_ACTIVITY);
-        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
-        mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+        launchActivity(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        mWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
 
-        final int displayId = mWmState
-                .getDisplayByActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        final int displayId = mWmState.getDisplayByActivity(RESIZEABLE_ACTIVITY);
 
-        // Rotate the activity and check that the orientation doesn't change
         final RotationSession rotationSession = createManagedRotationSession();
         assumeTrue("Skipping test: no user locked rotation support.",
                 supportsLockedUserRotation(rotationSession, displayId));
 
-        rotationSession.set(ROTATION_0);
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
 
+        // Rotate the activity and check that the orientation doesn't change
+        rotationSession.set(ROTATION_0);
         final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
         for (final int rotation : rotations) {
             separateTestJournal();
