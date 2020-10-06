@@ -84,6 +84,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     private static final String TEST_APP_DYNAMIC_CODE_NAME = "IncrementalTestAppDynamicCode.apk";
     private static final String TEST_APP_COMPRESSED_NATIVE_NAME =
             "IncrementalTestAppCompressedNativeLib.apk";
+    private static final String TEST_APP_UNCOMPRESSED_BASE_NAME =
+            "IncrementalTestAppUncompressed.apk";
     private static final String TEST_APP_UNCOMPRESSED_NATIVE_NAME =
             "IncrementalTestAppUncompressedNativeLib.apk";
 
@@ -205,7 +207,7 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
         assertTrue(checkNativeLibInApkCompression(TEST_APP_COMPRESSED_NATIVE_NAME,
                 "libuncompressednativeincrementaltest.so", false));
         verifyInstallCommandSuccess(
-                installWithAdbInstaller(TEST_APP_BASE_APK_NAME, TEST_APP_UNCOMPRESSED_NATIVE_NAME));
+                installWithAdbInstaller(TEST_APP_UNCOMPRESSED_BASE_NAME, TEST_APP_UNCOMPRESSED_NATIVE_NAME));
         verifyPackageInstalled(TEST_APP_PACKAGE_NAME);
         verifyInstallationTypeAndVersion(TEST_APP_PACKAGE_NAME, /* isIncfs= */ true,
                 TEST_APP_V1_VERSION);
