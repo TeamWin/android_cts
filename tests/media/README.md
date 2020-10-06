@@ -1,5 +1,11 @@
 ## Media V2 CTS Tests
-Current folder comprises of files necessary for testing media extractor, media muxer, media codec SDK and NDK Api.  These test aims to test all codecs advertised in MediaCodecList, available muxers and extractors. The aim of these tests is not verify the CDD requirements but to test components, their plugins and their interactions with media framework. The test vectors used by the test suite is available at [link](https://storage.googleapis.com/android_media/cts/tests/media/CtsMediaV2TestCases.zip) and is downloaded automatically while running tests. The test suite looks to cover sdk/ndk api in normal and error scenarios. Error scenarios are seperated from regular usage and are placed under class *UnitTest (MuxerUnitTest, ExtractorUnitTest, ...).
+Current folder comprises of files necessary for testing media extractor, media muxer, media codec SDK and NDK Api. These tests aims to test all codecs advertised in MediaCodecList, available muxers and extractors.
+
+The aim of these tests is not solely to verify the CDD requirements but also to test components, their plugins and their interactions with media framework.
+
+The test vectors used by the test suite is available at [link](https://storage.googleapis.com/android_media/cts/tests/media/CtsMediaV2TestCases-1.7.zip) and is downloaded automatically while running tests. Manual installation of these can be done using install_media.sh script in this directory.
+
+The test suite looks to cover sdk/ndk api in normal and error scenarios. Error scenarios are separated from regular usage and are placed under class *UnitTest (MuxerUnitTest, ExtractorUnitTest, ...).
 
 ### Commands
 ```sh
