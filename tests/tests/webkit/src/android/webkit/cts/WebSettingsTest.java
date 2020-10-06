@@ -236,32 +236,41 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertEquals(customUserAgent, mOnUiThread.getTitle());
     }
 
-    public void testAccessAllowFileAccess() {
+    public void testAccessAllowFileAccess() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        // This test is not compatible with 4.0.3
-        if ("4.0.3".equals(Build.VERSION.RELEASE)) {
-            return;
-        }
 
-        assertTrue(mSettings.getAllowFileAccess());
+        // prepare an HTML file in the data directory we can access to test the setting.
+        final String dataDirTitle = "Loaded from data dir";
+        final String dataDirFile = "datadir.html";
+        final String dataDirPath = mContext.getFileStreamPath(dataDirFile).getAbsolutePath();
+        final String dataDirUrl = "file://" + dataDirPath;
+        writeFile(dataDirFile, "<html><title>" + dataDirTitle + "</title></html>");
 
-        String fileUrl = TestHtmlConstants.getFileUrl(TestHtmlConstants.HELLO_WORLD_URL);
-        mOnUiThread.loadUrlAndWaitForCompletion(fileUrl);
-        assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
+        assertTrue("File access should be on by default", mSettings.getAllowFileAccess());
 
-        fileUrl = TestHtmlConstants.getFileUrl(TestHtmlConstants.BR_TAG_URL);
         mSettings.setAllowFileAccess(false);
-        assertFalse(mSettings.getAllowFileAccess());
-        mOnUiThread.loadUrlAndWaitForCompletion(fileUrl);
-        // android_asset URLs should still be loaded when even with file access
-        // disabled.
-        assertEquals(TestHtmlConstants.BR_TAG_TITLE, mOnUiThread.getTitle());
+        assertFalse("Explicitly setting file access to false should work",
+                mSettings.getAllowFileAccess());
 
-        // Files on the file system should not be loaded.
-        mOnUiThread.loadUrlAndWaitForCompletion(TestHtmlConstants.LOCAL_FILESYSTEM_URL);
-        assertEquals(TestHtmlConstants.WEBPAGE_NOT_AVAILABLE_TITLE, mOnUiThread.getTitle());
+        String assetUrl = TestHtmlConstants.getFileUrl(TestHtmlConstants.BR_TAG_URL);
+        mOnUiThread.loadUrlAndWaitForCompletion(assetUrl);
+        assertEquals(
+                "android_asset URLs should still be loaded when even with file access disabled",
+                TestHtmlConstants.BR_TAG_TITLE, mOnUiThread.getTitle());
+
+        mOnUiThread.loadUrlAndWaitForCompletion(dataDirUrl);
+        assertFalse("Files on the file system should not be loaded with file access disabled",
+                dataDirTitle.equals(mOnUiThread.getTitle()));
+
+        mSettings.setAllowFileAccess(true);
+        assertTrue("Explicitly setting file access to true should work",
+                mSettings.getAllowFileAccess());
+
+        mOnUiThread.loadUrlAndWaitForCompletion(dataDirUrl);
+        assertEquals("Loading files on the file system should work with file access enabled",
+                dataDirTitle, mOnUiThread.getTitle());
     }
 
     public void testAccessCacheMode_defaultValue() throws Throwable {
