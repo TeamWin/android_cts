@@ -16,10 +16,16 @@ cc_test_library {
 android_test {
     name: "CtsBionicAppTestCases",
     defaults: ["cts_defaults"],
-    static_libs: ["ctstestrunner-axt"],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+    ],
     srcs: ["**/*.java"],
     compile_multilib: "both",
-    jni_libs: ["libbionic_app_jni"],
+    jni_libs: [
+        "libbionic_app_jni",
+        "libcts_jni",
+    ],
     manifest: "AndroidManifest.xml",
     sdk_version: "current",
     test_suites: [
