@@ -190,6 +190,11 @@ public class ApexSignatureVerificationTest extends BaseHostJUnit4Test {
         try {
             apexes = mDevice.getActiveApexes();
             for (ITestDevice.ApexInfo ap : apexes) {
+                // We can pull apexes from only /system and /data.
+                // TODO(b/170202980): get all apexes including built-in apexes.
+                if (!ap.sourceDir.startsWith("/system") && !ap.sourceDir.startsWith("/data")) {
+                    continue;
+                }
                 mPreloadedApexPathMap.put(ap.name, ap.sourceDir);
             }
 
