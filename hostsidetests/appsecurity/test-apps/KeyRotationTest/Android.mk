@@ -32,7 +32,7 @@ include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsSignatureQueryService
 LOCAL_SDK_VERSION := current
 LOCAL_STATIC_JAVA_LIBRARIES := cts_signature_query_service
-LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
@@ -44,7 +44,7 @@ LOCAL_PACKAGE_NAME := CtsSignatureQueryService_v2
 LOCAL_MANIFEST_FILE = AndroidManifest_v2.xml
 LOCAL_SDK_VERSION := current
 LOCAL_STATIC_JAVA_LIBRARIES := cts_signature_query_service
-LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
 LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
@@ -58,7 +58,7 @@ LOCAL_PACKAGE_NAME := CtsSignatureQueryService_v3
 LOCAL_MANIFEST_FILE = AndroidManifest_v3.xml
 LOCAL_SDK_VERSION := current
 LOCAL_STATIC_JAVA_LIBRARIES := cts_signature_query_service
-LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
 LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
