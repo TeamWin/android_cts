@@ -56,17 +56,9 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
             (failureMetadata, mode) -> new ModeSubject(failureMetadata, mode);
 
     private static final Correspondence<Display.Mode, Mode> MODE_CORRESPONDENCE =
-            new Correspondence<Display.Mode, Mode>() {
-                @Override
-                public boolean compare(Display.Mode displayMode, Mode mode) {
-                    return mode.isEquivalent(displayMode, REFRESH_RATE_PRECISION);
-                }
-
-                @Override
-                public String toString() {
-                    return "is equivalent to";
-                }
-            };
+            Correspondence.from((Display.Mode displayMode, Mode mode) -> {
+                return mode.isEquivalent(displayMode, REFRESH_RATE_PRECISION);
+            }, "is equivalent to");
 
     private TestSequence mTestSequence;
 
@@ -137,7 +129,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                 display.getMode();
                 display.getSupportedModes();
             } catch (Exception e) {
-                getAsserter().fail(Throwables.getStackTraceAsString(e));
+                getAsserter().withMessage(Throwables.getStackTraceAsString(e)).fail();
             }
             done();
         }
@@ -199,7 +191,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                     .withMessage("Display.getSupportedModes()")
                     .that(Arrays.asList(display.getSupportedModes()))
                     .comparingElementsUsing(MODE_CORRESPONDENCE)
-                    .containsAllIn(expected2160pSupportedModes);
+                    .containsAtLeastElementsIn(expected2160pSupportedModes);
         }
     }
 
@@ -254,7 +246,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
                     .withMessage("Display.getSupportedModes()")
                     .that(Arrays.asList(display.getSupportedModes()))
                     .comparingElementsUsing(MODE_CORRESPONDENCE)
-                    .containsAllIn(expected1080pSupportedModes);
+                    .containsAtLeastElementsIn(expected1080pSupportedModes);
         }
     }
 
@@ -312,13 +304,16 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
     }
 
     private static class ModeSubject extends Subject<ModeSubject, Display.Mode> {
+        private final Display.Mode mActual;
+
         public ModeSubject(FailureMetadata failureMetadata, @Nullable Display.Mode subject) {
             super(failureMetadata, subject);
+            mActual = subject;
         }
 
         public void isEquivalentToAnyOf(final float refreshRatePrecision, Mode... modes) {
             boolean found = Arrays.stream(modes)
-                    .anyMatch(mode -> mode.isEquivalent(actual(), refreshRatePrecision));
+                    .anyMatch(mode -> mode.isEquivalent(mActual, refreshRatePrecision));
             if (!found) {
                 failWithActual("expected any of", Arrays.toString(modes));
             }
