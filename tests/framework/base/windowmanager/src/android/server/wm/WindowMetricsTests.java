@@ -61,7 +61,8 @@ public class WindowMetricsTests extends WindowManagerTestBase {
         final MetricsActivity activity = mMetricsActivity.launchActivity(null);
         activity.waitForLayout();
 
-        assertEquals(activity.mOnLayoutBounds, activity.mOnCreateCurrentMetrics.getBounds());
+        assertEquals(activity.mOnLayoutBoundsInScreen,
+                activity.mOnCreateCurrentMetrics.getBounds());
         assertTrue(activity.mOnCreateMaximumMetrics.getBounds().width()
                 >= activity.mOnCreateCurrentMetrics.getBounds().width());
         assertTrue(activity.mOnCreateMaximumMetrics.getBounds().height()
@@ -127,7 +128,7 @@ public class WindowMetricsTests extends WindowManagerTestBase {
         private WindowMetrics mOnCreateMaximumMetrics;
         private WindowMetrics mOnCreateCurrentMetrics;
 
-        private Rect mOnLayoutBounds;
+        private Rect mOnLayoutBoundsInScreen;
         private WindowInsets mOnLayoutInsets;
 
         @Override
@@ -142,9 +143,14 @@ public class WindowMetricsTests extends WindowManagerTestBase {
         public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft,
                 int oldTop, int oldRight, int oldBottom) {
             final View decorView = getWindow().getDecorView();
-            mOnLayoutBounds = new Rect(decorView.getTop(), decorView.getLeft(),
+            mOnLayoutBoundsInScreen = new Rect(decorView.getTop(), decorView.getLeft(),
                     decorView.getRight(), decorView.getBottom());
-            mOnLayoutInsets = getWindow().getDecorView().getRootWindowInsets();
+            // Convert decorView's bounds from window coordinates to screen coordinates.
+            final int[] locationOnScreen = new int[2];
+            decorView.getLocationOnScreen(locationOnScreen);
+            mOnLayoutBoundsInScreen.offset(locationOnScreen[0], locationOnScreen[1]);
+
+            mOnLayoutInsets = decorView.getRootWindowInsets();
             mLayoutLatch.countDown();
         }
 
