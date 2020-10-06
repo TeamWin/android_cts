@@ -45,6 +45,7 @@ public class CtsLocationAccessService extends Service {
             "get_service_state_from_listener";
     public static final String COMMAND_LISTEN_CELL_LOCATION = "listen_cell_location";
     public static final String COMMAND_LISTEN_CELL_INFO = "listen_cell_info";
+    public static final String COMMAND_REQUEST_CELL_INFO_UPDATE = "request_cell_info_update";
 
     private static final long LISTENER_TIMEOUT = 1000;
 
@@ -71,6 +72,8 @@ public class CtsLocationAccessService extends Service {
                 case COMMAND_LISTEN_CELL_LOCATION:
                     result = listenForCellLocation();
                     break;
+                case COMMAND_REQUEST_CELL_INFO_UPDATE:
+                    result = requestCellInfoUpdate();
             }
             return Collections.singletonList(result);
         }
@@ -152,6 +155,33 @@ public class CtsLocationAccessService extends Service {
                 throw new RuntimeException("Timed out waiting for service state");
             }
             return ss;
+        } catch (InterruptedException e) {
+            throw new RuntimeException("interrupted");
+        } finally {
+            handlerThread.quit();
+        }
+    }
+
+    private List<CellInfo> requestCellInfoUpdate() {
+        LinkedBlockingQueue<List<CellInfo>> queue = new LinkedBlockingQueue<>();
+        HandlerThread handlerThread = new HandlerThread("Telephony location CTS");
+        handlerThread.start();
+        Executor executor = new Handler(handlerThread.getLooper())::post;
+        TelephonyManager.CellInfoCallback cb = new TelephonyManager.CellInfoCallback() {
+            @Override
+            public void onCellInfo(List<CellInfo> cellInfo) {
+                queue.offer(cellInfo);
+            }
+        };
+
+        mTelephonyManager.requestCellInfoUpdate(executor, cb);
+
+        try {
+            List<CellInfo> ci = queue.poll(LISTENER_TIMEOUT, TimeUnit.MILLISECONDS);
+            if (ci == null) {
+                throw new RuntimeException("Timed out waiting for cell info");
+            }
+            return ci;
         } catch (InterruptedException e) {
             throw new RuntimeException("interrupted");
         } finally {
