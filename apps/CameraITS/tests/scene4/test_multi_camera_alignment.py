@@ -563,10 +563,10 @@ def main():
 
             # Find focal length and pixel & sensor size
             fl[i] = physical_props[i]['android.lens.info.availableFocalLengths'][0]
-            ar = physical_props[i]['android.sensor.info.activeArraySize']
+            ar = physical_props[i]['android.sensor.info.pixelArraySize']
             sensor_size = physical_props[i]['android.sensor.info.physicalSize']
-            pixel_size_w = sensor_size['width'] / (ar['right'] - ar['left'])
-            pixel_size_h = sensor_size['height'] / (ar['bottom'] - ar['top'])
+            pixel_size_w = sensor_size['width'] / (ar['width'])
+            pixel_size_h = sensor_size['height'] / (ar['height'])
             print 'pixel size(um): %.2f x %.2f' % (
                 pixel_size_w*1E3, pixel_size_h*1E3)
             pixel_sizes[i] = (pixel_size_w + pixel_size_h) / 2 * 1E3
