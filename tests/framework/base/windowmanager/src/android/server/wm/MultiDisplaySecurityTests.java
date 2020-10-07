@@ -820,9 +820,9 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
 
         // Expect onStartInput / showSoftInput would be executed when user tapping on the
         // untrusted display intentionally.
-        final Rect drawRect = new Rect();
-        editText.getDrawingRect(drawRect);
-        tapOnDisplaySync(drawRect.left, drawRect.top, newDisplay.mId);
+        final int[] location = new int[2];
+        editText.getLocationOnScreen(location);
+        tapOnDisplaySync(location[0], location[1], newDisplay.mId);
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
         waitOrderedImeEventsThenAssertImeShown(stream, DEFAULT_DISPLAY,
