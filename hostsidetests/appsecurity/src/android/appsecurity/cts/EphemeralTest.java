@@ -17,6 +17,8 @@
 package android.appsecurity.cts;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.SecurityTest;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -329,6 +331,7 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
     }
 
+    @SecurityTest(minPatchLevel = "2020-11")
     public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
         if (isDeviceUnsupported()) {
             return;
@@ -336,6 +339,7 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionNotGrantedInPackageInfo");
     }
 
+    @SecurityTest(minPatchLevel = "2020-11")
     public void testInstallPermissionGrantedInPackageInfo() throws Exception {
         if (isDeviceUnsupported()) {
             return;
