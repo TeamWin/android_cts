@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack;
+package android.server.wm.jetpack.utils;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeFalse;
 
 import android.content.Context;
-import android.server.wm.jetpack.wrapper.TestDeviceState;
-import android.server.wm.jetpack.wrapper.extensionwrapperimpl.TestExtensionCompat;
-import android.server.wm.jetpack.wrapper.sidecarwrapperimpl.TestSidecarCompat;
-import android.server.wm.jetpack.wrapper.TestInterfaceCompat;
-import android.server.wm.jetpack.wrapper.sidecarwrapperimpl.TestSidecarDeviceState;
+import android.server.wm.jetpack.utils.wrapper.TestDeviceState;
+import android.server.wm.jetpack.utils.wrapper.extensionwrapperimpl.TestExtensionCompat;
+import android.server.wm.jetpack.utils.wrapper.sidecarwrapperimpl.TestSidecarCompat;
+import android.server.wm.jetpack.utils.wrapper.TestInterfaceCompat;
+import android.server.wm.jetpack.utils.wrapper.sidecarwrapperimpl.TestSidecarDeviceState;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -34,16 +34,16 @@ import androidx.window.extensions.ExtensionProvider;
 import androidx.window.sidecar.SidecarProvider;
 
 /** Helper class to get the vendor provided Extension/Sidecar implementation. */
-final class ExtensionUtils {
+public final class ExtensionUtils {
     private static final String TAG = "TestInterfaceProvider";
 
     /** Skips devices that don't implement the wm extension library. */
-    static void assumeSupportedDevice(Context context) {
+    public static void assumeSupportedDevice(Context context) {
         assumeFalse(TextUtils.isEmpty(getVersion()) && getInterfaceCompat(context) == null);
     }
 
     /** Asserts that the vendor provided version is in the correct format and range. */
-    static void assertValidVersion() {
+    public static void assertValidVersion() {
         if (getExtensionVersion() != null) {
             String versionStr = getExtensionVersion();
             assertThat(Version.isValidVersion(versionStr)).isTrue();
@@ -55,7 +55,7 @@ final class ExtensionUtils {
         }
     }
 
-    static void assertEqualsState(TestDeviceState left, TestDeviceState right) {
+    public static void assertEqualsState(TestDeviceState left, TestDeviceState right) {
         if (left instanceof TestSidecarDeviceState && right instanceof TestSidecarDeviceState) {
             assertThat(left.getPosture()).isEqualTo(right.getPosture());
         } else {
@@ -68,7 +68,7 @@ final class ExtensionUtils {
      * Sidecar implementation (deprecated). If neither is available, returns {@code null}.
      */
     @Nullable
-    static TestInterfaceCompat getInterfaceCompat(Context context) {
+    public static TestInterfaceCompat getInterfaceCompat(Context context) {
         // TODO(b/158876142) Reinstate android.window.extension
         if (!TextUtils.isEmpty(getSidecarVersion())) {
             return getSidecarInterfaceCompat(context);
@@ -77,7 +77,7 @@ final class ExtensionUtils {
     }
 
     @Nullable
-    private static String getVersion() {
+    public static String getVersion() {
         if (!TextUtils.isEmpty(getExtensionVersion())) {
             return getExtensionVersion();
         } else if (!TextUtils.isEmpty(getSidecarVersion())) {
