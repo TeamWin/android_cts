@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
@@ -39,7 +40,6 @@ import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -57,7 +57,9 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
 
     @Test
     public void testSetFitInsetsTypes() {
-        final TestActivity activity = startActivity(TestActivity.class);
+        // Start the Activity in fullscreen windowing mode for its bounds to match display bounds.
+        final TestActivity activity =
+                startActivityInWindowingMode(TestActivity.class, WINDOWING_MODE_FULLSCREEN);
 
         // Make sure the main window has been laid out.
         final View mainWindowRoot = activity.getWindow().getDecorView();
@@ -99,7 +101,9 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
 
     @Test
     public void testSetFitInsetsSides() {
-        final TestActivity activity = startActivity(TestActivity.class);
+        // Start the Activity in fullscreen windowing mode for its bounds to match display bounds.
+        final TestActivity activity =
+                startActivityInWindowingMode(TestActivity.class, WINDOWING_MODE_FULLSCREEN);
 
         // Make sure the main window has been laid out.
         final View mainWindowRoot = activity.getWindow().getDecorView();
@@ -143,7 +147,9 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
 
     @Test
     public void testSetFitInsetsIgnoringVisibility() {
-        final TestActivity activity = startActivity(TestActivity.class);
+        // Start the Activity in fullscreen windowing mode for its bounds to match display bounds.
+        final TestActivity activity =
+                startActivityInWindowingMode(TestActivity.class, WINDOWING_MODE_FULLSCREEN);
 
         // Make sure the main window has been laid out.
         final View mainWindowRoot = activity.getWindow().getDecorView();
