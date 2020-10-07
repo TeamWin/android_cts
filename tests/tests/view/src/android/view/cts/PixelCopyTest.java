@@ -42,7 +42,7 @@ import android.view.Surface;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.cts.util.DisableFixToUserRotationRule;
+import android.view.cts.util.DisableFixedToUserRotationRule;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
@@ -71,8 +71,8 @@ public class PixelCopyTest {
     private static final String TAG = "PixelCopyTests";
 
     @Rule
-    public DisableFixToUserRotationRule mDisableFixToUserRotationRule =
-            new DisableFixToUserRotationRule();
+    public DisableFixedToUserRotationRule mDisableFixedToUserRotationRule =
+            new DisableFixedToUserRotationRule();
 
     @Rule
     public ActivityTestRule<PixelCopyGLProducerCtsActivity> mGLSurfaceViewActivityRule =
