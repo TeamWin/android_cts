@@ -17,13 +17,11 @@
 package android.media.cts;
 
 import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
 import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaPlayer;
-import android.media.cts.R;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
@@ -48,6 +46,7 @@ import org.apache.http.util.CharArrayBuffer;
 
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -77,7 +76,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     private static final int CONFIG_MODE_NONE = 0;
     private static final int CONFIG_MODE_QUEUE = 1;
 
-    private static Resources mResources;
+    static final String mInpPrefix = WorkDir.getMediaDirString();
     short[] mMasterBuffer;
 
     /** Load jni on initialization */
@@ -90,7 +89,6 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mResources = mContext.getResources();
 
     }
 
@@ -116,31 +114,31 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     public void testExtractor() throws Exception {
-        testExtractor(R.raw.sinesweepogg);
-        testExtractor(R.raw.sinesweepoggmkv);
-        testExtractor(R.raw.sinesweepoggmp4);
-        testExtractor(R.raw.sinesweepmp3lame);
-        testExtractor(R.raw.sinesweepmp3smpb);
-        testExtractor(R.raw.sinesweepopus);
-        testExtractor(R.raw.sinesweepopusmp4);
-        testExtractor(R.raw.sinesweepm4a);
-        testExtractor(R.raw.sinesweepflacmkv);
-        testExtractor(R.raw.sinesweepflac);
-        testExtractor(R.raw.sinesweepflacmp4);
-        testExtractor(R.raw.sinesweepwav);
+        testExtractor("sinesweepogg.ogg");
+        testExtractor("sinesweepoggmkv.mkv");
+        testExtractor("sinesweepoggmp4.mp4");
+        testExtractor("sinesweepmp3lame.mp3");
+        testExtractor("sinesweepmp3smpb.mp3");
+        testExtractor("sinesweepopus.mkv");
+        testExtractor("sinesweepopusmp4.mp4");
+        testExtractor("sinesweepm4a.m4a");
+        testExtractor("sinesweepflacmkv.mkv");
+        testExtractor("sinesweepflac.flac");
+        testExtractor("sinesweepflacmp4.mp4");
+        testExtractor("sinesweepwav.wav");
 
-        testExtractor(R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz);
-        testExtractor(R.raw.bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz);
-        testExtractor(R.raw.bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz);
-        testExtractor(R.raw.video_1280x720_webm_av1_2000kbps_30fps_vorbis_stereo_128kbps_48000hz);
-        testExtractor(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz);
-        testExtractor(R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz);
-        testExtractor(R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz);
+        testExtractor("video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
+        testExtractor("bbb_s3_1280x720_webm_vp8_8mbps_60fps_opus_6ch_384kbps_48000hz.webm");
+        testExtractor("bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz.webm");
+        testExtractor("video_1280x720_webm_av1_2000kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+        testExtractor("video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp");
+        testExtractor("video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz.mp4");
+        testExtractor("video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
 
         CtsTestServer foo = new CtsTestServer(mContext);
-        testExtractor(foo.getAssetUrl("noiseandchirps.ogg"));
-        testExtractor(foo.getAssetUrl("ringer.mp3"));
-        testExtractor(foo.getRedirectingAssetUrl("ringer.mp3"));
+        testExtractor(foo.getAssetUrl("noiseandchirps.ogg"), null, null);
+        testExtractor(foo.getAssetUrl("ringer.mp3"), null, null);
+        testExtractor(foo.getRedirectingAssetUrl("ringer.mp3"), null, null);
 
         String[] keys = new String[] {"header0", "header1"};
         String[] values = new String[] {"value0", "value1"};
@@ -156,10 +154,6 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
         String[] emptyArray = new String[0];
         testExtractor(foo.getAssetUrl("noiseandchirps.ogg"), emptyArray, emptyArray);
-    }
-
-    private void testExtractor(String path) throws Exception {
-        testExtractor(path, null, null);
     }
 
     /**
@@ -181,8 +175,16 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         compareArrays("different samplesizes native source", jsizes, nsizes2);
     }
 
-    private void testExtractor(int res) throws Exception {
-        AssetFileDescriptor fd = mResources.openRawResourceFd(res);
+    protected static AssetFileDescriptor getAssetFileDescriptorFor(final String res)
+            throws FileNotFoundException {
+        File inpFile = new File(mInpPrefix + res);
+        ParcelFileDescriptor parcelFD =
+                ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
+        return new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
+    }
+
+    private void testExtractor(final String res) throws Exception {
+        AssetFileDescriptor fd = getAssetFileDescriptorFor(res);
 
         int[] jsizes = getSampleSizes(
                 fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
@@ -273,13 +275,12 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     @Presubmit
     public void testExtractorFileDurationNative() throws Exception {
-        int res = R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz;
-        testExtractorFileDurationNative(res);
+        testExtractorFileDurationNative(
+                "video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
     }
 
-    private void testExtractorFileDurationNative(int res) throws Exception {
-
-        AssetFileDescriptor fd = mResources.openRawResourceFd(res);
+    private void testExtractorFileDurationNative(final String res) throws Exception {
+        AssetFileDescriptor fd = getAssetFileDescriptorFor(res);
         long durationUs = getExtractorFileDurationNative(
                 fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength());
 
@@ -319,33 +320,33 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     public void testDecoder() throws Exception {
         int testsRun =
-            testDecoder(R.raw.sinesweepogg) +
-            testDecoder(R.raw.sinesweepoggmkv) +
-            testDecoder(R.raw.sinesweepoggmp4) +
-            testDecoder(R.raw.sinesweepmp3lame) +
-            testDecoder(R.raw.sinesweepmp3smpb) +
-            testDecoder(R.raw.sinesweepopus) +
-            testDecoder(R.raw.sinesweepopusmp4) +
-            testDecoder(R.raw.sinesweepm4a) +
-            testDecoder(R.raw.sinesweepflacmkv) +
-            testDecoder(R.raw.sinesweepflac) +
-            testDecoder(R.raw.sinesweepflacmp4) +
-            testDecoder(R.raw.sinesweepwav) +
-
-            testDecoder(R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz) +
-            testDecoder(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz) +
-            testDecoder(R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz) +
-            testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz) +
-            testDecoder(R.raw.video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz);
-            testDecoder(R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz);
+            testDecoder("sinesweepogg.ogg") +
+            testDecoder("sinesweepoggmkv.mkv") +
+            testDecoder("sinesweepoggmp4.mp4") +
+            testDecoder("sinesweepmp3lame.mp3") +
+            testDecoder("sinesweepmp3smpb.mp3") +
+            testDecoder("sinesweepopus.mkv") +
+            testDecoder("sinesweepopusmp4.mp4") +
+            testDecoder("sinesweepm4a.m4a") +
+            testDecoder("sinesweepflacmkv.mkv") +
+            testDecoder("sinesweepflac.flac") +
+            testDecoder("sinesweepflacmp4.mp4") +
+            testDecoder("sinesweepwav.wav") +
+            testDecoder("video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4") +
+            testDecoder("bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz.webm") +
+            testDecoder("bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm") +
+            testDecoder("video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp") +
+            testDecoder("video_480x360_mp4_mpeg2_1500kbps_30fps_aac_stereo_128kbps_48000hz.mp4");
+            testDecoder("video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
         if (testsRun == 0) {
             MediaUtils.skipTest("no decoders found");
         }
     }
 
     public void testDataSource() throws Exception {
-        int testsRun = testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz,
-                /* wrapFd */ true, /* useCallback */ false);
+        int testsRun = testDecoder(
+                "video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp", /* wrapFd */
+                true, /* useCallback */ false);
         if (testsRun == 0) {
             MediaUtils.skipTest("no decoders found");
         }
@@ -353,10 +354,10 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     public void testDataSourceAudioOnly() throws Exception {
         int testsRun = testDecoder(
-                R.raw.loudsoftmp3,
+                "loudsoftmp3.mp3",
                 /* wrapFd */ true, /* useCallback */ false) +
                 testDecoder(
-                        R.raw.loudsoftaac,
+                        "loudsoftaac.aac",
                         /* wrapFd */ false, /* useCallback */ false);
         if (testsRun == 0) {
             MediaUtils.skipTest("no decoders found");
@@ -364,23 +365,25 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     public void testDataSourceWithCallback() throws Exception {
-        int testsRun = testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz,
-                /* wrapFd */ true, /* useCallback */ true);
+        int testsRun = testDecoder(
+                "video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp",/* wrapFd */
+                true, /* useCallback */ true);
         if (testsRun == 0) {
             MediaUtils.skipTest("no decoders found");
         }
     }
 
-    private int testDecoder(int res) throws Exception {
+    private int testDecoder(final String res) throws Exception {
         return testDecoder(res, /* wrapFd */ false, /* useCallback */ false);
     }
 
-    private int testDecoder(int res, boolean wrapFd, boolean useCallback) throws Exception {
-        if (!MediaUtils.hasCodecsForResource(mContext, res)) {
+    private int testDecoder(final String res, boolean wrapFd, boolean useCallback)
+            throws Exception {
+        if (!MediaUtils.hasCodecsForResource(mInpPrefix  + res)) {
             return 0; // skip
         }
 
-        AssetFileDescriptor fd = mResources.openRawResourceFd(res);
+        AssetFileDescriptor fd = getAssetFileDescriptorFor(res);
 
         int[] jdata1 = getDecodedData(
                 fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
@@ -560,30 +563,30 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     public void testVideoPlayback() throws Exception {
         int testsRun =
             testVideoPlayback(
-                    R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz) +
+                    "video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4") +
             testVideoPlayback(
-                    R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz) +
+                    "bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz.webm") +
             testVideoPlayback(
-                    R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz) +
+                    "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm") +
             testVideoPlayback(
-                    R.raw.video_640x360_webm_av1_470kbps_30fps_vorbis_stereo_128kbps_48000hz) +
+                    "video_640x360_webm_av1_470kbps_30fps_vorbis_stereo_128kbps_48000hz.webm") +
             testVideoPlayback(
-                    R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz) +
+                    "video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz.3gp") +
             testVideoPlayback(
-                    R.raw.video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz) +
+                    "video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz.mp4") +
             testVideoPlayback(
-                    R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz);
+                    "video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
         if (testsRun == 0) {
             MediaUtils.skipTest("no decoders found");
         }
     }
 
-    private int testVideoPlayback(int res) throws Exception {
-        if (!MediaUtils.checkCodecsForResource(mContext, res)) {
+    private int testVideoPlayback(final String res) throws Exception {
+        if (!MediaUtils.checkCodecsForResource(mInpPrefix + res)) {
             return 0; // skip
         }
 
-        AssetFileDescriptor fd = mResources.openRawResourceFd(res);
+        AssetFileDescriptor fd = getAssetFileDescriptorFor(res);
 
         boolean ret = testPlaybackNative(mActivity.getSurfaceHolder().getSurface(),
                 fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength());
@@ -597,56 +600,54 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     @Presubmit
     public void testMuxerAvc() throws Exception {
         // IMPORTANT: this file must not have B-frames
-        testMuxer(R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, false);
+        testMuxer("video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4", false);
     }
 
     public void testMuxerH263() throws Exception {
         // IMPORTANT: this file must not have B-frames
-        testMuxer(R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz, false);
+        testMuxer("video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz.3gp", false);
     }
 
     public void testMuxerHevc() throws Exception {
         // IMPORTANT: this file must not have B-frames
-        testMuxer(R.raw.video_640x360_mp4_hevc_450kbps_no_b, false);
+        testMuxer("video_640x360_mp4_hevc_450kbps_no_b.mp4", false);
     }
 
     public void testMuxerVp8() throws Exception {
-        testMuxer(R.raw.bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz, true);
+        testMuxer("bbb_s1_640x360_webm_vp8_2mbps_30fps_vorbis_5ch_320kbps_48000hz.webm", true);
     }
 
     public void testMuxerVp9() throws Exception {
-        testMuxer(
-                R.raw.video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz,
+        testMuxer("video_1280x720_webm_vp9_csd_309kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
                 true);
     }
 
     public void testMuxerVp9NoCsd() throws Exception {
-        testMuxer(
-                R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
+        testMuxer("bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
                 true);
     }
 
     public void testMuxerVp9Hdr() throws Exception {
-        testMuxer(R.raw.video_256x144_webm_vp9_hdr_83kbps_24fps, true);
+        testMuxer("video_256x144_webm_vp9_hdr_83kbps_24fps.webm", true);
     }
 
     // We do not support MPEG-2 muxing as of yet
     public void SKIP_testMuxerMpeg2() throws Exception {
         // IMPORTANT: this file must not have B-frames
-        testMuxer(R.raw.video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz, false);
+        testMuxer("video_176x144_mp4_mpeg2_105kbps_25fps_aac_stereo_128kbps_44100hz.mp4", false);
     }
 
     public void testMuxerMpeg4() throws Exception {
         // IMPORTANT: this file must not have B-frames
-        testMuxer(R.raw.video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz, false);
+        testMuxer("video_176x144_mp4_mpeg4_300kbps_25fps_aac_stereo_128kbps_44100hz.mp4", false);
     }
 
-    private void testMuxer(int res, boolean webm) throws Exception {
-        if (!MediaUtils.checkCodecsForResource(mContext, res)) {
+    private void testMuxer(final String res, boolean webm) throws Exception {
+        if (!MediaUtils.checkCodecsForResource(mInpPrefix + res)) {
             return; // skip
         }
 
-        AssetFileDescriptor infd = mResources.openRawResourceFd(res);
+        AssetFileDescriptor infd = getAssetFileDescriptorFor(res);
 
         File base = mContext.getExternalFilesDir(null);
         String tmpFile = base.getPath() + "/tmp.dat";
@@ -682,7 +683,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         org.release();
         remux.release();
 
-        MediaPlayer player1 = MediaPlayer.create(mContext, res);
+        MediaPlayer player1 =
+                MediaPlayer.create(mContext, Uri.fromFile(new File(mInpPrefix + res)));
         MediaPlayer player2 = MediaPlayer.create(mContext, Uri.parse("file://" + tmpFile));
         assertEquals("duration is different",
                      player1.getDuration(), player2.getDuration(), maxDurationDiffUs * 0.001);
@@ -766,11 +768,11 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     @Presubmit
     public void testPssh() throws Exception {
-        testPssh(R.raw.psshtest);
+        testPssh("psshtest.mp4");
     }
 
-    private void testPssh(int res) throws Exception {
-        AssetFileDescriptor fd = mResources.openRawResourceFd(res);
+    private void testPssh(final String res) throws Exception {
+        AssetFileDescriptor fd = getAssetFileDescriptorFor(res);
 
         MediaExtractor ex = new MediaExtractor();
         ex.setDataSource(fd.getParcelFileDescriptor().getFileDescriptor(),
