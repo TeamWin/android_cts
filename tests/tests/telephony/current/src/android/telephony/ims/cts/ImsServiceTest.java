@@ -343,6 +343,27 @@ public class ImsServiceTest {
     }
 
     @Test
+    public void testCarrierImsServiceBindNullRcsFeature() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        // Connect to the ImsService with the MMTEL feature.
+        assertTrue(sServiceConnector.connectCarrierImsServiceNullRcsBinding(
+                new ImsFeatureConfiguration.Builder()
+                .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
+                .build()));
+        // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
+        // Framework did not call it.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_CREATE_RCS));
+        // Check to see if telephony state was reset at some point due to a crash and fail if so
+        assertFalse("ImsService should not crash if there is a null ImsFeature returned",
+                ImsUtils.retryUntilTrue(() ->
+                        !sServiceConnector.isCarrierServiceStillConfigured(),
+                5000 /*test timeout*/, 5 /*num times*/));
+    }
+
+    @Test
     public void testDeviceImsServiceBindRcsFeature() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
