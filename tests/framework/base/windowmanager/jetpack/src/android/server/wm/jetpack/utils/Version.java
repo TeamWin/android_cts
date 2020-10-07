@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack;
+package android.server.wm.jetpack.utils;
 
 import android.text.TextUtils;
 
