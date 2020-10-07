@@ -76,7 +76,7 @@ class SpellCheckerTest : EndToEndImeTestBase() {
     }
 
     @Test
-    fun test() {
+    fun misspelled() {
         val configuration = MockSpellCheckerConfiguration.newBuilder()
                 .addSuggestionRules(
                         MockSpellCheckerProto.SuggestionRule.newBuilder()
@@ -93,15 +93,46 @@ class SpellCheckerTest : EndToEndImeTestBase() {
                 InputMethodVisibilityVerifier.expectImeVisible(TIMEOUT)
                 session.callCommitText("match", 1)
                 session.callCommitText(" ", 1)
-                TestUtils.waitOnMainUntil({ hasSuggestionSpan(editText) }, TIMEOUT)
+                TestUtils.waitOnMainUntil({
+                    getSuggestionSpans(editText).find {
+                        (it.flags and SuggestionSpan.FLAG_MISSPELLED) != 0
+                    } != null
+                }, TIMEOUT)
             }
         }
     }
 
-    private fun hasSuggestionSpan(editText: EditText): Boolean {
+    @Test
+    fun grammarError() {
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("match")
+                                .addSuggestions("suggestion")
+                                .setAttributes(SuggestionsInfo.RESULT_ATTR_LOOKS_LIKE_GRAMMAR_ERROR)
+        ).build()
+        MockImeSession.create(context).use { session ->
+            MockSpellCheckerClient.create(context, configuration).use {
+                val (_, editText) = startTestActivity()
+                CtsTouchUtils.emulateTapOnViewCenter(
+                        InstrumentationRegistry.getInstrumentation(), null, editText)
+                TestUtils.waitOnMainUntil({ editText.hasFocus() }, TIMEOUT)
+                InputMethodVisibilityVerifier.expectImeVisible(TIMEOUT)
+                session.callCommitText("match", 1)
+                session.callCommitText(" ", 1)
+                TestUtils.waitOnMainUntil({
+                    getSuggestionSpans(editText).find {
+                        (it.flags and SuggestionSpan.FLAG_GRAMMAR_ERROR) != 0
+                    } != null
+                }, TIMEOUT)
+            }
+        }
+    }
+
+    private fun getSuggestionSpans(editText: EditText): Array<SuggestionSpan> {
         val editable = editText.text
         val spans = editable.getSpans(0, editable.length, SuggestionSpan::class.java)
-        return spans != null && spans.isNotEmpty()
+        return spans
     }
 
     private fun startTestActivity(): Pair<TestActivity, EditText> {
