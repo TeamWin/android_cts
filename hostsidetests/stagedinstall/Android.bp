@@ -15,9 +15,7 @@
 java_test_host {
     name: "CtsStagedInstallHostTestCases",
     defaults: ["cts_defaults"],
-
     srcs:  ["src/**/*.java"],
-
     libs: [
         "cts-tradefed",
         "cts-shim-host-lib",
@@ -26,12 +24,11 @@ java_test_host {
         "hamcrest",
         "hamcrest-library",
     ],
-
+    static_libs: ["cts-install-lib-host"],
     data:   [
         ":StagedInstallTest",
         ":deapexer.zip",
     ],
-
     test_suites: [
         "cts",
         "general-tests",
@@ -41,11 +38,8 @@ java_test_host {
 
 android_test_helper_app {
     name: "StagedInstallTest",
-
     srcs:  ["app/src/**/*.java"],
-
     manifest : "app/AndroidManifest.xml",
-
     java_resources:  [
         ":ApexKeyRotationTestV2_SignedBob",
         ":ApexKeyRotationTestV2_SignedBobRot",
