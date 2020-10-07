@@ -50,6 +50,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     private static final String TEST_PASSPHRASE = "testPassword";
     private static final int TEST_PRIORITY = 5;
     private static final int TEST_PRIORITY_GROUP = 1;
+    private static final int TEST_SUB_ID = 1;
 
     @Override
     protected void setUp() throws Exception {
@@ -540,7 +541,6 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
             builder.setIsHiddenSsid(true);
         }
         builder.setPriority(TEST_PRIORITY);
-        builder.setPriorityGroup(TEST_PRIORITY_GROUP);
         builder.setIsAppInteractionRequired(true);
         builder.setIsUserInteractionRequired(true);
         builder.setIsMetered(true);
@@ -550,6 +550,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
         builder.setUntrusted(false);
         if (BuildCompat.isAtLeastS()) {
             builder.setOemPaid(false);
+            builder.setSubscriptionId(TEST_SUB_ID);
+            builder.setPriorityGroup(TEST_PRIORITY_GROUP);
         }
         return builder;
     }
@@ -576,8 +578,9 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
         assertFalse(suggestion.isUntrusted());
         if (BuildCompat.isAtLeastS()) {
             assertFalse(suggestion.isOemPaid());
+            assertEquals(TEST_PRIORITY_GROUP, suggestion.getPriorityGroup());
+            assertEquals(TEST_SUB_ID, suggestion.getSubscriptionId());
         }
-        assertEquals(TEST_PRIORITY_GROUP, suggestion.getPriorityGroup());
     }
 
     /**
