@@ -38,7 +38,7 @@ class WorkDir {
         android.os.Bundle bundle = InstrumentationRegistry.getArguments();
         String mediaDirString = bundle.getString(MEDIA_PATH_INSTR_ARG_KEY);
         if (mediaDirString == null) {
-            return (getTopDirString() + "test/CtsMediaTestCases-1.1/");
+            return (getTopDirString() + "test/CtsMediaTestCases-1.2/");
         } else if (!mediaDirString.endsWith(File.separator)) {
             // user has specified the mediaDirString via instrumentation-arg
             return mediaDirString + File.separator;
