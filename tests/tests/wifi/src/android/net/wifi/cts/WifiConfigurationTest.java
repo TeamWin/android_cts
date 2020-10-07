@@ -16,13 +16,23 @@
 
 package android.net.wifi.cts;
 
-import java.util.List;
+import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_EAP;
+import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_EAP_SUITE_B;
+import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_OPEN;
+import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_OWE;
+import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_PSK;
+import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_SAE;
+import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_WAPI_CERT;
+import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_WAPI_PSK;
 
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
+
+import androidx.test.filters.SdkSuppress;
+
+import java.util.List;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 public class WifiConfigurationTest extends WifiJUnit3TestBase {
@@ -46,6 +56,70 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
                 assertNotNull(wifiConfiguration);
                 assertNotNull(wifiConfiguration.toString());
             }
+        }
+    }
+
+    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
+    // Build.VERSION_CODES.S
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testGetAuthType() throws Exception {
+        WifiConfiguration configuration = new WifiConfiguration();
+
+        configuration.setSecurityParams(SECURITY_TYPE_PSK);
+        assertEquals(WifiConfiguration.KeyMgmt.WPA_PSK, configuration.getAuthType());
+
+        configuration.setSecurityParams(SECURITY_TYPE_SAE);
+        assertEquals(WifiConfiguration.KeyMgmt.SAE, configuration.getAuthType());
+
+        configuration.setSecurityParams(SECURITY_TYPE_WAPI_PSK);
+        assertEquals(WifiConfiguration.KeyMgmt.WAPI_PSK, configuration.getAuthType());
+
+        configuration.setSecurityParams(SECURITY_TYPE_OPEN);
+        assertEquals(WifiConfiguration.KeyMgmt.NONE, configuration.getAuthType());
+
+        configuration.setSecurityParams(SECURITY_TYPE_OWE);
+        assertEquals(WifiConfiguration.KeyMgmt.OWE, configuration.getAuthType());
+
+        configuration.setSecurityParams(SECURITY_TYPE_EAP);
+        assertEquals(WifiConfiguration.KeyMgmt.WPA_EAP, configuration.getAuthType());
+
+        configuration.setSecurityParams(SECURITY_TYPE_EAP_SUITE_B);
+        assertEquals(WifiConfiguration.KeyMgmt.SUITE_B_192, configuration.getAuthType());
+
+        configuration.setSecurityParams(SECURITY_TYPE_WAPI_CERT);
+        assertEquals(WifiConfiguration.KeyMgmt.WAPI_CERT, configuration.getAuthType());
+    }
+
+    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
+    // Build.VERSION_CODES.S
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testGetAuthTypeFailurePsk8021X() throws Exception {
+        WifiConfiguration configuration = new WifiConfiguration();
+
+        configuration.setSecurityParams(SECURITY_TYPE_PSK);
+        configuration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.IEEE8021X);
+        try {
+            configuration.getAuthType();
+            fail("Expected IllegalStateException exception");
+        } catch(IllegalStateException e) {
+            // empty
+        }
+    }
+
+    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
+    // Build.VERSION_CODES.S
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testGetAuthTypeFailure8021xEapSae() throws Exception {
+        WifiConfiguration configuration = new WifiConfiguration();
+
+        configuration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.IEEE8021X);
+        configuration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_EAP);
+        configuration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.SAE);
+        try {
+            configuration.getAuthType();
+            fail("Expected IllegalStateException exception");
+        } catch(IllegalStateException e) {
+            // empty
         }
     }
 }
