@@ -39,13 +39,14 @@ import android.media.MediaDrm;
 import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.media.cts.R;
 import android.opengl.GLES20;
 import android.os.Build;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
@@ -61,6 +62,7 @@ import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.BufferedInputStream;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -87,10 +89,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Presubmit
 @SmallTest
 @RequiresDevice
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 public class MediaCodecTest extends AndroidTestCase {
     private static final String TAG = "MediaCodecTest";
     private static final boolean VERBOSE = false;           // lots of logging
 
+    static final String mInpPrefix = WorkDir.getMediaDirString();
     // parameters for the video encoder
                                                             // H.264 Advanced Video Coding
     private static final String MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
@@ -113,8 +117,8 @@ public class MediaCodecTest extends AndroidTestCase {
     private boolean mAudioEncoderHadError = false;
     private volatile boolean mVideoEncodingOngoing = false;
 
-    private static final int INPUT_RESOURCE_ID =
-            R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
+    private static final String INPUT_RESOURCE =
+            "video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4";
 
     // The test should fail if the decoder never produces output frames for the input.
     // Time out decoding, as we have no way to query whether the decoder will produce output.
@@ -733,7 +737,7 @@ public class MediaCodecTest extends AndroidTestCase {
             throws Exception, InterruptedException {
         String mimeTypePrefix  = audio ? "audio/" : "video/";
         final MediaExtractor mediaExtractor = getMediaExtractorForMimeType(
-                INPUT_RESOURCE_ID, mimeTypePrefix);
+                INPUT_RESOURCE, mimeTypePrefix);
         MediaFormat mediaFormat = mediaExtractor.getTrackFormat(
                 mediaExtractor.getSampleTrackIndex());
         if (!MediaUtils.checkDecoderForFormat(mediaFormat)) {
@@ -1184,7 +1188,7 @@ public class MediaCodecTest extends AndroidTestCase {
                     if (!audio) {
                         outputSurface = new OutputSurface(1, 1);
                     }
-                    mediaExtractor = getMediaExtractorForMimeType(INPUT_RESOURCE_ID, mimeTypePrefix);
+                    mediaExtractor = getMediaExtractorForMimeType(INPUT_RESOURCE, mimeTypePrefix);
                     MediaFormat mediaFormat =
                             mediaExtractor.getTrackFormat(mediaExtractor.getSampleTrackIndex());
                     if (!MediaUtils.checkDecoderForFormat(mediaFormat)) {
@@ -1349,8 +1353,8 @@ public class MediaCodecTest extends AndroidTestCase {
     public void testDecodeShortInput() throws InterruptedException {
         // Input buffers from this input video are queued up to and including the video frame with
         // timestamp LAST_BUFFER_TIMESTAMP_US.
-        final int INPUT_RESOURCE_ID =
-                R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
+        final String INPUT_RESOURCE =
+                "video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz.mp4";
         final long LAST_BUFFER_TIMESTAMP_US = 166666;
 
         // The test should fail if the decoder never produces output frames for the truncated input.
@@ -1361,7 +1365,7 @@ public class MediaCodecTest extends AndroidTestCase {
         Thread videoDecodingThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                completed.set(runDecodeShortInput(INPUT_RESOURCE_ID, LAST_BUFFER_TIMESTAMP_US));
+                completed.set(runDecodeShortInput(INPUT_RESOURCE, LAST_BUFFER_TIMESTAMP_US));
             }
         });
         videoDecodingThread.start();
@@ -1371,7 +1375,7 @@ public class MediaCodecTest extends AndroidTestCase {
         }
     }
 
-    private boolean runDecodeShortInput(int inputResourceId, long lastBufferTimestampUs) {
+    private boolean runDecodeShortInput(final String inputResource, long lastBufferTimestampUs) {
         final int NO_BUFFER_INDEX = -1;
 
         OutputSurface outputSurface = null;
@@ -1379,7 +1383,7 @@ public class MediaCodecTest extends AndroidTestCase {
         MediaCodec mediaCodec = null;
         try {
             outputSurface = new OutputSurface(1, 1);
-            mediaExtractor = getMediaExtractorForMimeType(inputResourceId, "video/");
+            mediaExtractor = getMediaExtractorForMimeType(inputResource, "video/");
             MediaFormat mediaFormat =
                     mediaExtractor.getTrackFormat(mediaExtractor.getSampleTrackIndex());
             String mimeType = mediaFormat.getString(MediaFormat.KEY_MIME);
@@ -1854,10 +1858,13 @@ public class MediaCodecTest extends AndroidTestCase {
         return 0;   // not reached
     }
 
-    private MediaExtractor getMediaExtractorForMimeType(int resourceId, String mimeTypePrefix)
-            throws IOException {
+    private MediaExtractor getMediaExtractorForMimeType(final String resource,
+            String mimeTypePrefix) throws IOException {
         MediaExtractor mediaExtractor = new MediaExtractor();
-        AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(resourceId);
+        File inpFile = new File(mInpPrefix + resource);
+        ParcelFileDescriptor parcelFD =
+                ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
+        AssetFileDescriptor afd = new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
         try {
             mediaExtractor.setDataSource(
                     afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
@@ -2503,7 +2510,7 @@ public class MediaCodecTest extends AndroidTestCase {
 
     public void testAsyncRelease() throws Exception {
         OutputSurface outputSurface = new OutputSurface(1, 1);
-        MediaExtractor mediaExtractor = getMediaExtractorForMimeType(INPUT_RESOURCE_ID, "video/");
+        MediaExtractor mediaExtractor = getMediaExtractorForMimeType(INPUT_RESOURCE, "video/");
         MediaFormat mediaFormat =
                 mediaExtractor.getTrackFormat(mediaExtractor.getSampleTrackIndex());
         String mimeType = mediaFormat.getString(MediaFormat.KEY_MIME);
@@ -2683,7 +2690,7 @@ public class MediaCodecTest extends AndroidTestCase {
         try {
             MediaFormat newFormat = null;
             extractor = getMediaExtractorForMimeType(
-                    R.raw.noise_2ch_48khz_aot29_dr_sbr_sig2_mp4, "audio/");
+                    "noise_2ch_48khz_aot29_dr_sbr_sig2_mp4.m4a", "audio/");
             int trackIndex = extractor.getSampleTrackIndex();
             MediaFormat format = extractor.getTrackFormat(trackIndex);
             codec = createCodecByType(
