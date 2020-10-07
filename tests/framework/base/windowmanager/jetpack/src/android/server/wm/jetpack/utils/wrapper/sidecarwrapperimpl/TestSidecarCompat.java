@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.wrapper.sidecarwrapperimpl;
+package android.server.wm.jetpack.utils.wrapper.sidecarwrapperimpl;
 
 import android.os.IBinder;
-import android.server.wm.jetpack.wrapper.TestDeviceState;
-import android.server.wm.jetpack.wrapper.TestInterfaceCompat;
-import android.server.wm.jetpack.wrapper.TestWindowLayoutInfo;
+import android.server.wm.jetpack.utils.wrapper.TestDeviceState;
+import android.server.wm.jetpack.utils.wrapper.TestInterfaceCompat;
+import android.server.wm.jetpack.utils.wrapper.TestWindowLayoutInfo;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
