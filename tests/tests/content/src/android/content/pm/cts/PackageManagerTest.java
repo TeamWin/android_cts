@@ -161,7 +161,7 @@ public class PackageManagerTest {
         // Test queryIntentServices
         Intent serviceIntent = new Intent(SERVICE_ACTION_NAME);
         List<ResolveInfo> services = mPackageManager.queryIntentServices(serviceIntent,
-                PackageManager.GET_INTENT_FILTERS);
+                0 /*flags*/);
         checkServiceInfoName(SERVICE_NAME, services);
 
         // Test queryBroadcastReceivers
@@ -569,8 +569,7 @@ public class PackageManagerTest {
         // Test resolveService
         intent = new Intent(SERVICE_ACTION_NAME);
         intent.setComponent(new ComponentName(PACKAGE_NAME, SERVICE_NAME));
-        ResolveInfo resolveInfo = mPackageManager.resolveService(intent,
-                PackageManager.GET_INTENT_FILTERS);
+        ResolveInfo resolveInfo = mPackageManager.resolveService(intent, 0 /*flags*/);
         assertEquals(SERVICE_NAME, resolveInfo.serviceInfo.name);
 
         // Test resolveContentProvider
