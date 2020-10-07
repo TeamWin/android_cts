@@ -33,6 +33,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.net.Uri;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.util.Range;
 
@@ -40,6 +41,7 @@ import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -800,10 +802,13 @@ public class MediaUtils {
     }
 
     public static MediaExtractor createMediaExtractorForMimeType(
-            Context context, int resourceId, String mimeTypePrefix)
+            Context context, String resource, String mimeTypePrefix)
             throws IOException {
         MediaExtractor extractor = new MediaExtractor();
-        AssetFileDescriptor afd = context.getResources().openRawResourceFd(resourceId);
+        File inpFile = new File(resource);
+        ParcelFileDescriptor parcelFD =
+                ParcelFileDescriptor.open(inpFile, ParcelFileDescriptor.MODE_READ_ONLY);
+        AssetFileDescriptor afd = new AssetFileDescriptor(parcelFD, 0, parcelFD.getStatSize());
         try {
             extractor.setDataSource(
                     afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
