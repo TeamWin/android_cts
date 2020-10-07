@@ -1490,18 +1490,18 @@ public abstract class ActivityManagerTestBase {
     protected class RotationSession extends SettingsSession<Integer> {
         private final String SET_FIX_TO_USER_ROTATION_COMMAND =
                 "cmd window set-fix-to-user-rotation ";
-        private final SettingsSession<Integer> mUserRotation;
+        private final SettingsSession<Integer> mAccelerometerRotation;
         private final HandlerThread mThread;
         private final Handler mRunnableHandler;
         private final SettingsObserver mRotationObserver;
         private int mPreviousDegree;
 
         public RotationSession() {
-            // Save accelerometer_rotation preference.
-            super(Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION),
+            // Save user_rotation and accelerometer_rotation preferences.
+            super(Settings.System.getUriFor(Settings.System.USER_ROTATION),
                     Settings.System::getInt, Settings.System::putInt);
-            mUserRotation = new SettingsSession<>(
-                    Settings.System.getUriFor(Settings.System.USER_ROTATION),
+            mAccelerometerRotation = new SettingsSession<>(
+                    Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION),
                     Settings.System::getInt, Settings.System::putInt);
 
             mThread = new HandlerThread("Observer_Thread");
@@ -1512,9 +1512,9 @@ public abstract class ActivityManagerTestBase {
             // Disable fixed to user rotation
             executeShellCommand(SET_FIX_TO_USER_ROTATION_COMMAND + "disabled");
 
-            mPreviousDegree = mUserRotation.get();
+            mPreviousDegree = get();
             // Disable accelerometer_rotation.
-            super.set(0);
+            mAccelerometerRotation.set(0);
         }
 
         @Override
@@ -1541,7 +1541,7 @@ public abstract class ActivityManagerTestBase {
             if (observeRotationSettings) {
                 mRotationObserver.observe();
             }
-            mUserRotation.set(value);
+            super.set(value);
             mPreviousDegree = value;
 
             if (waitSystemUI) {
@@ -1570,9 +1570,9 @@ public abstract class ActivityManagerTestBase {
             // Disable fixed to user rotation
             executeShellCommand(SET_FIX_TO_USER_ROTATION_COMMAND + "default");
             mThread.quitSafely();
-            mUserRotation.close();
-            // Restore accelerometer_rotation preference.
             super.close();
+            // Restore accelerometer_rotation preference.
+            mAccelerometerRotation.close();
         }
 
         private class SettingsObserver extends ContentObserver {
