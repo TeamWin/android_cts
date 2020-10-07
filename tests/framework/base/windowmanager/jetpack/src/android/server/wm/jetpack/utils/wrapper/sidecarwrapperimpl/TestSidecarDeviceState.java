@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.wrapper.sidecarwrapperimpl;
+package android.server.wm.jetpack.utils.wrapper.sidecarwrapperimpl;
 
-import android.server.wm.jetpack.wrapper.TestDeviceState;
+import android.server.wm.jetpack.utils.wrapper.TestDeviceState;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
