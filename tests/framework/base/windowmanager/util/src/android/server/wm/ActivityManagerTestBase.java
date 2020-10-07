@@ -1551,7 +1551,7 @@ public abstract class ActivityManagerTestBase {
 
         @Override
         public void close() {
-            // Disable fixed to user rotation
+            // Set fixed to user rotation to default
             executeShellCommand(SET_FIX_TO_USER_ROTATION_COMMAND + "default");
             mThread.quitSafely();
             super.close();

@@ -705,7 +705,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
 
-        // Rotate the activity and check that the orientation doesn't change
+        // Rotate the display and check that the orientation doesn't change
         rotationSession.set(ROTATION_0);
         final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
         for (final int rotation : rotations) {
