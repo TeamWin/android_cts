@@ -26,12 +26,14 @@ android_test {
         "androidx.test.rules",
         "ctsdeviceutillegacy-axt",
         "ctstestrunner-axt",
+        "platform-test-annotations",
     ],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts",
         "general-tests",
+        "sts",
     ],
     srcs: ["src/**/*.java"],
     resource_dirs: ["res"],
