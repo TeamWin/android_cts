@@ -28,7 +28,9 @@ import android.telephony.cts.externalimsservice.ITestExternalImsService;
 import android.telephony.cts.externalimsservice.TestExternalImsService;
 import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -113,6 +115,7 @@ class ImsServiceConnector {
         private String mOrigSmsPackage;
         private int mConnectionType;
         private int mSlotId;
+        private SparseArray<String> mFeatureTypeToPackageOverrideMap = new SparseArray<>(2);
         Connection(int connectionType, int slotId) {
             mConnectionType = connectionType;
             mSlotId = slotId;
@@ -183,16 +186,49 @@ class ImsServiceConnector {
             }
         }
 
-        private void storeOriginalPackage() throws Exception {
+        /**
+         * @return true if the configuration set here still exists in telephony or false if it was
+         * changed (due to something like a Phone process crash).
+         */
+        boolean checkConfigurationExists() throws Exception {
+            boolean result = true;
+            String mmTelPackage = mFeatureTypeToPackageOverrideMap.get(ImsFeature.FEATURE_MMTEL);
+            String rcsPackage = mFeatureTypeToPackageOverrideMap.get(ImsFeature.FEATURE_RCS);
             switch (mConnectionType) {
                 case CONNECTION_TYPE_IMS_SERVICE_CARRIER: {
-                    mOrigMmTelServicePackage = getOriginalMmTelCarrierService();
-                    mOrigRcsServicePackage = getOriginalRcsCarrierService();
+                    result &= isPackageTheSame(mmTelPackage, getMmTelCarrierService());
+                    result &= isPackageTheSame(rcsPackage, getRcsCarrierService());
                     break;
                 }
                 case CONNECTION_TYPE_IMS_SERVICE_DEVICE: {
-                    mOrigMmTelServicePackage = getOriginalMmTelDeviceService();
-                    mOrigRcsServicePackage = getOriginalRcsDeviceService();
+                    result &= isPackageTheSame(mmTelPackage, getMmTelDeviceService());
+                    result &= isPackageTheSame(rcsPackage, getRcsDeviceService());
+                    break;
+                }
+                case CONNECTION_TYPE_DEFAULT_SMS_APP: {
+                    break;
+                }
+            }
+            return result;
+        }
+
+        private boolean isPackageTheSame(String pkgA, String pkgB) {
+            if (TextUtils.isEmpty(pkgA) && TextUtils.isEmpty(pkgB)) {
+                return true;
+            }
+            return TextUtils.equals(pkgA, pkgB);
+        }
+
+        private void storeOriginalPackage() throws Exception {
+            switch (mConnectionType) {
+                case CONNECTION_TYPE_IMS_SERVICE_CARRIER: {
+                    mOrigMmTelServicePackage = getMmTelCarrierService();
+                    mOrigRcsServicePackage = getRcsCarrierService();
+                    break;
+                }
+                case CONNECTION_TYPE_IMS_SERVICE_DEVICE: {
+                    mOrigMmTelServicePackage = getMmTelDeviceService();
+                    mOrigRcsServicePackage = getRcsDeviceService();
                     break;
                 }
                 case CONNECTION_TYPE_DEFAULT_SMS_APP: {
@@ -203,6 +239,8 @@ class ImsServiceConnector {
         }
 
         private boolean setDeviceImsService(String packageName) throws Exception {
+            mFeatureTypeToPackageOverrideMap.put(ImsFeature.FEATURE_MMTEL, packageName);
+            mFeatureTypeToPackageOverrideMap.put(ImsFeature.FEATURE_RCS, packageName);
             String result = TelephonyUtils.executeShellCommand(mInstrumentation,
                     constructSetImsServiceOverrideCommand(false, packageName, new int[] {
                             ImsFeature.FEATURE_MMTEL, ImsFeature.FEATURE_RCS}));
@@ -213,6 +251,8 @@ class ImsServiceConnector {
         }
 
         private boolean setCarrierImsService(String packageName) throws Exception {
+            mFeatureTypeToPackageOverrideMap.put(ImsFeature.FEATURE_MMTEL, packageName);
+            mFeatureTypeToPackageOverrideMap.put(ImsFeature.FEATURE_RCS, packageName);
             String result = TelephonyUtils.executeShellCommand(mInstrumentation,
                     constructSetImsServiceOverrideCommand(true, packageName, new int[] {
                             ImsFeature.FEATURE_MMTEL, ImsFeature.FEATURE_RCS}));
@@ -223,6 +263,7 @@ class ImsServiceConnector {
         }
 
         private boolean setDeviceImsService(String packageName, int featureType) throws Exception {
+            mFeatureTypeToPackageOverrideMap.put(featureType, packageName);
             String result = TelephonyUtils.executeShellCommand(mInstrumentation,
                     constructSetImsServiceOverrideCommand(false, packageName,
                             new int[]{featureType}));
@@ -233,6 +274,7 @@ class ImsServiceConnector {
         }
 
         private boolean setCarrierImsService(String packageName, int featureType) throws Exception {
+            mFeatureTypeToPackageOverrideMap.put(featureType, packageName);
             String result = TelephonyUtils.executeShellCommand(mInstrumentation,
                     constructSetImsServiceOverrideCommand(true, packageName,
                             new int[]{featureType}));
@@ -284,38 +326,38 @@ class ImsServiceConnector {
                     TestImsService.LATCH_FEATURES_READY);
         }
 
-        private String getOriginalMmTelCarrierService() throws Exception {
+        private String getMmTelCarrierService() throws Exception {
             String result = TelephonyUtils.executeShellCommand(mInstrumentation,
                     constructGetImsServiceCommand(true, ImsFeature.FEATURE_MMTEL));
             if (ImsUtils.VDBG) {
-                Log.d(TAG, "getOriginalMmTelCarrierService result: " + result);
+                Log.d(TAG, "getMmTelCarrierService result: " + result);
             }
             return result;
         }
 
-        private String getOriginalRcsCarrierService() throws Exception {
+        private String getRcsCarrierService() throws Exception {
             String result = TelephonyUtils.executeShellCommand(mInstrumentation,
                     constructGetImsServiceCommand(true, ImsFeature.FEATURE_RCS));
             if (ImsUtils.VDBG) {
-                Log.d(TAG, "getOriginalRcsCarrierService result: " + result);
+                Log.d(TAG, "getRcsCarrierService result: " + result);
             }
             return result;
         }
 
-        private String getOriginalMmTelDeviceService() throws Exception {
+        private String getMmTelDeviceService() throws Exception {
             String result = TelephonyUtils.executeShellCommand(mInstrumentation,
                     constructGetImsServiceCommand(false, ImsFeature.FEATURE_MMTEL));
             if (ImsUtils.VDBG) {
-                Log.d(TAG, "getOriginalMmTelDeviceService result: " + result);
+                Log.d(TAG, "getMmTelDeviceService result: " + result);
             }
             return result;
         }
 
-        private String getOriginalRcsDeviceService() throws Exception {
+        private String getRcsDeviceService() throws Exception {
             String result = TelephonyUtils.executeShellCommand(mInstrumentation,
                     constructGetImsServiceCommand(false, ImsFeature.FEATURE_RCS));
             if (ImsUtils.VDBG) {
-                Log.d(TAG, "getOriginalRcsDeviceService result: " + result);
+                Log.d(TAG, "getRcsDeviceService result: " + result);
             }
             return result;
         }
@@ -389,6 +431,17 @@ class ImsServiceConnector {
         return mCarrierServiceConnection.overrideService(config);
     }
 
+    boolean connectCarrierImsServiceNullRcsBinding(ImsFeatureConfiguration config)
+            throws Exception {
+        if (!setupLocalCarrierImsService()) {
+            Log.w(TAG, "connectCarrierImsService: couldn't set up service.");
+            return false;
+        }
+        mCarrierService.resetState();
+        mCarrierService.setNullRcsBinding();
+        return mCarrierServiceConnection.overrideService(config);
+    }
+
     boolean connectDeviceImsService(ImsFeatureConfiguration config) throws Exception {
         if (!setupExternalImsService()) {
             Log.w(TAG, "connectDeviceImsService: couldn't set up service.");
@@ -408,6 +461,10 @@ class ImsServiceConnector {
 
     void disconnectDeviceImsService() throws Exception {
         mDeviceServiceConnection.clearPackage();
+    }
+
+    boolean isCarrierServiceStillConfigured() throws Exception {
+        return mCarrierServiceConnection.checkConfigurationExists();
     }
 
     private boolean setupLocalCarrierImsService() {
