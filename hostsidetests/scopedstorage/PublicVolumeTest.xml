@@ -22,6 +22,7 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="class" value="android.scopedstorage.cts.host.PublicVolumeHostTest" />
+        <option name="class" value="android.scopedstorage.cts.host.PublicVolumeCoreHostTest" />
         <option name="class" value="android.scopedstorage.cts.host.PublicVolumeLegacyHostTest" />
     </test>
 

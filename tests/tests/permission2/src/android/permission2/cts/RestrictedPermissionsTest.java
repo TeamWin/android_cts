@@ -26,6 +26,7 @@ import static com.android.compatibility.common.util.SystemUtil.eventually;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
 
@@ -490,7 +491,7 @@ public class RestrictedPermissionsTest {
     private void assertRestrictedPermissionWhitelisted(
             @NonNull Set<String> expectedWhitelistedPermissions) throws Exception {
         final PackageManager packageManager = getContext().getPackageManager();
-    eventually(() -> runWithShellPermissionIdentity(() -> {
+        eventually(() -> runWithShellPermissionIdentity(() -> {
             final AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
             final PackageInfo packageInfo = packageManager.getPackageInfo(PKG,
                     PackageManager.GET_PERMISSIONS);
@@ -502,7 +503,7 @@ public class RestrictedPermissionsTest {
                         | PackageManager.FLAG_PERMISSION_WHITELIST_UPGRADE);
 
             assertThat(whitelistedPermissions).isNotNull();
-            assertThat(whitelistedPermissions).named("Whitelisted permissions")
+            assertWithMessage("Whitelisted permissions").that(whitelistedPermissions)
                     .containsExactlyElementsIn(expectedWhitelistedPermissions);
 
             // Also assert that apps ops are properly set
@@ -540,8 +541,8 @@ public class RestrictedPermissionsTest {
                     }
                 }
 
-                assertThat(appOpsManager.unsafeCheckOpRawNoThrow(op,
-                        packageInfo.applicationInfo.uid, PKG)).named(op).isIn(possibleModes);
+                assertWithMessage(op).that(appOpsManager.unsafeCheckOpRawNoThrow(op,
+                        packageInfo.applicationInfo.uid, PKG)).isIn(possibleModes);
             }
         }));
     }

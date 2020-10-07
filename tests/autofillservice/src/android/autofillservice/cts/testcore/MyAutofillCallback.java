@@ -112,7 +112,7 @@ public final class MyAutofillCallback extends AutofillCallback {
         assertWithMessage("Invalid type on event %s", event).that(event.event)
                 .isEqualTo(EVENT_INPUT_SHOWN);
         assertWithMessage("Invalid view on event %s", event).that(event.view)
-            .isSameAs(expectedView);
+            .isSameInstanceAs(expectedView);
         return event;
     }
 
@@ -144,7 +144,7 @@ public final class MyAutofillCallback extends AutofillCallback {
         assertWithMessage("Invalid type on event %s", event).that(event.event)
                 .isEqualTo(EVENT_INPUT_HIDDEN);
         assertWithMessage("Invalid view on event %s", event).that(event.view)
-                .isSameAs(expectedView);
+                .isSameInstanceAs(expectedView);
         return event;
     }
 
@@ -166,7 +166,7 @@ public final class MyAutofillCallback extends AutofillCallback {
         assertWithMessage("Invalid type on event %s", event).that(event.event)
                 .isEqualTo(EVENT_INPUT_UNAVAILABLE);
         assertWithMessage("Invalid view on event %s", event).that(event.view)
-                .isSameAs(expectedView);
+                .isSameInstanceAs(expectedView);
         return event;
     }
 

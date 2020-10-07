@@ -514,7 +514,7 @@ public abstract class ActivityManagerTestBase {
         pressWakeupButton();
         pressUnlockButton();
         launchHomeActivityNoWait();
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+        removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
             // TaskOrganizer ctor requires MANAGE_ACTIVITY_TASKS permission
@@ -532,10 +532,11 @@ public abstract class ActivityManagerTestBase {
         if (mTaskOrganizer != null) {
             SystemUtil.runWithShellPermissionIdentity(mTaskOrganizer::unregisterOrganizerIfNeeded);
         }
-        // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
-        // home are cleaned up from the stack at the end of each test. Am force stop shell commands
-        // might be asynchronous and could interrupt the stack cleanup process if executed first.
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+        // Synchronous execution of removeRootTasksWithActivityTypes() ensures that all
+        // activities but home are cleaned up from the root task at the end of each test. Am force
+        // stop shell commands might be asynchronous and could interrupt the task cleanup
+        // process if executed first.
+        removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         stopTestPackage(TEST_PACKAGE);
         stopTestPackage(SECOND_TEST_PACKAGE);
         stopTestPackage(THIRD_TEST_PACKAGE);
@@ -551,9 +552,9 @@ public abstract class ActivityManagerTestBase {
         SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
     }
 
-    protected void moveTopActivityToPinnedStack(int stackId) {
+    protected void moveTopActivityToPinnedRootTask(int rootTaskId) {
         SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.moveTopActivityToPinnedStack(stackId, new Rect(0, 0, 500, 500))
+                () -> mAtm.moveTopActivityToPinnedRootTask(rootTaskId, new Rect(0, 0, 500, 500))
         );
     }
 
@@ -699,15 +700,15 @@ public abstract class ActivityManagerTestBase {
         getInstrumentation().getUiAutomation().injectInputEvent(upEvent, sync);
     }
 
-    protected void removeStacksWithActivityTypes(int... activityTypes) {
+    protected void removeRootTasksWithActivityTypes(int... activityTypes) {
         SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.removeStacksWithActivityTypes(activityTypes));
+                () -> mAtm.removeRootTasksWithActivityTypes(activityTypes));
         waitForIdle();
     }
 
-    protected void removeStacksInWindowingModes(int... windowingModes) {
+    protected void removeRootTasksInWindowingModes(int... windowingModes) {
         SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.removeStacksInWindowingModes(windowingModes)
+                () -> mAtm.removeRootTasksInWindowingModes(windowingModes)
         );
         waitForIdle();
     }
@@ -945,10 +946,13 @@ public abstract class ActivityManagerTestBase {
         return result[0];
     }
 
-    /** Move activity to stack or on top of the given stack when the stack is a leak task. */
-    protected void moveActivityToStackOrOnTop(ComponentName activityName, int stackId) {
+    /**
+     * Move activity to root task or on top of the given root task when the root task is also a leaf
+     * task.
+     */
+    protected void moveActivityToRootTaskOrOnTop(ComponentName activityName, int rootTaskId) {
         mWmState.computeState(activityName);
-        WindowManagerState.ActivityTask rootTask = getRootTask(stackId);
+        WindowManagerState.ActivityTask rootTask = getRootTask(rootTaskId);
         if (rootTask.getActivities().size() != 0) {
             // If the root task is a 1-level task, start the activity on top of given task.
             getLaunchActivityBuilder()
@@ -962,10 +966,10 @@ public abstract class ActivityManagerTestBase {
         } else {
             final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
             SystemUtil.runWithShellPermissionIdentity(
-                    () -> mAtm.moveTaskToStack(taskId, stackId, true));
+                    () -> mAtm.moveTaskToRootTask(taskId, rootTaskId, true));
         }
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
-                .setStackId(stackId)
+                .setStackId(rootTaskId)
                 .build());
     }
 
@@ -977,10 +981,10 @@ public abstract class ActivityManagerTestBase {
                 () -> mAtm.resizeTask(taskId, new Rect(left, top, right, bottom)));
     }
 
-    protected void resizeDockedStack(
-            int stackWidth, int stackHeight, int taskWidth, int taskHeight) {
+    protected void resizePrimarySplitScreen(
+            int rootTaskWidth, int rootTaskHeight, int taskWidth, int taskHeight) {
         SystemUtil.runWithShellPermissionIdentity(() ->
-                mAtm.resizeDockedStack(new Rect(0, 0, stackWidth, stackHeight),
+                mAtm.resizePrimarySplitScreen(new Rect(0, 0, rootTaskWidth, rootTaskHeight),
                         new Rect(0, 0, taskWidth, taskHeight)));
     }
 
@@ -1062,12 +1066,13 @@ public abstract class ActivityManagerTestBase {
         mWmState.assertFocusedActivity(message, activityName);
         assertTrue("Activity must be resumed",
                 mWmState.hasActivityState(activityName, STATE_RESUMED));
-        final int frontStackId = mWmState.getFrontRootTaskId(displayId);
-        WindowManagerState.ActivityTask frontStackOnDisplay =
-                mWmState.getRootTask(frontStackId);
-        assertEquals("Resumed activity of front stack of the target display must match. " + message,
-                activityClassName, frontStackOnDisplay.mResumedActivity);
-        mWmState.assertFocusedStack("Top activity's stack must also be on top", frontStackId);
+        final int frontRootTaskId = mWmState.getFrontRootTaskId(displayId);
+        WindowManagerState.ActivityTask frontRootTaskOnDisplay =
+                mWmState.getRootTask(frontRootTaskId);
+        assertEquals(
+                "Resumed activity of front root task of the target display must match. " + message,
+                activityClassName, frontRootTaskOnDisplay.mResumedActivity);
+        mWmState.assertFocusedStack("Top activity's rootTask must also be on top", frontRootTaskId);
         mWmState.assertVisibility(activityName, true /* visible */);
     }
 
@@ -1436,7 +1441,7 @@ public abstract class ActivityManagerTestBase {
         @Override
         public void close() {
             if (mRemoveActivitiesOnClose) {
-                removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+                removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
             }
 
             setLockDisabled(mIsLockDisabled);
@@ -1483,6 +1488,8 @@ public abstract class ActivityManagerTestBase {
 
     /** Helper class to save, set & wait, and restore rotation related preferences. */
     protected class RotationSession extends SettingsSession<Integer> {
+        private final String SET_FIX_TO_USER_ROTATION_COMMAND =
+                "cmd window set-fix-to-user-rotation ";
         private final SettingsSession<Integer> mUserRotation;
         private final HandlerThread mThread;
         private final Handler mRunnableHandler;
@@ -1501,6 +1508,9 @@ public abstract class ActivityManagerTestBase {
             mThread.start();
             mRunnableHandler = new Handler(mThread.getLooper());
             mRotationObserver = new SettingsObserver(mRunnableHandler);
+
+            // Disable fixed to user rotation
+            executeShellCommand(SET_FIX_TO_USER_ROTATION_COMMAND + "disabled");
 
             mPreviousDegree = mUserRotation.get();
             // Disable accelerometer_rotation.
@@ -1557,6 +1567,8 @@ public abstract class ActivityManagerTestBase {
 
         @Override
         public void close() {
+            // Disable fixed to user rotation
+            executeShellCommand(SET_FIX_TO_USER_ROTATION_COMMAND + "default");
             mThread.quitSafely();
             mUserRotation.close();
             // Restore accelerometer_rotation preference.

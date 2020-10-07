@@ -991,7 +991,8 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // Trigger autofill.
         if (manualRequest) {
-            mActivity.getAutofillManager().requestAutofill(mActivity.mInput);
+            mActivity.syncRunOnUiThread(
+                    () -> mActivity.getAutofillManager().requestAutofill(mActivity.mInput));
         } else {
             mActivity.syncRunOnUiThread(() -> mActivity.mPassword.requestFocus());
         }
@@ -1127,8 +1128,9 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
             throws Exception {
         // Prepare activity.
         startActivity();
-        mActivity.mInput.getRootView()
-                .setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.getRootView()
+                .setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS)
+        );
 
         // Set service.
         enableService();
@@ -1142,7 +1144,8 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
                 .build());
 
         // Trigger autofill.
-        mActivity.getAutofillManager().requestAutofill(mActivity.mInput);
+        mActivity.syncRunOnUiThread(
+                () -> mActivity.getAutofillManager().requestAutofill(mActivity.mInput));
         sReplier.getNextFillRequest();
 
         // Trigger save.
@@ -1171,8 +1174,12 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_PASSWORD)
                 .build());
-        mActivity.getAutofillManager().requestAutofill(mActivity.mPassword);
+
+        // Trigger autofill on password
+        mActivity.syncRunOnUiThread(
+                () -> mActivity.getAutofillManager().requestAutofill(mActivity.mPassword));
         sReplier.getNextFillRequest();
+
         mActivity.syncRunOnUiThread(() -> {
             mActivity.mPassword.setText("42");
             mActivity.mCommit.performClick();

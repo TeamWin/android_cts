@@ -43,7 +43,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
-import android.server.wm.app.Components;
 import android.server.wm.intent.Activities;
 
 
@@ -64,7 +63,7 @@ public class StartActivityTests extends ActivityManagerTestBase {
         final int[] allActivityTypes = Arrays.copyOf(ALL_ACTIVITY_TYPE_BUT_HOME,
                 ALL_ACTIVITY_TYPE_BUT_HOME.length + 1);
         allActivityTypes[allActivityTypes.length - 1] = WindowConfiguration.ACTIVITY_TYPE_HOME;
-        removeStacksWithActivityTypes(allActivityTypes);
+        removeRootTasksWithActivityTypes(allActivityTypes);
 
         waitAndAssertTopResumedActivity(defaultHome, DEFAULT_DISPLAY,
                 "Home activity should be restarted after force-finish");

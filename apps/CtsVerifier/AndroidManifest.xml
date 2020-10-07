@@ -2210,6 +2210,7 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_sensors" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
         <activity
@@ -2263,6 +2264,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_sensors" />
             <meta-data android:name="test_applicable_features"
                        android:value="android.hardware.sensor.stepcounter:android.hardware.sensor.stepdetector:android.hardware.sensor.proximity:android.hardware.sensor.light" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
         <!-- TODO: enable when a more reliable way to identify time synchronization is available -->
@@ -2290,6 +2292,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_sensors"/>
             <meta-data android:name="test_excluded_features"
                     android:value="android.software.leanback" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
         <!-- End sensor tests definitions -->
 
@@ -3089,6 +3092,7 @@
                 android:value="@string/test_category_sensors" />
             <meta-data android:name="test_required_features"
                        android:value="android.hardware.sensor.stepcounter:android.hardware.sensor.stepdetector" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
         <activity
@@ -3103,6 +3107,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_sensors" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
         <service
@@ -3135,6 +3140,7 @@
                 android:value="@string/test_category_sensors" />
             <meta-data android:name="test_required_features"
                        android:value="android.hardware.sensor.accelerometer" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
         <activity
@@ -3158,6 +3164,7 @@
                 android:value="android.hardware.sensor.proximity:android.hardware.sensor.accelerometer">
             </meta-data>
 
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
         <!-- Set the HingeAngleTestActivity as not resizeable and with a max aspect ratio to prevent
@@ -3179,6 +3186,7 @@
                 android:value="@string/test_category_sensors" />
             <meta-data android:name="test_required_features"
                        android:value="android.hardware.sensor.hinge_angle" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
         <receiver android:name=".widget.WidgetCtsProvider"

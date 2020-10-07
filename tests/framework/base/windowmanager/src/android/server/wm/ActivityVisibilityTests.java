@@ -101,7 +101,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 LAUNCH_PIP_ON_PIP_ACTIVITY);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
-        moveTopActivityToPinnedStack(stackId);
+        moveTopActivityToPinnedRootTask(stackId);
         mWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_PINNED)
@@ -151,7 +151,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 ALWAYS_FOCUSABLE_PIP_ACTIVITY);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
-        moveTopActivityToPinnedStack(stackId);
+        moveTopActivityToPinnedRootTask(stackId);
         mWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_PINNED)
@@ -169,7 +169,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
             return;
         }
 
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+        removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         forceStopHome();
 
         assertEquals(mWmState.getResumedActivitiesCount(), 0);

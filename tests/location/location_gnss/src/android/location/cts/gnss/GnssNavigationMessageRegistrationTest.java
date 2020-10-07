@@ -95,6 +95,11 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
             return;
         }
 
+        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
+            return;
+        }
+
         // Register Gps Navigation Message Listener.
         mTestGnssNavigationMessageListener =
                 new TestGnssNavigationMessageListener(TAG, EVENTS_COUNT);

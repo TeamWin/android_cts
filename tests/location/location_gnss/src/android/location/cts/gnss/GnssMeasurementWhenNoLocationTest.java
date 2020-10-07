@@ -108,6 +108,11 @@ public class GnssMeasurementWhenNoLocationTest extends GnssTestCase {
             return;
         }
 
+        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
+            return;
+        }
+
         // Set the device in airplane mode so that the GPS assistance data cannot be downloaded.
         // This results in GNSS measurements being reported before a location is reported.
         // NOTE: Changing global setting airplane_mode_on is not allowed in CtsVerifier application.

@@ -32,7 +32,7 @@ android_test_helper_app {
     compile_multilib: "both",
     export_package_resources: true,
         aapt_include_all_resources: true,
-        libs: ["IncrementalTestApp"],
+        libs: ["IncrementalTestAppUncompressed"],
         aaptflags: [
             "--rename-manifest-package android.incrementalinstall.incrementaltestapp",
             "--package-id 0x83",
