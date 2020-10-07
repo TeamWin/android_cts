@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.wrapper;
+package android.server.wm.jetpack.utils.wrapper;
 
 import androidx.annotation.IntDef;
 
@@ -25,17 +25,17 @@ import java.lang.annotation.RetentionPolicy;
  * Test interface for {@link androidx.window.extensions.ExtensionDeviceState} and
  * {@link androidx.window.sidecar.SidecarDeviceState} that serves as an API compatibility wrapper.
  *
- * @see android.server.wm.jetpack.wrapper.extensionwrapperimpl.TestExtensionDeviceState
- * @see android.server.wm.jetpack.wrapper.sidecarwrapperimpl.TestSidecarDeviceState
+ * @see android.server.wm.jetpack.utils.wrapper.extensionwrapperimpl.TestExtensionDeviceState
+ * @see android.server.wm.jetpack.utils.wrapper.sidecarwrapperimpl.TestSidecarDeviceState
  */
 public interface TestDeviceState {
 
     /** Copied from {@link androidx.window.extensions.ExtensionDeviceState}. */
-    public static final int POSTURE_UNKNOWN = 0;
-    public static final int POSTURE_CLOSED = 1;
-    public static final int POSTURE_HALF_OPENED = 2;
-    public static final int POSTURE_OPENED = 3;
-    public static final int POSTURE_FLIPPED = 4;
+    int POSTURE_UNKNOWN = 0;
+    int POSTURE_CLOSED = 1;
+    int POSTURE_HALF_OPENED = 2;
+    int POSTURE_OPENED = 3;
+    int POSTURE_FLIPPED = 4;
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({
