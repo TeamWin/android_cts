@@ -34,6 +34,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
@@ -51,6 +52,7 @@ import android.util.Log;
 import android.util.Size;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 
 import org.junit.Assume;
 import org.junit.Before;
@@ -69,6 +71,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
 @RunWith(Parameterized.class)
 public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";

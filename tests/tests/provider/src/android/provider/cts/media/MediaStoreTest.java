@@ -40,6 +40,7 @@ import android.provider.cts.R;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 
 import org.junit.After;
 import org.junit.Before;
@@ -51,6 +52,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.util.Set;
 
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
 @RunWith(Parameterized.class)
 public class MediaStoreTest {
     static final String TAG = "MediaStoreTest";
