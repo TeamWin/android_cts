@@ -124,7 +124,7 @@ public class CertInstallDelegateTest extends InstrumentationTestCase {
         assertFalse(amICertInstallDelegate());
 
         assertExpectException(SecurityException.class,
-                "Neither user \\d+ nor current process has", () -> {
+                "Calling identity is not authorized", () -> {
                     mDpm.installCaCert(null, null);
                 });
 

@@ -19,7 +19,6 @@ package android.media.cts;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.Resources;
 import android.graphics.ImageFormat;
 import android.hardware.display.DisplayManager;
 import android.media.cts.CodecUtils;
@@ -1683,36 +1682,6 @@ public class DecoderTest extends MediaPlayerTestBase {
                 assertEquals(codecName + ": samples at " + i + " don't match", mono[i], mono3[i]);
             }
         }
-    }
-
-    protected static List<String> codecsFor(int resource, Resources resources) throws IOException {
-        MediaExtractor ex = new MediaExtractor();
-        AssetFileDescriptor fd = resources.openRawResourceFd(resource);
-        try {
-            ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
-        } finally {
-            fd.close();
-        }
-        MediaCodecInfo[] codecInfos = new MediaCodecList(
-                MediaCodecList.REGULAR_CODECS).getCodecInfos();
-        ArrayList<String> matchingCodecs = new ArrayList<String>();
-        MediaFormat format = ex.getTrackFormat(0);
-        String mime = format.getString(MediaFormat.KEY_MIME);
-        for (MediaCodecInfo info: codecInfos) {
-            if (info.isEncoder()) {
-                continue;
-            }
-            try {
-                MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
-                if (caps != null) {
-                    matchingCodecs.add(info.getName());
-                }
-            } catch (IllegalArgumentException e) {
-                // type is not supported
-            }
-        }
-        assertTrue("no matching codecs found", matchingCodecs.size() != 0);
-        return matchingCodecs;
     }
 
     protected static List<String> codecsFor(String resource) throws IOException {
