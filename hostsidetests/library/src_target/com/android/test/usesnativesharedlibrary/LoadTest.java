@@ -20,18 +20,26 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+import android.os.Build;
+import com.android.compatibility.common.util.PropertyUtil;
+
 import androidx.test.core.app.ApplicationProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 /**
  * Tests if native shared libs are loadable or un-loadable as expected. The list of loadable libs is
  * in the asset file <code>available.txt</code> and the list of un-loadable libs is in the asset
@@ -57,6 +65,22 @@ public class LoadTest {
         return result;
     }
 
+    private Set<String> vendorPublicLibraries() {
+        try (Stream<String> lines = Files.lines(Paths.get("/vendor/etc/public.libraries.txt"))) {
+            return lines.
+                filter(line -> {
+                    // filter-out empty lines or comment lines that start with #
+                    String strip = line.trim();
+                    return !strip.isEmpty() && !strip.startsWith("#");
+                }).
+                // line format is "name [bitness]". Extract the name part.
+                map(line -> line.trim().split("\\s+")[0]).
+                collect(Collectors.toSet());
+        } catch (IOException e) {
+            return Collections.emptySet();
+        }
+    }
+
     /**
      * Tests if libs listed in available.txt are all loadable
      */
@@ -67,6 +91,17 @@ public class LoadTest {
             try {
                 System.loadLibrary(lib);
             } catch (Throwable t) {
+                if (!PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.R)) {
+                    // Some old vendor.img might have stable entries in ./etc/public.libraries.txt
+                    // Don't emit error in that case.
+                    String libName = "lib" + lib + ".so";
+                    boolean notFound = t.getMessage().equals("dlopen failed: library \"" + libName
+                            + "\" not found");
+                    boolean isVendorPublicLib = vendorPublicLibraries().contains(libName);
+                    if (isVendorPublicLib && notFound) {
+                        continue;
+                    }
+                }
                 unexpected.add(t.getMessage());
             }
         };
