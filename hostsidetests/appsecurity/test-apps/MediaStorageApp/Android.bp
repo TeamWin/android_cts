@@ -26,7 +26,6 @@ android_test_helper_app {
     asset_dirs: ["assets"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
 }
@@ -45,7 +44,6 @@ android_test_helper_app {
     asset_dirs: ["assets"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "AndroidManifest28.xml",
@@ -65,7 +63,6 @@ android_test_helper_app {
     asset_dirs: ["assets"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "AndroidManifest29.xml",

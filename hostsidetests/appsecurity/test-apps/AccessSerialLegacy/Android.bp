@@ -23,7 +23,6 @@ android_test_helper_app {
     min_sdk_version: "27",
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     optimize: {
