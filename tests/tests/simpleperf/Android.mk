@@ -45,7 +45,7 @@ simpleperf_testdata_files := $(shell cd $(simpleperf_src_path); find testdata -t
 LOCAL_COMPATIBILITY_SUPPORT_FILES := \
   $(foreach file, $(simpleperf_testdata_files), $(simpleperf_src_path)/$(file):CtsSimpleperfTestCases_$(file))
 
-LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_CTS_TEST_PACKAGE := android.simpleperf
 include $(LLVM_DEVICE_BUILD_MK)

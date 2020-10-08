@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CTS_TEST_PACKAGE := android.host.adb
 LOCAL_MODULE := CtsAdbHostTestCases
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
