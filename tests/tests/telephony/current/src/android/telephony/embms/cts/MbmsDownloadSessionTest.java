@@ -243,4 +243,20 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
         assertEquals(MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE,
                 mCallback.waitOnError().arg1);
     }
+
+    @Test
+    public void testMaxServiceAnnouncementSize() throws Exception {
+        byte[] sampleAnnouncementFile =
+                new byte[MbmsDownloadSession.getMaximumServiceAnnouncementSize() + 1];
+        Arrays.fill(sampleAnnouncementFile, (byte) 0b10101010);
+        try {
+            mDownloadSession.addServiceAnnouncement(sampleAnnouncementFile);
+            fail("Expected IllegalArgumentException due to size constraints");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+        List<Bundle> addServiceAnnouncementCalls =
+                getMiddlewareCalls(CtsDownloadService.METHOD_ADD_SERVICE_ANNOUNCEMENT);
+        assertEquals(0, addServiceAnnouncementCalls.size());
+    }
 }
