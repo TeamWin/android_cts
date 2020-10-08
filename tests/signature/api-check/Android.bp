@@ -72,12 +72,20 @@ hiddenapi_flags {
     filename: "hiddenapi-flags.csv",
 }
 
+filegroup {
+    name: "cts-api-hiddenapi-filter-csv",
+    srcs: [
+        "hiddenapi-filter.csv",
+    ],
+}
+
 // Defaults for hiddenapi blacklist checks.
 java_defaults {
     name: "hiddenapi-blacklist-check-defaults",
     defaults: ["signature-api-check-defaults"],
     java_resources: [
         ":cts-hiddenapi-flags-csv",
+        ":cts-api-hiddenapi-filter-csv"
     ],
     jni_libs: [
         "libcts_dexchecker",
