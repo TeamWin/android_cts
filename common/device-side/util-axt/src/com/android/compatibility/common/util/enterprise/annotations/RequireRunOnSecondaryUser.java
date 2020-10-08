@@ -16,7 +16,7 @@
 
 package com.android.compatibility.common.util.enterprise.annotations;
 
-import com.android.compatibility.common.util.enterprise.Preconditions;
+import com.android.compatibility.common.util.enterprise.DeviceState;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  * created and the tests is being run on that user.
  *
  * <p>Optionally, you can guarantee that these methods do not run outside of a secondary user by
- * using {@link Preconditions}.
+ * using {@link DeviceState}.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

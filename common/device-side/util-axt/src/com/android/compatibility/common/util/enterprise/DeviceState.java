@@ -24,6 +24,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
@@ -33,8 +34,18 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.rules.TestWatcher;
+import androidx.test.core.app.ApplicationProvider;
+
+import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
+import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
+import com.android.compatibility.common.util.enterprise.annotations.RequireFeatures;
+import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
+import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnSecondaryUser;
+import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnWorkProfile;
+
+import org.junit.rules.TestRule;
 import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -43,10 +54,94 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+
 /**
- * JUnit Rule which allows configuration of device state
+ * A Junit rule which exposes methods for efficiently changing and querying device state.
+ *
+ * <p>States set by the methods on this class will by default be cleaned up after the test.
+ *
+ *
+ * <p>Using this rule also enforces preconditions in annotations from the
+ * {@code com.android.comaptibility.common.util.enterprise.annotations} package.
+ *
+ * {@code assumeTrue} will be used, so tests which do not meet preconditions will be skipped.
  */
-public final class DeviceState extends TestWatcher {
+public final class DeviceState implements TestRule {
+
+    private final Context mContext = ApplicationProvider.getApplicationContext();
+    private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
+    private final boolean mSkipTestTeardown;
+
+    public DeviceState() {
+        Bundle arguments = InstrumentationRegistry.getArguments();
+        mSkipTestTeardown = Boolean.parseBoolean(arguments.getString(SKIP_TEST_TEARDOWN_KEY, "false"));
+    }
+
+    @Override public Statement apply(final Statement base,
+            final Description description) {
+
+        if (description.isTest()) {
+            return applyTest(base, description);
+        } else if (description.isSuite()) {
+            return applySuite(base, description);
+        }
+        throw new IllegalStateException("Unknown description type: " + description);
+    }
+
+    private Statement applyTest(final Statement base, final Description description) {
+        return new Statement() {
+            @Override public void evaluate() throws Throwable {
+                if (description.getAnnotation(RequireRunOnPrimaryUser.class) != null) {
+                    assumeTrue("@RequireRunOnPrimaryUser tests only run on primary user",
+                            isRunningOnPrimaryUser());
+                }
+                if (description.getAnnotation(RequireRunOnWorkProfile.class) != null) {
+                    assumeTrue("@RequireRunOnWorkProfile tests only run on work profile",
+                            isRunningOnWorkProfile());
+                }
+                if (description.getAnnotation(RequireRunOnSecondaryUser.class) != null) {
+                    assumeTrue("@RequireRunOnSecondaryUser tests only run on secondary user",
+                            isRunningOnSecondaryUser());
+                }
+                EnsureHasWorkProfile ensureHasWorkAnnotation =
+                        description.getAnnotation(EnsureHasWorkProfile.class);
+                if (ensureHasWorkAnnotation != null) {
+                    ensureHasWorkProfile(
+                            /* installTestApp= */ ensureHasWorkAnnotation.installTestApp(),
+                            /* forUser= */ ensureHasWorkAnnotation.forUser()
+                    );
+                }
+                EnsureHasSecondaryUser ensureHasSecondaryUserAnnotation =
+                        description.getAnnotation(EnsureHasSecondaryUser.class);
+                if (ensureHasSecondaryUserAnnotation != null) {
+                    ensureHasSecondaryUser(
+                            /* installTestApp= */ ensureHasSecondaryUserAnnotation.installTestApp()
+                    );
+                }
+                RequireFeatures requireFeaturesAnnotation =
+                        description.getAnnotation(RequireFeatures.class);
+                if (requireFeaturesAnnotation != null) {
+                    for (String feature: requireFeaturesAnnotation.featureNames()) {
+                        requireFeature(feature);
+                    }
+                }
+
+                base.evaluate();
+
+                if (!mSkipTestTeardown) {
+                    teardown();
+                }
+            }};
+    }
+
+    private Statement applySuite(final Statement base, final Description description) {
+        return base;
+    }
+
+    private void requireFeature(String feature) {
+        assumeTrue("Device must have feature " + feature,
+                mContext.getPackageManager().hasSystemFeature(feature));
+    }
 
     public enum UserType {
         CURRENT_USER,
@@ -88,7 +183,7 @@ public final class DeviceState extends TestWatcher {
     @Nullable
     public UserHandle getWorkProfile(UserType forUser) {
         assumeTrue("Due to API limitations, tests cannot manage work profiles for users other " +
-                        "than the current one", forUser == UserType.CURRENT_USER);
+                "than the current one", forUser == UserType.CURRENT_USER);
 
         UserManager userManager = sInstrumentation.getContext().getSystemService(UserManager.class);
 
@@ -345,11 +440,6 @@ public final class DeviceState extends TestWatcher {
         }
 
         return mUiAutomation;
-    }
-
-    private void requireFeature(String feature) {
-        assumeTrue("Device must have feature " + feature,
-                sInstrumentation.getContext().getPackageManager().hasSystemFeature(feature));
     }
 
     private int getMaxNumberOfUsersSupported() {
