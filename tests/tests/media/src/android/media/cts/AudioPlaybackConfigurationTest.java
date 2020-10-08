@@ -26,23 +26,28 @@ import android.media.AudioAttributes.CapturePolicy;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.media.AudioPlaybackConfiguration;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.internal.annotations.GuardedBy;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioPlaybackConfigurationTest";
 
+    static final String mInpPrefix = WorkDir.getMediaDirString();
     private final static int TEST_TIMING_TOLERANCE_MS = 150;
     private final static int TEST_TIMEOUT_SOUNDPOOL_LOAD_MS = 3000;
 
@@ -85,8 +90,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 .setContentType(TEST_CONTENT)
                 .setAllowedCapturePolicy(ALLOW_CAPTURE_BY_NONE)
                 .build();
-        mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
-                aa, am.generateAudioSessionId());
+        mMp = MediaPlayer.create(getContext(),
+                Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), null, aa,
+                am.generateAudioSessionId());
         mMp.start();
         Thread.sleep(TEST_TIMING_TOLERANCE_MS);// waiting for playback to start
         List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
@@ -133,8 +139,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
         final int nbActivePlayersBeforeStart = configs.size();
 
-        mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
-                aa, am.generateAudioSessionId());
+        mMp = MediaPlayer.create(getContext(),
+                Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), null, aa,
+                am.generateAudioSessionId());
         configs = am.getActivePlaybackConfigurations();
         assertEquals("inactive MediaPlayer, number of configs shouldn't have changed",
                 nbActivePlayersBeforeStart /*expected*/, configs.size());
@@ -194,8 +201,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                     .setContentType(TEST_CONTENT)
                     .build();
 
-            mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
-                    aa, am.generateAudioSessionId());
+            mMp = MediaPlayer.create(getContext(),
+                    Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), null, aa,
+                    am.generateAudioSessionId());
 
             MyAudioPlaybackCallback callback = new MyAudioPlaybackCallback();
             am.registerAudioPlaybackCallback(callback, h /*handler*/);
@@ -258,8 +266,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                     .setContentType(TEST_CONTENT)
                     .build();
 
-            mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
-                    aa, am.generateAudioSessionId());
+            mMp = MediaPlayer.create(getContext(),
+                    Uri.fromFile(new File(mInpPrefix + "sine1khzs40dblong.mp3")), null, aa,
+                    am.generateAudioSessionId());
 
             MyAudioPlaybackCallback callback = new MyAudioPlaybackCallback();
             am.registerAudioPlaybackCallback(callback, h /*handler*/);
@@ -336,7 +345,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 }
             }
         });
-        final int loadId = mSp.load(getContext(), R.raw.sine1320hz5sec, 1/*priority*/);
+        final int loadId = mSp.load(mInpPrefix + "sine1320hz5sec.wav", 1/*priority*/);
         synchronized (loadLock) {
             loadLock.wait(TEST_TIMEOUT_SOUNDPOOL_LOAD_MS);
         }
