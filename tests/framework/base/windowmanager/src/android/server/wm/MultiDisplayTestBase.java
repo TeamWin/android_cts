@@ -43,7 +43,6 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
@@ -725,8 +724,6 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
     protected void assertBothDisplaysHaveResumedActivities(
             Pair<Integer, ComponentName> firstPair, Pair<Integer, ComponentName> secondPair) {
-        assertNotEquals("Displays must be different.  First display id: "
-                        + firstPair.first, firstPair.first, secondPair.first);
         mWmState.assertResumedActivities("Both displays must have resumed activities",
                 mapping -> {
                     mapping.put(firstPair.first, firstPair.second);

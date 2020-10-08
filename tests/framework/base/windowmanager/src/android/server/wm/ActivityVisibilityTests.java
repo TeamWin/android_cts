@@ -28,12 +28,11 @@ import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
-import static android.server.wm.CliIntentExtra.extraString;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.VirtualDisplayHelper.waitForDefaultDisplayState;
-import static android.server.wm.WindowManagerState.STATE_RESUMED;
-import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
@@ -329,7 +328,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         }
 
         // Launch an activity that calls "moveTaskToBack" to finish itself.
-        launchActivity(MOVE_TASK_TO_BACK_ACTIVITY, extraString(EXTRA_FINISH_POINT, finishPoint));
+        launchActivity(MOVE_TASK_TO_BACK_ACTIVITY, EXTRA_FINISH_POINT, finishPoint);
         mWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, true);
 
         // Launch a different activity on top.
