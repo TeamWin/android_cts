@@ -48,25 +48,14 @@ public class TaggingManifestDisabledTest extends TaggingBaseTest {
     }
 
     public void testCompatFeatureEnabled() throws Exception {
+        // Trying to force the compat feature on should fail if the manifest specifically turns the
+        // feature off.
         runDeviceCompatTestReported(
                 TEST_PKG,
                 DEVICE_TEST_CLASS_NAME,
                 DEVICE_TAGGING_DISABLED_TEST_NAME,
                 /*enabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of(),
-                /*reportedEnabledChanges*/ ImmutableSet.of(),
-                // No statsd report for manifest-disabled apps, see truth table in
-                // /cts/tagging/Android.bp for more information.
-                /*reportedDisabledChanges*/ ImmutableSet.of());
-    }
-
-    public void testCompatFeatureDisabled() throws Exception {
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
-                DEVICE_TAGGING_DISABLED_TEST_NAME,
-                /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*reportedEnabledChanges*/ ImmutableSet.of(),
                 // No statsd report for manifest-disabled apps, see truth table in
                 // /cts/tagging/Android.bp for more information.
