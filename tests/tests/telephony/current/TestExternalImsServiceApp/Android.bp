@@ -15,7 +15,6 @@ android_test_helper_app {
     sdk_version: "test_current",
     test_suites: [
         "cts",
-        "vts10",
         "mts",
     ]
 }

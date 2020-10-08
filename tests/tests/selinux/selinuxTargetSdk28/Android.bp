@@ -44,7 +44,6 @@ android_test {
     platform_apis: true,
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     min_sdk_version: "21",

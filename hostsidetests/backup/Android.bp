@@ -19,7 +19,6 @@ java_test_host {
     test_suites: [
         "arcts",
         "cts",
-        "vts10",
         "general-tests",
     ],
     libs: [

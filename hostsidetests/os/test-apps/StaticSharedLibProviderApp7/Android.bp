@@ -23,7 +23,6 @@ android_test_helper_app {
     additional_certificates: [":cts-keyset-test-a"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     optimize: {

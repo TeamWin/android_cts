@@ -29,6 +29,5 @@ java_test_host {
         "arcts",
         "cts",
         "general-tests",
-        "vts10",
     ],
 }
