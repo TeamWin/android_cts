@@ -97,28 +97,11 @@ public class BatteryUtils {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 1");
             putGlobalSetting(Global.LOW_POWER_MODE, "1");
             waitUntil("Battery saver still off", () -> getPowerManager().isPowerSaveMode());
-            waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
-                    () -> (PowerManager.LOCATION_MODE_NO_CHANGE
-                            != getPowerManager().getLocationPowerSaveMode()));
-
-            Thread.sleep(500);
-            waitUntil("Force all apps standby still off",
-                    () -> SystemUtil.runShellCommand("dumpsys alarm")
-                            .contains(" Force all apps standby: true\n"));
-
         } else {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
             putGlobalSetting(Global.LOW_POWER_MODE, "0");
             putGlobalSetting(Global.LOW_POWER_MODE_STICKY, "0");
             waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
-            waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
-                    () -> (PowerManager.LOCATION_MODE_NO_CHANGE
-                            == getPowerManager().getLocationPowerSaveMode()));
-
-            Thread.sleep(500);
-            waitUntil("Force all apps standby still on",
-                    () -> SystemUtil.runShellCommand("dumpsys alarm")
-                            .contains(" Force all apps standby: false\n"));
         }
 
         AmUtils.waitForBroadcastIdle();
