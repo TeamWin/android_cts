@@ -280,9 +280,9 @@ public class AppSearchManagerTest {
     private List<AppSearchDocument> doQuery(String queryExpression, String... schemaTypes) {
         AppSearchResult<SearchResults> result = mAppSearch.query(
                 queryExpression,
-                SearchSpec.newBuilder()
+                new SearchSpec.Builder()
                         .setSchemaTypes(schemaTypes)
-                        .setTermMatchType(SearchSpec.TERM_MATCH_TYPE_EXACT_ONLY)
+                        .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                         .build());
         checkIsSuccess(result);
         SearchResults searchResults = result.getResultValue();
