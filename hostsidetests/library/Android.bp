@@ -38,9 +38,10 @@ java_library {
     static_libs: [
         "androidx.test.core",
         "androidx.test.runner",
-        "android-support-test"
+        "android-support-test",
+        "compatibility-device-util-axt",
     ],
-    sdk_version: "current",
+    sdk_version: "test_current",
     compile_dex: true,
     installable: false,
     visibility: ["//visibility:private"],
