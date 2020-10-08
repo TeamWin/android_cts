@@ -162,7 +162,12 @@ void CodecEncoderTest::setUpParams(int limit) {
                     int channels = mEncParamList2[i];
                     AMediaFormat* format = AMediaFormat_new();
                     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, mMime);
-                    AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_BIT_RATE, bitrate);
+                    if (!strcmp(mMime, AMEDIA_MIMETYPE_AUDIO_FLAC)) {
+                        AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_FLAC_COMPRESSION_LEVEL,
+                                              bitrate);
+                    } else {
+                        AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_BIT_RATE, bitrate);
+                    }
                     AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_SAMPLE_RATE, rate);
                     AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_CHANNEL_COUNT, channels);
                     mFormats.push_back(format);
