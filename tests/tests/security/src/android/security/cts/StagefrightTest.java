@@ -1258,6 +1258,14 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2019-09")
+    public void testStagefright_cve_2019_2108() throws Exception {
+        doStagefrightTestRawBlob(R.raw.cve_2019_2108_hevc, "video/hevc", 320, 240,
+            new CrashUtils.Config().setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS,
+                                               CrashUtils.SIGABRT));
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2016-09")
     public void testStagefright_cve_2016_3880() throws Exception {
         Thread server = new Thread() {
@@ -1686,6 +1694,13 @@ public class StagefrightTest {
      to prevent merge conflicts, add Q tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-12")
+    public void testStagefright_cve_2019_2223() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.cve_2019_2223_framelen);
+        doStagefrightTestRawBlob(R.raw.cve_2019_2223_hevc, "video/hevc", 320, 240, frameSizes);
+    }
 
     @Test
     @SecurityTest(minPatchLevel = "2019-03")
