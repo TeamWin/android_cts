@@ -39,6 +39,7 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequ
 import android.autofillservice.cts.testcore.UiBot;
 import android.content.IntentSender;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -75,6 +76,7 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
      * Activity during the FillResponse authentication flow, we will fallback to dropdown when
      * authentication done and then back to original Activity.
      */
+    @Presubmit
     @Test
     public void testFillResponseAuth_withNewAutofillSessionStartByActivity()
             throws Exception {
@@ -120,6 +122,7 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         dropDownUiBot.assertDatasets("Dataset");
     }
 
+    @Presubmit
     @Test
     public void testFillResponseAuth() throws Exception {
         // Set service.
@@ -165,6 +168,7 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testDatasetAuthTwoFields() throws Exception {
         datasetAuthTwoFields(/* cancelFirstAttempt */ false);
@@ -230,6 +234,7 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testDatasetAuthPinnedPresentationSelectedAndAutofilled() throws Exception {
         // Set service.
@@ -303,6 +308,7 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testDatasetAuthFilteringUsingRegex() throws Exception {
         // Set service.
@@ -352,6 +358,7 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testDatasetAuthClientStateSetOnIntentOnly() throws Exception {
         fillDatasetAuthWithClientState(ClientStateLocation.INTENT_ONLY);

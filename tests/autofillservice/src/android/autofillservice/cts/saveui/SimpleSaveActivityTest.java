@@ -66,6 +66,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.FillContext;
@@ -118,6 +119,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         mActivity.startActivity(intent);
     }
 
+    @Presubmit
     @Test
     public void testAutoFillOneDatasetAndSave() throws Exception {
         startActivity();
@@ -279,6 +281,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         saveTest(false);
     }
 
+    @Presubmit
     @Test
     public void testSave_afterRotation() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
@@ -463,6 +466,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         assertTextAndValue(findNodeByResourceId(structure2, ID_PASSWORD), "42");
     }
 
+    @Presubmit
     @Test
     public void testSave_launchIntent() throws Exception {
         startActivity();
@@ -498,6 +502,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         WelcomeActivity.assertShowing(mUiBot, "Saved by the bell");
     }
 
+    @Presubmit
     @Test
     public void testSaveThenStartNewSessionRightAwayShouldKeepSaveUi() throws Exception {
         startActivity();
@@ -558,6 +563,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         mUiBot.assertDatasets("YO");
     }
 
+    @Presubmit
     @Test
     public void testCloseSaveUiThenStartNewSessionRightAway() throws Exception {
         startActivity();
@@ -608,6 +614,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         mUiBot.assertDatasets("YO");
     }
 
+    @Presubmit
     @Test
     public void testSaveWithParcelableOnClientState() throws Exception {
         startActivity();
@@ -663,6 +670,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         assertThat(actualMyId).isEqualTo(new MyAutofillId(expectedId));
     }
 
+    @Presubmit
     @Test
     public void testCancelPreventsSaveUiFromShowing() throws Exception {
         startActivity();
@@ -692,6 +700,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
     }
 
+    @Presubmit
     @Test
     public void testDismissSave_byTappingBack() throws Exception {
         startActivity();
@@ -704,12 +713,14 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         dismissSaveTest(DismissType.HOME_BUTTON);
     }
 
+    @Presubmit
     @Test
     public void testDismissSave_byTouchingOutside() throws Exception {
         startActivity();
         dismissSaveTest(DismissType.TOUCH_OUTSIDE);
     }
 
+    @Presubmit
     @Test
     public void testDismissSave_byFocusingOutside() throws Exception {
         startActivity();
@@ -757,6 +768,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
     }
 
+    @Presubmit
     @Test
     public void testTapHomeWhileDatasetPickerUiIsShowing() throws Exception {
         startActivity();
@@ -805,6 +817,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         autofillExpecation.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testTapHomeWhileSaveUiIsShowing() throws Exception {
         startActivity();
@@ -1064,6 +1077,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
     }
 
+    @Presubmit
     @Test
     @AppModeFull(reason = "Service-specific test")
     public void testSelectedDatasetsAreSentOnSaveRequest() throws Exception {
@@ -1190,6 +1204,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "42");
     }
 
+    @Presubmit
     @Test
     public void testSanitizeOnSaveWhenAppChangeValues() throws Exception {
         startActivity();
@@ -1482,6 +1497,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * Tests scenario when a text field's text is set automatically, it should trigger autofill and
      * show Save UI.
      */
+    @Presubmit
     @Test
     public void testShowSaveUiWhenSetTextAutomatically() throws Exception {
         triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.NORMAL);
@@ -1491,6 +1507,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * Tests scenario when a text field's text is set automatically, it should not trigger autofill
      * when there is an existing session.
      */
+    @Presubmit
     @Test
     public void testNotTriggerAutofillWhenSetTextWhileSessionExists() throws Exception {
         triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.HAS_SESSION);
@@ -1500,6 +1517,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * Tests scenario when a text field's text is set automatically, it should not trigger autofill
      * when the text is empty.
      */
+    @Presubmit
     @Test
     public void testNotTriggerAutofillWhenSetTextWhileEmptyText() throws Exception {
         triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.EMPTY_TEXT);
@@ -1509,6 +1527,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * Tests scenario when a text field's text is set automatically, it should not trigger autofill
      * when the field is focused.
      */
+    @Presubmit
     @Test
     public void testNotTriggerAutofillWhenSetTextWhileFocused() throws Exception {
         triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.FOCUSED);
@@ -1518,6 +1537,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * Tests scenario when a text field's text is set automatically, it should not trigger autofill
      * when the field is not important for autofill.
      */
+    @Presubmit
     @Test
     public void testNotTriggerAutofillWhenSetTextWhileNotImportantForAutofill() throws Exception {
         triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.NOT_IMPORTANT_FOR_AUTOFILL);
@@ -1527,6 +1547,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * Tests scenario when a text field's text is set automatically, it should not trigger autofill
      * when the field is not visible.
      */
+    @Presubmit
     @Test
     public void testNotTriggerAutofillWhenSetTextWhileInvisible() throws Exception {
         triggerAutofillWhenSetTextAutomaticallyTest(SetTextCondition.INVISIBLE);
@@ -1599,16 +1620,19 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         }
     }
 
+    @Presubmit
     @Test
     public void testExplicitlySaveButton() throws Exception {
         explicitlySaveButtonTest(false, 0);
     }
 
+    @Presubmit
     @Test
     public void testExplicitlySaveButtonWhenAppClearFields() throws Exception {
         explicitlySaveButtonTest(true, 0);
     }
 
+    @Presubmit
     @Test
     public void testExplicitlySaveButtonOnly() throws Exception {
         explicitlySaveButtonTest(false, SaveInfo.FLAG_DONT_SAVE_ON_FINISH);
@@ -1731,6 +1755,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * finishes:
      * the Save UI should have been restored.
      */
+    @Presubmit
     @Test
     @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnCustomDescription_thenTapBack() throws Exception {
@@ -1743,6 +1768,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * finishes:
      * the Save UI should have been restored.
      */
+    @Presubmit
     @Test
     @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnSuccinctDescription_thenTapBack() throws Exception {
@@ -1755,6 +1781,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * starts an another activity then it finishes:
      * the Save UI should have been restored.
      */
+    @Presubmit
     @Test
     @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnCustomDescription_forwardAnotherActivityThenTapBack()
@@ -1768,6 +1795,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * starts an another activity then it finishes:
      * the Save UI should have been restored.
      */
+    @Presubmit
     @Test
     @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnSuccinctDescription_forwardAnotherActivityThenTapBack()
@@ -1781,6 +1809,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * stops but does not finish:
      * the Save UI should have been restored.
      */
+    @Presubmit
     @Test
     @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnCustomDescription_tapBackWithoutFinish() throws Exception {
@@ -1793,6 +1822,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * stops but does not finish:
      * the Save UI should have been restored.
      */
+    @Presubmit
     @Test
     @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnSuccinctDescription_tapBackWithoutFinish() throws Exception {

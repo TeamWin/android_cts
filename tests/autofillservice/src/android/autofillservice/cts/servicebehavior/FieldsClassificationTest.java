@@ -41,6 +41,7 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillContext;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.UserData;
@@ -56,6 +57,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Presubmit
 @AppModeFull(reason = "Service-specific test")
 public class FieldsClassificationTest extends AbstractGridActivityTestCase {
 

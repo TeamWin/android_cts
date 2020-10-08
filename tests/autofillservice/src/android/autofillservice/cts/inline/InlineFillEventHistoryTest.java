@@ -35,6 +35,7 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InlineUiBot;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.support.test.uiautomator.UiObject2;
@@ -47,6 +48,7 @@ import java.util.List;
 /**
  * Test that uses {@link LoginActivity} to test {@link FillEventHistory}.
  */
+@Presubmit
 @AppModeFull(reason = "Service-specific test")
 public class InlineFillEventHistoryTest extends FillEventHistoryCommonTestCase {
 

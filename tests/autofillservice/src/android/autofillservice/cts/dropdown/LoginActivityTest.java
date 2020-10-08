@@ -101,6 +101,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillContext;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
@@ -369,6 +370,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertDatasets("THE DUDE");
     }
 
+    @Presubmit
     @Test
     public void testAutoFillOneDataset() throws Exception {
         autofillOneDatasetTest(BorderType.NONE);
@@ -386,6 +388,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         autofillOneDatasetTest(BorderType.FOOTER_ONLY);
     }
 
+    @Presubmit
     @Test
     public void testAutoFillOneDataset_withHeaderAndFooter() throws Exception {
         autofillOneDatasetTest(BorderType.BOTH);
@@ -712,6 +715,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testAutoFillWhenViewHasChildAccessibilityNodes() throws Exception {
         mActivity.onUsername((v) -> v.setAccessibilityDelegate(new AccessibilityDelegate() {
@@ -733,6 +737,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         testAutoFillOneDataset();
     }
 
+    @Presubmit
     @Test
     public void testAutoFillOneDatasetAndMoveFocusAround() throws Exception {
         // Set service.
@@ -799,6 +804,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertNoDatasetsEver();
     }
 
+    @Presubmit
     @Test
     public void testAutofillTapOutside() throws Exception {
         // Set service.
@@ -828,6 +834,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertNoDatasets();
     }
 
+    @Presubmit
     @Test
     public void testAutofillCallbacks() throws Exception {
         // Set service.
@@ -918,6 +925,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         callback.assertUiUnavailableEvent(username);
     }
 
+    @Presubmit
     @Test
     public void testAutoFillOneDatasetAndSave() throws Exception {
         // Set service.
@@ -995,6 +1003,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
     }
 
+    @Presubmit
     @Test
     public void testAutoFillOneDatasetAndSaveHidingOverlays() throws Exception {
         // Set service.
@@ -1186,6 +1195,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
      * Tests the scenario where the service uses custom remote views for different fields (username
      * and password).
      */
+    @Presubmit
     @Test
     public void testAutofillOneDatasetCustomPresentation() throws Exception {
         // Set service.
@@ -1878,6 +1888,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         sReplier.getNextSaveRequest();
     }
 
+    @Presubmit
     @Test
     public void testDontTriggerSaveOnFinishWhenRequestedByFlag() throws Exception {
         enableService();
@@ -1911,6 +1922,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
+    @Presubmit
     @Test
     public void testAutoFillOneDatasetAndSaveWhenFlagSecure() throws Exception {
         mActivity.setFlags(FLAG_SECURE);
@@ -1923,6 +1935,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         testAutoFillOneDataset();
     }
 
+    @Presubmit
     @Test
     @AppModeFull(reason = "Service-specific test")
     public void testDisableSelf() throws Exception {
@@ -1936,11 +1949,13 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         assertServiceDisabled();
     }
 
+    @Presubmit
     @Test
     public void testNeverRejectStyleNegativeSaveButton() throws Exception {
         negativeSaveButtonStyle(SaveInfo.NEGATIVE_BUTTON_STYLE_NEVER);
     }
 
+    @Presubmit
     @Test
     public void testRejectStyleNegativeSaveButton() throws Exception {
         negativeSaveButtonStyle(SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT);
@@ -1996,6 +2011,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
     }
 
+    @Presubmit
     @Test
     public void testContinueStylePositiveSaveButton() throws Exception {
         enableService();
@@ -2088,6 +2104,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         assertThat(usernameContainer.getChildCount()).isEqualTo(2);
     }
 
+    @Presubmit
     @Test
     public void testAutofillManuallyOneDataset() throws Exception {
         // Set service.
@@ -2367,6 +2384,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testCommitMultipleTimes() throws Throwable {
         // Set service.
@@ -2432,6 +2450,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         }
     }
 
+    @Presubmit
     @Test
     public void testCancelMultipleTimes() throws Throwable {
         // Set service.
@@ -2475,6 +2494,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         }
     }
 
+    @Presubmit
     @Test
     public void testClickCustomButton() throws Exception {
         // Set service.
@@ -2514,6 +2534,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.pressBack();
     }
 
+    @Presubmit
     @Test
     public void testIsServiceEnabled() throws Exception {
         disableService();
@@ -2527,6 +2548,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         }
     }
 
+    @Presubmit
     @Test
     public void testGetAutofillServiceComponentName() throws Exception {
         final AutofillManager afm = mActivity.getAutofillManager();
@@ -2540,6 +2562,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         assertThat(afm.getAutofillServiceComponentName()).isNull();
     }
 
+    @Presubmit
     @Test
     public void testSetupComplete() throws Exception {
         enableService();
@@ -2557,6 +2580,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         }
     }
 
+    @Presubmit
     @Test
     public void testPopupGoesAwayWhenServiceIsChanged() throws Exception {
         // Set service.
@@ -2583,6 +2607,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
     }
 
     // TODO(b/70682223): add a new test to make sure service with BIND_AUTOFILL permission works
+    @Presubmit
     @Test
     @AppModeFull(reason = "Service-specific test")
     public void testServiceIsDisabledWhenNewServiceInfoIsInvalid() throws Exception {
@@ -2700,6 +2725,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         // TODO: once it supports scrolling, selects the last dataset and asserts it's filled.
     }
 
+    @Presubmit
     @Test
     public void testCancellationSignalCalledAfterTimeout() throws Exception {
         // Set service.
@@ -2823,6 +2849,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertNoDatasets();
     }
 
+    @Presubmit
     @Test
     public void testCancelActionButton() throws Exception {
         // Set service.
@@ -2883,6 +2910,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertDatasetsContains("The Dude");
     }
 
+    @Presubmit
     @Test
     @AppModeFull(reason = "WRITE_SECURE_SETTING permission can't be grant to instant apps")
     public void testSwitchInputMethod_noNewFillRequest() throws Exception {

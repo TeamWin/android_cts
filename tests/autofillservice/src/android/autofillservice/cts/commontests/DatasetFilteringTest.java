@@ -36,6 +36,7 @@ import android.autofillservice.cts.testcore.UiBot;
 import android.content.IntentSender;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.view.KeyEvent;
 import android.widget.EditText;
 
@@ -69,7 +70,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         mActivity.onUsername((v) -> v.setText(username));
     }
 
-
+    @Presubmit
     @Test
     public void testFilter() throws Exception {
         final String aa = "Two A's";
@@ -125,6 +126,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         mUiBot.assertDatasets(aa, ab, b);
     }
 
+    @Presubmit
     @Test
     public void testFilter_injectingEvents() throws Exception {
         final String aa = "Two A's";
@@ -182,6 +184,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
         mUiBot.assertNoDatasets();
     }
 
+    @Presubmit
     @Test
     public void testFilter_usingKeyboard() throws Exception {
         final MockImeSession mockImeSession = sMockImeSessionRule.getMockImeSession();
