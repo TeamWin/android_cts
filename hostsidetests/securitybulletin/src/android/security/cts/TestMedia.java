@@ -45,6 +45,21 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/156997193
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @SecurityTest(minPatchLevel = "2020-11")
+    @Test
+    public void testPocCVE_2020_0409() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        String binaryName = "CVE-2020-0409";
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/156999009
      * Vulnerability Behaviour: SIGABRT in self
      */
