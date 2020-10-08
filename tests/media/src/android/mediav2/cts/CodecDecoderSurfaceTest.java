@@ -126,6 +126,9 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
                         "bbb_520x390_1mbps_30fps_split_non_display_frame_vp9.webm"},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "bbb_340x280_768kbps_30fps_av1.mp4",
                         "bbb_520x390_1mbps_30fps_av1.mp4"},
+                {MediaFormat.MIMETYPE_VIDEO_AV1,
+                        "bikes_qcif_color_bt2020_smpte2086Hlg_bt2020Ncl_fr_av1.mp4",
+                        "bbb_520x390_1mbps_30fps_av1.mp4"},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, true);
     }
