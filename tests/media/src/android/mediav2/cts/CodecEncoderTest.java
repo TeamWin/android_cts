@@ -179,8 +179,9 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                         10200, 12200}, new int[]{8000}, new int[]{1}},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_WB, new int[]{6600, 8850, 12650, 14250, 15850,
                         18250, 19850, 23050, 23850}, new int[]{16000}, new int[]{1}},
-                {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{64000, 192000}, new int[]{8000, 48000
-                        , 96000, 192000}, new int[]{1, 2}},
+                /* TODO(169310292) */
+                {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{/* 0, 1, 2, */ 3, 4, 5, 6, 7, 8},
+                        new int[]{8000, 48000, 96000, 192000}, new int[]{1, 2}},
 
                 // Video - CodecMime, arrays of bit-rates, height, width
                 {MediaFormat.MIMETYPE_VIDEO_H263, new int[]{32000, 64000}, new int[]{176},
@@ -227,7 +228,11 @@ public class CodecEncoderTest extends CodecEncoderTestBase {
                     for (int channels : mEncParamList2) {
                         MediaFormat format = new MediaFormat();
                         format.setString(MediaFormat.KEY_MIME, mMime);
-                        format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+                        if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_FLAC)) {
+                            format.setInteger(MediaFormat.KEY_FLAC_COMPRESSION_LEVEL, bitrate);
+                        } else {
+                            format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+                        }
                         format.setInteger(MediaFormat.KEY_SAMPLE_RATE, rate);
                         format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, channels);
                         mFormats.add(format);
