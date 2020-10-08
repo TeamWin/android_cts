@@ -1367,6 +1367,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_streaming" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch" />
+            <meta-data android:name="display_mode" android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".streamquality.PlayVideoActivity"
