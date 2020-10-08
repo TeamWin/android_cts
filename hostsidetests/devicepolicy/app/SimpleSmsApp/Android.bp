@@ -23,7 +23,6 @@ android_test {
     test_suites: [
         "arcts",
         "cts",
-        "vts10",
         "general-tests",
     ],
 }

@@ -19,7 +19,6 @@ android_test_helper_app {
     defaults: ["cts_support_defaults"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     sdk_version: "current",

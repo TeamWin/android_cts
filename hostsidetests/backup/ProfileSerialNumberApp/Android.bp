@@ -24,7 +24,6 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
     ],
     // Uncomment when b/78787392 is fixed
     // sdk_version: "system_test_current",

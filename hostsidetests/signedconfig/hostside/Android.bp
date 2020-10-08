@@ -27,7 +27,6 @@ java_test_host {
     static_libs: ["hamcrest-library"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
 }
