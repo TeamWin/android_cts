@@ -2372,7 +2372,6 @@
                 android:resource="@xml/accessory_filter" />
         </activity>
 
-<!-- Temporary disabled b/c of incorrect assumptions in part of the test: b/160938927
         <activity android:name=".usb.device.UsbDeviceTestActivity"
                 android:label="@string/usb_device_test"
                 android:configChanges="keyboardHidden|orientation|screenSize">
@@ -2386,7 +2385,6 @@
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch" />
         </activity>
-        -->
 
         <activity android:name=".usb.mtp.MtpHostTestActivity" android:label="@string/mtp_host_test">
             <intent-filter>
