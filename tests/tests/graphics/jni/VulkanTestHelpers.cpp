@@ -102,18 +102,8 @@ bool VkInit::init() {
       .engineVersion = VK_MAKE_VERSION(1, 0, 0),
       .apiVersion = VK_MAKE_VERSION(1, 1, 0),
   };
-  std::vector<const char *> instanceExt, deviceExt;
+  std::vector<const char *> instanceExt;
   instanceExt.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-  instanceExt.push_back(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
-  instanceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
-  instanceExt.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-  deviceExt.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-  deviceExt.push_back(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
-  deviceExt.push_back(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
-  deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
-  deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
-  deviceExt.push_back(VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
-  deviceExt.push_back(VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
   VkInstanceCreateInfo createInfo = {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       .pNext = nullptr,
@@ -130,6 +120,19 @@ bool VkInit::init() {
   int status = vkEnumeratePhysicalDevices(mInstance, &gpuCount, &mGpu);
   ASSERT(status == VK_SUCCESS || status == VK_INCOMPLETE);
   ASSERT(gpuCount > 0);
+
+  VkPhysicalDeviceProperties physicalDeviceProperties;
+  vkGetPhysicalDeviceProperties(mGpu, &physicalDeviceProperties);
+  std::vector<const char *> deviceExt;
+  if (physicalDeviceProperties.apiVersion < VK_API_VERSION_1_1) {
+      deviceExt.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+      deviceExt.push_back(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
+      deviceExt.push_back(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
+      deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
+      deviceExt.push_back(VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
+  }
+  deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
+  deviceExt.push_back(VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
 
   std::vector<VkExtensionProperties> supportedDeviceExtensions;
   ASSERT(enumerateDeviceExtensions(mGpu, &supportedDeviceExtensions));
@@ -190,10 +193,37 @@ bool VkInit::init() {
 
   VK_CALL(vkCreateDevice(mGpu, &deviceCreateInfo, nullptr, &mDevice));
 
-  mPfnGetAndroidHardwareBufferPropertiesANDROID =
-      (PFN_vkGetAndroidHardwareBufferPropertiesANDROID)vkGetDeviceProcAddr(
-          mDevice, "vkGetAndroidHardwareBufferPropertiesANDROID");
-  ASSERT(mPfnGetAndroidHardwareBufferPropertiesANDROID);
+  if (physicalDeviceProperties.apiVersion < VK_API_VERSION_1_1) {
+      mPfnBindImageMemory2 =
+              (PFN_vkBindImageMemory2)vkGetDeviceProcAddr(mDevice, "vkBindImageMemory2KHR");
+      mPfnGetImageMemoryRequirements2 = (PFN_vkGetImageMemoryRequirements2)
+              vkGetDeviceProcAddr(mDevice, "vkGetImageMemoryRequirements2KHR");
+      mPfnCreateSamplerYcbcrConversion = (PFN_vkCreateSamplerYcbcrConversion)
+              vkGetDeviceProcAddr(mDevice, "vkCreateSamplerYcbcrConversionKHR");
+      mPfnDestroySamplerYcbcrConversion = (PFN_vkDestroySamplerYcbcrConversion)
+              vkGetDeviceProcAddr(mDevice, "vkDestroySamplerYcbcrConversionKHR");
+  } else {
+      mPfnBindImageMemory2 =
+              (PFN_vkBindImageMemory2)vkGetDeviceProcAddr(mDevice, "vkBindImageMemory2");
+      mPfnGetImageMemoryRequirements2 = (PFN_vkGetImageMemoryRequirements2)
+              vkGetDeviceProcAddr(mDevice, "vkGetImageMemoryRequirements2");
+      mPfnCreateSamplerYcbcrConversion = (PFN_vkCreateSamplerYcbcrConversion)
+              vkGetDeviceProcAddr(mDevice, "vkCreateSamplerYcbcrConversion");
+      mPfnDestroySamplerYcbcrConversion = (PFN_vkDestroySamplerYcbcrConversion)
+              vkGetDeviceProcAddr(mDevice, "vkDestroySamplerYcbcrConversion");
+  }
+  ASSERT(mPfnBindImageMemory2);
+  ASSERT(mPfnGetImageMemoryRequirements2);
+  ASSERT(mPfnCreateSamplerYcbcrConversion);
+  ASSERT(mPfnDestroySamplerYcbcrConversion);
+
+  mPfnGetAndroidHardwareBufferProperties = (PFN_vkGetAndroidHardwareBufferPropertiesANDROID)
+          vkGetDeviceProcAddr(mDevice, "vkGetAndroidHardwareBufferPropertiesANDROID");
+  ASSERT(mPfnGetAndroidHardwareBufferProperties);
+
+  mPfnImportSemaphoreFd =
+          (PFN_vkImportSemaphoreFdKHR)vkGetDeviceProcAddr(mDevice, "vkImportSemaphoreFdKHR");
+  ASSERT(mPfnImportSemaphoreFd);
 
   VkPhysicalDeviceSamplerYcbcrConversionFeaturesKHR ycbcrFeatures{
       .sType =
@@ -204,11 +234,7 @@ bool VkInit::init() {
       .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR,
       .pNext = &ycbcrFeatures,
   };
-  PFN_vkGetPhysicalDeviceFeatures2KHR getFeatures =
-      (PFN_vkGetPhysicalDeviceFeatures2KHR)vkGetInstanceProcAddr(
-          mInstance, "vkGetPhysicalDeviceFeatures2KHR");
-  ASSERT(getFeatures);
-  getFeatures(mGpu, &physicalDeviceFeatures);
+  vkGetPhysicalDeviceFeatures2(mGpu, &physicalDeviceFeatures);
   ASSERT(ycbcrFeatures.samplerYcbcrConversion == VK_TRUE);
 
   vkGetDeviceQueue(mDevice, 0, 0, &mQueue);
@@ -267,8 +293,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, bool useExternalForma
       .sType = VK_STRUCTURE_TYPE_ANDROID_HARDWARE_BUFFER_PROPERTIES_ANDROID,
       .pNext = &formatInfo,
   };
-  VK_CALL(mInit->getHardwareBufferPropertiesFn()(mInit->device(), buffer,
-                                                 &properties));
+  VK_CALL(mInit->mPfnGetAndroidHardwareBufferProperties(mInit->device(), buffer, &properties));
   ASSERT(useExternalFormat || formatInfo.format != VK_FORMAT_UNDEFINED);
   // Create an image to bind to our AHardwareBuffer.
   VkExternalFormatANDROID externalFormat{
@@ -331,11 +356,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, bool useExternalForma
   bindImageInfo.memory = mMemory;
   bindImageInfo.memoryOffset = 0;
 
-  PFN_vkBindImageMemory2KHR bindImageMemory =
-      (PFN_vkBindImageMemory2KHR)vkGetDeviceProcAddr(mInit->device(),
-                                                     "vkBindImageMemory2KHR");
-  ASSERT(bindImageMemory);
-  VK_CALL(bindImageMemory(mInit->device(), 1, &bindImageInfo));
+  VK_CALL(mInit->mPfnBindImageMemory2(mInit->device(), 1, &bindImageInfo));
 
   VkImageMemoryRequirementsInfo2 memReqsInfo;
   memReqsInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
@@ -350,11 +371,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, bool useExternalForma
   memReqs.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
   memReqs.pNext = &dedicatedMemReqs;
 
-  PFN_vkGetImageMemoryRequirements2KHR getImageMemoryRequirements =
-      (PFN_vkGetImageMemoryRequirements2KHR)vkGetDeviceProcAddr(
-          mInit->device(), "vkGetImageMemoryRequirements2KHR");
-  ASSERT(getImageMemoryRequirements);
-  getImageMemoryRequirements(mInit->device(), &memReqsInfo, &memReqs);
+  mInit->mPfnGetImageMemoryRequirements2(mInit->device(), &memReqsInfo, &memReqs);
   ASSERT(VK_TRUE == dedicatedMemReqs.prefersDedicatedAllocation);
   ASSERT(VK_TRUE == dedicatedMemReqs.requiresDedicatedAllocation);
 
@@ -371,12 +388,8 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, bool useExternalForma
         .chromaFilter = VK_FILTER_NEAREST,
         .forceExplicitReconstruction = VK_FALSE,
     };
-    PFN_vkCreateSamplerYcbcrConversionKHR createSamplerYcbcrConversion =
-        (PFN_vkCreateSamplerYcbcrConversionKHR)vkGetDeviceProcAddr(
-            mInit->device(), "vkCreateSamplerYcbcrConversionKHR");
-    ASSERT(createSamplerYcbcrConversion);
-    VK_CALL(createSamplerYcbcrConversion(mInit->device(), &conversionCreateInfo,
-                                         nullptr, &mConversion));
+    VK_CALL(mInit->mPfnCreateSamplerYcbcrConversion(mInit->device(), &conversionCreateInfo, nullptr,
+                                                    &mConversion));
   }
   VkSamplerYcbcrConversionInfo samplerConversionInfo{
       .sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO,
@@ -443,12 +456,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, bool useExternalForma
         .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT,
         .fd = syncFd,
     };
-
-    PFN_vkImportSemaphoreFdKHR importSemaphoreFd =
-        (PFN_vkImportSemaphoreFdKHR)vkGetDeviceProcAddr(
-            mInit->device(), "vkImportSemaphoreFdKHR");
-    ASSERT(importSemaphoreFd);
-    VK_CALL(importSemaphoreFd(mInit->device(), &importSemaphoreInfo));
+    VK_CALL(mInit->mPfnImportSemaphoreFd(mInit->device(), &importSemaphoreInfo));
   }
 
   return true;
@@ -464,10 +472,7 @@ VkAHardwareBufferImage::~VkAHardwareBufferImage() {
     mSampler = VK_NULL_HANDLE;
   }
   if (mConversion != VK_NULL_HANDLE) {
-    PFN_vkDestroySamplerYcbcrConversionKHR destroySamplerYcbcrConversion =
-        (PFN_vkDestroySamplerYcbcrConversionKHR)vkGetDeviceProcAddr(
-            mInit->device(), "vkDestroySamplerYcbcrConversionKHR");
-    destroySamplerYcbcrConversion(mInit->device(), mConversion, nullptr);
+    mInit->mPfnDestroySamplerYcbcrConversion(mInit->device(), mConversion, nullptr);
   }
   if (mMemory != VK_NULL_HANDLE) {
     vkFreeMemory(mInit->device(), mMemory, nullptr);
