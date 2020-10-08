@@ -255,6 +255,11 @@
         <option name="push" value="CVE-2020-0408->/data/local/tmp/CVE-2020-0408" />
         <option name="push" value="CVE-2020-0421->/data/local/tmp/CVE-2020-0421" />
 
+        <!--__________________-->
+        <!-- Bulletin 2020-11 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2020-0409->/data/local/tmp/CVE-2020-0409" />
+
         <option name="append-bitness" value="true" />
     </target_preparer>
 
