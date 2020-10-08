@@ -102,7 +102,9 @@ public class MediaExtractorTest extends AndroidTestCase {
         return ds;
     }
 
-    public void testNullMediaDataSourceIsRejected() throws Exception {
+    public void SKIP_testNullMediaDataSourceIsRejected() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorUnitTest$TestApi
+        // #testIfNullMediaDataSourceIsRejectedBySetDataSource
         try {
             mExtractor.setDataSource((MediaDataSource)null);
             fail("Expected IllegalArgumentException.");
@@ -111,13 +113,16 @@ public class MediaExtractorTest extends AndroidTestCase {
         }
     }
 
-    public void testMediaDataSourceIsClosedOnRelease() throws Exception {
+    public void SKIP_testMediaDataSourceIsClosedOnRelease() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testMediaDataSource
         TestMediaDataSource dataSource = setDataSource("testvideo.3gp");
         mExtractor.release();
         assertTrue(dataSource.isClosed());
     }
 
-    public void testExtractorFailsIfMediaDataSourceThrows() throws Exception {
+    public void SKIP_testExtractorFailsIfMediaDataSourceThrows() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorUnitTest$TestApi
+        // #testIfInvalidDataSourceIsRejectedBySetDataSource
         TestMediaDataSource dataSource = getDataSourceFor("testvideo.3gp");
         dataSource.throwFromReadAt();
         try {
@@ -128,7 +133,9 @@ public class MediaExtractorTest extends AndroidTestCase {
         }
     }
 
-    public void testExtractorFailsIfMediaDataSourceReturnsAnError() throws Exception {
+    public void SKIP_testExtractorFailsIfMediaDataSourceReturnsAnError() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorUnitTest$TestApi
+        // #testIfInvalidDataSourceIsRejectedBySetDataSource
         TestMediaDataSource dataSource = getDataSourceFor("testvideo.3gp");
         dataSource.returnFromReadAt(-2);
         try {
@@ -140,13 +147,17 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     // Smoke test MediaExtractor reading from a DataSource.
-    public void testExtractFromAMediaDataSource() throws Exception {
+    public void SKIP_testExtractFromAMediaDataSource() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testMediaDataSource and
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testMetrics
         TestMediaDataSource dataSource = setDataSource("testvideo.3gp");
         checkExtractorSamplesAndMetrics();
     }
 
     // Smoke test MediaExtractor reading from an AssetFileDescriptor.
-    public void testExtractFromAssetFileDescriptor() throws Exception {
+    public void SKIP_testExtractFromAssetFileDescriptor() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testAssetFD and
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testMetrics
        AssetFileDescriptor afd = getAssetFileDescriptorFor("testvideo.3gp");
         mExtractor.setDataSource(afd);
         checkExtractorSamplesAndMetrics();
@@ -201,7 +212,8 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     // DolbyVisionMediaExtractor for profile-level (DvheStn/Fhd60).
-    public void testDolbyVisionMediaExtractorProfileDvheStn() throws Exception {
+    public void SKIP_testDolbyVisionMediaExtractorProfileDvheStn() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$ValidateKeyValuePairs[video/dolby-vision]
         TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_60fps_dvhe_05.mp4");
 
         if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
@@ -548,7 +560,8 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot bind sockets.")
-    public void testExtractorGetCachedDuration() throws Exception {
+    public void SKIP_testExtractorGetCachedDuration() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testUrlDataSource
         CtsTestServer foo = new CtsTestServer(getContext());
         String url = foo.getAssetUrl("ringer.mp3");
         mExtractor.setDataSource(url);
@@ -557,7 +570,8 @@ public class MediaExtractorTest extends AndroidTestCase {
         foo.shutdown();
     }
 
-    public void testExtractorHasCacheReachedEndOfStream() throws Exception {
+    public void SKIP_testExtractorHasCacheReachedEndOfStream() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testUrlDataSource
         // Using file source to get deterministic result.
         AssetFileDescriptor afd = getAssetFileDescriptorFor("testvideo.3gp");
         mExtractor.setDataSource(afd);
@@ -569,7 +583,8 @@ public class MediaExtractorTest extends AndroidTestCase {
      * Makes sure if PTS(order) of a video file with BFrames matches the expected values in
      * the corresponding text file with just PTS values.
      */
-    public void testVideoPresentationTimeStampsMatch() throws Exception {
+    public void SKIP_testVideoPresentationTimeStampsMatch() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$ExtractorTimeStampTest
         setDataSource("binary_counter_320x240_30fps_600frames.mp4");
         // Select the only video track present in the file.
         final int trackCount = mExtractor.getTrackCount();
@@ -754,7 +769,9 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     @SmallTest
-    public void testFlacIdentity() throws Exception {
+    public void SKIP_testFlacIdentity() throws Exception {
+        // duplicate of CtsMediaV2TestCases:CodecEncoderTest$testLosslessEncodeDecode[audio/flac]
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FusedExtractorDecoderTest[audio/flac]
         final int PCM_FRAMES = 1152 * 4; // FIXME: requires 4 flac frames to work with OMX codecs.
         final int CHANNEL_COUNT = 2;
         final int SAMPLES = PCM_FRAMES * CHANNEL_COUNT;
@@ -795,7 +812,8 @@ public class MediaExtractorTest extends AndroidTestCase {
         }
     }
 
-    public void testFlacMovExtraction() throws Exception {
+    public void SKIP_testFlacMovExtraction() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FusedExtractorDecoderTest[audio/flac]
         AssetFileDescriptor testFd = getAssetFileDescriptorFor("sinesweepalac.mov");
         MediaExtractor extractor = new MediaExtractor();
         extractor.setDataSource(testFd.getFileDescriptor(), testFd.getStartOffset(),
@@ -925,7 +943,9 @@ public class MediaExtractorTest extends AndroidTestCase {
         extractor.release();
     }
 
-    public void testAdvance() throws Exception {
+    public void SKIP_testAdvance() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest and
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testExtract[*]
         // audio-only
         doTestAdvance("sinesweepm4a.m4a");
         doTestAdvance("sinesweepmp3lame.mp3");
@@ -961,27 +981,32 @@ public class MediaExtractorTest extends AndroidTestCase {
         } while (mExtractor.advance());
     }
 
-    public void testAC3inMP4() throws Exception {
+    public void SKIP_testAC3inMP4() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/ac3]
         setDataSource("testac3mp4.mp4");
         readAllData();
     }
 
-    public void testEAC3inMP4() throws Exception {
+    public void SKIP_testEAC3inMP4() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/eac3]
         setDataSource("testeac3mp4.mp4");
         readAllData();
     }
 
-    public void testAC3inTS() throws Exception {
+    public void SKIP_testAC3inTS() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/ac3]
         setDataSource("testac3ts.ts");
         readAllData();
     }
 
-    public void testEAC3inTS() throws Exception {
+    public void SKIP_testEAC3inTS() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/eac3]
         setDataSource("testeac3ts.ts");
         readAllData();
     }
 
-    public void testAC4inMP4() throws Exception {
+    public void SKIP_testAC4inMP4() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest[audio/ac4]
         setDataSource("multi0.mp4");
         readAllData();
     }
