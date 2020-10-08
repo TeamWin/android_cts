@@ -1216,20 +1216,6 @@ public class UiBot {
     }
 
     /**
-     * Waits until the window was split to show multiple activities.
-     */
-    public void waitForWindowSplit() throws Exception {
-        try {
-            assertShownById(SPLIT_WINDOW_DIVIDER_ID);
-        } catch (Exception e) {
-            final long timeout = Timeouts.ACTIVITY_RESURRECTION.ms();
-            Log.e(TAG, "Did not find window divider " + SPLIT_WINDOW_DIVIDER_ID + "; waiting "
-                    + timeout + "ms instead");
-            SystemClock.sleep(timeout);
-        }
-    }
-
-    /**
      * Finds the first {@link URLSpan} on the current screen.
      */
     public URLSpan findFirstUrlSpanWithText(String str) throws Exception {
