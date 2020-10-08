@@ -36,6 +36,7 @@ const char* AMEDIA_MIMETYPE_VIDEO_H263 = "video/3gpp";
 const char* AMEDIA_MIMETYPE_AUDIO_AMR_NB = "audio/3gpp";
 const char* AMEDIA_MIMETYPE_AUDIO_AMR_WB = "audio/amr-wb";
 const char* AMEDIA_MIMETYPE_AUDIO_AAC = "audio/mp4a-latm";
+const char* AMEDIA_MIMETYPE_AUDIO_FLAC = "audio/flac";
 const char* AMEDIA_MIMETYPE_AUDIO_VORBIS = "audio/vorbis";
 const char* AMEDIA_MIMETYPE_AUDIO_OPUS = "audio/opus";
 
