@@ -28,7 +28,6 @@ android_test {
     test_suites: [
         "cts",
         "mts",
-        "vts10",
         "general-tests",
     ],
 }

@@ -37,7 +37,6 @@ android_test {
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     instrumentation_for: "CtsAppTestStubs",
@@ -71,7 +70,6 @@ android_test {
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     sdk_version: "test_current",
@@ -106,7 +104,6 @@ android_test {
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     sdk_version: "test_current",
@@ -136,7 +133,6 @@ android_test {
     ],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "AppExitTest/AndroidManifest.xml",

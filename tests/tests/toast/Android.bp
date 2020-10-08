@@ -19,7 +19,6 @@ android_test {
     defaults: ["cts_defaults"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     static_libs: [

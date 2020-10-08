@@ -22,7 +22,6 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
 }
@@ -36,7 +35,6 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
 }
