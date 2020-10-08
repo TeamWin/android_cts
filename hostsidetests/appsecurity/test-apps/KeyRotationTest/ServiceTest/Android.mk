@@ -28,7 +28,7 @@ LOCAL_SDK_VERSION := current
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_STATIC_JAVA_LIBRARIES := cts_signature_query_service androidx.test.core androidx.test.rules
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
-LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
@@ -40,7 +40,7 @@ LOCAL_SDK_VERSION := current
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_STATIC_JAVA_LIBRARIES := cts_signature_query_service androidx.test.core androidx.test.rules
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
-LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
 LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
