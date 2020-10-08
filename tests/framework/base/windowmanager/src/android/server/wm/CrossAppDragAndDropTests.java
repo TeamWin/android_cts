@@ -17,11 +17,13 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
+import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.UiDeviceUtils.dragPointer;
 import static android.server.wm.dndsourceapp.Components.DRAG_SOURCE;
 import static android.server.wm.dndtargetapp.Components.DROP_TARGET;
 import static android.server.wm.dndtargetappsdk23.Components.DROP_TARGET_SDK23;
 import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -37,10 +39,12 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.ActivityTask;
 import android.util.Log;
 import android.view.Display;
-import java.util.Map;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Map;
 
 /**
  * Build/Install/Run:
@@ -136,7 +140,8 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
      */
     private void launchFreeformActivity(ComponentName componentName, String mode,
             String logtag, Point displaySize, boolean leftSide) throws Exception {
-        launchActivity(componentName, WINDOWING_MODE_FREEFORM, "mode", mode, "logtag", logtag);
+        launchActivity(componentName, WINDOWING_MODE_FREEFORM, extraString("mode", mode),
+                extraString("logtag", logtag));
         Point topLeft = new Point(leftSide ? 0 : displaySize.x / 2, 0);
         Point bottomRight = new Point(leftSide ? displaySize.x / 2 : displaySize.x, displaySize.y);
         resizeActivityTask(componentName, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
