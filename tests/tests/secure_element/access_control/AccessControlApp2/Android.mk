@@ -47,7 +47,7 @@ LOCAL_MODULE_CLASS := APPS
 LOCAL_BUILT_MODULE_STEM := package.apk
 # Make sure the build system doesn't try to resign the APK
 LOCAL_CERTIFICATE := PRESIGNED
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts-instant
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_REPLACE_PREBUILT_APK_INSTALLED := $(LOCAL_PATH)/apk/signed-CtsSecureElementAccessControlTestCases2.apk
 
