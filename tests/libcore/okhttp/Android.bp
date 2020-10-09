@@ -41,6 +41,5 @@ android_test {
         "cts",
         "general-tests",
         "mts",
-        "vts10",
     ],
 }

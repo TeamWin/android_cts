@@ -74,7 +74,6 @@ android_test_helper_app {
     manifest: "app_no_extract/AndroidManifest.xml",
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     jni_libs: [
@@ -134,7 +133,6 @@ android_test_helper_app {
     manifest: "app_extract/AndroidManifest.xml",
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     jni_libs: [

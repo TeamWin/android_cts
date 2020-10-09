@@ -22,7 +22,6 @@ android_test {
     use_embedded_native_libs: false,
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
 }
