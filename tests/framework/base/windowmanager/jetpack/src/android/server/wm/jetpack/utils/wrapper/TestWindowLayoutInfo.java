@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.wrapper;
+package android.server.wm.jetpack.utils.wrapper;
 
 import androidx.annotation.Nullable;
 
@@ -25,8 +25,8 @@ import java.util.List;
  * {@link androidx.window.sidecar.SidecarWindowLayoutInfo} that serves as an API compatibility
  * wrapper.
  *
- * @see android.server.wm.jetpack.wrapper.extensionwrapperimpl.TestExtensionWindowLayoutInfo
- * @see android.server.wm.jetpack.wrapper.sidecarwrapperimpl.TestSidecarWindowLayoutInfo
+ * @see android.server.wm.jetpack.utils.wrapper.extensionwrapperimpl.TestExtensionWindowLayoutInfo
+ * @see android.server.wm.jetpack.utils.wrapper.sidecarwrapperimpl.TestSidecarWindowLayoutInfo
  */
 public interface TestWindowLayoutInfo {
     /** Gets the list of display features present within the window. */
