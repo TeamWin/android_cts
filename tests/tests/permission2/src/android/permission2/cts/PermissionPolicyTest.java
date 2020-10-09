@@ -20,7 +20,7 @@ import static android.content.pm.PermissionInfo.FLAG_INSTALLED;
 import static android.content.pm.PermissionInfo.PROTECTION_MASK_BASE;
 import static android.os.Build.VERSION.SECURITY_PATCH;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -235,7 +235,7 @@ public class PermissionPolicyTest {
         }
 
         // Fail on any offending item
-        assertThat(offendingList).named("list of offending permissions").isEmpty();
+        assertWithMessage("list of offending permissions").that(offendingList).isEmpty();
     }
 
     private List<ExpectedPermissionInfo> loadExpectedPermissions(int resourceId) throws Exception {
