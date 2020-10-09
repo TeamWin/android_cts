@@ -41,6 +41,7 @@ import android.opengl.GLES20;
 import android.opengl.GLES11Ext;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
@@ -83,6 +84,7 @@ import android.security.NetworkSecurityPolicy;
  * Verify that the device is not vulnerable to any known Stagefright
  * vulnerabilities.
  */
+@AppModeFull
 @SecurityTest
 public class StagefrightTest extends InstrumentationTestCase {
     static final String TAG = "StagefrightTest";
