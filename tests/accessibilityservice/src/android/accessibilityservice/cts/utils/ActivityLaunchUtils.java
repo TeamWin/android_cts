@@ -16,6 +16,7 @@ package android.accessibilityservice.cts.utils;
 
 import static android.accessibility.cts.common.ShellCommandBuilder.execShellCommand;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
+import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -152,6 +153,11 @@ public class ActivityLaunchUtils {
 
             fail("Unable to reach home screen");
         }
+    }
+
+    public static boolean supportsMultiDisplay(Context context) {
+        return context.getPackageManager().hasSystemFeature(
+                FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 
     private static boolean isHomeScreenShowing(Context context, UiAutomation uiAutomation) {
