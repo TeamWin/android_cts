@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -2866,6 +2867,70 @@ public class TelephonyManagerTest {
         isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
         assertTrue(isDataConnectionAvailable);
+    }
+
+    @Test
+    public void testDataDuringVoiceCallPolicy() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ShellIdentityUtils.ShellPermissionMethodHelper<Boolean, TelephonyManager> getPolicyHelper =
+                (tm) -> tm.isMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL);
+
+        boolean allowDataDuringVoiceCall = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, getPolicyHelper);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
+                        TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL,
+                        !allowDataDuringVoiceCall));
+
+        assertNotEquals(allowDataDuringVoiceCall,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
+                        TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL,
+                        allowDataDuringVoiceCall));
+
+        assertEquals(allowDataDuringVoiceCall,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
+    }
+
+    @Test
+    public void testAlwaysAllowMmsDataPolicy() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ShellIdentityUtils.ShellPermissionMethodHelper<Boolean, TelephonyManager> getPolicyHelper =
+                (tm) -> tm.isMobileDataPolicyEnabled(
+                        TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED);
+
+        boolean mmsAlwaysAllowed = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, getPolicyHelper);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
+                        TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
+                        !mmsAlwaysAllowed));
+
+        assertNotEquals(mmsAlwaysAllowed,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
+                        TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
+                        mmsAlwaysAllowed));
+
+        assertEquals(mmsAlwaysAllowed,
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        mTelephonyManager, getPolicyHelper));
     }
 
     /**
