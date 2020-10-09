@@ -171,7 +171,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testGetActiveStagedSessions() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testGetActiveStagedSessions");
     }
 
@@ -191,7 +193,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
 
     @Test
     public void testGetActiveStagedSessions_MultiApkSession() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testGetActiveStagedSessions_MultiApkSession");
     }
 
@@ -492,7 +496,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     // Should fail to stage multiple sessions when check-point is not available
     @Test
     public void testFailStagingMultipleSessionsIfNoCheckPoint() throws Exception {
-        assumeFalse(isCheckpointSupported());
+        assumeFalse("Device supports file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testFailStagingMultipleSessionsIfNoCheckPoint");
     }
 
@@ -504,13 +510,17 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     public void testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk()
             throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testAllowNonOverlappingMultipleStagedInstall_MultiPackageSinglePackage_Apk");
     }
 
     @Test
     public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk");
     }
 
@@ -518,7 +528,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testMultipleStagedInstall_ApkOnly() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testMultipleStagedInstall_ApkOnly_Commit");
         getDevice().reboot();
         runPhase("testMultipleStagedInstall_ApkOnly_VerifyPostReboot");
@@ -528,7 +540,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testInstallMultipleStagedSession_PartialFail_ApkOnly() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_Commit");
         getDevice().reboot();
         runPhase("testInstallMultipleStagedSession_PartialFail_ApkOnly_VerifyPostReboot");
@@ -538,7 +552,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testFailureReasonPersists_SingleSession() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testFailureReasonPersists_SingleSession_Commit");
         getDevice().reboot();
         runPhase("testFailureReasonPersists_SingleSession_VerifyPostReboot");
@@ -548,7 +564,9 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     @Test
     @LargeTest
     public void testFailureReasonPersists_MultiSession() throws Exception {
-        assumeTrue(isCheckpointSupported());
+        assumeTrue("Device does not support file-system checkpoint",
+                mHostUtils.isCheckpointSupported());
+
         runPhase("testFailureReasonPersists_MultipleSession_Commit");
         getDevice().reboot();
         runPhase("testFailureReasonPersists_MultipleSession_VerifyPostReboot");
@@ -731,15 +749,6 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
                 Log.e(TAG, e);
                 return "Failed to get staged sessions";
             }
-        }
-    }
-
-    private boolean isCheckpointSupported() throws Exception {
-        try {
-            runPhase("isCheckpointSupported");
-            return true;
-        } catch (AssertionError ignore) {
-            return false;
         }
     }
 
