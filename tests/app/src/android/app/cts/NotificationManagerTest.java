@@ -458,7 +458,8 @@ public class NotificationManagerTest extends AndroidTestCase {
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
 
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent,
+                PendingIntent.FLAG_MUTABLE);
         final Notification notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(icon)
@@ -3611,6 +3612,33 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         compareChannels(conversationChannel,
                 mNotificationManager.getNotificationChannel(channel.getId(), conversationId));
+    }
+
+    public void testConversationRankingFields() throws Exception {
+        toggleListenerAccess(true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        createDynamicShortcut();
+        mNotificationManager.notify(177, getConversationNotification().build());
+
+        if (!checkNotificationExistence(177, /*shouldExist=*/ true)) {
+            fail("couldn't find posted notification id=" + 177);
+        }
+        Thread.sleep(500); // wait for notification listener to receive notification
+        assertEquals(1, mListener.mPosted.size());
+
+        NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
+        NotificationListenerService.Ranking outRanking = new NotificationListenerService.Ranking();
+        for (String key : rankingMap.getOrderedKeys()) {
+            if (key.contains(mListener.getPackageName())) {
+                rankingMap.getRanking(key, outRanking);
+                assertTrue(outRanking.isConversation());
+                assertEquals(SHARE_SHORTCUT_ID, outRanking.getShortcutInfo().getId());
+            }
+        }
     }
 
     public void testDemoteConversationChannel() {
