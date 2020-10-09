@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.wrapper;
+package android.server.wm.jetpack.utils.wrapper;
 
 import android.graphics.Rect;
 
@@ -28,20 +28,20 @@ import java.lang.annotation.RetentionPolicy;
  * {@link androidx.window.sidecar.SidecarDisplayFeature} that serves as an API compatibility
  * wrapper.
  *
- * @see android.server.wm.jetpack.wrapper.extensionwrapperimpl.TestExtensionDisplayFeature
- * @see android.server.wm.jetpack.wrapper.sidecarwrapperimpl.TestSidecarDisplayFeature
+ * @see android.server.wm.jetpack.utils.wrapper.extensionwrapperimpl.TestExtensionDisplayFeature
+ * @see android.server.wm.jetpack.utils.wrapper.sidecarwrapperimpl.TestSidecarDisplayFeature
  */
 public interface TestDisplayFeature {
 
     /**
      * A fold in the flexible screen without a physical gap.
      */
-    public static final int TYPE_FOLD = 1;
+    int TYPE_FOLD = 1;
 
     /**
      * A physical separation with a hinge that allows two display panels to fold.
      */
-    public static final int TYPE_HINGE = 2;
+    int TYPE_HINGE = 2;
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({
