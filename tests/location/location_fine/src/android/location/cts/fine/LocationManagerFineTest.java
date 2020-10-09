@@ -16,6 +16,7 @@
 
 package android.location.cts.fine;
 
+import static android.Manifest.permission.WRITE_SECURE_SETTINGS;
 import static android.location.LocationManager.EXTRA_PROVIDER_ENABLED;
 import static android.location.LocationManager.EXTRA_PROVIDER_NAME;
 import static android.location.LocationManager.FUSED_PROVIDER;
@@ -23,14 +24,23 @@ import static android.location.LocationManager.GPS_PROVIDER;
 import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
 import static android.location.LocationManager.PROVIDERS_CHANGED_ACTION;
+import static android.os.PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF;
+import static android.os.PowerManager.LOCATION_MODE_GPS_DISABLED_WHEN_SCREEN_OFF;
+import static android.os.PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF;
+import static android.provider.Settings.Global.BATTERY_SAVER_CONSTANTS;
+import static android.provider.Settings.Global.LOCATION_IGNORE_SETTINGS_PACKAGE_WHITELIST;
 
 import static androidx.test.ext.truth.content.IntentSubject.assertThat;
 import static androidx.test.ext.truth.location.LocationSubject.assertThat;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.LocationUtils.createLocation;
+import static com.android.compatibility.common.util.SettingsUtils.NAMESPACE_GLOBAL;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -55,15 +65,19 @@ import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.platform.test.annotations.AppModeFull;
-import android.provider.Settings.Secure;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.LocationUtils;
+import com.android.compatibility.common.util.ScreenUtils;
+import com.android.compatibility.common.util.ScreenUtils.ScreenResetter;
+import com.android.compatibility.common.util.SettingsUtils;
+import com.android.compatibility.common.util.SettingsUtils.SettingResetter;
 
 import org.junit.After;
 import org.junit.Before;
@@ -92,7 +106,7 @@ public class LocationManagerFineTest {
 
     @Before
     public void setUp() throws Exception {
-        LocationUtils.registerMockLocationProvider(InstrumentationRegistry.getInstrumentation(),
+        LocationUtils.registerMockLocationProvider(getInstrumentation(),
                 true);
 
         long seed = System.currentTimeMillis();
@@ -127,21 +141,13 @@ public class LocationManagerFineTest {
             }
         }
 
-        LocationUtils.registerMockLocationProvider(InstrumentationRegistry.getInstrumentation(),
+        LocationUtils.registerMockLocationProvider(getInstrumentation(),
                 false);
     }
 
     @Test
     public void testIsLocationEnabled() {
         assertThat(mManager.isLocationEnabled()).isTrue();
-    }
-
-    @Test
-    public void testValidLocationMode() {
-        int locationMode = Secure.getInt(mContext.getContentResolver(), Secure.LOCATION_MODE,
-                Secure.LOCATION_MODE_OFF);
-        assertThat(locationMode).isNotEqualTo(Secure.LOCATION_MODE_SENSORS_ONLY);
-        assertThat(locationMode).isNotEqualTo(Secure.LOCATION_MODE_BATTERY_SAVING);
     }
 
     @Test
@@ -557,6 +563,180 @@ public class LocationManagerFineTest {
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
             assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
+        }
+    }
+
+    @Test
+    public void testRequestLocationUpdates_BatterySaver_GpsDisabledScreenOff() throws Exception {
+        PowerManager powerManager = Objects.requireNonNull(
+                mContext.getSystemService(PowerManager.class));
+
+        mManager.addTestProvider(GPS_PROVIDER,
+                false,
+                true,
+                false,
+                false,
+                true,
+                true,
+                true,
+                Criteria.POWER_HIGH,
+                Criteria.ACCURACY_FINE);
+        mManager.setTestProviderEnabled(GPS_PROVIDER, true);
+
+        LocationRequest request = new LocationRequest.Builder(0).build();
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
+             ScreenResetter ignored = new ScreenResetter()) {
+            mManager.requestLocationUpdates(GPS_PROVIDER, request,
+                    Executors.newSingleThreadExecutor(), capture);
+            mManager.requestLocationUpdates(TEST_PROVIDER, request,
+                    Executors.newSingleThreadExecutor(), capture);
+
+            SettingsUtils.set(NAMESPACE_GLOBAL, BATTERY_SAVER_CONSTANTS,
+                    "gps_mode=1");
+            BatteryUtils.runDumpsysBatteryUnplug();
+            BatteryUtils.enableBatterySaver(true);
+            assertThat(powerManager.getLocationPowerSaveMode()).isEqualTo(
+                    LOCATION_MODE_GPS_DISABLED_WHEN_SCREEN_OFF);
+
+            // check screen off behavior
+            ScreenUtils.setScreenOn(false);
+            assertFalse(powerManager.isInteractive());
+            Location loc = createLocation(TEST_PROVIDER, mRandom);
+            mManager.setTestProviderLocation(GPS_PROVIDER, loc);
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
+
+            // check screen on behavior
+            ScreenUtils.setScreenOn(true);
+            assertTrue(powerManager.isInteractive());
+            loc = createLocation(TEST_PROVIDER, mRandom);
+            mManager.setTestProviderLocation(GPS_PROVIDER, loc);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
+        } finally {
+            BatteryUtils.enableBatterySaver(false);
+            BatteryUtils.runDumpsysBatteryReset();
+        }
+    }
+
+    @Test
+    public void testRequestLocationUpdates_BatterySaver_AllDisabledScreenOff() throws Exception {
+        PowerManager powerManager = Objects.requireNonNull(
+                mContext.getSystemService(PowerManager.class));
+
+        LocationRequest request = new LocationRequest.Builder(0).build();
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
+             ScreenResetter ignored = new ScreenResetter()) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, request,
+                    Executors.newSingleThreadExecutor(), capture);
+
+            SettingsUtils.set(NAMESPACE_GLOBAL, BATTERY_SAVER_CONSTANTS,
+                    "gps_mode=2");
+            BatteryUtils.runDumpsysBatteryUnplug();
+            BatteryUtils.enableBatterySaver(true);
+            assertThat(powerManager.getLocationPowerSaveMode()).isEqualTo(
+                    LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF);
+
+            // check screen off behavior
+            ScreenUtils.setScreenOn(false);
+            assertFalse(powerManager.isInteractive());
+            mManager.setTestProviderLocation(TEST_PROVIDER, createLocation(TEST_PROVIDER, mRandom));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
+
+            // check screen on behavior
+            ScreenUtils.setScreenOn(true);
+            assertTrue(powerManager.isInteractive());
+            Location loc = createLocation(TEST_PROVIDER, mRandom);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
+        } finally {
+            BatteryUtils.enableBatterySaver(false);
+            BatteryUtils.runDumpsysBatteryReset();
+        }
+    }
+
+    @Test
+    public void testRequestLocationUpdates_BatterySaver_ThrottleScreenOff() throws Exception {
+        PowerManager powerManager = Objects.requireNonNull(
+                mContext.getSystemService(PowerManager.class));
+
+        LocationRequest request = new LocationRequest.Builder(0).build();
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
+             ScreenResetter ignored = new ScreenResetter()) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, request,
+                    Executors.newSingleThreadExecutor(), capture);
+
+            SettingsUtils.set(NAMESPACE_GLOBAL, BATTERY_SAVER_CONSTANTS,
+                    "gps_mode=4");
+            BatteryUtils.runDumpsysBatteryUnplug();
+            BatteryUtils.enableBatterySaver(true);
+            assertThat(powerManager.getLocationPowerSaveMode()).isEqualTo(
+                    LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF);
+
+            // check screen off behavior
+            ScreenUtils.setScreenOn(false);
+            assertFalse(powerManager.isInteractive());
+            mManager.setTestProviderLocation(TEST_PROVIDER, createLocation(TEST_PROVIDER, mRandom));
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isNull();
+
+            // check screen on behavior
+            ScreenUtils.setScreenOn(true);
+            assertTrue(powerManager.isInteractive());
+            Location loc = createLocation(TEST_PROVIDER, mRandom);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
+        } finally {
+            BatteryUtils.enableBatterySaver(false);
+            BatteryUtils.runDumpsysBatteryReset();
+        }
+    }
+
+    @Test
+    public void testRequestLocationUpdates_LocationSettingsIgnored() throws Exception {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
+             ScreenResetter ignored1 = new ScreenResetter();
+             SettingResetter ignored2 = new SettingResetter(NAMESPACE_GLOBAL,
+                     LOCATION_IGNORE_SETTINGS_PACKAGE_WHITELIST, mContext.getPackageName())) {
+
+            getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
+            try {
+                mManager.requestLocationUpdates(
+                        TEST_PROVIDER,
+                        new LocationRequest.Builder(0)
+                                .setLocationSettingsIgnored(true)
+                                .build(),
+                        Executors.newSingleThreadExecutor(),
+                        capture);
+            } finally {
+                getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            }
+
+            // turn off provider
+            mManager.setTestProviderEnabled(TEST_PROVIDER, false);
+
+            // enable battery saver throttling
+            SettingsUtils.set(NAMESPACE_GLOBAL, BATTERY_SAVER_CONSTANTS,
+                    "gps_mode=4");
+            BatteryUtils.runDumpsysBatteryUnplug();
+            BatteryUtils.enableBatterySaver(true);
+            ScreenUtils.setScreenOn(false);
+
+            // test that all restrictions are bypassed
+            Location loc = createLocation(TEST_PROVIDER, mRandom);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isEqualTo(loc);
+            loc = createLocation(TEST_PROVIDER, mRandom);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertThat(capture.getNextLocation(FAILURE_TIMEOUT_MS)).isEqualTo(loc);
+        } finally {
+            BatteryUtils.enableBatterySaver(false);
+            BatteryUtils.runDumpsysBatteryReset();
         }
     }
 
