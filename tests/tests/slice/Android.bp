@@ -19,7 +19,6 @@ android_test {
     test_suites: [
         "cts",
         "sts",
-        "vts10",
         "general-tests",
     ],
     libs: ["android.test.runner"],

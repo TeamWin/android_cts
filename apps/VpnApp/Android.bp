@@ -25,7 +25,6 @@ android_test_helper_app {
     manifest: "api23/AndroidManifest.xml",
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
 }
@@ -36,7 +35,6 @@ android_test_helper_app {
     manifest: "api24/AndroidManifest.xml",
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
 }
@@ -47,7 +45,6 @@ android_test_helper_app {
     manifest: "latest/AndroidManifest.xml",
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
 }
@@ -58,7 +55,6 @@ android_test_helper_app {
     manifest: "notalwayson/AndroidManifest.xml",
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
 }
