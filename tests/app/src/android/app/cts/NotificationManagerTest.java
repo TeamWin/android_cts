@@ -94,7 +94,12 @@ import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.ConditionVariable;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
+import android.os.Messenger;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -111,6 +116,7 @@ import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.service.notification.ZenPolicy;
 import android.test.AndroidTestCase;
+import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -136,6 +142,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -159,6 +166,22 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final String SHARE_SHORTCUT_CATEGORY =
             "android.app.stubs.SHARE_SHORTCUT_CATEGORY";
 
+    private static final String TRAMPOLINE_APP =
+            "com.android.test.notificationtrampoline.current";
+    private static final String TRAMPOLINE_APP_API_30 =
+            "com.android.test.notificationtrampoline.api30";
+    private static final ComponentName TRAMPOLINE_SERVICE =
+            new ComponentName(TRAMPOLINE_APP,
+                    "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName TRAMPOLINE_SERVICE_API_30 =
+            new ComponentName(TRAMPOLINE_APP_API_30,
+                    "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+
+    private static final long TIMEOUT_LONG_MS = 10000;
+    private static final long TIMEOUT_MS = 4000;
+    private static final int MESSAGE_BROADCAST_NOTIFICATION = 1;
+    private static final int MESSAGE_SERVICE_NOTIFICATION = 2;
+
     private PackageManager mPackageManager;
     private AudioManager mAudioManager;
     private NotificationManager mNotificationManager;
@@ -169,6 +192,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private BroadcastReceiver mBubbleBroadcastReceiver;
     private boolean mBubblesEnabledSettingToRestore;
     private INotificationUriAccessService mNotificationUriAccessService;
+    private FutureServiceConnection mTrampolineConnection;
 
     @Override
     protected void setUp() throws Exception {
@@ -247,6 +271,16 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         // Restore bubbles setting
         setBubblesGlobal(mBubblesEnabledSettingToRestore);
+
+        // For trampoline tests
+        if (mTrampolineConnection != null) {
+            mContext.unbindService(mTrampolineConnection);
+            mTrampolineConnection = null;
+        }
+        if (mListener != null) {
+            mListener.removeTestPackage(TRAMPOLINE_APP_API_30);
+            mListener.removeTestPackage(TRAMPOLINE_APP);
+        }
     }
 
     private void assertNotificationCancelled(int id, boolean all) {
@@ -859,6 +893,19 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void cleanupSendBubbleActivity() {
         mContext.unregisterReceiver(mBubbleBroadcastReceiver);
+    }
+
+    private void sendTrampolineMessage(ComponentName component, int message,
+            int notificationId, Handler callback) throws Exception {
+        if (mTrampolineConnection == null) {
+            Intent intent = new Intent();
+            intent.setComponent(component);
+            mTrampolineConnection = new FutureServiceConnection();
+            assertTrue(
+                    mContext.bindService(intent, mTrampolineConnection, Context.BIND_AUTO_CREATE));
+        }
+        Messenger service = new Messenger(mTrampolineConnection.get(TIMEOUT_MS));
+        service.send(Message.obtain(null, message, notificationId, -1, new Messenger(callback)));
     }
 
     public void testConsolidatedNotificationPolicy() throws Exception {
@@ -2861,8 +2908,6 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    ;
-
     public void testNotificationUriPermissionsRevokedOnlyFromRemovedListeners() throws Exception {
         Uri background7Uri = Uri.parse(
                 "content://com.android.test.notificationprovider.provider/background7.png");
@@ -3635,5 +3680,118 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         assertEquals(false, mNotificationManager.getNotificationChannel(
                 channel.getId(), conversationId).isDemoted());
+    }
+
+    public void testActivityStartOnBroadcastTrampoline_isBlocked() throws Exception {
+        setUpNotifListener();
+        mListener.addTestPackage(TRAMPOLINE_APP);
+        EventCallback callback = new EventCallback();
+        int notificationId = 6001;
+
+        // Post notification and fire its pending intent
+        sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_BROADCAST_NOTIFICATION, notificationId,
+                callback);
+        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        assertNotNull("Notification not posted on time", statusBarNotification);
+        statusBarNotification.getNotification().contentIntent.send();
+
+        assertTrue("Broadcast not received on time",
+                callback.waitFor(EventCallback.BROADCAST_RECEIVED, TIMEOUT_LONG_MS));
+        assertFalse("Activity start should have been blocked",
+                callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
+    public void testActivityStartOnServiceTrampoline_isBlocked() throws Exception {
+        setUpNotifListener();
+        mListener.addTestPackage(TRAMPOLINE_APP);
+        EventCallback callback = new EventCallback();
+        int notificationId = 6002;
+
+        // Post notification and fire its pending intent
+        sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_SERVICE_NOTIFICATION, notificationId,
+                callback);
+        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        assertNotNull("Notification not posted on time", statusBarNotification);
+        statusBarNotification.getNotification().contentIntent.send();
+
+        assertTrue("Service not started on time",
+                callback.waitFor(EventCallback.SERVICE_STARTED, TIMEOUT_MS));
+        assertFalse("Activity start should have been blocked",
+                callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
+    public void testActivityStartOnBroadcastTrampoline_whenApi30_isAllowed() throws Exception {
+        setUpNotifListener();
+        mListener.addTestPackage(TRAMPOLINE_APP_API_30);
+        EventCallback callback = new EventCallback();
+        int notificationId = 6003;
+
+        // Post notification and fire its pending intent
+        sendTrampolineMessage(TRAMPOLINE_SERVICE_API_30, MESSAGE_BROADCAST_NOTIFICATION,
+                notificationId, callback);
+        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        assertNotNull("Notification not posted on time", statusBarNotification);
+        statusBarNotification.getNotification().contentIntent.send();
+
+        assertTrue("Broadcast not received on time",
+                callback.waitFor(EventCallback.BROADCAST_RECEIVED, TIMEOUT_LONG_MS));
+        assertTrue("Activity not started",
+                callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
+    public void testActivityStartOnServiceTrampoline_whenApi30_isAllowed() throws Exception {
+        setUpNotifListener();
+        mListener.addTestPackage(TRAMPOLINE_APP_API_30);
+        EventCallback callback = new EventCallback();
+        int notificationId = 6004;
+
+        // Post notification and fire its pending intent
+        sendTrampolineMessage(TRAMPOLINE_SERVICE_API_30, MESSAGE_SERVICE_NOTIFICATION,
+                notificationId, callback);
+        StatusBarNotification statusBarNotification = findPostedNotification(notificationId, true);
+        assertNotNull("Notification not posted on time", statusBarNotification);
+        statusBarNotification.getNotification().contentIntent.send();
+
+        assertTrue("Service not started on time",
+                callback.waitFor(EventCallback.SERVICE_STARTED, TIMEOUT_MS));
+        assertTrue("Activity not started",
+                callback.waitFor(EventCallback.ACTIVITY_STARTED, TIMEOUT_MS));
+    }
+
+    private static class FutureServiceConnection implements ServiceConnection {
+        public final CompletableFuture<IBinder> future = new CompletableFuture<>();
+        public IBinder get(long timeoutMs) throws Exception {
+            return future.get(timeoutMs, TimeUnit.MILLISECONDS);
+        }
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            future.complete(service);
+        }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            fail(name + " disconnected");
+        }
+    }
+
+    private static class EventCallback extends Handler {
+        private static final int BROADCAST_RECEIVED = 1;
+        private static final int SERVICE_STARTED = 2;
+        private static final int ACTIVITY_STARTED = 3;
+
+        private final Map<Integer, ConditionVariable> mEvents =
+                Collections.synchronizedMap(new ArrayMap<>());
+
+        private EventCallback() {
+            super(Looper.getMainLooper());
+        }
+
+        @Override
+        public void handleMessage(Message message) {
+            mEvents.computeIfAbsent(message.what, e -> new ConditionVariable()).open();
+        }
+
+        public boolean waitFor(int event, long timeoutMs) {
+            return mEvents.computeIfAbsent(event, e -> new ConditionVariable()).block(timeoutMs);
+        }
     }
 }

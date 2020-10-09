@@ -16,15 +16,16 @@
 package android.app.stubs;
 
 import android.content.ComponentName;
+import android.os.ConditionVariable;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
-import android.util.Log;
 
 import java.util.ArrayList;
 
 public class TestNotificationListener extends NotificationListenerService {
     public static final String TAG = "TestNotificationListener";
     public static final String PKG = "android.app.stubs";
+    private static final long CONNECTION_TIMEOUT_MS = 1000;
 
     private ArrayList<String> mTestPackages = new ArrayList<>();
 
@@ -32,6 +33,16 @@ public class TestNotificationListener extends NotificationListenerService {
     public ArrayList<StatusBarNotification> mRemoved = new ArrayList<>();
     public RankingMap mRankingMap;
 
+    /**
+     * This controls whether there is a listener connected or not. Depending on the method, if the
+     * caller tries to use a listener after it has disconnected, NMS can throw a SecurityException.
+     *
+     * There is no race between onListenerConnected() and onListenerDisconnected() because they are
+     * called in the same thread. The value that getInstance() sees is guaranteed to be the value
+     * that was set by onListenerConnected() because of the happens-before established by the
+     * condition variable.
+     */
+    private static final ConditionVariable INSTANCE_AVAILABLE = new ConditionVariable(false);
     private static TestNotificationListener sNotificationListenerInstance = null;
     boolean isConnected;
 
@@ -55,21 +66,35 @@ public class TestNotificationListener extends NotificationListenerService {
     public void onListenerConnected() {
         super.onListenerConnected();
         sNotificationListenerInstance = this;
+        INSTANCE_AVAILABLE.open();
         isConnected = true;
     }
 
     @Override
     public void onListenerDisconnected() {
+        INSTANCE_AVAILABLE.close();
+        sNotificationListenerInstance = null;
         isConnected = false;
     }
 
     public static TestNotificationListener getInstance() {
-        return sNotificationListenerInstance;
+        if (INSTANCE_AVAILABLE.block(CONNECTION_TIMEOUT_MS)) {
+            return sNotificationListenerInstance;
+        }
+        return null;
     }
 
     public void resetData() {
         mPosted.clear();
         mRemoved.clear();
+    }
+
+    public void addTestPackage(String packageName) {
+        mTestPackages.add(packageName);
+    }
+
+    public void removeTestPackage(String packageName) {
+        mTestPackages.remove(packageName);
     }
 
     @Override
