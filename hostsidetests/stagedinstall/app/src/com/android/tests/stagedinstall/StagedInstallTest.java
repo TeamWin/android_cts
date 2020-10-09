@@ -903,16 +903,20 @@ public class StagedInstallTest {
     @Test
     public void testFailStagingMultipleSessionsIfNoCheckPoint() throws Exception {
         stageSingleApk(TestApp.A1).assertSuccessful();
-        StageSessionResult failedSessionResult = stageSingleApk(TestApp.B1);
-        assertThat(failedSessionResult.getErrorMessage()).contains(
+        int sessionId = stageSingleApk(TestApp.B1).assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
+        assertThat(info).isStagedSessionFailed();
+        assertThat(info.getStagedSessionErrorMessage()).contains(
                 "Cannot stage multiple sessions without checkpoint support");
     }
 
     @Test
     public void testFailOverlappingMultipleStagedInstall_BothSinglePackage_Apk() throws Exception {
         stageSingleApk(TestApp.A1).assertSuccessful();
-        StageSessionResult failedSessionResult = stageSingleApk(TestApp.A1);
-        assertThat(failedSessionResult.getErrorMessage()).contains(
+        int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
+        assertThat(info).isStagedSessionFailed();
+        assertThat(info.getStagedSessionErrorMessage()).contains(
                 "has been staged already by session");
     }
 
@@ -926,8 +930,10 @@ public class StagedInstallTest {
     @Test
     public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
         stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
-        StageSessionResult failedSessionResult = stageMultipleApks(TestApp.A2, TestApp.C1);
-        assertThat(failedSessionResult.getErrorMessage()).contains(
+        int sessionId = stageMultipleApks(TestApp.A2, TestApp.C1).assertSuccessful().getSessionId();
+        PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
+        assertThat(info).isStagedSessionFailed();
+        assertThat(info.getStagedSessionErrorMessage()).contains(
                 "has been staged already by session");
     }
 
