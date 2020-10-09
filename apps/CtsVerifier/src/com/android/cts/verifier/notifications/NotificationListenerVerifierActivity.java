@@ -38,14 +38,20 @@ import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
+import android.app.Person;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
+import android.graphics.drawable.Icon;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
 import android.service.notification.StatusBarNotification;
+import android.util.ArraySet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,6 +65,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -129,6 +136,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new RequestUnbindTest());
         tests.add(new RequestBindTest());
         tests.add(new MessageBundleTest());
+        tests.add(new ConversationOrderingTest());
         tests.add(new EnableHintsTest());
         tests.add(new IsDisabledTest());
         tests.add(new ServiceStoppedTest());
@@ -1430,6 +1438,108 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             }
 
             status = PASS;
+        }
+    }
+
+    /**
+     * Tests that conversation notifications appear at the top of the shade, if the device supports
+     * a separate conversation section
+     */
+    private class ConversationOrderingTest extends InteractiveTestCase {
+        private static final String SHARE_SHORTCUT_ID = "shareShortcut";
+        private static final String SHORTCUT_CATEGORY =
+                "com.android.cts.verifier.notifications.SHORTCUT_CATEGORY";
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            createDynamicShortcut();
+            sendNotifications();
+            status = READY;
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            deleteChannels();
+            delay();
+        }
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createPassFailItem(parent, R.string.conversation_section_ordering);
+        }
+
+        private void createDynamicShortcut() {
+            Person person = new Person.Builder()
+                    .setBot(false)
+                    .setIcon(Icon.createWithResource(mContext, R.drawable.ic_stat_alice))
+                    .setName("Person A")
+                    .setImportant(true)
+                    .build();
+
+            Set<String> categorySet = new ArraySet<>();
+            categorySet.add(SHORTCUT_CATEGORY);
+            Intent shortcutIntent =
+                    new Intent(mContext, BubbleActivity.class);
+            shortcutIntent.setAction(Intent.ACTION_VIEW);
+
+            ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, SHARE_SHORTCUT_ID)
+                    .setShortLabel(SHARE_SHORTCUT_ID)
+                    .setIcon(Icon.createWithResource(mContext, R.drawable.ic_stat_alice))
+                    .setIntent(shortcutIntent)
+                    .setPerson(person)
+                    .setCategories(categorySet)
+                    .setLongLived(true)
+                    .build();
+
+            ShortcutManager scManager =
+                    (ShortcutManager) mContext.getSystemService(Context.SHORTCUT_SERVICE);
+            scManager.addDynamicShortcuts(Arrays.asList(shortcut));
+        }
+
+        private void sendNotifications() {
+            mTag1 = UUID.randomUUID().toString();
+            mId1 = NOTIFICATION_ID + 1;
+
+            Person person = new Person.Builder()
+                    .setName("Person A")
+                    .build();
+
+            Notification n1 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle("ConversationOrderingTest")
+                    .setContentText(mTag1)
+                    .setSmallIcon(R.drawable.ic_stat_alice)
+                    .setShortcutId(SHARE_SHORTCUT_ID)
+                    .setStyle(new Notification.MessagingStyle(person)
+                            .setConversationTitle("Bubble Chat")
+                            .addMessage("Hello?",
+                                    SystemClock.currentThreadTimeMillis() - 300000, person)
+                            .addMessage("Is it me you're looking for?",
+                                    SystemClock.currentThreadTimeMillis(), person)
+                    )
+                    .build();
+            mNm.notify(mTag1, mId1, n1);
+
+            mTag2 = UUID.randomUUID().toString();
+            mId2 = mId1 + 1;
+            Notification n2 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                    .setContentTitle("Non-Person Notification")
+                    .setContentText(mTag1)
+                    .setSmallIcon(R.drawable.ic_stat_alice)
+                    .build();
+            mNm.notify(mTag2, mId2, n2);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            status = WAIT_FOR_USER;
+            next();
         }
     }
 }

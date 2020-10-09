@@ -57,7 +57,7 @@ def main():
         sens_min, _ = props['android.sensor.info.sensitivityRange']
         sens_max_ana = props['android.sensor.maxAnalogSensitivity']
         sens_step = (sens_max_ana - sens_min) / NUM_STEPS
-        s_ae, e_ae, _, _, _ = cam.do_3a(get_results=True, do_af=False)
+        s_ae, e_ae, _, _, _ = cam.do_3a(get_results=True)
         s_e_prod = s_ae * e_ae
         # Focus at zero to intentionally blur the scene as much as possible.
         f_dist = 0.0

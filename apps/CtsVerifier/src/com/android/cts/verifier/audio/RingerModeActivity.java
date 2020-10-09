@@ -808,6 +808,11 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
 
         @Override
         protected void test() {
+            if (mSkipRingerTests) {
+                status = PASS;
+                return;
+            }
+
             int volume, volumeDelta;
             int[] streams = {STREAM_MUSIC,
                     AudioManager.STREAM_VOICE_CALL,
@@ -1000,6 +1005,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
         @Override
         protected void test() {
             if (mSkipRingerTests) {
+                status = PASS;
                 return;
             }
             int[] streams = { AudioManager.STREAM_RING };
@@ -1041,6 +1047,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
         @Override
         protected void test() {
             if (mSkipRingerTests) {
+                status = PASS;
                 return;
             }
             int[] streams = { AudioManager.STREAM_RING };
@@ -1125,6 +1132,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
         @Override
         protected void test() {
             if (mSkipRingerTests) {
+                status = PASS;
                 return;
             }
             int musicVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);

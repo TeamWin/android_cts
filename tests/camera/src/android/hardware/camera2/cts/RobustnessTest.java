@@ -2053,6 +2053,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     private boolean isMandatoryCombinationAvailable(final int[] combination,
             final MaxStreamSizes maxSizes, boolean isInput,
             final MandatoryStreamCombination[] availableCombinations) {
+        boolean supportYuvReprocess = mStaticInfo.isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING);
+        boolean supportOpaqueReprocess = mStaticInfo.isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
         // Static combinations to be verified can be composed of multiple entries
         // that have the following layout (format, size). In case "isInput" is set,
         // the first stream configuration entry will contain the input format and size
@@ -2062,6 +2066,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 new ArrayList<Pair<Pair<Integer, Boolean>, Size>>(streamCount);
         for (int i = 0; i < combination.length; i += 2) {
             if (isInput && (i == 0)) {
+                // Skip the combination if the format is not supported for reprocessing.
+                if ((combination[i] == YUV && !supportYuvReprocess) ||
+                        (combination[i] == PRIV && !supportOpaqueReprocess)) {
+                    return true;
+                }
                 Size sz = maxSizes.getMaxInputSizeForFormat(combination[i]);
                 currentCombination.add(Pair.create(Pair.create(new Integer(combination[i]),
                             new Boolean(true)), sz));

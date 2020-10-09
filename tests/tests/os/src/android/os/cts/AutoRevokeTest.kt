@@ -22,6 +22,7 @@ import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_DENIED
 import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.content.res.Resources
 import android.net.Uri
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
@@ -31,10 +32,17 @@ import android.support.test.uiautomator.UiObject2
 import android.test.InstrumentationTestCase
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
-import com.android.compatibility.common.util.*
 import com.android.compatibility.common.util.textAsString
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
-import com.android.compatibility.common.util.SystemUtil.*
+import com.android.compatibility.common.util.SystemUtil
+import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.ThrowingSupplier
+import com.android.compatibility.common.util.UiAutomatorUtils
+import com.android.compatibility.common.util.click
+import com.android.compatibility.common.util.depthFirstSearch
+import com.android.compatibility.common.util.lowestCommonAncestor
+import com.android.compatibility.common.util.uiDump
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.containsStringIgnoringCase
 import org.hamcrest.Matcher
@@ -46,12 +54,17 @@ import java.util.regex.Pattern
 
 private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
 private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
+private const val APK_PATH_2 = "/data/local/tmp/cts/os/CtsAutoRevokePreRApp.apk"
+private const val APK_PACKAGE_NAME_2 = "android.os.cts.autorevokeprerapp"
 private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
 
 /**
  * Test for auto revoke
  */
 class AutoRevokeTest : InstrumentationTestCase() {
+
+    private val mPermissionControllerResources: Resources = context.createPackageContext(
+            context.packageManager.permissionControllerPackageName, 0).resources
 
     companion object {
         const val LOG_TAG = "AutoRevokeTest"
@@ -105,10 +118,51 @@ class AutoRevokeTest : InstrumentationTestCase() {
 
                 // Run
                 runAutoRevoke()
-                Thread.sleep(500)
+                Thread.sleep(1000)
 
                 // Verify
                 assertPermission(PERMISSION_GRANTED)
+            }
+        }
+    }
+
+    @AppModeFull(reason = "Uses separate apps for testing")
+    fun testPreRUnusedApp_doesntGetPermissionRevoked() {
+        wakeUpScreen()
+        withUnusedThresholdMs(3L) {
+            withDummyApp(APK_PATH_2, APK_PACKAGE_NAME_2) {
+                withDummyApp {
+                    startApp(APK_PACKAGE_NAME_2)
+                    clickPermissionAllow()
+                    eventually {
+                        assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_2)
+                    }
+
+                    goBack()
+                    goHome()
+                    goBack()
+
+                    startApp()
+                    clickPermissionAllow()
+                    eventually {
+                        assertPermission(PERMISSION_GRANTED)
+                    }
+
+                    goBack()
+                    goHome()
+                    goBack()
+                    Thread.sleep(20)
+
+                    // Run
+                    runAutoRevoke()
+                    Thread.sleep(500)
+
+                    // Verify
+                    eventually {
+                        assertPermission(PERMISSION_DENIED)
+                        assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_2)
+                    }
+                }
             }
         }
     }
@@ -261,8 +315,17 @@ class AutoRevokeTest : InstrumentationTestCase() {
     }
 
     private fun clickPermissionAllow() {
-        waitFindObject(By.res("com.android.permissioncontroller:id/permission_allow_button"))
-                .click()
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            waitFindObject(By.text(Pattern.compile(
+                    Pattern.quote(mPermissionControllerResources.getString(
+                            mPermissionControllerResources.getIdentifier(
+                                    "grant_dialog_button_allow", "string",
+                                    "com.android.permissioncontroller"))),
+                    Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE))).click()
+        } else {
+            waitFindObject(By.res("com.android.permissioncontroller:id/permission_allow_button"))
+                    .click()
+        }
     }
 
     private inline fun withDummyApp(
@@ -284,7 +347,8 @@ class AutoRevokeTest : InstrumentationTestCase() {
         runWithShellPermissionIdentity {
             assertEquals(
                 permissionStateToString(state),
-                permissionStateToString(context.packageManager.checkPermission(READ_CALENDAR, APK_PACKAGE_NAME)))
+                permissionStateToString(
+                        context.packageManager.checkPermission(READ_CALENDAR, packageName)))
         }
     }
 

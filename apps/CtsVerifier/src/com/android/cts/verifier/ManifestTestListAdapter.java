@@ -421,10 +421,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         }
                         break;
                     case CONFIG_HAS_RECENTS:
-                        final Resources systemRes = mContext.getResources().getSystem();
-                        final int id = systemRes.getIdentifier("config_hasRecents", "bool",
-                                "android");
-                        if (id == Resources.ID_NULL || !systemRes.getBoolean(id)) {
+                        if (!getSystemResourceFlag("config_hasRecents")) {
                             return false;
                         }
                         break;
@@ -439,6 +436,11 @@ public class ManifestTestListAdapter extends TestListAdapter {
                                     LOG_TAG,
                                     "Exception while looking up HDMI device type.",
                                     exception);
+                        }
+                        break;
+                    case CONFIG_QUICK_SETTINGS_SUPPORTED:
+                        if (!getSystemResourceFlag("config_quickSettingsSupported")) {
+                            return false;
                         }
                         break;
                     default:
@@ -468,6 +470,17 @@ public class ManifestTestListAdapter extends TestListAdapter {
             default:
                 return false;
         }
+    }
+
+    private boolean getSystemResourceFlag(String key) {
+        final Resources systemRes = mContext.getResources().getSystem();
+        final int id = systemRes.getIdentifier(key, "bool", "android");
+        if (id == Resources.ID_NULL) {
+            // The flag being queried should exist in
+            // frameworks/base/core/res/res/values/config.xml.
+            throw new RuntimeException("System resource flag " + key + " not found");
+        }
+        return systemRes.getBoolean(id);
     }
 
     private static List<Integer> getHdmiDeviceType()

@@ -81,7 +81,7 @@ public class TextureViewTest {
         mActivityRule.runOnUiThread(() -> {
             View content = activity.findViewById(android.R.id.content);
             int[] outLocation = new int[2];
-            content.getLocationOnScreen(outLocation);
+            content.getLocationInWindow(outLocation);
             center.x = outLocation[0] + (content.getWidth() / 2);
             center.y = outLocation[1] + (content.getHeight() / 2);
             windowRet[0] = activity.getWindow();
@@ -145,7 +145,7 @@ public class TextureViewTest {
         final Rect viewPos = new Rect();
         mActivityRule.runOnUiThread(() -> {
             int[] outLocation = new int[2];
-            textureView.getLocationOnScreen(outLocation);
+            textureView.getLocationInWindow(outLocation);
             viewPos.left = outLocation[0];
             viewPos.top = outLocation[1];
             viewPos.right = viewPos.left + textureView.getWidth();
@@ -187,7 +187,7 @@ public class TextureViewTest {
         final Rect viewPos = new Rect();
         mActivityRule.runOnUiThread(() -> {
             int[] outLocation = new int[2];
-            textureView.getLocationOnScreen(outLocation);
+            textureView.getLocationInWindow(outLocation);
             viewPos.left = outLocation[0];
             viewPos.top = outLocation[1];
             viewPos.right = viewPos.left + textureView.getWidth();
@@ -343,7 +343,7 @@ public class TextureViewTest {
             final Rect viewPos = new Rect();
             mActivityRule.runOnUiThread(() -> {
                 int[] outLocation = new int[2];
-                textureView.getLocationOnScreen(outLocation);
+                textureView.getLocationInWindow(outLocation);
                 viewPos.left = outLocation[0];
                 viewPos.top = outLocation[1];
                 viewPos.right = viewPos.left + textureView.getWidth();

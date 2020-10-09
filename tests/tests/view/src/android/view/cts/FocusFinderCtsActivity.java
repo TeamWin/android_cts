@@ -25,6 +25,8 @@ public class FocusFinderCtsActivity extends Activity {
 
     public ViewGroup layout;
 
+    public ViewGroup inflateLayout;
+
     public Button topLeftButton;
 
     public Button topRightButton;
@@ -33,15 +35,19 @@ public class FocusFinderCtsActivity extends Activity {
 
     public Button bottomRightButton;
 
+    public Button bottomButton;
+
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.focus_finder_layout);
         layout = (ViewGroup) findViewById(R.id.layout);
+        inflateLayout = (ViewGroup) findViewById(R.id.inflate_layout);
         topLeftButton = (Button) findViewById(R.id.top_left_button);
         topRightButton = (Button) findViewById(R.id.top_right_button);
         bottomLeftButton = (Button) findViewById(R.id.bottom_left_button);
         bottomRightButton = (Button) findViewById(R.id.bottom_right_button);
+        bottomButton = (Button) findViewById(R.id.bottom_button);
     }
 }
 

@@ -23,7 +23,7 @@
         <uses-library android:name="android.test.runner" />
         <activity android:name="android.dynamicmime.common.activity.FirstActivity">
             <intent-filter android:label="TestApp.FirstActivity">
-                <action android:name="android.intent.action.SEND"/>
+                <action android:name="android.dynamicmime.preferred.TEST_ACTION"/>
                 <action android:name="android.dynamicmime.preferred.FILTER_INFO_HOOK_group_first"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeGroup="group_first"/>
@@ -32,11 +32,31 @@
 
         <activity android:name="android.dynamicmime.common.activity.TwoGroupsActivity">
             <intent-filter android:label="TestApp.TwoGroupsActivity">
-                <action android:name="android.intent.action.SEND"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.dynamicmime.preferred.TEST_ACTION"/>
                 <action android:name="android.dynamicmime.preferred.FILTER_INFO_HOOK_group_both"/>
+                <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeGroup="group_third"/>
                 <data android:mimeGroup="group_second"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.dynamicmime.common.activity.StaticActivity1"
+            android:exported="true">
+            <intent-filter android:label="StaticActivity1">
+                <action android:name="android.dynamicmime.preferred.TEST_ACTION"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+                <data android:mimeType="image/png"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.dynamicmime.common.activity.StaticActivity2"
+            android:exported="true">
+            <intent-filter android:label="StaticActivity2">
+                <action android:name="android.dynamicmime.preferred.TEST_ACTION"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+                <data android:mimeType="image/png"/>
             </intent-filter>
         </activity>
 

@@ -1,4 +1,4 @@
-package com.android.cts.verifier.tv.display;
+package com.android.cts.verifier.tv;
 
 
 import com.android.cts.verifier.tv.TvAppVerifierActivity;

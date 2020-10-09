@@ -38,6 +38,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Rule
 import java.util.concurrent.CompletableFuture
+import java.util.regex.Pattern
 
 abstract class BasePermissionTest {
     companion object {
@@ -90,9 +91,11 @@ abstract class BasePermissionTest {
         pressHome()
     }
 
-    protected fun getPermissionControllerString(res: String): String =
-            mPermissionControllerResources.getString(mPermissionControllerResources
-                    .getIdentifier(res, "string", "com.android.permissioncontroller"))
+    protected fun getPermissionControllerString(res: String): Pattern =
+            Pattern.compile(Pattern.quote(mPermissionControllerResources.getString(
+                    mPermissionControllerResources.getIdentifier(
+                            res, "string", "com.android.permissioncontroller"))),
+                    Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE)
 
     protected fun installPackage(
         apkPath: String,
