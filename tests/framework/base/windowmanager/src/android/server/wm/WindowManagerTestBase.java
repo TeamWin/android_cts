@@ -37,8 +37,6 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.Before;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.annotation.concurrent.GuardedBy;
 
@@ -56,9 +54,18 @@ public class WindowManagerTestBase extends MultiDisplayTestBase {
         return startActivity(cls, DEFAULT_DISPLAY);
     }
 
-    static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId,
-            boolean hasFocus) {
+    static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId) {
+        return startActivity(cls, displayId, true /* hasFocus */);
+    }
+
+    static <T extends FocusableActivity> T startActivity(
+            Class<T> cls, int displayId, boolean hasFocus) {
         return startActivity(cls, displayId, hasFocus, WINDOWING_MODE_UNDEFINED);
+    }
+
+    static <T extends FocusableActivity> T startActivityInWindowingMode(
+            Class<T> cls, int windowingMode) {
+        return startActivity(cls, DEFAULT_DISPLAY, true /* hasFocus */, windowingMode);
     }
 
     static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId,
@@ -80,10 +87,6 @@ public class WindowManagerTestBase extends MultiDisplayTestBase {
             activity[0].waitAndAssertWindowFocusState(hasFocus);
         });
         return activity[0];
-    }
-
-    static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId) {
-      return startActivity(cls, displayId, true /* hasFocus */);
     }
 
     static class FocusableActivity extends Activity {
