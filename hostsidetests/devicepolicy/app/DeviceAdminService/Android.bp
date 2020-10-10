@@ -26,7 +26,6 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "package1/AndroidManifest.xml",
@@ -46,7 +45,6 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "package2/AndroidManifest.xml",
@@ -66,7 +64,6 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "package3/AndroidManifest.xml",
@@ -86,7 +83,6 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "package4/AndroidManifest.xml",
@@ -106,7 +102,6 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "packageb/AndroidManifest.xml",

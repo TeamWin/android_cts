@@ -27,7 +27,6 @@ android_test {
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
-        "vts10",
     ],
     sdk_version: "test_current",
 }
