@@ -4875,6 +4875,15 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_proaudio_nopa_message">This device does not set the FEATURE_AUDIO_PRO
         flag and therefore does not need to run this test.</string>
 
+    <!-- Various test status strings -->
+    <string name="audio_proaudio_pass">Pass</string>
+    <string name="audio_proaudio_latencytoohigh">Latency is too high</string>
+    <string name="audio_proaudio_confidencetoolow">"Insufficient Confidence value"</string>
+    <string name="audio_proaudio_midinotreported">"No MIDI support reported"</string>
+    <string name="audio_proaudio_usbhostnotreported">"No USB Host Mode support reported"</string>
+    <string name="audio_proaudio_usbperipheralnotreported">"No USB Peripheral Mode support reported"</string>
+    <string name="audio_proaudio_hdminotvalid">HDMI support is reported by not valid.</string>
+
     <!--  MIDI Test -->
     <string name="midi_test">MIDI Test</string>
     <string name="ndk_midi_test">Native MIDI API Test</string>
@@ -5378,7 +5387,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="proaudio_info">
        This test requires that you have connected a supported USB Audio Peripheral device
        (not a headset) and that peripheral\'s audio outputs are connected to the peripherals\'s
-       audio inputs. Alternatively, for devices with an analog audio jack or USB-c Digital
+       audio inputs. Alternatively, for devices with an analog audio jack or USB-C Digital
        to Analog dongle, a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>
        can be used. Also, if there is an input level
        control on the peripheral, it must be set to a non-zero value. When the test has
@@ -5685,7 +5694,7 @@ Follow the instructions on the screen to measure the frequency response for the 
         This can be done in one of three ways:\n
         1. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to the 3.5mm headset jack.\n
         2. Connect a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a> to a USB-C headset adapter.\n
-        3. Connect a USB audio interface peripheral and connect the outputs to the inputs with an audio patch cable.
+        3. Connect a USB audio interface peripheral and connect the outputs to the inputs with audio patch cables.
     </string>
 
     <string name="display_cutout_test">DisplayCutout Test</string>
