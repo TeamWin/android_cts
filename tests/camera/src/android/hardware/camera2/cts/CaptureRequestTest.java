@@ -2842,7 +2842,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
                 mCollector.expectRectsAreSimilar(
                         "Request and result crop region should be similar",
-                        activeArraySize, cropRegion,
+                        defaultCropRegion, cropRegion,
                         CROP_REGION_ERROR_PERCENT_DELTA * errorMultiplier);
             }
 
