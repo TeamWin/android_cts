@@ -45,7 +45,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     metrics-helper-lib \
     truth-prebuilt \
 
-LOCAL_COMPATIBILITY_SUITE := cts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_SDK_VERSION := test_current
 

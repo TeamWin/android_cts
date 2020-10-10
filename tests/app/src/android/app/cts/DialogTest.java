@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assert.fail;
 
 import android.app.Dialog;
@@ -456,6 +457,9 @@ public class DialogTest {
 
     @Test
     public void testTouchEvent() {
+        // Watch activities cover the entire screen, so there is no way to touch outside.
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH));
+
         startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
         final TestDialog d = (TestDialog) mActivity.getDialog();
 
@@ -485,11 +489,6 @@ public class DialogTest {
         d.isOnTouchEventCalled = false;
         assertTrue(d.isShowing());
         touchMotionEvent.recycle();
-
-        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            // Watch activities cover the entire screen, so there is no way to touch outside.
-            return;
-        }
 
         // Send a touch event outside the dialog window. Expect the dialog to be dismissed
         // because closeOnTouchOutside is true.

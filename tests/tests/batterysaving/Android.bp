@@ -33,7 +33,6 @@ android_test {
     srcs: ["src/**/*.java"],
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
         "mts",
     ],

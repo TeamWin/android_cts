@@ -30,7 +30,6 @@ android_test_helper_app {
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "api23/AndroidManifest.xml",
@@ -56,7 +55,6 @@ android_test_helper_app {
     test_suites: [
         "arcts",
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "api24/AndroidManifest.xml",
@@ -80,7 +78,6 @@ android_test_helper_app {
     test_suites: [
         "arcts",
         "cts",
-        "vts10",
         "general-tests",
     ],
     manifest: "api29/AndroidManifest.xml",

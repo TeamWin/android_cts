@@ -20,7 +20,6 @@ android_test_helper_app {
     certificate: ":cts-keyset-test-b",
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
     ],
     aaptflags: ["--shared-lib"],

@@ -20,7 +20,6 @@ android_test_helper_app {
     sdk_version: "current",
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
         "cts_instant",
     ],
