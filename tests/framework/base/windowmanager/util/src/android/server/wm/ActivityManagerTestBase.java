@@ -1472,6 +1472,8 @@ public abstract class ActivityManagerTestBase {
 
     /** Helper class to save, set & wait, and restore rotation related preferences. */
     protected class RotationSession extends SettingsSession<Integer> {
+        private final String SET_FIX_TO_USER_ROTATION_COMMAND =
+                "cmd window set-fix-to-user-rotation ";
         private final SettingsSession<Integer> mAccelerometerRotation;
         private final HandlerThread mThread;
         private final Handler mRunnableHandler;
@@ -1491,6 +1493,8 @@ public abstract class ActivityManagerTestBase {
             mRunnableHandler = new Handler(mThread.getLooper());
             mRotationObserver = new SettingsObserver(mRunnableHandler);
 
+            // Disable fixed to user rotation
+            executeShellCommand(SET_FIX_TO_USER_ROTATION_COMMAND + "disabled");
             mPreviousDegree = get();
             // Disable accelerometer_rotation.
             mAccelerometerRotation.set(0);
@@ -1546,6 +1550,8 @@ public abstract class ActivityManagerTestBase {
 
         @Override
         public void close() {
+            // Set fixed to user rotation to default
+            executeShellCommand(SET_FIX_TO_USER_ROTATION_COMMAND + "default");
             mThread.quitSafely();
             super.close();
             // Restore accelerometer_rotation preference.
