@@ -29,7 +29,7 @@ LOCAL_MODULE := cts-system-all.api
 LOCAL_MODULE_STEM := system-all.api.zip
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
-LOCAL_COMPATIBILITY_SUITE := arcts cts vts10 general-tests
+LOCAL_COMPATIBILITY_SUITE := arcts cts general-tests
 include $(BUILD_SYSTEM)/base_rules.mk
 $(LOCAL_BUILT_MODULE): $(SOONG_ZIP)
 $(LOCAL_BUILT_MODULE): PRIVATE_SYSTEM_API_FILES := $(all_system_api_files)

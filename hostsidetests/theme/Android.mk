@@ -39,7 +39,7 @@ LOCAL_CTS_TEST_PACKAGE := android.host.theme
 LOCAL_SDK_VERSION := current
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts10
+LOCAL_COMPATIBILITY_SUITE := cts
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
