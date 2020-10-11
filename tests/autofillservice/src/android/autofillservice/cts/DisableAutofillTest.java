@@ -27,6 +27,7 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.RetryableException;
 
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -168,6 +169,12 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
             activity.finish();
         }
         return SystemClock.elapsedRealtime() - before;
+    }
+
+    @Before
+    public void resetAutofillOptions() throws Exception {
+        // Reset AutofillOptions to avoid cts package was added to augmented autofill allowlist.
+        Helper.resetApplicationAutofillOptions(sContext);
     }
 
     @Test
