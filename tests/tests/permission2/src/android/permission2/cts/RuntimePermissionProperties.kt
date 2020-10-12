@@ -56,6 +56,7 @@ import android.permission.PermissionManager
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -75,14 +76,14 @@ class RuntimePermissionProperties {
             platformRuntimePerms.filter { !platformBgPermNames.contains(it.name) }
 
         for (perm in platformFgPerms) {
-            assertThat(permissionToOp(perm.name)).named("AppOp for ${perm.name}").isNotNull()
+            assertWithMessage("AppOp for ${perm.name}").that(permissionToOp(perm.name)).isNotNull()
         }
     }
 
     @Test
     fun groupOfRuntimePermissionsShouldBeUnknown() {
         for (perm in platformRuntimePerms) {
-            assertThat(perm.group).named("Group of ${perm.name}").isEqualTo(UNDEFINED)
+            assertWithMessage("Group of ${perm.name}").that(perm.group).isEqualTo(UNDEFINED)
         }
     }
 
@@ -96,7 +97,7 @@ class RuntimePermissionProperties {
                 }
 
         for (perm in platformAppOpPerms) {
-            assertThat(permissionToOp(perm.name)).named("AppOp for ${perm.name}").isNotNull()
+            assertWithMessage("AppOp for ${perm.name}").that(permissionToOp(perm.name)).isNotNull()
         }
     }
 
@@ -109,7 +110,7 @@ class RuntimePermissionProperties {
             platformRuntimePerms.filter { platformBgPermNames.contains(it.name) }
 
         for (perm in platformBgPerms) {
-            assertThat(permissionToOp(perm.name)).named("AppOp for ${perm.name}").isNull()
+            assertWithMessage("AppOp for ${perm.name}").that(permissionToOp(perm.name)).isNull()
         }
     }
 
