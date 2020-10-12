@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package android.net.ipsec.ike.cts;
+package android.ipsec.ike.cts;
 
 import static android.net.ipsec.ike.IkeSessionConfiguration.EXTENSION_TYPE_FRAGMENTATION;
 import static android.system.OsConstants.AF_INET;
@@ -27,6 +27,8 @@ import android.annotation.NonNull;
 import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.ipsec.ike.cts.IkeTunUtils.PortPair;
+import android.ipsec.ike.cts.TestNetworkUtils.TestNetworkCallback;
 import android.net.ConnectivityManager;
 import android.net.InetAddresses;
 import android.net.IpSecManager;
@@ -44,8 +46,6 @@ import android.net.ipsec.ike.IkeSessionConnectionInfo;
 import android.net.ipsec.ike.IkeTrafficSelector;
 import android.net.ipsec.ike.TransportModeChildSessionParams;
 import android.net.ipsec.ike.TunnelModeChildSessionParams;
-import android.net.ipsec.ike.cts.IkeTunUtils.PortPair;
-import android.net.ipsec.ike.cts.TestNetworkUtils.TestNetworkCallback;
 import android.net.ipsec.ike.exceptions.IkeException;
 import android.net.ipsec.ike.exceptions.IkeProtocolException;
 import android.os.Binder;

@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.net.ipsec.ike.cts;
+package android.ipsec.ike.cts;
 
-import static android.net.ipsec.ike.cts.PacketUtils.BytePayload;
-import static android.net.ipsec.ike.cts.PacketUtils.IP4_HDRLEN;
-import static android.net.ipsec.ike.cts.PacketUtils.IP6_HDRLEN;
-import static android.net.ipsec.ike.cts.PacketUtils.Ip4Header;
-import static android.net.ipsec.ike.cts.PacketUtils.Ip6Header;
-import static android.net.ipsec.ike.cts.PacketUtils.IpHeader;
-import static android.net.ipsec.ike.cts.PacketUtils.Payload;
-import static android.net.ipsec.ike.cts.PacketUtils.UDP_HDRLEN;
-import static android.net.ipsec.ike.cts.PacketUtils.UdpHeader;
+import static android.ipsec.ike.cts.PacketUtils.BytePayload;
+import static android.ipsec.ike.cts.PacketUtils.IP4_HDRLEN;
+import static android.ipsec.ike.cts.PacketUtils.IP6_HDRLEN;
+import static android.ipsec.ike.cts.PacketUtils.Ip4Header;
+import static android.ipsec.ike.cts.PacketUtils.Ip6Header;
+import static android.ipsec.ike.cts.PacketUtils.IpHeader;
+import static android.ipsec.ike.cts.PacketUtils.Payload;
+import static android.ipsec.ike.cts.PacketUtils.UDP_HDRLEN;
+import static android.ipsec.ike.cts.PacketUtils.UdpHeader;
 import static android.system.OsConstants.IPPROTO_UDP;
 
 import static com.android.internal.util.HexDump.hexStringToByteArray;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.net.eap.cts;
+package android.eap.cts;
 
 import static android.telephony.TelephonyManager.APPTYPE_USIM;
 
