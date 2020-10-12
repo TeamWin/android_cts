@@ -1055,6 +1055,18 @@ public class AImageDecoderTest {
         return AnimatedImageDrawableTest.parametersForTestEncodedRepeats();
     }
 
+    // Although these images have an encoded repeat count, they have only one frame,
+    // so they are not considered animated.
+    @Test
+    @Parameters({"still_with_loop_count.gif", "webp_still_with_loop_count.webp"})
+    public void testStill(String name) {
+        long asset = nOpenAsset(getAssetManager(), name);
+        long aimagedecoder = nCreateFromAsset(asset);
+
+        nTestIsAnimated(aimagedecoder, false);
+        nCloseAsset(asset);
+    }
+
     @Test
     @Parameters(method = "getAnimatedImagesPlusRepeatCounts")
     public void testAnimated(int resId, int unused) throws IOException {
@@ -1065,6 +1077,28 @@ public class AImageDecoderTest {
         } catch (FileNotFoundException e) {
             fail("Could not open " + Utils.getAsResourceUri(resId));
         }
+    }
+
+    @Test
+    @Parameters(method = "getAnimatedImagesPlusRepeatCounts")
+    public void testRepeatCount(int resId, int repeatCount) throws IOException {
+        try (ParcelFileDescriptor pfd = open(resId)) {
+            long aimagedecoder = nCreateFromFd(pfd.getFd());
+
+            nTestRepeatCount(aimagedecoder, repeatCount);
+        } catch (FileNotFoundException e) {
+            fail("Could not open " + Utils.getAsResourceUri(resId));
+        }
+    }
+
+    @Test
+    @Parameters({"still_with_loop_count.gif, 1", "webp_still_with_loop_count.webp,31999"})
+    public void testRepeatCountStill(String name, int repeatCount) {
+        long asset = nOpenAsset(getAssetManager(), name);
+        long aimagedecoder = nCreateFromAsset(asset);
+
+        nTestRepeatCount(aimagedecoder, repeatCount);
+        nCloseAsset(asset);
     }
 
     // Return a pointer to the native AAsset named |file|. Must be closed with nCloseAsset.
@@ -1110,4 +1144,5 @@ public class AImageDecoderTest {
     private static native void nTestScalePlusUnpremul(long aimagedecoder);
     private static native void nTestDecode(long aimagedecoder, Bitmap bm, int dataSpace);
     private static native void nTestIsAnimated(long aimagedecoder, boolean animated);
+    private static native void nTestRepeatCount(long aimagedecoder, int repeatCount);
 }
