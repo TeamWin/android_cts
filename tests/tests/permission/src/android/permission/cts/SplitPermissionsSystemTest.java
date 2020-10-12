@@ -24,6 +24,7 @@ import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_PHONE_STATE;
+import static android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE;
 import static android.Manifest.permission.WRITE_CALL_LOG;
 import static android.Manifest.permission.WRITE_CONTACTS;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -55,10 +56,6 @@ import java.util.Set;
 public class SplitPermissionsSystemTest {
 
     private static final int NO_TARGET = Build.VERSION_CODES.CUR_DEVELOPMENT + 1;
-
-    // Redefined here since it's only present in the system API surface.
-    private static final String READ_PRIVILEGED_PHONE_STATE =
-            "android.permission.READ_PRIVILEGED_PHONE_STATE";
 
     private List<SplitPermissionInfo> mSplitPermissions;
 
