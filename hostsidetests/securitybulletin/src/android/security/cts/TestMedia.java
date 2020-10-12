@@ -54,6 +54,40 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/63522430
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-01")
+    public void testPocCVE_2017_0817() throws Exception {
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0817", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
+     * b/36104177
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2017-09")
+    public void testPocCVE_2017_0670() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0670", null, getDevice());
+    }
+
+    /**
+     * b/68159767
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-02")
+    public void testPocCVE_2017_13234() throws Exception {
+        String inputFiles[] = { "cve_2017_13234.xmf" };
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13234",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/64340921
      * Vulnerability Behaviour: SIGABRT in audioserver
      */
