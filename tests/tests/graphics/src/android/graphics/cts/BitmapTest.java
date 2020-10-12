@@ -17,6 +17,7 @@ package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -51,6 +52,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.IntBuffer;
@@ -1458,7 +1460,10 @@ public class BitmapTest {
         nValidateNdkAccessAfterRecycle(bitmap);
     }
 
-    private void runGcAndFinalizersSync() {
+    private static void runGcAndFinalizersSync() {
+        Runtime.getRuntime().gc();
+        Runtime.getRuntime().runFinalization();
+
         final CountDownLatch fence = new CountDownLatch(1);
         new Object() {
             @Override
@@ -1478,44 +1483,62 @@ public class BitmapTest {
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
-        Runtime.getRuntime().gc();
     }
 
-    private void assertNotLeaking(int iteration, Debug.MemoryInfo start, Debug.MemoryInfo end) {
+    private static File sProcSelfFd = new File("/proc/self/fd");
+    private static int getFdCount() {
+        return sProcSelfFd.listFiles().length;
+    }
+
+    private static void assertNotLeaking(int iteration,
+            Debug.MemoryInfo start, Debug.MemoryInfo end) {
         Debug.getMemoryInfo(end);
+        assertNotEquals(0, start.getTotalPss());
+        assertNotEquals(0, end.getTotalPss());
         if (end.getTotalPss() - start.getTotalPss() > 2000 /* kB */) {
             runGcAndFinalizersSync();
             Debug.getMemoryInfo(end);
-            if (end.getTotalPss() - start.getTotalPss() > 2000 /* kB */) {
+            if (end.getTotalPss() - start.getTotalPss() > 4000 /* kB */) {
                 // Guarded by if so we don't continually generate garbage for the
                 // assertion string.
                 assertEquals("Memory leaked, iteration=" + iteration,
                         start.getTotalPss(), end.getTotalPss(),
-                        2000 /* kb */);
+                        4000 /* kb */);
             }
         }
+    }
+
+    private static void runNotLeakingTest(Runnable test) {
+        Debug.MemoryInfo meminfoStart = new Debug.MemoryInfo();
+        Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
+        int fdCount = -1;
+        // Do a warmup to reach steady-state memory usage
+        for (int i = 0; i < 50; i++) {
+            test.run();
+        }
+        runGcAndFinalizersSync();
+        Debug.getMemoryInfo(meminfoStart);
+        fdCount = getFdCount();
+        // Now run the test
+        for (int i = 0; i < 2000; i++) {
+            if (i % 100 == 5) {
+                assertNotLeaking(i, meminfoStart, meminfoEnd);
+                assertEquals(fdCount, getFdCount());
+            }
+            test.run();
+        }
+        assertNotLeaking(2000, meminfoStart, meminfoEnd);
+        assertEquals(fdCount, getFdCount());
     }
 
     @Test
     @LargeTest
     public void testHardwareBitmapNotLeaking() {
-        Debug.MemoryInfo meminfoStart = new Debug.MemoryInfo();
-        Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inPreferredConfig = Config.HARDWARE;
         opts.inScaled = false;
 
-        for (int i = 0; i < 2000; i++) {
-            if (i == 2) {
-                // Not really the "start" but by having done a couple
-                // we've fully initialized any state that may be required,
-                // so memory usage should be stable now
-                runGcAndFinalizersSync();
-                Debug.getMemoryInfo(meminfoStart);
-            }
-            if (i % 100 == 5) {
-                assertNotLeaking(i, meminfoStart, meminfoEnd);
-            }
+        runNotLeakingTest(() -> {
             Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, opts);
             assertNotNull(bitmap);
             // Make sure nothing messed with the bitmap
@@ -1523,16 +1546,12 @@ public class BitmapTest {
             assertEquals(128, bitmap.getHeight());
             assertEquals(Config.HARDWARE, bitmap.getConfig());
             bitmap.recycle();
-        }
-
-        assertNotLeaking(2000, meminfoStart, meminfoEnd);
+        });
     }
 
     @Test
     @LargeTest
     public void testDrawingHardwareBitmapNotLeaking() {
-        Debug.MemoryInfo meminfoStart = new Debug.MemoryInfo();
-        Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inPreferredConfig = Config.HARDWARE;
         opts.inScaled = false;
@@ -1540,17 +1559,7 @@ public class BitmapTest {
         renderTarget.setDefaultSize(128, 128);
         final Surface surface = renderTarget.getSurface();
 
-        for (int i = 0; i < 2000; i++) {
-            if (i == 2) {
-                // Not really the "start" but by having done a couple
-                // we've fully initialized any state that may be required,
-                // so memory usage should be stable now
-                runGcAndFinalizersSync();
-                Debug.getMemoryInfo(meminfoStart);
-            }
-            if (i % 100 == 5) {
-                assertNotLeaking(i, meminfoStart, meminfoEnd);
-            }
+        runNotLeakingTest(() -> {
             Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, opts);
             assertNotNull(bitmap);
             // Make sure nothing messed with the bitmap
@@ -1561,9 +1570,7 @@ public class BitmapTest {
             canvas.drawBitmap(bitmap, 0, 0, null);
             surface.unlockCanvasAndPost(canvas);
             bitmap.recycle();
-        }
-
-        assertNotLeaking(2000, meminfoStart, meminfoEnd);
+        });
     }
 
     private void strictModeTest(Runnable runnable) {
