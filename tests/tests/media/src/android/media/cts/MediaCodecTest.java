@@ -1608,25 +1608,22 @@ public class MediaCodecTest extends AndroidTestCase {
         public int mMaxH;
         public int mFps;
         public int mBitRate;
-    };
+    }
 
     public void testCryptoInfoPattern() {
         CryptoInfo info = new CryptoInfo();
         Pattern pattern = new Pattern(1 /*blocksToEncrypt*/, 2 /*blocksToSkip*/);
-        if (pattern.getEncryptBlocks() != 1) {
-            fail("Incorrect number of encrypt blocks in pattern");
-        }
-        if (pattern.getSkipBlocks() != 2) {
-            fail("Incorrect number of skip blocks in pattern");
-        }
+        assertEquals(1, pattern.getEncryptBlocks());
+        assertEquals(2, pattern.getSkipBlocks());
         pattern.set(3 /*blocksToEncrypt*/, 4 /*blocksToSkip*/);
-        if (pattern.getEncryptBlocks() != 3) {
-            fail("Incorrect number of encrypt blocks in pattern");
-        }
-        if (pattern.getSkipBlocks() != 4) {
-            fail("Incorrect number of skip blocks in pattern");
-        }
+        assertEquals(3, pattern.getEncryptBlocks());
+        assertEquals(4, pattern.getSkipBlocks());
         info.setPattern(pattern);
+        // Check that CryptoInfo does not leak access to the underlying pattern.
+        pattern.set(10, 10);
+        info.getPattern().set(10, 10);
+        assertSame(3, info.getPattern().getEncryptBlocks());
+        assertSame(4, info.getPattern().getSkipBlocks());
     }
 
     private static CodecInfo getAvcSupportedFormatInfo() {
