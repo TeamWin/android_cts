@@ -64,6 +64,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:AssistantStackTests
  */
+@FlakyTest(bugId = 169976309)
 @Presubmit
 public class AssistantStackTests extends ActivityManagerTestBase {
 
