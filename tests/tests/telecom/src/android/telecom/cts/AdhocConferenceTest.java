@@ -16,6 +16,7 @@
 
 package android.telecom.cts;
 
+import static android.telecom.Connection.STATE_DISCONNECTED;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
 import android.net.Uri;
@@ -99,8 +100,37 @@ public class AdhocConferenceTest extends BaseTelecomTestWithMockServices {
         } catch (InterruptedException e) {
             Log.i(TestUtils.TAG, "Test interrupted");
         }
+        MockConference conference = (MockConference) resultPair.first;
         Call call = mInCallCallbacks.getService().getLastConferenceCall();
-        call.answer(VideoProfile.STATE_AUDIO_ONLY);
+        call.answer(VideoProfile.STATE_RX_ENABLED);
+        conference.acquireLock(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertEquals(VideoProfile.STATE_RX_ENABLED, conference.getVideoState());
+    }
+
+    public void testAddNewIncomingConference_onReject() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        Bundle extra = new Bundle();
+        mTelecomManager.addNewIncomingConference(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, extra);
+        Pair<Conference, ConnectionRequest>  resultPair = verifyAdhocConferenceCall();
+        assertTrue(resultPair.second.isAdhocConferenceCall());
+        try {
+            if (!mInCallCallbacks.lock.tryAcquire(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                    TimeUnit.MILLISECONDS)) {
+                fail("No conference call added.");
+            }
+        } catch (InterruptedException e) {
+            Log.i(TestUtils.TAG, "Test interrupted");
+        }
+        MockConference conference = (MockConference) resultPair.first;
+        Call call = mInCallCallbacks.getService().getLastConferenceCall();
+        call.reject(false /* rejectWithMessage */, null /* textMessage */);
+        conference.acquireLock(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        for (Connection conn : conference.getConnections()) {
+            assertEquals(STATE_DISCONNECTED, conn.getState());
+            assertEquals(DisconnectCause.REJECTED, conn.getDisconnectCause().getCode());
+        }
     }
 
     public void testAddNewIncomingConferenceFailed() {
@@ -153,6 +183,7 @@ public class AdhocConferenceTest extends BaseTelecomTestWithMockServices {
                 "Call should have capability " + Call.Details.CAPABILITY_ADD_PARTICIPANT
         );
 
+        conference.resetLock();
         call.addConferenceParticipants(PARTICIPANTS);
         assertTrue(conference.acquireLock(WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS));
         assertTrue(conference.mParticipants.containsAll(PARTICIPANTS));
