@@ -58,6 +58,7 @@ import android.telephony.CallQuality;
 import android.telephony.CarrierBandwidth;
 import android.telephony.CarrierConfigManager;
 import android.telephony.CellLocation;
+import android.telephony.DataThrottlingRequest;
 import android.telephony.ModemActivityInfo;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.PhoneStateListener;
@@ -68,6 +69,7 @@ import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.ThermalMitigationRequest;
 import android.telephony.UiccCardInfo;
 import android.telephony.UiccSlotInfo;
 import android.telephony.data.ApnSetting;
@@ -3192,13 +3194,122 @@ public class TelephonyManagerTest {
         }
         CarrierBandwidth bandwidth =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                        (tm) -> tm.getCarrierBandwidth());
+                    (tm) -> tm.getCarrierBandwidth());
         if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
             assertTrue(bandwidth != null);
             assertTrue(bandwidth.getPrimaryDownlinkCapacityKbps()
                     != CarrierBandwidth.INVALID);
             assertTrue(bandwidth.getPrimaryUplinkCapacityKbps()
                     != CarrierBandwidth.INVALID);
+        }
+    }
+
+    @Test
+    public void testSendThermalMitigationRequest() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        long arbitraryCompletionWindowSecs = 1L;
+
+
+        // Test a proper data throttling thermal mitigation request.
+        int thermalMitigationResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.sendThermalMitigationRequest(
+                        new ThermalMitigationRequest.Builder()
+                                .setThermalMitigationAction(ThermalMitigationRequest
+                                        .THERMAL_MITIGATION_ACTION_DATA_THROTTLING)
+                                .setDataThrottlingRequest(new DataThrottlingRequest.Builder()
+                                        .setDataThrottlingAction(DataThrottlingRequest
+                                                .DATA_THROTTLING_ACTION_THROTTLE_SECONDARY_CARRIER)
+                                        .setCompletionDurationMillis(arbitraryCompletionWindowSecs)
+                                .build())
+                        .build()));
+        // Only verify the result for supported devices on IRadio 1.6+
+        if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
+            assertEquals(thermalMitigationResult,
+                    TelephonyManager.THERMAL_MITIGATION_RESULT_SUCCESS);
+        }
+        // Test negative completionDurationSecs is an invalid parameter.
+        try {
+            thermalMitigationResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.sendThermalMitigationRequest(
+                            new ThermalMitigationRequest.Builder()
+                                    .setThermalMitigationAction(ThermalMitigationRequest
+                                            .THERMAL_MITIGATION_ACTION_DATA_THROTTLING)
+                                    .setDataThrottlingRequest(new DataThrottlingRequest.Builder()
+                                            .setDataThrottlingAction(DataThrottlingRequest
+                                                    .DATA_THROTTLING_ACTION_THROTTLE_PRIMARY_CARRIER
+                                            )
+                                            .setCompletionDurationMillis(-1)
+                                            .build())
+                                    .build()));
+        } catch (IllegalArgumentException e) {
+        }
+
+        // Test non-zero completionDurationSecs is an invalid parameter for data throttling hold.
+        try {
+            thermalMitigationResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.sendThermalMitigationRequest(
+                            new ThermalMitigationRequest.Builder()
+                                    .setThermalMitigationAction(ThermalMitigationRequest
+                                            .THERMAL_MITIGATION_ACTION_DATA_THROTTLING)
+                                    .setDataThrottlingRequest(new DataThrottlingRequest.Builder()
+                                            .setDataThrottlingAction(
+                                                    DataThrottlingRequest
+                                                            .DATA_THROTTLING_ACTION_HOLD)
+                                            .setCompletionDurationMillis(
+                                                    arbitraryCompletionWindowSecs)
+                                            .build())
+                                    .build()));
+        } catch (IllegalArgumentException e) {
+        }
+
+        // Test null DataThrottlingParams is an invalid parameter for data throttling request.
+        try {
+            thermalMitigationResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.sendThermalMitigationRequest(
+                            new ThermalMitigationRequest.Builder()
+                                    .setThermalMitigationAction(ThermalMitigationRequest
+                                            .THERMAL_MITIGATION_ACTION_DATA_THROTTLING)
+                                    .build()));
+        } catch (IllegalArgumentException e) {
+        }
+
+        // Test non-null DataThrottlingParams is an invalid parameter for voice only request.
+        try {
+            thermalMitigationResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.sendThermalMitigationRequest(
+                            new ThermalMitigationRequest.Builder()
+                                    .setThermalMitigationAction(
+                                            ThermalMitigationRequest
+                                                    .THERMAL_MITIGATION_ACTION_VOICE_ONLY)
+                                    .setDataThrottlingRequest(new DataThrottlingRequest.Builder()
+                                            .setDataThrottlingAction(
+                                                    DataThrottlingRequest
+                                                    .DATA_THROTTLING_ACTION_THROTTLE_PRIMARY_CARRIER
+                                            )
+                                            .setCompletionDurationMillis(-1)
+                                            .build())
+                            .build()));
+        } catch (IllegalArgumentException e) {
+        }
+
+        // Test non-null DataThrottlingParams is an invalid parameter for radio off request.
+        try {
+            thermalMitigationResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.sendThermalMitigationRequest(
+                            new ThermalMitigationRequest.Builder()
+                                    .setThermalMitigationAction(
+                                            ThermalMitigationRequest
+                                                    .THERMAL_MITIGATION_ACTION_RADIO_OFF)
+                                    .setDataThrottlingRequest(new DataThrottlingRequest.Builder()
+                                            .setDataThrottlingAction(DataThrottlingRequest
+                                                    .DATA_THROTTLING_ACTION_THROTTLE_PRIMARY_CARRIER
+                                            )
+                                            .setCompletionDurationMillis(-1)
+                                            .build())
+                            .build()));
+        } catch (IllegalArgumentException e) {
         }
     }
 
