@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.net.ipsec.ike.cts;
+package android.ipsec.ike.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
