@@ -24,6 +24,7 @@ import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.RemoteConference;
 import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,7 @@ public class MockConference extends Conference {
             new TestUtils.InvokeCounter("onExtrasChanged");
     public List<Uri> mParticipants = new ArrayList<>();
     public CompletableFuture<Void> mLock = new CompletableFuture<>();
+    private int mVideoState = VideoProfile.STATE_AUDIO_ONLY;
 
     public MockConference(PhoneAccountHandle phoneAccount) {
         super(phoneAccount);
@@ -70,6 +72,20 @@ public class MockConference extends Conference {
         if (mRemoteConference != null) {
             mRemoteConference.disconnect();
         }
+    }
+
+    @Override
+    public void onReject() {
+        super.onReject();
+        for (Connection c : getConnections()) {
+            c.setDisconnected(new DisconnectCause(DisconnectCause.REJECTED));
+            c.destroy();
+        }
+        destroy();
+        if (mRemoteConference != null) {
+            mRemoteConference.disconnect();
+        }
+        mLock.complete(null);
     }
 
     @Override
@@ -158,6 +174,13 @@ public class MockConference extends Conference {
         mLock.complete(null);
     }
 
+    @Override
+    public void onAnswer(int videoState) {
+        super.onAnswer(videoState);
+        mVideoState = videoState;
+        mLock.complete(null);
+    }
+
     public void setRemoteConference(RemoteConference remoteConference) {
         mRemoteConference = remoteConference;
         Bundle bundle = remoteConference.getExtras();
@@ -174,6 +197,10 @@ public class MockConference extends Conference {
         return mDtmfString;
     }
 
+    public int getVideoState() {
+        return mVideoState;
+    }
+
     @Override
     public void onExtrasChanged(Bundle extras) {
         setExtras(extras);
@@ -187,5 +214,9 @@ public class MockConference extends Conference {
             return false;
         }
         return true;
+    }
+
+    public void resetLock() {
+        mLock = new CompletableFuture<>();
     }
 }
