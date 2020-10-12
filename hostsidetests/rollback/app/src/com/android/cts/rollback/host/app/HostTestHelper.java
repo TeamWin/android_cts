@@ -650,13 +650,6 @@ public class HostTestHelper {
         assertThat(RollbackUtils.getRollbackManager().getAvailableRollbacks()).isEmpty();
     }
 
-    @Test
-    public void isCheckpointSupported() {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        StorageManager sm = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
-        assertThat(sm.isCheckpointSupported()).isTrue();
-    }
-
     /**
      * Record the versions of Apk in shim apex and PrivApk in shim apex
      * in the order into {@link #APK_VERSION_FILENAME}.
