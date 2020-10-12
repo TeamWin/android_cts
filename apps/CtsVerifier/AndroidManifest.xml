@@ -121,6 +121,8 @@
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".admin.DeviceAdminUninstallTestActivity"
@@ -133,6 +135,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_device_admin" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".admin.tapjacking.DeviceAdminTapjackingTestActivity"
@@ -145,6 +149,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_device_admin" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <receiver android:name=".admin.tapjacking.EmptyDeviceAdminReceiver"
@@ -159,7 +165,10 @@
         <activity
             android:name=".admin.tapjacking.OverlayingActivity"
             android:theme="@style/OverlayTheme"
-            android:label="Overlaying Activity"/>
+            android:label="Overlaying Activity">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity
             android:name=".battery.BatterySaverTestActivity"
@@ -171,6 +180,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_other" />
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".forcestop.RecentTaskRemovalTestActivity"
@@ -182,6 +193,8 @@
             </intent-filter>
             <meta-data android:name="test_required_configs" android:value="config_has_recents"/>
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".companion.CompanionDeviceTestActivity"
@@ -194,6 +207,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_features" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.companion_device_setup" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!-- A generic activity for intent based tests.
@@ -215,6 +230,8 @@
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive:android.hardware.type.television:android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 <!--            CTS Verifier Bluetooth Test Top Screen -->
@@ -234,6 +251,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -260,6 +279,8 @@
             <meta-data
                 android:name="test_excluded_features"
                 android:value="android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -283,6 +304,8 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!-- Support service to ensure HID Device Test succeeds on
@@ -310,6 +333,8 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -335,6 +360,8 @@
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -360,6 +387,8 @@
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -385,6 +414,8 @@
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -410,6 +441,8 @@
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -432,6 +465,8 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -454,11 +489,16 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity
             android:name=".bluetooth.DevicePickerActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/bt_device_picker" />
+            android:label="@string/bt_device_picker" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
 <!--
      *****************************************************************************************
@@ -520,6 +560,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 
@@ -547,6 +589,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -577,6 +621,8 @@
             <meta-data
                 android:name="test_excluded_features"
                 android:value="android.hardware.type.watch"  />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -637,6 +683,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -663,6 +711,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -692,6 +742,8 @@
             <meta-data
                 android:name="test_excluded_features"
                 android:value="android.hardware.type.watch"  />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -752,6 +804,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -778,6 +832,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -808,6 +864,8 @@
             <meta-data
                 android:name="test_excluded_features"
                 android:value="android.hardware.type.watch"  />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -835,6 +893,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -866,6 +926,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -892,6 +954,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -921,6 +985,8 @@
             <meta-data
                 android:name="test_excluded_features"
                 android:value="android.hardware.type.watch"  />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -948,6 +1014,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -979,6 +1047,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1005,6 +1075,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1036,6 +1108,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1062,6 +1136,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1093,6 +1169,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1119,6 +1197,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1150,6 +1230,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1176,6 +1258,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1207,6 +1291,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1230,6 +1316,8 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BleScannerTestActivity" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 
@@ -1262,6 +1350,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!--
@@ -1285,6 +1375,8 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BleAdvertiserTestActivity" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".biometrics.BiometricTestList"
@@ -1299,6 +1391,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1317,6 +1411,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1335,6 +1431,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1353,6 +1451,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1371,6 +1471,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1389,6 +1491,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1407,6 +1511,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1425,6 +1531,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1443,6 +1551,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1461,6 +1571,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1479,6 +1591,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1497,6 +1611,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1515,6 +1631,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1533,6 +1651,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1551,6 +1671,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -1569,6 +1691,8 @@
             <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".security.IdentityCredentialAuthentication"
@@ -1583,6 +1707,8 @@
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.secure_lock_screen" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".security.FingerprintBoundKeysTest"
@@ -1597,6 +1723,8 @@
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
             <meta-data android:name="test_required_features"
                        android:value="android.hardware.fingerprint:android.software.secure_lock_screen" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".security.ProtectedConfirmationTest"
@@ -1607,6 +1735,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".security.ScreenLockBoundKeysTest"
@@ -1621,6 +1751,8 @@
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.device_admin:android.software.secure_lock_screen" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".security.LockConfirmBypassTest"
@@ -1635,6 +1767,8 @@
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.device_admin:android.software.secure_lock_screen" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".security.SetNewPasswordComplexityTest"
@@ -1649,6 +1783,8 @@
                        android:value="android.software.secure_lock_screen" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive:android.software.lockscreen_disabled" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".streamquality.StreamingVideoActivity"
@@ -1667,7 +1803,10 @@
         <activity android:name=".streamquality.PlayVideoActivity"
                 android:label="@string/streaming_video"
                 android:configChanges="keyboardHidden|orientation|screenSize"
-                android:screenOrientation="nosensor" />
+                android:screenOrientation="nosensor" >
+                <meta-data android:name="display_mode"
+                           android:value="multi_display_mode" />
+        </activity>
 
         <!-- FeatureSummaryActivity is replaced by CTS SystemFeaturesTest
         <activity android:name=".features.FeatureSummaryActivity" android:label="@string/feature_summary">
@@ -1686,6 +1825,8 @@
                 <action android:name="com.android.cts.verifier.location.SET_LOCATION_AND_CHECK" />
                 <category android:name="android.intent.category.DEFAULT"></category>
                 </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".net.ConnectivityBackgroundTestActivity"
@@ -1696,6 +1837,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_networking" />
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".net.MultiNetworkConnectivityTestActivity"
@@ -1709,6 +1852,8 @@
                        android:value="android.hardware.wifi:android.hardware.telephony" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".nfc.NfcTestActivity"
@@ -1720,165 +1865,275 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware" />
             <meta-data android:name="test_required_features" android:value="android.hardware.nfc" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name="com.android.cts.verifier.nfc.hce.HceReaderTestActivity"
                 android:label="@string/nfc_hce_reader_tests"
                 android:configChanges="keyboardHidden|orientation|screenSize">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name="com.android.cts.verifier.nfc.hce.HceEmulatorTestActivity"
                 android:label="@string/nfc_hce_emulator_tests"
                 android:configChanges="keyboardHidden|orientation|screenSize">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name="com.android.cts.verifier.nfc.hcef.HceFReaderTestActivity"
                 android:label="@string/nfc_hce_f_reader_tests"
                 android:configChanges="keyboardHidden|orientation|screenSize">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name="com.android.cts.verifier.nfc.hcef.HceFEmulatorTestActivity"
                 android:label="@string/nfc_hce_f_emulator_tests"
                 android:configChanges="keyboardHidden|orientation|screenSize">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name="com.android.cts.verifier.nfc.offhost.OffhostUiccReaderTestActivity"
                 android:label="@string/nfc_offhost_uicc_reader_tests"
                 android:configChanges="keyboardHidden|orientation|screenSize">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name="com.android.cts.verifier.nfc.offhost.OffhostUiccEmulatorTestActivity"
                 android:label="@string/nfc_offhost_uicc_emulator_tests"
                 android:configChanges="keyboardHidden|orientation|screenSize">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".nfc.NdefPushSenderActivity"
                 android:label="@string/nfc_ndef_push_sender"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.NdefPushReceiverActivity"
                 android:label="@string/nfc_ndef_push_receiver"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.LlcpVersionActivity"
                 android:label="@string/nfc_llcp_version_check"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.TagVerifierActivity"
                 android:label="@string/nfc_tag_verifier"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.DefaultRouteEmulatorActivity"
                 android:label="@string/nfc_hce_default_route_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.ProtocolParamsEmulatorActivity"
                 android:label="@string/nfc_hce_protocol_params_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.SinglePaymentEmulatorActivity"
                 android:label="@string/nfc_hce_single_payment_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.SimpleReaderActivity"
                 android:label="@string/nfc_hce_single_payment_reader"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.ProtocolParamsReaderActivity"
                 android:label="@string/nfc_hce_protocol_params_reader"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.DualPaymentEmulatorActivity"
                 android:label="@string/nfc_hce_dual_payment_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.ChangeDefaultEmulatorActivity"
                 android:label="@string/nfc_hce_change_default_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.SingleNonPaymentEmulatorActivity"
                 android:label="@string/nfc_hce_single_non_payment_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.DualNonPaymentEmulatorActivity"
                 android:label="@string/nfc_hce_dual_non_payment_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.ConflictingNonPaymentEmulatorActivity"
                 android:label="@string/nfc_hce_conflicting_non_payment_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.ForegroundNonPaymentEmulatorActivity"
                 android:label="@string/nfc_hce_foreground_non_payment_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.ForegroundPaymentEmulatorActivity"
                 android:label="@string/nfc_hce_foreground_payment_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.OffHostEmulatorActivity"
                 android:label="@string/nfc_hce_offhost_service_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.OnAndOffHostEmulatorActivity"
                 android:label="@string/nfc_hce_on_and_offhost_service_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.ThroughputEmulatorActivity"
                 android:label="@string/nfc_hce_throughput_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.TapTestEmulatorActivity"
                 android:label="@string/nfc_hce_tap_test_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.DynamicAidEmulatorActivity"
                 android:label="@string/nfc_hce_payment_dynamic_aids_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.LargeNumAidsEmulatorActivity"
                   android:label="@string/nfc_hce_large_num_aids_emulator"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.PrefixPaymentEmulatorActivity"
                 android:label="@string/nfc_hce_payment_prefix_aids_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.PrefixPaymentEmulator2Activity"
                 android:label="@string/nfc_hce_payment_prefix_aids_emulator_2"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.DualNonPaymentPrefixEmulatorActivity"
                 android:label="@string/nfc_hce_other_prefix_aids_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hce.ConflictingNonPaymentPrefixEmulatorActivity"
                 android:label="@string/nfc_hce_other_conflicting_prefix_aids_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hcef.HceFEmulatorActivity"
                 android:label="@string/nfc_hce_f_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.hcef.HceFReaderActivity"
                 android:label="@string/nfc_hce_f_reader"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.offhost.UiccTransactionEvent1EmulatorActivity"
                 android:label="@string/nfc_offhost_uicc_transaction_event1_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.offhost.UiccTransactionEvent2EmulatorActivity"
                 android:label="@string/nfc_offhost_uicc_transaction_event2_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.offhost.UiccTransactionEvent3EmulatorActivity"
                 android:label="@string/nfc_offhost_uicc_transaction_event3_emulator"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".nfc.offhost.SimpleOffhostReaderActivity"
                 android:label="@string/nfc_offhost_uicc_transaction_event1_reader"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <!-- services used for testing NFC host-based card emulation -->
         <service android:name=".nfc.hce.PaymentService1" android:exported="true"
@@ -2081,6 +2336,8 @@
                        android:value="android.hardware.sensor.accelerometer"/>
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".sensors.GyroscopeMeasurementTestActivity"
@@ -2095,6 +2352,8 @@
                        android:value="android.hardware.sensor.gyroscope"/>
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".sensors.HeartRateMonitorTestActivity"
@@ -2107,6 +2366,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_sensors" />
             <meta-data android:name="test_required_features"
                        android:value="android.hardware.sensor.heartrate" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".sensors.MagneticFieldMeasurementTestActivity"
@@ -2119,6 +2380,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_sensors" />
             <meta-data android:name="test_required_features"
                        android:value="android.hardware.sensor.compass" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".sensors.OffBodySensorTestActivity"
@@ -2148,12 +2411,16 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.sensor.accelerometer:android.hardware.sensor.gyroscope:android.hardware.sensor.compass:android.hardware.camera" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity
             android:name=".sensors.RVCVRecordActivity"
             android:keepScreenOn="true"
             android:label="@string/snsr_rvcvxchk_test_rec"
             android:screenOrientation="locked" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 
@@ -2222,6 +2489,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".camera.intents.CameraIntentsActivity"
@@ -2235,6 +2504,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive:android.hardware.type.television:android.software.leanback"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />n.)
         </activity>
 
         <service android:name=".camera.intents.CameraContentJobService"
@@ -2252,6 +2523,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -2267,6 +2540,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any"/>
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity
             android:name=".camera.fov.DetermineFovActivity"
@@ -2275,12 +2550,16 @@
             android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" >
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity
             android:name=".camera.fov.CalibrationPreferenceActivity"
             android:label="@string/camera_fov_label_options" >
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 
@@ -2296,6 +2575,8 @@
                     android:value="android.hardware.camera.any"/>
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".camera.its.ItsTestActivity"
@@ -2312,6 +2593,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".camera.flashlight.CameraFlashlightActivity"
@@ -2325,6 +2608,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.flash" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".camera.performance.CameraPerformanceActivity"
@@ -2338,6 +2623,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".camera.bokeh.CameraBokehActivity"
@@ -2352,6 +2639,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.camera.any" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".usb.accessory.UsbAccessoryTestActivity"
@@ -2365,6 +2654,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.accessory" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".usb.accessory.AccessoryAttachmentHandler">
@@ -2374,6 +2665,8 @@
 
             <meta-data android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
                 android:resource="@xml/accessory_filter" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 <!-- Temporary disabled b/c of incorrect assumptions in part of the test: b/160938927
@@ -2389,6 +2682,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         -->
 
@@ -2401,6 +2696,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive:android.hardware.type.television" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 <!-- Turned off Sensor Power Test in initial L release
@@ -2425,10 +2722,14 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_networking" />
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi.direct" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.RecentsRedactionActivity"
                 android:label="@string/provisioning_byod_recents" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity android:name=".managedprovisioning.IntermediateRecentActivity"
                   android:label="@string/provisioning_byod_recents"
@@ -2437,6 +2738,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.RECENTS" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity android:name=".wifi.TestListActivity"
                   android:label="@string/wifi_test"
@@ -2447,6 +2750,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_networking" />
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity android:name=".wifiaware.TestListActivity"
                   android:label="@string/aware_test"
@@ -2457,6 +2762,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_networking" />
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi.aware" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".notifications.NotificationListenerVerifierActivity"
@@ -2466,6 +2773,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <receiver android:name=".notifications.BlockChangeReceiver">
@@ -2499,6 +2808,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive:android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".notifications.AttentionManagementVerifierActivity"
@@ -2510,6 +2821,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch:android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".notifications.BubblesVerifierActivity"
@@ -2521,6 +2834,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".notifications.BubbleActivity"
@@ -2535,6 +2850,8 @@
 
             <meta-data android:name="android.app.shortcuts"
                        android:resource="@xml/shortcuts" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".notifications.MediaPlayerVerifierActivity"
@@ -2548,6 +2865,8 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
             <meta-data android:name="test_required_configs" android:value="config_quick_settings_supported" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service android:name=".notifications.MockListener"
@@ -2578,6 +2897,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.watch:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".qstiles.TileServiceVerifierActivity"
@@ -2590,6 +2911,8 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
             <meta-data android:name="test_required_configs" android:value="config_quick_settings_supported" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service android:name=".qstiles.MockTileService"
@@ -2612,6 +2935,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_vr" />
             <meta-data android:name="test_required_features"
                        android:value="android.hardware.vr.high_performance" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".vr.MockVrActivity"
@@ -2623,6 +2948,8 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".vr.MockVrActivity2"
@@ -2634,6 +2961,8 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service android:name=".vr.MockVrListenerService"
@@ -2667,6 +2996,8 @@
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity android:name=".security.CANotifyOnBootActivity"
                 android:label="@string/caboot_test">
@@ -2678,6 +3009,8 @@
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".security.KeyChainTest"
@@ -2690,6 +3023,8 @@
             <!-- KeyChain is only installed on communication-oriented devices inheriting core.mk -->
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".security.CaCertInstallViaIntentTest"
@@ -2702,187 +3037,324 @@
             <!-- Skip certificate installation on devices that do not support KeyChain -->
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestSpecificNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_specific"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifi.NetworkRequestPatternNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_pattern"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifi.NetworkRequestUnavailableNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_unavailable"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifi.NetworkRequestInvalidCredentialNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_invalid_credential"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidBssidTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid_bssid"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidPostConnectTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid_post_connect"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifi.NetworkSuggestionConnectionFailureTestActivity"
                   android:label="@string/wifi_test_network_suggestion_connection_failure"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifi.NetworkSuggestionModificationInPlaceTestActivity"
                   android:label="@string/wifi_test_network_suggestion_modification_in_place"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.GoNegRequesterTestListActivity"
                 android:label="@string/p2p_go_neg_requester"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.GoNegRequesterTestActivity"
                 android:label="@string/p2p_go_neg_requester"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.GoNegResponderTestActivity"
                 android:label="@string/p2p_go_neg_responder"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.P2pClientTestListActivity"
                 android:label="@string/p2p_join_go"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.P2pClientTestActivity"
                 android:label="@string/p2p_join_go"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.GoTestActivity"
                 android:label="@string/p2p_accept_client"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigTestListActivity"
                 android:label="@string/p2p_join_go"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.P2pClientWithConfig2gBandTestListActivity"
                 android:label="@string/p2p_join_go"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigFixedFrequencyTestListActivity"
                 android:label="@string/p2p_join_go"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigTestActivity"
                 android:label="@string/p2p_join_go"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.P2pClientWithConfig2gBandTestActivity"
                 android:label="@string/p2p_join_go"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigFixedFrequencyTestActivity"
                 android:label="@string/p2p_join_go"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.GoWithConfigTestActivity"
                 android:label="@string/p2p_accept_client"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.GoWithConfig2gBandTestActivity"
                 android:label="@string/p2p_accept_client"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.GoWithConfigFixedFrequencyTestActivity"
                 android:label="@string/p2p_accept_client"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.ServiceRequesterTestListActivity"
                 android:label="@string/p2p_service_discovery_requester"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.ServiceRequesterTestActivity"
                 android:label="@string/p2p_service_discovery_requester"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".p2p.ServiceResponderTestActivity"
                 android:label="@string/p2p_service_discovery_responder"
-                android:configChanges="keyboardHidden|orientation|screenSize" />
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathOpenUnsolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_open_unsolicited_publish"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathOpenPassiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_open_passive_subscribe"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseUnsolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_passphrase_unsolicited_publish"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathPassphrasePassiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_passphrase_passive_subscribe"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathPmkUnsolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_pmk_unsolicited_publish"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathPmkPassiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_pmk_passive_subscribe"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathOpenSolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_open_solicited_publish"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathOpenActiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_open_active_subscribe"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseSolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_passphrase_solicited_publish"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseActiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_passphrase_active_subscribe"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathPmkSolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_pmk_solicited_publish"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathPmkActiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_pmk_active_subscribe"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathOobOpenResponderTestActivity"
                   android:label="@string/aware_data_path_oob_open_responder"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathOobOpenInitiatorTestActivity"
                   android:label="@string/aware_data_path_oob_open_initiator"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathOobPassphraseResponderTestActivity"
                   android:label="@string/aware_data_path_oob_passphrase_responder"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DataPathOobPassphraseInitiatorTestActivity"
                   android:label="@string/aware_data_path_oob_passphrase_initiator"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DiscoveryRangingPublishTestActivity"
                   android:label="@string/aware_discovery_ranging_publish"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".wifiaware.DiscoveryRangingSubscribeTestActivity"
                   android:label="@string/aware_discovery_ranging_subscribe"
-                  android:configChanges="keyboardHidden|orientation|screenSize" />
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity-alias android:name=".CtsVerifierActivity" android:label="@string/app_name"
                 android:targetActivity=".TestListActivity">
@@ -2914,6 +3386,8 @@
                     android:value="android.software.app_widgets" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.automotive:android.hardware.ram.low" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".deskclock.DeskClockTestsActivity"
@@ -2925,6 +3399,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_deskclock" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 <!-- TODO: enable when not requiring to tap the screen and timeouts are tuned -->
@@ -3075,6 +3551,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_projection" />
             <meta-data android:name="test_required_features" android:value="android.hardware.faketouch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".projection.widgets.ProjectionWidgetActivity"
@@ -3085,6 +3563,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_projection" />
             <meta-data android:name="test_required_features" android:value="android.hardware.faketouch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".projection.list.ProjectionListActivity"
@@ -3096,6 +3576,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_projection" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".projection.video.ProjectionVideoActivity"
@@ -3107,6 +3589,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_projection" />
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".projection.touch.ProjectionTouchActivity"
@@ -3118,6 +3602,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_projection" />
             <meta-data android:name="test_required_features"
                        android:value="android.hardware.faketouch:android.hardware.touchscreen.multitouch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 
@@ -3130,6 +3616,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_projection" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service android:name=".projection.ProjectionService"
@@ -3146,9 +3634,14 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
-        <activity android:name=".managedprovisioning.DeviceOwnerNegativeTestActivity$TrampolineActivity" />
+        <activity android:name=".managedprovisioning.DeviceOwnerNegativeTestActivity$TrampolineActivity" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".managedprovisioning.EnterprisePrivacyInfoOnlyTestActivity"
                 android:label="@string/enterprise_privacy_test">
@@ -3156,6 +3649,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_ENTERPRISE_PRIVACY_INFO_ONLY" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerPositiveTestActivity"
@@ -3170,6 +3665,8 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.ManagedUserPositiveTestActivity"
@@ -3179,6 +3676,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_AFFILIATED_PROFILE_OWNER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerRequestingBugreportTestActivity"
@@ -3191,14 +3690,20 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.NonMarketAppsActivity"
                   android:label="@string/provisioning_byod_non_market_apps">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.KeyguardDisabledFeaturesActivity"
                 android:label="@string/provisioning_byod_keyguard_disabled_features">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.CrossProfilePermissionControlActivity"
@@ -3207,10 +3712,14 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CROSS_PROFILE_PERMISSION_CONTROL" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.DisallowAppsControlActivity"
                 android:label="@string/provisioning_byod_disallow_apps_control">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.LockTaskUiTestActivity"
@@ -3219,10 +3728,14 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.STOP_LOCK_TASK" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.WifiLockdownTestActivity"
                 android:label="@string/device_owner_wifi_lockdown_test">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.VpnTestActivity"
@@ -3231,6 +3744,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.VPN" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service android:name=".managedprovisioning.VpnTestActivity$MyTestVpnService"
@@ -3246,6 +3761,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.ALWAYS_ON_VPN_SETTINGS_TEST" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.KeyChainTestActivity"
@@ -3254,6 +3771,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.KEYCHAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.PermissionLockdownTestActivity"
@@ -3262,6 +3781,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_PERMISSION_LOCKDOWN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity-alias
@@ -3275,6 +3796,8 @@
 
         <activity android:name=".managedprovisioning.OrganizationInfoTestActivity"
                 android:label="@string/provisioning_byod_organization_info">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.PolicyTransparencyTestListActivity"
@@ -3283,6 +3806,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_POLICY_TRANSPARENCY" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.PolicyTransparencyTestActivity">
@@ -3290,6 +3815,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.SHOW_POLICY_TRANSPARENCY_TEST" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.EnterprisePrivacyTestListActivity"
@@ -3298,6 +3825,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_ENTERPRISE_PRIVACY" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.EnterprisePrivacyTestDefaultAppActivity"
@@ -3340,6 +3869,8 @@
                 <action android:name="android.intent.action.CALL" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.CommandReceiverActivity"
@@ -3349,6 +3880,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.EXECUTE_COMMAND" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.SetSupportMessageActivity">
@@ -3356,6 +3889,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.SET_SUPPORT_MSG" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$DummyInputMethod"
@@ -3381,6 +3916,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.AUTH_BOUND_KEY_TEST" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.ByodFlowTestActivity"
@@ -3404,6 +3941,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_required_features" android:value="android.software.managed_users:android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <receiver
@@ -3421,9 +3960,14 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_required_features" android:value="android.software.managed_users:android.software.device_admin" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
-        <activity android:name=".managedprovisioning.ByodProvisioningTestActivity$ProvisioningStartingActivity" />
+        <activity android:name=".managedprovisioning.ByodProvisioningTestActivity$ProvisioningStartingActivity" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".managedprovisioning.ByodHelperActivity">
             <intent-filter>
@@ -3456,6 +4000,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.TEST_PARENT_PROFILE_PASSWORD" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.ByodPrimaryHelperActivity">
@@ -3463,10 +4009,14 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK_IN_PRIMARY" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.NfcTestActivity">
             <meta-data android:name="test_required_features" android:value="android.hardware.nfc" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <provider
@@ -3484,6 +4034,8 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_SAMPLE_ICON" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.HandleIntentActivity"
@@ -3556,6 +4108,8 @@
                 <data android:scheme="geo" />
                 <data android:scheme="market" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.CrossProfileTestActivity">
@@ -3576,6 +4130,8 @@
                 <data android:mimeType="*/*" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.WorkStatusTestActivity">
@@ -3584,10 +4140,14 @@
                 <action android:name="com.android.cts.verifier.managedprovisioning.WORK_STATUS_TOAST" />
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.TurnOffWorkActivity"
                   android:label="@string/provisioning_byod_turn_off_work">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.WorkProfileWidgetActivity"
@@ -3596,6 +4156,8 @@
                 <action android:name="com.android.cts.verifier.byod.test_work_profile_widget"/>
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <receiver android:name=".managedprovisioning.DeviceAdminTestReceiver"
@@ -3614,7 +4176,10 @@
         </service>
 
         <!-- Used by the SensorTestScreenManipulator to reset the screen timeout after turn off. -->
-        <activity android:name=".os.TimeoutResetActivity"/>
+        <activity android:name=".os.TimeoutResetActivity">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <activity android:name=".tv.TvInputDiscoveryTestActivity"
                 android:label="@string/tv_input_discover_test">
@@ -3625,6 +4190,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.live_tv" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".tv.ParentalControlTestActivity"
@@ -3636,6 +4203,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.live_tv" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".tv.MultipleTracksTestActivity"
@@ -3647,6 +4216,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.live_tv" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".tv.TimeShiftTestActivity"
@@ -3658,6 +4229,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.live_tv" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".tv.AppLinkTestActivity"
@@ -3670,6 +4243,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
                 android:value="android.software.live_tv" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".tv.MicrophoneDeviceTestActivity"
@@ -3681,6 +4256,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".tv.audio.AudioCapabilitiesTestActivity"
@@ -3693,6 +4270,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_tv" />
             <meta-data android:name="test_required_features"
                        android:value="android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity android:name=".tv.display.DisplayHdrCapabilitiesTestActivity"
                   android:label="@string/tv_hdr_capabilities_test"
@@ -3706,6 +4285,8 @@
                        android:value="android.software.leanback" />
             <meta-data android:name="test_required_configs"
                        android:value="config_tv_panel"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
 
@@ -3718,12 +4299,16 @@
             <meta-data android:name="test_category" android:value="@string/test_category_other" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".tv.MockTvInputSetupActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.RingerModeActivity"
@@ -3735,6 +4320,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.HifiUltrasoundTestActivity"
@@ -3746,6 +4333,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.HifiUltrasoundSpeakerTestActivity"
@@ -3757,6 +4346,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioOutputDeviceNotificationsActivity"
@@ -3768,6 +4359,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
             <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioInputDeviceNotificationsActivity"
@@ -3779,6 +4372,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
             <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioOutputRoutingNotificationsActivity"
@@ -3790,6 +4385,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
             <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioInputRoutingNotificationsActivity"
@@ -3801,6 +4398,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
             <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralAttributesActivity"
@@ -3813,6 +4412,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralNotificationsTest"
@@ -3825,6 +4426,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralPlayActivity"
@@ -3837,6 +4440,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralRecordActivity"
@@ -3849,6 +4454,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralButtonsActivity"
@@ -3861,6 +4468,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBRestrictRecordAActivity"
@@ -3873,6 +4482,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.ProAudioActivity"
@@ -3883,6 +4494,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host:android.hardware.audio.pro" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!-- ProAudio test invokes the "Loopback" App -->
@@ -3898,6 +4511,8 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.watch:android.hardware.type.television" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.MidiActivity"
@@ -3909,6 +4524,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features"
                 android:value="android.hardware.usb.host:android.software.midi" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.NDKMidiActivity"
@@ -3920,6 +4537,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features"
                 android:value="android.hardware.usb.host:android.software.midi" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service android:name="com.android.midi.MidiEchoTestService"
@@ -3939,6 +4558,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioFrequencySpeakerActivity"
@@ -3949,6 +4570,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output:android.hardware.usb.host" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioFrequencyMicActivity"
@@ -3959,6 +4582,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output:android.hardware.usb.host" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioFrequencyUnprocessedActivity"
@@ -3969,6 +4594,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.usb.host" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioFrequencyVoiceRecognitionActivity"
@@ -3979,6 +4606,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.usb.host" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioAEC"
@@ -3989,6 +4618,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service android:name=".tv.MockTvInputService"
@@ -4017,7 +4648,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_car" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
-
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".car.CarDockActivity"
@@ -4028,6 +4660,8 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!-- See explaination in CarDockTestActivity.java -->
@@ -4066,6 +4700,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".car.NightModeTestActivity"
@@ -4078,6 +4714,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".car.ParkingBrakeOnTestActivity"
@@ -4090,6 +4728,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!-- 6DoF sensor test -->
@@ -4101,10 +4741,14 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST"/>
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_sensors"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity
                 android:name="com.android.cts.verifier.sensors.sixdof.Activities.TestActivity"
                 android:label="@string/title_activity_cts">
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".voicemail.VoicemailBroadcastActivity"
@@ -4129,6 +4773,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <receiver android:name=".voicemail.VoicemailBroadcastReceiver">
@@ -4154,6 +4800,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -4173,6 +4821,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service android:name=".dialer.DialerCallTestService"
@@ -4200,6 +4850,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -4219,6 +4871,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -4238,6 +4892,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -4257,6 +4913,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <service
@@ -4285,6 +4943,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -4304,6 +4964,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
             </activity>
 
         <activity
@@ -4323,6 +4985,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity
@@ -4342,6 +5006,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".telecom.TelecomDefaultDialerTestActivity"
@@ -4360,6 +5026,8 @@
             <meta-data
                 android:name="test_required_configs"
                 android:value="config_voice_capable"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".telecom.CtsVerifierInCallUi"
@@ -4368,10 +5036,15 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.LockscreenMessageTestActivity"
-            android:label="@string/device_owner_customize_lockscreen_message" />
+            android:label="@string/device_owner_customize_lockscreen_message" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
 
         <service android:name="com.android.cts.verifier.telecom.CtsConnectionService"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE" >
@@ -4394,6 +5067,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity android:name=".instantapps.RecentAppsTestActivity"
                  android:label="@string/ia_recents">
@@ -4403,6 +5078,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
         <activity android:name=".instantapps.AppInfoTestActivity"
                  android:label="@string/ia_app_info">
@@ -4413,6 +5090,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_instant_apps" />
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".displaycutout.DisplayCutoutTestActivity"
@@ -4422,6 +5101,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_display_cutout" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
     </application>
 
