@@ -37,6 +37,7 @@ import static android.permission.cts.PermissionUtils.uninstallApp;
 import static com.android.compatibility.common.util.SystemUtil.eventually;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 
@@ -118,7 +119,8 @@ public class SplitPermissionTest {
      * @param permName The permission that needs to be granted
      */
     private void assertPermissionGranted(@NonNull String permName) throws Exception {
-        eventually(() -> assertThat(isGranted(APP_PKG, permName)).named(permName + " is granted").isTrue());
+        eventually(() -> assertWithMessage(permName + " is granted").that(
+                isGranted(APP_PKG, permName)).isTrue());
     }
 
     /**
@@ -127,7 +129,7 @@ public class SplitPermissionTest {
      * @param permName The permission that should not be granted
      */
     private void assertPermissionRevoked(@NonNull String permName) throws Exception {
-        assertThat(isGranted(APP_PKG, permName)).named(permName + " is granted").isFalse();
+        assertWithMessage(permName + " is granted").that(isGranted(APP_PKG, permName)).isFalse();
     }
 
     /**
@@ -477,8 +479,8 @@ public class SplitPermissionTest {
 
         install(APK_LOCATION_BACKGROUND_29);
 
-        eventually(() -> assertThat(getAppOp(APP_PKG, ACCESS_COARSE_LOCATION)).named("foreground app-op")
-                .isEqualTo(MODE_FOREGROUND));
+        eventually(() -> assertWithMessage("foreground app-op").that(
+                getAppOp(APP_PKG, ACCESS_COARSE_LOCATION)).isEqualTo(MODE_FOREGROUND));
     }
 
     /**
