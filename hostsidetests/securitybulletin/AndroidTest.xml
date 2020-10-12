@@ -144,6 +144,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-09 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-0670->/data/local/tmp/CVE-2017-0670" />
         <option name="push" value="Bug-38195738->/data/local/tmp/Bug-38195738" />
 
         <!--__________________-->
@@ -163,6 +164,7 @@
         <!--__________________-->
         <!-- Bulletin 2018-01 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-0817->/data/local/tmp/CVE-2017-0817" />
         <option name="push" value="CVE-2018-9527->/data/local/tmp/CVE-2018-9527" />
 
         <!--__________________-->
