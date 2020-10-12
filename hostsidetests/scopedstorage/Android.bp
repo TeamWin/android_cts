@@ -72,6 +72,16 @@ android_test {
 }
 
 java_test_host {
+    name: "CtsScopedStorageCoreHostTest",
+    srcs:  [
+        "host/src/android/scopedstorage/cts/host/ScopedStorageCoreHostTest.java"
+    ],
+    libs: ["tradefed", "testng"],
+    test_suites: ["general-tests", "mts", "cts"],
+    test_config: "CoreTest.xml",
+}
+
+java_test_host {
     name: "CtsScopedStorageHostTest",
     srcs: ["host/src/**/*.java"],
     libs: ["tradefed", "testng"],
