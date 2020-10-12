@@ -38,6 +38,8 @@
 
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
+#pragma GCC diagnostic ignored "-Wnonnull"
+
 using AssetCloser = std::unique_ptr<AAsset, decltype(&AAsset_close)>;
 using DecoderDeleter = std::unique_ptr<AImageDecoder, decltype(&AImageDecoder_delete)>;
 
