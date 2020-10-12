@@ -39,9 +39,9 @@ import org.junit.runner.RunWith;
 public class MediaMetadataTest {
 
     @Test
-    public void getBitmapDimensionLimit_returnsZeroWhenNotSet() {
+    public void getBitmapDimensionLimit_returnsIntegerMaxWhenNotSet() {
         MediaMetadata metadata = new MediaMetadata.Builder().build();
-        assertEquals(0, metadata.getBitmapDimensionLimit());
+        assertEquals(Integer.MAX_VALUE, metadata.getBitmapDimensionLimit());
     }
 
     @Test
@@ -99,9 +99,9 @@ public class MediaMetadataTest {
 
         // Using copy constructor, unset the limit by passing zero to the limit.
         MediaMetadata copiedMetadataWithLimitUnset = new MediaMetadata.Builder()
-                .setBitmapDimensionLimit(0)
+                .setBitmapDimensionLimit(Integer.MAX_VALUE)
                 .build();
-        assertEquals(0, copiedMetadataWithLimitUnset.getBitmapDimensionLimit());
+        assertEquals(Integer.MAX_VALUE, copiedMetadataWithLimitUnset.getBitmapDimensionLimit());
     }
 
 }
