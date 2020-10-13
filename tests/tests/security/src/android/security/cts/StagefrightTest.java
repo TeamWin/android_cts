@@ -38,6 +38,7 @@ import android.opengl.GLES20;
 import android.opengl.GLES11Ext;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.os.Parcel;
 import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
 import android.view.Surface;
@@ -1243,6 +1244,42 @@ public class StagefrightTest {
      to prevent merge conflicts, add O tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testStagefright_cve_2018_9474() throws Exception {
+        MediaPlayer mp = new MediaPlayer();
+        Surface surface = getDummySurface();
+        mp.setSurface(surface);
+        AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
+                .openRawResourceFd(R.raw.cve_2018_9474);
+
+        mp.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        mp.prepare();
+
+        MediaPlayer.TrackInfo[] trackInfos = mp.getTrackInfo();
+        if (trackInfos == null || trackInfos.length == 0) {
+            return;
+        }
+
+        MediaPlayer.TrackInfo trackInfo = trackInfos[0];
+
+        int trackType = trackInfo.getTrackType();
+        MediaFormat format = trackInfo.getFormat();
+
+        Parcel data = Parcel.obtain();
+        trackInfo.writeToParcel(data, 0);
+
+        data.setDataPosition(0);
+        int trackTypeFromParcel = data.readInt();
+        String mimeTypeFromParcel = data.readString();
+        data.recycle();
+
+        if (trackType == trackTypeFromParcel) {
+            assertFalse("Device *IS* vulnerable to CVE-2018-9474",
+                        mimeTypeFromParcel.equals("und"));
+        }
+    }
 
     @Test
     @SecurityTest(minPatchLevel = "2016-09")
