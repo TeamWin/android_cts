@@ -19,7 +19,6 @@ package com.android.compatibility.common.util.enterprise.annotations;
 import static com.android.compatibility.common.util.enterprise.DeviceState.UserType.CURRENT_USER;
 
 import com.android.compatibility.common.util.enterprise.DeviceState;
-import com.android.compatibility.common.util.enterprise.Preconditions;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -32,7 +31,7 @@ import java.lang.annotation.Target;
  * <p>Use of this annotation implies {@code RequireFeatures("android.software.managed_users")}.
  *
  * <p>Your test configuration may be configured so that this test is only runs on a user which has
- * a work profile. Otherwise, you can use {@link Preconditions} to ensure that the device enters
+ * a work profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters
  * the correct state for the method.
  */
 @Target(ElementType.METHOD)
