@@ -67,11 +67,12 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /**
- * Class for testing magnification.
+ * Class for testing
+ * {@link com.android.server.accessibility.magnification.FullScreenMagnificationGestureHandler}.
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
-public class MagnificationGestureHandlerTest {
+public class FullScreenMagnificationGestureHandlerTest {
 
     private static final double MIN_SCALE = 1.2;
 
@@ -85,6 +86,8 @@ public class MagnificationGestureHandlerTest {
     float mPan;
     private boolean mHasTouchscreen;
     private boolean mOriginalIsMagnificationEnabled;
+    private int mOriginalIsMagnificationCapabilities;
+    private int mOriginalIsMagnificationMode;
 
     private final Object mZoomLock = new Object();
 
@@ -93,7 +96,7 @@ public class MagnificationGestureHandlerTest {
 
     private InstrumentedAccessibilityServiceTestRule<StubMagnificationAccessibilityService>
             mServiceRule = new InstrumentedAccessibilityServiceTestRule<>(
-                    StubMagnificationAccessibilityService.class, false);
+            StubMagnificationAccessibilityService.class, false);
 
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
@@ -112,9 +115,17 @@ public class MagnificationGestureHandlerTest {
                 || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
         if (!mHasTouchscreen) return;
 
-        mOriginalIsMagnificationEnabled =
-                Settings.Secure.getInt(mInstrumentation.getContext().getContentResolver(),
-                        Settings.Secure.ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED, 0) == 1;
+        // Backup and reset magnification settings.
+        mOriginalIsMagnificationCapabilities = getSecureSettingInt(
+                Settings.Secure.ACCESSIBILITY_MAGNIFICATION_CAPABILITY,
+                Settings.Secure.ACCESSIBILITY_MAGNIFICATION_MODE_FULLSCREEN);
+        setMagnificationCapabilities(Settings.Secure.ACCESSIBILITY_MAGNIFICATION_MODE_FULLSCREEN);
+        mOriginalIsMagnificationMode = getSecureSettingInt(
+                Settings.Secure.ACCESSIBILITY_MAGNIFICATION_MODE,
+                Settings.Secure.ACCESSIBILITY_MAGNIFICATION_MODE_FULLSCREEN);
+        setMagnificationMode(Settings.Secure.ACCESSIBILITY_MAGNIFICATION_MODE_FULLSCREEN);
+        mOriginalIsMagnificationEnabled = getSecureSettingInt(
+                Settings.Secure.ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED, 0) == 1;
         setMagnificationEnabled(true);
 
         mService = mServiceRule.enableService();
@@ -143,7 +154,10 @@ public class MagnificationGestureHandlerTest {
     public void tearDown() throws Exception {
         if (!mHasTouchscreen) return;
 
+        // Restore magnification settings.
         setMagnificationEnabled(mOriginalIsMagnificationEnabled);
+        setMagnificationCapabilities(mOriginalIsMagnificationCapabilities);
+        setMagnificationMode(mOriginalIsMagnificationMode);
     }
 
     @Test
@@ -196,7 +210,7 @@ public class MagnificationGestureHandlerTest {
         final GestureDescription.Builder builder2 = new GestureDescription.Builder();
 
         final long totalDuration = ViewConfiguration.getTapTimeout();
-        final long firstDuration = (long)(totalDuration * (minSwipeDistance / mPan));
+        final long firstDuration = (long) (totalDuration * (minSwipeDistance / mPan));
 
         for (final PointF startPoint : new PointF[]{mTapLocation, mTapLocation2}) {
             final PointF midPoint = add(startPoint, -minSwipeDistance, 0);
@@ -266,9 +280,30 @@ public class MagnificationGestureHandlerTest {
         mTouchListener.assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
     }
 
-    private void setMagnificationEnabled(boolean enabled) {
+    private int getSecureSettingInt(String key, int defaultValue) {
+        return Settings.Secure.getInt(mInstrumentation.getContext().getContentResolver(),
+                key,
+                defaultValue);
+    }
+
+    private void putSecureSettingInt(String key, int value) {
         Settings.Secure.putInt(mInstrumentation.getContext().getContentResolver(),
-                Settings.Secure.ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED, enabled ? 1 : 0);
+                key, value);
+    }
+
+    private void setMagnificationEnabled(boolean enabled) {
+        putSecureSettingInt(Settings.Secure.ACCESSIBILITY_DISPLAY_MAGNIFICATION_ENABLED,
+                enabled ? 1 : 0);
+    }
+
+    private void setMagnificationCapabilities(int capabilities) {
+        putSecureSettingInt(Settings.Secure.ACCESSIBILITY_MAGNIFICATION_CAPABILITY,
+                capabilities);
+    }
+
+    private void setMagnificationMode(int mode) {
+        putSecureSettingInt(Settings.Secure.ACCESSIBILITY_MAGNIFICATION_MODE,
+                mode);
     }
 
     private boolean isZoomed() {
