@@ -16,7 +16,7 @@
 
 package com.android.compatibility.common.util.enterprise.annotations;
 
-import com.android.compatibility.common.util.enterprise.Preconditions;
+import com.android.compatibility.common.util.enterprise.DeviceState;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * Mark that a test method should run only when the device has a given feature.
  *
  * <p>You can guarantee that these methods do not run on devices lacking the feature by
- * using {@link Preconditions}.
+ * using {@link DeviceState}.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

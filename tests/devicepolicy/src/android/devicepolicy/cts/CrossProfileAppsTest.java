@@ -40,7 +40,6 @@ import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
 import com.android.compatibility.common.util.enterprise.DeviceState;
-import com.android.compatibility.common.util.enterprise.Preconditions;
 import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
 import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
@@ -67,11 +66,8 @@ public final class CrossProfileAppsTest {
             sContext.getSystemService(CrossProfileApps.class);
     private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
 
-    @ClassRule
+    @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
-
-    @Rule
-    public final Preconditions mPreconditions = new Preconditions(sDeviceState);
 
     @Test
     @RequireRunOnPrimaryUser

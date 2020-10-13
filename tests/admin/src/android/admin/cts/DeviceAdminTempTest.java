@@ -24,7 +24,6 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.enterprise.DeviceState;
-import com.android.compatibility.common.util.enterprise.Preconditions;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnWorkProfile;
 
 import org.junit.ClassRule;
@@ -39,11 +38,8 @@ public class DeviceAdminTempTest {
 
     private static final Context sContext = ApplicationProvider.getApplicationContext();
 
-    @ClassRule
+    @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
-
-    @Rule
-    public final Preconditions mPreconditions = new Preconditions(sDeviceState);
 
     @RequireRunOnWorkProfile
     @Test

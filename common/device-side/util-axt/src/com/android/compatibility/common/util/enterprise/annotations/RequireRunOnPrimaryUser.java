@@ -16,7 +16,7 @@
 
 package com.android.compatibility.common.util.enterprise.annotations;
 
-import com.android.compatibility.common.util.enterprise.Preconditions;
+import com.android.compatibility.common.util.enterprise.DeviceState;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * <p>Your test configuration should be such that this test is only run on the primary user
  *
  * <p>Optionally, you can guarantee that these methods do not run outside of the primary
- * user by using {@link Preconditions}.
+ * user by using {@link DeviceState}.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
