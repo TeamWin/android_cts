@@ -127,5 +127,5 @@ android_library {
 java_library_host {
     name: "cts-install-lib-host",
     srcs: ["src/**/host/InstallUtilsHost.java"],
-    libs: ["tradefed"],
+    libs: ["tradefed", "cts-shim-host-lib",],
 }
