@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait;
+import static android.server.wm.BarTestUtils.assumeHasStatusBar;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
@@ -239,6 +240,7 @@ public class WindowInputTests {
     @Test
     public void testInjectToStatusBar() {
         // Try to inject event to status bar.
+        assumeHasStatusBar(mActivityRule);
         final long downTime = SystemClock.uptimeMillis();
         final MotionEvent eventHover = MotionEvent.obtain(
                 downTime, downTime, MotionEvent.ACTION_HOVER_MOVE, 0, 0, 0);

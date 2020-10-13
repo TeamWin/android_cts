@@ -2245,8 +2245,15 @@ public abstract class ActivityManagerTestBase {
                         // Include stopped packages
                         .append(" -f 0x00000020");
             } else {
+                // If new task flag isn't set the windowing mode of launcher activity will be the
+                // windowing mode of the target activity, so we need to launch launcher activity in
+                // it.
+                String amStartCmd =
+                        (mWindowingMode == -1 || mNewTask)
+                                ? getAmStartCmd(mLaunchingActivity)
+                                : getAmStartCmd(mLaunchingActivity, mWindowingMode);
                 // Use launching activity to launch the target.
-                commandBuilder.append(getAmStartCmd(mLaunchingActivity))
+                commandBuilder.append(amStartCmd)
                         .append(" -f 0x20000020");
             }
 

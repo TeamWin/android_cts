@@ -659,9 +659,9 @@ public class AccessibilityWindowQueryTest {
             SparseArray<List<AccessibilityWindowInfo>> allWindows =
                     sUiAutomation.getWindowsOnAllDisplays();
             assertNotNull(allWindows);
-            assertTrue(allWindows.size() == 2);
 
             // Gets windows on default display.
+            assertTrue(allWindows.contains(Display.DEFAULT_DISPLAY));
             List<AccessibilityWindowInfo> windowsOnDefaultDisplay =
                     allWindows.get(Display.DEFAULT_DISPLAY);
             assertNotNull(windowsOnDefaultDisplay);
@@ -676,6 +676,7 @@ public class AccessibilityWindowQueryTest {
                     new IsSortedBy<>(w -> w.getLayer(), /* ascending */ false));
 
             // Gets windows on virtual display.
+            assertTrue(allWindows.contains(virtualDisplayId));
             List<AccessibilityWindowInfo> windowsOnVirtualDisplay =
                     allWindows.get(virtualDisplayId);
             assertNotNull(windowsOnVirtualDisplay);

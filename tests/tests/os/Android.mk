@@ -14,6 +14,8 @@
 
 # platform version check (b/32056228)
 # ============================================================
+LOCAL_PATH:= $(call my-dir)
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := cts-platform-version-check

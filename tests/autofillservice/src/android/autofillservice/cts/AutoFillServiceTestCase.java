@@ -26,6 +26,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.app.PendingIntent;
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
+import android.autofillservice.cts.augmented.AugmentedAuthActivity;
 import android.autofillservice.cts.inline.InlineUiBot;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -98,6 +99,10 @@ public final class AutoFillServiceTestCase {
 
         protected static UiBot getInlineUiBot() {
             return sDefaultUiBot2;
+        }
+
+        protected static UiBot getDropdownUiBot() {
+            return sDefaultUiBot;
         }
 
         @ClassRule
@@ -388,6 +393,7 @@ public final class AutoFillServiceTestCase {
 
             InstrumentedAutoFillService.resetStaticState();
             AuthenticationActivity.resetStaticState();
+            AugmentedAuthActivity.resetStaticState();
             sReplier.reset();
         }
 

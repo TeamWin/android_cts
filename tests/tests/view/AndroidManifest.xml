@@ -174,14 +174,14 @@
                   android:screenOrientation="portrait"
                   android:rotationAnimation="jumpcut"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
-                  android:configChanges="orientation|screenSize" />
+                  android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize" />
 
         <activity android:name="android.view.cts.PixelCopyWideGamutViewProducerActivity"
                   android:label="PixelCopyWideGamutViewProducerActivity"
                   android:screenOrientation="portrait"
                   android:rotationAnimation="jumpcut"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
-                  android:configChanges="orientation|screenSize"
+                  android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
                   android:colorMode="wideColorGamut" />
 
         <activity android:name="android.view.cts.PixelCopyViewProducerDialogActivity"
@@ -189,7 +189,7 @@
                   android:screenOrientation="portrait"
                   android:rotationAnimation="jumpcut"
                   android:theme="@android:style/Theme.Material.Dialog.NoActionBar"
-                  android:configChanges="orientation|screenSize" />
+                  android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize" />
 
         <activity android:name="android.view.cts.FocusFinderCtsActivity"
                   android:screenOrientation="locked"

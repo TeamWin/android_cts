@@ -88,6 +88,12 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
         mUiDevice.pressHome();
     }
 
+    public void testLockTaskIsActive() throws Exception {
+        Log.d(TAG, "testLockTaskIsActive on host-driven test");
+        waitAndCheckLockedActivityIsResumed();
+        checkLockedActivityIsRunning();
+    }
+
     /**
      * On low-RAM devices, this test can take too long to finish, so the test runner can incorrectly
      * assume it's finished. Therefore, only use it once in a given test.

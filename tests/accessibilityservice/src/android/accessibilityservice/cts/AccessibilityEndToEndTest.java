@@ -863,9 +863,11 @@ public class AccessibilityEndToEndTest {
         final int buttonY = button.getHeight() / 2;
         final int hoverY = buttonLocation[1] + buttonY;
         final Button buttonWithTooltip = mActivity.findViewById(R.id.buttonWithTooltip);
+        final int[] buttonWithTooltipLocation = new int[2];
+        buttonWithTooltip.getLocationOnScreen(buttonWithTooltipLocation);
         final int touchableSize = 48;
-        final int hoverRight = buttonWithTooltip.getLeft() + touchableSize / 2;
-        final int hoverLeft = button.getRight() + touchableSize / 2;
+        final int hoverRight = buttonWithTooltipLocation[0] + touchableSize / 2;
+        final int hoverLeft = buttonLocation[0] + button.getWidth() + touchableSize / 2;
         final int hoverMiddle = (hoverLeft + hoverRight) / 2;
         final View.OnHoverListener listener = CtsMouseUtil.installHoverListener(button, false);
         enableTouchExploration(sInstrumentation, true);
