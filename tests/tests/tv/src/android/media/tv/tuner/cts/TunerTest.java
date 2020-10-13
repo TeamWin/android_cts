@@ -35,6 +35,7 @@ import android.media.tv.tuner.dvr.DvrRecorder;
 import android.media.tv.tuner.dvr.OnPlaybackStatusChangedListener;
 import android.media.tv.tuner.dvr.OnRecordStatusChangedListener;
 
+import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.AudioDescriptor;
 import android.media.tv.tuner.filter.DownloadEvent;
 import android.media.tv.tuner.filter.FilterCallback;
@@ -318,6 +319,31 @@ public class TunerTest {
         f.start();
         f.flush();
         f.read(new byte[3], 0, 3);
+        f.stop();
+        f.close();
+    }
+
+    @Test
+    public void testAudioFilterStreamTypeConfig() throws Exception {
+        if (!hasTuner()) return;
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_AUDIO, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        Settings settings = AvSettings
+                .builder(Filter.TYPE_TS, true)
+                .setPassthrough(false)
+                .setAudioStreamType(AvSettings.AUDIO_STREAM_TYPE_MPEG1)
+                .build();
+        FilterConfiguration config = TsFilterConfiguration
+                .builder()
+                .setTpid(10)
+                .setSettings(settings)
+                .build();
+        f.configure(config);
+        f.start();
+        f.flush();
         f.stop();
         f.close();
     }
