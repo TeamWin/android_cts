@@ -772,16 +772,16 @@ public class WindowInsetsBehaviorTests {
             setSystemUiVisibility(systemUiVisibility);
             setAndWaitForSystemGestureExclusionRectsListenerTrigger(null);
 
-            // The limit is consumed from bottom to top.
-            final int[] bottom = new int[1];
+            final Rect swipeBounds = new Rect();
             mainThreadRun(() -> {
                 final View rootView = mActivity.getWindow().getDecorView();
-                bottom[0] = rootView.getLocationOnScreen()[1] + rootView.getHeight();
+                swipeBounds.set(mActivity.getViewBound(rootView));
             });
-            final int swipeY = bottom[0] - mExclusionLimit + shiftY;
+            // The limit is consumed from bottom to top.
+            final int swipeY = swipeBounds.bottom - mExclusionLimit + shiftY;
 
             for (int i = 0; i < swipeCount; i++) {
-                swipeFromLeftToRight(swipeY, mDisplayWidth);
+                mDevice.swipe(swipeBounds.left, swipeY, swipeBounds.right, swipeY, STEPS);
             }
 
             mainThreadRun(() -> {
@@ -860,10 +860,6 @@ public class WindowInsetsBehaviorTests {
             view.setSystemGestureExclusionRects(Lists.newArrayList(exclusiveRect));
         });
         assertTrue("Exclusion must be applied.", exclusionApplied.await(3, SECONDS));
-    }
-
-    private void swipeFromLeftToRight(int y, int distance) {
-        mDevice.swipe(0, y, distance, y, STEPS);
     }
 
     private static int getPropertyOfMaxExclusionHeight() {
