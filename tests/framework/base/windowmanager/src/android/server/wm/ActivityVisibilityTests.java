@@ -73,6 +73,8 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.app.Components;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -87,6 +89,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
 
+    @FlakyTest(bugId = 170502188)
     @Test
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
         if (!supportsPip()) {
