@@ -28,6 +28,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.graphics.Insets;
 import android.graphics.Point;
+import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 import android.view.View;
@@ -36,6 +37,7 @@ import android.view.WindowInsets.Side;
 import android.view.WindowInsets.Type;
 import android.view.WindowManager;
 
+import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -199,6 +201,14 @@ public class WindowInsetsLayoutTests extends WindowManagerTestBase {
     public static class TestActivity extends FocusableActivity {
 
         private View mChildWindowRoot;
+
+        @Override
+        protected void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            getWindow().setAttributes(lp);
+        }
 
         void addChildWindow(int types, int sides, boolean ignoreVis) {
             final WindowManager.LayoutParams attrs = new WindowManager.LayoutParams();
