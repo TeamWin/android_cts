@@ -170,6 +170,11 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
     }
 
     ASSERT_FALSE(AImageDecoder_isAnimated(nullptr));
+
+    {
+        int result = AImageDecoder_getRepeatCount(nullptr);
+        ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
+    }
 }
 
 static void testInfo(JNIEnv* env, jclass, jlong imageDecoderPtr, jint width, jint height,
@@ -1223,6 +1228,18 @@ static void testIsAnimated(JNIEnv* env, jclass, jlong imageDecoderPtr, jboolean 
     ASSERT_EQ(animated, AImageDecoder_isAnimated(decoder));
 }
 
+static void testRepeatCount(JNIEnv* env, jclass, jlong imageDecoderPtr, jint repeatCount) {
+    AImageDecoder* decoder = reinterpret_cast<AImageDecoder*>(imageDecoderPtr);
+    DecoderDeleter decoderDeleter(decoder, AImageDecoder_delete);
+
+    if (repeatCount == -1) { // AnimatedImageDrawable.REPEAT_INFINITE
+        repeatCount = ANDROID_IMAGE_DECODER_INFINITE;
+    }
+
+    ASSERT_TRUE(decoder);
+    ASSERT_EQ(repeatCount, AImageDecoder_getRepeatCount(decoder));
+}
+
 #define ASSET_MANAGER "Landroid/content/res/AssetManager;"
 #define STRING "Ljava/lang/String;"
 #define BITMAP "Landroid/graphics/Bitmap;"
@@ -1252,6 +1269,7 @@ static JNINativeMethod gMethods[] = {
     { "nTestScalePlusUnpremul", "(J)V", (void*) testScalePlusUnpremul },
     { "nTestDecode", "(J" BITMAP "I)V", (void*) testDecodeSetDataSpace },
     { "nTestIsAnimated", "(JZ)V", (void*) testIsAnimated },
+    { "nTestRepeatCount", "(JI)V", (void*) testRepeatCount },
 };
 
 int register_android_graphics_cts_AImageDecoderTest(JNIEnv* env) {
