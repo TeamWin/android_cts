@@ -33,6 +33,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
+        "mts"
     ],
     sdk_version: "test_current"
 }
