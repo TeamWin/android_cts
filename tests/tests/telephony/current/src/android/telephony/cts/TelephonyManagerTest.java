@@ -2965,6 +2965,17 @@ public class TelephonyManagerTest {
                         mTelephonyManager, getPolicyHelper));
     }
 
+    @Test
+    public void testGetCdmaEnhancedRoamingIndicatorIconIndex() {
+        int index = mTelephonyManager.getCdmaEnhancedRoamingIndicatorIconIndex();
+        int phoneType = mTelephonyManager.getPhoneType();
+        if (phoneType == TelephonyManager.PHONE_TYPE_CDMA) {
+            assertTrue(index >= 0 && index <= 255);
+        } else {
+            assertEquals(-1, index);
+        }
+    }
+
     /**
      * Validate Emergency Number address that only contains the dialable character.
      *
