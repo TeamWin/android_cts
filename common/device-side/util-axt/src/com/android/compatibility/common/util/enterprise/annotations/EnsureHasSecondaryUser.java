@@ -16,7 +16,7 @@
 
 package com.android.compatibility.common.util.enterprise.annotations;
 
-import com.android.compatibility.common.util.enterprise.Preconditions;
+import com.android.compatibility.common.util.enterprise.DeviceState;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  * current user.
  *
  * <p>Your test configuration may be configured so that this test is only runs on a device which
- * has a secondary user that is not the current user. Otherwise, you can use {@link Preconditions}
+ * has a secondary user that is not the current user. Otherwise, you can use {@link DeviceState}
  * to ensure that the device enters the correct state for the method. If there is not already a
  * secondary user on the device, and the device does not support creating additional users, then
  * the test will be skipped.

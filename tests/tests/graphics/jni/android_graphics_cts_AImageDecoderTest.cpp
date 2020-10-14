@@ -38,6 +38,8 @@
 
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
+#pragma GCC diagnostic ignored "-Wnonnull"
+
 using AssetCloser = std::unique_ptr<AAsset, decltype(&AAsset_close)>;
 using DecoderDeleter = std::unique_ptr<AImageDecoder, decltype(&AImageDecoder_delete)>;
 
@@ -166,6 +168,8 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
         int result = AImageDecoder_setDataSpace(nullptr, dataSpace);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
     }
+
+    ASSERT_FALSE(AImageDecoder_isAnimated(nullptr));
 }
 
 static void testInfo(JNIEnv* env, jclass, jlong imageDecoderPtr, jint width, jint height,
@@ -1211,6 +1215,14 @@ static void testDecodeSetDataSpace(JNIEnv* env, jclass, jlong imageDecoderPtr,
     free(pixels);
 }
 
+static void testIsAnimated(JNIEnv* env, jclass, jlong imageDecoderPtr, jboolean animated) {
+    AImageDecoder* decoder = reinterpret_cast<AImageDecoder*>(imageDecoderPtr);
+    DecoderDeleter decoderDeleter(decoder, AImageDecoder_delete);
+
+    ASSERT_TRUE(decoder);
+    ASSERT_EQ(animated, AImageDecoder_isAnimated(decoder));
+}
+
 #define ASSET_MANAGER "Landroid/content/res/AssetManager;"
 #define STRING "Ljava/lang/String;"
 #define BITMAP "Landroid/graphics/Bitmap;"
@@ -1239,6 +1251,7 @@ static JNINativeMethod gMethods[] = {
     { "nTestDecodeCrop", "(J" BITMAP "IIIIII)V", (void*) testDecodeCrop },
     { "nTestScalePlusUnpremul", "(J)V", (void*) testScalePlusUnpremul },
     { "nTestDecode", "(J" BITMAP "I)V", (void*) testDecodeSetDataSpace },
+    { "nTestIsAnimated", "(JZ)V", (void*) testIsAnimated },
 };
 
 int register_android_graphics_cts_AImageDecoderTest(JNIEnv* env) {
