@@ -64,7 +64,6 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:AssistantStackTests
  */
-@FlakyTest(bugId = 169976309)
 @Presubmit
 public class AssistantStackTests extends ActivityManagerTestBase {
 
@@ -316,6 +315,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
         }
     }
 
+    @FlakyTest(bugId = 169976309)
     @Test
     public void testLaunchIntoSameTask() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {

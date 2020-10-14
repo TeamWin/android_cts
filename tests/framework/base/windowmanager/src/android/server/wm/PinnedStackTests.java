@@ -101,8 +101,6 @@ import android.server.wm.settings.SettingsSession;
 import android.util.Log;
 import android.util.Size;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -538,7 +536,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 (float) MAX_ASPECT_RATIO_NUMERATOR / MAX_ASPECT_RATIO_DENOMINATOR);
     }
 
-    @FlakyTest(bugId = 170502188)
     @Test
     public void testAutoEnterPictureInPictureOverPip() throws Exception {
         // Launch another PIP activity
@@ -559,7 +556,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertEquals(getActivityName(ALWAYS_FOCUSABLE_PIP_ACTIVITY), pinnedStack.mRealActivity);
     }
 
-    @FlakyTest(bugId = 170502188)
     @Test
     public void testDismissPipWhenLaunchNewOne() throws Exception {
         // Launch another PIP activity
