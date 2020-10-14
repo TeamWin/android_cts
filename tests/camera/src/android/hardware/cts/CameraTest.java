@@ -1284,10 +1284,12 @@ public class CameraTest extends Assert {
         surfaceHolder = mActivityRule.getActivity().getSurfaceView().getHolder();
         CamcorderProfile profile = null; // Used for built-in camera
         Camera.Size videoSize = null; // Used for external camera
+        int frameRate = -1; // Used for external camera
 
         // Set the preview size.
         if (mIsExternalCamera) {
             videoSize = setupExternalCameraRecord(parameters);
+            frameRate = parameters.getPreviewFrameRate();
         } else {
             profile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_LOW);
             setPreviewSizeByProfile(parameters, profile);
@@ -1299,7 +1301,7 @@ public class CameraTest extends Assert {
         mCamera.lock();  // Locking again from the same process has no effect.
         try {
             if (mIsExternalCamera) {
-                recordVideoBySize(videoSize, surfaceHolder);
+                recordVideoBySize(videoSize, frameRate, surfaceHolder);
             } else {
                 recordVideo(profile, surfaceHolder);
             }
@@ -1317,7 +1319,7 @@ public class CameraTest extends Assert {
         }
 
         if (mIsExternalCamera) {
-            recordVideoBySize(videoSize, surfaceHolder);
+            recordVideoBySize(videoSize, frameRate, surfaceHolder);
         } else {
             recordVideo(profile, surfaceHolder);  // should not throw exception
         }
@@ -1353,7 +1355,7 @@ public class CameraTest extends Assert {
         }
     }
 
-    private void recordVideoBySize(Camera.Size size,
+    private void recordVideoBySize(Camera.Size size, int frameRate,
             SurfaceHolder holder) throws Exception {
         MediaRecorder recorder = new MediaRecorder();
         try {
@@ -1366,6 +1368,7 @@ public class CameraTest extends Assert {
             recorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
             recorder.setVideoSize(size.width, size.height);
+            recorder.setVideoFrameRate(frameRate);
             recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
@@ -2866,9 +2869,11 @@ public class CameraTest extends Assert {
         SurfaceHolder holder = mActivityRule.getActivity().getSurfaceView().getHolder();
         CamcorderProfile profile = null; // for built-in camera
         Camera.Size videoSize = null; // for external camera
+        int frameRate = -1; // for external camera
 
         if (mIsExternalCamera) {
             videoSize = setupExternalCameraRecord(parameters);
+            frameRate = parameters.getPreviewFrameRate();
         } else {
             profile = CamcorderProfile.get(cameraId, CamcorderProfile.QUALITY_LOW);
             setPreviewSizeByProfile(parameters, profile);
@@ -2881,7 +2886,7 @@ public class CameraTest extends Assert {
             mCamera.setParameters(parameters);
             mCamera.startPreview();
             if (mIsExternalCamera) {
-                recordVideoSimpleBySize(videoSize, holder);
+                recordVideoSimpleBySize(videoSize, frameRate, holder);
             } else {
                 recordVideoSimple(profile, holder);
             }
@@ -2899,7 +2904,7 @@ public class CameraTest extends Assert {
         terminateMessageLooper();
     }
 
-    private void recordVideoSimpleBySize(Camera.Size size,
+    private void recordVideoSimpleBySize(Camera.Size size, int frameRate,
             SurfaceHolder holder) throws Exception {
         mCamera.unlock();
         MediaRecorder recorder = new MediaRecorder();
@@ -2912,6 +2917,7 @@ public class CameraTest extends Assert {
             recorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
             recorder.setVideoSize(size.width, size.height);
+            recorder.setVideoFrameRate(frameRate);
             recorder.setOutputFile(mRecordingPath);
             recorder.setPreviewDisplay(holder.getSurface());
             recorder.prepare();
