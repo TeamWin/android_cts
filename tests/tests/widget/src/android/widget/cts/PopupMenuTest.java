@@ -458,7 +458,9 @@ public class PopupMenuTest {
 
     private void emulateHoverOverVisibleItems(Instrumentation instrumentation, ListView listView) {
         final int childCount = listView.getChildCount();
-        for (int i = 0; i < childCount; i++) {
+        // The first/last child may present partially on the app, we should ignore them when inject
+        // mouse events to prevent the event send to the wrong target.
+        for (int i = 1; i < childCount - 1; i++) {
             View itemView = listView.getChildAt(i);
             injectMouseEvent(instrumentation, itemView, MotionEvent.ACTION_HOVER_MOVE);
 
