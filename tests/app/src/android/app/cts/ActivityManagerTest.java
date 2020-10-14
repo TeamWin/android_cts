@@ -22,6 +22,7 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.ActivityManager.RunningTaskInfo;
 import android.app.ActivityOptions;
+import android.app.HomeVisibilityListener;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
 import android.app.Instrumentation.ActivityResult;
@@ -57,12 +58,14 @@ import android.util.Log;
 import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.AmMonitor;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -609,6 +612,35 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertEquals(RESULT_PASS, timeReceiver.waitForActivity());
         timeReceiver.close();
         assertTrue(timeReceiver.mTimeUsed != 0);
+    }
+
+    public void testHomeVisibilityListener() throws Exception {
+        LinkedBlockingQueue<Boolean> currentHomeScreenVisibility = new LinkedBlockingQueue<>(2);
+        HomeVisibilityListener homeVisibilityListener = new HomeVisibilityListener() {
+            @Override
+            public void onHomeVisibilityChanged(boolean isHomeActivityVisible) {
+                currentHomeScreenVisibility.offer(isHomeActivityVisible);
+            }
+        };
+        launchHome();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mActivityManager,
+                (am) -> am.addHomeVisibilityListener(Runnable::run, homeVisibilityListener));
+
+        try {
+            // Make sure we got the first notification that the home screen is visible.
+            assertTrue(currentHomeScreenVisibility.poll(WAIT_TIME, TimeUnit.MILLISECONDS));
+            // Launch a basic activity to obscure the home screen.
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mTargetContext.startActivity(intent);
+
+            // Make sure the observer reports the home screen as no longer visible
+            assertFalse(currentHomeScreenVisibility.poll(WAIT_TIME, TimeUnit.MILLISECONDS));
+        } finally {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mActivityManager,
+                    (am) -> am.removeHomeVisibilityListener(homeVisibilityListener));
+        }
     }
 
     /**
