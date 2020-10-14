@@ -25,6 +25,8 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.support
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.accessibilityservice.cts.utils.DisplayUtils.getStatusBarHeight;
 import static android.accessibilityservice.cts.utils.DisplayUtils.VirtualDisplaySession;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
@@ -61,11 +63,8 @@ import android.app.Activity;
 import android.app.ActivityTaskManager;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
-import android.app.UiAutomation.AccessibilityEventFilter;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Rect;
-import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.SparseArray;
@@ -82,6 +81,8 @@ import android.widget.Button;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.TestUtils;
 
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -150,16 +151,6 @@ public class AccessibilityWindowQueryTest {
         mActivity = launchActivityAndWaitForItToBeOnscreen(
                 sInstrumentation, sUiAutomation, mActivityRule);
     }
-
-    private final AccessibilityEventFilter mDividerPresentFilter = (event) ->
-            (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
-                    || event.getEventType() == TYPE_WINDOWS_CHANGED)
-                    && isDividerWindowPresent();
-
-    private final AccessibilityEventFilter mDividerAbsentFilter = (event) ->
-            (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
-                    || event.getEventType() == TYPE_WINDOWS_CHANGED)
-                    && !isDividerWindowPresent();
 
     @MediumTest
     @Test
@@ -574,29 +565,46 @@ public class AccessibilityWindowQueryTest {
 
     @MediumTest
     @Test
-    public void testWindowDockAndUndock_dividerWindowAppearsAndDisappears() throws Exception {
-        if (!ActivityTaskManager.supportsSplitScreenMultiWindow(sInstrumentation.getContext())) {
-            // Skipping test: no multi-window support
-            return;
-        }
+    public void testToggleSplitScreen() throws Exception {
+        assumeTrue(
+                "Skipping test: no multi-window support",
+                ActivityTaskManager.supportsSplitScreenMultiWindow(sInstrumentation.getContext()));
 
-        if (sInstrumentation.getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
-            // Android TV doesn't support the divider window
-            return;
-        }
+        final int initialWindowingMode =
+                mActivity.getResources().getConfiguration().windowConfiguration.getWindowingMode();
 
-        setAccessInteractiveWindowsFlag();
-        assertFalse(isDividerWindowPresent());
-
-        Runnable toggleSplitScreenRunnable = () -> assertTrue(sUiAutomation.performGlobalAction(
+        assertTrue(
+                sUiAutomation.performGlobalAction(
                         AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN));
 
-        sUiAutomation.executeAndWaitForEvent(toggleSplitScreenRunnable, mDividerPresentFilter,
-                DEFAULT_TIMEOUT_MS);
+        TestUtils.waitUntil(
+                "waiting until activity becomes split screen windowing mode",
+                () -> {
+                    final int windowingMode =
+                            mActivity
+                                    .getResources()
+                                    .getConfiguration()
+                                    .windowConfiguration
+                                    .getWindowingMode();
+                    return windowingMode == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY
+                            || windowingMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+                });
 
-        sUiAutomation.executeAndWaitForEvent(toggleSplitScreenRunnable, mDividerAbsentFilter,
-                DEFAULT_TIMEOUT_MS);
+        assertTrue(
+                sUiAutomation.performGlobalAction(
+                        AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN));
+
+        TestUtils.waitUntil(
+                "waiting until activity goes back to default screen windowing mode",
+                () -> {
+                    final int windowingMode =
+                            mActivity
+                                    .getResources()
+                                    .getConfiguration()
+                                    .windowConfiguration
+                                    .getWindowingMode();
+                    return windowingMode == initialWindowingMode;
+                });
     }
 
     @Test
@@ -704,21 +712,6 @@ public class AccessibilityWindowQueryTest {
                         .size() == 1)
                 .findFirst()
                 .get();
-    }
-
-    private boolean isDividerWindowPresent() {
-        final List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
-        final int windowCount = windows.size();
-        for (int i = 0; i < windowCount; i++) {
-            final AccessibilityWindowInfo window = windows.get(i);
-            final AccessibilityNodeInfo rootNode = window.getRoot();
-            if (window.getType() == AccessibilityWindowInfo.TYPE_SPLIT_SCREEN_DIVIDER &&
-                    rootNode != null &&
-                    rootNode.isVisibleToUser()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void assertSingleAccessibilityFocus() {
