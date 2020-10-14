@@ -37,12 +37,6 @@ public abstract class BaseKillswitchTest extends AbstractApiTest {
         DexMemberChecker.init();
     }
 
-    protected String getGlobalExemptions() {
-      return Settings.Global.getString(
-          getInstrumentation().getContext().getContentResolver(),
-          Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS);
-    }
-
     // We have four methods to split up the load, keeping individual test runs small.
     // Tests shared by all the subclasses.
 
