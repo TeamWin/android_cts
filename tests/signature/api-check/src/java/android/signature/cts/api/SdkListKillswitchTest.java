@@ -20,13 +20,11 @@ public class SdkListKillswitchTest extends BaseKillswitchTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        mErrorMessageAppendix = " when global setting hidden_api_blacklist_exemptions is \"L\"";
+    }
 
-        String exemptions = getGlobalExemptions();
-        mErrorMessageAppendix = " when global setting hidden_api_blacklist_exemptions is "
-            + "\"" + exemptions + "\"";
-
-        // precondition check: make sure global setting has been configured properly.
-        // This should be done via an adb command, configured in AndroidTest.xml.
-        assertEquals("L", exemptions);
+    @Override
+    protected String getExpectedBlocklistExemptions() {
+        return "L";
     }
 }
