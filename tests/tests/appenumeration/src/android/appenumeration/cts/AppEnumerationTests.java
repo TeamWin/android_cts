@@ -179,15 +179,6 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void all_cannotSeeForceQueryableInstalledNormally() throws Exception {
-        assertNotVisible(QUERIES_NOTHING, TARGET_FORCEQUERYABLE_NORMAL);
-        assertNotVisible(QUERIES_ACTIVITY_ACTION, TARGET_FORCEQUERYABLE_NORMAL);
-        assertNotVisible(QUERIES_SERVICE_ACTION, TARGET_FORCEQUERYABLE_NORMAL);
-        assertNotVisible(QUERIES_PROVIDER_AUTH, TARGET_FORCEQUERYABLE_NORMAL);
-        assertNotVisible(QUERIES_PACKAGE, TARGET_FORCEQUERYABLE_NORMAL);
-    }
-
-    @Test
     public void startExplicitly_canStartNonVisible() throws Exception {
         assertNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
         startExplicitIntentViaComponent(QUERIES_NOTHING, TARGET_FILTERS);
