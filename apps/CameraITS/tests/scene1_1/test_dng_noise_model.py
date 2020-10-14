@@ -113,12 +113,17 @@ def main():
                             mean_img_ch, var_model, mean_minus_3sigma)
                     assert 0, e_msg
                 else:
-                    print 'mean:', mean_img_ch,
-                    var_measured[i].append(
-                            its.image.compute_image_variances(tile_norm)[0])
-                    print 'var:', var_measured[i][-1],
+                    var = its.image.compute_image_variances(tile_norm)[0]
+                    var_measured[i].append(var)
                     var_expected[i].append(var_model)
-                    print 'var_model:', var_expected[i][-1]
+                    abs_diff = abs(var - var_model)
+                    if var_model:
+                        rel_diff = abs_diff / var_model
+                    else:
+                        raise ValueError('var_model=0!')
+                    print ('%s mean: %.3f, var: %.3e, var_model: %.3e, '
+                           'abs_diff: %.5f, rel_diff: %.3f' %
+                           (ch, mean_img_ch, var, var_model, abs_diff, rel_diff))
             print ''
             sens_valid.append(sens)
 
