@@ -398,17 +398,30 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
     }
 
     /**
-     * Test FGS background startForeground() restriction.
+     * Test FGS background startForeground() restriction, use DeviceConfig to turn on restriction.
      * @throws Exception
      */
-    public void testFgsStartFromBG() throws Exception {
+    public void testFgsStartFromBG1() throws Exception {
+        testFgsStartFromBG(true);
+    }
+
+    /**
+     * Test FGS background startForeground() restriction, use AppCompat CHANGE ID to turn on
+     * restriction.
+     * @throws Exception
+     */
+    public void testFgsStartFromBG2() throws Exception {
+        testFgsStartFromBG(false);
+    }
+
+    private void testFgsStartFromBG(boolean useDeviceConfig) throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
         WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
                 WAITFOR_MSEC);
         try {
             // disable the FGS background startForeground() restriction.
-            enableFgsRestriction(false);
+            enableFgsRestriction(false, useDeviceConfig, PACKAGE_NAME_APP1);
             // Package1 is in BG state, Start FGS in package1.
             Bundle bundle = new Bundle();
             CommandReceiver.sendCommand(mContext,
@@ -423,7 +436,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
 
             // Enable the FGS background startForeground() restriction.
-            enableFgsRestriction(true);
+            enableFgsRestriction(true, useDeviceConfig, PACKAGE_NAME_APP1);
             // Start FGS in BG state.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
@@ -457,7 +470,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
         } finally {
             uid1Watcher.finish();
-            enableFgsRestriction(false);
+            enableFgsRestriction(false, useDeviceConfig, PACKAGE_NAME_APP1);
         }
     }
 
@@ -468,7 +481,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
                 WAITFOR_MSEC);
 
         try {
-            enableFgsRestriction(false);
+            enableFgsRestriction(false, true, "");
             // Package1 is in BG state, bind FGSL in package1 first.
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_FOREGROUND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
@@ -490,7 +503,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
         } finally {
             uid1Watcher.finish();
-            enableFgsRestriction(false);
+            enableFgsRestriction(false, true, "");
         }
     }
 
@@ -501,7 +514,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
                 WAITFOR_MSEC);
 
         try {
-            enableFgsRestriction(true);
+            enableFgsRestriction(true, true, "");
             // Package1 is in BG state, bind FGSL in package1 first.
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_FOREGROUND_SERVICE,
                     PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
@@ -527,16 +540,31 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
             uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
         } finally {
             uid1Watcher.finish();
-            enableFgsRestriction(false);
+            enableFgsRestriction(false, true, "");
         }
     }
 
-    private void enableFgsRestriction(boolean enable) {
-        runWithShellPermissionIdentity(()-> {
-                    DeviceConfig.setProperty("activity_manager",
-                            KEY_DEFAULT_FGS_STARTS_RESTRICTION_ENABLED, Boolean.toString(enable),
-                            false);
-                }
-        );
+    /**
+     * Turn on the FGS BG-launch restriction. DeviceConfig can turn on restriction on the whole
+     * device (across all apps). AppCompat can turn on restriction on a single app package.
+     * @param enable true to turn on restriction, false to turn off.
+     * @param useDeviceConfig true to use DeviceConfig, false to use AppCompat CHANGE ID.
+     * @param packageName the packageName if using AppCompat CHANGE ID.
+     * @throws Exception
+     */
+    private void enableFgsRestriction(boolean enable, boolean useDeviceConfig, String packageName)
+            throws Exception {
+        if (useDeviceConfig) {
+            runWithShellPermissionIdentity(() -> {
+                        DeviceConfig.setProperty("activity_manager",
+                                KEY_DEFAULT_FGS_STARTS_RESTRICTION_ENABLED,
+                                Boolean.toString(enable), false);
+                    }
+            );
+        } else {
+            CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                    "am compat " + (enable ? "enable" : "disable")
+                            + " FGS_BG_START_RESTRICTION_CHANGE_ID " + packageName);
+        }
     }
 }
