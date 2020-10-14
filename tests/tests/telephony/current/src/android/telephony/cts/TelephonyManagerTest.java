@@ -101,6 +101,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 /**
@@ -2588,6 +2589,37 @@ public class TelephonyManagerTest {
         int activeModemCount = mTelephonyManager.getActiveModemCount();
         assertTrue(activeModemCount >= 0);
         assertTrue(supportedModemCount >= activeModemCount);
+    }
+
+    @Test
+    public void testGetAllNetworkTypes() {
+        Set<Integer> expectedNetworkTypes = new HashSet<>(Arrays.asList(
+                TelephonyManager.NETWORK_TYPE_GPRS,
+                TelephonyManager.NETWORK_TYPE_EDGE,
+                TelephonyManager.NETWORK_TYPE_UMTS,
+                TelephonyManager.NETWORK_TYPE_CDMA,
+                TelephonyManager.NETWORK_TYPE_EVDO_0,
+                TelephonyManager.NETWORK_TYPE_EVDO_A,
+                TelephonyManager.NETWORK_TYPE_1xRTT,
+                TelephonyManager.NETWORK_TYPE_HSDPA,
+                TelephonyManager.NETWORK_TYPE_HSUPA,
+                TelephonyManager.NETWORK_TYPE_HSPA,
+                TelephonyManager.NETWORK_TYPE_IDEN,
+                TelephonyManager.NETWORK_TYPE_EVDO_B,
+                TelephonyManager.NETWORK_TYPE_LTE,
+                TelephonyManager.NETWORK_TYPE_EHRPD,
+                TelephonyManager.NETWORK_TYPE_HSPAP,
+                TelephonyManager.NETWORK_TYPE_GSM,
+                TelephonyManager.NETWORK_TYPE_TD_SCDMA,
+                TelephonyManager.NETWORK_TYPE_IWLAN,
+                TelephonyManager.NETWORK_TYPE_LTE_CA,
+                TelephonyManager.NETWORK_TYPE_NR
+        ));
+
+        Set<Integer> actualNetworkTypes = IntStream.of(TelephonyManager.getAllNetworkTypes())
+                .boxed().collect(Collectors.toSet());
+        assertTrue(expectedNetworkTypes.containsAll(actualNetworkTypes));
+        assertTrue(actualNetworkTypes.containsAll(expectedNetworkTypes));
     }
 
     @Test
