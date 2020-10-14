@@ -28,6 +28,7 @@ import android.hdmicec.cts.RequiredPropertyRule;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -84,6 +85,7 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
      * Tests that the device sends a <TEXT_VIEW_ON> when the home key is pressed on device, followed
      * by a <ACTIVE_SOURCE> message.
      */
+    @Ignore("b/169755426")
     @Test
     public void cect_11_2_1_1_OneTouchPlay() throws Exception {
         ITestDevice device = getDevice();
