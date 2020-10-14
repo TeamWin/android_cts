@@ -183,7 +183,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         @Override
         public void close() {
-            SystemUtil.runWithShellPermissionIdentity(mWallpaperManager::clearWallpaper);
+            SystemUtil.runWithShellPermissionIdentity(() -> mWallpaperManager.clearWallpaper());
             if (mTestBitmap != null) {
                 mTestBitmap.recycle();
             }
