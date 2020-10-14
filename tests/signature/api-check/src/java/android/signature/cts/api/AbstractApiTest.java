@@ -90,16 +90,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
             mResultObserver.notifyFailure(FailureType.CAUGHT_EXCEPTION, e.getClass().getName(),
                     writer.toString());
         }
-        if (mResultObserver.mDidFail) {
-            StringBuilder errorString = mResultObserver.mErrorString;
-            ClassLoader classLoader = getClass().getClassLoader();
-            errorString.append("\nClassLoader hierarchy\n");
-            while (classLoader != null) {
-                errorString.append("    ").append(classLoader).append("\n");
-                classLoader = classLoader.getParent();
-            }
-            fail(errorString.toString());
-        }
+        mResultObserver.onTestComplete(); // Will throw is there are failures
     }
 
     static String[] getCommaSeparatedList(Bundle instrumentationArgs, String key) {
