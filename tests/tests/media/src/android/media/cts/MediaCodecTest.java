@@ -147,6 +147,8 @@ public class MediaCodecTest extends AndroidTestCase {
         tested = verifyException(format, false /* isEncoder */) || tested;
 
         // video encoder (H.264/AVC may not be present on some Android devices)
+        format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
         tested = verifyException(format, true /* isEncoder */) || tested;
 
         // signal test is skipped due to no device media codecs.
