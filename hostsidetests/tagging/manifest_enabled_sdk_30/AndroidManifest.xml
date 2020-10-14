@@ -19,8 +19,11 @@
 
     <uses-sdk android:targetSdkVersion="30" />
 
-    <application android:debuggable="true"
-                 android:allowNativeHeapPointerTagging="true">
+    <!-- Note, do not set debuggable:true. Pre-release platforms allow for
+         debuggable apps to disable compat features, even if it's a `user`
+         build. By using a non-debuggable app, we replicate a proper release-
+         build device. -->
+    <application android:allowNativeHeapPointerTagging="true">
         <uses-library android:name="android.test.runner" />
     </application>
 
