@@ -238,5 +238,78 @@ public final class DeviceUtils {
         return features.contains(feature);
     }
 
+    /**
+     * Runs an activity in a particular app.
+     */
+    public static void runActivity(ITestDevice device, String pkgName, String activity,
+            @Nullable String actionKey, @Nullable String actionValue) throws Exception {
+        runActivity(device, pkgName, activity, actionKey, actionValue,
+                AtomTestUtils.WAIT_TIME_LONG);
+    }
+
+    /**
+     * Runs an activity in a particular app for a certain period of time.
+     *
+     * @param pkgName name of package that contains the Activity
+     * @param activity name of the Activity class
+     * @param actionKey key of extra data that is passed to the Activity via an Intent
+     * @param actionValue value of extra data that is passed to the Activity via an Intent
+     * @param waitTimeMs duration that the activity runs for
+     */
+    public static void runActivity(ITestDevice device, String pkgName, String activity,
+            @Nullable String actionKey, @Nullable String actionValue, long waitTimeMs)
+            throws Exception {
+        try (AutoCloseable a = withActivity(device, pkgName, activity, actionKey, actionValue)) {
+            Thread.sleep(waitTimeMs);
+        }
+    }
+
+    /**
+     * Starts the specified activity and returns an {@link AutoCloseable} that stops the activity
+     * when closed.
+     *
+     * <p>Example usage:
+     * <pre>
+     *     try (AutoClosable a = withActivity("activity", "action", "action-value")) {
+     *         doStuff();
+     *     }
+     * </pre>
+     */
+    public static AutoCloseable withActivity(ITestDevice device, String pkgName, String activity,
+            @Nullable String actionKey, @Nullable String actionValue) throws Exception {
+        String intentString;
+        if (actionKey != null && actionValue != null) {
+            intentString = actionKey + " " + actionValue;
+        } else {
+            intentString = null;
+        }
+
+        String cmd = "am start -n " + pkgName + "/." + activity;
+        if (intentString != null) {
+            cmd += " -e " + intentString;
+        }
+        device.executeShellCommand(cmd);
+
+        return () -> {
+            device.executeShellCommand("am force-stop " + pkgName);
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        };
+    }
+
+    public static void setChargingState(ITestDevice device, int state) throws Exception {
+        device.executeShellCommand("cmd battery set status " + state);
+    }
+
+    public static void unplugDevice(ITestDevice device) throws Exception {
+        // On batteryless devices on Android P or above, the 'unplug' command
+        // alone does not simulate the really unplugged state.
+        //
+        // This is because charging state is left as "unknown". Unless a valid
+        // state like 3 = BatteryManager.BATTERY_STATUS_DISCHARGING is set,
+        // framework does not consider the device as running on battery.
+        setChargingState(device, 3);
+        device.executeShellCommand("cmd battery unplug");
+    }
+
     private DeviceUtils() {}
 }
