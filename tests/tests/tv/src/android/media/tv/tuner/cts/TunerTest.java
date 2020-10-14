@@ -41,6 +41,7 @@ import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterConfiguration;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.Filter;
+import android.media.tv.tuner.filter.IpFilterConfiguration;
 import android.media.tv.tuner.filter.IpPayloadEvent;
 import android.media.tv.tuner.filter.MediaEvent;
 import android.media.tv.tuner.filter.MmtpRecordEvent;
@@ -331,6 +332,30 @@ public class TunerTest {
         assertNotEquals(Tuner.INVALID_TIMESTAMP, f.getTimeStamp());
         assertNotEquals(Tuner.INVALID_TIMESTAMP, f.getSourceTime());
         f.clearTimestamp();
+        f.close();
+    }
+
+    @Test
+    public void testIpFilter() throws Exception {
+        if (!hasTuner()) return;
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_IP, Filter.SUBTYPE_IP, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        FilterConfiguration config = IpFilterConfiguration
+                .builder()
+                .setSrcIpAddress(new byte[] {(byte) 0xC0, (byte) 0xA8, 0, 1})
+                .setDstIpAddress(new byte[] {(byte) 0xC0, (byte) 0xA8, 3, 4})
+                .setSrcPort(33)
+                .setDstPort(23)
+                .setPassthrough(false)
+                .setSettings(null)
+                .setIpFilterContextId(1)
+                .build();
+        f.configure(config);
+        f.start();
+        f.stop();
         f.close();
     }
 
