@@ -32,10 +32,10 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.DeviceConfig;
-import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
@@ -56,6 +56,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     JobScheduler mJobScheduler;
 
     Context mContext;
+    DeviceConfigStateHelper mDeviceConfigStateHelper;
 
     static final String MY_PACKAGE = "android.jobscheduler.cts";
 
@@ -106,6 +107,8 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        mDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_JOB_SCHEDULER);
         kTestEnvironment.setUp();
         kTriggerTestEnvironment.setUp();
         mJobScheduler.cancelAll();
@@ -123,9 +126,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
         SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd jobscheduler reset-execution-quota -u current "
                         + kJobServiceComponent.getPackageName());
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
-                        DeviceConfig.NAMESPACE_JOB_SCHEDULER));
+        mDeviceConfigStateHelper.restoreOriginalValues();
 
         // The super method should be called at the end.
         super.tearDown();
@@ -213,10 +214,5 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
                 + " -u " + UserHandle.myUserId()
                 + " " + kJobServiceComponent.getPackageName()
                 + " " + jobId);
-    }
-
-    static void updateConfiguration(DeviceConfig.Properties properties) {
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> DeviceConfig.setProperties(properties));
     }
 }

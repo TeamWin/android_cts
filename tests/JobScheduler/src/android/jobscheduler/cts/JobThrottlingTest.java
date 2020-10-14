@@ -16,7 +16,6 @@
 
 package android.jobscheduler.cts;
 
-import static android.jobscheduler.cts.BaseJobSchedulerTest.updateConfiguration;
 import static android.jobscheduler.cts.ConnectivityConstraintTest.ensureSavedWifiNetwork;
 import static android.jobscheduler.cts.ConnectivityConstraintTest.setWifiState;
 import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
@@ -54,7 +53,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.ThermalUtils;
 
 import junit.framework.AssertionFailedError;
@@ -110,6 +109,7 @@ public class JobThrottlingTest {
     private boolean mLeanbackOnly;
 
     private TestAppInterface mTestAppInterface;
+    private DeviceConfigStateHelper mDeviceConfigStateHelper;
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -162,7 +162,9 @@ public class JobThrottlingTest {
         mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET);
         // Make sure test jobs can run regardless of bucket.
-        updateConfiguration(
+        mDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_JOB_SCHEDULER);
+        mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
                         .setInt("min_ready_non_active_jobs_count", 0).build());
         // Make sure the screen doesn't turn off when the test turns it on.
@@ -528,9 +530,7 @@ public class JobThrottlingTest {
                 Log.e(TAG, "Failed to return wifi state to " + mInitialWiFiState, e);
             }
         }
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
-                        DeviceConfig.NAMESPACE_JOB_SCHEDULER));
+        mDeviceConfigStateHelper.restoreOriginalValues();
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
         if (isAirplaneModeOn() != mInitialAirplaneModeState) {

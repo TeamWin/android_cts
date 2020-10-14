@@ -27,7 +27,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
 import android.provider.DeviceConfig;
-import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -35,6 +34,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -58,6 +58,7 @@ public class TimeChangeTests {
 
     private final Context mContext = InstrumentationRegistry.getTargetContext();
     private final AlarmManager mAlarmManager = mContext.getSystemService(AlarmManager.class);
+    private DeviceConfigStateHelper mDeviceConfigStateHelper;
     private PendingIntent mAlarmPi;
     private long mTestStartRtc;
     private long mTestStartElapsed;
@@ -94,11 +95,9 @@ public class TimeChangeTests {
         mAlarmPi = PendingIntent.getBroadcast(mContext, 0, alarmIntent, 0);
         final IntentFilter alarmFilter = new IntentFilter(ACTION_ALARM);
         mContext.registerReceiver(mAlarmReceiver, alarmFilter);
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-                    DeviceConfig.setProperty(
-                            DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
-                            "500", /* makeDefault */ false);
-                });
+        mDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
+        mDeviceConfigStateHelper.set("min_futurity", "500");
         BatteryUtils.runDumpsysBatteryUnplug();
         mTestStartRtc = System.currentTimeMillis();
         mTestStartElapsed = SystemClock.elapsedRealtime();
@@ -135,9 +134,7 @@ public class TimeChangeTests {
 
     @After
     public void tearDown() {
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
-                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
+        mDeviceConfigStateHelper.restoreOriginalValues();
         BatteryUtils.runDumpsysBatteryReset();
         if (mTimeChanged) {
             // Make an attempt at resetting the clock to normal
