@@ -24,6 +24,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.MacAddress;
@@ -643,9 +644,16 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
 
         // 2. update-subscribe
-        subscribeConfig = new SubscribeConfig.Builder().setServiceName(
-                serviceName).setServiceSpecificInfo("extras".getBytes())
-                .setMinDistanceMm(MIN_DISTANCE_MM).build();
+        boolean rttSupported = getContext().getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_WIFI_RTT);
+        SubscribeConfig.Builder builder = new SubscribeConfig.Builder().setServiceName(
+                    serviceName).setServiceSpecificInfo("extras".getBytes());
+
+        if (rttSupported) {
+            builder.setMinDistanceMm(MIN_DISTANCE_MM);
+        }
+        subscribeConfig = builder.build();
+
         discoverySession.updateSubscribe(subscribeConfig);
         assertTrue("Subscribe update", discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
