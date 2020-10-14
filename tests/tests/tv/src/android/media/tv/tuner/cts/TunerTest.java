@@ -131,6 +131,15 @@ public class TunerTest {
     }
 
     @Test
+    public void testTunerVersion() {
+        if (!hasTuner()) return;
+        assertNotNull(mTuner);
+        int version = TunerVersionChecker.getTunerVersion();
+        assertTrue(version >= TunerVersionChecker.TUNER_VERSION_1_0);
+        assertTrue(version <= TunerVersionChecker.TUNER_VERSION_1_1);
+    }
+
+    @Test
     public void testTuning() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
