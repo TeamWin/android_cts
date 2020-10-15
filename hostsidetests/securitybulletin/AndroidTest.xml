@@ -300,6 +300,7 @@
         <option name="push" value="CVE-2017-1324132->/data/local/tmp/CVE-2017-13241" />
         <option name="push" value="CVE-2016-390932->/data/local/tmp/CVE-2016-3909" />
         <option name="push" value="CVE-2017-1319032->/data/local/tmp/CVE-2017-13190" />
+        <option name="push" value="CVE-2017-1314932->/data/local/tmp/CVE-2017-13149" />
 
         <!-- Please add 64-bit binary tests below to avoid merge conflict -->
         <option name="push" value="CVE-2017-1320364->/data/local/tmp/CVE-2017-13203" />
