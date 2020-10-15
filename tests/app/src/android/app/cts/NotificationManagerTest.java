@@ -2418,7 +2418,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         // wait for the activity to launch and finish
         mContext.startActivity(activityIntent);
-        Thread.sleep(1000);
+        Thread.sleep(mActivityManager.isLowRamDevice() ? 1500 : 1000);
 
         // send notification
         Notification n = new Notification.Builder(mContext, "channel")
