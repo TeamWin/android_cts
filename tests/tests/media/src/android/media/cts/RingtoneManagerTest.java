@@ -103,27 +103,21 @@ public class RingtoneManagerTest
         super.tearDown();
     }
 
-    private boolean hasAudioOutput() {
-        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
-    }
-
-    private boolean isTV() {
-        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
+    private boolean isSupportedDevice() {
+        final PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)
+                && !pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
     }
 
     public void testConstructors() {
+        if (!isSupportedDevice()) return;
+
         new RingtoneManager(mActivity);
         new RingtoneManager(mContext);
     }
 
     public void testAccessMethods() {
-        if (isTV()) {
-            return;
-        }
-        if (!hasAudioOutput()) {
-            Log.i(TAG, "Skipping testAccessMethods(): device doesn't have audio output.");
-            return;
-        }
+        if (!isSupportedDevice()) return;
 
         Cursor c = mRingtoneManager.getCursor();
         assertTrue("Must have at least one ring tone available", c.getCount() > 0);
@@ -151,6 +145,8 @@ public class RingtoneManagerTest
     }
 
     public void testSetType() {
+        if (!isSupportedDevice()) return;
+
         mRingtoneManager.setType(RingtoneManager.TYPE_ALARM);
         assertEquals(AudioManager.STREAM_ALARM, mRingtoneManager.inferStreamType());
         Cursor c = mRingtoneManager.getCursor();
@@ -160,13 +156,7 @@ public class RingtoneManagerTest
     }
 
     public void testStopPreviousRingtone() {
-        if (isTV()) {
-            return;
-        }
-        if (!hasAudioOutput()) {
-            Log.i(TAG, "Skipping testStopPreviousRingtone(): device doesn't have audio output.");
-            return;
-        }
+        if (!isSupportedDevice()) return;
 
         Cursor c = mRingtoneManager.getCursor();
         assertTrue("Must have at least one ring tone available", c.getCount() > 0);
@@ -185,5 +175,16 @@ public class RingtoneManagerTest
         assertTrue(newRingtone.isPlaying());
         mRingtoneManager.stopPreviousRingtone();
         assertFalse(newRingtone.isPlaying());
+    }
+
+    public void testQuery() {
+        if (!isSupportedDevice()) return;
+
+        final Cursor c = mRingtoneManager.getCursor();
+        assertTrue(c.moveToFirst());
+        assertTrue(c.getInt(RingtoneManager.ID_COLUMN_INDEX) >= 0);
+        assertTrue(c.getString(RingtoneManager.TITLE_COLUMN_INDEX) != null);
+        assertTrue(c.getString(RingtoneManager.URI_COLUMN_INDEX),
+                c.getString(RingtoneManager.URI_COLUMN_INDEX).startsWith("content://"));
     }
 }
