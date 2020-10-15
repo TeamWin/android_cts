@@ -854,6 +854,40 @@ public class NotificationTest extends AndroidTestCase {
         assertTrue((n.flags & FLAG_BUBBLE) != 0);
     }
 
+    public void testGetMessagesFromBundleArray() {
+        Person sender = new Person.Builder().setName("Sender").build();
+        Notification.MessagingStyle.Message firstExpectedMessage =
+                new Notification.MessagingStyle.Message("hello", /* timestamp= */ 123, sender);
+        Notification.MessagingStyle.Message secondExpectedMessage =
+                new Notification.MessagingStyle.Message("hello2", /* timestamp= */ 456, sender);
+
+        Notification.MessagingStyle messagingStyle =
+                new Notification.MessagingStyle("self name")
+                        .addMessage(firstExpectedMessage)
+                        .addMessage(secondExpectedMessage);
+        Notification notification = new Notification.Builder(mContext, "test id")
+                .setSmallIcon(1)
+                .setContentTitle("test title")
+                .setStyle(messagingStyle)
+                .build();
+
+        List<Notification.MessagingStyle.Message> actualMessages =
+                Notification.MessagingStyle.Message.getMessagesFromBundleArray(
+                        notification.extras.getParcelableArray(Notification.EXTRA_MESSAGES));
+
+        assertEquals(2, actualMessages.size());
+        assertMessageEquals(firstExpectedMessage, actualMessages.get(0));
+        assertMessageEquals(secondExpectedMessage, actualMessages.get(1));
+    }
+
+    private static void assertMessageEquals(
+            Notification.MessagingStyle.Message expected,
+            Notification.MessagingStyle.Message actual) {
+        assertEquals(expected.getText(), actual.getText());
+        assertEquals(expected.getTimestamp(), actual.getTimestamp());
+        assertEquals(expected.getSenderPerson(), actual.getSenderPerson());
+    }
+
     private static RemoteInput newDataOnlyRemoteInput() {
         return new RemoteInput.Builder(DATA_RESULT_KEY)
             .setAllowFreeFormInput(false)
