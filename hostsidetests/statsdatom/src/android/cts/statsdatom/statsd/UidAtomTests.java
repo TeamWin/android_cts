@@ -500,7 +500,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             assertWithMessage("Wrong count for " + opName).that(count).isEqualTo(expectedCount);
         }
     }
-
+/*
     public void testGpsScan() throws Exception {
         if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
         // Whitelist this app against background location request throttling
@@ -536,7 +536,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             }
         }
     }
-
+*/
     public void testGnssStats() throws Exception {
         // Get GnssMetrics as a simple gauge metric.
         StatsdConfig.Builder config = createConfigBuilder();
@@ -663,51 +663,51 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 atom -> atom.getOverlayStateChanged().getState().getNumber());
     }
 
-    public void testPictureInPictureState() throws Exception {
-        String supported = getDevice().executeShellCommand("am supports-multiwindow");
-        if (!hasFeature(FEATURE_WATCH, false) ||
-                !hasFeature(FEATURE_PICTURE_IN_PICTURE, true) ||
-                !supported.contains("true")) {
-            LogUtil.CLog.d("Skipping picture in picture atom test.");
-            return;
-        }
-
-        StatsdConfig.Builder conf = createConfigBuilder();
-        // PictureInPictureStateChanged atom is used prior to rvc-qpr
-        addAtomEvent(conf, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
-                /*useAttribution=*/false);
-        // Picture-in-picture logs' been migrated to UiEvent since rvc-qpr
-        FieldValueMatcher.Builder pkgMatcher = createFvm(UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
-                .setEqString(DEVICE_SIDE_TEST_PACKAGE);
-        addAtomEvent(conf, Atom.UI_EVENT_REPORTED_FIELD_NUMBER, Arrays.asList(pkgMatcher));
-        uploadConfig(conf);
-
-        LogUtil.CLog.d("Playing video in Picture-in-Picture mode");
-        runActivity("VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
-
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
-
-        // Filter out the PictureInPictureStateChanged and UiEventReported atom
-        List<EventMetricData> pictureInPictureStateChangedData = data.stream()
-                .filter(e -> e.getAtom().hasPictureInPictureStateChanged())
-                .collect(Collectors.toList());
-        List<EventMetricData> uiEventReportedData = data.stream()
-                .filter(e -> e.getAtom().hasUiEventReported())
-                .collect(Collectors.toList());
-
-        assertThat(pictureInPictureStateChangedData).isEmpty();
-        assertThat(uiEventReportedData).isNotEmpty();
-
-        // See PipUiEventEnum for definitions
-        final int enterPipEventId = 603;
-        // Assert that log for entering PiP happens exactly once, we do not use
-        // assertStateOccurred here since PiP may log something else when activity finishes.
-        List<EventMetricData> entered = uiEventReportedData.stream()
-                .filter(e -> e.getAtom().getUiEventReported().getEventId() == enterPipEventId)
-                .collect(Collectors.toList());
-        assertThat(entered).hasSize(1);
-    }
+//    public void testPictureInPictureState() throws Exception {
+//        String supported = getDevice().executeShellCommand("am supports-multiwindow");
+//        if (!hasFeature(FEATURE_WATCH, false) ||
+//                !hasFeature(FEATURE_PICTURE_IN_PICTURE, true) ||
+//                !supported.contains("true")) {
+//            LogUtil.CLog.d("Skipping picture in picture atom test.");
+//            return;
+//        }
+//
+//        StatsdConfig.Builder conf = createConfigBuilder();
+//        // PictureInPictureStateChanged atom is used prior to rvc-qpr
+//        addAtomEvent(conf, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
+//                /*useAttribution=*/false);
+//        // Picture-in-picture logs' been migrated to UiEvent since rvc-qpr
+//        FieldValueMatcher.Builder pkgMatcher = createFvm(UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
+//                .setEqString(DEVICE_SIDE_TEST_PACKAGE);
+//        addAtomEvent(conf, Atom.UI_EVENT_REPORTED_FIELD_NUMBER, Arrays.asList(pkgMatcher));
+//        uploadConfig(conf);
+//
+//        LogUtil.CLog.d("Playing video in Picture-in-Picture mode");
+//        runActivity("VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
+//
+//        // Sorted list of events in order in which they occurred.
+//        List<EventMetricData> data = getEventMetricDataList();
+//
+//        // Filter out the PictureInPictureStateChanged and UiEventReported atom
+//        List<EventMetricData> pictureInPictureStateChangedData = data.stream()
+//                .filter(e -> e.getAtom().hasPictureInPictureStateChanged())
+//                .collect(Collectors.toList());
+//        List<EventMetricData> uiEventReportedData = data.stream()
+//                .filter(e -> e.getAtom().hasUiEventReported())
+//                .collect(Collectors.toList());
+//
+//        assertThat(pictureInPictureStateChangedData).isEmpty();
+//        assertThat(uiEventReportedData).isNotEmpty();
+//
+//        // See PipUiEventEnum for definitions
+//        final int enterPipEventId = 603;
+//        // Assert that log for entering PiP happens exactly once, we do not use
+//        // assertStateOccurred here since PiP may log something else when activity finishes.
+//        List<EventMetricData> entered = uiEventReportedData.stream()
+//                .filter(e -> e.getAtom().getUiEventReported().getEventId() == enterPipEventId)
+//                .collect(Collectors.toList());
+//        assertThat(entered).hasSize(1);
+//    }
 
     public void testScheduledJobState() throws Exception {
         String expectedName = "com.android.server.cts.device.statsd/.StatsdJobService";
@@ -1741,7 +1741,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(result.getCausedByAppCertRule()).isFalse();
         assertThat(result.getCausedByInstallerRule()).isFalse();
     }
-
+/*
     public void testMobileBytesTransfer() throws Throwable {
         final int appUid = getUid();
 
@@ -1759,7 +1759,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
             return false;
         });
     }
-
+*/
+/*
     public void testMobileBytesTransferByFgBg() throws Throwable {
         final int appUid = getUid();
 
@@ -1774,7 +1775,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             return false;
         });
     }
-
+*/
     private void assertSubscriptionInfo(AtomsProto.DataUsageBytesTransfer data) {
         assertThat(data.getSimMcc()).matches("^\\d{3}$");
         assertThat(data.getSimMnc()).matches("^\\d{2,3}$");
@@ -1806,7 +1807,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             return false;
         });
     }
-
+/*
     public void testDataUsageBytesTransfer() throws Throwable {
         final boolean oldSubtypeCombined = getNetworkStatsCombinedSubTypeEnabled();
 
@@ -1821,7 +1822,6 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Restore to original default value.
         setNetworkStatsCombinedSubTypeEnabled(oldSubtypeCombined);
     }
-
     // TODO(b/157651730): Determine how to test tag and metered state within atom.
     public void testBytesTransferByTagAndMetered() throws Throwable {
         final int appUid = getUid();
@@ -1830,7 +1830,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         doTestMobileBytesTransferThat(atomId, (atom) -> {
             final AtomsProto.BytesTransferByTagAndMetered data =
                     ((Atom) atom).getBytesTransferByTagAndMetered();
-            if (data.getUid() == appUid && data.getTag() == 0 /*app traffic generated on tag 0*/) {
+            if (data.getUid() == appUid && data.getTag() == 0) { // app traffic generated on tag 0
                 assertDataUsageAtomDataExpected(data.getRxBytes(), data.getTxBytes(),
                         data.getRxPackets(), data.getTxPackets());
                 return true; // found
@@ -1838,7 +1838,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             return false;
         });
     }
-
+*/
     public void testPushedBlobStoreStats() throws Exception {
         StatsdConfig.Builder conf = createConfigBuilder();
         addAtomEvent(conf, Atom.BLOB_COMMITTED_FIELD_NUMBER, false);
@@ -2041,7 +2041,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         popUntilFind(data, onStates, appUsageStateFunction); // clear out initial appusage states.s
         assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
     }
-
+/*
     public void testAppForceStopUsageEvent() throws Exception {
         Set<Integer> onStates = new HashSet<>(Arrays.asList(
                 AppUsageEventOccurred.EventType.MOVE_TO_FOREGROUND_VALUE));
@@ -2070,7 +2070,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         popUntilFind(data, onStates, appUsageStateFunction); // clear out initial appusage states.
         assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
     }
-
+*/
     private AtomsProto.PackageInstallerV2Reported installPackageUsingV2AndGetReport(
             String[] apkNames) throws Exception {
         createAndUploadConfig(Atom.PACKAGE_INSTALLER_V2_REPORTED_FIELD_NUMBER);

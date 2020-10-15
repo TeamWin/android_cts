@@ -16,8 +16,8 @@ java_test_host {
     name: "CtsStatsdAtomHostTestCases",
     defaults: ["cts_defaults"],
     srcs: [
-        "src/**/statsd/UidAtomTestsTemp.java",
         "src/**/binderstats/*.java",
+        "src/**/statsd/*.java",
     ],
 
     test_suites: [
