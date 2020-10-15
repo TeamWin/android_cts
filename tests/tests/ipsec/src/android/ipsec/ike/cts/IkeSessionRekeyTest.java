@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package android.net.ipsec.ike.cts;
+package android.ipsec.ike.cts;
 
 import static com.android.internal.util.HexDump.hexStringToByteArray;
 
+import android.ipsec.ike.cts.IkeTunUtils.PortPair;
 import android.net.InetAddresses;
 import android.net.LinkAddress;
 import android.net.ipsec.ike.IkeFqdnIdentification;
 import android.net.ipsec.ike.IkeSession;
 import android.net.ipsec.ike.IkeSessionParams;
 import android.net.ipsec.ike.IkeTrafficSelector;
-import android.net.ipsec.ike.cts.IkeTunUtils.PortPair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
