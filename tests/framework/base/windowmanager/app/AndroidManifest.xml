@@ -230,6 +230,22 @@
              android:process=".top_process"
              android:exported="true"
              android:theme="@style/TranslucentTheme"/>
+        <activity android:name=".TopNonResizableActivity"
+             android:exported="true"
+             android:resizeableActivity="false"
+             android:theme="@style/NoPreview"
+        />
+        <activity android:name=".BottomNonResizableActivity"
+             android:exported="true"
+             android:resizeableActivity="false"
+             android:theme="@style/NoPreview"
+        />
+        <activity android:name=".TranslucentTopNonResizableActivity"
+             android:process=".top_process"
+             android:exported="true"
+             android:resizeableActivity="false"
+             android:theme="@style/TranslucentTheme"
+        />
         <!-- An animation test with an explicitly opaque theme, overriding device defaults, as the
                          animation background being tested is not used in translucent activities. -->
         <activity android:name=".AnimationTestActivity"
