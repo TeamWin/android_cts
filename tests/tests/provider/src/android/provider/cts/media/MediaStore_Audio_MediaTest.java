@@ -29,6 +29,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -44,6 +45,7 @@ import android.provider.cts.media.MediaStoreUtils.PendingSession;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -55,6 +57,7 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.File;
 import java.io.OutputStream;
 
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
 @RunWith(Parameterized.class)
 public class MediaStore_Audio_MediaTest {
     private Context mContext;

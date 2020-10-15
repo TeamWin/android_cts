@@ -19,10 +19,12 @@ package android.provider.cts.media;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.ProviderTestUtils;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import junit.framework.Assert;
@@ -53,6 +55,7 @@ import java.io.IOException;
  * @see MediaStore_Audio_Artists_AlbumsTest
  * @see MediaStore_Audio_AlbumsTest
  */
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.R)
 @RunWith(AndroidJUnit4.class)
 public class MediaStoreAudioTestHelper {
     public static abstract class MockAudioMediaInfo {
