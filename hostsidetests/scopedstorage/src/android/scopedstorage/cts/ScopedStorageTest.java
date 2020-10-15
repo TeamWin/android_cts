@@ -1638,6 +1638,33 @@ public class ScopedStorageTest {
         }
     }
 
+    /**
+     * Test that we don't allow renaming to top level directory
+     */
+    @Test
+    public void testCantRenameToTopLevelDirectory() throws Exception {
+        final File topLevelDir1 = new File(getExternalStorageDir(), TEST_DIRECTORY_NAME + "_1");
+        final File topLevelDir2 = new File(getExternalStorageDir(), TEST_DIRECTORY_NAME + "_2");
+        final File nonTopLevelDir = new File(getDcimDir(), TEST_DIRECTORY_NAME);
+        try {
+            executeShellCommand("mkdir " + topLevelDir1.getAbsolutePath());
+            assertTrue(topLevelDir1.exists());
+
+            // We can't rename a top level directory to a top level directory
+            assertCantRenameDirectory(topLevelDir1, topLevelDir2, null);
+
+            // However, we can rename a top level directory to non-top level directory.
+            assertCanRenameDirectory(topLevelDir1, nonTopLevelDir, null, null);
+
+            // We can't rename a non-top level directory to a top level directory.
+            assertCantRenameDirectory(nonTopLevelDir, topLevelDir2, null);
+        } finally {
+            executeShellCommand("rmdir " + topLevelDir1.getAbsolutePath());
+            executeShellCommand("rmdir " + topLevelDir2.getAbsolutePath());
+            nonTopLevelDir.delete();
+        }
+    }
+
     @Test
     public void testManageExternalStorageCanCreateFilesAnywhere() throws Exception {
         pollForManageExternalStorageAllowed();
