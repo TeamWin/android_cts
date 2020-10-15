@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.net.ipsec.ike.cts;
+package android.ipsec.ike.cts;
 
 import android.net.InetAddresses;
 import android.net.LinkAddress;

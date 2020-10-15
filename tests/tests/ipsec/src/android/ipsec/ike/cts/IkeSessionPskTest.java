@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.net.ipsec.ike.cts;
+package android.ipsec.ike.cts;
 
 import static android.app.AppOpsManager.OP_MANAGE_IPSEC_TUNNELS;
 import static android.net.ipsec.ike.exceptions.IkeProtocolException.ERROR_TYPE_AUTHENTICATION_FAILED;
