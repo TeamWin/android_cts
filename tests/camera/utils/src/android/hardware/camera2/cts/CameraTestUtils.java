@@ -2243,7 +2243,7 @@ public class CameraTestUtils extends Assert {
                 Size effectivePlaneSize = getEffectivePlaneSizeForImage(src, i);
                 int srcRowByteCount = srcRowStride;
                 int dstRowByteCount = dstRowStride;
-                byte[] srcDataRow = new byte[srcRowByteCount];
+                byte[] srcDataRow = new byte[Math.max(srcRowStride, dstRowStride)];
 
                 if (srcPixStride == dstPixStride && srcPixStride == 1) {
                     // Row by row copy case
@@ -2252,14 +2252,11 @@ public class CameraTestUtils extends Assert {
                             // Special case for interleaved planes: need handle the last row
                             // carefully to avoid memory corruption. Check if we have enough bytes
                             // to copy.
-                            int remainingBytes = srcBuffer.remaining();
-                            if (srcRowByteCount > remainingBytes) {
-                                srcRowByteCount = remainingBytes;
-                            }
+                            srcRowByteCount = Math.min(srcRowByteCount, srcBuffer.remaining());
+                            dstRowByteCount = Math.min(dstRowByteCount, dstBuffer.remaining());
                         }
                         srcBuffer.get(srcDataRow, /*offset*/0, srcRowByteCount);
-                        dstBuffer.put(srcDataRow, /*offset*/0,
-                                Math.min(srcRowByteCount, dstRowByteCount));
+                        dstBuffer.put(srcDataRow, /*offset*/0, dstRowByteCount);
                     }
                 } else {
                     // Row by row per pixel copy case
