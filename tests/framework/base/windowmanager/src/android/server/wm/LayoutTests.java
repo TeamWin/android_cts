@@ -31,6 +31,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.ContentResolver;
 import android.graphics.Rect;
@@ -43,6 +44,7 @@ import android.view.View;
 import android.view.WindowInsets.Type;
 import android.view.WindowManager.LayoutParams;
 
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -138,6 +140,11 @@ public class LayoutTests extends WindowManagerTestBase {
 
     @Test
     public void testAddingImmersiveWindow() throws InterruptedException {
+        // Automotive device implementations [3.8/A] MAY restrict the application requests to limit
+        // the ability to enter a full screen mode as described in immersive documentation.
+        assumeFalse("Skipping test: Immersive mode could be disabled in Automotive",
+                FeatureUtil.isAutomotive());
+
         final boolean[] systemUiFlagsGotCleared = { false };
         final TestActivity activity = startActivity(TestActivity.class);
 
