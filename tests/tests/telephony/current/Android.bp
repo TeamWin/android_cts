@@ -32,7 +32,6 @@ android_test {
         "telephony-common",
         "android.test.runner",
         "android.test.base",
-        "framework-telephony-stubs",
         "voip-common",
     ],
     // uncomment when EuiccService tests do not use hidden APIs (Binder instances)
