@@ -35,6 +35,7 @@ public class LocationRequestTest {
     public void testBuild_Defaults() {
         LocationRequest request = new LocationRequest.Builder(0).build();
         assertThat(request.getIntervalMillis()).isEqualTo(0);
+        assertThat(request.getQuality()).isEqualTo(LocationRequest.QUALITY_BALANCED_POWER_ACCURACY);
         assertThat(request.getMinUpdateIntervalMillis()).isEqualTo(0);
         assertThat(request.getDurationMillis()).isEqualTo(Long.MAX_VALUE);
         assertThat(request.getMaxUpdates()).isEqualTo(Integer.MAX_VALUE);
@@ -47,6 +48,7 @@ public class LocationRequestTest {
     @Test
     public void testBuild_Explicit() {
         LocationRequest request = new LocationRequest.Builder(5000)
+                .setQuality(LocationRequest.QUALITY_HIGH_ACCURACY)
                 .setMinUpdateIntervalMillis(4000)
                 .setDurationMillis(6000)
                 .setMaxUpdates(7000)
@@ -56,6 +58,7 @@ public class LocationRequestTest {
                 .setLowPower(true)
                 .build();
         assertThat(request.getIntervalMillis()).isEqualTo(5000);
+        assertThat(request.getQuality()).isEqualTo(LocationRequest.QUALITY_HIGH_ACCURACY);
         assertThat(request.getMinUpdateIntervalMillis()).isEqualTo(4000);
         assertThat(request.getDurationMillis()).isEqualTo(6000);
         assertThat(request.getMaxUpdates()).isEqualTo(7000);
@@ -68,6 +71,7 @@ public class LocationRequestTest {
     @Test
     public void testBuild_Copy() {
         LocationRequest original = new LocationRequest.Builder(5000)
+                .setQuality(LocationRequest.QUALITY_HIGH_ACCURACY)
                 .setMinUpdateIntervalMillis(4000)
                 .setDurationMillis(6000)
                 .setMaxUpdates(7000)
@@ -78,6 +82,7 @@ public class LocationRequestTest {
                 .build();
         LocationRequest copy = new LocationRequest.Builder(original).build();
         assertThat(copy.getIntervalMillis()).isEqualTo(5000);
+        assertThat(copy.getQuality()).isEqualTo(LocationRequest.QUALITY_HIGH_ACCURACY);
         assertThat(copy.getMinUpdateIntervalMillis()).isEqualTo(4000);
         assertThat(copy.getDurationMillis()).isEqualTo(6000);
         assertThat(copy.getMaxUpdates()).isEqualTo(7000);
@@ -122,6 +127,13 @@ public class LocationRequestTest {
     }
 
     @Test
+    public void testBuild_IllegalQuality() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new LocationRequest.Builder(0).setQuality(-999));
+    }
+
+    @Test
     public void testBuild_IllegalMinUpdateInterval() {
         assertThrows(
                 IllegalArgumentException.class,
@@ -158,6 +170,7 @@ public class LocationRequestTest {
     @Test
     public void testParcelRoundtrip() {
         LocationRequest request = new LocationRequest.Builder(5000)
+                .setQuality(LocationRequest.QUALITY_LOW_POWER)
                 .setMinUpdateIntervalMillis(4000)
                 .setDurationMillis(6000)
                 .setMaxUpdates(7000)
