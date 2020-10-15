@@ -27,6 +27,7 @@ import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
@@ -109,19 +110,22 @@ public class EncoderTest extends AndroidTestCase {
         testEncoderWithFormats(MediaFormat.MIMETYPE_AUDIO_AMR_WB, formats);
     }
 
+    @CddTest(requirement="5.1.3")
     public void testOpusEncoders() {
         LinkedList<MediaFormat> formats = new LinkedList<MediaFormat>();
 
         final int kBitRates[] =
-            { 6600, 8850, 12650, 14250, 15850, 18250, 19850, 23050, 23850 };
+            { 8000, 12000, 16000, 24000, 48000 };
 
         for (int j = 0; j < kBitRates.length; ++j) {
-            MediaFormat format  = new MediaFormat();
-            format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_OPUS);
-            format.setInteger(MediaFormat.KEY_SAMPLE_RATE, 16000);
-            format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
-            format.setInteger(MediaFormat.KEY_BIT_RATE, kBitRates[j]);
-            formats.push(format);
+            for (int nChannels = 1; nChannels <= 2; ++nChannels) {
+                MediaFormat format  = new MediaFormat();
+                format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_AUDIO_OPUS);
+                format.setInteger(MediaFormat.KEY_SAMPLE_RATE, 16000);
+                format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, nChannels);
+                format.setInteger(MediaFormat.KEY_BIT_RATE, kBitRates[j]);
+                formats.push(format);
+            }
         }
 
         testEncoderWithFormats(MediaFormat.MIMETYPE_AUDIO_OPUS, formats);

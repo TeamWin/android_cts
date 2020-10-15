@@ -29,6 +29,7 @@ import android.media.tv.tuner.Descrambler;
 import android.media.tv.tuner.LnbCallback;
 import android.media.tv.tuner.Lnb;
 import android.media.tv.tuner.Tuner;
+import android.media.tv.tuner.TunerVersionChecker;
 import android.media.tv.tuner.dvr.DvrPlayback;
 import android.media.tv.tuner.dvr.DvrRecorder;
 import android.media.tv.tuner.dvr.OnPlaybackStatusChangedListener;
@@ -40,6 +41,7 @@ import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterConfiguration;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.Filter;
+import android.media.tv.tuner.filter.IpFilterConfiguration;
 import android.media.tv.tuner.filter.IpPayloadEvent;
 import android.media.tv.tuner.filter.MediaEvent;
 import android.media.tv.tuner.filter.MmtpRecordEvent;
@@ -127,6 +129,15 @@ public class TunerTest {
     public void testTunerConstructor() throws Exception {
         if (!hasTuner()) return;
         assertNotNull(mTuner);
+    }
+
+    @Test
+    public void testTunerVersion() {
+        if (!hasTuner()) return;
+        assertNotNull(mTuner);
+        int version = TunerVersionChecker.getTunerVersion();
+        assertTrue(version >= TunerVersionChecker.TUNER_VERSION_1_0);
+        assertTrue(version <= TunerVersionChecker.TUNER_VERSION_1_1);
     }
 
     @Test
@@ -284,6 +295,11 @@ public class TunerTest {
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
         assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertNotEquals(Tuner.INVALID_FILTER_ID_64BIT, f.getId64Bit());
+        } else {
+            assertEquals(Tuner.INVALID_FILTER_ID_64BIT, f.getId64Bit());
+        }
 
         Settings settings = SectionSettingsWithTableInfo
                 .builder(Filter.TYPE_TS)
@@ -316,6 +332,30 @@ public class TunerTest {
         assertNotEquals(Tuner.INVALID_TIMESTAMP, f.getTimeStamp());
         assertNotEquals(Tuner.INVALID_TIMESTAMP, f.getSourceTime());
         f.clearTimestamp();
+        f.close();
+    }
+
+    @Test
+    public void testIpFilter() throws Exception {
+        if (!hasTuner()) return;
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_IP, Filter.SUBTYPE_IP, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        FilterConfiguration config = IpFilterConfiguration
+                .builder()
+                .setSrcIpAddress(new byte[] {(byte) 0xC0, (byte) 0xA8, 0, 1})
+                .setDstIpAddress(new byte[] {(byte) 0xC0, (byte) 0xA8, 3, 4})
+                .setSrcPort(33)
+                .setDstPort(23)
+                .setPassthrough(false)
+                .setSettings(null)
+                .setIpFilterContextId(1)
+                .build();
+        f.configure(config);
+        f.start();
+        f.stop();
         f.close();
     }
 
@@ -502,6 +542,15 @@ public class TunerTest {
     private void testMmtpRecordEvent(Filter filter, MmtpRecordEvent e) {
         e.getScHevcIndexMask();
         e.getDataLength();
+        int mpuSequenceNumber = e.getMpuSequenceNumber();
+        long pts = e.getPts();
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertNotEquals(mpuSequenceNumber, Tuner.INVALID_MMTP_RECORD_EVENT_MPT_SEQUENCE_NUM);
+            assertNotEquals(pts, Tuner.INVALID_TIMESTAMP);
+        } else {
+            assertEquals(mpuSequenceNumber, Tuner.INVALID_MMTP_RECORD_EVENT_MPT_SEQUENCE_NUM);
+            assertEquals(pts, Tuner.INVALID_TIMESTAMP);
+        }
     }
 
     private void testPesEvent(Filter filter, PesEvent e) {
@@ -536,6 +585,12 @@ public class TunerTest {
         e.getTsIndexMask();
         e.getScIndexMask();
         e.getDataLength();
+        long pts = e.getPts();
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertNotEquals(pts, Tuner.INVALID_TIMESTAMP);
+        } else {
+            assertEquals(pts, Tuner.INVALID_TIMESTAMP);
+        }
     }
 
     private OnRecordStatusChangedListener getRecordListener() {

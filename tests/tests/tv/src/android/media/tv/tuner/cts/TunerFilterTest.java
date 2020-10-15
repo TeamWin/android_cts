@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.media.tv.tuner.Tuner;
+import android.media.tv.tuner.TunerVersionChecker;
 import android.media.tv.tuner.filter.AlpFilterConfiguration;
 import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.DownloadSettings;
@@ -201,6 +202,7 @@ public class TunerFilterTest {
                         .setDstPort(23)
                         .setPassthrough(false)
                         .setSettings(null)
+                        .setIpFilterContextId(1)
                         .build();
 
         assertEquals(Filter.TYPE_IP, config.getType());
@@ -212,6 +214,13 @@ public class TunerFilterTest {
         assertEquals(23, config.getDstPort());
         assertFalse(config.isPassthrough());
         assertEquals(null, config.getSettings());
+        if (!TunerVersionChecker.checkHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1,
+                TAG + ": testIpFilterConfiguration.setIpFilterContextId")) {
+            assertEquals(IpFilterConfiguration.INVALID_IP_FILTER_CONTEXT_ID,
+                    config.getIpFilterContextId());
+        } else {
+            assertEquals(1, config.getIpFilterContextId());
+        }
     }
 
     @Test
