@@ -65,6 +65,9 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
+        ITestDevice device = getDevice();
+        CecVersionHelper.setCec14(device);
+
         if (mDutLogicalAddress == LogicalAddress.UNKNOWN) {
             mDutLogicalAddress = LogicalAddress.getLogicalAddress(getDumpsysLogicalAddress());
         }
