@@ -36,11 +36,11 @@
 time_t start_timer(void);
 int timer_active(time_t timer_started);
 
-time_t start_timer(){
+inline time_t start_timer(){
   return time(NULL);
 }
 
-int timer_active(time_t timer_started){
+inline int timer_active(time_t timer_started){
   return time(NULL) < (timer_started + MAX_TEST_DURATION);
 }
 
