@@ -634,6 +634,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.SYSTEM_ALERT_WINDOW")
     @Test
     public void testOnCheckIsTextEditorRunOnUIThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
