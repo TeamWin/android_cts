@@ -54,6 +54,16 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/36104177
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2017-09")
+    public void testPocCVE_2017_0670() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0670", null, getDevice());
+    }
+
+    /**
      * b/68159767
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
