@@ -133,7 +133,6 @@ public class HostTestHelper {
 
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
-        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
     }
 
@@ -194,7 +193,6 @@ public class HostTestHelper {
                 Rollback.from(TestApp.A2).to(TestApp.A1));
         assertThat(committed).causePackagesContainsExactly(TestApp.A2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
-        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
 
         // Process TestApp.B
@@ -214,7 +212,6 @@ public class HostTestHelper {
                 Rollback.from(TestApp.B2).to(TestApp.B1));
         assertThat(committed).causePackagesContainsExactly(TestApp.B2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
-        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
     }
 
@@ -284,7 +281,6 @@ public class HostTestHelper {
                 Rollback.from(TestApp.A2).to(TestApp.A1));
         assertThat(committed).causePackagesContainsExactly(TestApp.A2);
         assertThat(committed.getCommittedSessionId()).isNotEqualTo(-1);
-        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
     }
 
@@ -370,7 +366,6 @@ public class HostTestHelper {
 
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
-        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
     }
 
@@ -432,7 +427,6 @@ public class HostTestHelper {
 
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
-        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
     }
 
@@ -508,7 +502,6 @@ public class HostTestHelper {
 
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
-        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(3);
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
     }
@@ -620,7 +613,6 @@ public class HostTestHelper {
 
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
-        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         assertThat(InstallUtils.getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(2);
     }
 
@@ -686,7 +678,6 @@ public class HostTestHelper {
 
         // Note: The app is not rolled back until after the rollback is staged
         // and the device has been rebooted.
-        InstallUtils.waitForSessionReady(committed.getCommittedSessionId());
         assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
     }
 
