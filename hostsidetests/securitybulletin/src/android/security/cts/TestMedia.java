@@ -54,6 +54,73 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/62151041 - Has 4 CVEs filed together
+     */
+    /** 1. CVE-2017-9047
+     * Vulnerability Behaviour: SIGABRT by -fstack-protector
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testPocCVE_2018_9466_CVE_2017_9047() throws Exception {
+        String binaryName = "CVE-2018-9466-CVE-2017-9047";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /** 2. CVE-2017-9048
+     * Vulnerability Behaviour: SIGABRT by -fstack-protector
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testPocCVE_2018_9466_CVE_2017_9048() throws Exception {
+        String binaryName = "CVE-2018-9466-CVE-2017-9048";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /** 3. CVE-2017-9049
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testPocCVE_2018_9466_CVE_2017_9049() throws Exception {
+        String binaryName = "CVE-2018-9466-CVE-2017-9049";
+        String inputFiles[] = {"cve_2018_9466_cve_2017_9049.xml"};
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination  = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /** 4. CVE-2017-9050
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testPocCVE_2018_9466_CVE_2017_9050() throws Exception {
+        String binaryName = "CVE-2018-9466-CVE-2017-9049";
+        String inputFiles[] = {"cve_2018_9466_cve_2017_9050.xml"};
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination  = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/23247055
      * Vulnerability Behaviour: SIGABRT in self
      */
