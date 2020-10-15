@@ -32,6 +32,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,7 +69,7 @@ public class PasspointConfigurationTest extends WifiJUnit3TestBase {
 
         homeSp.setRoamingConsortiumOis(new long[]{0xaa, 0xbb});
         homeSp.setFriendlyName("Some other name");
-        homeSp.setOtherHomePartners(new String[]{"other-provider1", "other-provider2"});
+        homeSp.setOtherHomePartnersList(Arrays.asList("other-provider1", "other-provider2"));
         homeSp.setMatchAllOis(new long[]{0x1000, 0x2000});
         config2.setHomeSp(homeSp);
 

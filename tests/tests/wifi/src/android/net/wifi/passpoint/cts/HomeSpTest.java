@@ -22,7 +22,9 @@ import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SmallTest;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
@@ -56,10 +58,9 @@ public class HomeSpTest extends WifiJUnit3TestBase {
      */
     public void testOtherHomePartners() throws Exception {
         HomeSp homeSp = new HomeSp();
-        assertNull(homeSp.getOtherHomePartners());
-        final String[] homePartners = new String[] {"other-provider1", "other-provider2"};
-        homeSp.setOtherHomePartners(homePartners);
-        final String[] profileHomePartners = homeSp.getOtherHomePartners();
-        assertTrue(Arrays.equals(homePartners, profileHomePartners));
+        final Collection<String> homePartners = Arrays.asList("other-provider1", "other-provider2");
+        homeSp.setOtherHomePartnersList(homePartners);
+        final Collection<String> profileHomePartners = homeSp.getOtherHomePartnersList();
+        assertTrue(homePartners.equals(profileHomePartners));
     }
 }
