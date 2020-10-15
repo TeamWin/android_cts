@@ -1241,6 +1241,81 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2016-09")
+    public void testStagefright_cve_2016_3880() throws Exception {
+        Thread server = new Thread() {
+            @Override
+            public void run() {
+                try (ServerSocket serverSocket = new ServerSocket(8080) {
+                        {setSoTimeout(10_000);} // time out after 10 seconds
+                    };
+                    Socket conn = serverSocket.accept()
+                ) {
+                    OutputStream outputstream = conn.getOutputStream();
+                    InputStream inputStream = conn.getInputStream();
+                    byte input[] = new byte[65536];
+                    inputStream.read(input, 0, 65536);
+                    String inputStr = new String(input);
+                    if (inputStr.contains("DESCRIBE rtsp://127.0.0.1:8080/cve_2016_3880")) {
+                        byte http[] = ("RTSP/1.0 200 OK\r\n"
+                        + "Server: stagefright/1.2 (Linux;Android 9)\r\n"
+                        + "Content-Type: application/sdp\r\n"
+                        + "Content-Base: rtsp://127.0.0.1:8080/cve_2016_3880\r\n"
+                        + "Content-Length: 379\r\n"
+                        + "Cache-Control: no-cache\r\nCSeq: 1\r\n\r\n").getBytes();
+
+                        byte sdp[] = ("v=0\r\no=- 64 233572944 IN IP4 127.0.0.0\r\n"
+                        + "s=QuickTime\r\nt=0 0\r\na=range:npt=now-\r\n"
+                        + "m=video 5434 RTP/AVP 96123456\r\nc=IN IP4 127.0.0.1\r\n"
+                        + "b=AS:320000\r\na=rtpmap:96123456 H264/90000\r\n"
+                        + "a=fmtp:96123456 packetization-mode=1;profile-level-id=42001E;"
+                        + "sprop-parameter-sets=Z0IAHpZUBaHogA==,aM44gA==\r\n"
+                        + "a=cliprect:0,0,480,270\r\na=framesize:96123456 720-480\r\n"
+                        + "a=control:track1\r\n").getBytes();
+
+                        outputstream.write(http);
+                        outputstream.write(sdp);
+                        outputstream.flush();
+                    }
+                } catch (IOException e) {
+                }
+            }
+        };
+        server.start();
+        String uri = "rtsp://127.0.0.1:8080/cve_2016_3880";
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(new CrashUtils.Config()
+                .setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT));
+        LooperThread t = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                mp.setOnPreparedListener(mpcl);
+                mp.setOnCompletionListener(mpcl);
+                Surface surface = getDummySurface();
+                mp.setSurface(surface);
+                AssetFileDescriptor fd = null;
+                try {
+                    mp.setDataSource(uri);
+                    mp.prepareAsync();
+                } catch (IOException e) {
+                    Log.e(TAG, e.toString());
+                } finally {
+                    closeQuietly(fd);
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        t.start();
+        assertFalse("Device *IS* vulnerable to CVE-2016-3880",
+                mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        t.stopLooper();
+        t.join();
+        server.join();
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2020-05")
     public void testStagefright_cve_2020_3641() throws Exception {
         doStagefrightTest(R.raw.cve_2020_3641);
