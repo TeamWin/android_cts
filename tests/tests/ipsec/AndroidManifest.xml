@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.net.ipsec.cts"
+    package="android.ipsec.cts"
     android:targetSandboxVersion="2">
 
     <!--Allow tests to call ConnectivityManager#getActiveNetwork()-->
@@ -30,8 +30,8 @@
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.net.ipsec.cts"
-                     android:label="CTS tests of android.net.ipsec">
+                     android:targetPackage="android.ipsec.cts"
+                     android:label="CTS tests of android.net.ipsec.ike">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
