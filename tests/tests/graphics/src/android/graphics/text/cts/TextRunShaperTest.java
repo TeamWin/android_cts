@@ -24,9 +24,8 @@ import android.graphics.Typeface;
 import android.graphics.fonts.Font;
 import android.graphics.fonts.FontFamily;
 import android.graphics.fonts.FontVariationAxis;
-import android.graphics.text.GlyphStyle;
 import android.graphics.text.PositionedGlyphs;
-import android.graphics.text.TextShaper;
+import android.graphics.text.TextRunShaper;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -40,7 +39,7 @@ import java.util.HashSet;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class TextShaperTest {
+public class TextRunShaperTest {
 
     @Test
     public void shapeText() {
@@ -50,20 +49,19 @@ public class TextShaperTest {
         String text = "Hello, World.";
 
         // Act
-        PositionedGlyphs result = TextShaper.shapeTextRun(
+        PositionedGlyphs result = TextRunShaper.shapeTextRun(
                 text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
 
         // Assert
         // Glyph must be included. (the count cannot be expected since there could be ligature).
         assertThat(result.glyphCount()).isNotEqualTo(0);
-        assertThat(result.getStyle()).isEqualTo(new GlyphStyle(paint));
         for (int i = 0; i < result.glyphCount(); ++i) {
             // Glyph ID = 0 is reserved for Tofu, thus expecting all character has glyph.
             assertThat(result.getGlyphId(i)).isNotEqualTo(0);
         }
 
         // Must have horizontal advance.
-        assertThat(result.getTotalAdvance()).isGreaterThan(0f);
+        assertThat(result.getAdvance()).isGreaterThan(0f);
         float ascent = result.getAscent();
         float descent = result.getDescent();
         // Usually font has negative ascent value which is relative from the baseline.
@@ -88,16 +86,16 @@ public class TextShaperTest {
 
         // Act
         paint.setTextSize(100f);  // Shape text with 100px
-        PositionedGlyphs result1 = TextShaper.shapeTextRun(
+        PositionedGlyphs result1 = TextRunShaper.shapeTextRun(
                 text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
 
         paint.setTextSize(50f);  // Shape text with 50px
-        PositionedGlyphs result2 = TextShaper.shapeTextRun(
+        PositionedGlyphs result2 = TextRunShaper.shapeTextRun(
                 text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
 
         // Assert
         // The total advance should be different.
-        assertThat(result1.getTotalAdvance()).isNotEqualTo(result2.getTotalAdvance());
+        assertThat(result1.getAdvance()).isNotEqualTo(result2.getAdvance());
 
         // The size change doesn't affect glyph selection.
         assertThat(result1.glyphCount()).isEqualTo(result2.glyphCount());
@@ -116,9 +114,9 @@ public class TextShaperTest {
         String text = "\u0645\u0631\u062D\u0628\u0627";
 
         // Act
-        PositionedGlyphs resultWithContext = TextShaper.shapeTextRun(
+        PositionedGlyphs resultWithContext = TextRunShaper.shapeTextRun(
                 text, 0, 1, 0, text.length(), 0f, 0f, true, paint);
-        PositionedGlyphs resultWithoutContext = TextShaper.shapeTextRun(
+        PositionedGlyphs resultWithoutContext = TextRunShaper.shapeTextRun(
                 text, 0, 1, 0, 1, 0f, 0f, true, paint);
 
         // Assert
@@ -134,24 +132,23 @@ public class TextShaperTest {
         paint.setTextSize(100f);  // Shape text with 100px
 
         // Act
-        PositionedGlyphs resultString = TextShaper.shapeTextRun(
+        PositionedGlyphs resultString = TextRunShaper.shapeTextRun(
                 text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
 
         char[] charArray = text.toCharArray();
-        PositionedGlyphs resultChars = TextShaper.shapeTextRun(
+        PositionedGlyphs resultChars = TextRunShaper.shapeTextRun(
                 charArray, 0, charArray.length, 0, charArray.length, 0f, 0f, false, paint);
 
         // Asserts
         assertThat(resultString.glyphCount()).isEqualTo(resultChars.glyphCount());
-        assertThat(resultString.getTotalAdvance()).isEqualTo(resultChars.getTotalAdvance());
+        assertThat(resultString.getAdvance()).isEqualTo(resultChars.getAdvance());
         assertThat(resultString.getAscent()).isEqualTo(resultChars.getAscent());
         assertThat(resultString.getDescent()).isEqualTo(resultChars.getDescent());
-        assertThat(resultString.getStyle()).isEqualTo(resultChars.getStyle());
         for (int i = 0; i < resultString.glyphCount(); ++i) {
             assertThat(resultString.getGlyphId(i)).isEqualTo(resultChars.getGlyphId(i));
             assertThat(resultString.getFont(i)).isEqualTo(resultChars.getFont(i));
-            assertThat(resultString.getPositionX(i)).isEqualTo(resultChars.getPositionX(i));
-            assertThat(resultString.getPositionY(i)).isEqualTo(resultChars.getPositionY(i));
+            assertThat(resultString.getGlyphX(i)).isEqualTo(resultChars.getGlyphX(i));
+            assertThat(resultString.getGlyphY(i)).isEqualTo(resultChars.getGlyphY(i));
         }
     }
 
@@ -163,7 +160,7 @@ public class TextShaperTest {
         String text = "Hello, Emoji: \uD83E\uDE90";  // Usually emoji is came from ColorEmoji font.
 
         // Act
-        PositionedGlyphs result = TextShaper.shapeTextRun(
+        PositionedGlyphs result = TextRunShaper.shapeTextRun(
                 text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
 
         // Assert
@@ -191,7 +188,7 @@ public class TextShaperTest {
         paint.setFontVariationSettings("'wght' 250");
 
         // Act
-        PositionedGlyphs res = TextShaper.shapeTextRun("a", 0, 1, 0, 1, 0f, 0f, false, paint);
+        PositionedGlyphs res = TextRunShaper.shapeTextRun("a", 0, 1, 0, 1, 0f, 0f, false, paint);
 
         // Assert
         Font font = res.getFont(0);
@@ -210,16 +207,16 @@ public class TextShaperTest {
         paint.setTextSize(100f);
 
         // Act
-        PositionedGlyphs glyphs = TextShaper.shapeTextRun(
+        PositionedGlyphs glyphs = TextRunShaper.shapeTextRun(
                 "abcde", 0, 5, 0, 5, 0f, 0f, true, paint);
-        PositionedGlyphs eqGlyphs = TextShaper.shapeTextRun(
+        PositionedGlyphs eqGlyphs = TextRunShaper.shapeTextRun(
                 "abcde", 0, 5, 0, 5, 0f, 0f, true, paint);
-        PositionedGlyphs reversedGlyphs = TextShaper.shapeTextRun(
+        PositionedGlyphs reversedGlyphs = TextRunShaper.shapeTextRun(
                 "edcba", 0, 5, 0, 5, 0f, 0f, true, paint);
-        PositionedGlyphs substrGlyphs = TextShaper.shapeTextRun(
+        PositionedGlyphs substrGlyphs = TextRunShaper.shapeTextRun(
                 "edcba", 0, 3, 0, 3, 0f, 0f, true, paint);
         paint.setTextSize(50f);
-        PositionedGlyphs differentStyleGlyphs = TextShaper.shapeTextRun(
+        PositionedGlyphs differentStyleGlyphs = TextRunShaper.shapeTextRun(
                 "edcba", 0, 3, 0, 3, 0f, 0f, true, paint);
 
         // Assert
@@ -236,7 +233,7 @@ public class TextShaperTest {
         Paint paint = new Paint();
         String text = "Hello, World.";
         paint.setTextSize(100f);  // Shape text with 100px
-        PositionedGlyphs res = TextShaper.shapeTextRun(
+        PositionedGlyphs res = TextRunShaper.shapeTextRun(
                 text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
 
         // Act
@@ -249,7 +246,7 @@ public class TextShaperTest {
         Paint paint = new Paint();
         String text = "Hello, World.";
         paint.setTextSize(100f);  // Shape text with 100px
-        PositionedGlyphs res = TextShaper.shapeTextRun(
+        PositionedGlyphs res = TextRunShaper.shapeTextRun(
                 text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
 
         // Act
@@ -262,11 +259,11 @@ public class TextShaperTest {
         Paint paint = new Paint();
         String text = "Hello, World.";
         paint.setTextSize(100f);  // Shape text with 100px
-        PositionedGlyphs res = TextShaper.shapeTextRun(
+        PositionedGlyphs res = TextRunShaper.shapeTextRun(
                 text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
 
         // Act
-        res.getPositionX(res.glyphCount());  // throws IllegalArgumentException
+        res.getGlyphX(res.glyphCount());  // throws IllegalArgumentException
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -275,11 +272,11 @@ public class TextShaperTest {
         Paint paint = new Paint();
         String text = "Hello, World.";
         paint.setTextSize(100f);  // Shape text with 100px
-        PositionedGlyphs res = TextShaper.shapeTextRun(
+        PositionedGlyphs res = TextRunShaper.shapeTextRun(
                 text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
 
         // Act
-        res.getPositionY(res.glyphCount());  // throws IllegalArgumentException
+        res.getGlyphY(res.glyphCount());  // throws IllegalArgumentException
     }
 
     // TODO(nona): Add pixel comparison tests once we have Canvas.drawGlyph APIs.
