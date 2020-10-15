@@ -31,6 +31,7 @@ import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingSe
 import android.media.tv.cts.TvInputServiceTest.CountingTvInputService.CountingRecordingSession;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.SystemClock;
 import android.test.ActivityInstrumentationTestCase2;
 import android.text.TextUtils;
@@ -1088,6 +1089,11 @@ public class TvInputServiceTest extends ActivityInstrumentationTestCase2<TvViewS
         public RecordingSession onCreateRecordingSession(String inputId, String tvInputSessionId) {
             sTvInputSessionId = tvInputSessionId;
             return onCreateRecordingSession(inputId);
+        }
+
+        @Override
+        public IBinder createExtension() {
+            return null;
         }
 
         public static class CountingSession extends Session {
