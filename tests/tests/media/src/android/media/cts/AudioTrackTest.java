@@ -2589,6 +2589,38 @@ public class AudioTrackTest {
     }
 
     @Test
+    public void testAc3BuilderNoBufferSize() throws Exception {
+        AudioFormat format = new AudioFormat.Builder()
+            .setEncoding(AudioFormat.ENCODING_AC3)
+            .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+            .setSampleRate(48000)
+            .build();
+        try {
+            AudioTrack audioTrack = new AudioTrack.Builder()
+                .setAudioFormat(format)
+                .setBufferSizeInBytes(100)
+                .build();
+            audioTrack.release();
+            Thread.sleep(200);
+        } catch (UnsupportedOperationException e) {
+            // Do nothing. It's OK for a device to not support ac3 audio tracks.
+            return;
+        }
+        // if ac3 audio tracks with set buffer size succeed, the builder should also succeed if the
+        // buffer size isn't set, allowing the framework to report the recommended buffer size.
+        try {
+            AudioTrack audioTrack = new AudioTrack.Builder()
+                .setAudioFormat(format)
+                .build();
+            audioTrack.release();
+        } catch (UnsupportedOperationException e) {
+            // This builder should not fail as the first builder succeeded when setting buffer size
+            fail("UnsupportedOperationException should not be thrown when setBufferSizeInBytes"
+                  + " is excluded from builder");
+        }
+    }
+
+    @Test
     public void testSetPresentationDefaultTrack() throws Exception {
         final AudioTrack track = new AudioTrack.Builder().build();
         assertEquals(AudioTrack.ERROR, track.setPresentation(createAudioPresentation()));
