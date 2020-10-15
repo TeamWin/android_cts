@@ -305,6 +305,11 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
                     "ImageWriter 1st input image should match camera 1st output image",
                     isImageStronglyEqual(inputImage, cameraImage));
 
+            if (DEBUG) {
+                String inputFileName = mDebugFileNameBase + "/" + maxSize + "_image1_input.yuv";
+                dumpFile(inputFileName, getDataFromImage(inputImage));
+            }
+
             // Image should be closed after queueInputImage call
             Plane closedPlane = inputImage.getPlanes()[0];
             ByteBuffer closedBuffer = closedPlane.getBuffer();
