@@ -16,9 +16,12 @@
 
 package android.preference.cts;
 
+import static android.server.wm.ActivityManagerState.STATE_RESUMED;
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.graphics.Bitmap;
+import android.server.wm.ActivityAndWindowManagersState;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
@@ -42,6 +45,9 @@ public class PreferenceActivityLegacyFlowTest {
 
     // Helper strings to ensure that some parts of preferences are visible or not.
     private static final String LEGACY_SCREEN_TEXT = "Preset Title";
+
+    static final String TEST_APP_PACKAGE = "android.preference.cts";
+    private static final String TEST_APP_ACTIVITY = TEST_APP_PACKAGE + ".PreferencesFromXml";
 
     private TestUtils mTestUtils;
     private PreferencesFromXml mActivity;
@@ -86,6 +92,8 @@ public class PreferenceActivityLegacyFlowTest {
     private void recreate() {
         runOnUiThread(() -> mActivity.recreate());
         mTestUtils.waitForIdle();
+        ComponentName testComponentName = new ComponentName(TEST_APP_PACKAGE, TEST_APP_ACTIVITY);
+        waitForActivityState(testComponentName, STATE_RESUMED);
     }
 
     private void runOnUiThread(final Runnable runnable) {
@@ -102,6 +110,11 @@ public class PreferenceActivityLegacyFlowTest {
 
     private void assertTextShown(String text) {
         assertTrue(mTestUtils.isTextShown(text));
+    }
+
+    public void waitForActivityState(ComponentName activityName, String activityState) {
+        ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
+        mAmWmState.waitForActivityState(activityName, activityState);
     }
 
 }
