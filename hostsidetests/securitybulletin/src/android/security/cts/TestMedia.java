@@ -54,6 +54,25 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/24441553
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2015-12")
+    public void testPocCVE_2015_6616_2() throws Exception {
+        String inputFiles[] = {"cve_2015_6616_2.mp4"};
+        String binaryName = "CVE-2015-6616-2";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination  = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/134420911
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
