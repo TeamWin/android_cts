@@ -30,7 +30,6 @@ import android.content.IntentFilter;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
-import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
@@ -38,7 +37,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -69,6 +68,7 @@ public class BackgroundRestrictedAlarmsTest {
     private Object mLock = new Object();
     private Context mContext;
     private ComponentName mAlarmScheduler;
+    private DeviceConfigStateHelper mDeviceConfigStateHelper;
     private UiDevice mUiDevice;
     private int mAlarmCount;
 
@@ -89,6 +89,8 @@ public class BackgroundRestrictedAlarmsTest {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = 0;
+        mDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
         updateAlarmManagerConstants();
         setAppOpsMode(APP_OP_MODE_IGNORED);
         final IntentFilter intentFilter = new IntentFilter();
@@ -165,20 +167,12 @@ public class BackgroundRestrictedAlarmsTest {
     }
 
     private void updateAlarmManagerConstants() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
-                    "0", /* makeDefault */ false);
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_interval",
-                    String.valueOf(MIN_REPEATING_INTERVAL), /* makeDefault */ false);
-        });
+        mDeviceConfigStateHelper.set("min_futurity", "0");
+        mDeviceConfigStateHelper.set("min_interval", String.valueOf(MIN_REPEATING_INTERVAL));
     }
 
     private void deleteAlarmManagerConstants() {
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
-                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
+        mDeviceConfigStateHelper.restoreOriginalValues();
     }
 
     private void setAppStandbyBucket(String bucket) throws IOException {

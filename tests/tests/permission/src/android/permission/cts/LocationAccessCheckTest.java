@@ -24,7 +24,6 @@ import static android.content.Context.BIND_NOT_FOREGROUND;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.location.Criteria.ACCURACY_FINE;
-import static android.provider.Settings.RESET_MODE_PACKAGE_DEFAULTS;
 import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_DELAY_MILLIS;
 import static android.provider.Settings.Secure.LOCATION_ACCESS_CHECK_INTERVAL_MILLIS;
 
@@ -73,6 +72,7 @@ import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.ProtoUtils;
 import com.android.compatibility.common.util.mainline.MainlineModule;
 import com.android.compatibility.common.util.mainline.ModuleDetector;
@@ -135,6 +135,9 @@ public class LocationAccessCheckTest {
 
     private static ServiceConnection sConnection;
     private static IAccessLocationOnCommand sLocationAccessor;
+
+    private DeviceConfigStateHelper mDeviceConfigStateHelper =
+            new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_PRIVACY);
 
     private static void assumeNotPlayManaged() throws Exception {
         assumeFalse(ModuleDetector.moduleIsPlayManaged(
@@ -426,18 +429,14 @@ public class LocationAccessCheckTest {
      */
     @Before
     public void enableLocationAccessCheck() {
-        runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(
-                DeviceConfig.NAMESPACE_PRIVACY,
-                PROPERTY_LOCATION_ACCESS_CHECK_ENABLED, "true", false));
+        mDeviceConfigStateHelper.set(PROPERTY_LOCATION_ACCESS_CHECK_ENABLED, "true");
     }
 
     /**
      * Disable location access check
      */
     private void disableLocationAccessCheck() {
-        runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(
-                DeviceConfig.NAMESPACE_PRIVACY,
-                PROPERTY_LOCATION_ACCESS_CHECK_ENABLED, "false", false));
+        mDeviceConfigStateHelper.set(PROPERTY_LOCATION_ACCESS_CHECK_ENABLED, "false");
     }
 
     /**
@@ -560,9 +559,7 @@ public class LocationAccessCheckTest {
      */
     @After
     public void resetPrivacyConfig() {
-        runWithShellPermissionIdentity(
-                () -> DeviceConfig.resetToDefaults(RESET_MODE_PACKAGE_DEFAULTS,
-                        DeviceConfig.NAMESPACE_PRIVACY));
+        mDeviceConfigStateHelper.restoreOriginalValues();
     }
 
     @After
