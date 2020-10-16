@@ -4003,6 +4003,7 @@
         </receiver>
 
         <activity android:name=".car.CarDockTestActivity"
+                android:exported="true"
                 android:label="@string/car_dock_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4011,7 +4012,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_car" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
-
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".car.CarDockActivity"
@@ -4022,10 +4024,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!-- See explaination in CarDockTestActivity.java -->
         <activity-alias android:name=".car.CarDockActivity1"
+                android:exported="true"
             android:targetActivity=".car.CarDockActivity" >
             <meta-data
                 android:name="android.dock_home"
@@ -4039,6 +4044,7 @@
 
         <activity-alias android:name=".car.CarDockActivity2"
             android:targetActivity=".car.CarDockActivity"
+                android:exported="true"
             android:enabled="false" >
             <meta-data
                 android:name="android.dock_home"
@@ -4051,6 +4057,7 @@
         </activity-alias>
 
         <activity android:name=".car.GearSelectionTestActivity"
+                android:exported="true"
                 android:label="@string/gear_selection_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4060,9 +4067,12 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".car.NightModeTestActivity"
+                android:exported="true"
                 android:label="@string/night_mode_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4072,9 +4082,12 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".car.ParkingBrakeOnTestActivity"
+                android:exported="true"
                 android:label="@string/parking_brake_on_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4084,6 +4097,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.type.automotive"/>
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
         </activity>
 
         <!-- 6DoF sensor test -->
