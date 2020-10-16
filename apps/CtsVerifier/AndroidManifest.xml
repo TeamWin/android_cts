@@ -5362,7 +5362,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_display_cutout" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
         <activity android:name=".speech.tts.TtsTestActivity"
                   android:label="@string/tts_test">
