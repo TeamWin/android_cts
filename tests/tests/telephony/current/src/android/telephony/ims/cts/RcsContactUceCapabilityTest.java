@@ -21,7 +21,10 @@ import static org.junit.Assert.assertTrue;
 
 import android.net.Uri;
 import android.os.Parcel;
+import android.telephony.ims.RcsContactPresenceTuple;
+import android.telephony.ims.RcsContactPresenceTuple.ServiceCapabilities;
 import android.telephony.ims.RcsContactUceCapability;
+import android.telephony.ims.RcsContactUceCapability.PresenceBuilder;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -35,9 +38,6 @@ import java.util.List;
 public class RcsContactUceCapabilityTest {
 
     private static final Uri TEST_CONTACT = Uri.fromParts("sip", "me.test", null);
-    private static final Uri TEST_VT_CONTACT = Uri.fromParts("sip", "contact.test", null);
-    private static final String TEST_EXTENSION_TAG = "+g.3gpp.iari-ref=\"urn%3Aurn-7%3A3gpp"
-            + "-application.ims.iari.rcs.mnc000.mcc000.testService\"";
 
     @Test
     @Ignore("RCS APIs not public yet")
@@ -46,11 +46,29 @@ public class RcsContactUceCapabilityTest {
             return;
         }
 
-        RcsContactUceCapability.Builder builder = new RcsContactUceCapability.Builder(TEST_CONTACT);
-        builder.add(RcsContactUceCapability.CAPABILITY_IP_VIDEO_CALL, TEST_VT_CONTACT);
-        builder.add(RcsContactUceCapability.CAPABILITY_IP_VOICE_CALL);
-        builder.add(TEST_EXTENSION_TAG);
-        RcsContactUceCapability testCapability = builder.build();
+        final boolean isAudioCapable = true;
+        final boolean isVideoCapable = true;
+        final String serviceVersion = "1.0";
+        final String serviceDescription = "service description test";
+
+        // Create the test capability
+        ServiceCapabilities.Builder servCapsBuilder = new ServiceCapabilities.Builder(
+                isAudioCapable, isVideoCapable);
+        servCapsBuilder.addSupportedDuplexMode(ServiceCapabilities.DUPLEX_MODE_FULL);
+
+        RcsContactPresenceTuple.Builder tupleBuilder = new RcsContactPresenceTuple.Builder(
+                RcsContactPresenceTuple.TUPLE_BASIC_STATUS_OPEN,
+                RcsContactPresenceTuple.SERVICE_ID_MMTEL, serviceVersion);
+        tupleBuilder.addContactUri(TEST_CONTACT)
+                .addDescription(serviceDescription)
+                .addServiceCapabilities(servCapsBuilder.build());
+
+        PresenceBuilder presenceBuilder = new PresenceBuilder(TEST_CONTACT,
+                RcsContactUceCapability.SOURCE_TYPE_CACHED,
+                RcsContactUceCapability.REQUEST_RESULT_FOUND);
+        presenceBuilder.addCapabilityTuple(tupleBuilder.build());
+
+        RcsContactUceCapability testCapability = presenceBuilder.build();
 
         // parcel and unparcel
         Parcel infoParceled = Parcel.obtain();
@@ -60,18 +78,35 @@ public class RcsContactUceCapabilityTest {
                 RcsContactUceCapability.CREATOR.createFromParcel(infoParceled);
         infoParceled.recycle();
 
-        assertTrue(unparceledCapability.isCapable(
-                RcsContactUceCapability.CAPABILITY_IP_VOICE_CALL));
-        assertTrue(unparceledCapability.isCapable(
-                RcsContactUceCapability.CAPABILITY_IP_VIDEO_CALL));
-        assertEquals(TEST_VT_CONTACT, unparceledCapability.getServiceUri(
-                RcsContactUceCapability.CAPABILITY_IP_VIDEO_CALL));
-        assertEquals(TEST_CONTACT, unparceledCapability.getServiceUri(
-                RcsContactUceCapability.CAPABILITY_IP_VOICE_CALL));
-        assertEquals(TEST_CONTACT, unparceledCapability.getContactUri());
+        boolean unparceledVolteCapable = false;
+        boolean unparceledVtCapable = false;
+        String unparceledTupleStatus = RcsContactPresenceTuple.TUPLE_BASIC_STATUS_CLOSED;
+        String unparceledDuplexMode = ServiceCapabilities.DUPLEX_MODE_RECEIVE_ONLY;
 
-        List<String> extensions = unparceledCapability.getCapableExtensionTags();
-        assertEquals(1, extensions.size());
-        assertEquals(TEST_EXTENSION_TAG, extensions.get(0));
+        RcsContactPresenceTuple unparceledTuple =
+                unparceledCapability.getPresenceTuple(RcsContactPresenceTuple.SERVICE_ID_MMTEL);
+
+        if (unparceledTuple != null) {
+            unparceledTupleStatus = unparceledTuple.getStatus();
+
+            ServiceCapabilities serviceCaps = unparceledTuple.getServiceCapabilities();
+            if (serviceCaps != null) {
+                unparceledVolteCapable = serviceCaps.isAudioCapable();
+                unparceledVtCapable = serviceCaps.isVideoCapable();
+                List<String> duplexModes = serviceCaps.getSupportedDuplexModes();
+                if (duplexModes != null && !duplexModes.isEmpty()) {
+                    unparceledDuplexMode = duplexModes.get(0);
+                }
+            }
+        }
+
+        assertEquals(TEST_CONTACT, unparceledCapability.getContactUri());
+        assertTrue(unparceledVolteCapable);
+        assertTrue(unparceledVtCapable);
+        assertEquals(RcsContactPresenceTuple.TUPLE_BASIC_STATUS_OPEN, unparceledTupleStatus);
+        assertEquals(ServiceCapabilities.DUPLEX_MODE_FULL, unparceledDuplexMode);
+        assertEquals(RcsContactPresenceTuple.SERVICE_ID_MMTEL, unparceledTuple.getServiceId());
+        assertEquals(serviceVersion, unparceledTuple.getServiceVersion());
+        assertEquals(serviceDescription, unparceledTuple.getServiceDescription());
     }
 }
