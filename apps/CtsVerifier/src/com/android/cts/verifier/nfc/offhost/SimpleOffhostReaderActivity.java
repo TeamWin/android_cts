@@ -140,6 +140,12 @@ public class SimpleOffhostReaderActivity extends PassFailButtons.Activity implem
                 boolean wildCard = "*".equals(mResponses[count]);
                 byte[] expectedResponse = HceUtils.hexStringToBytes(mResponses[count]);
                 Log.d(TAG, HceUtils.getHexBytes("APDU response: ", response));
+
+                if (response.length > expectedResponse.length) {
+                    response = Arrays.copyOfRange(response,
+                            response.length - expectedResponse.length, response.length);
+                }
+
                 if (!wildCard && !Arrays.equals(response, expectedResponse)) {
                     Log.d(TAG, "Unexpected APDU response: " + HceUtils.getHexBytes("", response));
                     success = false;
