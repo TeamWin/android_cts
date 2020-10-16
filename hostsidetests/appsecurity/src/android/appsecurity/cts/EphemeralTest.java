@@ -519,21 +519,21 @@ public class EphemeralTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testUninstall_noExtraRemovedBySystemInPackageRemovedIntent() throws Throwable {
+    public void uninstall_userInstalledApp_shouldBeUserInitiated() throws Throwable {
         assumeFalse("Device does not support instant app", mIsUnsupportedDevice);
         installEphemeralApp(EPHEMERAL_1_APK, NORMAL_PKG);
 
         Utils.runDeviceTestsAsCurrentUser(getDevice(), NORMAL_PKG, TEST_CLASS,
-                "testUninstall_noExtraRemovedBySystemInPackageRemovedIntent");
+                "uninstall_userInstalledApp_shouldBeUserInitiated");
     }
 
     @Test
-    public void testPruneInstantApp_hasExtraRemovedBySystemInPackageRemovedIntent()
+    public void uninstall_pruneInstantApp_shouldNotBeUserInitiated()
             throws Throwable {
         assumeFalse("Device does not support instant app", mIsUnsupportedDevice);
 
         Utils.runDeviceTestsAsCurrentUser(getDevice(), NORMAL_PKG, TEST_CLASS,
-                "testPruneInstantApp_hasExtraRemovedBySystemInPackageRemovedIntent");
+                "uninstall_pruneInstantApp_shouldNotBeUserInitiated");
     }
 
     private static final HashMap<String, String> makeArgs(
