@@ -59,7 +59,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
      * Test that scheduling fails once an app hits the schedule quota limit.
      */
     public void testFailingScheduleOnQuotaExceeded() {
-        updateConfiguration(
+        mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
                 .setBoolean("enable_api_quotas", true)
                 .setInt("aq_schedule_count", 300)
@@ -85,7 +85,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
      * Test that scheduling succeeds even after an app hits the schedule quota limit.
      */
     public void testContinuingScheduleOnQuotaExceeded() {
-        updateConfiguration(
+        mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
                         .setBoolean("enable_api_quotas", true)
                         .setInt("aq_schedule_count", 300)
@@ -109,7 +109,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
      * Test that non-persisted jobs aren't limited by quota.
      */
     public void testNonPersistedJobsNotLimited() {
-        updateConfiguration(
+        mDeviceConfigStateHelper.set(
                 new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_JOB_SCHEDULER)
                 .setBoolean("enable_api_quotas", true)
                 .setInt("aq_schedule_count", 300)
