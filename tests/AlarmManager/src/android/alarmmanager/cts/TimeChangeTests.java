@@ -63,6 +63,7 @@ public class TimeChangeTests {
     private long mTestStartRtc;
     private long mTestStartElapsed;
     private boolean mTimeChanged;
+    private boolean mAutoTimeEnabled;
 
     final CountDownLatch mAlarmLatch = new CountDownLatch(1);
 
@@ -87,6 +88,11 @@ public class TimeChangeTests {
         mTimeChanged = true;
     }
 
+    private boolean isAutoTimeEnabled() {
+        String auto_time = SystemUtil.runShellCommand("settings get global auto_time");
+        return auto_time.trim().equals("1");
+    }
+
     @Before
     public void setUp() {
         final Intent alarmIntent = new Intent(ACTION_ALARM)
@@ -101,6 +107,9 @@ public class TimeChangeTests {
         BatteryUtils.runDumpsysBatteryUnplug();
         mTestStartRtc = System.currentTimeMillis();
         mTestStartElapsed = SystemClock.elapsedRealtime();
+        mAutoTimeEnabled = isAutoTimeEnabled();
+        // Disable auto time as tests might fail if the system restores time while they are running
+        SystemUtil.runShellCommand("settings put global auto_time 0");
     }
 
     @Test
@@ -141,6 +150,10 @@ public class TimeChangeTests {
             final long testDuration = SystemClock.elapsedRealtime() - mTestStartElapsed;
             final long expectedCorrectRtc = mTestStartRtc + testDuration;
             setTime(expectedCorrectRtc);
+        }
+        if (mAutoTimeEnabled) {
+            // Restore auto time
+            SystemUtil.runShellCommand("settings put global auto_time 1");
         }
     }
 }
