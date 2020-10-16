@@ -54,6 +54,20 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/27793367
+     * Vulnerability Behaviour: SIGSEGV in mediaserver or omx@1.0-service
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2016-06")
+    public void testPocCVE_2016_2485() throws Exception {
+        String inputFiles[] = {"cve_2016_2485.raw"};
+        String processPatternStrings[] = {"mediaserver", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-2485",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
      * b/141890807
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      */
