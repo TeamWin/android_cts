@@ -66,6 +66,7 @@
         <!--__________________-->
         <!-- Bulletin 2016-06 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-2485->/data/local/tmp/CVE-2016-2485" />
         <option name="push" value="CVE-2016-2482->/data/local/tmp/CVE-2016-2482" />
 
         <!--__________________-->
@@ -118,6 +119,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-04 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-10244->/data/local/tmp/CVE-2016-10244" />
         <option name="push" value="CVE-2016-10229->/data/local/tmp/CVE-2016-10229" />
         <option name="push" value="CVE-2014-3145->/data/local/tmp/CVE-2014-3145"/>
         <option name="push" value="CVE-2017-0553->/data/local/tmp/CVE-2017-0553"/>
@@ -146,6 +148,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-09 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-0670->/data/local/tmp/CVE-2017-0670" />
         <option name="push" value="Bug-38195738->/data/local/tmp/Bug-38195738" />
 
         <!--__________________-->
@@ -165,11 +168,13 @@
         <!--__________________-->
         <!-- Bulletin 2018-01 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-0817->/data/local/tmp/CVE-2017-0817" />
         <option name="push" value="CVE-2018-9527->/data/local/tmp/CVE-2018-9527" />
 
         <!--__________________-->
         <!-- Bulletin 2018-02 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-13234->/data/local/tmp/CVE-2017-13234" />
         <option name="push" value="CVE-2017-0837->/data/local/tmp/CVE-2017-0837" />
         <option name="push" value="CVE-2017-13273->/data/local/tmp/CVE-2017-13273" />
         <option name="push" value="CVE-2017-13232->/data/local/tmp/CVE-2017-13232" />
@@ -211,11 +216,22 @@
         <option name="push" value="CVE-2018-9539->/data/local/tmp/CVE-2018-9539" />
 
         <!--__________________-->
+        <!-- Bulletin 2019-02 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2019-1988->/data/local/tmp/CVE-2019-1988" />
+
+        <!--__________________-->
         <!-- Bulletin 2019-03 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="Bug-115739809->/data/local/tmp/Bug-115739809" />
         <option name="push" value="CVE-2019-2025->/data/local/tmp/CVE-2019-2025" />
-      
+
+        <!--__________________-->
+        <!-- Bulletin 2019-08 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2019-2133->/data/local/tmp/CVE-2019-2133" />
+        <option name="push" value="CVE-2019-2134->/data/local/tmp/CVE-2019-2134" />
+
         <!--__________________-->
         <!-- Bulletin 2019-09 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
@@ -223,6 +239,11 @@
         <option name="push" value="CVE-2019-9308->/data/local/tmp/CVE-2019-9308" />
         <option name="push" value="CVE-2019-9357->/data/local/tmp/CVE-2019-9357" />
         <option name="push" value="CVE-2019-9313->/data/local/tmp/CVE-2019-9313" />
+
+        <!--__________________-->
+        <!-- Bulletin 2020-01 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2020-0007->/data/local/tmp/CVE-2020-0007" />
 
         <!--__________________-->
         <!-- Bulletin 2020-03 -->

@@ -45,6 +45,108 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/132082342
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2019-08")
+    @Test
+    public void testPocCVE_2019_2133() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2133", null, getDevice());
+    }
+
+    /**
+     * b/132083376
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2019-08")
+    @Test
+    public void testPocCVE_2019_2134() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2134", null, getDevice());
+    }
+
+    /**
+     * b/31470908
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2017-04")
+    @Test
+    public void testPocCVE_2016_10244() throws Exception {
+        String inputFiles[] = {"cve_2016_10244"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-10244",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/27793367
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @SecurityTest(minPatchLevel = "2016-06")
+    @Test
+    public void testPocCVE_2016_2485() throws Exception {
+        String inputFiles[] = {"cve_2016_2485.raw"};
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-2485",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
+     * b/141890807
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2020-01")
+    @Test
+    public void testPocCVE_2020_0007() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0007", null, getDevice());
+    }
+
+    /**
+     * b/118372692
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2019-02")
+    @Test
+    public void testPocCVE_2019_1988() throws Exception {
+        String inputFiles[] = {"cve_2019_1988.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-1988",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/63522430
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @SecurityTest(minPatchLevel = "2018-01")
+    @Test
+    public void testPocCVE_2017_0817() throws Exception {
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0817", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
+     * b/36104177
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2017-09")
+    @Test
+    public void testPocCVE_2017_0670() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0670", null, getDevice());
+    }
+
+    /**
+     * b/68159767
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2018-02")
+    @Test
+    public void testPocCVE_2017_13234() throws Exception {
+        String inputFiles[] = { "cve_2017_13234.xmf" };
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13234",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/74122779
      * Vulnerability Behaviour: SIGABRT in audioserver
      */
