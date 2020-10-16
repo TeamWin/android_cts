@@ -42,6 +42,8 @@ public class CamcorderProfileTest extends AndroidTestCase {
         CamcorderProfile.QUALITY_720P,
         CamcorderProfile.QUALITY_1080P,
         CamcorderProfile.QUALITY_QVGA,
+        CamcorderProfile.QUALITY_2K,
+        CamcorderProfile.QUALITY_QHD,
         CamcorderProfile.QUALITY_2160P,
         CamcorderProfile.QUALITY_TIME_LAPSE_LOW,
         CamcorderProfile.QUALITY_TIME_LAPSE_HIGH,
@@ -51,6 +53,8 @@ public class CamcorderProfileTest extends AndroidTestCase {
         CamcorderProfile.QUALITY_TIME_LAPSE_720P,
         CamcorderProfile.QUALITY_TIME_LAPSE_1080P,
         CamcorderProfile.QUALITY_TIME_LAPSE_QVGA,
+        CamcorderProfile.QUALITY_TIME_LAPSE_2K,
+        CamcorderProfile.QUALITY_TIME_LAPSE_QHD,
         CamcorderProfile.QUALITY_TIME_LAPSE_2160P,
         CamcorderProfile.QUALITY_HIGH_SPEED_LOW,
         CamcorderProfile.QUALITY_HIGH_SPEED_HIGH,
@@ -161,6 +165,18 @@ public class CamcorderProfileTest extends AndroidTestCase {
                 assertTrue(1088 == profile.videoFrameHeight ||
                            1080 == profile.videoFrameHeight);
                 break;
+            case CamcorderProfile.QUALITY_2K:
+            case CamcorderProfile.QUALITY_TIME_LAPSE_2K:
+                // 2K could be either 2048x1088 or 2048x1080
+                assertEquals(2048, profile.videoFrameWidth);
+                assertTrue(1088 == profile.videoFrameHeight ||
+                           1080 == profile.videoFrameHeight);
+                break;
+            case CamcorderProfile.QUALITY_QHD:
+            case CamcorderProfile.QUALITY_TIME_LAPSE_QHD:
+                assertEquals(2560, profile.videoFrameWidth);
+                assertEquals(1440, profile.videoFrameHeight);
+                break;
             case CamcorderProfile.QUALITY_2160P:
             case CamcorderProfile.QUALITY_TIME_LAPSE_2160P:
                 assertEquals(3840, profile.videoFrameWidth);
@@ -258,7 +274,7 @@ public class CamcorderProfileTest extends AndroidTestCase {
             if (CamcorderProfile.hasProfile(cameraId, quality) || isProfileMandatory(quality)) {
                 List<Size> videoSizesToCheck = null;
                 if (quality >= CamcorderProfile.QUALITY_LOW &&
-                                quality <= CamcorderProfile.QUALITY_2160P) {
+                                quality <= CamcorderProfile.QUALITY_2K) {
                     videoSizesToCheck = videoSizes;
                 }
                 CamcorderProfile profile = getWithOptionalId(quality, cameraId);
@@ -303,6 +319,8 @@ public class CamcorderProfileTest extends AndroidTestCase {
                                           CamcorderProfile.QUALITY_480P,
                                           CamcorderProfile.QUALITY_720P,
                                           CamcorderProfile.QUALITY_1080P,
+                                          CamcorderProfile.QUALITY_2K,
+                                          CamcorderProfile.QUALITY_QHD,
                                           CamcorderProfile.QUALITY_2160P};
 
         int[] specificTimeLapseProfileQualities = {CamcorderProfile.QUALITY_TIME_LAPSE_QCIF,
@@ -311,6 +329,8 @@ public class CamcorderProfileTest extends AndroidTestCase {
                                                    CamcorderProfile.QUALITY_TIME_LAPSE_480P,
                                                    CamcorderProfile.QUALITY_TIME_LAPSE_720P,
                                                    CamcorderProfile.QUALITY_TIME_LAPSE_1080P,
+                                                   CamcorderProfile.QUALITY_TIME_LAPSE_2K,
+                                                   CamcorderProfile.QUALITY_TIME_LAPSE_QHD,
                                                    CamcorderProfile.QUALITY_TIME_LAPSE_2160P};
 
         int[] specificHighSpeedProfileQualities = {CamcorderProfile.QUALITY_HIGH_SPEED_480P,
