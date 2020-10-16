@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.net.ipsec.ike.cts;
+package android.ipsec.ike.cts;
 
 import static android.net.ipsec.ike.SaProposal.DH_GROUP_1024_BIT_MODP;
 import static android.net.ipsec.ike.SaProposal.DH_GROUP_2048_BIT_MODP;

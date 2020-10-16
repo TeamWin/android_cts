@@ -16,11 +16,17 @@
 
 package android.media.tv.cts;
 
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.media.AudioManager;
+import android.media.tv.cts.TvViewTest.MockCallback;
+import android.media.tv.TunedInfo;
 import android.media.tv.TvContentRating;
+import android.media.tv.TvContract;
 import android.media.tv.TvInputHardwareInfo;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -28,8 +34,12 @@ import android.media.tv.TvInputManager.Hardware;
 import android.media.tv.TvInputManager.HardwareCallback;
 import android.media.tv.TvInputService;
 import android.media.tv.TvStreamConfig;
+import android.media.tv.TvView;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.test.ActivityInstrumentationTestCase2;
+import android.tv.cts.R;
 
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -62,6 +72,11 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     private TvInputManager mManager;
     private LoggingCallback mCallback = new LoggingCallback();
     private TvInputInfo mStubTvInputInfo;
+    private TvView mTvView;
+    private Activity mActivity;
+    private Instrumentation mInstrumentation;
+    private TvInputInfo mStubTunerTvInputInfo;
+    private final MockCallback mMockCallback = new MockCallback();
 
     private static TvInputInfo getInfoForClassName(List<TvInputInfo> list, String name) {
         for (TvInputInfo info : list) {
@@ -78,14 +93,118 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
 
     @Override
     public void setUp() throws Exception {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        super.setUp();
+        mActivity = getActivity();
+        if (!Utils.hasTvInputFramework(mActivity)) {
             return;
         }
-        mManager = (TvInputManager) getActivity().getSystemService(Context.TV_INPUT_SERVICE);
+        mInstrumentation = getInstrumentation();
+        mTvView = findTvViewById(R.id.tvview);
+        mManager = (TvInputManager) mActivity.getSystemService(Context.TV_INPUT_SERVICE);
         mStubId = getInfoForClassName(
                 mManager.getTvInputList(), StubTvInputService2.class.getName()).getId();
         mStubTvInputInfo = getInfoForClassName(
                 mManager.getTvInputList(), StubTvInputService2.class.getName());
+        for (TvInputInfo info : mManager.getTvInputList()) {
+            if (info.getServiceInfo().name.equals(StubTunerTvInputService.class.getName())) {
+                mStubTunerTvInputInfo = info;
+                break;
+            }
+        }
+        assertNotNull(mStubTunerTvInputInfo);
+        mTvView.setCallback(mMockCallback);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            super.tearDown();
+            return;
+        }
+        StubTunerTvInputService.deleteChannels(
+                mActivity.getContentResolver(), mStubTunerTvInputInfo);
+        StubTunerTvInputService.clearTracks();
+        try {
+            runTestOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mTvView.reset();
+                }
+            });
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
+        mInstrumentation.waitForIdleSync();
+        super.tearDown();
+    }
+
+    private TvView findTvViewById(int id) {
+        return (TvView) mActivity.findViewById(id);
+    }
+
+    private void tryTuneAllChannels() throws Throwable {
+        StubTunerTvInputService.insertChannels(
+                mActivity.getContentResolver(), mStubTunerTvInputInfo);
+
+        Uri uri = TvContract.buildChannelsUriForInput(mStubTunerTvInputInfo.getId());
+        String[] projection = { TvContract.Channels._ID };
+        try (Cursor cursor = mActivity.getContentResolver().query(
+                uri, projection, null, null, null)) {
+            while (cursor != null && cursor.moveToNext()) {
+                long channelId = cursor.getLong(0);
+                Uri channelUri = TvContract.buildChannelUri(channelId);
+                mCallback.mTunedInfos = null;
+                mTvView.tune(mStubTunerTvInputInfo.getId(), channelUri);
+                mInstrumentation.waitForIdleSync();
+                new PollingCheck(TIME_OUT_MS) {
+                    @Override
+                    protected boolean check() {
+                        return mMockCallback.isVideoAvailable(mStubTunerTvInputInfo.getId());
+                    }
+                }.run();
+                new PollingCheck(TIME_OUT_MS) {
+                    @Override
+                    protected boolean check() {
+                        return mCallback.mTunedInfos != null;
+                    }
+                }.run();
+
+                List<TunedInfo> returnedInfos = mManager.getCurrentTunedInfos();
+                assertEquals(1, returnedInfos.size());
+                TunedInfo returnedInfo = returnedInfos.get(0);
+                TunedInfo expectedInfo = new TunedInfo(
+                        "android.tv.cts/android.media.tv.cts.StubTunerTvInputService",
+                        channelUri,
+                        false,
+                        true,
+                        TunedInfo.APP_TYPE_SELF,
+                        TunedInfo.APP_TAG_SELF);
+                assertEquals(expectedInfo, returnedInfo);
+
+                assertEquals(1, mCallback.mTunedInfos.size());
+                TunedInfo callbackInfo = mCallback.mTunedInfos.get(0);
+                assertEquals(expectedInfo, callbackInfo);
+            }
+        }
+    }
+
+    public void testGetCurrentTunedInfos() throws Throwable {
+        if (!Utils.hasTvInputFramework(getActivity())) {
+            return;
+        }
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mManager.registerCallback(mCallback, new Handler());
+            }
+        });
+        tryTuneAllChannels();
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mManager.unregisterCallback(mCallback);
+            }
+        });
     }
 
     public void testGetInputState() throws Exception {
@@ -310,6 +429,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         private final List<String> mAddedInputs = new ArrayList<>();
         private final List<String> mRemovedInputs = new ArrayList<>();
         private TvInputInfo mLastUpdatedTvInputInfo;
+        private List<TunedInfo> mTunedInfos;
 
         @Override
         public synchronized void onInputAdded(String inputId) {
@@ -324,6 +444,12 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         @Override
         public synchronized void onTvInputInfoUpdated(TvInputInfo info) {
             mLastUpdatedTvInputInfo = info;
+        }
+
+        @Override
+        public synchronized void onCurrentTunedInfosUpdated(
+                List<TunedInfo> tunedInfos) {
+            mTunedInfos = tunedInfos;
         }
 
         public synchronized void resetLogs() {

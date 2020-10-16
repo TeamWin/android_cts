@@ -73,11 +73,55 @@ final class TestSidecarWindowLayoutInfo implements TestWindowLayoutInfo {
             return false;
         }
         final TestSidecarWindowLayoutInfo other = (TestSidecarWindowLayoutInfo) obj;
-        return mSidecarWindowLayoutInfo.equals(other.mSidecarWindowLayoutInfo);
+        return areSidecarWindowLayoutInfoEqual(mSidecarWindowLayoutInfo,
+                other.mSidecarWindowLayoutInfo);
     }
 
     @Override
     public int hashCode() {
         return mSidecarWindowLayoutInfo.hashCode();
+    }
+
+    /**
+     * Compares two {@link SidecarWindowLayoutInfo} with respect to their core data. This method is
+     * necessary because {@link SidecarWindowLayoutInfo} did not implement {@code equals}. Also
+     * Sidecar has been deprecated and frozen, so this method is stable.
+     *
+     * @param lhs {@link SidecarWindowLayoutInfo} to be compared.
+     * @param rhs {@link SidecarWindowLayoutInfo} to be compared.
+     * @return {@code true} if objects are equal with respect to data otherwise return
+     * {@code false}.
+     */
+    private static boolean areSidecarWindowLayoutInfoEqual(@NonNull SidecarWindowLayoutInfo lhs,
+            @NonNull SidecarWindowLayoutInfo rhs) {
+        if (lhs.displayFeatures == rhs.displayFeatures) {
+            return true;
+        }
+        if (lhs.displayFeatures == null || rhs.displayFeatures == null
+                || lhs.displayFeatures.size() != rhs.displayFeatures.size()) {
+            return false;
+        }
+        for (int i = 0; i < lhs.displayFeatures.size(); i++) {
+            if (!areSidecarDisplayFeatureEqual(lhs.displayFeatures.get(i),
+                    rhs.displayFeatures.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Compares two {@link SidecarDisplayFeature} with respect to their core data.  This method is
+     * necessary because {@link SidecarWindowLayoutInfo} did not implement {@code equals}.  Also
+     * Sidecar has been deprecated and frozen, so this method is stable.
+     *
+     * @param lhs {@link SidecarDisplayFeature} to be compared.
+     * @param rhs {@link SidecarDisplayFeature} to be compared.
+     * @return {@code true} if objects are equal with respect to data otherwise return
+     * {@code false}.
+     */
+    private static boolean areSidecarDisplayFeatureEqual(@NonNull SidecarDisplayFeature lhs,
+            @NonNull SidecarDisplayFeature rhs) {
+        return lhs.getType() == rhs.getType() && lhs.getRect().equals(rhs.getRect());
     }
 }
