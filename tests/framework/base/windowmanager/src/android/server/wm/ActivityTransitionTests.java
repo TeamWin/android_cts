@@ -16,14 +16,14 @@
 
 package android.server.wm;
 
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.wm.ActivityLauncher.KEY_NEW_TASK;
-import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertTrue;
 
+import android.app.Activity;
 import android.app.ActivityOptions;
+import android.app.Instrumentation;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -33,6 +33,8 @@ import android.server.wm.cts.R;
 import android.util.Range;
 
 import org.junit.Test;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -63,20 +65,34 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
             latch.countDown();
         };
 
+        final Intent intent = new Intent(mContext, LauncherActivity.class)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final LauncherActivity launcherActivity =
+            (LauncherActivity) instrumentation.startActivitySync(intent);
+
         final Bundle bundle = ActivityOptions.makeCustomAnimation(mContext,
                 R.anim.alpha, 0, new Handler(Looper.getMainLooper()), startedListener,
                 finishedListener).toBundle();
-        final Intent intent = new Intent().setComponent(TEST_ACTIVITY)
-                .addFlags(FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent, bundle);
+        launcherActivity.startTransitionActivity(bundle);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
-                "Activity must be launched");
+        waitAndAssertTopResumedActivity(new ComponentName(mContext, TransitionActivity.class),
+            DEFAULT_DISPLAY, "Activity must be launched");
 
         latch.await(2, TimeUnit.SECONDS);
         final long totalTime = transitionEndTime[0] - transitionStartTime[0];
         assertTrue("Actual transition duration should be in the range "
                 + "<" + minDurationMs + ", " + maxDurationMs + "> ms, "
                 + "actual=" + totalTime, durationRange.contains(totalTime));
+    }
+
+    public static class LauncherActivity extends Activity {
+
+        public void startTransitionActivity(Bundle bundle) {
+            startActivity(new Intent(this, TransitionActivity.class), bundle);
+        }
+    }
+
+    public static class TransitionActivity extends Activity {
     }
 }
