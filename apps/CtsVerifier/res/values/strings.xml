@@ -322,7 +322,7 @@
     <string name="biometric_test_set_user_authentication_biometric_or_credential_signature_label">4f: Signature, Biometric|Credential</string>
     <string name="biometric_test_set_user_authentication_credential_mac_label">4g: MAC, Credential</string>
     <string name="biometric_test_set_user_authentication_biometric_mac_label">4h: MAC, Biometric</string>
-    <string name="biometric_test_set_user_authentication_biometric_or_credential_mac_label">4h: MAC, Biometric|Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_mac_label">4i: MAC, Biometric|Credential</string>
     <string name="biometric_test_set_user_authentication_credential_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_DEVICE_CREDENTIAL.
         Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
     <string name="biometric_test_set_user_authentication_biometric_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_BIOMETRIC_STRONG.
