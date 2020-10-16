@@ -32,6 +32,12 @@
         <option name="teardown-command" value="cmd blob_store idle-maintenance" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+      <!-- Disable hidden API checking, see b/166236554 -->
+        <option name="run-command" value="settings put global hidden_api_policy 1" />
+        <option name="teardown-command" value="settings delete global hidden_api_policy" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.cts.blob" />
     </test>
