@@ -60,6 +60,7 @@ import com.android.server.wm.nano.ConfigurationContainerProto;
 import com.android.server.wm.nano.DisplayAreaProto;
 import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.DisplayFramesProto;
+import com.android.server.wm.nano.DisplayRotationProto;
 import com.android.server.wm.nano.IdentifierProto;
 import com.android.server.wm.nano.KeyguardControllerProto;
 import com.android.server.wm.nano.PinnedStackControllerProto;
@@ -146,8 +147,6 @@ public class WindowManagerState {
     private Rect mDefaultPinnedStackBounds = new Rect();
     private Rect mPinnedStackMovementBounds = new Rect();
     private String mInputMethodWindowAppToken = null;
-    private int mRotation;
-    private int mLastOrientation;
     private boolean mDisplayFrozen;
     private boolean mSanityCheckFocusedWindow = true;
 
@@ -419,8 +418,6 @@ public class WindowManagerState {
             mInputMethodWindowAppToken = Integer.toHexString(state.inputMethodWindow.hashCode);
         }
         mDisplayFrozen = state.displayFrozen;
-        mRotation = state.rotation;
-        mLastOrientation = state.lastOrientation;
     }
 
     private void reset() {
@@ -441,8 +438,6 @@ public class WindowManagerState {
         mDefaultPinnedStackBounds.setEmpty();
         mPinnedStackMovementBounds.setEmpty();
         mInputMethodWindowAppToken = null;
-        mRotation = 0;
-        mLastOrientation = 0;
         mDisplayFrozen = false;
     }
 
@@ -1032,11 +1027,11 @@ public class WindowManagerState {
     }
 
     public int getRotation() {
-        return mRotation;
+        return getDisplay(DEFAULT_DISPLAY).mRotation;
     }
 
     public int getLastOrientation() {
-        return mLastOrientation;
+        return getDisplay(DEFAULT_DISPLAY).mLastOrientation;
     }
 
     public int getFocusedDisplayId() {
@@ -1062,6 +1057,11 @@ public class WindowManagerState {
         private String mFocusedApp;
         private String mLastTransition;
         private String mAppTransitionState;
+        private int mRotation;
+        private boolean mFrozenToUserRotation;
+        private int mUserRotation;
+        private int mFixedToUserRotationMode;
+        private int mLastOrientation;
 
         DisplayContent(DisplayContentProto proto) {
             super(proto.rootDisplayArea.windowContainer);
@@ -1104,6 +1104,14 @@ public class WindowManagerState {
                 mPinnedStackMovementBounds = extract(pinnedStackProto.movementBounds);
             }
 
+            final DisplayRotationProto rotationProto = proto.displayRotation;
+            if (rotationProto != null) {
+                mRotation = rotationProto.rotation;
+                mFrozenToUserRotation = rotationProto.frozenToUserRotation;
+                mUserRotation = rotationProto.userRotation;
+                mFixedToUserRotationMode = rotationProto.fixedToUserRotationMode;
+                mLastOrientation = rotationProto.lastOrientation;
+            }
         }
 
         public String getName() {
