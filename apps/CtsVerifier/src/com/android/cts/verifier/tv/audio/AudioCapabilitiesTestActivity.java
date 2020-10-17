@@ -49,14 +49,19 @@ import java.util.List;
  */
 public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
         implements View.OnClickListener {
-    private static final ImmutableList<AudioFormat> TESTED_AUDIO_FORMATS =
-            ImmutableList.of(
-                    // PCM formats
-                    makeAudioFormat(ENCODING_PCM_16BIT, 44100, 2),
-                    makeAudioFormat(ENCODING_PCM_16BIT, 44100, 6),
 
-                    // EAC3_JOC formats
+    private final ImmutableList<AudioFormat> ATMOS_FORMATS =
+            ImmutableList.of(
+                    // EAC3_JOC formats - ignoring channel count for Atmos
+                    makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 1),
+                    makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 2),
+                    makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 3),
+                    makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 4),
+                    makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 5),
+                    makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 6),
+                    makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 7),
                     makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 8));
+
 
     private TestSequence mTestSequence;
     private View mSupportDolbyAtmosYesItem;
@@ -102,6 +107,7 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
     }
 
     private class TvTestStep extends TestStep {
+
         public TvTestStep(TvAppVerifierActivity context) {
             super(
                     context,
@@ -117,22 +123,37 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                             .build();
 
-            ImmutableList.Builder<String> actualAudioFormatStrings = ImmutableList.builder();
-            for (AudioFormat audioFormat : TESTED_AUDIO_FORMATS) {
+            getAsserter()
+                    .withMessage("AudioTrack.isDirectPlaybackSupported is expected to return true"
+                            + " for PCM16 2 channel")
+                    .that(AudioTrack.isDirectPlaybackSupported(makeAudioFormat(ENCODING_PCM_16BIT, 44100, 2), audioAttributes))
+                    .isTrue();
+
+            getAsserter()
+                    .withMessage("AudioTrack.isDirectPlaybackSupported is expected to return false "
+                            + "for EAC3 6 channel")
+                    .that(AudioTrack.isDirectPlaybackSupported(makeAudioFormat(ENCODING_E_AC3, 44100, 6), audioAttributes))
+                    .isFalse();
+
+            ImmutableList.Builder<String> actualAtmosFormatStrings = ImmutableList.builder();
+            for (AudioFormat audioFormat : ATMOS_FORMATS) {
                 if (AudioTrack.isDirectPlaybackSupported(audioFormat, audioAttributes)) {
-                    actualAudioFormatStrings.add(toStr(audioFormat));
+                    actualAtmosFormatStrings.add(toStr(audioFormat));
                 }
             }
 
+            // check that Atmos should not be supported
             getAsserter()
-                    .withMessage("AudioTrack.isDirectPlaybackSupported only returns true for these")
-                    .that(actualAudioFormatStrings.build())
-                    .containsExactlyElementsIn(
-                            ImmutableList.of(toStr(makeAudioFormat(ENCODING_PCM_16BIT, 44100, 2))));
+                    .withMessage(
+                            "AudioTrack.isDirectPlaybackSupported is expected to return false for"
+                                + " EAC3_JOC")
+                    .that(actualAtmosFormatStrings.build())
+                    .isEmpty();
         }
     }
 
     private class ReceiverTestStep extends TestStep {
+
         public ReceiverTestStep(TvAppVerifierActivity context) {
             super(
                     context,
@@ -148,31 +169,52 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                             .build();
 
-            ImmutableList.Builder<String> actualAudioFormatStrings = ImmutableList.builder();
-            for (AudioFormat audioFormat : TESTED_AUDIO_FORMATS) {
+            getAsserter()
+                    .withMessage("AudioTrack.isDirectPlaybackSupported is expected to return true"
+                            + " for PCM16 6 channel")
+                    .that(AudioTrack.isDirectPlaybackSupported(makeAudioFormat(ENCODING_PCM_16BIT, 44100, 6), audioAttributes))
+                    .isTrue();
+
+            getAsserter()
+                    .withMessage("AudioTrack.isDirectPlaybackSupported is expected to return true "
+                            + "for EAC3 6 channel")
+                    .that(AudioTrack.isDirectPlaybackSupported(makeAudioFormat(ENCODING_E_AC3, 44100, 6), audioAttributes))
+                    .isTrue();
+
+            ImmutableList.Builder<String> actualAtmosFormatStrings = ImmutableList.builder();
+            for (AudioFormat audioFormat : ATMOS_FORMATS) {
                 if (AudioTrack.isDirectPlaybackSupported(audioFormat, audioAttributes)) {
-                    actualAudioFormatStrings.add(toStr(audioFormat));
-                    break;
+                    actualAtmosFormatStrings.add(toStr(audioFormat));
                 }
             }
 
+            // check that Atmos should be supported
             getAsserter()
-                    .withMessage("AudioTrack.isDirectPlaybackSupported only returns true for these")
-                    .that(actualAudioFormatStrings.build())
-                    .containsExactlyElementsIn(
-                            ImmutableList.of(
-                                    toStr(makeAudioFormat(ENCODING_PCM_16BIT, 41000, 6)),
-                                    toStr(makeAudioFormat(ENCODING_E_AC3_JOC, 44100, 8))));
+                    .withMessage(
+                            "AudioTrack.isDirectPlaybackSupported is expected to return true for"
+                                + " EAC3_JOC")
+                    .that(actualAtmosFormatStrings.build())
+                    .isNotEmpty();
         }
     }
 
     /** Returns channel mask for {@code channelCount}. */
     private static int channelCountToMask(int channelCount) {
         switch (channelCount) {
+            case 1:
+                return CHANNEL_OUT_MONO;
             case 2:
                 return CHANNEL_OUT_STEREO;
+            case 3:
+                return CHANNEL_OUT_STEREO | CHANNEL_OUT_FRONT_CENTER;
+            case 4:
+                return CHANNEL_OUT_QUAD;
+            case 5:
+                return CHANNEL_OUT_QUAD | CHANNEL_OUT_FRONT_CENTER;
             case 6:
                 return CHANNEL_OUT_5POINT1;
+            case 7:
+                return CHANNEL_OUT_5POINT1 | CHANNEL_OUT_BACK_CENTER;
             case 8:
                 return CHANNEL_OUT_7POINT1_SURROUND;
             default:
@@ -183,6 +225,8 @@ public class AudioCapabilitiesTestActivity extends TvAppVerifierActivity
     /** Returns a displayable String message for {@code encodingCode}. */
     private static String encodingToString(int encodingCode) {
         switch (encodingCode) {
+            case ENCODING_E_AC3:
+                return "E_AC3";
             case ENCODING_E_AC3_JOC:
                 return "E_AC3_JOC";
             case ENCODING_PCM_16BIT:

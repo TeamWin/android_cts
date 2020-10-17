@@ -41,14 +41,13 @@ import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestSe
 import android.os.cts.batterysaving.common.BatterySavingCtsCommon.Payload.TestServiceRequest.StartServiceRequest;
 import android.os.cts.batterysaving.common.Values;
 import android.provider.DeviceConfig;
-import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.ThreadUtils;
 
 import org.junit.After;
@@ -79,26 +78,18 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
     private static final long MIN_FUTURITY = 2_000;
 
     private void updateAlarmManagerConstants() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_interval",
-                    String.valueOf(MIN_REPEATING_INTERVAL), /* makeDefault */ false);
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
-                    String.valueOf(MIN_FUTURITY), /* makeDefault */ false);
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "allow_while_idle_short_time",
-                    String.valueOf(ALLOW_WHILE_IDLE_SHORT_TIME), /* makeDefault */ false);
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "allow_while_idle_long_time",
-                    String.valueOf(ALLOW_WHILE_IDLE_LONG_TIME), /* makeDefault */ false);
-        });
+        mAlarmManagerDeviceConfigStateHelper.set("min_interval",
+                String.valueOf(MIN_REPEATING_INTERVAL));
+        mAlarmManagerDeviceConfigStateHelper.set("min_futurity",
+                String.valueOf(MIN_FUTURITY));
+        mAlarmManagerDeviceConfigStateHelper.set("allow_while_idle_short_time",
+                String.valueOf(ALLOW_WHILE_IDLE_SHORT_TIME));
+        mAlarmManagerDeviceConfigStateHelper.set("allow_while_idle_long_time",
+                String.valueOf(ALLOW_WHILE_IDLE_LONG_TIME));
     }
 
     private void resetAlarmManagerConstants() {
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
-                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
+        mAlarmManagerDeviceConfigStateHelper.restoreOriginalValues();
     }
 
     // Use a different broadcast action every time.
@@ -113,6 +104,9 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
             Log.d(TAG, "Alarm received at " + SystemClock.elapsedRealtime());
         }
     };
+
+    private final DeviceConfigStateHelper mAlarmManagerDeviceConfigStateHelper =
+            new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
 
     @Before
     public void setUp() throws IOException {

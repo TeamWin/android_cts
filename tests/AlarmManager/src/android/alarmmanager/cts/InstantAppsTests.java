@@ -24,12 +24,11 @@ import android.content.Context;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeInstant;
 import android.provider.DeviceConfig;
-import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -49,11 +48,14 @@ public class InstantAppsTests {
 
     private AlarmManager mAlarmManager;
     private Context mContext;
+    private DeviceConfigStateHelper mDeviceConfigStateHelper;
 
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getTargetContext();
         mAlarmManager = mContext.getSystemService(AlarmManager.class);
+        mDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
         assumeTrue(mContext.getPackageManager().isInstantApp());
         updateAlarmManagerSettings();
     }
@@ -81,16 +83,10 @@ public class InstantAppsTests {
 
     @After
     public void deleteAlarmManagerSettings() {
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
-                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
+        mDeviceConfigStateHelper.restoreOriginalValues();
     }
 
     private void updateAlarmManagerSettings() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
-                    "0", /* makeDefault */ false);
-        });
+        mDeviceConfigStateHelper.set("min_futurity", "0");
     }
 }

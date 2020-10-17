@@ -30,13 +30,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-public class DisableFixToUserRotationRule implements TestRule {
+public class DisableFixedToUserRotationRule implements TestRule {
     private static final String TAG = "DisableFixToUserRotationRule";
-    private static final String COMMAND = "cmd window set-fix-to-user-rotation ";
+    private static final String COMMAND = "cmd window fixed-to-user-rotation ";
 
     private final UiAutomation mUiAutomation;
 
-    public DisableFixToUserRotationRule() {
+    private String mOriginalValue;
+
+    public DisableFixedToUserRotationRule() {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
 
@@ -45,17 +47,18 @@ public class DisableFixToUserRotationRule implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                mOriginalValue = executeShellCommand(COMMAND);
                 executeShellCommandAndPrint(COMMAND + "disabled");
                 try {
                     base.evaluate();
                 } finally {
-                    executeShellCommandAndPrint(COMMAND + "default");
+                    executeShellCommandAndPrint(COMMAND + mOriginalValue);
                 }
             }
         };
     }
 
-    private void executeShellCommandAndPrint(String cmd) {
+    private String executeShellCommand(String cmd) {
         ParcelFileDescriptor pfd = mUiAutomation.executeShellCommand(cmd);
         StringBuilder builder = new StringBuilder();
         char[] buffer = new char[256];
@@ -68,8 +71,11 @@ public class DisableFixToUserRotationRule implements TestRule {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return builder.toString();
+    }
 
-        Log.i(TAG, "Command: " + cmd + " Output: " + builder);
+    private void executeShellCommandAndPrint(String cmd) {
+        Log.i(TAG, "Command: " + cmd + " Output: " + executeShellCommand(cmd));
     }
 
 }

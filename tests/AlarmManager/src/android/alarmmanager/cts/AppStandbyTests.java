@@ -34,7 +34,6 @@ import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
-import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 import android.util.LongArray;
@@ -44,7 +43,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -105,6 +104,7 @@ public class AppStandbyTests {
     private ComponentName mAlarmScheduler;
     private UiDevice mUiDevice;
     private AtomicInteger mAlarmCount;
+    private DeviceConfigStateHelper mAlarmManagerDeviceConfigStateHelper;
 
     private final BroadcastReceiver mAlarmStateReceiver = new BroadcastReceiver() {
         @Override
@@ -134,6 +134,8 @@ public class AppStandbyTests {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = new AtomicInteger(0);
+        mAlarmManagerDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
         updateAlarmManagerConstants();
         setBatteryCharging(false);
         final IntentFilter intentFilter = new IntentFilter();
@@ -240,7 +242,6 @@ public class AppStandbyTests {
 
     @Test
     public void testAllowWhileIdleAlarms() throws Exception {
-        updateAlarmManagerConstants();
         setAppStandbyBucket("active");
         final long firstTrigger = SystemClock.elapsedRealtime() + MIN_FUTURITY;
         scheduleAlarm(firstTrigger, true, 0);
@@ -285,7 +286,7 @@ public class AppStandbyTests {
     public void tearDown() throws Exception {
         setPowerWhitelisted(false);
         setBatteryCharging(true);
-        deleteAlarmManagerConstants();
+        mAlarmManagerDeviceConfigStateHelper.restoreOriginalValues();
         final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
         cancelAlarmsIntent.setComponent(mAlarmScheduler);
         mContext.sendBroadcast(cancelAlarmsIntent);
@@ -302,22 +303,15 @@ public class AppStandbyTests {
     }
 
     private void updateAlarmManagerConstants() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "min_futurity",
-                    String.valueOf(MIN_FUTURITY), /* makeDefault */ false);
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "allow_while_idle_short_time",
-                    String.valueOf(ALLOW_WHILE_IDLE_SHORT_TIME), /* makeDefault */ false);
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "app_standby_window",
-                    String.valueOf(APP_STANDBY_WINDOW), /* makeDefault */ false);
-            for (int i = 0; i < APP_STANDBY_QUOTAS.length; i++) {
-                DeviceConfig.setProperty(
-                        DeviceConfig.NAMESPACE_ALARM_MANAGER, APP_BUCKET_QUOTA_KEYS[i],
-                        String.valueOf(APP_STANDBY_QUOTAS[i]), /* makeDefault */ false);
-            }
-        });
+        mAlarmManagerDeviceConfigStateHelper.set("min_futurity", String.valueOf(MIN_FUTURITY));
+        mAlarmManagerDeviceConfigStateHelper.set("allow_while_idle_short_time",
+                String.valueOf(ALLOW_WHILE_IDLE_SHORT_TIME));
+        mAlarmManagerDeviceConfigStateHelper.set("app_standby_window",
+                String.valueOf(APP_STANDBY_WINDOW));
+        for (int i = 0; i < APP_STANDBY_QUOTAS.length; i++) {
+            mAlarmManagerDeviceConfigStateHelper.set(APP_BUCKET_QUOTA_KEYS[i],
+                    String.valueOf(APP_STANDBY_QUOTAS[i]));
+        }
     }
 
     private void setPowerWhitelisted(boolean whitelist) throws IOException {
@@ -325,12 +319,6 @@ public class AppStandbyTests {
         cmd.append(whitelist ? "+" : "-");
         cmd.append(TEST_APP_PACKAGE);
         executeAndLog(cmd.toString());
-    }
-
-    private void deleteAlarmManagerConstants() {
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
-                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
     }
 
     private void setAppStandbyBucket(String bucket) throws IOException {

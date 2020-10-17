@@ -271,7 +271,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
 
         @Override
-        public void onServiceLost(PeerHandle peerHandle) {
+        public void onServiceLost(PeerHandle peerHandle, int reason) {
             processCallback(ON_SESSION_DISCOVERED_LOST);
         }
 

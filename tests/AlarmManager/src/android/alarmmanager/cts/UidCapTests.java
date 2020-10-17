@@ -17,6 +17,8 @@
 
 package android.alarmmanager.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static org.junit.Assert.fail;
 
 import android.app.AlarmManager;
@@ -25,13 +27,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
-import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -39,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
@@ -56,17 +58,29 @@ public class UidCapTests {
 
     private AlarmManager mAlarmManager;
     private Context mContext;
+    private DeviceConfigStateHelper mDeviceConfigStateHelper;
     private ArrayList<PendingIntent> mAlarmsSet = new ArrayList<>();
 
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getTargetContext();
         mAlarmManager = mContext.getSystemService(AlarmManager.class);
+        mDeviceConfigStateHelper =
+                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
     }
 
     @Test
     public void sufficientAlarmsAllowedByDefault() {
-        deleteAlarmManagerConstants();
+        // Remove any set config values so we can test the underlying defaults.
+        final AtomicReference<DeviceConfig.Properties> reference = new AtomicReference<>();
+        runWithShellPermissionIdentity(
+                () -> reference.set(
+                        DeviceConfig.getProperties(DeviceConfig.NAMESPACE_ALARM_MANAGER)),
+                "android.permission.READ_DEVICE_CONFIG");
+        for (String key : reference.get().getKeyset()) {
+            mDeviceConfigStateHelper.set(key, null);
+        }
+
         for (int i = 1; i <= SUFFICIENT_NUM_ALARMS; i++) {
             try {
                 final PendingIntent pi = PendingIntent.getBroadcast(mContext, 0,
@@ -105,11 +119,7 @@ public class UidCapTests {
     }
 
     private void setMaxAlarmsPerUid(int maxAlarmsPerUid) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_ALARM_MANAGER, "max_alarms_per_uid",
-                    String.valueOf(maxAlarmsPerUid), /* makeDefault */ false);
-        });
+        mDeviceConfigStateHelper.set("max_alarms_per_uid", String.valueOf(maxAlarmsPerUid));
     }
 
     @After
@@ -122,8 +132,6 @@ public class UidCapTests {
 
     @After
     public void deleteAlarmManagerConstants() {
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.resetToDefaults(Settings.RESET_MODE_PACKAGE_DEFAULTS,
-                        DeviceConfig.NAMESPACE_ALARM_MANAGER));
+        mDeviceConfigStateHelper.restoreOriginalValues();
     }
 }

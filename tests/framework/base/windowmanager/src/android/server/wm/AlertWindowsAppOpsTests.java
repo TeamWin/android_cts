@@ -17,9 +17,7 @@
 package android.server.wm;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
-import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
-import static android.app.AppOpsManager.OP_SYSTEM_ALERT_WINDOW;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -38,7 +36,6 @@ import android.app.AppOpsManager;
 import android.os.Process;
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
@@ -61,20 +58,23 @@ import java.util.concurrent.TimeUnit;
 public class AlertWindowsAppOpsTests {
     private static final long APP_OP_CHANGE_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(2);
 
+    private static int sPreviousSawAppOp;
+
     @Rule
     public final ActivityTestRule<AlertWindowsAppOpsTestsActivity> mActivityRule =
             new ActivityTestRule<>(AlertWindowsAppOpsTestsActivity.class);
 
     @BeforeClass
     public static void grantSystemAlertWindowAccess() throws IOException {
-        AppOpsUtils.setOpMode(getInstrumentation().getContext().getPackageName(),
-                OPSTR_SYSTEM_ALERT_WINDOW, MODE_ALLOWED);
+        String packageName = getInstrumentation().getContext().getPackageName();
+        sPreviousSawAppOp = AppOpsUtils.getOpMode(packageName, OPSTR_SYSTEM_ALERT_WINDOW);
+        AppOpsUtils.setOpMode(packageName, OPSTR_SYSTEM_ALERT_WINDOW, MODE_ALLOWED);
     }
 
     @AfterClass
     public static void revokeSystemAlertWindowAccess() throws IOException {
         AppOpsUtils.setOpMode(getInstrumentation().getContext().getPackageName(),
-                OPSTR_SYSTEM_ALERT_WINDOW, MODE_ERRORED);
+                OPSTR_SYSTEM_ALERT_WINDOW, sPreviousSawAppOp);
     }
 
     @Test

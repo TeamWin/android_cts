@@ -407,7 +407,7 @@ public abstract class ActivityManagerTestBase {
         }
 
         /**
-         * Launches an {@link Activity} synchronously on a target display. The class name needs to 
+         * Launches an {@link Activity} synchronously on a target display. The class name needs to
          * be provided either implicitly through the {@link Intent} or explicitly as a parameter
          *
          * @param className Optional class name of expected activity
@@ -1488,13 +1488,14 @@ public abstract class ActivityManagerTestBase {
 
     /** Helper class to save, set & wait, and restore rotation related preferences. */
     protected class RotationSession extends SettingsSession<Integer> {
-        private final String SET_FIX_TO_USER_ROTATION_COMMAND =
-                "cmd window set-fix-to-user-rotation ";
+        private final String FIXED_TO_USER_ROTATION_COMMAND =
+                "cmd window fixed-to-user-rotation ";
         private final SettingsSession<Integer> mAccelerometerRotation;
         private final HandlerThread mThread;
         private final Handler mRunnableHandler;
         private final SettingsObserver mRotationObserver;
         private int mPreviousDegree;
+        private String mPreviousFixedToUserRotationMode;
 
         public RotationSession() {
             // Save user_rotation and accelerometer_rotation preferences.
@@ -1510,7 +1511,8 @@ public abstract class ActivityManagerTestBase {
             mRotationObserver = new SettingsObserver(mRunnableHandler);
 
             // Disable fixed to user rotation
-            executeShellCommand(SET_FIX_TO_USER_ROTATION_COMMAND + "disabled");
+            mPreviousFixedToUserRotationMode = executeShellCommand(FIXED_TO_USER_ROTATION_COMMAND);
+            executeShellCommand(FIXED_TO_USER_ROTATION_COMMAND + "disabled");
 
             mPreviousDegree = get();
             // Disable accelerometer_rotation.
@@ -1567,8 +1569,8 @@ public abstract class ActivityManagerTestBase {
 
         @Override
         public void close() {
-            // Set fixed to user rotation to default
-            executeShellCommand(SET_FIX_TO_USER_ROTATION_COMMAND + "default");
+            // Restore fixed to user rotation to default
+            executeShellCommand(FIXED_TO_USER_ROTATION_COMMAND + mPreviousFixedToUserRotationMode);
             mThread.quitSafely();
             super.close();
             // Restore accelerometer_rotation preference.
