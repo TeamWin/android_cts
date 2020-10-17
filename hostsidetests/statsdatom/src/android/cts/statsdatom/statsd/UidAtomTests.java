@@ -663,51 +663,51 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 atom -> atom.getOverlayStateChanged().getState().getNumber());
     }
 
-//    public void testPictureInPictureState() throws Exception {
-//        String supported = getDevice().executeShellCommand("am supports-multiwindow");
-//        if (!hasFeature(FEATURE_WATCH, false) ||
-//                !hasFeature(FEATURE_PICTURE_IN_PICTURE, true) ||
-//                !supported.contains("true")) {
-//            LogUtil.CLog.d("Skipping picture in picture atom test.");
-//            return;
-//        }
-//
-//        StatsdConfig.Builder conf = createConfigBuilder();
-//        // PictureInPictureStateChanged atom is used prior to rvc-qpr
-//        addAtomEvent(conf, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
-//                /*useAttribution=*/false);
-//        // Picture-in-picture logs' been migrated to UiEvent since rvc-qpr
-//        FieldValueMatcher.Builder pkgMatcher = createFvm(UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
-//                .setEqString(DEVICE_SIDE_TEST_PACKAGE);
-//        addAtomEvent(conf, Atom.UI_EVENT_REPORTED_FIELD_NUMBER, Arrays.asList(pkgMatcher));
-//        uploadConfig(conf);
-//
-//        LogUtil.CLog.d("Playing video in Picture-in-Picture mode");
-//        runActivity("VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
-//
-//        // Sorted list of events in order in which they occurred.
-//        List<EventMetricData> data = getEventMetricDataList();
-//
-//        // Filter out the PictureInPictureStateChanged and UiEventReported atom
-//        List<EventMetricData> pictureInPictureStateChangedData = data.stream()
-//                .filter(e -> e.getAtom().hasPictureInPictureStateChanged())
-//                .collect(Collectors.toList());
-//        List<EventMetricData> uiEventReportedData = data.stream()
-//                .filter(e -> e.getAtom().hasUiEventReported())
-//                .collect(Collectors.toList());
-//
-//        assertThat(pictureInPictureStateChangedData).isEmpty();
-//        assertThat(uiEventReportedData).isNotEmpty();
-//
-//        // See PipUiEventEnum for definitions
-//        final int enterPipEventId = 603;
-//        // Assert that log for entering PiP happens exactly once, we do not use
-//        // assertStateOccurred here since PiP may log something else when activity finishes.
-//        List<EventMetricData> entered = uiEventReportedData.stream()
-//                .filter(e -> e.getAtom().getUiEventReported().getEventId() == enterPipEventId)
-//                .collect(Collectors.toList());
-//        assertThat(entered).hasSize(1);
-//    }
+    public void testPictureInPictureState() throws Exception {
+        String supported = getDevice().executeShellCommand("am supports-multiwindow");
+        if (!hasFeature(FEATURE_WATCH, false) ||
+                !hasFeature(FEATURE_PICTURE_IN_PICTURE, true) ||
+                !supported.contains("true")) {
+            LogUtil.CLog.d("Skipping picture in picture atom test.");
+            return;
+        }
+
+        StatsdConfig.Builder conf = createConfigBuilder();
+        // PictureInPictureStateChanged atom is used prior to rvc-qpr
+        addAtomEvent(conf, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
+                /*useAttribution=*/false);
+        // Picture-in-picture logs' been migrated to UiEvent since rvc-qpr
+        FieldValueMatcher.Builder pkgMatcher = createFvm(UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
+                .setEqString(DEVICE_SIDE_TEST_PACKAGE);
+        addAtomEvent(conf, Atom.UI_EVENT_REPORTED_FIELD_NUMBER, Arrays.asList(pkgMatcher));
+        uploadConfig(conf);
+
+        LogUtil.CLog.d("Playing video in Picture-in-Picture mode");
+        runActivity("VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
+
+        // Sorted list of events in order in which they occurred.
+        List<EventMetricData> data = getEventMetricDataList();
+
+        // Filter out the PictureInPictureStateChanged and UiEventReported atom
+        List<EventMetricData> pictureInPictureStateChangedData = data.stream()
+                .filter(e -> e.getAtom().hasPictureInPictureStateChanged())
+                .collect(Collectors.toList());
+        List<EventMetricData> uiEventReportedData = data.stream()
+                .filter(e -> e.getAtom().hasUiEventReported())
+                .collect(Collectors.toList());
+
+        assertThat(pictureInPictureStateChangedData).isEmpty();
+        assertThat(uiEventReportedData).isNotEmpty();
+
+        // See PipUiEventEnum for definitions
+        final int enterPipEventId = 603;
+        // Assert that log for entering PiP happens exactly once, we do not use
+        // assertStateOccurred here since PiP may log something else when activity finishes.
+        List<EventMetricData> entered = uiEventReportedData.stream()
+                .filter(e -> e.getAtom().getUiEventReported().getEventId() == enterPipEventId)
+                .collect(Collectors.toList());
+        assertThat(entered).hasSize(1);
+    }
 
     public void testScheduledJobState() throws Exception {
         String expectedName = "com.android.server.cts.device.statsd/.StatsdJobService";
