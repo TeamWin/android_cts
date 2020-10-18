@@ -55,6 +55,7 @@ import test_package.IntEnum;
 import test_package.LongEnum;
 import test_package.MyExt;
 import test_package.RegularPolygon;
+import test_package.SimpleUnion;
 
 @RunWith(Parameterized.class)
 public class JavaClientTest {
@@ -604,6 +605,8 @@ public class JavaClientTest {
         foo.shouldContainTwoIntFoos = new int[]{IntEnum.FOO, IntEnum.FOO};
         foo.shouldContainTwoLongFoos = new long[]{LongEnum.FOO, LongEnum.FOO};
 
+        foo.u = SimpleUnion.e(new byte[]{ByteEnum.FOO, ByteEnum.FOO});
+
         Foo repeatedFoo = mInterface.repeatFoo(foo);
 
         assertEquals(foo.a, repeatedFoo.a);
@@ -616,6 +619,7 @@ public class JavaClientTest {
         Assert.assertArrayEquals(foo.shouldContainTwoByteFoos, repeatedFoo.shouldContainTwoByteFoos);
         Assert.assertArrayEquals(foo.shouldContainTwoIntFoos, repeatedFoo.shouldContainTwoIntFoos);
         Assert.assertArrayEquals(foo.shouldContainTwoLongFoos, repeatedFoo.shouldContainTwoLongFoos);
+        Assert.assertArrayEquals(foo.u.getE(), repeatedFoo.u.getE());
     }
 
     @Test
@@ -699,5 +703,14 @@ public class JavaClientTest {
         assertNotEquals(null, myext2);
         assertEquals(42, myext2.a);
         assertEquals("mystr", myext2.b);
-      }
+    }
+
+    @Test
+    public void testRepeatSimpleUnion() throws RemoteException {
+        final int[] intArray = { 1, 2, 3 };
+        SimpleUnion origin = SimpleUnion.b(intArray);
+        SimpleUnion ret = mInterface.RepeatSimpleUnion(origin);
+        assertEquals(SimpleUnion.b, ret.getTag());
+        Assert.assertArrayEquals(intArray, ret.getB());
+    }
 }
