@@ -109,6 +109,7 @@ public class LegacyStorageTest {
      * test runs.
      */
     static final String NONCE = String.valueOf(System.nanoTime());
+    static final String CONTENT_PROVIDER_URL = "content://android.tradefed.contentprovider";
 
     static final String IMAGE_FILE_NAME = "LegacyStorageTest_file_" + NONCE + ".jpg";
     static final String VIDEO_FILE_NAME = "LegacyStorageTest_file_" + NONCE + ".mp4";
@@ -132,7 +133,7 @@ public class LegacyStorageTest {
 
     @After
     public void teardown() throws Exception {
-        executeShellCommand("rm " + getShellFile());
+        deleteFileInExternalDir(getShellFile());
         MediaStore.scanFile(getContentResolver(), getShellFile());
     }
 
@@ -221,7 +222,7 @@ public class LegacyStorageTest {
         final File existingFile = getShellFile();
 
         try {
-            executeShellCommand("touch " + existingFile);
+            createFileInExternalDir(existingFile);
             MediaStore.scanFile(getContentResolver(), existingFile);
             Os.open(existingFile.getPath(), OsConstants.O_RDONLY, /*mode*/ 0);
             fail("Opening file for read expected to fail: " + existingFile);
@@ -274,7 +275,7 @@ public class LegacyStorageTest {
         // can open file for read
         FileDescriptor fd = null;
         try {
-            executeShellCommand("touch " + existingFile);
+            createFileInExternalDir(existingFile);
             MediaStore.scanFile(getContentResolver(), existingFile);
             fd = Os.open(existingFile.getPath(), OsConstants.O_RDONLY, /*mode*/ 0);
         } finally {
@@ -316,7 +317,7 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ false);
         final File shellFile = getShellFile();
 
-        executeShellCommand("touch " + getShellFile());
+        createFileInExternalDir(shellFile);
         MediaStore.scanFile(getContentResolver(), getShellFile());
         // can list a non-media file created by other package.
         assertThat(Arrays.asList(shellFile.getParentFile().list()))
@@ -384,7 +385,7 @@ public class LegacyStorageTest {
                 new File(TestUtils.getExternalMediaDir(),
                         "LegacyFileAccessTest2");
         try {
-            executeShellCommand("touch " + shellFile1);
+            createFileInExternalDir(shellFile1);
             MediaStore.scanFile(getContentResolver(), shellFile1);
             // app can't rename shell file.
             assertCantRenameFile(shellFile1, shellFile2);
@@ -419,7 +420,7 @@ public class LegacyStorageTest {
                 new File(TestUtils.getExternalMediaDir(),
                         "LegacyFileAccessTest2");
         try {
-            executeShellCommand("touch " + shellFile1);
+            createFileInExternalDir(shellFile1);
             MediaStore.scanFile(getContentResolver(), shellFile1);
             // app can't rename shell file.
             assertCantRenameFile(shellFile1, shellFile2);
@@ -820,5 +821,15 @@ public class LegacyStorageTest {
     private File getShellFile() throws Exception {
         return new File(TestUtils.getExternalStorageDir(),
                 "LegacyAccessHostTest_shell");
+    }
+
+    private void createFileInExternalDir(File file) throws Exception {
+        Log.d(TAG, "Creating file " + file + " in the external Directory");
+        getContentResolver().openFile(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), "w", null);
+    }
+
+    private void deleteFileInExternalDir(File file) throws Exception {
+        Log.d(TAG, "Deleting file " + file + " from the external Directory");
+        getContentResolver().delete(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), null, null);
     }
 }

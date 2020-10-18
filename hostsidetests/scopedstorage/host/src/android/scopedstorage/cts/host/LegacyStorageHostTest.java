@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.tradefed.device.contentprovider.ContentProviderHandler;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -41,6 +42,8 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
     private String executeShellCommand(String cmd) throws Exception {
         return getDevice().executeShellCommand(cmd);
     }
+
+    private ContentProviderHandler mContentProviderHandler;
 
     /**
      * Runs the given phase of LegacyFileAccessTest by calling into the device.
@@ -85,6 +88,8 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
 
     @Before
     public void setup() throws Exception {
+        mContentProviderHandler = new ContentProviderHandler(getDevice());
+        mContentProviderHandler.setUp();
         setupExternalStorage();
         // Granting WRITE automatically grants READ as well, so we grant them both explicitly by
         // default in order to avoid confusion. Test cases that don't want any of those permissions
@@ -95,6 +100,7 @@ public class LegacyStorageHostTest extends BaseHostJUnit4Test {
 
     @After
     public void tearDown() throws Exception {
+        mContentProviderHandler.tearDown();
         revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE",
                 "android.permission.READ_EXTERNAL_STORAGE");
     }
