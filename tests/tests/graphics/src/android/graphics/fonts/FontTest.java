@@ -1103,4 +1103,39 @@ public class FontTest {
         // This refers head.yMin which is not explicitly visible in ttx file.
         assertEquals(0f, metrics.bottom, 0f);
     }
+
+    @Test
+    public void byteBufferEquality() throws IOException {
+        AssetManager assets = InstrumentationRegistry.getTargetContext().getAssets();
+
+        Font aFont = new Font.Builder(assets, "fonts/others/samplefont.ttf").build();
+        // Copied font must be equals to original one.
+        assertEquals(new Font.Builder(aFont).build(), aFont);
+
+        // Same source font must be equal.
+        assertEquals(new Font.Builder(assets, "fonts/others/samplefont.ttf").build(), aFont);
+
+        // Created font from duplicated buffers must be equal.
+        Font cFont = new Font.Builder(aFont.getBuffer().duplicate()).build();
+        Font dFont = new Font.Builder(aFont.getBuffer().duplicate()).build();
+        assertEquals(cFont, dFont);
+    }
+
+    @Test
+    public void byteBufferSameHash() throws IOException {
+        AssetManager assets = InstrumentationRegistry.getTargetContext().getAssets();
+
+        Font aFont = new Font.Builder(assets, "fonts/others/samplefont.ttf").build();
+        // Copied font must be equals to original one.
+        assertEquals(new Font.Builder(aFont).build().hashCode(), aFont.hashCode());
+
+        // Same source font must be equal.
+        assertEquals(new Font.Builder(assets, "fonts/others/samplefont.ttf").build().hashCode(),
+                aFont.hashCode());
+
+        // Created font from duplicated buffers must be equal.
+        int cFontHash = new Font.Builder(aFont.getBuffer().duplicate()).build().hashCode();
+        int dFontHash = new Font.Builder(aFont.getBuffer().duplicate()).build().hashCode();
+        assertEquals(cFontHash, dFontHash);
+    }
 }
