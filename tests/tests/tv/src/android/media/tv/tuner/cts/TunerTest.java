@@ -537,6 +537,7 @@ public class TunerTest {
             ad.getAdGainFront();
             ad.getAdGainSurround();
         }
+        e.release();
     }
 
     private void testMmtpRecordEvent(Filter filter, MmtpRecordEvent e) {
