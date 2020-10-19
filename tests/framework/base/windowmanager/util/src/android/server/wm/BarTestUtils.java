@@ -45,7 +45,10 @@ public final class BarTestUtils {
 
     public static void assumeHasColoredStatusBar(ActivityTestRule<?> rule) {
         assumeHasColoredBars();
+        assumeHasStatusBar(rule);
+    }
 
+    public static void assumeHasStatusBar(ActivityTestRule<?> rule) {
         assumeFalse("No status bar when running in VR", isRunningInVr());
 
         assumeTrue("Top stable inset is non-positive, no status bar.",

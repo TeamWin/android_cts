@@ -16,6 +16,8 @@
 
 package android.app.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ApplicationExitInfo;
@@ -726,6 +728,60 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         ApplicationExitInfo info = list.get(0);
         verify(info, mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
                 ApplicationExitInfo.REASON_PERMISSION_CHANGE, null, null, now, now2);
+
+        // Also verify that we get the expected meminfo
+        assertEquals(lastPss, DebugUtils.sizeValueToString(
+                info.getPss() * 1024, new StringBuilder()));
+        assertEquals(lastRss, DebugUtils.sizeValueToString(
+                info.getRss() * 1024, new StringBuilder()));
+    }
+
+    // A clone of testPermissionChange using a different revoke api
+    public void testPermissionChangeWithReason() throws Exception {
+        String revokeReason = "test reason";
+        // Remove old records to avoid interference with the test.
+        clearHistoricalExitInfo();
+
+        // Grant the read calendar permission
+        mInstrumentation.getUiAutomation().grantRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.READ_CALENDAR);
+        long now = System.currentTimeMillis();
+
+        // Start a process and do nothing
+        startService(ACTION_FINISH, STUB_SERVICE_NAME, false, false);
+
+        // Enable high frequency memory sampling
+        executeShellCmd("dumpsys procstats --start-testing");
+        // Sleep for a while to wait for the sampling of memory info
+        sleep(10000);
+        // Stop the high frequency memory sampling
+        executeShellCmd("dumpsys procstats --stop-testing");
+        // Get the memory info from it.
+        String dump = executeShellCmd("dumpsys activity processes " + STUB_PACKAGE_NAME);
+        assertNotNull(dump);
+        final String lastPss = extractMemString(dump, " lastPss=", ' ');
+        final String lastRss = extractMemString(dump, " lastRss=", '\n');
+
+        // Revoke the read calendar permission
+        runWithShellPermissionIdentity(() -> {
+            mContext.getPackageManager().revokeRuntimePermission(STUB_PACKAGE_NAME,
+                    android.Manifest.permission.READ_CALENDAR, Process.myUserHandle(),
+                    revokeReason);
+        });
+        waitForGone(mWatcher);
+        long now2 = System.currentTimeMillis();
+
+        List<ApplicationExitInfo> list = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                STUB_PACKAGE_NAME, mStubPackagePid, 1,
+                mActivityManager::getHistoricalProcessExitReasons,
+                android.Manifest.permission.DUMP);
+
+        assertTrue(list != null && list.size() == 1);
+
+        ApplicationExitInfo info = list.get(0);
+        verify(info, mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
+                ApplicationExitInfo.REASON_PERMISSION_CHANGE, null, null, now, now2);
+        assertEquals(revokeReason, info.getDescription());
 
         // Also verify that we get the expected meminfo
         assertEquals(lastPss, DebugUtils.sizeValueToString(
