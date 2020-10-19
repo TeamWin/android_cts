@@ -39,6 +39,7 @@ public class WindowContextPolicyTests extends WindowContextTestBase {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testCreateTooManyWindowContextWithoutViewThrowException() {
+        createAllowSystemAlertWindowAppOpSession();
         final WindowManagerState.DisplayContent display =  createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
         for (int i = 0; i < 6; i++) {
