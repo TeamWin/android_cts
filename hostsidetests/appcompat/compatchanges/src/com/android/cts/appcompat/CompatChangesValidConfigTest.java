@@ -43,23 +43,23 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
     private static class Change {
         private static final Pattern CHANGE_REGEX = Pattern.compile("^ChangeId\\((?<changeId>[0-9]+)"
                                                 + "(; name=(?<changeName>[^;]+))?"
-                                                + "(; enableAfterTargetSdk=(?<targetSdk>[0-9]+))?"
+                                                + "(; enableSinceTargetSdk=(?<sinceSdk>[0-9]+))?"
                                                 + "(; (?<disabled>disabled))?"
                                                 + "(; (?<loggingOnly>loggingOnly))?"
                                                 + "(; packageOverrides=(?<overrides>[^\\)]+))?"
                                                 + "\\)");
         long changeId;
         String changeName;
-        int targetSdk;
+        int sinceSdk;
         boolean disabled;
         boolean loggingOnly;
         boolean hasOverrides;
 
-        private Change(long changeId, String changeName, int targetSdk, boolean disabled,
-                boolean loggingOnly, boolean hasOverrides) {
+        private Change(long changeId, String changeName, int sinceSdk,
+                boolean disabled, boolean loggingOnly, boolean hasOverrides) {
             this.changeId = changeId;
             this.changeName = changeName;
-            this.targetSdk = targetSdk;
+            this.sinceSdk = sinceSdk;
             this.disabled = disabled;
             this.loggingOnly = loggingOnly;
             this.hasOverrides = hasOverrides;
@@ -68,7 +68,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
         static Change fromString(String line) {
             long changeId = 0;
             String changeName;
-            int targetSdk = 0;
+            int sinceSdk = -1;
             boolean disabled = false;
             boolean loggingOnly = false;
             boolean hasOverrides = false;
@@ -84,12 +84,12 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
                 throw new RuntimeException("No or invalid changeId!", e);
             }
             changeName = matcher.group("changeName");
-            String targetSdkAsString = matcher.group("targetSdk");
-            if (targetSdkAsString != null) {
+            String sinceSdkAsString = matcher.group("sinceSdk");
+            if (sinceSdkAsString != null) {
                 try {
-                    targetSdk = Integer.parseInt(targetSdkAsString);
+                    sinceSdk = Integer.parseInt(sinceSdkAsString);
                 } catch (NumberFormatException e) {
-                    throw new RuntimeException("Invalid targetSdk for change!", e);
+                    throw new RuntimeException("Invalid sinceSdk for change!", e);
                 }
             }
             if (matcher.group("disabled") != null) {
@@ -101,16 +101,24 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             if (matcher.group("overrides") != null) {
                 hasOverrides = true;
             }
-            return new Change(changeId, changeName, targetSdk, disabled, loggingOnly, hasOverrides);
+            return new Change(changeId, changeName, sinceSdk, disabled, loggingOnly, hasOverrides);
         }
 
         static Change fromNode(Node node) {
             Element element = (Element) node;
             long changeId = Long.parseLong(element.getAttribute("id"));
             String changeName = element.getAttribute("name");
-            int targetSdk = 0;
+            int sinceSdk = -1;
+            if (element.hasAttribute("enableAfterTargetSdk")
+                && element.hasAttribute("enableSinceTargetSdk")) {
+                    throw new IllegalArgumentException("Invalid change node!"
+                    + "Change contains both enableAfterTargetSdk and enableSinceTargetSdk");
+            }
             if (element.hasAttribute("enableAfterTargetSdk")) {
-                targetSdk = Integer.parseInt(element.getAttribute("enableAfterTargetSdk"));
+                sinceSdk = Integer.parseInt(element.getAttribute("enableAfterTargetSdk")) + 1;
+            }
+            if (element.hasAttribute("enableSinceTargetSdk")) {
+                sinceSdk = Integer.parseInt(element.getAttribute("enableSinceTargetSdk"));
             }
             boolean disabled = false;
             if (element.hasAttribute("disabled")) {
@@ -121,11 +129,11 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
                 loggingOnly = true;
             }
             boolean hasOverrides = false;
-            return new Change(changeId, changeName, targetSdk, disabled, loggingOnly, hasOverrides);
+            return new Change(changeId, changeName, sinceSdk, disabled, loggingOnly, hasOverrides);
         }
         @Override
         public int hashCode() {
-            return Objects.hash(changeId, changeName, targetSdk, disabled, hasOverrides);
+            return Objects.hash(changeId, changeName, sinceSdk, disabled, hasOverrides);
         }
         @Override
         public boolean equals(Object other) {
@@ -138,7 +146,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             Change that = (Change) other;
             return this.changeId == that.changeId
                 && Objects.equals(this.changeName, that.changeName)
-                && this.targetSdk == that.targetSdk
+                && this.sinceSdk == that.sinceSdk
                 && this.disabled == that.disabled
                 && this.loggingOnly == that.loggingOnly
                 && this.hasOverrides == that.hasOverrides;
@@ -150,8 +158,8 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
             if (changeName != null && !changeName.isEmpty()) {
                 sb.append("; name=" + changeName);
             }
-            if (targetSdk != 0) {
-                sb.append("; enableAfterTargetSdk=" + targetSdk);
+            if (sinceSdk != 0) {
+                sb.append("; enableSinceTargetSdk=" + sinceSdk);
             }
             if (disabled) {
                 sb.append("; disabled");
