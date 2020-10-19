@@ -23,10 +23,12 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
         <option name="push" value="icu.cintltst->/data/local/tmp/cintltst" />
+        <option name="post-push" value="chmod a+x /data/local/tmp/cintltst" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
         <option name="push" value="icu.intltest->/data/local/tmp/intltest" />
+        <option name="post-push" value="chmod a+x /data/local/tmp/intltest" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
