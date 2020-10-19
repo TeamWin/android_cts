@@ -45,6 +45,61 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/157650336
+     * Vulnerability Behaviour: SIGSEGV in self / EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2020-11")
+    @Test
+    public void testPocCVE_2020_0450() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0450", null, getDevice());
+    }
+
+    /**
+     * b/156997193
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @SecurityTest(minPatchLevel = "2020-11")
+    @Test
+    public void testPocCVE_2020_0409() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        String binaryName = "CVE-2020-0409";
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
+     * b/156999009
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @SecurityTest(minPatchLevel = "2020-10")
+    @Test
+    public void testPocCVE_2020_0408() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        String binaryName = "CVE-2020-0408";
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
+     * b/161894517
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @SecurityTest(minPatchLevel = "2020-10")
+    @Test
+    public void testPocCVE_2020_0421() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        String binaryName = "CVE-2020-0421";
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/132082342
      * Vulnerability Behaviour: SIGSEGV in self
      */
