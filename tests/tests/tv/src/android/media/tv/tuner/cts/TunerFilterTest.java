@@ -120,14 +120,14 @@ public class TunerFilterTest {
                                 RecordSettings.TS_INDEX_FIRST_PACKET
                                         | RecordSettings.TS_INDEX_PRIVATE_DATA)
                         .setScIndexType(RecordSettings.INDEX_TYPE_SC)
-                        .setScIndexMask(RecordSettings.SC_INDEX_I_FRAME)
+                        .setScIndexMask(RecordSettings.SC_INDEX_B_SLICE)
                         .build();
 
         assertEquals(
                 RecordSettings.TS_INDEX_FIRST_PACKET | RecordSettings.TS_INDEX_PRIVATE_DATA,
                 settings.getTsIndexMask());
         assertEquals(RecordSettings.INDEX_TYPE_SC, settings.getScIndexType());
-        assertEquals(RecordSettings.SC_INDEX_I_FRAME, settings.getScIndexMask());
+        assertEquals(RecordSettings.SC_INDEX_B_SLICE, settings.getScIndexMask());
     }
 
     @Test
