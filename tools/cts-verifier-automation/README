@@ -1,0 +1,9 @@
+CTS Verifier Automation
+---------------------
+
+This is a set of configurable automated testcases to help in reducing the manual effort for
+executing CTS-Verifier.
+These cases are intended to be used with UIConductor (https://github.com/google/android-uiconductor)
+
+The cases are designed to be easily modified for custom implemented Android user interfaces,
+focusing on the modifications to global variables which affect how the testcases use UI elements.
