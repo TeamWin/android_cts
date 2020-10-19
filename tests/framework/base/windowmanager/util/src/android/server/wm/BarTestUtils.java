@@ -84,6 +84,8 @@ public final class BarTestUtils {
         assumeFalse("No bars on watches and TVs", pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
                 || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+
+        assumeFalse("No bars on PCs", pm.hasSystemFeature(PackageManager.FEATURE_PC));
     }
 
     private static boolean isRunningInVr() {
