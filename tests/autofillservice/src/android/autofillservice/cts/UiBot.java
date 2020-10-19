@@ -53,6 +53,7 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.Direction;
 import android.support.test.uiautomator.SearchCondition;
+import android.support.test.uiautomator.StaleObjectException;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
@@ -143,6 +144,8 @@ public class UiBot {
             "com.android.systemui:id/docked_divider_background";
 
     private static final boolean DUMP_ON_ERROR = true;
+
+    private static final int MAX_UIOBJECT_RETRY_COUNT = 3;
 
     /** Pass to {@link #setScreenOrientation(int)} to change the display to portrait mode */
     public static int PORTRAIT = 0;
@@ -1053,10 +1056,23 @@ public class UiBot {
     }
 
     private UiObject2 findDatasetPicker(Timeout timeout) throws Exception {
-        final UiObject2 picker = waitForObject(DATASET_PICKER_SELECTOR, timeout);
-
+        // The UI element here is flaky. Sometimes the UI automator returns a StateObject.
+        // Retry is put in place here to make sure that we catch the object.
+        UiObject2 picker = null;
+        int retryCount = 0;
         final String expectedTitle = getString(RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE);
-        assertAccessibilityTitle(picker, expectedTitle);
+        while (retryCount < MAX_UIOBJECT_RETRY_COUNT) {
+            try {
+                picker = waitForObject(DATASET_PICKER_SELECTOR, timeout);
+                assertAccessibilityTitle(picker, expectedTitle);
+                break;
+            } catch (StaleObjectException e) {
+                Log.d(TAG, "Retry grabbing view class");
+            }
+            retryCount++;
+        }
+        assertWithMessage(expectedTitle + " not found").that(retryCount).isLessThan(
+                MAX_UIOBJECT_RETRY_COUNT);
 
         if (picker != null) {
             mOkToCallAssertNoDatasets = true;
