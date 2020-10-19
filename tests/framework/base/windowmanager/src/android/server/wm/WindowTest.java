@@ -826,6 +826,7 @@ public class WindowTest {
 
         public ProjectedPresentation(Context outerContext, Display display) {
             super(outerContext, display);
+            getWindow().setType(WindowManager.LayoutParams.TYPE_PRIVATE_PRESENTATION);
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_LOCAL_FOCUS_MODE);
         }
 

@@ -46,7 +46,7 @@ public class PresentationTest extends MultiDisplayTestBase {
             if ((display.getFlags() & Display.FLAG_PRESENTATION) != Display.FLAG_PRESENTATION) {
                 assertNoPresentationDisplayed();
             } else {
-                assertPresentationOnDisplayAndMatchesDisplayMetrics(display.getDisplayId());
+                assertPresentationOnDisplay(display.getDisplayId());
             }
         }
     }
@@ -63,11 +63,11 @@ public class PresentationTest extends MultiDisplayTestBase {
                 .isEqualTo(Display.FLAG_PRESENTATION);
 
         launchPresentationActivity(display.mId);
-        assertPresentationOnDisplayAndMatchesDisplayMetrics(display.mId);
+        assertPresentationOnDisplay(display.mId);
     }
 
     @Test
-    public void testPresentationNotDismissAfterResizeDisplay() {
+    public void testPresentationDismissAfterResizeDisplay() {
         final VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();
         WindowManagerState.DisplayContent display = virtualDisplaySession
                         .setPresentationDisplay(true)
@@ -79,14 +79,14 @@ public class PresentationTest extends MultiDisplayTestBase {
                 .isEqualTo(Display.FLAG_PRESENTATION);
 
         launchPresentationActivity(display.mId);
-        assertPresentationOnDisplayAndMatchesDisplayMetrics(display.mId);
+        assertPresentationOnDisplay(display.mId);
 
         virtualDisplaySession.resizeDisplay();
 
-        assertTrue("Presentation must not dismiss on external public display even if"
-                + "display resize", mWmState.waitForWithAmState(
-                state -> isPresentationOnDisplay(state, display.mId),
-                "Presentation window still shows"));
+        assertTrue("Presentation must dismiss on external public display",
+                mWmState.waitForWithAmState(
+                        state -> !isPresentationOnDisplay(state, display.mId),
+                        "Presentation window dismiss"));
     }
 
     @Test
@@ -117,17 +117,13 @@ public class PresentationTest extends MultiDisplayTestBase {
         assertThat(presentationWindows).isEmpty();
     }
 
-    private void assertPresentationOnDisplayAndMatchesDisplayMetrics(int displayId) {
+    private void assertPresentationOnDisplay(int displayId) {
         final List<WindowManagerState.WindowState> presentationWindows =
                 mWmState.getWindowsByPackageName(
                         Components.PRESENTATION_ACTIVITY.getPackageName(), TYPE_PRESENTATION);
         assertThat(presentationWindows).hasSize(1);
         WindowManagerState.WindowState presentationWindowState = presentationWindows.get(0);
         assertThat(presentationWindowState.getDisplayId()).isEqualTo(displayId);
-
-        WindowManagerState.DisplayContent display = mWmState.getDisplay(displayId);
-        assertThat(display.getDisplayRect()).isEqualTo(
-                presentationWindowState.mFullConfiguration.windowConfiguration.getBounds());
     }
 
     private void launchPresentationActivity(int displayId) {
