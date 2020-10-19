@@ -18,10 +18,12 @@ package android.media.tv.tuner.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.media.tv.tuner.Tuner;
+import android.media.tv.tuner.TunerVersionChecker;
 import android.media.tv.tuner.frontend.AnalogFrontendCapabilities;
 import android.media.tv.tuner.frontend.AnalogFrontendSettings;
 import android.media.tv.tuner.frontend.Atsc3FrontendCapabilities;
@@ -94,17 +96,30 @@ public class TunerFrontendTest {
                         .setAftFlag(AnalogFrontendSettings.AFT_FLAG_TRUE)
                         .build();
 
-        settings.setSpectralInversion(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL);
-        settings.setEndFrequency(100);
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            settings.setSpectralInversion(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL);
+            settings.setEndFrequency(100);
+        } else {
+            settings.setSpectralInversion(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL);
+            settings.setEndFrequency(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY);
+        }
 
         assertEquals(FrontendSettings.TYPE_ANALOG, settings.getType());
         assertEquals(1, settings.getFrequency());
         assertEquals(AnalogFrontendSettings.SIGNAL_TYPE_NTSC, settings.getSignalType());
         assertEquals(AnalogFrontendSettings.SIF_BG_NICAM, settings.getSifStandard());
         assertEquals(AnalogFrontendSettings.AFT_FLAG_TRUE, settings.getAftFlag());
-        assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
-                settings.getFrontendSpectralInversion());
-        assertEquals(100, settings.getEndFrequency());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(AnalogFrontendSettings.AFT_FLAG_TRUE, settings.getAftFlag());
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(100, settings.getEndFrequency());
+        } else {
+            assertEquals(AnalogFrontendSettings.AFT_FLAG_UNDEFINED, settings.getAftFlag());
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+        }
     }
 
     @Test
@@ -163,9 +178,15 @@ public class TunerFrontendTest {
         assertEquals(Atsc3FrontendSettings.CODERATE_UNDEFINED, plps[1].getCodeRate());
         assertEquals(Atsc3FrontendSettings.FEC_LDPC_16K, plps[1].getFec());
 
-        assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
-                settings.getFrontendSpectralInversion());
-        assertEquals(100, settings.getEndFrequency());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(100, settings.getEndFrequency());
+        } else {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+        }
     }
 
     @Test
@@ -184,9 +205,15 @@ public class TunerFrontendTest {
         assertEquals(FrontendSettings.TYPE_ATSC, settings.getType());
         assertEquals(3, settings.getFrequency());
         assertEquals(AtscFrontendSettings.MODULATION_MOD_8VSB, settings.getModulation());
-        assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
-                settings.getFrontendSpectralInversion());
-        assertEquals(100, settings.getEndFrequency());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(100, settings.getEndFrequency());
+        } else {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+        }
     }
 
     @Test
@@ -202,6 +229,7 @@ public class TunerFrontendTest {
                         .setOuterFec(DvbcFrontendSettings.OUTER_FEC_OUTER_FEC_RS)
                         .setAnnex(DvbcFrontendSettings.ANNEX_B)
                         .setTimeInterleaveMode(DvbcFrontendSettings.TIME_INTERLEAVE_MODE_AUTO)
+                        .setBandwidth(DvbcFrontendSettings.BANDWIDTH_5MHZ)
                         // DvbcFrontendSettings.SpectralInversion is deprecated in Android 12. Use
                         // FrontendSettings.FrontendSpectralInversion instead.
                         .setSpectralInversion(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL)
@@ -220,7 +248,13 @@ public class TunerFrontendTest {
                 settings.getTimeInterleaveMode());
         assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
                 settings.getSpectralInversion());
-        assertEquals(100, settings.getEndFrequency());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(100, settings.getEndFrequency());
+            assertEquals(DvbcFrontendSettings.BANDWIDTH_5MHZ, settings.getBandwidth());
+        } else {
+            assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+            assertEquals(DvbcFrontendSettings.BANDWIDTH_UNDEFINED, settings.getBandwidth());
+        }
     }
 
     @Test
@@ -249,6 +283,7 @@ public class TunerFrontendTest {
                         .setStandard(DvbsFrontendSettings.STANDARD_S2)
                         .setVcmMode(DvbsFrontendSettings.VCM_MODE_MANUAL)
                         .setScanType(DvbsFrontendSettings.SCAN_TYPE_DIRECT)
+                        .setDiseqcRxMessage(true)
                         .build();
 
         settings.setSpectralInversion(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL);
@@ -263,10 +298,19 @@ public class TunerFrontendTest {
         assertEquals(1, settings.getInputStreamId());
         assertEquals(DvbsFrontendSettings.STANDARD_S2, settings.getStandard());
         assertEquals(DvbsFrontendSettings.VCM_MODE_MANUAL, settings.getVcmMode());
-        assertEquals(DvbsFrontendSettings.SCAN_TYPE_DIRECT, settings.getScanType());
-        assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
-                settings.getFrontendSpectralInversion());
-        assertEquals(100, settings.getEndFrequency());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(DvbsFrontendSettings.SCAN_TYPE_DIRECT, settings.getScanType());
+            assertTrue(settings.isDiseqcRxMessage());
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(100, settings.getEndFrequency());
+        } else {
+            assertEquals(DvbsFrontendSettings.SCAN_TYPE_UNDEFINED, settings.getScanType());
+            assertFalse(settings.isDiseqcRxMessage());
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+        }
 
         DvbsCodeRate cr = settings.getCodeRate();
         assertNotNull(cr);
@@ -303,10 +347,7 @@ public class TunerFrontendTest {
 
         assertEquals(FrontendSettings.TYPE_DVBT, settings.getType());
         assertEquals(6, settings.getFrequency());
-        assertEquals(DvbtFrontendSettings.TRANSMISSION_MODE_EXTENDED_32K,
-                settings.getTransmissionMode());
         assertEquals(DvbtFrontendSettings.BANDWIDTH_1_7MHZ, settings.getBandwidth());
-        assertEquals(DvbtFrontendSettings.CONSTELLATION_16QAM_R, settings.getConstellation());
         assertEquals(DvbtFrontendSettings.HIERARCHY_4_NATIVE, settings.getHierarchy());
         assertEquals(DvbtFrontendSettings.CODERATE_6_7, settings.getHighPriorityCodeRate());
         assertEquals(DvbtFrontendSettings.CODERATE_2_3, settings.getLowPriorityCodeRate());
@@ -317,9 +358,21 @@ public class TunerFrontendTest {
         assertEquals(DvbtFrontendSettings.PLP_MODE_MANUAL, settings.getPlpMode());
         assertEquals(333, settings.getPlpId());
         assertEquals(777, settings.getPlpGroupId());
-        assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
-                settings.getFrontendSpectralInversion());
-        assertEquals(100, settings.getEndFrequency());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(DvbtFrontendSettings.TRANSMISSION_MODE_EXTENDED_32K,
+                    settings.getTransmissionMode());
+            assertEquals(DvbtFrontendSettings.CONSTELLATION_16QAM_R, settings.getConstellation());
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(100, settings.getEndFrequency());
+        } else {
+            assertEquals(DvbtFrontendSettings.TRANSMISSION_MODE_UNDEFINED,
+                    settings.getTransmissionMode());
+            assertEquals(DvbtFrontendSettings.CONSTELLATION_UNDEFINED, settings.getConstellation());
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+        }
     }
 
     @Test
@@ -348,9 +401,15 @@ public class TunerFrontendTest {
         assertEquals(Isdbs3FrontendSettings.CODERATE_1_3, settings.getCodeRate());
         assertEquals(555, settings.getSymbolRate());
         assertEquals(Isdbs3FrontendSettings.ROLLOFF_0_03, settings.getRolloff());
-        assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
-                settings.getFrontendSpectralInversion());
-        assertEquals(100, settings.getEndFrequency());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(100, settings.getEndFrequency());
+        } else {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+        }
     }
 
     @Test
@@ -380,9 +439,15 @@ public class TunerFrontendTest {
         assertEquals(IsdbsFrontendSettings.CODERATE_3_4, settings.getCodeRate());
         assertEquals(667, settings.getSymbolRate());
         assertEquals(IsdbsFrontendSettings.ROLLOFF_0_35, settings.getRolloff());
-        assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
-                settings.getFrontendSpectralInversion());
-        assertEquals(100, settings.getEndFrequency());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(100, settings.getEndFrequency());
+        } else {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+        }
     }
 
     @Test
@@ -411,9 +476,15 @@ public class TunerFrontendTest {
         assertEquals(DvbtFrontendSettings.CODERATE_7_8, settings.getCodeRate());
         assertEquals(DvbtFrontendSettings.GUARD_INTERVAL_1_4, settings.getGuardInterval());
         assertEquals(10, settings.getServiceAreaId());
-        assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
-                settings.getFrontendSpectralInversion());
-        assertEquals(100, settings.getEndFrequency());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(100, settings.getEndFrequency());
+        } else {
+            assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
+                    settings.getFrontendSpectralInversion());
+            assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
+        }
     }
 
     @Test
