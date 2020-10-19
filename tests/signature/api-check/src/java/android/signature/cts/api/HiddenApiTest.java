@@ -155,7 +155,7 @@ public class HiddenApiTest extends AbstractApiTest {
                 while (line != null) {
                     DexMember dexMember = DexApiDocumentParser.parseLine(line, lineIndex);
                     if (memberFilter.test(dexMember) && shouldTestMember(dexMember)
-                            && !hiddenapiFilterSet.contains(line)) {
+                            && !isFiltered(line)) {
                         DexMemberChecker.checkSingleMember(dexMember, reflection, jni,
                                 observer);
                     }
@@ -176,7 +176,28 @@ public class HiddenApiTest extends AbstractApiTest {
         return false;
     }
 
-    private void loadFilters() throws IOException, ParseException {
+    /**
+     * Checks whether this method/field is included in the filter file. If so, we should not test
+     * it. If not, we should test it.
+     *
+     * @param line is the line from the hiddenapi-flags.csv indicating which method/field to check
+     * @return true if the method/field is to be filtered out, false otherwise
+     */
+    private boolean isFiltered(String line) {
+        if (line == null) {
+            return false;
+        }
+        // Need to remove which list the method/field is a part of (at the end of the line)
+        int commaIndex = line.indexOf(',');
+        return commaIndex > 0 && hiddenapiFilterSet.contains(line.substring(0, commaIndex));
+    }
+
+    /**
+     * Loads the filter file and inserts each line of the file into a Set
+     *
+     * @throws IOException if the filter file does not exist
+     */
+    private void loadFilters() throws IOException {
         // Avoids testing members in filter file (only a single filter file can be supplied)
         if (hiddenapiFilterFile != null) {
             VirtualPath.ResourcePath resourcePath =
