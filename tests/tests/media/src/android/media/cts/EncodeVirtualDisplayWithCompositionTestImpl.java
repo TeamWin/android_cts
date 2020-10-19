@@ -1200,6 +1200,7 @@ public class EncodeVirtualDisplayWithCompositionTestImpl {
             // This theme is required to prevent an extra view from obscuring the presentation
             super(outerContext, display,
                     android.R.style.Theme_Holo_Light_NoActionBar_TranslucentDecor);
+            getWindow().setType(WindowManager.LayoutParams.TYPE_PRIVATE_PRESENTATION);
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_LOCAL_FOCUS_MODE);
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
         }
