@@ -498,6 +498,25 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/158762825
+     * Vulnerability Behaviour: SIGABRT / EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2020-11")
+    @Test
+    public void testPocCVE_2020_0451() throws Exception {
+        String inputFiles[] = {"cve_2020_0451.aac"};
+        String binaryName = "CVE-2020-0451";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/112891564
      * Vulnerability Behaviour: SIGSEGV in self (Android P),
      *                          SIGABRT in self (Android Q onward)
