@@ -109,7 +109,7 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         int veryJankyDelta = countFramesAbove(statsAfter, 60) - countFramesAbove(statsBefore, 60);
         // The 1st frame could be >40ms, but nothing after that should be
         assertThat(veryJankyDelta).isAtMost(2);
-        int noGPUJank = countGPUFramesAbove(statsAfter, 60) - countGPUFramesAbove(statsBefore, 60);
+        int noGPUJank = countGPUFramesAbove(statsAfter, 25) - countGPUFramesAbove(statsBefore, 25);
         assertThat(noGPUJank).isEqualTo(0);
     }
 
