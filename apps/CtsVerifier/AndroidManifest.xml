@@ -122,7 +122,7 @@
             <meta-data android:name="test_required_features"
                     android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".admin.DeviceAdminUninstallTestActivity"
@@ -136,7 +136,7 @@
             <meta-data android:name="test_required_features"
                        android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".admin.tapjacking.DeviceAdminTapjackingTestActivity"
@@ -150,7 +150,7 @@
             <meta-data android:name="test_required_features"
                        android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <receiver android:name=".admin.tapjacking.EmptyDeviceAdminReceiver"
@@ -167,7 +167,7 @@
             android:theme="@style/OverlayTheme"
             android:label="Overlaying Activity">
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity
@@ -231,7 +231,7 @@
             <meta-data android:name="test_required_features"
                     android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
 <!--            CTS Verifier Bluetooth Test Top Screen -->
@@ -2729,7 +2729,7 @@
         <activity android:name=".managedprovisioning.RecentsRedactionActivity"
                 android:label="@string/provisioning_byod_recents" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
         <activity android:name=".managedprovisioning.IntermediateRecentActivity"
                   android:label="@string/provisioning_byod_recents"
@@ -2739,7 +2739,7 @@
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
         <activity android:name=".wifi.TestListActivity"
                   android:label="@string/wifi_test"
@@ -3635,12 +3635,12 @@
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerNegativeTestActivity$TrampolineActivity" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.EnterprisePrivacyInfoOnlyTestActivity"
@@ -3650,7 +3650,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerPositiveTestActivity"
@@ -3666,7 +3666,7 @@
                        android:value="android.software.lockscreen_disabled" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.ManagedUserPositiveTestActivity"
@@ -3677,7 +3677,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.DeviceOwnerRequestingBugreportTestActivity"
@@ -3691,19 +3691,19 @@
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.NonMarketAppsActivity"
                   android:label="@string/provisioning_byod_non_market_apps">
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.KeyguardDisabledFeaturesActivity"
                 android:label="@string/provisioning_byod_keyguard_disabled_features">
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.CrossProfilePermissionControlActivity"
@@ -3713,13 +3713,13 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.DisallowAppsControlActivity"
                 android:label="@string/provisioning_byod_disallow_apps_control">
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.LockTaskUiTestActivity"
@@ -3729,13 +3729,13 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.WifiLockdownTestActivity"
                 android:label="@string/device_owner_wifi_lockdown_test">
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.VpnTestActivity"
@@ -3745,7 +3745,7 @@
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <service android:name=".managedprovisioning.VpnTestActivity$MyTestVpnService"
@@ -3762,7 +3762,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.KeyChainTestActivity"
@@ -3772,7 +3772,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.PermissionLockdownTestActivity"
@@ -3782,7 +3782,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity-alias
@@ -3797,7 +3797,7 @@
         <activity android:name=".managedprovisioning.OrganizationInfoTestActivity"
                 android:label="@string/provisioning_byod_organization_info">
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.PolicyTransparencyTestListActivity"
@@ -3807,7 +3807,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.PolicyTransparencyTestActivity">
@@ -3816,7 +3816,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.EnterprisePrivacyTestListActivity"
@@ -3826,7 +3826,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.EnterprisePrivacyTestDefaultAppActivity"
@@ -3870,7 +3870,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.CommandReceiverActivity"
@@ -3881,7 +3881,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.SetSupportMessageActivity">
@@ -3890,7 +3890,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <service android:name=".managedprovisioning.PolicyTransparencyTestActivity$DummyInputMethod"
@@ -3917,7 +3917,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.ByodFlowTestActivity"
@@ -3942,7 +3942,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_required_features" android:value="android.software.managed_users:android.software.device_admin" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <receiver
@@ -3961,12 +3961,12 @@
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_required_features" android:value="android.software.managed_users:android.software.device_admin" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.ByodProvisioningTestActivity$ProvisioningStartingActivity" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.ByodHelperActivity">
@@ -4001,7 +4001,7 @@
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.ByodPrimaryHelperActivity">
@@ -4010,13 +4010,13 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.NfcTestActivity">
             <meta-data android:name="test_required_features" android:value="android.hardware.nfc" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <provider
@@ -4035,7 +4035,7 @@
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.HandleIntentActivity"
@@ -4109,7 +4109,7 @@
                 <data android:scheme="market" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.CrossProfileTestActivity">
@@ -4131,7 +4131,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.WorkStatusTestActivity">
@@ -4141,13 +4141,13 @@
                 <category android:name="android.intent.category.DEFAULT"></category>
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.TurnOffWorkActivity"
                   android:label="@string/provisioning_byod_turn_off_work">
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.WorkProfileWidgetActivity"
@@ -4157,7 +4157,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <receiver android:name=".managedprovisioning.DeviceAdminTestReceiver"
@@ -5053,7 +5053,7 @@
         <activity android:name=".managedprovisioning.LockscreenMessageTestActivity"
             android:label="@string/device_owner_customize_lockscreen_message" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <service android:name="com.android.cts.verifier.telecom.CtsConnectionService"
