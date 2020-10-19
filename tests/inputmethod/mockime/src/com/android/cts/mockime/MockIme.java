@@ -25,6 +25,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.inputmethodservice.InputMethodService;
@@ -288,6 +289,15 @@ public final class MockIme extends InputMethodService {
                         final int keyEventCode = command.getExtras().getInt("keyEventCode");
                         sendDownUpKeyEvents(keyEventCode);
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "getApplicationInfo": {
+                        final String packageName = command.getExtras().getString("packageName");
+                        final int flags = command.getExtras().getInt("flags");
+                        try {
+                            return getPackageManager().getApplicationInfo(packageName, flags);
+                        } catch (PackageManager.NameNotFoundException e) {
+                            return e;
+                        }
                     }
                     case "getDisplayId":
                         return getDisplay().getDisplayId();
@@ -809,6 +819,13 @@ public final class MockIme extends InputMethodService {
                         suggestionView -> {
                             Log.d(TAG, "new inline suggestion view ready");
                             if (suggestionView != null) {
+                                suggestionView.setOnClickListener((v) -> {
+                                    getTracer().onInlineSuggestionClickedEvent(() -> { });
+                                });
+                                suggestionView.setOnLongClickListener((v) -> {
+                                    getTracer().onInlineSuggestionLongClickedEvent(() -> { });
+                                    return true;
+                                });
                                 pendingInlineSuggestions.mViews[index] = suggestionView;
                             }
                             if (pendingInlineSuggestions.mInflatedViewCount.incrementAndGet()
@@ -1067,6 +1084,16 @@ public final class MockIme extends InputMethodService {
             arguments.putParcelable("response", response);
             return recordEventInternal("onInlineSuggestionsResponse", supplier::getAsBoolean,
                     arguments);
+        }
+
+        void onInlineSuggestionClickedEvent(@NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            recordEventInternal("onInlineSuggestionClickedEvent", runnable, arguments);
+        }
+
+        void onInlineSuggestionLongClickedEvent(@NonNull Runnable runnable) {
+            final Bundle arguments = new Bundle();
+            recordEventInternal("onInlineSuggestionLongClickedEvent", runnable, arguments);
         }
     }
 }

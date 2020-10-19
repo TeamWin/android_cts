@@ -307,7 +307,7 @@ def run_rotations(camera_id, test_name):
     with ItsSession(camera_id) as cam:
         props = cam.get_camera_properties()
         method = {'test_sensor_fusion': {
-                          'flag': its.caps.sensor_fusion_capable(props),
+                          'flag': its.caps.sensor_fusion_test_capable(props, cam),
                           'runs': 10},
                   'test_multi_camera_frame_sync': {
                           'flag': its.caps.multi_camera_frame_sync_capable(props),

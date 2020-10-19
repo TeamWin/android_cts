@@ -474,7 +474,7 @@ public class MediaExtractorTest extends AndroidTestCase {
             }
         }
 
-        // Not all devices support AC4
+        // Not all devices support AC4.
         if (ac4TrackIndex == -1) {
             List<AudioPresentation> presentations =
                     mExtractor.getAudioPresentations(0 /*trackIndex*/);

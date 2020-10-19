@@ -2186,6 +2186,11 @@
         dismiss them.
     </string>
     <string name="msg_extras_preserved">Check that Message extras Bundle was preserved.</string>
+    <string name="conversation_section_ordering">If this device supports conversation notifications,
+        and groups them into a separate section from alerting and silent non-conversation
+        notifications, fully expand the notification display and verify that the \"Person A\"
+        notification appears before the "\Non-Person Notification\".
+        If this device does not support conversation notifications or does not group them together, press Pass.</string>
     <string name="qs_media_player_title">QS Media Controls Test</string>
     <string name="qs_media_player_test">Media Controls Test</string>
     <string name="qs_media_player_info">This test checks that media controls appear in the
@@ -4647,6 +4652,16 @@ You should be prompted to select credentials; choose the ones you just installed
     <!-- Common strings for the TV Display tests -->
     <string name="tv_start_test">Start Test</string>
 
+    <!-- Audio Capabilities test -->
+    <string name="tv_audio_capabilities_test">Audio Capabilities Test</string>
+    <string name="tv_audio_capabilities_test_info">This test checks if AudioDeviceInfo and
+    AudioTrack#isDirectPlaybackSupported APIs correctly report the Audio capabilities
+    of the connected audio devices.</string>
+    <string name="tv_audio_capabilities_no_receiver_connected">Disconnect all receivers or
+    soundbars which are connected. </string>
+    <string name="tv_audio_capabilities_receiver_connected">Connect a receiver or
+    soundbar which can play Dolby Atmos. </string>
+
     <!-- HDR Capabilities test -->
     <string name="tv_hdr_capabilities_test">HDR Capabilities Test</string>
     <string name="tv_hdr_capabilities_test_step_hdr_display">HDR Display</string>
@@ -5571,16 +5586,16 @@ Follow the instructions on the screen to measure the frequency response for the 
     1. Click Start Test. \n\n
     2. An alert dialog with install instruction will be shown if the sample Instant App has not been installed, otherwise, the sample Instant App will be opened automatically. \n\n
     3. Drag down the notification bar when the sample Instant App is at foreground. \n\n
-    4. Skip this step in china version. \n\n
+    4. Check if Instant App is shown in notifciation area with the following (Please expand the notification if it is collapsed): \n
+    \u0020\u0020\u0020a. It provides information about Instant Apps not requiring installation and an action that provides more information about the Instant App. \n
+    \u0020\u0020\u0020b. It provides an action allowing the user to launch the associated link with web browser. \n\n
     5. Click Pass button if all checks in step 4 passed, otherwise click Fail button.
     </string>
     <string name="ia_notification_instruction_label_no_app_market_version">\n
     1. Click Start Test. \n\n
     2. An alert dialog with install instruction will be shown if the sample Instant App has not been installed, otherwise, the sample Instant App will be opened automatically. \n\n
     3. Drag down the notification bar when the sample Instant App is at foreground. \n\n
-    4. Check if Instant App is shown in notification area with the following (Please expand the notification if it is collapsed): \n
-    \u0020\u0020\u0020a. It provides information about Instant Apps not requiring installation and an action that provides more information about the Instant App. \n
-    \u0020\u0020\u0020b. Skip this step in china version.Can not launch the associated link with web browser. \n\n
+    4. Check if Instant App is shown in notification area with information about Instant Apps not requiring installation and an action that provides more information about the Instant App (Please expand the notification if it is collapsed) \n\n
     5. Click Pass button if all checks in step 4 passed, otherwise click Fail button.
     </string>
     <string name="ia_recents">Instant Apps Recents Test</string>

@@ -555,12 +555,13 @@ def backward_compatible(props):
               0 in props["android.request.availableCapabilities"]
 
 
-def sensor_fusion_capable(props):
+def sensor_fusion_test_capable(props, cam):
     """Determine if test_sensor_fusion is run."""
     return all([
             its.caps.sensor_fusion(props),
             its.caps.manual_sensor(props),
-            props["android.lens.facing"] != FACING_EXTERNAL])
+            props["android.lens.facing"] != FACING_EXTERNAL,
+            cam.get_sensors().get("gyro")])
 
 
 def multi_camera_frame_sync_capable(props):

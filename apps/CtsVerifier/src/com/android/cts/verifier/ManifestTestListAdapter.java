@@ -131,6 +131,10 @@ public class ManifestTestListAdapter extends TestListAdapter {
 
     private static final String CONFIG_HDMI_SOURCE = "config_hdmi_source";
 
+    private static final String CONFIG_TV_PANEL = "config_tv_panel";
+
+    private static final String CONFIG_QUICK_SETTINGS_SUPPORTED = "config_quick_settings_supported";
+
     /** The config to represent that a test is only needed to run in the main display mode
      * (i.e. unfolded) */
     private static final String SINGLE_DISPLAY_MODE = "single_display_mode";
@@ -421,30 +425,44 @@ public class ManifestTestListAdapter extends TestListAdapter {
                         }
                         break;
                     case CONFIG_HAS_RECENTS:
-                        final Resources systemRes = mContext.getResources().getSystem();
-                        final int id = systemRes.getIdentifier("config_hasRecents", "bool",
-                                "android");
-                        if (id == Resources.ID_NULL || !systemRes.getBoolean(id)) {
+                        if (!getSystemResourceFlag("config_hasRecents")) {
                             return false;
                         }
                         break;
                     case CONFIG_HDMI_SOURCE:
-                        final int DEVICE_TYPE_HDMI_SOURCE = 4;
-                        try {
-                            if (!getHdmiDeviceType().contains(DEVICE_TYPE_HDMI_SOURCE)) {
-                                return false;
-                            }
-                        } catch (Exception exception) {
-                            Log.e(
-                                    LOG_TAG,
-                                    "Exception while looking up HDMI device type.",
-                                    exception);
+                        if(isTvPanel()) {
+                            return false;
+                        }
+                        break;
+                    case CONFIG_TV_PANEL:
+                        if(!isTvPanel()) {
+                            return false;
+                        }
+                        break;
+                    case CONFIG_QUICK_SETTINGS_SUPPORTED:
+                        if (!getSystemResourceFlag("config_quickSettingsSupported")) {
+                            return false;
                         }
                         break;
                     default:
                         break;
                 }
             }
+        }
+        return true;
+    }
+
+    private boolean isTvPanel() {
+        final int DEVICE_TYPE_HDMI_SOURCE = 4;
+        try {
+            if (getHdmiDeviceType().contains(DEVICE_TYPE_HDMI_SOURCE)) {
+                return false;
+            }
+        } catch (Exception exception) {
+            Log.e(
+                    LOG_TAG,
+                    "Exception while looking up HDMI device type.",
+                    exception);
         }
         return true;
     }
@@ -468,6 +486,17 @@ public class ManifestTestListAdapter extends TestListAdapter {
             default:
                 return false;
         }
+    }
+
+    private boolean getSystemResourceFlag(String key) {
+        final Resources systemRes = mContext.getResources().getSystem();
+        final int id = systemRes.getIdentifier(key, "bool", "android");
+        if (id == Resources.ID_NULL) {
+            // The flag being queried should exist in
+            // frameworks/base/core/res/res/values/config.xml.
+            throw new RuntimeException("System resource flag " + key + " not found");
+        }
+        return systemRes.getBoolean(id);
     }
 
     private static List<Integer> getHdmiDeviceType()

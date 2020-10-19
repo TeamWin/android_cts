@@ -977,6 +977,27 @@ public class MockImeSession implements AutoCloseable {
         return callCommandInternal("sendDownUpKeyEvents", params);
     }
 
+    /**
+     * Lets {@link MockIme} call
+     * {@link android.content.pm.PackageManager#getApplicationInfo(String, int)} with the given
+     * {@code packageName} and {@code flags}.
+     *
+     * @param packageName the package name to be passed to
+     *                    {@link android.content.pm.PackageManager#getApplicationInfo(String, int)}.
+     * @param flags the flags to be passed to
+     *                    {@link android.content.pm.PackageManager#getApplicationInfo(String, int)}.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}.
+     */
+    @NonNull
+    public ImeCommand callGetApplicationInfo(@NonNull String packageName, int flags) {
+        final Bundle params = new Bundle();
+        params.putString("packageName", packageName);
+        params.putInt("flags", flags);
+        return callCommandInternal("getApplicationInfo", params);
+    }
+
     @NonNull
     public ImeCommand callGetDisplayId() {
         final Bundle params = new Bundle();

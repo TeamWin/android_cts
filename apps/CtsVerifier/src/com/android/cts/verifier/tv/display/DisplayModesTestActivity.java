@@ -24,6 +24,8 @@ import android.view.Display;
 import androidx.annotation.StringRes;
 
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.tv.TestSequence;
+import com.android.cts.verifier.tv.TestStepBase;
 import com.android.cts.verifier.tv.TvAppVerifierActivity;
 import com.android.cts.verifier.tv.TvUtil;
 
@@ -122,8 +124,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
         private void runTest() {
             try {
                 // Verify the display APIs do not crash when the display is disconnected
-                DisplayManager displayManager =
-                        (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+                DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
                 Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
                 display.getMode();
                 display.getSupportedModes();
@@ -155,8 +156,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
         @Override
         public void runTest() {
-            DisplayManager displayManager =
-                    (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+            DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
             Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
             getAsserter()
                     .withMessage("Display.getMode()")
@@ -216,8 +216,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
 
         @Override
         public void runTest() {
-            DisplayManager displayManager =
-                    (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+            DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
             Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
 
             getAsserter()
@@ -257,8 +256,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
         }
 
         private static String getInstructionText(Context context) {
-            DisplayManager displayManager =
-                    (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
+            DisplayManager displayManager = context.getSystemService(DisplayManager.class);
             Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
             String supportedModes =
                     Arrays.stream(display.getSupportedModes())
@@ -281,7 +279,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
     }
 
     // We use a custom Mode class since the constructors of Display.Mode are hidden. Additionally,
-    // we want to use fuzzy comparision for frame rates which is not used in Display.Mode.equals().
+    // we want to use fuzzy comparison for frame rates which is not used in Display.Mode.equals().
     private static class Mode {
         public int mWidth;
         public int mHeight;

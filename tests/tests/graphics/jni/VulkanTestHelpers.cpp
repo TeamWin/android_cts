@@ -69,6 +69,29 @@ void addImageTransitionBarrier(VkCommandBuffer commandBuffer, VkImage image,
 
 } // namespace
 
+static bool enumerateDeviceExtensions(VkPhysicalDevice device,
+                                      std::vector<VkExtensionProperties>* extensions) {
+    VkResult result;
+
+    uint32_t count = 0;
+    result = vkEnumerateDeviceExtensionProperties(device, nullptr, &count, nullptr);
+    if (result != VK_SUCCESS) return false;
+
+    extensions->resize(count);
+    result = vkEnumerateDeviceExtensionProperties(device, nullptr, &count, extensions->data());
+    if (result != VK_SUCCESS) return false;
+
+    return true;
+}
+
+static bool hasExtension(const char* extension_name,
+                         const std::vector<VkExtensionProperties>& extensions) {
+    return std::find_if(extensions.cbegin(), extensions.cend(),
+                        [extension_name](const VkExtensionProperties& extension) {
+                            return strcmp(extension.extensionName, extension_name) == 0;
+                        }) != extensions.cend();
+}
+
 bool VkInit::init() {
   VkApplicationInfo appInfo = {
       .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -107,6 +130,12 @@ bool VkInit::init() {
   int status = vkEnumeratePhysicalDevices(mInstance, &gpuCount, &mGpu);
   ASSERT(status == VK_SUCCESS || status == VK_INCOMPLETE);
   ASSERT(gpuCount > 0);
+
+  std::vector<VkExtensionProperties> supportedDeviceExtensions;
+  ASSERT(enumerateDeviceExtensions(mGpu, &supportedDeviceExtensions));
+  for (const auto extension : deviceExt) {
+      ASSERT(hasExtension(extension, supportedDeviceExtensions));
+  }
 
   uint32_t queueFamilyCount = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(mGpu, &queueFamilyCount, nullptr);

@@ -24,6 +24,7 @@ android_test {
     libs: ["android.test.runner"],
     static_libs: [
         "androidx.test.rules",
+        "androidx.test.uiautomator_uiautomator",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "CtsMockInputMethodLib",
