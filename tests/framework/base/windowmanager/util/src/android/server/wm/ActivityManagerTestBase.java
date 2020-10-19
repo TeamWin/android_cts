@@ -17,6 +17,8 @@
 package android.server.wm;
 
 import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
 import static android.app.Instrumentation.ActivityMonitor;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
@@ -150,6 +152,7 @@ import android.view.ViewConfiguration;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
@@ -1191,6 +1194,12 @@ public abstract class ActivityManagerTestBase {
         return new TestActivitySession<T>();
     }
 
+    /** @see ObjectTracker#manage(AutoCloseable) */
+    protected SystemAlertWindowAppOpSession createAllowSystemAlertWindowAppOpSession() {
+        return mObjectTracker.manage(
+                new SystemAlertWindowAppOpSession(mContext.getOpPackageName(), MODE_ALLOWED));
+    }
+
     /**
      * Test @Rule class that disables screen doze settings before each test method running and
      * restoring to initial values after test method finished.
@@ -1427,6 +1436,35 @@ public abstract class ActivityManagerTestBase {
          */
         protected void setLockDisabled(boolean lockDisabled) {
             runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
+        }
+    }
+
+    /** Helper class to set and restore appop mode "android:system_alert_window". */
+    protected static class SystemAlertWindowAppOpSession implements AutoCloseable {
+        private final String mPackageName;
+        private final int mPreviousOpMode;
+
+        SystemAlertWindowAppOpSession(String packageName, int mode) {
+            mPackageName = packageName;
+            try {
+                mPreviousOpMode = AppOpsUtils.getOpMode(mPackageName, OPSTR_SYSTEM_ALERT_WINDOW);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            setOpMode(mode);
+        }
+
+        @Override
+        public void close() {
+            setOpMode(mPreviousOpMode);
+        }
+
+        void setOpMode(int mode) {
+            try {
+                AppOpsUtils.setOpMode(mPackageName, OPSTR_SYSTEM_ALERT_WINDOW, mode);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
