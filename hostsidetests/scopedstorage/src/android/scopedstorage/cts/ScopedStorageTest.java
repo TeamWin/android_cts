@@ -165,7 +165,9 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class ScopedStorageTest {
     static final String TAG = "ScopedStorageTest";
+    static final String CONTENT_PROVIDER_URL = "content://android.tradefed.contentprovider";
     static final String THIS_PACKAGE_NAME = getContext().getPackageName();
+    static final int USER_SYSTEM = 0;
 
     /**
      * To help avoid flaky tests, give ourselves a unique nonce to be used for
@@ -767,7 +769,7 @@ public class ScopedStorageTest {
         final File videoFile = new File(getMusicDir(), VIDEO_FILE_NAME);
         try {
             // TEST_APP_A with storage permission should not see pdf file in DCIM
-            executeShellCommand("touch " + pdfFile.getAbsolutePath());
+            createFileUsingTradefedContentProvider(pdfFile);
             assertThat(pdfFile.exists()).isTrue();
             assertThat(MediaStore.scanFile(getContentResolver(), pdfFile)).isNotNull();
 
@@ -775,14 +777,14 @@ public class ScopedStorageTest {
             assertThat(listAs(TEST_APP_A, getDcimDir().getPath()))
                     .doesNotContain(NONMEDIA_FILE_NAME);
 
-            executeShellCommand("touch " + videoFile.getAbsolutePath());
+            createFileUsingTradefedContentProvider(videoFile);
             // We don't insert files to db for files created by shell.
             assertThat(MediaStore.scanFile(getContentResolver(), videoFile)).isNotNull();
             // TEST_APP_A with storage permission should see video file in Music directory.
             assertThat(listAs(TEST_APP_A, getMusicDir().getPath())).contains(VIDEO_FILE_NAME);
         } finally {
-            executeShellCommand("rm " + pdfFile.getAbsolutePath());
-            executeShellCommand("rm " + videoFile.getAbsolutePath());
+            deleteFileUsingTradefedContentProvider(pdfFile);
+            deleteFileUsingTradefedContentProvider(videoFile);
             MediaStore.scanFile(getContentResolver(), pdfFile);
             MediaStore.scanFile(getContentResolver(), videoFile);
             uninstallAppNoThrow(TEST_APP_A);
@@ -1647,7 +1649,7 @@ public class ScopedStorageTest {
         final File topLevelDir2 = new File(getExternalStorageDir(), TEST_DIRECTORY_NAME + "_2");
         final File nonTopLevelDir = new File(getDcimDir(), TEST_DIRECTORY_NAME);
         try {
-            executeShellCommand("mkdir " + topLevelDir1.getAbsolutePath());
+            createDirUsingTradefedContentProvider(topLevelDir1);
             assertTrue(topLevelDir1.exists());
 
             // We can't rename a top level directory to a top level directory
@@ -1659,8 +1661,8 @@ public class ScopedStorageTest {
             // We can't rename a non-top level directory to a top level directory.
             assertCantRenameDirectory(nonTopLevelDir, topLevelDir2, null);
         } finally {
-            executeShellCommand("rmdir " + topLevelDir1.getAbsolutePath());
-            executeShellCommand("rmdir " + topLevelDir2.getAbsolutePath());
+            deleteDirUsingTradefedContentProvider(topLevelDir1);
+            deleteDirUsingTradefedContentProvider(topLevelDir2);
             nonTopLevelDir.delete();
         }
     }
@@ -2276,13 +2278,11 @@ public class ScopedStorageTest {
         final File podcastsDir = getPodcastsDir();
         try {
             if (podcastsDir.exists()) {
-                // Apps can't delete top level directories, not even default directories, so we let
-                // shell do the deed for us.
-                executeShellCommand("rm -r " + podcastsDir);
+                deleteDirUsingTradefedContentProvider(podcastsDir);
             }
             assertThat(podcastsDir.mkdir()).isTrue();
         } finally {
-            executeShellCommand("mkdir " + podcastsDir);
+            createDirUsingTradefedContentProvider(podcastsDir);
         }
     }
 
@@ -2760,7 +2760,7 @@ public class ScopedStorageTest {
         try {
             installApp(TEST_APP_A);
             assertCreateFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
-            executeShellCommand("touch " + otherTopLevelFile);
+            createFileUsingTradefedContentProvider(otherTopLevelFile);
 
             // We can list other apps' files
             assertDirectoryContains(otherAppPdf.getParentFile(), otherAppPdf);
@@ -2772,7 +2772,7 @@ public class ScopedStorageTest {
             // We can also list all top level directories
             assertDirectoryContains(getExternalStorageDir(), getDefaultTopLevelDirs());
         } finally {
-            executeShellCommand("rm " + otherTopLevelFile);
+            deleteFileUsingTradefedContentProvider(otherTopLevelFile);
             deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
             uninstallApp(TEST_APP_A);
         }
@@ -2802,6 +2802,8 @@ public class ScopedStorageTest {
 
     @Test
     public void testRenameFromShell() throws Exception {
+        // This test is for shell and shell always runs as USER_SYSTEM
+        if (getCurrentUser() != USER_SYSTEM) return;
         final File imageFile = new File(getPicturesDir(), IMAGE_FILE_NAME);
         final File dir = new File(getMoviesDir(), TEST_DIRECTORY_NAME);
         final File renamedDir = new File(getMusicDir(), TEST_DIRECTORY_NAME);
@@ -3304,5 +3306,39 @@ public class ScopedStorageTest {
         } else {
             assertThrows(ErrnoException.class, () -> { Os.access(file.getAbsolutePath(), mask); });
         }
+    }
+
+    private void createFileUsingTradefedContentProvider(File file) throws Exception {
+        // Files/Dirs are created using content provider. Owner of the Filse/Dirs is
+        // android.tradefed.contentprovider.
+        Log.d(TAG, "Creating file " + file);
+        getContentResolver().openFile(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), "w", null);
+    }
+
+    private void createDirUsingTradefedContentProvider(File file) throws Exception {
+        // Files/Dirs are created using content provider. Owner of the Files/Dirs is
+        // android.tradefed.contentprovider.
+        Log.d(TAG, "Creating Dir " + file);
+        // Create a tmp file in the target directory, this would also create the required
+        // directory, then delete the tmp file. It would leave only new directory.
+        getContentResolver()
+            .openFile(Uri.parse(CONTENT_PROVIDER_URL + file.getPath() + "/tmp.txt"), "w", null);
+        getContentResolver()
+            .delete(Uri.parse(CONTENT_PROVIDER_URL + file.getPath() + "/tmp.txt"), null, null);
+    }
+
+    private void deleteFileUsingTradefedContentProvider(File file) throws Exception {
+        Log.d(TAG, "Deleting file " + file);
+        getContentResolver().delete(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), null, null);
+    }
+
+    private void deleteDirUsingTradefedContentProvider(File file) throws Exception {
+        Log.d(TAG, "Deleting Dir " + file);
+        getContentResolver().delete(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), null, null);
+    }
+
+    private int getCurrentUser() throws Exception {
+        String userId = executeShellCommand("am get-current-user");
+        return Integer.parseInt(userId.trim());
     }
 }
