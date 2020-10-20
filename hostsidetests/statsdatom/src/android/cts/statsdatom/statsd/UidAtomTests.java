@@ -232,22 +232,27 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testAppCrashOccurred() throws Exception {
         final int atomTag = Atom.APP_CRASH_OCCURRED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag, false);
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(config, atomTag, /*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), config);
         Thread.sleep(WAIT_TIME_SHORT);
 
-        runActivity("StatsdCtsForegroundActivity", "action", "action.crash");
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.crash");
 
-        Thread.sleep(WAIT_TIME_SHORT);
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
+        assertThat(data).hasSize(1);
         AppCrashOccurred atom = data.get(0).getAtom().getAppCrashOccurred();
         assertThat(atom.getEventType()).isEqualTo("crash");
         assertThat(atom.getIsInstantApp().getNumber())
-            .isEqualTo(AppCrashOccurred.InstantApp.FALSE_VALUE);
+                .isEqualTo(AppCrashOccurred.InstantApp.FALSE_VALUE);
         assertThat(atom.getForegroundState().getNumber())
-            .isEqualTo(AppCrashOccurred.ForegroundState.FOREGROUND_VALUE);
-        assertThat(atom.getPackageName()).isEqualTo(TEST_PACKAGE_NAME);
+                .isEqualTo(AppCrashOccurred.ForegroundState.FOREGROUND_VALUE);
+        assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
     }
 
     public void testAppStartOccurred() throws Exception {

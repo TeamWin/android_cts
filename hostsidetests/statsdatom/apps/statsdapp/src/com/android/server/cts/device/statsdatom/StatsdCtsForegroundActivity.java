@@ -31,6 +31,7 @@ public class StatsdCtsForegroundActivity extends Activity {
     private static final String TAG = StatsdCtsForegroundActivity.class.getSimpleName();
 
     public static final String KEY_ACTION = "action";
+    public static final String ACTION_CRASH = "action.crash";
     public static final String ACTION_SHOW_NOTIFICATION = "action.show_notification";
 
     @Override
@@ -49,6 +50,9 @@ public class StatsdCtsForegroundActivity extends Activity {
         switch (action) {
             case ACTION_SHOW_NOTIFICATION:
                 doShowNotification();
+                break;
+            case ACTION_CRASH:
+                doCrash();
                 break;
             default:
                 Log.e(TAG, "Intent had invalid action " + action);
@@ -75,5 +79,10 @@ public class StatsdCtsForegroundActivity extends Activity {
                         .build());
         nm.cancel(notificationId);
         finish();
+    }
+
+    @SuppressWarnings("ConstantOverflow")
+    private void doCrash() {
+        Log.e(TAG, "About to crash the app with 1/0 " + (long) 1 / 0);
     }
 }
