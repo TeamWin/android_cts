@@ -77,11 +77,30 @@ public class TunerFilterTest {
         if (!hasTuner()) return;
         AvSettings settings =
                 AvSettings
-                        .builder(Filter.TYPE_TS, true)
+                        .builder(Filter.TYPE_TS, true) // is Audio
                         .setPassthrough(false)
+                        .setAudioStreamType(AvSettings.AUDIO_STREAM_TYPE_MPEG1)
                         .build();
 
         assertFalse(settings.isPassthrough());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(settings.getAudioStreamType(), AvSettings.AUDIO_STREAM_TYPE_MPEG1);
+        } else {
+            assertEquals(settings.getAudioStreamType(), AvSettings.AUDIO_STREAM_TYPE_UNDEFINED);
+        }
+
+        settings = AvSettings
+                .builder(Filter.TYPE_TS, false) // is Video
+                .setPassthrough(false)
+                .setVideoStreamType(AvSettings.VIDEO_STREAM_TYPE_MPEG1)
+                .build();
+
+        assertFalse(settings.isPassthrough());
+        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
+            assertEquals(settings.getVideoStreamType(), AvSettings.VIDEO_STREAM_TYPE_MPEG1);
+        } else {
+            assertEquals(settings.getVideoStreamType(), AvSettings.VIDEO_STREAM_TYPE_UNDEFINED);
+        }
     }
 
     @Test
