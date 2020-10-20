@@ -26,6 +26,10 @@ import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREG
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -46,7 +50,6 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
-import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -54,17 +57,26 @@ import android.os.Parcel;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
+import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
-import android.test.InstrumentationTestCase;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.SystemUtil;
 
-public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+@Presubmit
+public class ActivityManagerProcessStateTest {
     private static final String TAG = ActivityManagerProcessStateTest.class.getName();
 
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
@@ -124,11 +136,9 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     private ApplicationInfo[] mAppInfo;
     private WatchUidRunner[] mWatchers;
 
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
+    @Before
+    public void setUp() throws Exception {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getContext();
         mTargetContext = mInstrumentation.getTargetContext();
         mServiceIntent = new Intent();
@@ -250,6 +260,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     /**
      * Test basic state changes as processes go up and down due to services running in them.
      */
+    @Test
     public void testUidImportanceListener() throws Exception {
         final Parcel data = Parcel.obtain();
         ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, mServiceIntent,
@@ -422,6 +433,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Test that background check correctly prevents idle services from running but allows
      * whitelisted apps to bypass the check.
      */
+    @Test
     public void testBackgroundCheckService() throws Exception {
         final Parcel data = Parcel.obtain();
         Intent serviceIntent = new Intent();
@@ -589,6 +601,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Test that background check behaves correctly after a process is no longer foreground: first
      * allowing a service to be started, then stopped by the system when idle.
      */
+    @Test
     public void testBackgroundCheckStopsService() throws Exception {
         final Parcel data = Parcel.obtain();
         ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, mServiceIntent,
@@ -760,6 +773,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Test the background check doesn't allow services to be started from broadcasts except when in
      * the correct states.
      */
+    @Test
     public void testBackgroundCheckBroadcastService() throws Exception {
         final Intent broadcastIntent = new Intent();
         broadcastIntent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
@@ -895,6 +909,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     /**
      * Test that background check does allow services to be started from activities.
      */
+    @Test
     public void testBackgroundCheckActivityService() throws Exception {
         final Intent activityIntent = new Intent();
         activityIntent.setClassName(SIMPLE_PACKAGE_NAME,
@@ -984,6 +999,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     /**
      * Test that the foreground service app op does prevent the foreground state.
      */
+    @Test
     public void testForegroundServiceAppOp() throws Exception {
         PermissionUtils.grantPermission(
                 STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
@@ -1144,6 +1160,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Verify that an app under background restrictions has its foreground services demoted to
      * ordinary service state when it is no longer the top app.
      */
+    @Test
     public void testBgRestrictedForegroundService() throws Exception {
         final Intent activityIntent = new Intent()
                 .setClassName(SIMPLE_PACKAGE_NAME,
@@ -1153,7 +1170,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         PermissionUtils.grantPermission(
                 STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         final ServiceProcessController controller = new ServiceProcessController(mContext,
-                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
+                mInstrumentation, STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
         final WatchUidRunner uidWatcher = controller.getUidWatcher();
 
         final Intent homeIntent = new Intent()
@@ -1226,6 +1243,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     /**
      * Test that a single "can't save state" app has the proper process management semantics.
      */
+    @Test
     public void testCantSaveStateLaunchAndBackground() throws Exception {
         if (!supportsCantSaveState()) {
             return;
@@ -1366,6 +1384,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     /**
      * Test that switching between two "can't save state" apps is handled properly.
      */
+    @Test
     public void testCantSaveStateLaunchAndSwitch() throws Exception {
         if (!supportsCantSaveState()) {
             return;
@@ -1531,6 +1550,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      *
      * @throws Exception
      */
+    @Test
     public void testCycleFgs() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -1591,6 +1611,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      *
      * @throws Exception
      */
+    @Test
     public void testCycleFgsTriangle() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -1677,6 +1698,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      *
      * @throws Exception
      */
+    @Test
     public void testCycleFgsTriangleBiDi() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -1758,6 +1780,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * client to service.
      * @throws Exception
      */
+    @Test
     public void testFgsLocationBind() throws Exception {
         setupWatchers(3);
 
@@ -1846,6 +1869,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Bound app should be TOP w/flag and BTOP without flag.
      * @throws Exception
      */
+    @Test
     public void testTopBind() throws Exception {
         setupWatchers(2);
 
@@ -1892,6 +1916,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         return monitor.waitForActivity();
     }
 
+    @Test
     public void testCycleTop() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -2029,6 +2054,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testCycleFgAppAndAlert() throws Exception {
         ApplicationInfo stubInfo = mContext.getPackageManager().getApplicationInfo(
                 STUB_PACKAGE_NAME, 0);
@@ -2148,5 +2174,59 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid2Watcher.finish();
             uid3Watcher.finish();
         }
+    }
+
+    // Copied from android.test.InstrumentationTestCase
+    /**
+     * Utility method for launching an activity.
+     *
+     * <p>The {@link Intent} used to launch the Activity is:
+     *  action = {@link Intent#ACTION_MAIN}
+     *  extras = null, unless a custom bundle is provided here
+     * All other fields are null or empty.
+     *
+     * <p><b>NOTE:</b> The parameter <i>pkg</i> must refer to the package identifier of the
+     * package hosting the activity to be launched, which is specified in the AndroidManifest.xml
+     * file.  This is not necessarily the same as the java package name.
+     *
+     * @param pkg The package hosting the activity to be launched.
+     * @param activityCls The activity class to launch.
+     * @param extras Optional extra stuff to pass to the activity.
+     * @return The activity, or null if non launched.
+     */
+    public final <T extends Activity> T launchActivity(
+            String pkg,
+            Class<T> activityCls,
+            Bundle extras) {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        if (extras != null) {
+            intent.putExtras(extras);
+        }
+        return launchActivityWithIntent(pkg, activityCls, intent);
+    }
+
+    // Copied from android.test.InstrumentationTestCase
+    /**
+     * Utility method for launching an activity with a specific Intent.
+     *
+     * <p><b>NOTE:</b> The parameter <i>pkg</i> must refer to the package identifier of the
+     * package hosting the activity to be launched, which is specified in the AndroidManifest.xml
+     * file.  This is not necessarily the same as the java package name.
+     *
+     * @param pkg The package hosting the activity to be launched.
+     * @param activityCls The activity class to launch.
+     * @param intent The intent to launch with
+     * @return The activity, or null if non launched.
+     */
+    @SuppressWarnings("unchecked")
+    public final <T extends Activity> T launchActivityWithIntent(
+            String pkg,
+            Class<T> activityCls,
+            Intent intent) {
+        intent.setClassName(pkg, activityCls.getName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        T activity = (T) mInstrumentation.startActivitySync(intent);
+        mInstrumentation.waitForIdleSync();
+        return activity;
     }
 }
