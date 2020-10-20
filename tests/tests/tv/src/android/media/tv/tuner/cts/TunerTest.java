@@ -209,7 +209,19 @@ public class TunerTest {
                         FrontendStatus.FRONTEND_STATUS_TYPE_FREQ_OFFSET,
                         FrontendStatus.FRONTEND_STATUS_TYPE_HIERARCHY,
                         FrontendStatus.FRONTEND_STATUS_TYPE_RF_LOCK,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_ATSC3_PLP_INFO
+                        FrontendStatus.FRONTEND_STATUS_TYPE_ATSC3_PLP_INFO,
+                        // Extended status types in Android 12
+                        FrontendStatus.FRONTEND_STATUS_TYPE_BERS,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_CODERATES,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_BANDWIDTH,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_GUARD_INTERVAL,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_TRANSMISSION_MODE,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_UEC,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_T2_SYSTEM_ID,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_INTERLEAVINGS,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_ISDBT_SEGMENTS,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_TS_DATA_RATES,
+                        FrontendStatus.FRONTEND_STATUS_TYPE_MODULATIONS_EXT
                 });
         assertNotNull(status);
 
@@ -242,6 +254,18 @@ public class TunerTest {
                 tuningInfo.getUec();
             }
         }
+        // Status supported from Android 12
+        status.getBandwidth();
+        status.getBers();
+        status.getCodeRates();
+        status.getGuardInterval();
+        status.getInterleaving();
+        status.getIsdbtSegment();
+        status.getModulationsExt();
+        status.getSystemId();
+        status.getTransmissionMode();
+        status.getTsDataRate();
+        status.getUec();
     }
 
     @Test
