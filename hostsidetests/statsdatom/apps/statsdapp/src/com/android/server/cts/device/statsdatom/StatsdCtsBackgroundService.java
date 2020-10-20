@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.server.cts.device.statsd;
-
-import com.android.server.cts.device.statsd.AtomTests;
+package com.android.server.cts.device.statsdatom;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -34,7 +32,7 @@ public class StatsdCtsBackgroundService extends IntentService {
     public static final int SLEEP_OF_ACTION_BACKGROUND_SLEEP = 2_000;
 
     static {
-        System.loadLibrary("lmkhelper");
+        System.loadLibrary("lmkhelper_statsdatom");
     }
 
     public StatsdCtsBackgroundService() {

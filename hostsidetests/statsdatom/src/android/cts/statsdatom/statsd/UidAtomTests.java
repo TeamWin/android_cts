@@ -208,21 +208,25 @@ public class UidAtomTests extends DeviceAtomTestCase {
         }
 
         final int atomTag = Atom.LMK_KILL_OCCURRED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag, false);
+        final String actionLmk = "action.lmk";
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(config, atomTag, /*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), config);
 
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        executeBackgroundService(ACTION_LMK);
+        DeviceUtils.executeBackgroundService(getDevice(), actionLmk);
         Thread.sleep(15_000);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        int appUid = DeviceUtils.getStatsdTestAppUid(getDevice());
 
         assertThat(data).hasSize(1);
         assertThat(data.get(0).getAtom().hasLmkKillOccurred()).isTrue();
         LmkKillOccurred atom = data.get(0).getAtom().getLmkKillOccurred();
-        assertThat(atom.getUid()).isEqualTo(getUid());
-        assertThat(atom.getProcessName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+        assertThat(atom.getUid()).isEqualTo(appUid);
+        assertThat(atom.getProcessName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertThat(atom.getOomAdjScore()).isAtLeast(500);
     }
 
