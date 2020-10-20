@@ -306,6 +306,23 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 result);
     }
 
+    protected void installAppIncremental(String appFileName)
+            throws FileNotFoundException, DeviceNotAvailableException {
+        final String signatureSuffix = ".idsig";
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
+        final File apk = buildHelper.getTestFile(appFileName);
+        assertNotNull(apk);
+        final File idsig = buildHelper.getTestFile(appFileName + signatureSuffix);
+        assertNotNull(idsig);
+        final String remoteApkPath = TEST_UPDATE_LOCATION + "/" + apk.getName();
+        final String remoteIdsigPath = remoteApkPath + signatureSuffix;
+        assertTrue(getDevice().pushFile(apk, remoteApkPath));
+        assertTrue(getDevice().pushFile(idsig, remoteIdsigPath));
+        String installResult = getDevice().executeShellCommand(
+                "pm install-incremental -t -g " + remoteApkPath);
+        assertEquals("Success\n", installResult);
+    }
+
     protected void forceStopPackageForUser(String packageName, int userId) throws Exception {
         // TODO Move this logic to ITestDevice
         executeShellCommand("am force-stop --user " + userId + " " + packageName);
