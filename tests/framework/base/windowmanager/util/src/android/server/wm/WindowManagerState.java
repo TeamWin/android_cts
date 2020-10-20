@@ -1512,7 +1512,7 @@ public class WindowManagerState {
     public static class WindowState extends WindowContainer {
 
         private static final int WINDOW_TYPE_NORMAL = 0;
-        private static final int WINDOW_TYPE_STARTING = 1;
+        public static final int WINDOW_TYPE_STARTING = 1;
         private static final int WINDOW_TYPE_EXITING = 2;
         private static final int WINDOW_TYPE_DEBUGGER = 3;
 
