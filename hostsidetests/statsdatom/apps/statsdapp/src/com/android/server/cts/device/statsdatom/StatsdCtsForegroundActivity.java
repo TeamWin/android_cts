@@ -23,6 +23,7 @@ import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -32,7 +33,10 @@ public class StatsdCtsForegroundActivity extends Activity {
 
     public static final String KEY_ACTION = "action";
     public static final String ACTION_CRASH = "action.crash";
+    public static final String ACTION_SLEEP_WHILE_TOP = "action.sleep_top";
     public static final String ACTION_SHOW_NOTIFICATION = "action.show_notification";
+
+    public static final int SLEEP_OF_ACTION_SLEEP_WHILE_TOP = 2_000;
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -54,10 +58,29 @@ public class StatsdCtsForegroundActivity extends Activity {
             case ACTION_CRASH:
                 doCrash();
                 break;
+            case ACTION_SLEEP_WHILE_TOP:
+                doSleepWhileTop(SLEEP_OF_ACTION_SLEEP_WHILE_TOP);
+                break;
             default:
                 Log.e(TAG, "Intent had invalid action " + action);
                 finish();
         }
+    }
+
+    /** Does nothing, but asynchronously. */
+    private void doSleepWhileTop(int sleepTime) {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... params) {
+                AtomTests.sleep(sleepTime);
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void nothing) {
+                finish();
+            }
+        }.execute();
     }
 
     private void doShowNotification() {

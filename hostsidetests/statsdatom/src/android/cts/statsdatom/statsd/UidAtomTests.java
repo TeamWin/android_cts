@@ -257,20 +257,23 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testAppStartOccurred() throws Exception {
         final int atomTag = Atom.APP_START_OCCURRED_FIELD_NUMBER;
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(config, atomTag, /*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), config);
 
-        createAndUploadConfig(atomTag, false);
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        runActivity("StatsdCtsForegroundActivity", "action", "action.sleep_top", 3_500);
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.sleep_top", 3_500);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertThat(data).hasSize(1);
         AppStartOccurred atom = data.get(0).getAtom().getAppStartOccurred();
-        assertThat(atom.getPkgName()).isEqualTo(TEST_PACKAGE_NAME);
+        assertThat(atom.getPkgName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertThat(atom.getActivityName())
-            .isEqualTo("com.android.server.cts.device.statsd.StatsdCtsForegroundActivity");
+                .isEqualTo("com.android.server.cts.device.statsdatom.StatsdCtsForegroundActivity");
         assertThat(atom.getIsInstantApp()).isFalse();
         assertThat(atom.getActivityStartMillis()).isGreaterThan(0L);
         assertThat(atom.getTransitionDelayMillis()).isGreaterThan(0);
