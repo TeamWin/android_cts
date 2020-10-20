@@ -55,6 +55,13 @@
         <option name="teardown-command"
                 value="settings put secure android.car.ENABLE_INITIAL_NOTICE_SCREEN_TO_USER 1" />
     </target_preparer>
+
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+      <!-- Disable hidden API checking, see b/166236554 -->
+        <option name="run-command" value="settings put global hidden_api_policy 1" />
+        <option name="teardown-command" value="settings delete global hidden_api_policy" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
         <option name="package" value="android.server.wm.cts"/>
         <option name="runtime-hint" value="1h"/>
