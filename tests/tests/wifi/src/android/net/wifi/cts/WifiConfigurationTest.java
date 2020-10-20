@@ -18,6 +18,7 @@ package android.net.wifi.cts;
 
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_EAP;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_EAP_SUITE_B;
+import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_EAP_WPA3_ENTERPRISE;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_OPEN;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_OWE;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_PSK;
@@ -81,6 +82,9 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
         assertEquals(WifiConfiguration.KeyMgmt.OWE, configuration.getAuthType());
 
         configuration.setSecurityParams(SECURITY_TYPE_EAP);
+        assertEquals(WifiConfiguration.KeyMgmt.WPA_EAP, configuration.getAuthType());
+
+        configuration.setSecurityParams(SECURITY_TYPE_EAP_WPA3_ENTERPRISE);
         assertEquals(WifiConfiguration.KeyMgmt.WPA_EAP, configuration.getAuthType());
 
         configuration.setSecurityParams(SECURITY_TYPE_EAP_SUITE_B);
