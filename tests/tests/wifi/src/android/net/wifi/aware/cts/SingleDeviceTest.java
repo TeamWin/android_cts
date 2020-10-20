@@ -52,6 +52,8 @@ import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
+import androidx.core.os.BuildCompat;
+
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayDeque;
@@ -444,6 +446,12 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 characteristics.getMaxServiceSpecificInfoLength(), 255);
         assertEquals("Match Filter Length", characteristics.getMaxMatchFilterLength(), 255);
         assertNotEquals("Cipher suites", characteristics.getSupportedCipherSuites(), 0);
+        if (BuildCompat.isAtLeastS()) {
+            mWifiAwareManager.enableInstantCommunicationMode(true);
+            assertEquals(mWifiAwareManager.isInstantCommunicationModeEnabled(),
+                    characteristics.isInstantCommunicationModeSupported());
+            mWifiAwareManager.enableInstantCommunicationMode(false);
+        }
     }
 
     /**
