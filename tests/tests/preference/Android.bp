@@ -28,6 +28,7 @@ android_test {
         "compatibility-device-util-axt",
         "mockito-target-minus-junit4",
         "ub-uiautomator",
+        "cts-wm-util",
     ],
 
     libs: [
