@@ -20,6 +20,8 @@ import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait
 import static android.server.wm.BarTestUtils.assumeHasStatusBar;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.server.wm.WindowUntrustedTouchTest.MIN_POSITIVE_OPACITY;
+import static android.server.wm.app.Components.OverlayTestService.EXTRA_LAYOUT_PARAMS;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
@@ -33,14 +35,12 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
@@ -82,6 +82,7 @@ public class WindowInputTests {
             new ActivityTestRule<>(TestActivity.class);
 
     private Instrumentation mInstrumentation;
+    private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     private TestActivity mActivity;
     private View mView;
     private final Random mRandom = new Random();
@@ -195,7 +196,7 @@ public class WindowInputTests {
                 mClickCount++;
             });
             mView.setOnTouchListener((v, ev) -> {
-                assertEquals((ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED), 0);
+                assertEquals(0, ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
                 return false;
             });
             mActivity.addWindow(mView, p);
@@ -235,29 +236,211 @@ public class WindowInputTests {
                     mClickCount++;
                 });
                 mView.setOnTouchListener((v, ev) -> {
-                    assertEquals((ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED),
-                            MotionEvent.FLAG_WINDOW_IS_OBSCURED);
+                    assertEquals(MotionEvent.FLAG_WINDOW_IS_OBSCURED,
+                            ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
                     return false;
                 });
                 mActivity.addWindow(mView, p);
 
                 // Set up an overlap window from service, use different process.
-                intent.putExtra(Components.OverlayTestService.EXTRA_WINDOW_NAME, windowName);
+                WindowManager.LayoutParams params = getObscuringViewLayoutParams(windowName);
+                params.flags |= FLAG_NOT_TOUCHABLE;
+                intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
                 mActivity.startForegroundService(intent);
             });
             mInstrumentation.waitForIdleSync();
-
-            final WindowManagerStateHelper wmState = new WindowManagerStateHelper();
-            wmState.waitForWithAmState(state -> {
-                return state.isWindowSurfaceShown(windowName);
-            }, windowName + "'s surface is appeared");
-
+            waitForWindow(windowName);
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             assertEquals(0, mClickCount);
         } finally {
             mActivity.stopService(intent);
         }
+    }
+
+    @Test
+    public void testDoNotFlagTouchesWhenObscuredByZeroOpacityWindow() throws Throwable {
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+
+        final Intent intent = new Intent();
+        intent.setComponent(Components.OVERLAY_TEST_SERVICE);
+        final String windowName = "Test Overlay";
+        try {
+            mActivityRule.runOnUiThread(() -> {
+                mView = new View(mActivity);
+                mView.setBackgroundColor(Color.GREEN);
+                p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
+                p.width = 100;
+                p.height = 100;
+                p.gravity = Gravity.CENTER;
+                mView.setOnClickListener((v) -> {
+                    mClickCount++;
+                });
+                mView.setOnTouchListener((v, ev) -> {
+                    assertEquals(0, ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
+                    return false;
+                });
+                mActivity.addWindow(mView, p);
+
+                // Set up an overlap window from service, use different process.
+                WindowManager.LayoutParams params = getObscuringViewLayoutParams(windowName);
+                params.flags |= FLAG_NOT_TOUCHABLE;
+                params.alpha = 0;
+                intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
+                mActivity.startForegroundService(intent);
+            });
+            mInstrumentation.waitForIdleSync();
+            waitForWindow(windowName);
+            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+
+            assertEquals(1, mClickCount);
+        } finally {
+            mActivity.stopService(intent);
+        }
+    }
+
+    @Test
+    public void testFlagTouchesWhenObscuredByMinPositiveOpacityWindow() throws Throwable {
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+
+        final Intent intent = new Intent();
+        intent.setComponent(Components.OVERLAY_TEST_SERVICE);
+        final String windowName = "Test Overlay";
+        try {
+            mActivityRule.runOnUiThread(() -> {
+                mView = new View(mActivity);
+                mView.setBackgroundColor(Color.GREEN);
+                p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
+                p.width = 100;
+                p.height = 100;
+                p.gravity = Gravity.CENTER;
+                mView.setOnClickListener((v) -> {
+                    mClickCount++;
+                });
+                mView.setOnTouchListener((v, ev) -> {
+                    assertEquals(MotionEvent.FLAG_WINDOW_IS_OBSCURED,
+                            ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
+                    return false;
+                });
+                mActivity.addWindow(mView, p);
+
+                // Set up an overlap window from service, use different process.
+                WindowManager.LayoutParams params = getObscuringViewLayoutParams(windowName);
+                params.flags |= FLAG_NOT_TOUCHABLE;
+                params.alpha = MIN_POSITIVE_OPACITY;
+                intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
+                mActivity.startForegroundService(intent);
+            });
+            mInstrumentation.waitForIdleSync();
+            waitForWindow(windowName);
+            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+
+            assertEquals(1, mClickCount);
+        } finally {
+            mActivity.stopService(intent);
+        }
+    }
+
+    @Test
+    public void testFlagTouchesWhenPartiallyObscuredByZeroOpacityWindow() throws Throwable {
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+
+        final Intent intent = new Intent();
+        intent.setComponent(Components.OVERLAY_TEST_SERVICE);
+        final String windowName = "Test Overlay";
+        try {
+            mActivityRule.runOnUiThread(() -> {
+                mView = new View(mActivity);
+                mView.setBackgroundColor(Color.GREEN);
+                p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
+                p.width = 100;
+                p.height = 100;
+                p.gravity = Gravity.CENTER;
+                mView.setOnClickListener((v) -> {
+                    mClickCount++;
+                });
+                mView.setOnTouchListener((v, ev) -> {
+                    assertEquals(MotionEvent.FLAG_WINDOW_IS_PARTIALLY_OBSCURED,
+                            ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_PARTIALLY_OBSCURED);
+                    return false;
+                });
+                mActivity.addWindow(mView, p);
+
+                // Set up an overlap window from service, use different process.
+                WindowManager.LayoutParams params = getObscuringViewLayoutParams(windowName, 30);
+                // Move it off the touch path (center) but still overlap with window above
+                params.y = 30;
+                params.alpha = 0;
+                intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
+                mActivity.startForegroundService(intent);
+            });
+            mInstrumentation.waitForIdleSync();
+            waitForWindow(windowName);
+            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+
+            assertEquals(1, mClickCount);
+        } finally {
+            mActivity.stopService(intent);
+        }
+    }
+
+    @Test
+    public void testDoNotFlagTouchesWhenPartiallyObscuredByNotTouchableZeroOpacityWindow()
+            throws Throwable {
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+
+        final Intent intent = new Intent();
+        intent.setComponent(Components.OVERLAY_TEST_SERVICE);
+        final String windowName = "Test Overlay";
+        try {
+            mActivityRule.runOnUiThread(() -> {
+                mView = new View(mActivity);
+                mView.setBackgroundColor(Color.GREEN);
+                p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
+                p.width = 100;
+                p.height = 100;
+                p.gravity = Gravity.CENTER;
+                mView.setOnClickListener((v) -> {
+                    mClickCount++;
+                });
+                mView.setOnTouchListener((v, ev) -> {
+                    assertEquals(0, ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_PARTIALLY_OBSCURED);
+                    return false;
+                });
+                mActivity.addWindow(mView, p);
+
+                // Set up an overlap window from service, use different process.
+                WindowManager.LayoutParams params = getObscuringViewLayoutParams(windowName, 30);
+                params.flags |= FLAG_NOT_TOUCHABLE;
+                // Move it off the touch path (center) but still overlap with window above
+                params.y = 30;
+                params.alpha = 0;
+                intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
+                mActivity.startForegroundService(intent);
+            });
+            mInstrumentation.waitForIdleSync();
+            waitForWindow(windowName);
+            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+
+            assertEquals(1, mClickCount);
+        } finally {
+            mActivity.stopService(intent);
+        }
+    }
+
+    private WindowManager.LayoutParams getObscuringViewLayoutParams(String windowName) {
+        return getObscuringViewLayoutParams(windowName, 100);
+    }
+
+    private WindowManager.LayoutParams getObscuringViewLayoutParams(String windowName, int size) {
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams();
+        params.setTitle(windowName);
+        params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        params.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
+        params.width = size;
+        params.height = size;
+        params.gravity = Gravity.CENTER;
+        return params;
     }
 
     @Test
@@ -431,6 +614,11 @@ public class WindowInputTests {
 
         executor.shutdown();
         executor.awaitTermination(5L, TimeUnit.SECONDS);
+    }
+
+    private void waitForWindow(String name) {
+        mWmState.waitForWithAmState(state -> state.isWindowSurfaceShown(name),
+                name + "'s surface is appeared");
     }
 
     public static class TestActivity extends Activity {
