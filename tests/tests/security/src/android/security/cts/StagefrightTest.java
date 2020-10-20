@@ -1720,6 +1720,11 @@ public class StagefrightTest {
     @Test
     @SecurityTest(minPatchLevel = "2019-12")
     public void testStagefright_cve_2019_2222() throws Exception {
+        // TODO(b/170987914): This also skips testing hw_codecs.
+        // Update doStagefrightTestRawBlob to skip just the sw_codec test.
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA_SOFTWARE_CODEC));
         int[] frameSizes = getFrameSizes(R.raw.cve_2019_2222_framelen);
         doStagefrightTestRawBlob(R.raw.cve_2019_2222_hevc, "video/hevc", 320, 240, frameSizes);
     }
