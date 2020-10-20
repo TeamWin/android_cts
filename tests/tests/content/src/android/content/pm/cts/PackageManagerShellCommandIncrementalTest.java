@@ -22,11 +22,16 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.UiAutomation;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.RemoteCallback;
 import android.platform.test.annotations.AppModeFull;
 import android.service.dataloader.DataLoaderService;
 import android.text.TextUtils;
@@ -53,11 +58,15 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
+@LargeTest
 public class PackageManagerShellCommandIncrementalTest {
     private static final String TEST_APP_PACKAGE = "com.example.helloworld";
 
@@ -161,7 +170,9 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @Test
     public void testInstallWithIdSig() throws Exception {
+        final Result stateListenerResult = startListeningForBroadcast();
         installPackage(TEST_APK);
+        assertTrue(stateListenerResult.await());
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
 
@@ -182,10 +193,12 @@ public class PackageManagerShellCommandIncrementalTest {
         File[] files = new File[]{apkfile, splitfile};
         String param = Arrays.stream(files).map(
                 file -> file.getName() + ":" + file.length()).collect(Collectors.joining(" "));
+        final Result stateListenerResult = startListeningForBroadcast();
         assertEquals("Success\n", executeShellCommand(
                 String.format("pm install-incremental -t -g -S %s %s",
                         (apkfile.length() + splitfile.length()), param),
                 files));
+        assertTrue(stateListenerResult.await());
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals("base, config.hdpi", getSplits(TEST_APP_PACKAGE));
     }
@@ -193,10 +206,12 @@ public class PackageManagerShellCommandIncrementalTest {
     @Test
     public void testInstallWithIdSigInvalidLength() throws Exception {
         File file = new File(createApkPath(TEST_APK));
+        final Result stateListenerResult = startListeningForBroadcast();
         assertTrue(
                 executeShellCommand("pm install-incremental -t -g -S " + (file.length() - 1),
                         new File[]{file}).contains(
                         "Failure"));
+        assertFalse(stateListenerResult.await());
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
@@ -206,10 +221,12 @@ public class PackageManagerShellCommandIncrementalTest {
         long length = file.length();
         // Streaming happens in blocks of 1024 bytes, new length will not stream the last block.
         long newLength = length - (length % 1024 == 0 ? 1024 : length % 1024);
+        final Result stateListenerResult = startListeningForBroadcast();
         assertTrue(
                 executeShellCommand("pm install-incremental -t -g -S " + length,
                         new File[]{file}, new long[]{newLength}).contains(
                         "Failure"));
+        assertFalse(stateListenerResult.await());
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
@@ -223,11 +240,13 @@ public class PackageManagerShellCommandIncrementalTest {
         File[] files = new File[]{apkfile, splitfile};
         String param = Arrays.stream(files).map(
                 file -> file.getName() + ":" + file.length()).collect(Collectors.joining(" "));
+        final Result stateListenerResult = startListeningForBroadcast();
         assertTrue(executeShellCommand(
                 String.format("pm install-incremental -t -g -S %s %s",
                         (apkfile.length() + splitfile.length()), param),
                 files, new long[]{apkfile.length(), newSplitLength}).contains(
                 "Failure"));
+        assertFalse(stateListenerResult.await());
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
@@ -333,5 +352,45 @@ public class PackageManagerShellCommandIncrementalTest {
     private String uninstallPackageSilently(String packageName) throws IOException {
         return executeShellCommand("pm uninstall " + packageName);
     }
+
+    interface Result {
+        boolean await() throws Exception;
+    }
+
+    private Result startListeningForBroadcast() {
+        final Intent intent = new Intent()
+                .setComponent(new ComponentName("android.content.pm.cts.app", "android.content"
+                        + ".pm.cts.app.MainActivity"))
+                // data uri unique to each activity start to ensure actual launch and not just
+                // redisplay
+                .setData(Uri.parse("test://" + UUID.randomUUID().toString()))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        intent.putExtra(Intent.EXTRA_PACKAGE_NAME, TEST_APP_PACKAGE);
+        HandlerThread responseThread = new HandlerThread("response");
+        responseThread.start();
+        // Should receive at least one startable broadcast and one fully_loaded broadcast
+        final Semaphore startableSemaphore = new Semaphore(0);
+        final Semaphore fullyLoadedSemaphore = new Semaphore(0);
+        final RemoteCallback callback = new RemoteCallback(
+                bundle -> {
+                    if (bundle == null) {
+                        return;
+                    }
+                    if (bundle.getString("intent").equals(Intent.ACTION_PACKAGE_STARTABLE)) {
+                        startableSemaphore.release();
+                    }
+                    if (bundle.getString("intent").equals(Intent.ACTION_PACKAGE_FULLY_LOADED)) {
+                        fullyLoadedSemaphore.release();
+                    }
+                },
+                new Handler(responseThread.getLooper())
+        );
+        intent.putExtra("callback", callback);
+        InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
+        return () -> startableSemaphore.tryAcquire(10, TimeUnit.SECONDS)
+                && fullyLoadedSemaphore.tryAcquire(10, TimeUnit.SECONDS);
+    }
+
+
 }
 
