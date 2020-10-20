@@ -21,12 +21,14 @@ import static android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC;
 import static android.media.MediaMetadataRetriever.OPTION_NEXT_SYNC;
 import static android.media.MediaMetadataRetriever.OPTION_PREVIOUS_SYNC;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -41,6 +43,7 @@ import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.view.Display;
 
 import androidx.test.filters.SmallTest;
 
@@ -642,11 +645,31 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     public void testThumbnailVP9Hdr() {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
 
+        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        int numberOfSupportedHdrTypes =
+            displayManager.getDisplay(Display.DEFAULT_DISPLAY).getHdrCapabilities()
+                .getSupportedHdrTypes().length;
+
+        if (numberOfSupportedHdrTypes == 0) {
+            MediaUtils.skipTest("No supported HDR display type");
+            return;
+        }
+
         testThumbnail("video_1280x720_vp9_hdr_static_3mbps.mkv", 1280, 720);
     }
 
     public void testThumbnailAV1Hdr() {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
+
+        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        int numberOfSupportedHdrTypes =
+            displayManager.getDisplay(Display.DEFAULT_DISPLAY).getHdrCapabilities()
+                .getSupportedHdrTypes().length;
+
+        if (numberOfSupportedHdrTypes == 0) {
+            MediaUtils.skipTest("No supported HDR display type");
+            return;
+        }
 
         testThumbnail("video_1280x720_av1_hdr_static_3mbps.webm", 1280, 720);
     }
