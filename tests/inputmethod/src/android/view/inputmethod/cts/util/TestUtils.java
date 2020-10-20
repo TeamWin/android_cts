@@ -17,6 +17,8 @@
 package android.view.inputmethod.cts.util;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -149,5 +151,16 @@ public final class TestUtils {
      */
     public static void unlockScreen() throws Exception {
         runShellCommand("input keyevent KEYCODE_MENU");
+    }
+
+    /**
+     * Call a command to force stop the given application package.
+     *
+     * @param pkg The name of the package to be stopped.
+     */
+    public static void forceStopPackage(@NonNull String pkg) {
+        runWithShellPermissionIdentity(() -> {
+            runShellCommandOrThrow("am force-stop " + pkg);
+        });
     }
 }
