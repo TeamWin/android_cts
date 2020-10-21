@@ -863,6 +863,9 @@ public class TunerTest {
 
             @Override
             public void onPriorityReported(boolean isHighPriority) {}
+
+            @Override
+            public void onDvbcAnnexReported(int dvbcAnnext) {}
         };
     }
 }
