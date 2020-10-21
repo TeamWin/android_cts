@@ -167,7 +167,7 @@ public class ProcStateAtomTests extends ProcStateTestCase {
         popUntilFind(data, onStates, PROC_STATE_FUNCTION); // clear out initial proc states.
         assertStatesOccurred(stateSet, data, waitTime, PROC_STATE_FUNCTION);
     }
-/*
+
     public void testTopSleeping() throws Exception {
         if (!hasFeature(FEATURE_WATCH, false)) return;
         Set<Integer> onStates = new HashSet<>(Arrays.asList(
@@ -195,7 +195,7 @@ public class ProcStateAtomTests extends ProcStateTestCase {
         // Don't check the wait time, since it's up to the system how long top sleeping persists.
         assertStatesOccurred(stateSet, data, 0, PROC_STATE_FUNCTION);
     }
-*/
+
     public void testCached() throws Exception {
         Set<Integer> onStates = CACHED_STATES;
         Set<Integer> offStates = complement(onStates);
