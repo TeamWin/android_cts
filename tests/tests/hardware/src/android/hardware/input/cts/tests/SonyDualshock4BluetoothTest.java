@@ -48,4 +48,11 @@ public class SonyDualshock4BluetoothTest extends InputHidTestCase {
         testInputVibratorEvents(R.raw.sony_dualshock4_bluetooth_vibratortests);
     }
 
+
+    @Test
+    public void testAllTouch() throws Throwable {
+        try (PointerCaptureSession session = new PointerCaptureSession()) {
+            testInputEvents(R.raw.sony_dualshock4_toucheventtests);
+        }
+    }
 }
