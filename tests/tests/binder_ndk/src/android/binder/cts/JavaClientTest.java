@@ -43,6 +43,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import test_package.Bar;
 import test_package.ByteEnum;
+import test_package.ExtendableParcelable;
 import test_package.Foo;
 import test_package.GenericBar;
 import test_package.GenericFoo;
@@ -50,6 +51,7 @@ import test_package.IEmpty;
 import test_package.ITest;
 import test_package.IntEnum;
 import test_package.LongEnum;
+import test_package.MyExt;
 import test_package.RegularPolygon;
 
 @RunWith(Parameterized.class)
@@ -686,4 +688,21 @@ public class JavaClientTest {
         assertEquals("a", mInterface.RepeatStringNullableLater("a"));
         assertEquals("foo", mInterface.RepeatStringNullableLater("foo"));
     }
+
+    @Test
+    public void testParcelableHolder() throws RemoteException {
+        ExtendableParcelable ep = new ExtendableParcelable();
+
+        MyExt myext1 = new MyExt();
+        myext1.a = 42;
+        myext1.b = "mystr";
+        ep.ext.setParcelable(myext1);
+
+        ExtendableParcelable ep2 = new ExtendableParcelable();
+        mInterface.RepeatExtendableParcelable(ep, ep2);
+        MyExt myext2 = ep2.ext.getParcelable(MyExt.class);
+        assertNotEquals(null, myext2);
+        assertEquals(42, myext2.a);
+        assertEquals("mystr", myext2.b);
+      }
 }
