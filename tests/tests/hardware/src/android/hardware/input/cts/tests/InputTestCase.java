@@ -32,6 +32,7 @@ import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.cts.input.InputJsonParser;
 
 import org.junit.After;
@@ -163,9 +164,13 @@ public abstract class InputTestCase {
      * @param actualSource actual source flag received in the test app.
      */
     void assertAxis(String testCase, MotionEvent expectedEvent, MotionEvent actualEvent) {
-        for (int axis = MotionEvent.AXIS_X; axis <= MotionEvent.AXIS_GENERIC_16; axis++) {
-            assertEquals(testCase + " (" + MotionEvent.axisToString(axis) + ")",
-                    expectedEvent.getAxisValue(axis), actualEvent.getAxisValue(axis), TOLERANCE);
+        for (int i = 0; i < actualEvent.getPointerCount(); i++) {
+            for (int axis = MotionEvent.AXIS_X; axis <= MotionEvent.AXIS_GENERIC_16; axis++) {
+                assertEquals(testCase + " pointer " + i
+                        + " (" + MotionEvent.axisToString(axis) + ")",
+                        expectedEvent.getAxisValue(axis, i), actualEvent.getAxisValue(axis, i),
+                        TOLERANCE);
+            }
         }
     }
 
@@ -369,6 +374,20 @@ public abstract class InputTestCase {
         }
     }
 
+    protected void requestFocusSync() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mDecorView.setFocusable(true);
+            mDecorView.setFocusableInTouchMode(true);
+            mDecorView.requestFocus();
+        });
+        PollingCheck.waitFor(mDecorView::hasFocus);
+    }
+
+    protected void requestPointerCaptureSync() throws Throwable {
+        mDecorView.requestPointerCapture();
+        requestFocusSync();
+    }
+
     protected class PointerCaptureSession implements AutoCloseable {
         protected PointerCaptureSession() {
             requestPointerCaptureSync();
@@ -381,10 +400,12 @@ public abstract class InputTestCase {
 
         private void requestPointerCaptureSync() {
             mInstrumentation.runOnMainSync(mDecorView::requestPointerCapture);
+            PollingCheck.waitFor(() -> mDecorView.hasPointerCapture());
         }
 
         private void releasePointerCaptureSync() {
             mInstrumentation.runOnMainSync(mDecorView::releasePointerCapture);
+            PollingCheck.waitFor(() -> !mDecorView.hasPointerCapture());
         }
     }
 }
