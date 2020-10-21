@@ -15,9 +15,11 @@
  */
 package android.host.multiuser;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.Presubmit;
 
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
@@ -29,6 +31,7 @@ import org.junit.runner.RunWith;
  *
  * Run: atest android.host.multiuser.EphemeralTest
  */
+@LargeTest
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class EphemeralTest extends BaseMultiUserTest {
 
@@ -39,16 +42,8 @@ public class EphemeralTest extends BaseMultiUserTest {
     @Presubmit
     @Test
     public void testSwitchAndRemoveEphemeralUser() throws Exception {
-        int ephemeralUserId = -1;
-        try {
-            ephemeralUserId = getDevice().createUser(
-                    "TestUser_" + System.currentTimeMillis() /* name */,
-                    false /* guest */,
-                    true /* ephemeral */);
-        } catch (Exception e) {
-            CLog.w("Failed to create user. Skipping test.");
-            return;
-        }
+        final int ephemeralUserId = createEphemeralUser();
+
         assertSwitchToNewUser(ephemeralUserId);
         assertSwitchToUser(ephemeralUserId, mInitialUserId);
         waitForUserRemove(ephemeralUserId);
@@ -59,18 +54,96 @@ public class EphemeralTest extends BaseMultiUserTest {
     @Presubmit
     @Test
     public void testRebootAndRemoveEphemeralUser() throws Exception {
-        int ephemeralUserId = -1;
-        try {
-            ephemeralUserId = getDevice().createUser(
-                    "TestUser_" + System.currentTimeMillis() /* name */,
-                    false /* guest */,
-                    true /* ephemeral */);
-        } catch (Exception e) {
-            CLog.w("Failed to create user. Skipping test.");
-            return;
-        }
+        final int ephemeralUserId = createEphemeralUser();
+
         assertSwitchToNewUser(ephemeralUserId);
         getDevice().reboot();
         assertUserNotPresent(ephemeralUserId);
+    }
+
+    /**
+     * Test to verify that {@link android.os.UserManager#removeUserOrSetEphemeral(int)} immediately
+     * removes a user that isn't running.
+     *
+     * <p>Indirectly executed by means of the --set-ephemeral-if-in-use flag
+     */
+    @Presubmit
+    @Test
+    public void testRemoveUserOrSetEphemeral_nonRunningUserRemoved() throws Exception {
+        final int userId = createUser();
+
+        executeRemoveUserOrSetEphemeralAdbCommand(userId);
+
+        assertUserNotPresent(userId);
+    }
+
+    /**
+     * Test to verify that {@link android.os.UserManager#removeUserOrSetEphemeral(int)} sets the
+     * current user to ephemeral and removes the user after user switch.
+     *
+     * <p>Indirectly executed by means of the --set-ephemeral-if-in-use flag
+     */
+    @Presubmit
+    @Test
+    public void testRemoveUserOrSetEphemeral_currentUserSetEphemeral_removeAfterSwitch()
+            throws Exception {
+        final int userId = createUser();
+
+        assertSwitchToNewUser(userId);
+        executeRemoveUserOrSetEphemeralAdbCommand(userId);
+        assertUserEphemeral(userId);
+
+        assertSwitchToUser(userId, mInitialUserId);
+        waitForUserRemove(userId);
+        assertUserNotPresent(userId);
+    }
+
+    /**
+     * Test to verify that {@link android.os.UserManager#removeUserOrSetEphemeral(int)} sets the
+     * current user to ephemeral and removes that user after reboot.
+     *
+     * <p>Indirectly executed by means of the --set-ephemeral-if-in-use flag
+     */
+    @Presubmit
+    @Test
+    public void testRemoveUserOrSetEphemeral_currentUserSetEphemeral_removeAfterReboot()
+            throws Exception {
+        final int userId = createUser();
+
+        assertSwitchToNewUser(userId);
+        executeRemoveUserOrSetEphemeralAdbCommand(userId);
+        assertUserEphemeral(userId);
+
+        getDevice().reboot();
+        assertUserNotPresent(userId);
+    }
+
+    private void executeRemoveUserOrSetEphemeralAdbCommand(int userId) throws Exception {
+        getDevice().executeShellV2Command("pm remove-user --set-ephemeral-if-in-use " + userId);
+    }
+
+    private void assertUserEphemeral(int userId) throws Exception {
+        assertUserPresent(userId);
+        assertWithMessage("User ID %s should be flagged as ephemeral", userId)
+                .that(getDevice().getUserInfos().get(userId).isEphemeral()).isTrue();
+    }
+
+    private int createUser() throws Exception {
+        return createUser(/* isGuest= */ false, /* isEphemeral= */ false);
+    }
+
+    private int createEphemeralUser() throws Exception {
+        return createUser(/* isGuest= */ false, /* isEphemeral= */ true);
+    }
+
+    private int createUser(boolean isGuest, boolean isEphemeral) throws Exception {
+        final String name = "TestUser_" + System.currentTimeMillis();
+        try {
+            return getDevice().createUser(name, isGuest, isEphemeral);
+        } catch (Exception e) {
+            throw new IllegalStateException(String.format(
+                    "Failed to create user (name=%s, isGuest=%s, isEphemeral=%s)",
+                    name, isGuest, isEphemeral), e);
+        }
     }
 }
