@@ -45,6 +45,8 @@
 
         <service android:name=".IsolatedProcessService"
             android:isolatedProcess="true"/>
+        <service android:name=".StatsdCtsBackgroundService"
+                 android:exported="true"/>
         <activity android:name=".StatsdCtsForegroundActivity"
             android:exported="true"/>
     </application>

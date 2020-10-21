@@ -14,6 +14,19 @@
  * limitations under the License.
  */
 
+cc_library_shared {
+    name: "liblmkhelper_statsdatom", //TODO(b/163546661): rename back to liblmkhelper.
+    srcs: ["jni/alloc_stress_activity.cpp"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    header_libs: ["jni_headers"],
+    shared_libs: ["liblog"],
+    stl: "c++_static",
+    sdk_version: "current",
+}
+
 android_test_helper_app {
     name: "CtsStatsdAtomApp",
     defaults: ["cts_defaults"],
@@ -35,6 +48,7 @@ android_test_helper_app {
         "androidx.legacy_legacy-support-v4",
         "androidx.test.rules",
     ],
+    jni_libs: ["liblmkhelper_statsdatom"],
     compile_multilib: "both",
 }
 

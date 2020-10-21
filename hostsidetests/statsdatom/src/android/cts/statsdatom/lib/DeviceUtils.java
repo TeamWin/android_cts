@@ -50,7 +50,12 @@ public final class DeviceUtils {
     public static final String STATSD_ATOM_TEST_APK = "CtsStatsdAtomApp.apk";
     public static final String STATSD_ATOM_TEST_PKG = "com.android.server.cts.device.statsdatom";
 
+    private static final String DEVICE_SIDE_BG_SERVICE_COMPONENT =
+            "com.android.server.cts.device.statsdatom/.StatsdCtsBackgroundService";
+
     private static final String TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner";
+
+    private static final String KEY_ACTION = "action";
 
     // feature names
     public static final String FEATURE_WATCH = "android.hardware.type.watch";
@@ -309,6 +314,27 @@ public final class DeviceUtils {
         // framework does not consider the device as running on battery.
         setChargingState(device, 3);
         device.executeShellCommand("cmd battery unplug");
+    }
+
+    /**
+     * Runs a (background) service to perform the given action.
+     * @param actionValue the action code constants indicating the desired action to perform.
+     */
+    public static void executeBackgroundService(ITestDevice device, String actionValue)
+            throws Exception {
+        allowBackgroundServices(device);
+        device.executeShellCommand(String.format(
+                "am startservice -n '%s' -e %s %s",
+                DEVICE_SIDE_BG_SERVICE_COMPONENT,
+                KEY_ACTION, actionValue));
+    }
+
+    /**
+     * Required to successfully start a background service from adb in Android O.
+     */
+    private static void allowBackgroundServices(ITestDevice device) throws Exception {
+        device.executeShellCommand(String.format(
+                "cmd deviceidle tempwhitelist %s", STATSD_ATOM_TEST_PKG));
     }
 
     private DeviceUtils() {}

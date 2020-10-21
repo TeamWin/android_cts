@@ -284,6 +284,9 @@ public final class ConfigUtils {
 
         // Remove config from temporary location
         device.executeShellCommand("rm " + remotePath);
+
+        // Sleep for a bit so that statsd receives config before more work is done within the test.
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
     }
 
     /**
