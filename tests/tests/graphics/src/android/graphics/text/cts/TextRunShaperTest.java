@@ -19,6 +19,9 @@ package android.graphics.text.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.fonts.Font;
@@ -26,6 +29,10 @@ import android.graphics.fonts.FontFamily;
 import android.graphics.fonts.FontVariationAxis;
 import android.graphics.text.PositionedGlyphs;
 import android.graphics.text.TextRunShaper;
+import android.text.Layout;
+import android.text.TextDirectionHeuristic;
+import android.text.TextDirectionHeuristics;
+import android.text.TextPaint;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -279,5 +286,82 @@ public class TextRunShaperTest {
         res.getGlyphY(res.glyphCount());  // throws IllegalArgumentException
     }
 
-    // TODO(nona): Add pixel comparison tests once we have Canvas.drawGlyph APIs.
+    public void assertSameDrawResult(CharSequence text, TextPaint paint,
+            TextDirectionHeuristic textDir) {
+        int width = (int) Math.ceil(Layout.getDesiredWidth(text, paint));
+        Paint.FontMetricsInt fmi = paint.getFontMetricsInt();
+        int height = fmi.descent - fmi.ascent;
+        boolean isRtl = textDir.isRtl(text, 0, text.length());
+
+        // Expected bitmap output
+        Bitmap layoutResult = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas layoutCanvas = new Canvas(layoutResult);
+        layoutCanvas.translate(0f, -fmi.ascent);
+        layoutCanvas.drawTextRun(
+                text,
+                0, text.length(),  // range
+                0, text.length(),  // context range
+                0f, 0f,  // position
+                isRtl, paint);
+
+        // Actual bitmap output
+        Bitmap glyphsResult = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas glyphsCanvas = new Canvas(glyphsResult);
+        glyphsCanvas.translate(0f, -fmi.ascent);
+        PositionedGlyphs glyphs = TextRunShaper.shapeTextRun(
+                text,
+                0, text.length(),  // range
+                0, text.length(),  // context range
+                0f, 0f,  // position
+                isRtl, paint);
+        for (int i = 0; i < glyphs.glyphCount(); ++i) {
+            glyphsCanvas.drawGlyphs(
+                    new int[] { glyphs.getGlyphId(i) },
+                    0,
+                    new float[] { glyphs.getGlyphX(i), glyphs.getGlyphY(i) },
+                    0,
+                    1,
+                    glyphs.getFont(i),
+                    paint
+            );
+        }
+
+        assertThat(glyphsResult.sameAs(layoutResult)).isTrue();
+    }
+
+    @Test
+    public void testDrawConsistency() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        assertSameDrawResult("Hello, Android.", paint, TextDirectionHeuristics.LTR);
+    }
+
+    @Test
+    public void testDrawConsistencyMultiFont() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        assertSameDrawResult("こんにちは、Android.", paint, TextDirectionHeuristics.LTR);
+    }
+
+    @Test
+    public void testDrawConsistencyBidi() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        assertSameDrawResult("مرحبا, Android.", paint, TextDirectionHeuristics.FIRSTSTRONG_LTR);
+        assertSameDrawResult("مرحبا, Android.", paint, TextDirectionHeuristics.LTR);
+        assertSameDrawResult("مرحبا, Android.", paint, TextDirectionHeuristics.RTL);
+    }
+
+    @Test
+    public void testDrawConsistencyBidi2() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        assertSameDrawResult("Hello, العالمية", paint, TextDirectionHeuristics.FIRSTSTRONG_LTR);
+        assertSameDrawResult("Hello, العالمية", paint, TextDirectionHeuristics.LTR);
+        assertSameDrawResult("Hello, العالمية", paint, TextDirectionHeuristics.RTL);
+    }
 }
