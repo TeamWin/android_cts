@@ -347,11 +347,15 @@ public class ImsServiceTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-        // Connect to the ImsService with the MMTEL feature.
-        assertTrue(sServiceConnector.connectCarrierImsServiceNullRcsBinding(
-                new ImsFeatureConfiguration.Builder()
+        // Connect to the ImsService with the RCS feature.
+        ImsFeatureConfiguration config = new ImsFeatureConfiguration.Builder()
                 .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
-                .build()));
+                .build();
+        assertTrue(sServiceConnector.connectCarrierImsServiceLocally());
+        sServiceConnector.getCarrierService().resetState();
+        sServiceConnector.getCarrierService().setNullRcsBinding();
+        assertTrue(sServiceConnector.triggerFrameworkConnectionToCarrierImsService(config));
+
         // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
         // Framework did not call it.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
