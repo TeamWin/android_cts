@@ -34,5 +34,5 @@ android_test {
     ],
     stl: "c++_shared",
     srcs: ["src/**/*.java"],
-    sdk_version: "current",
+    sdk_version: "system_current",
 }

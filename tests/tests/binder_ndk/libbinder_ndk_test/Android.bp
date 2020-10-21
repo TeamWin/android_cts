@@ -26,6 +26,8 @@ filegroup {
         "test_package/RegularPolygon.aidl",
         "test_package/GenericFoo.aidl",
         "test_package/GenericBar.aidl",
+        "test_package/ExtendableParcelable.aidl",
+        "test_package/MyExt.aidl",
     ],
     visibility: ["//visibility:private"]
 }
@@ -39,7 +41,7 @@ aidl_interface {
     ],
     backend: {
         java: {
-            sdk_version: "28",
+            sdk_version: "system_current",
         },
         cpp: {
             enabled: false,

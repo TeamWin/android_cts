@@ -18,6 +18,7 @@
 #include <aidl/test_package/BnEmpty.h>
 #include <aidl/test_package/BpTest.h>
 #include <aidl/test_package/ByteEnum.h>
+#include <aidl/test_package/ExtendableParcelable.h>
 #include <aidl/test_package/FixedSize.h>
 #include <aidl/test_package/Foo.h>
 #include <aidl/test_package/IntEnum.h>
@@ -38,12 +39,14 @@
 using ::aidl::test_package::Bar;
 using ::aidl::test_package::BpTest;
 using ::aidl::test_package::ByteEnum;
+using ::aidl::test_package::ExtendableParcelable;
 using ::aidl::test_package::FixedSize;
 using ::aidl::test_package::Foo;
 using ::aidl::test_package::GenericBar;
 using ::aidl::test_package::IntEnum;
 using ::aidl::test_package::ITest;
 using ::aidl::test_package::LongEnum;
+using ::aidl::test_package::MyExt;
 using ::aidl::test_package::RegularPolygon;
 using ::ndk::ScopedAStatus;
 using ::ndk::ScopedFileDescriptor;
@@ -891,10 +894,48 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceHash) {
   EXPECT_OK(iface->getInterfaceHash(&res));
   if (GetParam().shouldBeOld) {
     // aidl_api/libbinder_ndk_test_interface/1/.hash
-    EXPECT_EQ("d1f6d67f8af3bf736ae93d872660b0c800dd14d9", res);
+    EXPECT_EQ("f9242b385edcffed7e4e37127b0532a3a9b8ac98", res);
   } else {
     EXPECT_EQ("notfrozen", res);
   }
+}
+
+TEST_P(NdkBinderTest_Aidl, ParcelableHolderTest) {
+  ExtendableParcelable ep;
+  MyExt myext1;
+  myext1.a = 42;
+  myext1.b = "mystr";
+  ep.ext.setParcelable(&myext1);
+  std::unique_ptr<MyExt> myext2 = ep.ext.getParcelable<MyExt>();
+  EXPECT_TRUE(myext2);
+  EXPECT_EQ(42, myext2->a);
+  EXPECT_EQ("mystr", myext2->b);
+
+  AParcel* parcel = AParcel_create();
+  ep.writeToParcel(parcel);
+  AParcel_setDataPosition(parcel, 0);
+  ExtendableParcelable ep2;
+  ep2.readFromParcel(parcel);
+  std::unique_ptr<MyExt> myext3 = ep2.ext.getParcelable<MyExt>();
+  EXPECT_TRUE(myext3);
+  EXPECT_EQ(42, myext3->a);
+  EXPECT_EQ("mystr", myext3->b);
+  AParcel_delete(parcel);
+}
+TEST_P(NdkBinderTest_Aidl, ParcelableHolderCommunicationTest) {
+  ExtendableParcelable ep;
+
+  MyExt myext1;
+  myext1.a = 42;
+  myext1.b = "mystr";
+  ep.ext.setParcelable(&myext1);
+
+  ExtendableParcelable ep2;
+  EXPECT_OK(iface->RepeatExtendableParcelable(ep, &ep2));
+  std::unique_ptr<MyExt> myext2 = ep2.ext.getParcelable<MyExt>();
+  EXPECT_TRUE(myext2);
+  EXPECT_EQ(42, myext2->a);
+  EXPECT_EQ("mystr", myext2->b);
 }
 
 std::shared_ptr<ITest> getProxyLocalService() {
