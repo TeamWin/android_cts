@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <aidl/test_package/BnCompatTest.h>
 #include <aidl/test_package/BnTest.h>
 #include <aidl/test_package/MyExt.h>
 #include <stdio.h>
@@ -24,6 +25,7 @@
 #include "utilities.h"
 
 using Bar = ::aidl::test_package::Bar;
+using Baz = ::aidl::test_package::Baz;
 using ByteEnum = ::aidl::test_package::ByteEnum;
 using Foo = ::aidl::test_package::Foo;
 using IEmpty = ::aidl::test_package::IEmpty;
@@ -412,28 +414,40 @@ class MyTest : public ::aidl::test_package::BnTest,
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 
+  ::ndk::ScopedAStatus getICompatTest(::ndk::SpAIBinder* _aidl_return) {
+    class MyCompatTest : public ::aidl::test_package::BnCompatTest {
+     public:
+      ::ndk::ScopedAStatus repeatBaz(const ::aidl::test_package::Baz& in_inBaz,
+                                     ::aidl::test_package::Baz* _aidl_return) override {
+        *_aidl_return = in_inBaz;
+        return ::ndk::ScopedAStatus(AStatus_newOk());
+      }
+
 #ifdef USING_VERSION_1
-  ::ndk::ScopedAStatus RepeatStringNullableLater(const std::string& in_value,
-                                                 std::string* _aidl_return) override {
-    *_aidl_return = in_value;
-    return ::ndk::ScopedAStatus(AStatus_newOk());
-  }
+      ::ndk::ScopedAStatus RepeatStringNullableLater(const std::string& in_value,
+                                                     std::string* _aidl_return) override {
+        *_aidl_return = in_value;
+        return ::ndk::ScopedAStatus(AStatus_newOk());
+      }
 #else
-  ::ndk::ScopedAStatus RepeatStringNullableLater(
-      const std::optional<std::string>& in_value,
-      std::optional<std::string>* _aidl_return) override {
-    *_aidl_return = in_value;
-    return ::ndk::ScopedAStatus(AStatus_newOk());
-  }
+      ::ndk::ScopedAStatus RepeatStringNullableLater(
+          const std::optional<std::string>& in_value,
+          std::optional<std::string>* _aidl_return) override {
+        *_aidl_return = in_value;
+        return ::ndk::ScopedAStatus(AStatus_newOk());
+      }
 #endif
 
 #ifndef USING_VERSION_1
-  // All methods added from now on should be within this macro
-  ::ndk::ScopedAStatus NewMethodThatReturns10(int32_t* _aidl_return) override {
-    *_aidl_return = 10;
+      ::ndk::ScopedAStatus NewMethodThatReturns10(int32_t* _aidl_return) override {
+        *_aidl_return = 10;
+        return ::ndk::ScopedAStatus(AStatus_newOk());
+      }
+#endif
+    };
+    *_aidl_return = SharedRefBase::make<MyCompatTest>()->asBinder();
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
-#endif
 
   ::ndk::ScopedAStatus RepeatExtendableParcelable(
       const ::aidl::test_package::ExtendableParcelable& in_input,
