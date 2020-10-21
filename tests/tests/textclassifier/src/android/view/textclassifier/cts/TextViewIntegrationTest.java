@@ -1,0 +1,166 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.view.textclassifier.cts;
+
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.RootMatchers.isPlatformPopup;
+import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
+import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.matcher.ViewMatchers.withTagValue;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.hamcrest.CoreMatchers.is;
+
+import android.app.PendingIntent;
+import android.app.RemoteAction;
+import android.content.Intent;
+import android.graphics.drawable.Icon;
+import android.net.Uri;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
+import android.view.textclassifier.TextClassification;
+import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextLinks;
+import android.widget.TextView;
+
+import androidx.test.core.app.ActivityScenario;
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.espresso.ViewInteraction;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
+
+import org.junit.Rule;
+import org.junit.Test;
+
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class TextViewIntegrationTest {
+    private final static String TOOLBAR_TAG = "floating_toolbar";
+
+    private final SimpleTextClassifier mSimpleTextClassifier = new SimpleTextClassifier();
+
+    @Rule
+    public ActivityScenarioRule<TextViewActivity> rule = new ActivityScenarioRule<>(
+            TextViewActivity.class);
+
+    @Test
+    public void smartLinkify() throws Exception {
+        ActivityScenario<TextViewActivity> scenario = rule.getScenario();
+        // Linkify the text.
+        final String TEXT = "Link: https://www.android.com";
+        AtomicInteger clickIndex = new AtomicInteger();
+        Spannable linkifiedText = createLinkifiedText(TEXT);
+        scenario.onActivity(activity -> {
+            TextView textView = activity.findViewById(R.id.textview);
+            textView.setText(linkifiedText);
+            textView.setTextClassifier(mSimpleTextClassifier);
+            textView.setMovementMethod(LinkMovementMethod.getInstance());
+            TextLinks.TextLinkSpan[] spans = linkifiedText.getSpans(0, TEXT.length(),
+                    TextLinks.TextLinkSpan.class);
+            assertThat(spans).hasLength(1);
+            TextLinks.TextLinkSpan span = spans[0];
+            clickIndex.set(
+                    (span.getTextLink().getStart() + span.getTextLink().getEnd()) / 2);
+        });
+
+        // Click on the span.
+        onView(withId(R.id.textview)).perform(TextViewActions.tapOnTextAtIndex(clickIndex.get()));
+
+        assertFloatingToolbarIsDisplayed();
+        assertFloatingToolbarContainsItem("Test");
+    }
+
+    private Spannable createLinkifiedText(CharSequence text) {
+        TextLinks.Request request = new TextLinks.Request.Builder(text)
+                .setEntityConfig(
+                        new TextClassifier.EntityConfig.Builder()
+                                .setIncludedTypes(Collections.singleton(TextClassifier.TYPE_URL))
+                                .build())
+                .build();
+        TextLinks textLinks = mSimpleTextClassifier.generateLinks(request);
+        Spannable linkifiedText = new SpannableString(text);
+        int resultCode = textLinks.apply(
+                linkifiedText,
+                TextLinks.APPLY_STRATEGY_REPLACE,
+                /* spanFactory= */null);
+        assertThat(resultCode).isEqualTo(TextLinks.STATUS_LINKS_APPLIED);
+        return linkifiedText;
+    }
+
+    private static ViewInteraction onFloatingToolBar() {
+        return onView(withTagValue(is(TOOLBAR_TAG))).inRoot(isPlatformPopup());
+    }
+
+    private static void assertFloatingToolbarIsDisplayed() {
+        onFloatingToolBar().check(matches(isDisplayed()));
+    }
+
+    private static void assertFloatingToolbarContainsItem(String itemLabel) {
+        onFloatingToolBar().check(matches(hasDescendant(withText(itemLabel))));
+    }
+
+    /** A {@link TextClassifier} that can only annotate the android.com url. */
+    private static class SimpleTextClassifier implements TextClassifier {
+        private static final String ANDROID_URL = "https://www.android.com";
+        private static final Icon NO_ICON = Icon.createWithData(new byte[0], 0, 0);
+
+        @Override
+        public TextClassification classifyText(TextClassification.Request request) {
+            TextClassification.Builder builder =
+                    new TextClassification.Builder().setText(request.getText().toString());
+            String spanText = request.getText().toString()
+                    .substring(request.getStartIndex(), request.getEndIndex());
+            if (TextUtils.equals(ANDROID_URL, spanText)) {
+                builder.setEntityType(TextClassifier.TYPE_URL, 1.0f);
+
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(ANDROID_URL));
+                PendingIntent pendingIntent = PendingIntent.getActivity(
+                        ApplicationProvider.getApplicationContext(),
+                        /* requestCode= */ 0,
+                        intent,
+                        PendingIntent.FLAG_IMMUTABLE);
+
+                RemoteAction remoteAction =
+                        new RemoteAction(NO_ICON, "Test", "content description", pendingIntent);
+                remoteAction.setShouldShowIcon(false);
+
+                builder.addAction(remoteAction);
+            }
+            return builder.build();
+        }
+
+        @Override
+        public TextLinks generateLinks(TextLinks.Request request) {
+            TextLinks.Builder builder = new TextLinks.Builder(request.getText().toString());
+            int index = request.getText().toString().indexOf(ANDROID_URL);
+            if (index == -1) {
+                return builder.build();
+            }
+            builder.addLink(index,
+                    index + ANDROID_URL.length(),
+                    Collections.singletonMap(TextClassifier.TYPE_URL, 1.0f));
+            return builder.build();
+        }
+    }
+}

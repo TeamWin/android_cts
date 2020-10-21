@@ -30,10 +30,14 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "truth-prebuilt",
+        "androidx.test.espresso.core",
+        "androidx.test.ext.junit",
+
     ],
     srcs: [
         "src/**/*.java",
     ],
+    resource_dirs: ["res"],
     sdk_version: "test_current",
     min_sdk_version: "29",
 }
