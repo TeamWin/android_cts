@@ -18,15 +18,23 @@ package android.text.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.text.PositionedGlyphs;
 import android.graphics.text.TextRunShaper;
+import android.text.Layout;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.StaticLayout;
+import android.text.TextDirectionHeuristic;
 import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextShaper;
 import android.text.style.AbsoluteSizeSpan;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.TypefaceSpan;
 import android.util.Pair;
 
@@ -106,5 +114,127 @@ public class TextShaperTest {
         assertThat(result.get(1).second.getTextSize()).isEqualTo(100f);
     }
 
-    // TODO(nona): Add pixel comparison tests once we have Canvas.drawGlyph APIs.
+    public void assertSameDrawResult(CharSequence text, TextPaint paint,
+            TextDirectionHeuristic textDir) {
+        // For some reasons, StaticLayout breaks text even if we give the exact the same amount
+        // of width. To avoid unexpected line breaking, adding 10px as a workaround.
+        int width = (int) Math.ceil(Layout.getDesiredWidth(text, paint)) + 10;
+        StaticLayout layout = StaticLayout.Builder.obtain(
+                text, 0, text.length(), paint, width)
+                .setTextDirection(textDir)
+                .setIncludePad(false).build();
+        int height = layout.getHeight();
+
+        // Expected bitmap output
+        Bitmap layoutResult = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas layoutCanvas = new Canvas(layoutResult);
+        layout.draw(layoutCanvas);
+
+        // actual bitmap output
+        Bitmap glyphsResult = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas glyphsCanvas = new Canvas(glyphsResult);
+
+        // StaticLayout uses the default font's ascent for baseline
+        Paint.FontMetricsInt fmi = paint.getFontMetricsInt();
+        // In the RTL paragraph, the shape result goes from right to left. StaticLayout
+        // automatically moves the drawing offset to the right most position. We do it by manual.
+        if (textDir.isRtl(text, 0, text.length())) {
+            glyphsCanvas.translate(width, -fmi.ascent);
+        } else {
+            glyphsCanvas.translate(0, -fmi.ascent);
+        }
+
+        // Draws text.
+        TextShaper.shapeText(text, 0, text.length(), textDir, paint,
+                (start, end, glyphs, drawPaint) -> {
+                    for (int i = 0; i < glyphs.glyphCount(); ++i) {
+                        glyphsCanvas.drawGlyphs(
+                                new int[] { glyphs.getGlyphId(i) },
+                                0,
+                                new float[] { glyphs.getGlyphX(i), glyphs.getGlyphY(i) },
+                                0,
+                                1,
+                                glyphs.getFont(i),
+                                drawPaint
+                        );
+                    }
+                });
+        assertThat(glyphsResult.sameAs(layoutResult)).isTrue();
+    }
+
+    @Test
+    public void testDrawConsistencyNoStyle() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        assertSameDrawResult("Hello, Android.", paint, TextDirectionHeuristics.LTR);
+    }
+
+    @Test
+    public void testDrawConsistencyNoStyleMultiFont() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        assertSameDrawResult("こんにちは、Android.", paint, TextDirectionHeuristics.LTR);
+    }
+
+    @Test
+    public void testDrawConsistencyMultiStyle() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        SpannableString text = new SpannableString("こんにちは Android.");
+        text.setSpan(new AbsoluteSizeSpan(32), 3, 8, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        text.setSpan(new ForegroundColorSpan(Color.RED), 5, 10, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        text.setSpan(new TypefaceSpan("serif"), 6, 14, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        assertSameDrawResult(text, paint, TextDirectionHeuristics.LTR);
+    }
+
+    @Test
+    public void testDrawConsistencyBidi() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        assertSameDrawResult("مرحبا, Android.", paint, TextDirectionHeuristics.FIRSTSTRONG_LTR);
+        assertSameDrawResult("مرحبا, Android.", paint, TextDirectionHeuristics.LTR);
+        assertSameDrawResult("مرحبا, Android.", paint, TextDirectionHeuristics.RTL);
+    }
+
+    @Test
+    public void testDrawConsistencyBidi2() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        assertSameDrawResult("Hello, العالمية", paint, TextDirectionHeuristics.FIRSTSTRONG_LTR);
+        assertSameDrawResult("Hello, العالمية", paint, TextDirectionHeuristics.LTR);
+        assertSameDrawResult("Hello, العالمية", paint, TextDirectionHeuristics.RTL);
+    }
+
+    @Test
+    public void testDrawConsistencyBidiMultiStyle() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        SpannableString text = new SpannableString("مرحبا, Android.");
+        text.setSpan(new AbsoluteSizeSpan(32), 3, 8, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        text.setSpan(new ForegroundColorSpan(Color.RED), 5, 10, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        text.setSpan(new TypefaceSpan("serif"), 6, 14, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        assertSameDrawResult(text, paint, TextDirectionHeuristics.FIRSTSTRONG_LTR);
+        assertSameDrawResult(text, paint, TextDirectionHeuristics.LTR);
+        assertSameDrawResult(text, paint, TextDirectionHeuristics.RTL);
+    }
+
+    @Test
+    public void testDrawConsistencyBidi2MultiStyle() {
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(32f);
+        paint.setColor(Color.BLUE);
+        SpannableString text = new SpannableString("Hello, العالمية");
+        text.setSpan(new AbsoluteSizeSpan(32), 3, 8, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        text.setSpan(new ForegroundColorSpan(Color.RED), 5, 10, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        text.setSpan(new TypefaceSpan("serif"), 6, 14, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        assertSameDrawResult(text, paint, TextDirectionHeuristics.FIRSTSTRONG_LTR);
+        assertSameDrawResult(text, paint, TextDirectionHeuristics.LTR);
+        assertSameDrawResult(text, paint, TextDirectionHeuristics.RTL);
+    }
 }
