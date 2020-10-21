@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.SecurityTest;
 
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -379,6 +380,7 @@ public class EphemeralTest extends BaseAppSecurityTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2020-11")
     public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
@@ -388,6 +390,7 @@ public class EphemeralTest extends BaseAppSecurityTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2020-11")
     public void testInstallPermissionGrantedInPackageInfo() throws Exception {
         if (mIsUnsupportedDevice) {
             return;
