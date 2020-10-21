@@ -85,6 +85,7 @@ class PipTestActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         mediaSession = MediaSession(this, MEDIA_SESSION_TITLE).apply {
             setPlaybackState(playbackBuilder.build())
             setCallback(mediaCallback)

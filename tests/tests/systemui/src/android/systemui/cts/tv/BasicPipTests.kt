@@ -54,6 +54,7 @@ import com.android.compatibility.common.util.ThrowingSupplier
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.math.roundToInt
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -337,7 +338,7 @@ class BasicPipTests : PipTestBase() {
                 defaultPipSize * aspectRatio to defaultPipSize
             }
 
-        Gravity.apply(pipGravity, width.toInt(), height.toInt(),
+        Gravity.apply(pipGravity, width.roundToInt(), height.roundToInt(),
             displaySize, screenEdgeInsets.x, screenEdgeInsets.y, this)
     }
 
