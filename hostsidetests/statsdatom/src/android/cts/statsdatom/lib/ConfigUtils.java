@@ -296,5 +296,29 @@ public final class ConfigUtils {
         device.executeShellCommand(String.join(" ", REMOVE_CONFIG_CMD, CONFIG_ID_STRING));
     }
 
-    private ConfigUtils() {}
+    public static void uploadConfigForPushedAtomWithUid(ITestDevice device, String pkgName,
+            int atomId,
+            boolean useUidAttributionChain) throws Exception {
+        StatsdConfig.Builder config = createConfigBuilder(pkgName);
+        addEventMetricForUidAtom(config, atomId, useUidAttributionChain, pkgName);
+        uploadConfig(device, config);
+    }
+
+    public static void uploadConfigForPulledAtomWithUid(ITestDevice device, String pkgName,
+            int atomId,
+            boolean useUidAttributionChain) throws Exception {
+        StatsdConfig.Builder config = createConfigBuilder(pkgName);
+        addGaugeMetricForUidAtom(config, atomId, useUidAttributionChain, pkgName);
+        uploadConfig(device, config);
+    }
+
+    public static void uploadConfigForPulledAtom(ITestDevice device, String pkgName, int atomId)
+            throws Exception {
+        StatsdConfig.Builder config = createConfigBuilder(pkgName);
+        addGaugeMetric(config, atomId);
+        uploadConfig(device, config);
+    }
+
+    private ConfigUtils() {
+    }
 }
