@@ -87,6 +87,7 @@
         <option name="test-file-name" value="CtsContentPartiallyDirectBootAwareTestApp.apk" />
         <option name="test-file-name" value="CtsSyncAccountAccessStubs.apk" />
         <option name="test-file-name" value="CtsBinderPermissionTestService.apk" />
+        <option name="test-file-name" value="CtsContentTestsHelperApp.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

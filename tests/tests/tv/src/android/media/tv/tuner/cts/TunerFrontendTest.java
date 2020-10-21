@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.media.tv.tuner.Tuner;
+import android.media.tv.tuner.TunerVersionChecker;
 import android.media.tv.tuner.frontend.AnalogFrontendCapabilities;
 import android.media.tv.tuner.frontend.AnalogFrontendSettings;
 import android.media.tv.tuner.frontend.Atsc3FrontendCapabilities;
@@ -36,6 +37,8 @@ import android.media.tv.tuner.frontend.DvbsFrontendCapabilities;
 import android.media.tv.tuner.frontend.DvbsFrontendSettings;
 import android.media.tv.tuner.frontend.DvbtFrontendCapabilities;
 import android.media.tv.tuner.frontend.DvbtFrontendSettings;
+import android.media.tv.tuner.frontend.DtmbFrontendCapabilities;
+import android.media.tv.tuner.frontend.DtmbFrontendSettings;
 import android.media.tv.tuner.frontend.FrontendCapabilities;
 import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
@@ -45,6 +48,7 @@ import android.media.tv.tuner.frontend.IsdbsFrontendCapabilities;
 import android.media.tv.tuner.frontend.IsdbsFrontendSettings;
 import android.media.tv.tuner.frontend.IsdbtFrontendCapabilities;
 import android.media.tv.tuner.frontend.IsdbtFrontendSettings;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -417,6 +421,37 @@ public class TunerFrontendTest {
     }
 
     @Test
+    public void testDtmbFrontendSettings() throws Exception {
+        if (!hasTuner()) return;
+        if (!TunerVersionChecker.checkHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1,
+                TAG + ": testDtmbFrontendSettings")) {
+            return;
+        }
+        DtmbFrontendSettings settings =
+                DtmbFrontendSettings
+                        .builder()
+                        .setFrequency(6)
+                        .setModulation(DtmbFrontendSettings.MODULATION_CONSTELLATION_4QAM)
+                        .setCodeRate(DtmbFrontendSettings.CODERATE_2_5)
+                        .setTransmissionMode(DtmbFrontendSettings.TRANSMISSION_MODE_C1)
+                        .setBandwidth(DtmbFrontendSettings.BANDWIDTH_8MHZ)
+                        .setTimeInterleaveMode(
+                                DtmbFrontendSettings.TIME_INTERLEAVE_MODE_TIMER_INT_240)
+                        .setGuardInterval(DtmbFrontendSettings.GUARD_INTERVAL_PN_945_VARIOUS)
+                        .build();
+        assertEquals(FrontendSettings.TYPE_DTMB, settings.getType());
+        assertEquals(6, settings.getFrequency());
+        assertEquals(DtmbFrontendSettings.TRANSMISSION_MODE_C1, settings.getTransmissionMode());
+        assertEquals(DtmbFrontendSettings.BANDWIDTH_8MHZ, settings.getBandwidth());
+        assertEquals(DtmbFrontendSettings.MODULATION_CONSTELLATION_4QAM, settings.getModulation());
+        assertEquals(DtmbFrontendSettings.TIME_INTERLEAVE_MODE_TIMER_INT_240,
+                settings.getTimeInterleaveMode());
+        assertEquals(DtmbFrontendSettings.CODERATE_2_5, settings.getCodeRate());
+        assertEquals(DtmbFrontendSettings.GUARD_INTERVAL_PN_945_VARIOUS,
+                settings.getGuardInterval());
+    }
+
+    @Test
     public void testFrontendInfo() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
@@ -459,6 +494,9 @@ public class TunerFrontendTest {
                     break;
                 case FrontendSettings.TYPE_ISDBT:
                     testIsdbtFrontendCapabilities(caps);
+                    break;
+                case FrontendSettings.TYPE_DTMB:
+                    testDtmbFrontendCapabilities(caps);
                     break;
                 default:
                     break;
@@ -541,6 +579,17 @@ public class TunerFrontendTest {
         isdbtCaps.getModulationCapability();
         isdbtCaps.getCodeRateCapability();
         isdbtCaps.getGuardIntervalCapability();
+    }
+
+    private void testDtmbFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof DtmbFrontendCapabilities);
+        DtmbFrontendCapabilities dtmbCaps = (DtmbFrontendCapabilities) caps;
+        dtmbCaps.getTimeInterleaveModeCapability();
+        dtmbCaps.getBandwidthCapability();
+        dtmbCaps.getModulationCapability();
+        dtmbCaps.getCodeRateCapability();
+        dtmbCaps.getTransmissionModeCapability();
+        dtmbCaps.getGuardIntervalCapability();
     }
 
     private boolean hasTuner() {
