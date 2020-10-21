@@ -77,10 +77,9 @@ interface ITest {
   void renameFoo(inout test_package.Foo foo, String name);
   void renameBar(inout test_package.Foo foo, String name);
   int getF(in test_package.Foo foo);
-  @nullable String RepeatStringNullableLater(@nullable String repeated);
   test_package.GenericBar<int> repeatGenericBar(in test_package.GenericBar<int> bar);
   void RepeatExtendableParcelable(in test_package.ExtendableParcelable input, out test_package.ExtendableParcelable output);
-  int NewMethodThatReturns10();
+  IBinder getICompatTest();
   const int kZero = 0;
   const int kOne = 1;
   const int kOnes = -1;
