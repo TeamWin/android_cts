@@ -30,6 +30,8 @@ import test_package.GenericBar;
 import test_package.IEmpty;
 import test_package.ITest;
 import test_package.RegularPolygon;
+import test_package.ExtendableParcelable;
+import test_package.MyExt;
 
 public class TestImpl extends ITest.Stub {
   @Override
@@ -405,5 +407,14 @@ public class TestImpl extends ITest.Stub {
   @Override
   public GenericBar<Integer> repeatGenericBar(GenericBar<Integer> bar) {
     return bar;
+  }
+
+  @Override
+  public void RepeatExtendableParcelable(ExtendableParcelable in, ExtendableParcelable out) {
+    MyExt ext = in.ext.getParcelable(MyExt.class);
+    MyExt ext2 = new MyExt();
+    ext2.a = ext.a;
+    ext2.b = ext.b;
+    out.ext.setParcelable(ext2);
   }
 }

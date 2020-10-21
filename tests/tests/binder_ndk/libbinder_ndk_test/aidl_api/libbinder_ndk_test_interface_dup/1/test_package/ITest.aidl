@@ -62,6 +62,7 @@ interface ITest {
   int getF(in test_package.Foo foo);
   String RepeatStringNullableLater(String repeated);
   test_package.GenericBar<int> repeatGenericBar(in test_package.GenericBar<int> bar);
+  void RepeatExtendableParcelable(in test_package.ExtendableParcelable input, out test_package.ExtendableParcelable output);
   const int kZero = 0;
   const int kOne = 1;
   const int kOnes = -1;
