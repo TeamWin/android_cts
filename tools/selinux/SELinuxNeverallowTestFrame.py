@@ -94,6 +94,10 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
         return PropertyUtil.getFirstApiLevel(mDevice) > 29;
     }
 
+    private boolean isDeviceLaunchingWithS() throws Exception {
+        return PropertyUtil.getFirstApiLevel(mDevice) > 30;
+    }
+
     private boolean isCompatiblePropertyEnforcedDevice() throws Exception {
         return android.security.cts.SELinuxHostTest.isCompatiblePropertyEnforcedDevice(mDevice);
     }
@@ -112,6 +116,7 @@ src_method = """
         String neverallowRule = "$NEVERALLOW_RULE_HERE$";
         boolean fullTrebleOnly = $TREBLE_ONLY_BOOL_HERE$;
         boolean launchingWithROnly = $LAUNCHING_WITH_R_ONLY_BOOL_HERE$;
+        boolean launchingWithSOnly = $LAUNCHING_WITH_S_ONLY_BOOL_HERE$;
         boolean compatiblePropertyOnly = $COMPATIBLE_PROPERTY_ONLY_BOOL_HERE$;
 
         if ((fullTrebleOnly) && (!isFullTrebleDevice())) {
@@ -120,6 +125,10 @@ src_method = """
         }
         if ((launchingWithROnly) && (!isDeviceLaunchingWithR())) {
             // This test applies only to devices launching with R or later but this device isn't one
+            return;
+        }
+        if ((launchingWithSOnly) && (!isDeviceLaunchingWithS())) {
+            // This test applies only to devices launching with S or later but this device isn't one
             return;
         }
         if ((compatiblePropertyOnly) && (!isCompatiblePropertyEnforcedDevice())) {
