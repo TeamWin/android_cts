@@ -87,6 +87,19 @@ public class TestMediaCodec extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/34779227
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @Test
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testPocCVE_2017_0675() throws Exception {
+        String inputFiles[] = {"cve_2017_0675.hevc"};
+        runHevcDecodeMemTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1",
+                getDevice());
+    }
+
+    /**
      * b/65719872
      * Vulnerability Behaviour: SIGSEGV in self
      **/
