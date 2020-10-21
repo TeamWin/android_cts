@@ -2498,6 +2498,7 @@ public class StagefrightTest {
     }
 
     @Test
+    @NonMediaMainlineTest
     @SecurityTest(minPatchLevel = "Unknown")
     public void testBug_127310810() throws Exception {
         assertExtractorDoesNotHang(R.raw.bug_127310810);
