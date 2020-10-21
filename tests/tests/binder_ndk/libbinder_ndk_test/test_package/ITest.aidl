@@ -120,13 +120,9 @@ interface ITest {
     void renameBar(inout Foo foo, String name);
     int getF(in Foo foo);
 
-    // Method which is not nullable in version 1, but is nullable in version 2
-    @nullable String RepeatStringNullableLater(@nullable String repeated);
-
     GenericBar<int> repeatGenericBar(in GenericBar<int> bar);
 
     void RepeatExtendableParcelable(in ExtendableParcelable input, out ExtendableParcelable output);
 
-    // Methods that do not exist in version 1
-    int NewMethodThatReturns10();
+    IBinder getICompatTest();
 }
