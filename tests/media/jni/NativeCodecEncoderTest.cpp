@@ -213,9 +213,9 @@ void CodecEncoderTest::resetContext(bool isAsync, bool signalEOSWithLastFrame) {
 bool CodecEncoderTest::flushCodec() {
     bool isOk = CodecTestBase::flushCodec();
     if (mIsAudio) {
-        mInputOffsetPts = (mNumBytesSubmitted + 1024) * 1000000L / (2 * mChannels * mSampleRate);
+        mInputOffsetPts = (mNumBytesSubmitted + 1024) * 1000000LL / (2 * mChannels * mSampleRate);
     } else {
-        mInputOffsetPts = (mInputCount + 5) * 1000000L / mDefFrameRate;
+        mInputOffsetPts = (mInputCount + 5) * 1000000LL / mDefFrameRate;
     }
     mPrevOutputPts = mInputOffsetPts - 1;
     mNumBytesSubmitted = 0;
@@ -275,7 +275,7 @@ bool CodecEncoderTest::enqueueInput(size_t bufferIndex) {
         size_t buffSize;
         uint8_t* inputBuffer = AMediaCodec_getInputBuffer(mCodec, bufferIndex, &buffSize);
         if (mIsAudio) {
-            pts += mNumBytesSubmitted * 1000000L / (2 * mChannels * mSampleRate);
+            pts += mNumBytesSubmitted * 1000000LL / (2 * mChannels * mSampleRate);
             size = std::min(buffSize, mInputLength - mNumBytesSubmitted);
             memcpy(inputBuffer, mInputData + mNumBytesSubmitted, size);
             if (mNumBytesSubmitted + size >= mInputLength && mSignalEOSWithLastFrame) {
@@ -284,7 +284,7 @@ bool CodecEncoderTest::enqueueInput(size_t bufferIndex) {
             }
             mNumBytesSubmitted += size;
         } else {
-            pts += mInputCount * 1000000L / mDefFrameRate;
+            pts += mInputCount * 1000000LL / mDefFrameRate;
             size = mWidth * mHeight * 3 / 2;
             int frmSize = kInpFrmWidth * kInpFrmHeight * 3 / 2;
             if (mNumBytesSubmitted + frmSize > mInputLength) {
