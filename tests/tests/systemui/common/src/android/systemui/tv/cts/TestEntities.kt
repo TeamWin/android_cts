@@ -36,9 +36,6 @@ object Components {
         ResourceNames.SYSTEM_UI_PACKAGE,
         ResourceNames.WM_SHELL_PACKAGE + ".pip.tv.PipMenuActivity"
     )
-
-    @JvmField
-    val KEYBOARD_ACTIVITY: ComponentName = ComponentName.createRelative(pkg, ".KeyboardActivity")
 }
 
 object PipActivity {
@@ -102,11 +99,6 @@ object PipActivity {
     const val EXTRA_SET_CUSTOM_ACTIONS = "set_custom_actions"
 }
 
-object KeyboardActivity {
-    const val ACTION_SHOW_KEYBOARD = "$pkg.KeyboardActivity.show_keyboard"
-    const val ACTION_HIDE_KEYBOARD = "$pkg.KeyboardActivity.hide_keyboard"
-}
-
 object PipMenu {
     const val ACTION_MENU = "PipNotification.menu"
     const val ACTION_CLOSE = "PipNotification.close"
@@ -122,9 +114,6 @@ object ResourceNames {
     const val SYSTEM_UI_CTS_PACKAGE = "android.systemui.cts"
     const val SYSTEM_UI_PACKAGE = "com.android.systemui"
     const val WM_SHELL_PACKAGE = "com.android.wm.shell"
-
-    /** The name of the soft keyboard window. */
-    const val WINDOW_NAME_INPUT_METHOD = "InputMethod"
 
     const val STRING_PIP_MENU_BOUNDS = "pip_menu_bounds"
 
