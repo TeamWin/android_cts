@@ -16,12 +16,18 @@
 
 package android.server.wm;
 
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Rect;
+import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.view.View;
@@ -41,7 +47,7 @@ public class WindowContextTests extends WindowContextTestBase {
     @AppModeFull
     public void testWindowContextConfigChanges() {
         createAllowSystemAlertWindowAppOpSession();
-        final WindowManagerState.DisplayContent display =  createManagedVirtualDisplaySession()
+        final WindowManagerState.DisplayContent display = createManagedVirtualDisplaySession()
                 .setSimulateDisplay(true).createDisplay();
         final Context windowContext = createWindowContext(display.mId);
         mInstrumentation.runOnMainSync(() -> {
@@ -71,5 +77,26 @@ public class WindowContextTests extends WindowContextTestBase {
             Rect bounds) {
         assertEquals(expectedMetrics.getSize().getWidth(), bounds.width());
         assertEquals(expectedMetrics.getSize().getHeight(), bounds.height());
+    }
+
+    @Test
+    @AppModeFull
+    public void testWindowContextBindService() {
+        createAllowSystemAlertWindowAppOpSession();
+        final Context windowContext = createWindowContext(DEFAULT_DISPLAY);
+        final ServiceConnection serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {}
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {}
+        };
+        try {
+            assertTrue("WindowContext must bind service successfully.",
+                    windowContext.bindService(new Intent(windowContext, TestLogService.class),
+                            serviceConnection, Context.BIND_AUTO_CREATE));
+        } finally {
+            windowContext.unbindService(serviceConnection);
+        }
     }
 }
