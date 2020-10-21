@@ -255,6 +255,10 @@
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2020-0007->/data/local/tmp/CVE-2020-0007" />
 
+        <!-- Bulletin 2020-05 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2020-0101->/data/local/tmp/CVE-2020-0101" />
+
         <!-- Bulletin 2020-10 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2020-0408->/data/local/tmp/CVE-2020-0408" />
