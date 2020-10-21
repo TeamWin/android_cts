@@ -15,7 +15,7 @@
  */
 
 #include <aidl/test_package/BnTest.h>
-
+#include <aidl/test_package/MyExt.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <condition_variable>
@@ -30,6 +30,8 @@ using IEmpty = ::aidl::test_package::IEmpty;
 using IntEnum = ::aidl::test_package::IntEnum;
 using LongEnum = ::aidl::test_package::LongEnum;
 using RegularPolygon = ::aidl::test_package::RegularPolygon;
+using MyExt = ::aidl::test_package::MyExt;
+using ExtendableParcelable = ::aidl::test_package::ExtendableParcelable;
 
 class MyTest : public ::aidl::test_package::BnTest,
                public ThisShouldBeDestroyed {
@@ -432,6 +434,17 @@ class MyTest : public ::aidl::test_package::BnTest,
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 #endif
+
+  ::ndk::ScopedAStatus RepeatExtendableParcelable(
+      const ::aidl::test_package::ExtendableParcelable& in_input,
+      ::aidl::test_package::ExtendableParcelable* out_output) {
+    std::unique_ptr<MyExt> ext = in_input.ext.getParcelable<MyExt>();
+    MyExt ext2;
+    ext2.a = ext->a;
+    ext2.b = ext->b;
+    out_output->ext.setParcelable(&ext2);
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
 
   ::ndk::ScopedAStatus repeatFoo(const Foo& in_inFoo, Foo* _aidl_return) {
     *_aidl_return = in_inFoo;
