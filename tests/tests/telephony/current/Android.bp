@@ -20,6 +20,7 @@ filegroup {
         "src/android/telephony/ims/cts/TestMmTelFeature.java",
         "src/android/telephony/ims/cts/TestImsSmsImpl.java",
         "src/android/telephony/ims/cts/TestImsConfig.java",
+        "src/android/telephony/ims/cts/TestSipTransport.java",
         "src/android/telephony/ims/cts/ImsUtils.java",
     ],
     path: "src/",
