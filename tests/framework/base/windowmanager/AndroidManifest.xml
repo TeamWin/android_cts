@@ -333,7 +333,21 @@
              android:turnScreenOn="true"
              android:showWhenLocked="true"
              android:label="DragDropActivity"
+             android:hardwareAccelerated="true"
              android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.server.wm.DragDropTest$SoftwareCanvasDragDropActivity"
+            android:screenOrientation="locked"
+            android:turnScreenOn="true"
+            android:showWhenLocked="true"
+            android:label="DragDropTest$SoftwareCanvasDragDropActivity"
+            android:hardwareAccelerated="false"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
