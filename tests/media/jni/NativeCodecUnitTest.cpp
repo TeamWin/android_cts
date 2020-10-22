@@ -1191,8 +1191,8 @@ bool NativeCodecUnitTest::testQueueInputBufferWithBadSize() {
         } else {
             if (AMEDIA_OK == AMediaCodec_queueInputBuffer(mCodec, 0, 0, bufSize + 100, 0,
                                                           AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM)) {
-                ALOGE("queueInputBuffer succeeds for bad size %d, buffer capacity %d, ",
-                      (int)bufSize + 100, (int)bufSize);
+                ALOGE("queueInputBuffer succeeds for bad size %zu, buffer capacity %zu ",
+                      bufSize + 100, bufSize);
                 return false;
             }
         }
