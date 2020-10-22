@@ -33,6 +33,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+
 /**
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:SplashscreenTests
@@ -59,9 +61,15 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         mWmState.getStableBounds();
         final Bitmap image = takeScreenshot();
+        int windowingMode = mWmState.getFocusedStackWindowingMode();
+        Rect appBounds = new Rect();
+        appBounds.set(windowingMode == WINDOWING_MODE_FULLSCREEN ?
+                mWmState.getStableBounds() :
+                mWmState.findFirstWindowWithType(
+                        WindowManagerState.WindowState.WINDOW_TYPE_STARTING).getContentInsets());
         // Use ratios to flexibly accomodate circular or not quite rectangular displays
         // Note: Color.BLACK is the pixel color outside of the display region
-        assertColors(image, mWmState.getStableBounds(),
+        assertColors(image, appBounds,
             Color.RED, 0.50f, Color.BLACK, 0.02f);
     }
 
