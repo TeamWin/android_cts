@@ -424,6 +424,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         // The swipe action brings down the notification shade which causes subsequent tests to
         // fail.
         if (isAutomotive(mContext)) {
+            // Bring system to a known state before requesting to close system dialogs.
+            launchHomeActivity();
             broadcastCloseSystemDialogs();
         }
     }
