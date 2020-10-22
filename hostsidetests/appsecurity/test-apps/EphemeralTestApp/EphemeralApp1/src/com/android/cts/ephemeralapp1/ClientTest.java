@@ -69,6 +69,7 @@ import android.telephony.TelephonyManager;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+import android.platform.test.annotations.SecurityTest;
 
 import com.android.cts.util.TestResult;
 
@@ -1147,11 +1148,13 @@ public class ClientTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2020-11")
     public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
         assertThat(isPermissionGrantedInPackageInfo(Manifest.permission.SET_ALARM), is(false));
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2020-11")
     public void testInstallPermissionGrantedInPackageInfo() throws Exception {
         assertThat(isPermissionGrantedInPackageInfo(Manifest.permission.INTERNET), is(true));
     }
