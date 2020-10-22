@@ -573,6 +573,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testGetCallForwarding() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
         List<Integer> callForwardingReasons = new ArrayList<>();
         callForwardingReasons.add(CallForwardingInfo.REASON_UNCONDITIONAL);
         callForwardingReasons.add(CallForwardingInfo.REASON_BUSY);
@@ -632,6 +636,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testSetCallForwarding() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
         List<Integer> callForwardingReasons = new ArrayList<>();
         callForwardingReasons.add(CallForwardingInfo.REASON_UNCONDITIONAL);
         callForwardingReasons.add(CallForwardingInfo.REASON_BUSY);
@@ -689,6 +697,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testGetCallWaitingStatus() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
         Set<Integer> validCallWaitingStatuses = new HashSet<Integer>();
         validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_ENABLED);
         validCallWaitingStatuses.add(TelephonyManager.CALL_WAITING_STATUS_DISABLED);
@@ -705,6 +717,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testSetCallWaitingStatus() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
         Set<Integer> validCallWaitingErrors = new HashSet<Integer>();
         validCallWaitingErrors.add(TelephonyManager.CALL_WAITING_STATUS_UNKNOWN_ERROR);
         validCallWaitingErrors.add(TelephonyManager.CALL_WAITING_STATUS_NOT_SUPPORTED);
