@@ -433,21 +433,20 @@ public class UidAtomTests extends DeviceAtomTestCase {
     public void testDeviceCalculatedPowerUse() throws Exception {
         if (!hasFeature(FEATURE_LEANBACK_ONLY, false)) return;
 
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.DEVICE_CALCULATED_POWER_USE_FIELD_NUMBER, null);
-        uploadConfig(config);
-        unplugDevice();
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.DEVICE_CALCULATED_POWER_USE_FIELD_NUMBER);
+        DeviceUtils.unplugDevice(getDevice());
 
         Thread.sleep(WAIT_TIME_LONG);
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testSimpleCpu");
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
         Thread.sleep(WAIT_TIME_SHORT);
         setAppBreadcrumbPredicate();
         Thread.sleep(WAIT_TIME_LONG);
 
-        Atom atom = getGaugeMetricDataList().get(0);
+        Atom atom = ReportUtils.getGaugeMetricAtoms(getDevice()).get(0);
         assertThat(atom.getDeviceCalculatedPowerUse().getComputedPowerNanoAmpSecs())
-            .isGreaterThan(0L);
-        resetBatteryStatus();
+                .isGreaterThan(0L);
+        DeviceUtils.resetBatteryStatus(getDevice());
     }
 
 
@@ -456,42 +455,38 @@ public class UidAtomTests extends DeviceAtomTestCase {
         if (!hasBattery()) {
             return;
         }
-
         String kernelVersion = getDevice().executeShellCommand("uname -r");
         if (kernelVersion.contains("3.18")) {
             LogUtil.CLog.d("Skipping calculated power blame uid test.");
             return;
         }
-
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config,
-                Atom.DEVICE_CALCULATED_POWER_BLAME_UID_FIELD_NUMBER, null);
-        uploadConfig(config);
-        unplugDevice();
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.DEVICE_CALCULATED_POWER_BLAME_UID_FIELD_NUMBER);
+        DeviceUtils.unplugDevice(getDevice());
 
         Thread.sleep(WAIT_TIME_LONG);
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testSimpleCpu");
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
         Thread.sleep(WAIT_TIME_SHORT);
         setAppBreadcrumbPredicate();
         Thread.sleep(WAIT_TIME_LONG);
 
-        List<Atom> atomList = getGaugeMetricDataList();
+        List<Atom> atomList = ReportUtils.getGaugeMetricAtoms(getDevice());
         boolean uidFound = false;
-        int uid = getUid();
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         long uidPower = 0;
         for (Atom atom : atomList) {
             DeviceCalculatedPowerBlameUid item = atom.getDeviceCalculatedPowerBlameUid();
-                if (item.getUid() == uid) {
+            if (item.getUid() == uid) {
                 assertWithMessage(String.format("Found multiple power values for uid %d", uid))
-                    .that(uidFound).isFalse();
+                        .that(uidFound).isFalse();
                 uidFound = true;
                 uidPower = item.getPowerNanoAmpSecs();
             }
         }
         assertWithMessage(String.format("No power value for uid %d", uid)).that(uidFound).isTrue();
         assertWithMessage(String.format("Non-positive power value for uid %d", uid))
-            .that(uidPower).isGreaterThan(0L);
-        resetBatteryStatus();
+                .that(uidPower).isGreaterThan(0L);
+        DeviceUtils.resetBatteryStatus(getDevice());
     }
 
     public void testDavey() throws Exception {
