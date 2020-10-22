@@ -758,7 +758,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
     }
 
     private void validateProfileData(String profileData) throws IOException {
-        final int TIMESTAMP_COUNT = 15;
+        final int TIMESTAMP_COUNT = 16;
         boolean foundAtLeastOneRow = false;
         try (BufferedReader reader = new BufferedReader(
                 new StringReader(profileData))) {
@@ -770,8 +770,9 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
             assertTrue("First line was not the expected header",
                     line.startsWith("Flags,FrameTimelineVsyncId,IntendedVsync,Vsync" +
                             ",OldestInputEvent,NewestInputEvent,HandleInputStart" +
-                            ",AnimationStart,PerformTraversalsStart,DrawStart,SyncQueued" +
-                            ",SyncStart,IssueDrawCommandsStart,SwapBuffers,FrameCompleted"));
+                            ",AnimationStart,PerformTraversalsStart,DrawStart,FrameDeadline" +
+                            ",SyncQueued,SyncStart,IssueDrawCommandsStart,SwapBuffers" +
+                            ",FrameCompleted"));
 
             long[] numparts = new long[TIMESTAMP_COUNT];
             while ((line = reader.readLine()) != null && !line.isEmpty()) {
@@ -795,7 +796,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
                             numparts[i] + " not larger than " + numparts[i - 1],
                             numparts[i] >= numparts[i-1]);
                 }
-                long totalDuration = numparts[14] - numparts[2];
+                long totalDuration = numparts[15] - numparts[2];
                 assertTrue("Frame did not take a positive amount of time to process",
                         totalDuration > 0);
                 assertTrue("Bogus frame duration, exceeds 100 seconds",
