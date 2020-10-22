@@ -36,6 +36,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import androidx.test.core.app.ApplicationProvider;
 
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
 import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
 import com.android.compatibility.common.util.enterprise.annotations.RequireFeatures;
@@ -126,10 +127,13 @@ public final class DeviceState implements TestRule {
                     }
                 }
 
-                base.evaluate();
-
-                if (!mSkipTestTeardown) {
-                    teardown();
+                try {
+                    base.evaluate();
+                } finally {
+                    teardownNonShareableState();
+                    if (!mSkipTestTeardown) {
+                        teardownShareableState();
+                    }
                 }
             }};
     }
@@ -171,6 +175,7 @@ public final class DeviceState implements TestRule {
     private static final int FLAG_FULL = 0x00000400;
 
     private List<Integer> createdUserIds = new ArrayList<>();
+    private List<BlockingBroadcastReceiver> registeredBroadcastReceivers = new ArrayList<>();
 
     private UiAutomation mUiAutomation;
     private final int MAX_UI_AUTOMATION_RETRIES = 5;
@@ -356,6 +361,19 @@ public final class DeviceState implements TestRule {
                 " current users, " + maxUsers + " max users)", currentUsers + 1 <= maxUsers);
     }
 
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiver(String action) {
+        BlockingBroadcastReceiver broadcastReceiver =
+                new BlockingBroadcastReceiver(mContext, action);
+        broadcastReceiver.register();
+        registeredBroadcastReceivers.add(broadcastReceiver);
+
+        return broadcastReceiver;
+    }
+
     private int resolveUserTypeToUserId(UserType userType) {
         switch (userType) {
             case CURRENT_USER:
@@ -371,7 +389,14 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    void teardown() {
+    private void teardownNonShareableState() {
+        for (BlockingBroadcastReceiver broadcastReceiver : registeredBroadcastReceivers) {
+            broadcastReceiver.unregisterQuietly();
+        }
+        registeredBroadcastReceivers.clear();
+    }
+
+    private void teardownShareableState() {
         for (Integer userId : createdUserIds) {
             runCommandWithOutput("pm remove-user " + userId);
         }
