@@ -67,6 +67,14 @@
         <option name="push" value="CtsInstallPermissionEscalatorApp.apk->/data/local/tmp/cts/permissions/CtsInstallPermissionEscalatorApp.apk" />
         <option name="push" value="CtsAppThatRequestsOneTimePermission.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsOneTimePermission.apk" />
         <option name="push" value="AppThatDefinesUndefinedPermissionGroupElement.apk->/data/local/tmp/cts/permissions/AppThatDefinesUndefinedPermissionGroupElement.apk" />
+        <option name="push" value="CtsAppThatDefinesPermissionA.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionA.apk" />
+        <option name="push" value="CtsAppThatAlsoDefinesPermissionA.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionA.apk" />
+        <option name="push" value="CtsAppThatAlsoDefinesPermissionADifferentCert.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionADifferentCert.apk" />
+        <option name="push" value="CtsAppThatAlsoDefinesPermissionGroupADifferentCert.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionGroupADifferentCert.apk" />
+        <option name="push" value="CtsAppThatDefinesPermissionInPlatformGroup.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionInPlatformGroup.apk" />
+        <option name="push" value="CtsAppThatAlsoDefinesPermissionGroupADifferentCert30.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionGroupADifferentCert30.apk" />
+        <option name="push" value="CtsAppThatDefinesPermissionWithInvalidGroup.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionWithInvalidGroup.apk" />
+        <option name="push" value="CtsAppThatDefinesPermissionWithInvalidGroup30.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionWithInvalidGroup30.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
