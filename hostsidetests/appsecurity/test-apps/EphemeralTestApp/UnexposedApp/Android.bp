@@ -23,6 +23,7 @@ android_test {
         "cts",
         "vts",
         "general-tests",
+        "sts",
     ],
     resource_dirs: ["res"],
     sdk_version: "current",

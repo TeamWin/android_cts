@@ -27,6 +27,7 @@ android_test {
         "cts",
         "vts",
         "general-tests",
+        "sts",
     ],
     srcs: ["src/**/*.java"],
     resource_dirs: ["res"],
