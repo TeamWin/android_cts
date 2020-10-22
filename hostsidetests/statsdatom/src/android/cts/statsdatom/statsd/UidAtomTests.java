@@ -94,6 +94,7 @@ import com.google.protobuf.Descriptors;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -301,58 +302,86 @@ public class UidAtomTests extends DeviceAtomTestCase {
     public void testBleScan() throws Exception {
         if (!hasFeature(FEATURE_BLUETOOTH_LE, true)) return;
 
-        final int atom = Atom.BLE_SCAN_STATE_CHANGED_FIELD_NUMBER;
-        final int field = BleScanStateChanged.STATE_FIELD_NUMBER;
-        final int stateOn = BleScanStateChanged.State.ON_VALUE;
-        final int stateOff = BleScanStateChanged.State.OFF_VALUE;
-        final int minTimeDiffMillis = 1_500;
-        final int maxTimeDiffMillis = 3_000;
+        final int atomTag = Atom.BLE_SCAN_STATE_CHANGED_FIELD_NUMBER;
+        Set<Integer> onState = new HashSet<>(
+                Collections.singletonList(BleScanStateChanged.State.ON_VALUE));
+        Set<Integer> offState = new HashSet<>(
+                Collections.singletonList(BleScanStateChanged.State.OFF_VALUE));
+        final int expectedWait = 3_000;
+        // Add state sets to the list in order.
+        List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useAttributionChain=*/ true);
 
-        List<EventMetricData> data = doDeviceMethodOnOff("testBleScanUnoptimized", atom, field,
-                stateOn, stateOff, minTimeDiffMillis, maxTimeDiffMillis, true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBleScanUnoptimized");
+        Thread.sleep(WAIT_TIME_SHORT);
 
-        BleScanStateChanged a0 = data.get(0).getAtom().getBleScanStateChanged();
-        BleScanStateChanged a1 = data.get(1).getAtom().getBleScanStateChanged();
-        assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
-        assertThat(a1.getState().getNumber()).isEqualTo(stateOff);
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomTestUtils.assertStatesOccurred(stateSet, data, expectedWait,
+                atom -> atom.getBleScanStateChanged().getState().getNumber());
     }
 
     public void testBleUnoptimizedScan() throws Exception {
         if (!hasFeature(FEATURE_BLUETOOTH_LE, true)) return;
 
-        final int atom = Atom.BLE_SCAN_STATE_CHANGED_FIELD_NUMBER;
-        final int field = BleScanStateChanged.STATE_FIELD_NUMBER;
-        final int stateOn = BleScanStateChanged.State.ON_VALUE;
-        final int stateOff = BleScanStateChanged.State.OFF_VALUE;
+        final int atomTag = Atom.BLE_SCAN_STATE_CHANGED_FIELD_NUMBER;
+        Set<Integer> onState = new HashSet<>(
+                Collections.singletonList(BleScanStateChanged.State.ON_VALUE));
+        Set<Integer> offState = new HashSet<>(
+                Collections.singletonList(BleScanStateChanged.State.OFF_VALUE));
         final int minTimeDiffMillis = 1_500;
         final int maxTimeDiffMillis = 3_000;
+        // Add state sets to the list in order.
+        List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useAttributionChain=*/ true);
 
-        List<EventMetricData> data = doDeviceMethodOnOff("testBleScanUnoptimized", atom, field,
-                stateOn, stateOff, minTimeDiffMillis, maxTimeDiffMillis, true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBleScanUnoptimized");
+        Thread.sleep(WAIT_TIME_SHORT);
 
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomTestUtils.assertTimeDiffBetween(data.get(0), data.get(1), minTimeDiffMillis,
+                maxTimeDiffMillis);
         BleScanStateChanged a0 = data.get(0).getAtom().getBleScanStateChanged();
-        assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
+        assertThat(a0.getState().getNumber()).isEqualTo(BleScanStateChanged.State.ON_VALUE);
         assertThat(a0.getIsFiltered()).isFalse();
         assertThat(a0.getIsFirstMatch()).isFalse();
         assertThat(a0.getIsOpportunistic()).isFalse();
         BleScanStateChanged a1 = data.get(1).getAtom().getBleScanStateChanged();
-        assertThat(a1.getState().getNumber()).isEqualTo(stateOff);
+        assertThat(a1.getState().getNumber()).isEqualTo(BleScanStateChanged.State.OFF_VALUE);
         assertThat(a1.getIsFiltered()).isFalse();
         assertThat(a1.getIsFirstMatch()).isFalse();
         assertThat(a1.getIsOpportunistic()).isFalse();
+    }
 
+    public void testBleOpportunisticScan() throws Exception {
+        if (!hasFeature(FEATURE_BLUETOOTH_LE, true)) return;
 
-        // Now repeat the test for opportunistic scanning and make sure it is reported correctly.
-        data = doDeviceMethodOnOff("testBleScanOpportunistic", atom, field,
-                stateOn, stateOff, minTimeDiffMillis, maxTimeDiffMillis, true);
+        final int atomTag = Atom.BLE_SCAN_STATE_CHANGED_FIELD_NUMBER;
+        Set<Integer> onState = new HashSet<>(
+                Collections.singletonList(BleScanStateChanged.State.ON_VALUE));
+        Set<Integer> offState = new HashSet<>(
+                Collections.singletonList(BleScanStateChanged.State.OFF_VALUE));
+        final int minTimeDiffMillis = 1_500;
+        final int maxTimeDiffMillis = 3_000;
+        // Add state sets to the list in order.
+        List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useAttributionChain=*/ true);
 
-        a0 = data.get(0).getAtom().getBleScanStateChanged();
-        assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests",
+                "testBleScanOpportunistic");
+
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomTestUtils.assertTimeDiffBetween(data.get(0), data.get(1), minTimeDiffMillis,
+                maxTimeDiffMillis);
+        BleScanStateChanged a0 = data.get(0).getAtom().getBleScanStateChanged();
+        assertThat(a0.getState().getNumber()).isEqualTo(BleScanStateChanged.State.ON_VALUE);
         assertThat(a0.getIsFiltered()).isFalse();
         assertThat(a0.getIsFirstMatch()).isFalse();
         assertThat(a0.getIsOpportunistic()).isTrue();  // This scan is opportunistic.
-        a1 = data.get(1).getAtom().getBleScanStateChanged();
-        assertThat(a1.getState().getNumber()).isEqualTo(stateOff);
+        BleScanStateChanged a1 = data.get(1).getAtom().getBleScanStateChanged();
+        assertThat(a1.getState().getNumber()).isEqualTo(BleScanStateChanged.State.OFF_VALUE);
         assertThat(a1.getIsFiltered()).isFalse();
         assertThat(a1.getIsFirstMatch()).isFalse();
         assertThat(a1.getIsOpportunistic()).isTrue();
@@ -363,11 +392,17 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         final int atom = Atom.BLE_SCAN_RESULT_RECEIVED_FIELD_NUMBER;
         final int field = BleScanResultReceived.NUM_RESULTS_FIELD_NUMBER;
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetric(config, atom, Arrays.asList(
+                ConfigUtils.createUidFvm(/*useAttributionChain=*/ true,
+                        DeviceUtils.STATSD_ATOM_TEST_PKG),
+                ConfigUtils.createFvm(field).setGteInt(0)));
+        ConfigUtils.uploadConfig(getDevice(), config);
 
-        StatsdConfig.Builder conf = createConfigBuilder();
-        addAtomEvent(conf, atom, createFvm(field).setGteInt(0));
-        List<EventMetricData> data = doDeviceMethod("testBleScanResult", conf);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBleScanResult");
 
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isAtLeast(1);
         BleScanResultReceived a0 = data.get(0).getAtom().getBleScanResultReceived();
         assertThat(a0.getNumResults()).isAtLeast(1);
