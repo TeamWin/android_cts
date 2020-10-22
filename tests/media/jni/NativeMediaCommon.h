@@ -17,6 +17,7 @@
 #ifndef MEDIACTSNATIVE_NATIVE_MEDIA_COMMON_H
 #define MEDIACTSNATIVE_NATIVE_MEDIA_COMMON_H
 
+#include <inttypes.h>
 #include <NdkMediaFormat.h>
 
 extern const char* AMEDIA_MIMETYPE_VIDEO_VP8;

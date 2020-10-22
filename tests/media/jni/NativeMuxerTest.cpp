@@ -205,11 +205,11 @@ bool MuxerNativeTestHelper::insertSampleData(AMediaMuxer* muxer) {
             delete[] frameCount;
             return false;
         }
-        ALOGV("Track: %d Timestamp: %d", trackID, (int)info->presentationTimeUs);
+        ALOGV("Track: %d Timestamp: %" PRId64 "", trackID, info->presentationTimeUs);
         frameCount[index]++;
     }
     delete[] frameCount;
-    ALOGV("Total track samples %d", (int)mTrackIdxOrder.size());
+    ALOGV("Total track samples %zu", mTrackIdxOrder.size());
     return true;
 }
 
@@ -250,8 +250,8 @@ bool MuxerNativeTestHelper::combineMedias(AMediaMuxer* muxer, MuxerNativeTestHel
                                                     info) != AMEDIA_OK) {
                         return false;
                     }
-                    ALOGV("Track: %d Timestamp: %d", outIndexMap[idx],
-                          (int)info->presentationTimeUs);
+                    ALOGV("Track: %d Timestamp: %" PRId64 "", outIndexMap[idx],
+                          info->presentationTimeUs);
                 }
                 idx++;
             }

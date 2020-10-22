@@ -96,8 +96,8 @@ static bool isMediaSimilar(AMediaExtractor* refExtractor, AMediaExtractor* testE
                     ALOGD(" Mime: %s mismatch for sample: %d", refMime, frameCount);
                     ALOGD(" flags exp/got: %d / %d", refSampleInfo.flags, testSampleInfo.flags);
                     ALOGD(" size exp/got: %d / %d ", refSampleInfo.size, testSampleInfo.size);
-                    ALOGD(" ts exp/got: %d / %d ", (int)refSampleInfo.presentationTimeUs,
-                          (int)testSampleInfo.presentationTimeUs);
+                    ALOGD(" ts exp/got: %" PRId64 " / %" PRId64 "",
+                          refSampleInfo.presentationTimeUs, testSampleInfo.presentationTimeUs);
                     areTracksIdentical = false;
                     break;
                 }
@@ -152,9 +152,9 @@ static bool isMediaSimilar(AMediaExtractor* refExtractor, AMediaExtractor* testE
                     areTracksIdentical = false;
                     break;
                 }
-                ALOGV("Mime: %s Sample: %d flags: %d size: %d ts: %d", refMime, frameCount,
-                      refSampleInfo.flags, refSampleInfo.size,
-                      (int)refSampleInfo.presentationTimeUs);
+                ALOGV("Mime: %s Sample: %d flags: %d size: %d ts: % " PRId64 "", refMime,
+                      frameCount, refSampleInfo.flags, refSampleInfo.size,
+                      refSampleInfo.presentationTimeUs);
                 if (!haveRefSamples || frameCount >= sampleLimit) {
                     break;
                 }
@@ -402,8 +402,8 @@ static int checkSeekPoints(const char* srcFile, const char* mime,
             if (!isSampleInfoIdentical(&arg->mExpected, &received)) {
                 ALOGE(" flags exp/got: %d / %d", arg->mExpected.flags, received.flags);
                 ALOGE(" size exp/got: %d / %d ", arg->mExpected.size, received.size);
-                ALOGE(" ts exp/got: %d / %d ", (int)arg->mExpected.presentationTimeUs,
-                      (int)received.presentationTimeUs);
+                ALOGE(" ts exp/got: %" PRId64 " / %" PRId64 "", arg->mExpected.presentationTimeUs,
+                      received.presentationTimeUs);
                 errCnt++;
             }
         }
@@ -460,8 +460,8 @@ static bool isSeekOk(AMediaExtractor* refExtractor, AMediaExtractor* testExtract
                 if (!result) {
                     ALOGE(" flags exp/got: %d / %d", refSampleInfo.flags, testSampleInfo.flags);
                     ALOGE(" size exp/got: %d / %d ", refSampleInfo.size, testSampleInfo.size);
-                    ALOGE(" ts exp/got: %d / %d ", (int)refSampleInfo.presentationTimeUs,
-                          (int)testSampleInfo.presentationTimeUs);
+                    ALOGE(" ts exp/got: %" PRId64 " / %" PRId64 "",
+                          refSampleInfo.presentationTimeUs, testSampleInfo.presentationTimeUs);
                 }
                 int refTrackIdx = AMediaExtractor_getSampleTrackIndex(refExtractor);
                 int testTrackIdx = AMediaExtractor_getSampleTrackIndex(testExtractor);
@@ -632,8 +632,8 @@ static jboolean nativeTestSeek(JNIEnv* env, jobject, jstring jsrcPath, jstring j
         std::shuffle(seekTestArgs.begin(), seekTestArgs.end(), std::default_random_engine(kSeed));
         int seekAccErrCnt = checkSeekPoints(csrcPath, cmime, seekTestArgs);
         if (seekAccErrCnt != 0) {
-            ALOGE("For %s seek chose inaccurate Sync point in: %d / %d", csrcPath, seekAccErrCnt,
-                  (int)seekTestArgs.size());
+            ALOGE("For %s seek chose inaccurate Sync point in: %d / %zu", csrcPath, seekAccErrCnt,
+                  seekTestArgs.size());
             isPass = false;
         } else {
             isPass = true;
@@ -705,8 +705,8 @@ static jboolean nativeTestSeekToZero(JNIEnv* env, jobject, jstring jsrcPath, jst
                     ALOGE("seen mismatch seekTo(0, SEEK_TO_CLOSEST_SYNC)");
                     ALOGE(" flags exp/got: %d / %d", sampleInfoAtZero.flags, currInfo.flags);
                     ALOGE(" size exp/got: %d / %d ", sampleInfoAtZero.size, currInfo.size);
-                    ALOGE(" ts exp/got: %d / %d ", (int)sampleInfoAtZero.presentationTimeUs,
-                          (int)currInfo.presentationTimeUs);
+                    ALOGE(" ts exp/got: %" PRId64 " / %" PRId64 " ",
+                          sampleInfoAtZero.presentationTimeUs, currInfo.presentationTimeUs);
                     AMediaFormat_delete(format);
                     break;
                 }
@@ -717,8 +717,8 @@ static jboolean nativeTestSeekToZero(JNIEnv* env, jobject, jstring jsrcPath, jst
                     ALOGE("seen mismatch seekTo(-1, SEEK_TO_CLOSEST_SYNC)");
                     ALOGE(" flags exp/got: %d / %d", sampleInfoAtZero.flags, currInfo.flags);
                     ALOGE(" size exp/got: %d / %d ", sampleInfoAtZero.size, currInfo.size);
-                    ALOGE(" ts exp/got: %d / %d ", (int)sampleInfoAtZero.presentationTimeUs,
-                          (int)currInfo.presentationTimeUs);
+                    ALOGE(" ts exp/got: %" PRId64 " / %" PRId64 "",
+                          sampleInfoAtZero.presentationTimeUs, currInfo.presentationTimeUs);
                     AMediaFormat_delete(format);
                     break;
                 }
