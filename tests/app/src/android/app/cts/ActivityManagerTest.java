@@ -78,7 +78,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     public static final int RESULT_FAIL = 2;
     public static final int RESULT_TIMEOUT = 3;
 
-    private Context mContext;
+    private Context mTargetContext;
     private ActivityManager mActivityManager;
     private Intent mIntent;
     private List<Activity> mStartedActivityList;
@@ -89,8 +89,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mInstrumentation = getInstrumentation();
-        mContext = mInstrumentation.getContext();
-        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        mTargetContext = mInstrumentation.getTargetContext();
+        mActivityManager = (ActivityManager) mInstrumentation.getContext()
+                .getSystemService(Context.ACTIVITY_SERVICE);
         mStartedActivityList = new ArrayList<Activity>();
         mErrorProcessID = -1;
         startSubActivity(ScreenOnActivity.class);
@@ -173,7 +174,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         ActivityReceiverFilter receiver = new ActivityReceiverFilter(ACTIVITY_LAUNCHED_ACTION);
-        mContext.startActivity(intent);
+        mTargetContext.startActivity(intent);
 
         // Make sure the activity has really started.
         assertEquals(RESULT_PASS, receiver.waitForActivity());
@@ -187,7 +188,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         // Tell the activity to finalize.
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.putExtra("finish", true);
-        mContext.startActivity(intent);
+        mTargetContext.startActivity(intent);
     }
 
     // The receiver filter needs to be instantiated with the command to filter for before calling
@@ -314,7 +315,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         }
         assertTrue(foundService);
         MockService.prepareDestroy();
-        mContext.stopService(intent);
+        mTargetContext.stopService(intent);
         boolean destroyed = MockService.waitForDestroy(WAIT_TIME);
         assertTrue(destroyed);
     }
@@ -444,7 +445,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             Intent intent = new Intent(Intent.ACTION_MAIN);
             intent.addCategory(Intent.CATEGORY_HOME);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
+            mTargetContext.startActivity(intent);
             Thread.sleep(WAIT_TIME);
         }
     }
@@ -488,7 +489,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         ActivityReceiverFilter timeReceiver = new ActivityReceiverFilter(ACTIVITY_TIME_TRACK_INFO);
 
         // Run the activity.
-        mContext.startActivity(intent, options.toBundle());
+        mTargetContext.startActivity(intent, options.toBundle());
 
         // Wait until it finishes and end the reciever then.
         assertEquals(RESULT_PASS, appEndReceiver.waitForActivity());
@@ -546,7 +547,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         ActivityReceiverFilter timeReceiver = new ActivityReceiverFilter(ACTIVITY_TIME_TRACK_INFO);
 
         // Run the activity.
-        mContext.startActivity(intent, options.toBundle());
+        mTargetContext.startActivity(intent, options.toBundle());
 
         // Wait until it finishes and end the reciever then.
         assertEquals(RESULT_PASS, appStartedReceiver.waitForActivity());
@@ -594,7 +595,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         ActivityReceiverFilter timeReceiver = new ActivityReceiverFilter(ACTIVITY_TIME_TRACK_INFO);
 
         // Run the activity.
-        mContext.startActivity(intent, options.toBundle());
+        mTargetContext.startActivity(intent, options.toBundle());
 
         // Wait until it finishes and end the reciever then.
         assertEquals(RESULT_PASS, appEndReceiver.waitForActivity());
@@ -640,13 +641,13 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         Intent intent = new Intent();
         intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        mTargetContext.startActivity(intent);
         assertEquals(RESULT_PASS, appStartedReceiver.waitForActivity());
 
         // Start a new activity in the same task. Here adds an action to make a different to intent
         // filter comparison so another same activity will be created.
         intent.setAction(Intent.ACTION_MAIN);
-        mContext.startActivity(intent);
+        mTargetContext.startActivity(intent);
         assertEquals(RESULT_PASS, appStartedReceiver.waitForActivity());
         appStartedReceiver.close();
 
