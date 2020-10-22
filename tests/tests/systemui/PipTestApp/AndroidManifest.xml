@@ -27,12 +27,6 @@
             android:launchMode="singleTask"
             android:supportsPictureInPicture="true"
             android:taskAffinity="nobody.but.PipTestActivity" />
-
-        <activity
-            android:name=".KeyboardActivity"
-            android:exported="true"
-            android:launchMode="singleInstance"
-            android:windowSoftInputMode="stateAlwaysVisible" />
     </application>
 
 </manifest>

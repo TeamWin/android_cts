@@ -36,7 +36,6 @@ android_test {
         "androidx.test.uiautomator",
         "cts-wm-util",
         "ub-uiautomator",
-        "flickerlib",
     ],
     srcs: [
         "src/**/*.java",

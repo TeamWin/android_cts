@@ -795,42 +795,6 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
 
     }
 
-    /** Tests launching of activities on a single task instance display. */
-    @Test
-    public void testSingleTaskInstanceDisplay() {
-        DisplayContent display = createManagedVirtualDisplaySession()
-                .setSimulateDisplay(true)
-                .createDisplay();
-        final int displayId = display.mId;
-
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.setDisplayToSingleTaskInstance(displayId));
-        display = getDisplayState(displayId);
-        assertTrue("Display must be set to singleTaskInstance", display.mSingleTaskInstance);
-
-        // SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY will launch
-        // SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2 in the same task and
-        // SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3 in different task.
-        launchActivityOnDisplay(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY, displayId);
-
-        waitAndAssertTopResumedActivity(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3, DEFAULT_DISPLAY,
-                "Activity should be resumed on default display");
-
-        display = getDisplayState(displayId);
-        // Verify that the 2 activities in the same task are on the display and the one in a
-        // different task isn't on the display, but on the default display
-        assertTrue("Display should contain SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY",
-                display.containsActivity(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY));
-        assertTrue("Display should contain SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2",
-                display.containsActivity(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY2));
-
-        assertFalse("Display shouldn't contain SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3",
-                display.containsActivity(SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3));
-        assertTrue("Display should contain SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3",
-                getDisplayState(DEFAULT_DISPLAY).containsActivity(
-                        SINGLE_TASK_INSTANCE_DISPLAY_ACTIVITY3));
-    }
-
     @Test
     public void testLaunchPendingIntentActivity() throws Exception {
         final DisplayContent displayContent = createManagedVirtualDisplaySession()

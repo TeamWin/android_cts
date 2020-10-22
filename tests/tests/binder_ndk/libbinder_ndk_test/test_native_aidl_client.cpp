@@ -16,8 +16,10 @@
 #define LOG_TAG "Cts-NdkBinderTest"
 
 #include <aidl/test_package/BnEmpty.h>
+#include <aidl/test_package/BpCompatTest.h>
 #include <aidl/test_package/BpTest.h>
 #include <aidl/test_package/ByteEnum.h>
+#include <aidl/test_package/ExtendableParcelable.h>
 #include <aidl/test_package/FixedSize.h>
 #include <aidl/test_package/Foo.h>
 #include <aidl/test_package/IntEnum.h>
@@ -38,12 +40,15 @@
 using ::aidl::test_package::Bar;
 using ::aidl::test_package::BpTest;
 using ::aidl::test_package::ByteEnum;
+using ::aidl::test_package::ExtendableParcelable;
 using ::aidl::test_package::FixedSize;
 using ::aidl::test_package::Foo;
 using ::aidl::test_package::GenericBar;
+using ::aidl::test_package::ICompatTest;
 using ::aidl::test_package::IntEnum;
 using ::aidl::test_package::ITest;
 using ::aidl::test_package::LongEnum;
+using ::aidl::test_package::MyExt;
 using ::aidl::test_package::RegularPolygon;
 using ::ndk::ScopedAStatus;
 using ::ndk::ScopedFileDescriptor;
@@ -142,6 +147,12 @@ std::string dumpToString(std::shared_ptr<ITest> itest, std::vector<const char*> 
 
   close(fd[1]);
   return ret;
+}
+
+auto getCompatTest(std::shared_ptr<ITest> itest) {
+  SpAIBinder binder;
+  itest->getICompatTest(&binder);
+  return ICompatTest::fromBinder(binder);
 }
 
 TEST_P(NdkBinderTest_Aidl, UseDump) {
@@ -459,16 +470,17 @@ TEST_P(NdkBinderTest_Aidl, InsAndOuts) {
 }
 
 TEST_P(NdkBinderTest_Aidl, NewField) {
-  Foo foo;
-  foo.g = {"a", "b", "c"};
+  Baz baz;
+  baz.d = {"a", "b", "c"};
 
-  Foo outFoo;
-  ASSERT_OK(iface->repeatFoo(foo, &outFoo));
+  Baz outbaz;
+
+  ASSERT_OK(getCompatTest(iface)->repeatBaz(baz, &outbaz));
 
   if (GetParam().shouldBeOld) {
-    EXPECT_EQ(std::nullopt, outFoo.g);
+    EXPECT_EQ(std::nullopt, outbaz.d);
   } else {
-    EXPECT_EQ(foo.g, outFoo.g);
+    EXPECT_EQ(baz.d, outbaz.d);
   }
 }
 
@@ -525,12 +537,6 @@ TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatGenericBar) {
-  if (GetParam().shouldBeOld) {
-    // TODO(b/127361166): GTEST_SKIP is considered a failure, would prefer to use that here
-    __android_log_write(ANDROID_LOG_ERROR, LOG_TAG,
-                        "Skipping RepeatGenericBar test on old interface");
-    return;
-  }
   GenericBar<int32_t> bar;
   bar.a = 40;
   bar.shouldBeGenericFoo.a = 41;
@@ -819,7 +825,7 @@ TEST_P(NdkBinderTest_Aidl, NullableArrays) {
                           });
 }
 
-class DefaultImpl : public ::aidl::test_package::ITestDefault {
+class DefaultImpl : public ::aidl::test_package::ICompatTestDefault {
  public:
   ::ndk::ScopedAStatus NewMethodThatReturns10(int32_t* _aidl_return) override {
     *_aidl_return = 100;  // default impl returns different value
@@ -828,11 +834,12 @@ class DefaultImpl : public ::aidl::test_package::ITestDefault {
 };
 
 TEST_P(NdkBinderTest_Aidl, NewMethod) {
-  std::shared_ptr<ITest> default_impl = SharedRefBase::make<DefaultImpl>();
-  ::aidl::test_package::ITest::setDefaultImpl(default_impl);
+  std::shared_ptr<ICompatTest> default_impl = SharedRefBase::make<DefaultImpl>();
+  ::aidl::test_package::ICompatTest::setDefaultImpl(default_impl);
 
+  auto compat_test = getCompatTest(iface);
   int32_t res;
-  EXPECT_OK(iface->NewMethodThatReturns10(&res));
+  EXPECT_OK(compat_test->NewMethodThatReturns10(&res));
   if (GetParam().shouldBeOld) {
     // Remote was built with version 1 interface which does not have
     // "NewMethodThatReturns10". In this case the default method
@@ -857,27 +864,29 @@ TEST_P(NdkBinderTest_Aidl, RepeatStringNullableLater) {
   // non-nullable type. Of course, this is not ideal, but the problem runs very
   // deep.
   const bool supports_nullable = !GetParam().shouldBeOld || name == "Java";
+  auto compat_test = getCompatTest(iface);
   if (supports_nullable) {
-    EXPECT_OK(iface->RepeatStringNullableLater(std::nullopt, &res));
+    EXPECT_OK(compat_test->RepeatStringNullableLater(std::nullopt, &res));
     EXPECT_EQ(std::nullopt, res);
   } else {
-    ndk::ScopedAStatus status = iface->RepeatStringNullableLater(std::nullopt, &res);
+    ndk::ScopedAStatus status = compat_test->RepeatStringNullableLater(std::nullopt, &res);
     ASSERT_EQ(STATUS_UNEXPECTED_NULL, AStatus_getStatus(status.get()));
   }
 
-  EXPECT_OK(iface->RepeatStringNullableLater("", &res));
+  EXPECT_OK(compat_test->RepeatStringNullableLater("", &res));
   EXPECT_EQ("", res);
 
-  EXPECT_OK(iface->RepeatStringNullableLater("a", &res));
+  EXPECT_OK(compat_test->RepeatStringNullableLater("a", &res));
   EXPECT_EQ("a", res);
 
-  EXPECT_OK(iface->RepeatStringNullableLater("say what?", &res));
+  EXPECT_OK(compat_test->RepeatStringNullableLater("say what?", &res));
   EXPECT_EQ("say what?", res);
 }
 
 TEST_P(NdkBinderTest_Aidl, GetInterfaceVersion) {
   int32_t res;
-  EXPECT_OK(iface->getInterfaceVersion(&res));
+  auto compat_test = getCompatTest(iface);
+  EXPECT_OK(compat_test->getInterfaceVersion(&res));
   if (GetParam().shouldBeOld) {
     EXPECT_EQ(1, res);
   } else {
@@ -888,13 +897,52 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceVersion) {
 
 TEST_P(NdkBinderTest_Aidl, GetInterfaceHash) {
   std::string res;
-  EXPECT_OK(iface->getInterfaceHash(&res));
+  auto compat_test = getCompatTest(iface);
+  EXPECT_OK(compat_test->getInterfaceHash(&res));
   if (GetParam().shouldBeOld) {
     // aidl_api/libbinder_ndk_test_interface/1/.hash
-    EXPECT_EQ("d1f6d67f8af3bf736ae93d872660b0c800dd14d9", res);
+    EXPECT_EQ("b663b681b3e0d66f9b5428c2f23365031b7d4ba0", res);
   } else {
     EXPECT_EQ("notfrozen", res);
   }
+}
+
+TEST_P(NdkBinderTest_Aidl, ParcelableHolderTest) {
+  ExtendableParcelable ep;
+  MyExt myext1;
+  myext1.a = 42;
+  myext1.b = "mystr";
+  ep.ext.setParcelable(&myext1);
+  std::unique_ptr<MyExt> myext2 = ep.ext.getParcelable<MyExt>();
+  EXPECT_TRUE(myext2);
+  EXPECT_EQ(42, myext2->a);
+  EXPECT_EQ("mystr", myext2->b);
+
+  AParcel* parcel = AParcel_create();
+  ep.writeToParcel(parcel);
+  AParcel_setDataPosition(parcel, 0);
+  ExtendableParcelable ep2;
+  ep2.readFromParcel(parcel);
+  std::unique_ptr<MyExt> myext3 = ep2.ext.getParcelable<MyExt>();
+  EXPECT_TRUE(myext3);
+  EXPECT_EQ(42, myext3->a);
+  EXPECT_EQ("mystr", myext3->b);
+  AParcel_delete(parcel);
+}
+TEST_P(NdkBinderTest_Aidl, ParcelableHolderCommunicationTest) {
+  ExtendableParcelable ep;
+
+  MyExt myext1;
+  myext1.a = 42;
+  myext1.b = "mystr";
+  ep.ext.setParcelable(&myext1);
+
+  ExtendableParcelable ep2;
+  EXPECT_OK(iface->RepeatExtendableParcelable(ep, &ep2));
+  std::unique_ptr<MyExt> myext2 = ep2.ext.getParcelable<MyExt>();
+  EXPECT_TRUE(myext2);
+  EXPECT_EQ(42, myext2->a);
+  EXPECT_EQ("mystr", myext2->b);
 }
 
 std::shared_ptr<ITest> getProxyLocalService() {

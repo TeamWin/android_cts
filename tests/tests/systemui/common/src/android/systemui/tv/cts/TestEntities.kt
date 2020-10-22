@@ -36,9 +36,6 @@ object Components {
         ResourceNames.SYSTEM_UI_PACKAGE,
         ResourceNames.WM_SHELL_PACKAGE + ".pip.tv.PipMenuActivity"
     )
-
-    @JvmField
-    val KEYBOARD_ACTIVITY: ComponentName = ComponentName.createRelative(pkg, ".KeyboardActivity")
 }
 
 object PipActivity {
@@ -102,11 +99,6 @@ object PipActivity {
     const val EXTRA_SET_CUSTOM_ACTIONS = "set_custom_actions"
 }
 
-object KeyboardActivity {
-    const val ACTION_SHOW_KEYBOARD = "$pkg.KeyboardActivity.show_keyboard"
-    const val ACTION_HIDE_KEYBOARD = "$pkg.KeyboardActivity.hide_keyboard"
-}
-
 object PipMenu {
     const val ACTION_MENU = "PipNotification.menu"
     const val ACTION_CLOSE = "PipNotification.close"
@@ -123,15 +115,12 @@ object ResourceNames {
     const val SYSTEM_UI_PACKAGE = "com.android.systemui"
     const val WM_SHELL_PACKAGE = "com.android.wm.shell"
 
-    /** The name of the soft keyboard window. */
-    const val WINDOW_NAME_INPUT_METHOD = "InputMethod"
-
     const val STRING_PIP_MENU_BOUNDS = "pip_menu_bounds"
 
-    const val ID_PIP_MENU_CLOSE_BUTTON = "$WM_SHELL_PACKAGE:id/close_button"
-    const val ID_PIP_MENU_FULLSCREEN_BUTTON = "$WM_SHELL_PACKAGE:id/full_button"
-    const val ID_PIP_MENU_PLAY_PAUSE_BUTTON = "$WM_SHELL_PACKAGE:id/play_pause_button"
-    const val ID_PIP_MENU_CUSTOM_BUTTON = "$WM_SHELL_PACKAGE:id/button"
+    const val ID_PIP_MENU_CLOSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/close_button"
+    const val ID_PIP_MENU_FULLSCREEN_BUTTON = "$SYSTEM_UI_PACKAGE:id/full_button"
+    const val ID_PIP_MENU_PLAY_PAUSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/play_pause_button"
+    const val ID_PIP_MENU_CUSTOM_BUTTON = "$SYSTEM_UI_PACKAGE:id/button"
 }
 
 object ShellCommands {

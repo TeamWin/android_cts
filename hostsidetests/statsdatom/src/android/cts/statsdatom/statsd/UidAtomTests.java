@@ -21,6 +21,10 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.AppOpEnum;
+import android.cts.statsdatom.lib.AtomTestUtils;
+import android.cts.statsdatom.lib.ConfigUtils;
+import android.cts.statsdatom.lib.DeviceUtils;
+import android.cts.statsdatom.lib.ReportUtils;
 import android.net.wifi.WifiModeEnum;
 import android.os.WakeLockLevelEnum;
 import android.server.ErrorSource;
@@ -98,6 +102,10 @@ import java.util.stream.Collectors;
 
 /**
  * Statsd atom tests that are done via app, for atoms that report a uid.
+ *
+ * TODO: Once all tests have migrated to use the new helper test library, this class should not
+ * extend DeviceAtomTestCase. Instead, this class should extend DeviceTestCase and implement
+ * IBuildReceiver. At the same time, the setBuild function should be overridden.
  */
 public class UidAtomTests extends DeviceAtomTestCase {
 
@@ -126,12 +134,72 @@ public class UidAtomTests extends DeviceAtomTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        assertThat(mCtsBuild).isNotNull();
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice());
+        DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
     @Override
     protected void tearDown() throws Exception {
-        resetBatteryStatus();
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice());
+        DeviceUtils.uninstallStatsdTestApp(getDevice());
         super.tearDown();
+    }
+
+    /**
+     * Tests that statsd correctly maps isolated uids to host uids by verifying that atoms logged
+     * from an isolated process are seen as coming from their host process.
+     */
+    public void testIsolatedToHostUidMapping() throws Exception {
+        StatsdConfig.Builder config =
+                ConfigUtils.createConfigBuilder(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(config, Atom.APP_BREADCRUMB_REPORTED_FIELD_NUMBER,
+                /*uidInAttributionChain=*/false, DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), config);
+
+        // Create an isolated service from which an AppBreadcrumbReported atom is logged.
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests",
+                "testIsolatedProcessService");
+
+        // Verify correctness of data.
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).hasSize(1);
+        AppBreadcrumbReported atom = data.get(0).getAtom().getAppBreadcrumbReported();
+        assertThat(atom.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
+        assertThat(atom.getLabel()).isEqualTo(0);
+        assertThat(atom.getState()).isEqualTo(AppBreadcrumbReported.State.START);
+    }
+
+    public void testCpuTimePerUid() throws Exception {
+        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
+
+        StatsdConfig.Builder config =
+                ConfigUtils.createConfigBuilder(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addGaugeMetricForUidAtom(config, Atom.CPU_TIME_PER_UID_FIELD_NUMBER,
+                /*uidInAttributionChain=*/false, DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), config);
+
+        // Do some trivial work on the app
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        // Trigger atom pull
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        // Verify correctness of data
+        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
+        boolean found = false;
+        int appUid = DeviceUtils.getStatsdTestAppUid(getDevice());
+        for (Atom atom : atoms) {
+            assertThat(atom.getCpuTimePerUid().getUid()).isEqualTo(appUid);
+            assertThat(atom.getCpuTimePerUid().getUserTimeMicros()).isGreaterThan(0L);
+            assertThat(atom.getCpuTimePerUid().getSysTimeMicros()).isGreaterThan(0L);
+            found = true;
+        }
+        assertWithMessage("Found no CpuTimePerUid atoms from uid " + appUid).that(found).isTrue();
     }
 
     public void testLmkKillOccurred() throws Exception {
@@ -140,60 +208,72 @@ public class UidAtomTests extends DeviceAtomTestCase {
         }
 
         final int atomTag = Atom.LMK_KILL_OCCURRED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag, false);
+        final String actionLmk = "action.lmk";
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(config, atomTag, /*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), config);
 
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        executeBackgroundService(ACTION_LMK);
+        DeviceUtils.executeBackgroundService(getDevice(), actionLmk);
         Thread.sleep(15_000);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        int appUid = DeviceUtils.getStatsdTestAppUid(getDevice());
 
         assertThat(data).hasSize(1);
         assertThat(data.get(0).getAtom().hasLmkKillOccurred()).isTrue();
         LmkKillOccurred atom = data.get(0).getAtom().getLmkKillOccurred();
-        assertThat(atom.getUid()).isEqualTo(getUid());
-        assertThat(atom.getProcessName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+        assertThat(atom.getUid()).isEqualTo(appUid);
+        assertThat(atom.getProcessName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertThat(atom.getOomAdjScore()).isAtLeast(500);
     }
 
     public void testAppCrashOccurred() throws Exception {
         final int atomTag = Atom.APP_CRASH_OCCURRED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag, false);
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(config, atomTag, /*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), config);
         Thread.sleep(WAIT_TIME_SHORT);
 
-        runActivity("StatsdCtsForegroundActivity", "action", "action.crash");
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.crash");
 
-        Thread.sleep(WAIT_TIME_SHORT);
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
+        assertThat(data).hasSize(1);
         AppCrashOccurred atom = data.get(0).getAtom().getAppCrashOccurred();
         assertThat(atom.getEventType()).isEqualTo("crash");
         assertThat(atom.getIsInstantApp().getNumber())
-            .isEqualTo(AppCrashOccurred.InstantApp.FALSE_VALUE);
+                .isEqualTo(AppCrashOccurred.InstantApp.FALSE_VALUE);
         assertThat(atom.getForegroundState().getNumber())
-            .isEqualTo(AppCrashOccurred.ForegroundState.FOREGROUND_VALUE);
-        assertThat(atom.getPackageName()).isEqualTo(TEST_PACKAGE_NAME);
+                .isEqualTo(AppCrashOccurred.ForegroundState.FOREGROUND_VALUE);
+        assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
     }
 
     public void testAppStartOccurred() throws Exception {
         final int atomTag = Atom.APP_START_OCCURRED_FIELD_NUMBER;
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(config, atomTag, /*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), config);
 
-        createAndUploadConfig(atomTag, false);
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        runActivity("StatsdCtsForegroundActivity", "action", "action.sleep_top", 3_500);
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.sleep_top", 3_500);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertThat(data).hasSize(1);
         AppStartOccurred atom = data.get(0).getAtom().getAppStartOccurred();
-        assertThat(atom.getPkgName()).isEqualTo(TEST_PACKAGE_NAME);
+        assertThat(atom.getPkgName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertThat(atom.getActivityName())
-            .isEqualTo("com.android.server.cts.device.statsd.StatsdCtsForegroundActivity");
+                .isEqualTo("com.android.server.cts.device.statsdatom.StatsdCtsForegroundActivity");
         assertThat(atom.getIsInstantApp()).isFalse();
         assertThat(atom.getActivityStartMillis()).isGreaterThan(0L);
         assertThat(atom.getTransitionDelayMillis()).isGreaterThan(0);
@@ -347,6 +427,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         Atom atom = getGaugeMetricDataList().get(0);
         assertThat(atom.getDeviceCalculatedPowerUse().getComputedPowerNanoAmpSecs())
             .isGreaterThan(0L);
+        resetBatteryStatus();
     }
 
 
@@ -390,6 +471,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertWithMessage(String.format("No power value for uid %d", uid)).that(uidFound).isTrue();
         assertWithMessage(String.format("Non-positive power value for uid %d", uid))
             .that(uidPower).isGreaterThan(0L);
+        resetBatteryStatus();
     }
 
     public void testDavey() throws Exception {
@@ -500,7 +582,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             assertWithMessage("Wrong count for " + opName).that(count).isEqualTo(expectedCount);
         }
     }
-/*
+
     public void testGpsScan() throws Exception {
         if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
         // Whitelist this app against background location request throttling
@@ -536,7 +618,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             }
         }
     }
-*/
+
     public void testGnssStats() throws Exception {
         // Get GnssMetrics as a simple gauge metric.
         StatsdConfig.Builder config = createConfigBuilder();

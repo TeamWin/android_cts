@@ -349,34 +349,52 @@ public class InputJsonParser {
     }
 
     private MotionEvent parseMotionEvent(int source, JSONObject entry) throws JSONException {
-        MotionEvent.PointerProperties[] properties = new MotionEvent.PointerProperties[1];
-        properties[0] = new MotionEvent.PointerProperties();
-        properties[0].id = 0;
-        properties[0].toolType = MotionEvent.TOOL_TYPE_UNKNOWN;
+        JSONArray pointers = entry.optJSONArray("axes");
+        int pointerCount = pointers == null ? 1 : pointers.length();
 
-        MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[1];
-        coords[0] = new MotionEvent.PointerCoords();
-
-        JSONObject axes = entry.getJSONObject("axes");
-        Iterator<String> keys = axes.keys();
-        while (keys.hasNext()) {
-            String axis = keys.next();
-            float value = (float) axes.getDouble(axis);
-            coords[0].setAxisValue(MotionEvent.axisFromString(axis), value);
+        MotionEvent.PointerProperties[] properties =
+                new MotionEvent.PointerProperties[pointerCount];
+        for (int i = 0; i < pointerCount; i++) {
+            properties[i] = new MotionEvent.PointerProperties();
+            properties[i].id = i;
+            properties[i].toolType = MotionEvent.TOOL_TYPE_UNKNOWN;
         }
+
+        MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[pointerCount];
+        for (int i = 0; i < pointerCount; i++) {
+            coords[i] = new MotionEvent.PointerCoords();
+        }
+
+        int action = motionActionFromString(entry);
 
         int buttonState = 0;
         JSONArray buttons = entry.optJSONArray("buttonState");
         if (buttons != null) {
-            for (int i = 0; i < buttons.length(); ++i) {
-                buttonState |= motionButtonFromString(buttons.getString(i));
+            for (int i = 0; i < buttons.length(); i++) {
+                String buttonStr = buttons.getString(i);
+                buttonState |= motionButtonFromString(buttonStr);
             }
         }
 
-        int action = motionActionFromString(entry.getString("action"));
-        // Only care about axes, action and source here. Times are not checked.
+        // "axes" field should be an array if there are multiple pointers
+        for (int i = 0; i < pointerCount; i++) {
+            JSONObject axes;
+            if (pointers == null) {
+                axes = entry.getJSONObject("axes");
+            } else {
+                axes = pointers.getJSONObject(i);
+            }
+            Iterator<String> keys = axes.keys();
+            while (keys.hasNext()) {
+                String axis = keys.next();
+                float value = (float) axes.getDouble(axis);
+                coords[i].setAxisValue(MotionEvent.axisFromString(axis), value);
+            }
+        }
+
+        // Times are not checked
         return MotionEvent.obtain(/* downTime */ 0, /* eventTime */ 0, action,
-                /* pointercount */ 1, properties, coords, 0, buttonState, 0f, 0f,
+                pointerCount, properties, coords, 0, buttonState, 0f, 0f,
                 0, 0, source, 0);
     }
 
@@ -440,26 +458,65 @@ public class InputJsonParser {
         return metaState;
     }
 
-    private static int motionActionFromString(String action) {
-        switch (action.toUpperCase()) {
-            case "DOWN":
-                return MotionEvent.ACTION_DOWN;
-            case "MOVE":
-                return MotionEvent.ACTION_MOVE;
-            case "UP":
-                return MotionEvent.ACTION_UP;
-            case "BUTTON_PRESS":
-                return MotionEvent.ACTION_BUTTON_PRESS;
-            case "BUTTON_RELEASE":
-                return MotionEvent.ACTION_BUTTON_RELEASE;
-            case "HOVER_ENTER":
-                return MotionEvent.ACTION_HOVER_ENTER;
-            case "HOVER_MOVE":
-                return MotionEvent.ACTION_HOVER_MOVE;
-            case "HOVER_EXIT":
-                return MotionEvent.ACTION_HOVER_EXIT;
+    private static int motionActionFromString(JSONObject entry) {
+        String action;
+        int motionAction = 0;
+
+        try {
+            action = entry.getString("action").toUpperCase();
+        } catch (JSONException e) {
+            throw new RuntimeException("Action not specified. ");
         }
-        throw new RuntimeException("Unknown action specified: " + action);
+
+        switch (action) {
+            case "DOWN":
+                motionAction = MotionEvent.ACTION_DOWN;
+                break;
+            case "MOVE":
+                motionAction = MotionEvent.ACTION_MOVE;
+                break;
+            case "UP":
+                motionAction = MotionEvent.ACTION_UP;
+                break;
+            case "BUTTON_PRESS":
+                motionAction = MotionEvent.ACTION_BUTTON_PRESS;
+                break;
+            case "BUTTON_RELEASE":
+                motionAction = MotionEvent.ACTION_BUTTON_RELEASE;
+                break;
+            case "HOVER_ENTER":
+                motionAction = MotionEvent.ACTION_HOVER_ENTER;
+                break;
+            case "HOVER_MOVE":
+                motionAction = MotionEvent.ACTION_HOVER_MOVE;
+                break;
+            case "HOVER_EXIT":
+                motionAction = MotionEvent.ACTION_HOVER_EXIT;
+                break;
+            case "POINTER_DOWN":
+                motionAction = MotionEvent.ACTION_POINTER_DOWN;
+                break;
+            case "POINTER_UP":
+                motionAction = MotionEvent.ACTION_POINTER_UP;
+                break;
+            case "CANCEL":
+                motionAction = MotionEvent.ACTION_CANCEL;
+                break;
+            default:
+                throw new RuntimeException("Unknown action specified: " + action);
+        }
+        int pointerId;
+        try {
+            if (motionAction == MotionEvent.ACTION_POINTER_UP
+                    || motionAction == MotionEvent.ACTION_POINTER_DOWN) {
+                pointerId = entry.getInt("pointerId");
+            } else {
+                pointerId = entry.optInt("pointerId", 0);
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException("PointerId not specified: " + action);
+        }
+        return motionAction | (pointerId << MotionEvent.ACTION_POINTER_INDEX_SHIFT);
     }
 
     private static int sourceFromString(String sourceString) {
@@ -485,6 +542,9 @@ public class InputJsonParser {
                     break;
                 case "DPAD":
                     source |= InputDevice.SOURCE_DPAD;
+                    break;
+                case "TOUCHPAD":
+                    source |= InputDevice.SOURCE_TOUCHPAD;
                     break;
                 default:
                     throw new RuntimeException("Unknown source chunk: " + trimmedSourceEntry

@@ -45,6 +45,30 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/66969349
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @SecurityTest(minPatchLevel = "2018-01")
+    @Test
+    public void testPocCVE_2017_13180() throws Exception {
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13180", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
+     * b/111210196
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2019-12")
+    @Test
+    public void testPocCVE_2019_2228() throws Exception {
+        String inputFiles[] = {"cve_2019_2228_ipp.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2228",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/157650336
      * Vulnerability Behaviour: SIGSEGV in self / EXIT_VULNERABLE (113)
      */
