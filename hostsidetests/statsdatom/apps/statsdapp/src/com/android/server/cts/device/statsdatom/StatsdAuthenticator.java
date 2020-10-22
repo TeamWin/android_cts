@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.server.cts.device.statsd;
+package com.android.server.cts.device.statsdatom;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;

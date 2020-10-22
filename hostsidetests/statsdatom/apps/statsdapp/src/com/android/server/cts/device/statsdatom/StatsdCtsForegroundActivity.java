@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.server.cts.device.statsd;
+package com.android.server.cts.device.statsdatom;
 
 import android.app.Activity;
 import android.app.Notification;
@@ -41,6 +41,7 @@ public class StatsdCtsForegroundActivity extends Activity {
     private static final String TAG = StatsdCtsForegroundActivity.class.getSimpleName();
 
     public static final String KEY_ACTION = "action";
+    public static final String ACTION_CRASH = "action.crash";
     public static final String ACTION_END_IMMEDIATELY = "action.end_immediately";
     public static final String ACTION_SLEEP_WHILE_TOP = "action.sleep_top";
     public static final String ACTION_LONG_SLEEP_WHILE_TOP = "action.long_sleep_top";
@@ -69,6 +70,9 @@ public class StatsdCtsForegroundActivity extends Activity {
         switch (action) {
             case ACTION_END_IMMEDIATELY:
                 finish();
+                break;
+            case ACTION_CRASH:
+                doCrash();
                 break;
             case ACTION_SLEEP_WHILE_TOP:
                 doSleepWhileTop(SLEEP_OF_ACTION_SLEEP_WHILE_TOP);
@@ -188,5 +192,10 @@ public class StatsdCtsForegroundActivity extends Activity {
         } finally {
             finish();
         }
+    }
+
+    @SuppressWarnings("ConstantOverflow")
+    private void doCrash() {
+        Log.e(TAG, "About to crash the app with 1/0 " + (long) 1 / 0);
     }
 }

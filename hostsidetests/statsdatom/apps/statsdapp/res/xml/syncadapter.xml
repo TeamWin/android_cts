@@ -15,6 +15,6 @@
 -->
 
 <sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
-    android:contentAuthority= "com.android.server.cts.device.statsd.provider"
-    android:accountType="com.android.cts.statsd"
+    android:contentAuthority= "com.android.server.cts.device.statsdatom.provider"
+    android:accountType="com.android.cts.statsdatom"
 />

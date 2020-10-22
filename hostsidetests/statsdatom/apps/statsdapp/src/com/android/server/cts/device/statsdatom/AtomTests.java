@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.server.cts.device.statsd;
+package com.android.server.cts.device.statsdatom;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -196,6 +196,16 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_AUTO_REVOKE_PERMISSIONS_IF_UNUSED, 97);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_AUTO_REVOKE_MANAGED_BY_INSTALLER, 98);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_NO_ISOLATED_STORAGE, 99);
+    }
+
+    @Test
+    // Start the isolated service, which logs an AppBreadcrumbReported atom, and then exit.
+    public void testIsolatedProcessService() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        Intent intent = new Intent(context, IsolatedProcessService.class);
+        context.startService(intent);
+        sleep(500);
+        context.stopService(intent);
     }
 
     @Test

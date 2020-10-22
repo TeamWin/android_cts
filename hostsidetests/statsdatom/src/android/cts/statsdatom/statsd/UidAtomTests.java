@@ -566,7 +566,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             assertWithMessage("Wrong count for " + opName).that(count).isEqualTo(expectedCount);
         }
     }
-/*
+
     public void testGpsScan() throws Exception {
         if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
         // Whitelist this app against background location request throttling
@@ -602,7 +602,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             }
         }
     }
-*/
+
     public void testGnssStats() throws Exception {
         // Get GnssMetrics as a simple gauge metric.
         StatsdConfig.Builder config = createConfigBuilder();
