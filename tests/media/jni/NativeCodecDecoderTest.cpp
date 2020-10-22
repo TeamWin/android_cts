@@ -210,7 +210,8 @@ bool CodecDecoderTest::enqueueInput(size_t bufferIndex) {
         }
         CHECK_STATUS(AMediaCodec_queueInputBuffer(mCodec, bufferIndex, 0, size, pts, flags),
                      "AMediaCodec_queueInputBuffer failed");
-        ALOGV("input: id: %zu  size: %zu  pts: %d  flags: %d", bufferIndex, size, (int)pts, flags);
+        ALOGV("input: id: %zu  size: %zu  pts: %" PRId64 "  flags: %d", bufferIndex, size, pts,
+              flags);
         if (size > 0) {
             mOutputBuff->saveInPTS(pts);
             mInputCount++;
@@ -233,8 +234,8 @@ bool CodecDecoderTest::dequeueOutput(size_t bufferIndex, AMediaCodecBufferInfo* 
         mOutputBuff->saveOutPTS(info->presentationTimeUs);
         mOutputCount++;
     }
-    ALOGV("output: id: %zu  size: %d  pts: %d  flags: %d", bufferIndex, info->size,
-          (int)info->presentationTimeUs, info->flags);
+    ALOGV("output: id: %zu  size: %d  pts: %" PRId64 "  flags: %d", bufferIndex, info->size,
+          info->presentationTimeUs, info->flags);
     CHECK_STATUS(AMediaCodec_releaseOutputBuffer(mCodec, bufferIndex, mWindow != nullptr),
                  "AMediaCodec_releaseOutputBuffer failed");
     return !hasSeenError();
@@ -257,7 +258,7 @@ bool CodecDecoderTest::queueCodecConfig() {
             if (bufferIndex >= 0) {
                 isOk = enqueueCodecConfig(bufferIndex);
             } else {
-                ALOGE("unexpected return value from *_dequeueInputBuffer: %d", (int)bufferIndex);
+                ALOGE("unexpected return value from *_dequeueInputBuffer: %d", bufferIndex);
                 return false;
             }
         }
