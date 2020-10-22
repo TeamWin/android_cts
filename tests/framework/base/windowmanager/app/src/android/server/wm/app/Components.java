@@ -518,7 +518,7 @@ public class Components extends ComponentsBase {
     }
 
     public static class OverlayTestService {
-        public static final String EXTRA_WINDOW_NAME = "window_name";
+        public static final String EXTRA_LAYOUT_PARAMS = "layout_params";
     }
 
     public static class Notifications {
