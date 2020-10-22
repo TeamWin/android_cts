@@ -522,31 +522,31 @@ public class ClientTest {
     }
 
     @Test
-    public void testUninstall_noExtraRemovedBySystemInPackageRemovedIntent() {
+    public void uninstall_userInstalledApp_shouldBeUserInitiated() {
         runWithShellPermissionIdentity(() -> {
-            final boolean removedBySystem = uninstallAndWaitForExtraRemovedBySystem(
+            final boolean userInitiated = uninstallAndWaitForExtraUserInitiated(
                     InstrumentationRegistry.getContext(), EPHEMERAL_1_PKG);
 
-            assertThat(removedBySystem).isFalse();
+            assertThat(userInitiated).isTrue();
         }, Manifest.permission.DELETE_PACKAGES, Manifest.permission.ACCESS_INSTANT_APPS);
     }
 
     @Test
-    public void testPruneInstantApp_hasExtraRemovedBySystemInPackageRemovedIntent() {
+    public void uninstall_pruneInstantApp_shouldNotBeUserInitiated() {
         runWithShellPermissionIdentity(() -> {
-            final boolean removedBySystem = pruneInstantAppAndWaitForExtraRemovedBySystem(
+            final boolean userInitiated = pruneInstantAppAndWaitForExtraUserInitiated(
                     InstrumentationRegistry.getContext(), EPHEMERAL_1_PKG);
 
-            assertThat(removedBySystem).isTrue();
+            assertThat(userInitiated).isFalse();
         }, Manifest.permission.WRITE_SECURE_SETTINGS, Manifest.permission.ACCESS_INSTANT_APPS);
     }
 
     /**
      * Uninstall the package and wait for the package removed intent.
      *
-     * @return The value of {@link Intent#EXTRA_REMOVED_BY_SYSTEM} associated with the intent.
+     * @return The value of {@link Intent#EXTRA_USER_INITIATED} associated with the intent.
      */
-    private boolean uninstallAndWaitForExtraRemovedBySystem(Context context, String packageName) {
+    private boolean uninstallAndWaitForExtraUserInitiated(Context context, String packageName) {
         final Runnable uninstall = () -> {
             final PackageInstaller packageInstaller = context.getPackageManager()
                     .getPackageInstaller();
@@ -555,16 +555,16 @@ public class ClientTest {
 
         final Intent packageRemoved = executeAndWaitForPackageRemoved(
                 context, packageName, uninstall);
-        return packageRemoved.getBooleanExtra(Intent.EXTRA_REMOVED_BY_SYSTEM, false);
+        return packageRemoved.getBooleanExtra(Intent.EXTRA_USER_INITIATED, false);
     }
 
     /**
      * Runs the shell command {@code pm trim-caches} to invoke system to prune instant applications.
      * Waits for the package removed intent and returns the extra filed.
      *
-     * @return The value of {@link Intent#EXTRA_REMOVED_BY_SYSTEM} associated with the intent.
+     * @return The value of {@link Intent#EXTRA_USER_INITIATED} associated with the intent.
      */
-    private boolean pruneInstantAppAndWaitForExtraRemovedBySystem(Context context,
+    private boolean pruneInstantAppAndWaitForExtraUserInitiated(Context context,
             String packageName) {
         final String defaultPeriod = Settings.Global.getString(context.getContentResolver(),
                 INSTALLED_INSTANT_APP_MIN_CACHE_PERIOD);
@@ -579,7 +579,7 @@ public class ClientTest {
         try {
             final Intent packageRemoved = executeAndWaitForPackageRemoved(
                     context, packageName, trimCaches);
-            return packageRemoved.getBooleanExtra(Intent.EXTRA_REMOVED_BY_SYSTEM, false);
+            return packageRemoved.getBooleanExtra(Intent.EXTRA_USER_INITIATED, false);
         } finally {
             Settings.Global.putString(context.getContentResolver(),
                     INSTALLED_INSTANT_APP_MIN_CACHE_PERIOD, defaultPeriod);
