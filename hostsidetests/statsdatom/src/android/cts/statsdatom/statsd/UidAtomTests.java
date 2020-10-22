@@ -417,15 +417,16 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(cameraOn, cameraOff);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useAttributionChain=*/ true);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testCameraState");
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testCameraState");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_LONG,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, WAIT_TIME_LONG,
                 atom -> atom.getCameraStateChanged().getState().getNumber());
     }
 
