@@ -27,12 +27,14 @@ android_test_helper_app {
         "ctsdeviceutillegacy-axt",
         "ctstestrunner-axt",
         "testng",
+        "platform-test-annotations",
     ],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "vts10",
         "general-tests",
+        "sts",
     ],
     srcs: ["src/**/*.java"],
     resource_dirs: ["res"],
