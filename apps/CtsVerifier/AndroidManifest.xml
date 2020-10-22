@@ -3736,8 +3736,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.HifiUltrasoundSpeakerTestActivity"
@@ -3749,8 +3748,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioOutputDeviceNotificationsActivity"
@@ -3762,8 +3760,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
             <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioInputDeviceNotificationsActivity"
@@ -3775,8 +3772,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
             <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioOutputRoutingNotificationsActivity"
@@ -3788,8 +3784,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
             <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioInputRoutingNotificationsActivity"
@@ -3801,8 +3796,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
             <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralAttributesActivity"
@@ -3814,9 +3808,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralPlayActivity"
@@ -3828,9 +3821,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralRecordActivity"
@@ -3842,13 +3834,12 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.USBAudioPeripheralButtonsActivity"
-                  android:label="@string/audio_uap_buttons_test">
+            android:label="@string/audio_uap_buttons_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
@@ -3856,9 +3847,8 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
             <meta-data android:name="test_excluded_features"
-                android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <!-- TODO b/142492957
@@ -3870,6 +3860,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host:android.hardware.audio.pro" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
         -->
         <!-- ProAudio test invokes the "Loopback" App -->
@@ -3886,6 +3877,7 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.watch:android.hardware.type.television" />
+           <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
         -->
         <activity android:name=".audio.MidiActivity"
@@ -3897,8 +3889,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features"
                 android:value="android.hardware.usb.host:android.software.midi" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.NDKMidiActivity"
@@ -3910,8 +3901,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features"
                 android:value="android.hardware.usb.host:android.software.midi" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <service android:name="com.android.midi.MidiEchoTestService"
@@ -3931,8 +3921,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioFrequencySpeakerActivity"
@@ -3943,8 +3932,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output:android.hardware.usb.host" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioFrequencyMicActivity"
@@ -3955,8 +3943,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output:android.hardware.usb.host" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioFrequencyUnprocessedActivity"
@@ -3967,8 +3954,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.usb.host" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioFrequencyVoiceRecognitionActivity"
@@ -3979,8 +3965,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.usb.host" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <activity android:name=".audio.AudioAEC"
@@ -3991,8 +3976,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
-            <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
         <service android:name=".tv.MockTvInputService"
