@@ -140,6 +140,8 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                         "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_lame_vbr.mp3", 103.60f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_2ch_44kHz_lame_vbr.mp3",
                         "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_8kHz_lame_cbr.mp3", 53.066f, -1L},
+                {MediaFormat.MIMETYPE_AUDIO_MPEG, "bbb_2ch_44kHz_lame_crc.mp3",
+                        "bbb_2ch_44kHz_s16le.raw", "bbb_1ch_16kHz_lame_vbr.mp3", 104.09f, -1L},
                 {MediaFormat.MIMETYPE_AUDIO_AMR_WB, "bbb_1ch_16kHz_16kbps_amrwb.3gp",
                         "bbb_1ch_16kHz_s16le.raw", "bbb_1ch_16kHz_23kbps_amrwb.3gp", 2393.598f,
                         -1L},
