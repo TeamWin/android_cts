@@ -277,24 +277,24 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag,  /*uidInAttributionChain=*/true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
         Thread.sleep(WAIT_TIME_SHORT);
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Because the timestamp is truncated, we skip checking time differences between state
         // changes.
-        assertStatesOccurred(stateSet, data, 0,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
                 atom -> atom.getAudioStateChanged().getState().getNumber());
 
         // Check that timestamp is truncated
         for (EventMetricData metric : data) {
             long elapsedTimestampNs = metric.getElapsedTimestampNanos();
-            assertTimestampIsTruncated(elapsedTimestampNs);
+            AtomTestUtils.assertTimestampIsTruncated(elapsedTimestampNs);
         }
     }
 
