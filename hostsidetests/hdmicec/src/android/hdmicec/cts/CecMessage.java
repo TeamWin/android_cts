@@ -25,18 +25,6 @@ public class CecMessage {
 
     private static final int HEXADECIMAL_RADIX = 16;
 
-    /** Gets the hexadecimal ASCII character values of a string. */
-    public static String getHexAsciiString(String string) {
-        String asciiString = "";
-        byte[] ascii = string.trim().getBytes();
-
-        for (byte b : ascii) {
-            asciiString.concat(Integer.toHexString(b));
-        }
-
-        return asciiString;
-    }
-
     public static String formatParams(String rawParams) {
         StringBuilder params = new StringBuilder("");
         int position = 0;
