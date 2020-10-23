@@ -239,7 +239,7 @@ public final class ConfigUtils {
      * is a standalone field
      * @param pkgName test app package from which atom will be logged
      */
-    private static FieldValueMatcher.Builder createUidFvm(boolean uidInAttributionChain,
+    public static FieldValueMatcher.Builder createUidFvm(boolean uidInAttributionChain,
             String pkgName) {
         if (uidInAttributionChain) {
             FieldValueMatcher.Builder nodeFvm = createFvm(ATTRIBUTION_NODE_UID_FIELD_NUMBER)
@@ -258,7 +258,7 @@ public final class ConfigUtils {
      *
      * @param fieldNumber index of field within the atom
      */
-    private static FieldValueMatcher.Builder createFvm(int fieldNumber) {
+    public static FieldValueMatcher.Builder createFvm(int fieldNumber) {
         return FieldValueMatcher.newBuilder().setField(fieldNumber);
     }
 

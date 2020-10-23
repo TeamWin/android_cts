@@ -18,6 +18,7 @@ package android.cts.statsdatom.statsd;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.cts.statsdatom.lib.DeviceUtils;
 import android.os.BatteryPluggedStateEnum;
 import android.os.BatteryStatusEnum;
 import android.platform.test.annotations.RestrictedBuildTest;
@@ -169,7 +170,7 @@ public class HostAtomTests extends AtomTestCase {
         List<EventMetricData> data = getEventMetricDataList();
 
         // Unfreeze battery state after test
-        resetBatteryStatus();
+        DeviceUtils.resetBatteryStatus(getDevice());
         Thread.sleep(WAIT_TIME_SHORT);
 
         // Assert that the events happened in the expected order.
@@ -219,7 +220,7 @@ public class HostAtomTests extends AtomTestCase {
         List<EventMetricData> data = getEventMetricDataList();
 
         // Unfreeze battery state after test
-        resetBatteryStatus();
+        DeviceUtils.resetBatteryStatus(getDevice());
         Thread.sleep(WAIT_TIME_SHORT);
 
         // Assert that the events happened in the expected order.
@@ -264,7 +265,7 @@ public class HostAtomTests extends AtomTestCase {
         List<EventMetricData> data = getEventMetricDataList();
 
         // Unfreeze battery state after test
-        resetBatteryStatus();
+        DeviceUtils.resetBatteryStatus(getDevice());
         Thread.sleep(WAIT_TIME_SHORT);
 
         // Assert that the events happened in the expected order.
