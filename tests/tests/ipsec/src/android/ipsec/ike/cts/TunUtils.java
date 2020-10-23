@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.net.ipsec.ike.cts;
+package android.ipsec.ike.cts;
 
-import static android.net.ipsec.ike.cts.PacketUtils.IP4_HDRLEN;
-import static android.net.ipsec.ike.cts.PacketUtils.IP6_HDRLEN;
-import static android.net.ipsec.ike.cts.PacketUtils.IPPROTO_ESP;
-import static android.net.ipsec.ike.cts.PacketUtils.UDP_HDRLEN;
+import static android.ipsec.ike.cts.PacketUtils.IP4_HDRLEN;
+import static android.ipsec.ike.cts.PacketUtils.IP6_HDRLEN;
+import static android.ipsec.ike.cts.PacketUtils.IPPROTO_ESP;
+import static android.ipsec.ike.cts.PacketUtils.UDP_HDRLEN;
 import static android.system.OsConstants.IPPROTO_UDP;
 
 import static org.junit.Assert.assertEquals;

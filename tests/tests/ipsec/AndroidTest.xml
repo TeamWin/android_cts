@@ -24,7 +24,7 @@
         <option name="test-file-name" value="CtsIkeTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.net.ipsec.cts" />
+        <option name="package" value="android.ipsec.cts" />
         <option name="hidden-api-checks" value="false" />
     </test>
     <object type="module_controller" class="com.android.tradefed.testtype.suite.module.MainlineTestModuleController">
