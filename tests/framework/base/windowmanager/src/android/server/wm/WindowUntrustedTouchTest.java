@@ -17,7 +17,6 @@
 package android.server.wm;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
-import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
@@ -75,6 +74,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Presubmit
 public class WindowUntrustedTouchTest {
+    /**
+     * Opacity (or alpha) is represented as a half-precision floating point number (16b) in surface
+     * flinger and the conversion from the single-precision float provided to window manager happens
+     * in Layer::setAlpha() by android::half::ftoh(). So, many small non-zero values provided to
+     * window manager end up becoming zero due to loss of precision (this is fine as long as the
+     * zeros are also used to render the pixels on the screen). So, the minimum opacity possible is
+     * actually the minimum positive value representable in half-precision float, which is
+     * 0_00001_0000000000, whose equivalent in float is 0_01110001_00000000000000000000000.
+     *
+     * Note that from float -> half conversion code we don't produce any subnormal half-precision
+     * floats during conversion.
+     */
+    public static final float MIN_POSITIVE_OPACITY =
+            Float.intBitsToFloat(0b00111000100000000000000000000000);
+
     private static final float MAXIMUM_OBSCURING_OPACITY = .8f;
     private static final long TOUCH_TIME_OUT_MS = 1000L;
     private static final long PROCESS_RESPONSE_TIME_OUT_MS = 1000L;
@@ -95,14 +109,9 @@ public class WindowUntrustedTouchTest {
     private static final String WINDOW_2 = "W2";
 
     private static final String[] APPS = {APP_A, APP_B};
-    private static final String APP_COMPAT_ENABLE_CHANGE =
-            "am compat enable " + InputManager.BLOCK_UNTRUSTED_TOUCHES + " ";
-    private static final String APP_COMPAT_RESET_CHANGE =
-            "am compat reset " + InputManager.BLOCK_UNTRUSTED_TOUCHES + " ";
 
     private static final String SETTING_MAXIMUM_OBSCURING_OPACITY =
             "maximum_obscuring_opacity_for_touch";
-
 
     private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     private final IBinder mPongCallback = new PongCallback();
@@ -145,12 +154,9 @@ public class WindowUntrustedTouchTest {
         mPreviousTouchOpacity = setMaximumObscuringOpacityForTouch(MAXIMUM_OBSCURING_OPACITY);
         mPreviousMode = setBlockUntrustedTouchesMode(FEATURE_MODE_BLOCK);
         for (String app : APPS) {
-            SystemUtil.runShellCommand(mInstrumentation, APP_COMPAT_ENABLE_CHANGE + app);
-        }
-        for (String app : APPS) {
-            // Previous app-compat command restarts the processes, we don't want the process initial
-            // delay in broadcast response result in windows not appearing on time, hence we ping
-            // the process here and wait for its response before we kick off the tests.
+            // We don't want the process initial delay in broadcast response result in windows not
+            // appearing on time, hence we ping the process here and wait for its response before we
+            // kick off the tests.
             ping(app);
         }
         pressWakeupButton();
@@ -163,7 +169,6 @@ public class WindowUntrustedTouchTest {
         removeOverlays();
         for (String app : APPS) {
             stopPackage(app);
-            SystemUtil.runShellCommand(mInstrumentation, APP_COMPAT_RESET_CHANGE + app);
         }
         setBlockUntrustedTouchesMode(mPreviousMode);
         setMaximumObscuringOpacityForTouch(mPreviousTouchOpacity);
@@ -281,6 +286,15 @@ public class WindowUntrustedTouchTest {
     @Test
     public void testWhenOneSawWindowBelowThreshold_allowsTouch() throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .7f);
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+
+        assertTouchReceived();
+    }
+
+    @Test
+    public void testWhenOneSawWindowWithZeroOpacity_allowsTouch() throws Throwable {
+        addSawOverlay(APP_A, WINDOW_1, 0f);
 
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
 
@@ -426,6 +440,36 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneActivityWindowAboveThreshold_blocksTouch()
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ .9f);
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+
+        assertTouchNotReceived();
+    }
+
+    @Test
+    public void testWhenOneActivityWindowWithZeroOpacity_allowsTouch()
+            throws Throwable {
+        addActivityOverlay(APP_A, /* opacity */ 0f);
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+
+        assertTouchReceived();
+    }
+
+    @Test
+    public void testWhenOneActivityWindowWithMinPositiveOpacity_blocksTouch()
+            throws Throwable {
+        addActivityOverlay(APP_A, /* opacity */ MIN_POSITIVE_OPACITY);
+
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+
+        assertTouchNotReceived();
+    }
+
+    @Test
+    public void testWhenOneActivityWindowWithSmallOpacity_blocksTouch()
+            throws Throwable {
+        addActivityOverlay(APP_A, /* opacity */ .01f);
 
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
 

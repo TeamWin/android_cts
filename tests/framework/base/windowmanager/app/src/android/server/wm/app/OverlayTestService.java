@@ -16,10 +16,7 @@
 
 package android.server.wm.app;
 
-import static android.server.wm.app.Components.OverlayTestService.EXTRA_WINDOW_NAME;
-import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
-import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+import static android.server.wm.app.Components.OverlayTestService.EXTRA_LAYOUT_PARAMS;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -28,9 +25,9 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.IBinder;
-import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 
 public class OverlayTestService extends Service {
     private WindowManager mWindowManager;
@@ -49,26 +46,18 @@ public class OverlayTestService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null && intent.hasExtra(EXTRA_WINDOW_NAME)) {
+        if (intent != null && intent.hasExtra(EXTRA_LAYOUT_PARAMS)) {
             // Have to be a foreground service since this app is in the background
             startForeground();
-            addWindow(intent.getStringExtra(EXTRA_WINDOW_NAME));
+            addWindow(intent.getParcelableExtra(EXTRA_LAYOUT_PARAMS));
         }
         return START_NOT_STICKY;
     }
 
-    private void addWindow(final String windowName) {
+    private void addWindow(final LayoutParams params) {
         mView = new View(this);
         mView.setBackgroundColor(Color.RED);
-        WindowManager.LayoutParams p = new WindowManager.LayoutParams();
-        p.setTitle(windowName);
-        p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN | FLAG_NOT_TOUCHABLE;
-        p.width = 100;
-        p.height = 100;
-        p.alpha = 0.5f;
-        p.gravity = Gravity.CENTER;
-        p.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-        mWindowManager.addView(mView, p);
+        mWindowManager.addView(mView, params);
     }
 
     @Override
