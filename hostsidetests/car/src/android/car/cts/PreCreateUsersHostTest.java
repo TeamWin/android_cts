@@ -29,7 +29,6 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
-import org.junit.AssumptionViolatedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +36,6 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -45,7 +43,7 @@ import java.util.stream.Collectors;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
-
+    private static final int DEFAULT_TIMEOUT_SEC = 20;
     private static int sNumberCreateadUsers;
 
     /**
@@ -165,7 +163,14 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         int referenceUserId = isGuest
                 ? createGuestUser("PreCreatedUsersTest_Reference_Guest")
                 : createFullUser("PreCreatedUsersTest_Reference_User");
-        Map<String, Map<String, Boolean>> pkgMapRef = getPackagesAndPermissions(referenceUserId);
+        waitUntilUserPermissionsIsReady(referenceUserId);
+        Map<String, List<String>> refPkgMap = getPackagesAndPermissionsForUser(referenceUserId);
+
+        // There can be just one guest by default, so remove it now otherwise
+        // convertPreCreatedUser() below will fail
+        if (isGuest && !afterReboot) {
+            removeUser(referenceUserId);
+        }
 
         int initialUserId = getCurrentUserId();
         int preCreatedUserId = preCreateUser(isGuest);
@@ -175,47 +180,16 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         }
 
         convertPreCreatedUser(isGuest, preCreatedUserId);
+        waitUntilUserPermissionsIsReady(preCreatedUserId);
+        Map<String, List<String>> actualPkgMap = getPackagesAndPermissionsForUser(preCreatedUserId);
 
-        // Checks the packages and permissions match
-        Map<String, Map<String, Boolean>> pkgMapConverted = getPackagesAndPermissions(
-                preCreatedUserId);
-
-        comparePackages("converted user", pkgMapRef, pkgMapConverted);
-    }
-
-    private void comparePackages(String name, Map<String, Map<String, Boolean>> ref,
-            Map<String, Map<String, Boolean>> actual) {
-        // TODO: figure out a if Truth or other tool provides an easier way to compare maps
         List<String> errors = new ArrayList<>();
-        addError(errors,
-                () -> assertWithMessage("packages mismatch for %s", name).that(actual.keySet())
-                        .containsAllIn(ref.keySet()));
-        Set<String> pkgsOnlyOnActual = actual.keySet();
-        for (String refPackage: ref.keySet()) {
-            if (pkgsOnlyOnActual.contains(refPackage)) {
-                Map<String, Boolean> refPermissions = ref.get(refPackage);
-                Map<String, Boolean> actualPermissions = actual.get(refPackage);
-                pkgsOnlyOnActual.remove(refPackage);
-
-                addError(errors, () ->
-                        assertWithMessage("permissions list mismatch for %s on %s",
-                                refPackage, name)
-                                .that(actualPermissions.keySet())
-                                .isEqualTo(refPermissions.keySet()));
-
-                addError(errors, () ->
-                        assertWithMessage("permissions state mismatch for %s on %s",
-                                refPackage, name)
-                                .that(actualPermissions).isEqualTo(refPermissions));
-            } else {
-                errors.add("Package " + refPackage + " not found on " + actual);
-            }
+        for (String pkg: refPkgMap.keySet()) {
+            addError(errors, () ->
+                    assertWithMessage("permissions state mismatch for %s", pkg)
+                            .that(actualPkgMap.get(pkg))
+                            .isEqualTo(refPkgMap.get(pkg)));
         }
-        // TODO(b/167454361): remove this 'if' once it uses dumpsys proto and it's not flaky
-        if (!errors.isEmpty()) {
-            throw new AssumptionViolatedException("Found " + errors.size() + ": " + errors);
-        }
-
         assertWithMessage("found %s error", errors.size()).that(errors).isEmpty();
     }
 
@@ -229,13 +203,14 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
 
     private void assertHasPreCreatedUser(int userId) throws Exception {
         List<Integer> existingIds = getPreCreatedUsers();
-        CLog.d("asserHasPreCreatedUser(%d): pool=%s", userId, existingIds);
+        CLog.d("assertHasPreCreatedUser(%d): pool=%s", userId, existingIds);
         assertWithMessage("pre-created user not found").that(existingIds).contains(userId);
     }
 
     private List<Integer> getPreCreatedUsers() throws Exception {
         return onAllUsers((allUsers) -> allUsers.stream()
-                    .filter((u) -> u.otherState.contains("(pre-created)"))
+                    .filter((u) -> u.otherState.contains("(pre-created)")
+                            && !u.flags.contains("DISABLED"))
                     .map((u) -> u.id).collect(Collectors.toList()));
     }
 
@@ -265,6 +240,13 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
     private void waitUntilUserDataIsPersisted(int userId) throws InterruptedException {
         int napTimeSec = 10;
         CLog.i("Sleeping %ds to make sure user data for user %d is persisted", napTimeSec, userId);
+        sleep(napTimeSec * 1_000);
+    }
+
+    // TODO(b/170263003): update this method after core framewokr's refactoring for proto
+    private void waitUntilUserPermissionsIsReady(int userId) throws InterruptedException {
+        int napTimeSec = 10;
+        CLog.i("Sleeping %ds to make permissions for user %d is ready", napTimeSec, userId);
         sleep(napTimeSec * 1_000);
     }
 
