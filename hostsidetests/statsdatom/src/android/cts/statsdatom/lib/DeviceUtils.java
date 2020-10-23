@@ -316,6 +316,10 @@ public final class DeviceUtils {
         device.executeShellCommand("cmd battery unplug");
     }
 
+    public static void resetBatteryStatus(ITestDevice device) throws Exception {
+        device.executeShellCommand("cmd battery reset");
+    }
+
     /**
      * Runs a (background) service to perform the given action.
      * @param actionValue the action code constants indicating the desired action to perform.

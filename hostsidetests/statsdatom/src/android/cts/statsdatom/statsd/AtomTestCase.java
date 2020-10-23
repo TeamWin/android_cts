@@ -929,10 +929,6 @@ public class AtomTestCase extends BaseTestCase {
         getDevice().executeShellCommand("cmd battery set level " + level);
     }
 
-    protected void resetBatteryStatus() throws Exception {
-        getDevice().executeShellCommand("cmd battery reset");
-    }
-
     protected int getScreenBrightness() throws Exception {
         return Integer.parseInt(
                 getDevice().executeShellCommand("settings get system screen_brightness").trim());
