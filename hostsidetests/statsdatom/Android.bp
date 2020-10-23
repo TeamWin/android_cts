@@ -17,6 +17,7 @@ java_test_host {
     defaults: ["cts_defaults"],
     srcs: [
         "src/**/binderstats/*.java",
+        "src/**/cpu/*.java",
         "src/**/statsd/*.java",
     ],
 

@@ -171,32 +171,6 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(atom.getState()).isEqualTo(AppBreadcrumbReported.State.START);
     }
 
-    public void testCpuTimePerUid() throws Exception {
-        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
-
-        ConfigUtils.uploadConfigForPulledAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.CPU_TIME_PER_UID_FIELD_NUMBER,  /*uidInAttributionChain=*/false);
-
-        // Do some trivial work on the app
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-        // Trigger atom pull
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
-        // Verify correctness of data
-        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
-        boolean found = false;
-        int appUid = DeviceUtils.getStatsdTestAppUid(getDevice());
-        for (Atom atom : atoms) {
-            assertThat(atom.getCpuTimePerUid().getUid()).isEqualTo(appUid);
-            assertThat(atom.getCpuTimePerUid().getUserTimeMicros()).isGreaterThan(0L);
-            assertThat(atom.getCpuTimePerUid().getSysTimeMicros()).isGreaterThan(0L);
-            found = true;
-        }
-        assertWithMessage("Found no CpuTimePerUid atoms from uid " + appUid).that(found).isTrue();
-    }
-
     public void testLmkKillOccurred() throws Exception {
         if (!"true".equals(getProperty("ro.lmk.log_stats"))) {
             return;
