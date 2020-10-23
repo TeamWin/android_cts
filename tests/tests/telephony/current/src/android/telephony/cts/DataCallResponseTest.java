@@ -16,6 +16,9 @@
 
 package android.telephony.cts;
 
+import static android.telephony.data.DataCallResponse.HANDOVER_FAILURE_MODE_DO_FALLBACK;
+import static android.telephony.data.DataCallResponse.HANDOVER_FAILURE_MODE_LEGACY;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.net.InetAddresses;
@@ -47,6 +50,7 @@ public class DataCallResponseTest {
             Arrays.asList(InetAddresses.parseNumericAddress("22.33.44.55"));
     private static final int MTU_V4 = 1440;
     private static final int MTU_V6 = 1400;
+    private static final int HANDOVER_FAILURE_MODE = HANDOVER_FAILURE_MODE_DO_FALLBACK;
 
     @Test
     public void testConstructorAndGetters() {
@@ -63,6 +67,7 @@ public class DataCallResponseTest {
                 .setPcscfAddresses(PCSCFS)
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .build();
 
         assertThat(response.getCause()).isEqualTo(CAUSE);
@@ -77,6 +82,7 @@ public class DataCallResponseTest {
         assertThat(response.getPcscfAddresses()).isEqualTo(PCSCFS);
         assertThat(response.getMtuV4()).isEqualTo(MTU_V4);
         assertThat(response.getMtuV6()).isEqualTo(MTU_V6);
+        assertThat(response.getHandoverFailureMode()).isEqualTo(HANDOVER_FAILURE_MODE_DO_FALLBACK);
     }
 
     @Test
@@ -94,6 +100,7 @@ public class DataCallResponseTest {
                 .setPcscfAddresses(PCSCFS)
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .build();
 
         DataCallResponse equalsResponse = new DataCallResponse.Builder()
@@ -109,6 +116,7 @@ public class DataCallResponseTest {
                 .setPcscfAddresses(PCSCFS)
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .build();
 
         assertThat(response).isEqualTo(equalsResponse);
@@ -129,6 +137,7 @@ public class DataCallResponseTest {
                 .setPcscfAddresses(PCSCFS)
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .build();
 
         DataCallResponse notEqualsResponse = new DataCallResponse.Builder()
@@ -144,6 +153,7 @@ public class DataCallResponseTest {
                 .setPcscfAddresses(PCSCFS)
                 .setMtuV4(1441)
                 .setMtuV6(1440)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE_LEGACY)
                 .build();
 
         assertThat(response).isNotEqualTo(notEqualsResponse);
@@ -166,6 +176,7 @@ public class DataCallResponseTest {
                 .setPcscfAddresses(PCSCFS)
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
+                .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .build();
 
         Parcel stateParcel = Parcel.obtain();
