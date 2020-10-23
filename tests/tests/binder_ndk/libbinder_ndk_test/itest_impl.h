@@ -17,23 +17,26 @@
 #include <aidl/test_package/BnCompatTest.h>
 #include <aidl/test_package/BnTest.h>
 #include <aidl/test_package/MyExt.h>
+#include <aidl/test_package/SimpleUnion.h>
 #include <stdio.h>
 #include <unistd.h>
+
 #include <condition_variable>
 #include <mutex>
 
 #include "utilities.h"
 
-using Bar = ::aidl::test_package::Bar;
-using Baz = ::aidl::test_package::Baz;
-using ByteEnum = ::aidl::test_package::ByteEnum;
-using Foo = ::aidl::test_package::Foo;
-using IEmpty = ::aidl::test_package::IEmpty;
-using IntEnum = ::aidl::test_package::IntEnum;
-using LongEnum = ::aidl::test_package::LongEnum;
-using RegularPolygon = ::aidl::test_package::RegularPolygon;
-using MyExt = ::aidl::test_package::MyExt;
-using ExtendableParcelable = ::aidl::test_package::ExtendableParcelable;
+using ::aidl::test_package::Bar;
+using ::aidl::test_package::Baz;
+using ::aidl::test_package::ByteEnum;
+using ::aidl::test_package::ExtendableParcelable;
+using ::aidl::test_package::Foo;
+using ::aidl::test_package::IEmpty;
+using ::aidl::test_package::IntEnum;
+using ::aidl::test_package::LongEnum;
+using ::aidl::test_package::MyExt;
+using ::aidl::test_package::RegularPolygon;
+using ::aidl::test_package::SimpleUnion;
 
 class MyTest : public ::aidl::test_package::BnTest,
                public ThisShouldBeDestroyed {
@@ -457,6 +460,12 @@ class MyTest : public ::aidl::test_package::BnTest,
     ext2.a = ext->a;
     ext2.b = ext->b;
     out_output->ext.setParcelable(&ext2);
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+  ::ndk::ScopedAStatus RepeatSimpleUnion(const SimpleUnion& in_u,
+                                         SimpleUnion* _aidl_return) override {
+    *_aidl_return = in_u;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 

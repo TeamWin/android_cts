@@ -24,6 +24,7 @@ import test_package.LongEnum;
 import test_package.RegularPolygon;
 import test_package.GenericBar;
 import test_package.ExtendableParcelable;
+import test_package.SimpleUnion;
 
 // This test interface is used in order to test the all of the things that AIDL can generate which
 // build on top of the NDK.
@@ -123,6 +124,8 @@ interface ITest {
     GenericBar<int> repeatGenericBar(in GenericBar<int> bar);
 
     void RepeatExtendableParcelable(in ExtendableParcelable input, out ExtendableParcelable output);
+
+    SimpleUnion RepeatSimpleUnion(in SimpleUnion u);
 
     IBinder getICompatTest();
 }
