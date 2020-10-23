@@ -34,6 +34,7 @@ import test_package.ITest;
 import test_package.RegularPolygon;
 import test_package.ExtendableParcelable;
 import test_package.MyExt;
+import test_package.SimpleUnion;
 
 public class TestImpl extends ITest.Stub {
   @Override
@@ -402,6 +403,10 @@ public class TestImpl extends ITest.Stub {
     ext2.a = ext.a;
     ext2.b = ext.b;
     out.ext.setParcelable(ext2);
+  }
+
+  public SimpleUnion RepeatSimpleUnion(SimpleUnion in_u) {
+    return in_u;
   }
 
   private static class CompatTest extends ICompatTest.Stub {
