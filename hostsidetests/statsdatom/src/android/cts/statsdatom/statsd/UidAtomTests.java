@@ -617,13 +617,13 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testGpsScan() throws Exception {
-        if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LOCATION_GPS)) return;
         // Whitelist this app against background location request throttling
         String origWhitelist = getDevice().executeShellCommand(
                 "settings get global location_background_throttle_package_whitelist").trim();
         getDevice().executeShellCommand(String.format(
                 "settings put global location_background_throttle_package_whitelist %s",
-                DEVICE_SIDE_TEST_PACKAGE));
+                DeviceUtils.STATSD_ATOM_TEST_PKG));
 
         try {
             final int atom = Atom.GPS_SCAN_STATE_CHANGED_FIELD_NUMBER;
@@ -633,11 +633,19 @@ public class UidAtomTests extends DeviceAtomTestCase {
             final int minTimeDiffMillis = 500;
             final int maxTimeDiffMillis = 60_000;
 
-            List<EventMetricData> data = doDeviceMethodOnOff("testGpsScan", atom, key,
-                    stateOn, stateOff, minTimeDiffMillis, maxTimeDiffMillis, true);
+            ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(),
+                    DeviceUtils.STATSD_ATOM_TEST_PKG,
+                    atom, /*useUidAttributionChain=*/true);
 
+            DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests",
+                    "testGpsScan");
+
+            List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+            assertThat(data).hasSize(2);
             GpsScanStateChanged a0 = data.get(0).getAtom().getGpsScanStateChanged();
             GpsScanStateChanged a1 = data.get(1).getAtom().getGpsScanStateChanged();
+            AtomTestUtils.assertTimeDiffBetween(data.get(0), data.get(1), minTimeDiffMillis,
+                    maxTimeDiffMillis);
             assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
             assertThat(a1.getState().getNumber()).isEqualTo(stateOff);
         } finally {
