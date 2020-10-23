@@ -303,7 +303,7 @@ public class DisplayModesTestActivity extends TvAppVerifierActivity {
         }
     }
 
-    private static class ModeSubject extends Subject<ModeSubject, Display.Mode> {
+    private static class ModeSubject extends Subject {
         private final Display.Mode mActual;
 
         public ModeSubject(FailureMetadata failureMetadata, @Nullable Display.Mode subject) {
