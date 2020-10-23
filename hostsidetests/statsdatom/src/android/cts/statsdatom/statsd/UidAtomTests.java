@@ -524,29 +524,29 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testFlashlightState() throws Exception {
-        if (!hasFeature(FEATURE_CAMERA_FLASH, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_CAMERA_FLASH)) return;
 
         final int atomTag = Atom.FLASHLIGHT_STATE_CHANGED_FIELD_NUMBER;
         final String name = "testFlashlight";
 
         Set<Integer> flashlightOn = new HashSet<>(
-            Arrays.asList(FlashlightStateChanged.State.ON_VALUE));
+                Arrays.asList(FlashlightStateChanged.State.ON_VALUE));
         Set<Integer> flashlightOff = new HashSet<>(
-            Arrays.asList(FlashlightStateChanged.State.OFF_VALUE));
+                Arrays.asList(FlashlightStateChanged.State.OFF_VALUE));
 
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(flashlightOn, flashlightOff);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getFlashlightStateChanged().getState().getNumber());
     }
 
