@@ -96,7 +96,7 @@ public class PipActivityTest extends ActivityInstrumentationTestCase2<PipActivit
             Intent intent = Intent.makeMainActivity(new ComponentName("android.app.stubs",
                     "android.app.stubs.PipActivity"));
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            mInstrumentation.getContext().startActivity(intent);
+            mInstrumentation.getTargetContext().startActivity(intent);
 
             // Exiting PIP mode is not synchronous, so wait for the expected callbacks
             waitAndAssertCondition(() -> {
