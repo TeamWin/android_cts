@@ -154,11 +154,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
      * from an isolated process are seen as coming from their host process.
      */
     public void testIsolatedToHostUidMapping() throws Exception {
-        StatsdConfig.Builder config =
-                ConfigUtils.createConfigBuilder(DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetricForUidAtom(config, Atom.APP_BREADCRUMB_REPORTED_FIELD_NUMBER,
-                /*uidInAttributionChain=*/false, DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.uploadConfig(getDevice(), config);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.APP_BREADCRUMB_REPORTED_FIELD_NUMBER, /*uidInAttributionChain=*/false);
 
         // Create an isolated service from which an AppBreadcrumbReported atom is logged.
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests",
@@ -176,11 +173,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
     public void testCpuTimePerUid() throws Exception {
         if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
 
-        StatsdConfig.Builder config =
-                ConfigUtils.createConfigBuilder(DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addGaugeMetricForUidAtom(config, Atom.CPU_TIME_PER_UID_FIELD_NUMBER,
-                /*uidInAttributionChain=*/false, DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.uploadConfig(getDevice(), config);
+        ConfigUtils.uploadConfigForPulledAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.CPU_TIME_PER_UID_FIELD_NUMBER,  /*uidInAttributionChain=*/false);
 
         // Do some trivial work on the app
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
@@ -209,11 +203,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         final int atomTag = Atom.LMK_KILL_OCCURRED_FIELD_NUMBER;
         final String actionLmk = "action.lmk";
-        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetricForUidAtom(config, atomTag, /*uidInAttributionChain=*/false,
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.uploadConfig(getDevice(), config);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag,  /*uidInAttributionChain=*/false);
 
         DeviceUtils.executeBackgroundService(getDevice(), actionLmk);
         Thread.sleep(15_000);
@@ -232,12 +223,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testAppCrashOccurred() throws Exception {
         final int atomTag = Atom.APP_CRASH_OCCURRED_FIELD_NUMBER;
-        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetricForUidAtom(config, atomTag, /*uidInAttributionChain=*/false,
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.uploadConfig(getDevice(), config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag,  /*uidInAttributionChain=*/false);
 
         DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 "StatsdCtsForegroundActivity", "action", "action.crash");
@@ -257,11 +244,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testAppStartOccurred() throws Exception {
         final int atomTag = Atom.APP_START_OCCURRED_FIELD_NUMBER;
-        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetricForUidAtom(config, atomTag, /*uidInAttributionChain=*/false,
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.uploadConfig(getDevice(), config);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag,  /*uidInAttributionChain=*/false);
 
         DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 "StatsdCtsForegroundActivity", "action", "action.sleep_top", 3_500);
