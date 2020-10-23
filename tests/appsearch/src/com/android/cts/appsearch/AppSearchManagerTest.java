@@ -238,49 +238,7 @@ public class AppSearchManagerTest {
         assertThat(getResult.getSuccesses().get("uri2")).isEqualTo(email2);
     }
 
-    @Test
-    public void testRemoveByTypes() {
-        // Schema registration
-        AppSearchSchema genericSchema = new AppSearchSchema.Builder("Generic").build();
-        checkIsSuccess(mAppSearch.setSchema(new SetSchemaRequest.Builder()
-                .addSchema(AppSearchEmail.SCHEMA, genericSchema).build()));
-
-        // Index documents
-        AppSearchEmail email1 =
-                new AppSearchEmail.Builder("uri1")
-                        .setFrom("from@example.com")
-                        .setTo("to1@example.com", "to2@example.com")
-                        .setSubject("testPut example")
-                        .setBody("This is the body of the testPut email")
-                        .build();
-        AppSearchEmail email2 =
-                new AppSearchEmail.Builder("uri2")
-                        .setFrom("from@example.com")
-                        .setTo("to1@example.com", "to2@example.com")
-                        .setSubject("testPut example 2")
-                        .setBody("This is the body of the testPut second email")
-                        .build();
-        GenericDocument document1 = new GenericDocument.Builder<>("uri3", "Generic").build();
-        checkIsSuccess(mAppSearch.putDocuments(
-                new PutDocumentsRequest.Builder().addGenericDocument(email1, email2, document1)
-                        .build()));
-
-        // Check the presence of the documents
-        assertThat(doGet("uri1", "uri2", "uri3")).hasSize(3);
-
-        // Delete the email type
-        checkIsSuccess(mAppSearch.deleteByTypes(ImmutableList.of(AppSearchEmail.SCHEMA_TYPE)));
-
-        // Make sure it's really gone
-        AppSearchBatchResult<String, GenericDocument> getResult = mAppSearch.getByUri(
-                new GetByUriRequest.Builder().addUri("uri1", "uri2", "uri3").build());
-        assertThat(getResult.isSuccess()).isFalse();
-        assertThat(getResult.getFailures().get("uri1").getResultCode())
-                .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
-        assertThat(getResult.getFailures().get("uri2").getResultCode())
-                .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
-        assertThat(getResult.getSuccesses().get("uri3")).isEqualTo(document1);
-    }
+    //TODO(b/162450968) add test for deleteByType and namespace once deleteByQuery is ready.
 
     private List<GenericDocument> doGet(String... uris) {
         AppSearchBatchResult<String, GenericDocument> result = mAppSearch.getByUri(
