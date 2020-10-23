@@ -505,19 +505,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testDavey() throws Exception {
-        if (!DAVEY_ENABLED ) return;
+        if (!DAVEY_ENABLED) return;
         long MAX_DURATION = 2000;
         long MIN_DURATION = 750;
         final int atomTag = Atom.DAVEY_OCCURRED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag, false); // UID is logged without attribution node
 
-        runActivity("DaveyActivity", null, null);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        List<EventMetricData> data = getEventMetricDataList();
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "DaveyActivity", /*actionKey=*/null, /*actionValue=*/null);
+
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).hasSize(1);
         long duration = data.get(0).getAtom().getDaveyOccurred().getJankDurationMillis();
         assertWithMessage("Incorrect jank duration")
-            .that(duration).isIn(Range.closed(MIN_DURATION, MAX_DURATION));
+                .that(duration).isIn(Range.closed(MIN_DURATION, MAX_DURATION));
     }
 
     public void testFlashlightState() throws Exception {
