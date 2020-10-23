@@ -508,6 +508,28 @@ TEST_P(NdkBinderTest_Aidl, GetLastItem) {
   EXPECT_EQ(15, retF);
 }
 
+namespace aidl {
+namespace test_package {
+bool operator==(const SimpleUnion& lhs, const SimpleUnion& rhs) {
+  if (lhs.getTag() != rhs.getTag()) return false;
+  switch (lhs.getTag()) {
+    case SimpleUnion::a:
+      return lhs.get<SimpleUnion::a>() == rhs.get<SimpleUnion::a>();
+    case SimpleUnion::b:
+      return lhs.get<SimpleUnion::b>() == rhs.get<SimpleUnion::b>();
+    case SimpleUnion::c:
+      return lhs.get<SimpleUnion::c>() == rhs.get<SimpleUnion::c>();
+    case SimpleUnion::d:
+      return lhs.get<SimpleUnion::d>() == rhs.get<SimpleUnion::d>();
+    case SimpleUnion::e:
+      return lhs.get<SimpleUnion::e>() == rhs.get<SimpleUnion::e>();
+    case SimpleUnion::f:
+      return lhs.get<SimpleUnion::f>() == rhs.get<SimpleUnion::f>();
+  }
+}
+}  // namespace test_package
+}  // namespace aidl
+
 TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
   Foo foo;
   foo.a = "NEW FOO";
@@ -520,6 +542,8 @@ TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
   foo.shouldContainTwoByteFoos = {ByteEnum::FOO, ByteEnum::FOO};
   foo.shouldContainTwoIntFoos = {IntEnum::FOO, IntEnum::FOO};
   foo.shouldContainTwoLongFoos = {LongEnum::FOO, LongEnum::FOO};
+  foo.u = SimpleUnion::make<SimpleUnion::c>("hello");
+
   Foo retFoo;
 
   ASSERT_OK(iface->repeatFoo(foo, &retFoo));
@@ -534,6 +558,7 @@ TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
   EXPECT_EQ(foo.shouldContainTwoByteFoos, retFoo.shouldContainTwoByteFoos);
   EXPECT_EQ(foo.shouldContainTwoIntFoos, retFoo.shouldContainTwoIntFoos);
   EXPECT_EQ(foo.shouldContainTwoLongFoos, retFoo.shouldContainTwoLongFoos);
+  EXPECT_EQ(foo.u, retFoo.u);
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatGenericBar) {

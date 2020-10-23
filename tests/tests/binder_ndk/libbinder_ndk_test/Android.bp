@@ -37,6 +37,7 @@ filegroup {
         "test_package/GenericBar.aidl",
         "test_package/ExtendableParcelable.aidl",
         "test_package/MyExt.aidl",
+        "test_package/SimpleUnion.aidl",
     ],
     visibility: ["//visibility:private"]
 }
