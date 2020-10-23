@@ -1401,6 +1401,10 @@ public abstract class ActivityManagerTestBase {
             } else {
                 Condition.waitFor("display to turn off", () -> !isDisplayOn(DEFAULT_DISPLAY));
             }
+            if(!isLockDisabled()) {
+                mWmState.waitFor(state -> state.getKeyguardControllerState().keyguardShowing,
+                        "Keyguard showing");
+            }
             return this;
         }
 
