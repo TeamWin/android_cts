@@ -79,6 +79,7 @@ interface ITest {
   int getF(in test_package.Foo foo);
   test_package.GenericBar<int> repeatGenericBar(in test_package.GenericBar<int> bar);
   void RepeatExtendableParcelable(in test_package.ExtendableParcelable input, out test_package.ExtendableParcelable output);
+  test_package.SimpleUnion RepeatSimpleUnion(in test_package.SimpleUnion u);
   IBinder getICompatTest();
   const int kZero = 0;
   const int kOne = 1;
