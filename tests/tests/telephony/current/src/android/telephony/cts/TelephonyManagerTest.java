@@ -57,6 +57,7 @@ import android.telephony.CallForwardingInfo;
 import android.telephony.CallQuality;
 import android.telephony.CarrierConfigManager;
 import android.telephony.CellLocation;
+import android.telephony.ModemActivityInfo;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.PreciseCallState;
@@ -96,6 +97,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -2662,6 +2664,40 @@ public class TelephonyManagerTest {
             mTelephonyManager.isApplicationOnUicc(TelephonyManager.APPTYPE_SIM);
         } catch (SecurityException se) {
             fail("Caller with READ_PRIVILEGED_PHONE_STATE should be able to call API");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testRequestModemActivityInfo() throws Exception {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        try {
+            // Get one instance of activity info and make sure it's valid
+            CompletableFuture<ModemActivityInfo> future1 = new CompletableFuture<>();
+            mTelephonyManager.requestModemActivityInfo(getContext().getMainExecutor(),
+                    future1::complete);
+            ModemActivityInfo activityInfo1 = future1.get(TOLERANCE, TimeUnit.MILLISECONDS);
+            assertNotNull(activityInfo1);
+            assertTrue("first activity info is" + activityInfo1, activityInfo1.isValid());
+
+            // Wait a bit, then get another instance to make sure that some info has accumulated
+            CompletableFuture<ModemActivityInfo> future2 = new CompletableFuture<>();
+            mTelephonyManager.requestModemActivityInfo(getContext().getMainExecutor(),
+                    future2::complete);
+            ModemActivityInfo activityInfo2 = future2.get(TOLERANCE, TimeUnit.MILLISECONDS);
+            assertNotNull(activityInfo2);
+            assertTrue("second activity info is" + activityInfo2, activityInfo2.isValid());
+
+            ModemActivityInfo diff = activityInfo1.getDelta(activityInfo2);
+            assertNotNull(diff);
+            assertTrue("diff is" + diff, diff.isValid() || diff.isEmpty());
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
