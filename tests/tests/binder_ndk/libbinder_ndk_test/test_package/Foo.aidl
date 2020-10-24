@@ -4,6 +4,7 @@ import test_package.Bar;
 import test_package.ByteEnum;
 import test_package.IntEnum;
 import test_package.LongEnum;
+import test_package.SimpleUnion;
 
 parcelable Foo {
     String a="FOO";
@@ -18,6 +19,6 @@ parcelable Foo {
     ByteEnum[] shouldContainTwoByteFoos;
     IntEnum[] shouldContainTwoIntFoos;
     LongEnum[] shouldContainTwoLongFoos;
-    // This field doesn't exist in version 1.
     @nullable String[] g;
+    @nullable SimpleUnion u;
 }

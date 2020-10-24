@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package android.security.cts;
+package com.android.server.cts.device.statsdatom;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import android.annotation.NonNull;
+import android.telecom.Call;
+import android.telecom.CallScreeningService;
 
-/**
- * Annotation for tests that are not related to media mainline.
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface NonMediaMainlineTest {
+public class DummyCallscreeningService extends CallScreeningService {
+    @Override
+    public void onScreenCall(@NonNull Call.Details callDetails) {
+
+    }
 }

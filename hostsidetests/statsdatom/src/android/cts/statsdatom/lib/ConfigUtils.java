@@ -239,7 +239,7 @@ public final class ConfigUtils {
      * is a standalone field
      * @param pkgName test app package from which atom will be logged
      */
-    private static FieldValueMatcher.Builder createUidFvm(boolean uidInAttributionChain,
+    public static FieldValueMatcher.Builder createUidFvm(boolean uidInAttributionChain,
             String pkgName) {
         if (uidInAttributionChain) {
             FieldValueMatcher.Builder nodeFvm = createFvm(ATTRIBUTION_NODE_UID_FIELD_NUMBER)
@@ -258,7 +258,7 @@ public final class ConfigUtils {
      *
      * @param fieldNumber index of field within the atom
      */
-    private static FieldValueMatcher.Builder createFvm(int fieldNumber) {
+    public static FieldValueMatcher.Builder createFvm(int fieldNumber) {
         return FieldValueMatcher.newBuilder().setField(fieldNumber);
     }
 
@@ -296,5 +296,29 @@ public final class ConfigUtils {
         device.executeShellCommand(String.join(" ", REMOVE_CONFIG_CMD, CONFIG_ID_STRING));
     }
 
-    private ConfigUtils() {}
+    public static void uploadConfigForPushedAtomWithUid(ITestDevice device, String pkgName,
+            int atomId,
+            boolean useUidAttributionChain) throws Exception {
+        StatsdConfig.Builder config = createConfigBuilder(pkgName);
+        addEventMetricForUidAtom(config, atomId, useUidAttributionChain, pkgName);
+        uploadConfig(device, config);
+    }
+
+    public static void uploadConfigForPulledAtomWithUid(ITestDevice device, String pkgName,
+            int atomId,
+            boolean useUidAttributionChain) throws Exception {
+        StatsdConfig.Builder config = createConfigBuilder(pkgName);
+        addGaugeMetricForUidAtom(config, atomId, useUidAttributionChain, pkgName);
+        uploadConfig(device, config);
+    }
+
+    public static void uploadConfigForPulledAtom(ITestDevice device, String pkgName, int atomId)
+            throws Exception {
+        StatsdConfig.Builder config = createConfigBuilder(pkgName);
+        addGaugeMetric(config, atomId);
+        uploadConfig(device, config);
+    }
+
+    private ConfigUtils() {
+    }
 }
