@@ -35,7 +35,7 @@ import java.util.List;
 
 public class DataCallResponseTest {
     private static final int CAUSE = 0;
-    private static final int RETRY = -1;
+    private static final long RETRY = -1L;
     private static final int ID = 1;
     private static final int LINK_STATUS = 2;
     private static final int PROTOCOL_TYPE = ApnSetting.PROTOCOL_IP;
@@ -56,7 +56,7 @@ public class DataCallResponseTest {
     public void testConstructorAndGetters() {
         DataCallResponse response = new DataCallResponse.Builder()
                 .setCause(CAUSE)
-                .setSuggestedRetryTime(RETRY)
+                .setRetryIntervalMillis(RETRY)
                 .setId(ID)
                 .setLinkStatus(LINK_STATUS)
                 .setProtocolType(PROTOCOL_TYPE)
@@ -71,7 +71,7 @@ public class DataCallResponseTest {
                 .build();
 
         assertThat(response.getCause()).isEqualTo(CAUSE);
-        assertThat(response.getSuggestedRetryTime()).isEqualTo(RETRY);
+        assertThat(response.getRetryIntervalMillis()).isEqualTo(RETRY);
         assertThat(response.getId()).isEqualTo(ID);
         assertThat(response.getLinkStatus()).isEqualTo(LINK_STATUS);
         assertThat(response.getProtocolType()).isEqualTo(PROTOCOL_TYPE);
@@ -89,7 +89,7 @@ public class DataCallResponseTest {
     public void testEquals() {
         DataCallResponse response = new DataCallResponse.Builder()
                 .setCause(CAUSE)
-                .setSuggestedRetryTime(RETRY)
+                .setRetryIntervalMillis(RETRY)
                 .setId(ID)
                 .setLinkStatus(LINK_STATUS)
                 .setProtocolType(PROTOCOL_TYPE)
@@ -105,7 +105,7 @@ public class DataCallResponseTest {
 
         DataCallResponse equalsResponse = new DataCallResponse.Builder()
                 .setCause(CAUSE)
-                .setSuggestedRetryTime(RETRY)
+                .setRetryIntervalMillis(RETRY)
                 .setId(ID)
                 .setLinkStatus(LINK_STATUS)
                 .setProtocolType(PROTOCOL_TYPE)
@@ -126,7 +126,7 @@ public class DataCallResponseTest {
     public void testNotEquals() {
         DataCallResponse response = new DataCallResponse.Builder()
                 .setCause(CAUSE)
-                .setSuggestedRetryTime(RETRY)
+                .setRetryIntervalMillis(RETRY)
                 .setId(ID)
                 .setLinkStatus(LINK_STATUS)
                 .setProtocolType(PROTOCOL_TYPE)
@@ -142,7 +142,7 @@ public class DataCallResponseTest {
 
         DataCallResponse notEqualsResponse = new DataCallResponse.Builder()
                 .setCause(1)
-                .setSuggestedRetryTime(-1)
+                .setRetryIntervalMillis(-1)
                 .setId(1)
                 .setLinkStatus(3)
                 .setProtocolType(PROTOCOL_TYPE)
@@ -165,7 +165,7 @@ public class DataCallResponseTest {
     public void testParcel() {
         DataCallResponse response = new DataCallResponse.Builder()
                 .setCause(CAUSE)
-                .setSuggestedRetryTime(RETRY)
+                .setRetryIntervalMillis(RETRY)
                 .setId(ID)
                 .setLinkStatus(LINK_STATUS)
                 .setProtocolType(PROTOCOL_TYPE)
