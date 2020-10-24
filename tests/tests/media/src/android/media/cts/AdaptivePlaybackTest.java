@@ -1016,6 +1016,12 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 }
                 mCodec.releaseOutputBuffer(ix, doRender);
             } else if (doRender) {
+                mRenderedTimeStamps.add(info.presentationTimeUs);
+                if (!mTimeStamps.remove(info.presentationTimeUs)) {
+                    warn("invalid timestamp " + info.presentationTimeUs + ", queued " +
+                            mTimeStamps);
+                }
+
                 // If using SurfaceTexture, as soon as we call releaseOutputBuffer, the
                 // buffer will be forwarded to SurfaceTexture to convert to a texture.
                 // The API doesn't guarantee that the texture will be available before
@@ -1029,14 +1035,6 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 }
             } else {
                 mCodec.releaseOutputBuffer(ix, doRender);
-            }
-
-            if (doRender) {
-                mRenderedTimeStamps.add(info.presentationTimeUs);
-                if (!mTimeStamps.remove(info.presentationTimeUs)) {
-                    warn("invalid timestamp " + info.presentationTimeUs + ", queued " +
-                            mTimeStamps);
-                }
             }
 
             return String.format(Locale.US, "{pts=%d, flags=%x, data=0x%x}",
@@ -1119,6 +1117,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         public int queueInputBufferRange(
                 Media media, int frameStartIx, int frameEndIx, boolean sendEosAtEnd,
                 boolean waitForEos, long adjustTimeUs) {
+            final int targetNumFramesDecoded = Math.min(frameEndIx - frameStartIx - 16, 0);
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             int frameIx = frameStartIx;
             int numFramesDecoded = 0;
@@ -1127,7 +1126,8 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
             ArrayList<String> frames = new ArrayList<String>();
             String buf = null;
             // After all input buffers are queued, dequeue as many output buffers as possible.
-            while ((waitForEos && !sawOutputEos) || frameIx < frameEndIx || buf != null) {
+            while ((waitForEos && !sawOutputEos) || frameIx < frameEndIx ||
+                   numFramesDecoded < targetNumFramesDecoded) {
                 if (frameIx < frameEndIx) {
                     if (queueInputBuffer(
                             media,
@@ -1157,7 +1157,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
                 }
             }
 
-            if (numFramesDecoded < frameEndIx - frameStartIx - 16) {
+            if (numFramesDecoded < targetNumFramesDecoded) {
                 fail("Queued " + (frameEndIx - frameStartIx) + " frames but only received " +
                         numFramesDecoded);
             }
