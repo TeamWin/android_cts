@@ -64,6 +64,16 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -80,6 +90,99 @@ import java.util.concurrent.Executors;
 @RunWith(AndroidJUnit4.class)
 public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     private static final String TAG = "WifiNetworkSpecifierTest";
+
+    private static final String CA_SUITE_B_ECDSA_CERT_STRING =
+            "-----BEGIN CERTIFICATE-----\n"
+                    + "MIICTzCCAdSgAwIBAgIUdnLttwNPnQzFufplGOr9bTrGCqMwCgYIKoZIzj0EAwMw\n"
+                    + "XjELMAkGA1UEBhMCVVMxCzAJBgNVBAgMAkNBMQwwCgYDVQQHDANNVFYxEDAOBgNV\n"
+                    + "BAoMB0FuZHJvaWQxDjAMBgNVBAsMBVdpLUZpMRIwEAYDVQQDDAl1bml0ZXN0Q0Ew\n"
+                    + "HhcNMjAwNzIxMDIyNDA1WhcNMzAwNTMwMDIyNDA1WjBeMQswCQYDVQQGEwJVUzEL\n"
+                    + "MAkGA1UECAwCQ0ExDDAKBgNVBAcMA01UVjEQMA4GA1UECgwHQW5kcm9pZDEOMAwG\n"
+                    + "A1UECwwFV2ktRmkxEjAQBgNVBAMMCXVuaXRlc3RDQTB2MBAGByqGSM49AgEGBSuB\n"
+                    + "BAAiA2IABFmntXwk9icqhDQFUP1xy04WyEpaGW4q6Q+8pujlSl/X3iotPZ++GZfp\n"
+                    + "Mfv3YDHDBl6sELPQ2BEjyPXmpsKjOUdiUe69e88oGEdeqT2xXiQ6uzpTfJD4170i\n"
+                    + "O/TwLrQGKKNTMFEwHQYDVR0OBBYEFCjptsX3g4g5W0L4oEP6N3gfyiZXMB8GA1Ud\n"
+                    + "IwQYMBaAFCjptsX3g4g5W0L4oEP6N3gfyiZXMA8GA1UdEwEB/wQFMAMBAf8wCgYI\n"
+                    + "KoZIzj0EAwMDaQAwZgIxAK61brUYRbLmQKiaEboZgrHtnPAcGo7Yzx3MwHecx3Dm\n"
+                    + "5soIeLVYc8bPYN1pbhXW1gIxALdEe2sh03nBHyQH4adYoZungoCwt8mp/7sJFxou\n"
+                    + "9UnRegyBgGzf74ROWdpZHzh+Pg==\n"
+                    + "-----END CERTIFICATE-----\n";
+    public static final X509Certificate CA_SUITE_B_ECDSA_CERT =
+            loadCertificate(CA_SUITE_B_ECDSA_CERT_STRING);
+
+    private static final String CLIENT_SUITE_B_ECDSA_CERT_STRING =
+            "-----BEGIN CERTIFICATE-----\n"
+                    + "MIIB9zCCAX4CFDpfSZh3AH07BEfGWuMDa7Ynz6y+MAoGCCqGSM49BAMDMF4xCzAJ\n"
+                    + "BgNVBAYTAlVTMQswCQYDVQQIDAJDQTEMMAoGA1UEBwwDTVRWMRAwDgYDVQQKDAdB\n"
+                    + "bmRyb2lkMQ4wDAYDVQQLDAVXaS1GaTESMBAGA1UEAwwJdW5pdGVzdENBMB4XDTIw\n"
+                    + "MDcyMTAyMjk1MFoXDTMwMDUzMDAyMjk1MFowYjELMAkGA1UEBhMCVVMxCzAJBgNV\n"
+                    + "BAgMAkNBMQwwCgYDVQQHDANNVFYxEDAOBgNVBAoMB0FuZHJvaWQxDjAMBgNVBAsM\n"
+                    + "BVdpLUZpMRYwFAYDVQQDDA11bml0ZXN0Q2xpZW50MHYwEAYHKoZIzj0CAQYFK4EE\n"
+                    + "ACIDYgAEhxhVJ7dcSqrto0X+dgRxtd8BWG8cWmPjBji3MIxDLfpcMDoIB84ae1Ew\n"
+                    + "gJn4YUYHrWsUDiVNihv8j7a/Ol1qcIY2ybH7tbezefLmagqA4vXEUXZXoUyL4ZNC\n"
+                    + "DWcdw6LrMAoGCCqGSM49BAMDA2cAMGQCMH4aP73HrriRUJRguiuRic+X4Cqj/7YQ\n"
+                    + "ueJmP87KF92/thhoQ9OrRo8uJITPmNDswwIwP2Q1AZCSL4BI9dYrqu07Ar+pSkXE\n"
+                    + "R7oOqGdZR+d/MvXcFSrbIaLKEoHXmQamIHLe\n"
+                    + "-----END CERTIFICATE-----\n";
+    public static final X509Certificate CLIENT_SUITE_B_ECDSA_CERT =
+            loadCertificate(CLIENT_SUITE_B_ECDSA_CERT_STRING);
+
+    private static final byte[] CLIENT_SUITE_B_ECC_KEY_DATA = new byte[]{
+            (byte) 0x30, (byte) 0x81, (byte) 0xb6, (byte) 0x02, (byte) 0x01, (byte) 0x00,
+            (byte) 0x30, (byte) 0x10, (byte) 0x06, (byte) 0x07, (byte) 0x2a, (byte) 0x86,
+            (byte) 0x48, (byte) 0xce, (byte) 0x3d, (byte) 0x02, (byte) 0x01, (byte) 0x06,
+            (byte) 0x05, (byte) 0x2b, (byte) 0x81, (byte) 0x04, (byte) 0x00, (byte) 0x22,
+            (byte) 0x04, (byte) 0x81, (byte) 0x9e, (byte) 0x30, (byte) 0x81, (byte) 0x9b,
+            (byte) 0x02, (byte) 0x01, (byte) 0x01, (byte) 0x04, (byte) 0x30, (byte) 0xea,
+            (byte) 0x6c, (byte) 0x4b, (byte) 0x6d, (byte) 0x43, (byte) 0xf9, (byte) 0x6c,
+            (byte) 0x91, (byte) 0xdc, (byte) 0x2d, (byte) 0x6e, (byte) 0x87, (byte) 0x4f,
+            (byte) 0x0a, (byte) 0x0b, (byte) 0x97, (byte) 0x25, (byte) 0x1c, (byte) 0x79,
+            (byte) 0xa2, (byte) 0x07, (byte) 0xdc, (byte) 0x94, (byte) 0xc2, (byte) 0xee,
+            (byte) 0x64, (byte) 0x51, (byte) 0x6d, (byte) 0x4e, (byte) 0x35, (byte) 0x1c,
+            (byte) 0x22, (byte) 0x2f, (byte) 0xc0, (byte) 0xea, (byte) 0x09, (byte) 0x47,
+            (byte) 0x3e, (byte) 0xb9, (byte) 0xb6, (byte) 0xb8, (byte) 0x83, (byte) 0x9e,
+            (byte) 0xed, (byte) 0x59, (byte) 0xe5, (byte) 0xe7, (byte) 0x0f, (byte) 0xa1,
+            (byte) 0x64, (byte) 0x03, (byte) 0x62, (byte) 0x00, (byte) 0x04, (byte) 0x87,
+            (byte) 0x18, (byte) 0x55, (byte) 0x27, (byte) 0xb7, (byte) 0x5c, (byte) 0x4a,
+            (byte) 0xaa, (byte) 0xed, (byte) 0xa3, (byte) 0x45, (byte) 0xfe, (byte) 0x76,
+            (byte) 0x04, (byte) 0x71, (byte) 0xb5, (byte) 0xdf, (byte) 0x01, (byte) 0x58,
+            (byte) 0x6f, (byte) 0x1c, (byte) 0x5a, (byte) 0x63, (byte) 0xe3, (byte) 0x06,
+            (byte) 0x38, (byte) 0xb7, (byte) 0x30, (byte) 0x8c, (byte) 0x43, (byte) 0x2d,
+            (byte) 0xfa, (byte) 0x5c, (byte) 0x30, (byte) 0x3a, (byte) 0x08, (byte) 0x07,
+            (byte) 0xce, (byte) 0x1a, (byte) 0x7b, (byte) 0x51, (byte) 0x30, (byte) 0x80,
+            (byte) 0x99, (byte) 0xf8, (byte) 0x61, (byte) 0x46, (byte) 0x07, (byte) 0xad,
+            (byte) 0x6b, (byte) 0x14, (byte) 0x0e, (byte) 0x25, (byte) 0x4d, (byte) 0x8a,
+            (byte) 0x1b, (byte) 0xfc, (byte) 0x8f, (byte) 0xb6, (byte) 0xbf, (byte) 0x3a,
+            (byte) 0x5d, (byte) 0x6a, (byte) 0x70, (byte) 0x86, (byte) 0x36, (byte) 0xc9,
+            (byte) 0xb1, (byte) 0xfb, (byte) 0xb5, (byte) 0xb7, (byte) 0xb3, (byte) 0x79,
+            (byte) 0xf2, (byte) 0xe6, (byte) 0x6a, (byte) 0x0a, (byte) 0x80, (byte) 0xe2,
+            (byte) 0xf5, (byte) 0xc4, (byte) 0x51, (byte) 0x76, (byte) 0x57, (byte) 0xa1,
+            (byte) 0x4c, (byte) 0x8b, (byte) 0xe1, (byte) 0x93, (byte) 0x42, (byte) 0x0d,
+            (byte) 0x67, (byte) 0x1d, (byte) 0xc3, (byte) 0xa2, (byte) 0xeb
+    };
+    public static final PrivateKey CLIENT_SUITE_B_ECC_KEY =
+            loadPrivateKey("EC", CLIENT_SUITE_B_ECC_KEY_DATA);
+
+    private static X509Certificate loadCertificate(String blob) {
+        try {
+            final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            InputStream stream = new ByteArrayInputStream(blob.getBytes(StandardCharsets.UTF_8));
+
+            return (X509Certificate) certFactory.generateCertificate(stream);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static PrivateKey loadPrivateKey(String algorithm, byte[] fakeKey) {
+        try {
+            KeyFactory kf = KeyFactory.getInstance(algorithm);
+            return kf.generatePrivate(new PKCS8EncodedKeySpec(fakeKey));
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            return null;
+        }
+    }
 
     private static boolean sWasVerboseLoggingEnabled;
     private static boolean sWasScanThrottleEnabled;
@@ -588,6 +691,47 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
                 .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
+                .build();
+        assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
+    }
+
+    /**
+     * Tests the builder for WPA3 enterprise networks.
+     * Note: Can't do end to end tests for such networks in CTS environment.
+     */
+    @Test
+    public void testBuilderForWpa3EnterpriseWithStandardApi() {
+        WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
+                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setWpa3EnterpriseStandardModeConfig(new WifiEnterpriseConfig())
+                .build();
+        WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
+                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
+                .build();
+        assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
+    }
+
+    /**
+     * Tests the builder for WPA3 enterprise networks.
+     * Note: Can't do end to end tests for such networks in CTS environment.
+     */
+    @Test
+    public void testBuilderForWpa3Enterprise192bit() {
+        WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
+        enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
+        enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
+        enterpriseConfig.setClientKeyEntryWithCertificateChain(CLIENT_SUITE_B_ECC_KEY,
+                new X509Certificate[] {CLIENT_SUITE_B_ECDSA_CERT});
+        enterpriseConfig.setAltSubjectMatch("domain.com");
+
+        WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
+                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
+                .build();
+        WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
+                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
     }
