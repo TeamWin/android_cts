@@ -33,6 +33,8 @@ import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -56,7 +58,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.zip.CRC32;
 
@@ -467,7 +471,8 @@ public class ExtractorTest {
         return checksum.getValue();
     }
 
-    private static native long nativeReadAllData(String srcPath, String mime, int sampleLimit);
+    private static native long nativeReadAllData(String srcPath, String mime, int sampleLimit,
+            String[] keys, String[] values, boolean isSrcUrl);
 
     /**
      * Tests setDataSource(...) Api by observing the extractor behavior after its successful
@@ -604,8 +609,8 @@ public class ExtractorTest {
                 fail("setDataSource failed: " + testName.getMethodName());
             }
             long sdkChecksum = readAllData(testExtractor, null, Integer.MAX_VALUE);
-            long ndkChecksum =
-                    nativeReadAllData(mInpPrefix + mInpMedia, "", Integer.MAX_VALUE);
+            long ndkChecksum = nativeReadAllData(mInpPrefix + mInpMedia, "",
+                    Integer.MAX_VALUE, null, null, false);
             testExtractor.release();
             assertEquals("SDK and NDK checksums mismatch", sdkChecksum, ndkChecksum);
         }
@@ -671,10 +676,19 @@ public class ExtractorTest {
             testExtractor.release();
         }
 
-        @Test
-        public void testUrlDataSource() throws Exception {
+        private void checkExtractorOkForUrlDS(Map<String, String> headers) throws Exception {
             MediaExtractor testExtractor = new MediaExtractor();
-            testExtractor.setDataSource(mInpMediaUrl, null);
+            testExtractor.setDataSource(mInpMediaUrl, headers);
+            HttpRequest req = mWebServer.getLastRequest(mResString);
+            if (headers != null) {
+                for (String key : headers.keySet()) {
+                    String value = headers.get(key);
+                    Header[] header = req.getHeaders(key);
+                    assertTrue(
+                            "expecting " + key + ":" + value + ", saw " + Arrays.toString(header),
+                            header.length == 1 && header[0].getValue().equals(value));
+                }
+            }
             if (!isMediaSimilar(mRefExtractor, testExtractor, null, Integer.MAX_VALUE) ||
                     !areMetricsIdentical(mRefExtractor, testExtractor) ||
                     !isSeekOk(mRefExtractor, testExtractor)) {
@@ -694,6 +708,32 @@ public class ExtractorTest {
             assertTrue(testExtractor.hasCacheReachedEndOfStream());
             testExtractor.unselectTrack(0);
             testExtractor.release();
+        }
+
+        @Test
+        public void testUrlDataSource() throws Exception {
+            checkExtractorOkForUrlDS(null);
+
+            Map<String, String> headers = new HashMap<>();
+            checkExtractorOkForUrlDS(headers);
+
+            String[] keys = new String[]{"From", "Client", "Location"};
+            String[] values = new String[]{"alcor@bigdipper.asm", "CtsTestServer", "UrsaMajor"};
+            for (int i = 0; i < keys.length; i++) {
+                headers.put(keys[i], values[i]);
+            }
+            checkExtractorOkForUrlDS(headers);
+
+            MediaExtractor testExtractor = new MediaExtractor();
+            testExtractor.setDataSource(mInpMediaUrl, headers);
+            long sdkChecksum = readAllData(testExtractor, null, Integer.MAX_VALUE);
+            testExtractor.release();
+            long ndkChecksum = nativeReadAllData(mInpMediaUrl, "", Integer.MAX_VALUE, keys,
+                    values, true);
+            assertEquals("SDK and NDK checksums mismatch", sdkChecksum, ndkChecksum);
+            ndkChecksum = nativeReadAllData(mInpMediaUrl, "", Integer.MAX_VALUE, new String[0],
+                    new String[0], true);
+            assertEquals("SDK and NDK checksums mismatch", sdkChecksum, ndkChecksum);
         }
 
         private native boolean nativeTestDataSource(String srcPath, String srcUrl);
@@ -1000,8 +1040,8 @@ public class ExtractorTest {
             MediaExtractor refExtractor = new MediaExtractor();
             refExtractor.setDataSource(mInpPrefix + mSrcFiles[0]);
             long sdkChecksum = readAllData(refExtractor, mMime, Integer.MAX_VALUE);
-            long ndkChecksum =
-                    nativeReadAllData(mInpPrefix + mSrcFiles[0], mMime, Integer.MAX_VALUE);
+            long ndkChecksum = nativeReadAllData(mInpPrefix + mSrcFiles[0], mMime,
+                    Integer.MAX_VALUE, null, null, false);
             assertEquals("SDK and NDK checksums mismatch", sdkChecksum, ndkChecksum);
             if (mSrcFiles.length == 1) {
                 refExtractor.release();
