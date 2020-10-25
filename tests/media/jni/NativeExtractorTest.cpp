@@ -215,6 +215,37 @@ static AMediaExtractor* createExtractorFromFD(FILE* fp) {
     return extractor;
 }
 
+static bool createExtractorFromUrl(JNIEnv* env, jobjectArray jkeys, jobjectArray jvalues,
+                                   AMediaExtractor** ex, AMediaDataSource** ds, const char* url) {
+    int numkeys = jkeys ? env->GetArrayLength(jkeys) : 0;
+    int numvalues = jvalues ? env->GetArrayLength(jvalues) : 0;
+    if (numkeys != numvalues) {
+        ALOGE("Unequal number of keys and values");
+        return false;
+    }
+    const char** keyvalues = numkeys ? new const char*[numkeys * 2] : nullptr;
+    for (int i = 0; i < numkeys; i++) {
+        auto jkey = (jstring)(env->GetObjectArrayElement(jkeys, i));
+        auto jvalue = (jstring)(env->GetObjectArrayElement(jvalues, i));
+        const char* key = env->GetStringUTFChars(jkey, nullptr);
+        const char* value = env->GetStringUTFChars(jvalue, nullptr);
+        keyvalues[i * 2] = key;
+        keyvalues[i * 2 + 1] = value;
+    }
+    *ex = AMediaExtractor_new();
+    *ds = AMediaDataSource_newUri(url, numkeys, keyvalues);
+    bool isPass = *ds ? (AMEDIA_OK == AMediaExtractor_setDataSourceCustom(*ex, *ds)) : false;
+    if (!isPass) ALOGE("setDataSourceCustom failed");
+    for (int i = 0; i < numkeys; i++) {
+        auto jkey = (jstring)(env->GetObjectArrayElement(jkeys, i));
+        auto jvalue = (jstring)(env->GetObjectArrayElement(jvalues, i));
+        env->ReleaseStringUTFChars(jkey, keyvalues[i * 2]);
+        env->ReleaseStringUTFChars(jvalue, keyvalues[i * 2 + 1]);
+    }
+    delete[] keyvalues;
+    return isPass;
+}
+
 // content necessary for testing seek are grouped in this class
 class SeekTestParams {
   public:
@@ -478,22 +509,35 @@ static bool isSeekOk(AMediaExtractor* refExtractor, AMediaExtractor* testExtract
 }
 
 static jlong nativeReadAllData(JNIEnv* env, jobject, jstring jsrcPath, jstring jmime,
-                               jint sampleLimit) {
+                               jint sampleLimit, jobjectArray jkeys, jobjectArray jvalues,
+                               jboolean isSrcUrl) {
     const int maxSampleSize = (4 * 1024 * 1024);
-    bool isPass = false;
+    bool isPass = true;
     uLong crc32value = 0U;
     const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
     const char* cmime = env->GetStringUTFChars(jmime, nullptr);
-    FILE* srcFp = fopen(csrcPath, "rbe");
-    AMediaExtractor* extractor = createExtractorFromFD(srcFp);
-    if (extractor == nullptr) {
-        if (srcFp) fclose(srcFp);
+    AMediaExtractor* extractor = nullptr;
+    AMediaDataSource* dataSource = nullptr;
+    FILE* srcFp = nullptr;
+
+    if (isSrcUrl) {
+        isPass = createExtractorFromUrl(env, jkeys, jvalues, &extractor, &dataSource, csrcPath);
+    } else {
+        srcFp = fopen(csrcPath, "rbe");
+        extractor = createExtractorFromFD(srcFp);
+        if (extractor == nullptr) {
+            if (srcFp) fclose(srcFp);
+            isPass = false;
+        }
+    }
+    if (!isPass) {
         env->ReleaseStringUTFChars(jmime, cmime);
         env->ReleaseStringUTFChars(jsrcPath, csrcPath);
-        ALOGE(" Error while creating extractor");
+        ALOGE("Error while creating extractor");
+        if (dataSource) AMediaDataSource_delete(dataSource);
+        if (extractor) AMediaExtractor_delete(extractor);
         return static_cast<jlong>(-2);
     }
-    isPass = true;
     auto buffer = new uint8_t[maxSampleSize];
     int bufferSize = 0;
     int tracksSelected = 0;
@@ -586,7 +630,8 @@ static jlong nativeReadAllData(JNIEnv* env, jobject, jstring jsrcPath, jstring j
         }
     }
     delete[] buffer;
-    AMediaExtractor_delete(extractor);
+    if (extractor) AMediaExtractor_delete(extractor);
+    if (dataSource) AMediaDataSource_delete(dataSource);
     if (srcFp) fclose(srcFp);
     env->ReleaseStringUTFChars(jmime, cmime);
     env->ReleaseStringUTFChars(jsrcPath, csrcPath);
@@ -763,13 +808,9 @@ static jboolean nativeTestDataSource(JNIEnv* env, jobject, jstring jsrcPath, jst
     if (status == AMEDIA_OK) {
         isPass &= validateCachedDuration(refExtractor, true);
         const char* csrcPath = env->GetStringUTFChars(jsrcPath, nullptr);
-        AMediaDataSource* dataSource = AMediaDataSource_newUri(csrcUrl, 0, nullptr);
-        AMediaExtractor* testExtractor = AMediaExtractor_new();
-        status = AMediaExtractor_setDataSourceCustom(testExtractor, dataSource);
-        if (status != AMEDIA_OK) {
-            ALOGE("setDataSourceCustom failed");
-            isPass = false;
-        } else {
+        AMediaDataSource* dataSource = nullptr;
+        AMediaExtractor* testExtractor = nullptr;
+        if (createExtractorFromUrl(env, nullptr, nullptr, &testExtractor, &dataSource, csrcUrl)) {
             isPass &= validateCachedDuration(testExtractor, true);
             if (!(isMediaSimilar(refExtractor, testExtractor, nullptr) &&
                   isFileFormatIdentical(refExtractor, testExtractor) &&
@@ -831,7 +872,8 @@ int registerAndroidMediaV2CtsExtractorTestFunc(JNIEnv* env) {
 
 int registerAndroidMediaV2CtsExtractorTest(JNIEnv* env) {
     const JNINativeMethod methodTable[] = {
-            {"nativeReadAllData", "(Ljava/lang/String;Ljava/lang/String;I)J",
+            {"nativeReadAllData",
+             "(Ljava/lang/String;Ljava/lang/String;I[Ljava/lang/String;[Ljava/lang/String;Z)J",
              (void*)nativeReadAllData},
     };
     jclass c = env->FindClass("android/mediav2/cts/ExtractorTest");
