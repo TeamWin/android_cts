@@ -22,6 +22,7 @@ android_test {
         "ctstestserver",
     ],
     libs: [
+        "org.apache.http.legacy",
         "android.test.runner",
         "android.test.base",
     ],
