@@ -688,7 +688,28 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
-    public void testBuilderWithWpa3EnterpriseSuiteBRsa() throws Exception {
+    public void testBuilderWithWpa3EnterpriseWithStandardApi() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        WifiEnterpriseConfig enterpriseConfig = createEnterpriseConfig();
+        WifiNetworkSuggestion suggestion =
+                createBuilderWithCommonParams()
+                        .setWpa3EnterpriseStandardModeConfig(enterpriseConfig)
+                        .build();
+        validateCommonParams(suggestion);
+        assertNull(suggestion.getPassphrase());
+        assertNotNull(suggestion.getEnterpriseConfig());
+        assertEquals(enterpriseConfig.getEapMethod(),
+                suggestion.getEnterpriseConfig().getEapMethod());
+        assertNull(suggestion.getPasspointConfig());
+    }
+
+    /**
+     * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
+     */
+    public void testBuilderWithWpa3EnterpriseWithSuiteBRsaCerts() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -714,7 +735,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
-    public void testBuilderWithWpa3EnterpriseSuiteBEcc() throws Exception {
+    public void testBuilderWithWpa3EnterpriseWithSuiteBEccCerts() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -728,6 +749,58 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
                         .setWpa3EnterpriseConfig(enterpriseConfig)
+                        .build();
+        validateCommonParams(suggestion);
+        assertNull(suggestion.getPassphrase());
+        assertNotNull(suggestion.getEnterpriseConfig());
+        assertEquals(enterpriseConfig.getEapMethod(),
+                suggestion.getEnterpriseConfig().getEapMethod());
+        assertNull(suggestion.getPasspointConfig());
+    }
+
+    /**
+     * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
+     */
+    public void testBuilderWithWpa3Enterprise192bitWithSuiteBRsaCerts() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
+        enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
+        enterpriseConfig.setCaCertificate(CA_SUITE_B_RSA3072_CERT);
+        enterpriseConfig.setClientKeyEntryWithCertificateChain(CLIENT_SUITE_B_RSA3072_KEY,
+                new X509Certificate[] {CLIENT_SUITE_B_RSA3072_CERT});
+        enterpriseConfig.setAltSubjectMatch("domain.com");
+        WifiNetworkSuggestion suggestion =
+                createBuilderWithCommonParams()
+                        .setWpa3EnterpriseConfig(enterpriseConfig)
+                        .build();
+        validateCommonParams(suggestion);
+        assertNull(suggestion.getPassphrase());
+        assertNotNull(suggestion.getEnterpriseConfig());
+        assertEquals(enterpriseConfig.getEapMethod(),
+                suggestion.getEnterpriseConfig().getEapMethod());
+        assertNull(suggestion.getPasspointConfig());
+    }
+
+    /**
+     * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
+     */
+    public void testBuilderWithWpa3Enterprise192bitWithSuiteBEccCerts() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
+        enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
+        enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
+        enterpriseConfig.setClientKeyEntryWithCertificateChain(CLIENT_SUITE_B_ECC_KEY,
+                new X509Certificate[] {CLIENT_SUITE_B_ECDSA_CERT});
+        enterpriseConfig.setAltSubjectMatch("domain.com");
+        WifiNetworkSuggestion suggestion =
+                createBuilderWithCommonParams()
+                        .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
                         .build();
         validateCommonParams(suggestion);
         assertNull(suggestion.getPassphrase());
