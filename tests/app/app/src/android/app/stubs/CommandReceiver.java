@@ -212,10 +212,12 @@ public class CommandReceiver extends BroadcastReceiver {
         ActivityManager am = context.getSystemService(ActivityManager.class);
         am.appNotResponding("CTS - self induced");
     }
+
     private void doStartActivity(Context context, Intent commandIntent) {
         String targetPackage = getTargetPackage(commandIntent);
         Intent activityIntent = new Intent(Intent.ACTION_MAIN);
         sActivityIntent.put(targetPackage, activityIntent);
+        activityIntent.putExtras(commandIntent);
         activityIntent.setComponent(new ComponentName(targetPackage, ACTIVITY_NAME));
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(activityIntent);
