@@ -16,12 +16,14 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.server.wm.ActivityManagerState.STATE_STOPPED;
 import static android.server.wm.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
 import static android.server.wm.WindowManagerState.TRANSIT_KEYGUARD_GOING_AWAY;
 import static android.server.wm.WindowManagerState.TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER;
 import static android.server.wm.WindowManagerState.TRANSIT_KEYGUARD_OCCLUDE;
 import static android.server.wm.WindowManagerState.TRANSIT_KEYGUARD_UNOCCLUDE;
+import static android.server.wm.WindowManagerState.TRANSIT_TASK_OPEN;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY;
@@ -61,7 +63,13 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             lockScreenSession.gotoKeyguard()
                     .unlockDevice();
             mAmWmState.computeState(TEST_ACTIVITY);
-            assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY,
+            String expectedTransition;
+            if (isInFullscreenWindowingMode()) {
+                expectedTransition = TRANSIT_KEYGUARD_GOING_AWAY;
+            } else {
+                expectedTransition = TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER;
+            }
+            assertEquals("Picked wrong transition", expectedTransition,
                     mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
     }
@@ -109,7 +117,13 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ACTIVITY);
             launchActivity(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
-            assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
+            String expectedTransition;
+            if (isInFullscreenWindowingMode()) {
+                expectedTransition = TRANSIT_ACTIVITY_OPEN;
+            } else {
+                expectedTransition = TRANSIT_TASK_OPEN;
+            }
+            assertEquals("Picked wrong transition", expectedTransition,
                     mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
     }
@@ -159,8 +173,19 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             launchActivity(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
-            assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
+            String expectedTransition;
+            if (isInFullscreenWindowingMode()) {
+                expectedTransition = TRANSIT_ACTIVITY_OPEN;
+            } else {
+                expectedTransition = TRANSIT_TASK_OPEN;
+            }
+            assertEquals("Picked wrong transition", expectedTransition,
                     mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
+    }
+
+    private boolean isInFullscreenWindowingMode() {
+        int windowingMode = mAmWmState.getWmState().getDisplay(0).getWindowingMode();
+        return windowingMode == WINDOWING_MODE_FULLSCREEN;
     }
 }
