@@ -50,7 +50,7 @@ import java.util.ArrayList;
  * owner is setup correctly, removing the work profile upon request, and verifying the image and
  * video capture functionality.
  *
- * Note: We have to use a dummy activity because cross-profile intents only work for activities.
+ * Note: We have to use a test activity because cross-profile intents only work for activities.
  */
 public class ByodHelperActivity extends LocationListenerActivity
         implements DialogCallback {

@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 public class ParentProfileTest extends BaseManagedProfileTest {
 
     /**
-     * A whitelist of public API methods in {@link android.app.admin.DevicePolicyManager}
+     * An allowlist of public API methods in {@link android.app.admin.DevicePolicyManager}
      * that are supported on a parent profile.
      */
     private static final ImmutableSet<String> SUPPORTED_APIS = new ImmutableSet.Builder<String>()
@@ -106,7 +106,7 @@ public class ParentProfileTest extends BaseManagedProfileTest {
 
     /**
      * Verify that all public API methods of {@link android.app.admin.DevicePolicyManager},
-     * except those explicitly whitelisted in {@link #SUPPORTED_APIS},
+     * except those explicitly allowed in {@link #SUPPORTED_APIS},
      * throw a {@link SecurityException} when called on a parent profile.
      *
      * <p><b>Note:</b> System API methods (i.e. those with the

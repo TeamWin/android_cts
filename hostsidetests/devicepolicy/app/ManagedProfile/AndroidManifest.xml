@@ -122,7 +122,7 @@
         </activity>
         <activity android:name=".TestActivity"/>
 
-        <service android:name=".DummyConnectionService"
+        <service android:name=".TestConnectionService"
              android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE"
              android:exported="true">
             <intent-filter>
@@ -130,7 +130,7 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".DummyDialerActivity"
+        <activity android:name=".TestDialerActivity"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.DIAL"/>
@@ -176,7 +176,7 @@
         <activity android:name=".TimeoutActivity"
              android:exported="true"/>
 
-        <activity android:name=".DummyCrossProfileViewEventActivity"
+        <activity android:name=".TestCrossProfileViewEventActivity"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.provider.calendar.action.VIEW_MANAGED_PROFILE_CALENDAR_EVENT"/>
@@ -200,9 +200,9 @@
             </intent-filter>
         </receiver>
 
-        <!-- Dummy receiver that's decleared direct boot aware. This is needed to make the test app
+        <!-- Test receiver that's decleared direct boot aware. This is needed to make the test app
                          executable by instrumentation before device unlock -->
-        <receiver android:name=".ResetPasswordWithTokenTest$DummyReceiver"
+        <receiver android:name=".ResetPasswordWithTokenTest$TestReceiver"
              android:directBootAware="true"
              android:exported="true">
           <intent-filter>
