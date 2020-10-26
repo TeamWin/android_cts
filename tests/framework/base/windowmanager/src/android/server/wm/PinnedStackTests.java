@@ -53,6 +53,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PA
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT;
 import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
+import static android.server.wm.app.Components.PipActivity.EXTRA_NUMBER_OF_CUSTOM_ACTIONS;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
@@ -72,6 +73,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -82,6 +84,9 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityTaskManager;
+import android.app.PictureInPictureParams;
+import android.app.TaskInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
@@ -1227,6 +1232,50 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchHomeActivity();
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
+    }
+
+    @Test
+    public void testMaxNumberOfActions() {
+        final int maxNumberActions = ActivityTaskManager.getMaxNumPictureInPictureActions(mContext);
+        assertThat(maxNumberActions, greaterThanOrEqualTo(3));
+    }
+
+    @Test
+    public void testFillMaxAllowedActions() {
+        final int maxNumberActions = ActivityTaskManager.getMaxNumPictureInPictureActions(mContext);
+        // Launch the PIP activity with max allowed actions
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_NUMBER_OF_CUSTOM_ACTIONS, String.valueOf(maxNumberActions));
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
+
+        assertNumberOfActions(PIP_ACTIVITY, maxNumberActions);
+    }
+
+    @Test
+    public void testRejectExceededActions() {
+        final int maxNumberActions = ActivityTaskManager.getMaxNumPictureInPictureActions(mContext);
+        // Launch the PIP activity with exceeded amount of actions
+        launchActivity(PIP_ACTIVITY,
+                EXTRA_NUMBER_OF_CUSTOM_ACTIONS, String.valueOf(maxNumberActions + 1));
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
+
+        assertNumberOfActions(PIP_ACTIVITY, maxNumberActions);
+    }
+
+    private void assertNumberOfActions(ComponentName componentName, int numberOfActions) {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            final ActivityTask task = mWmState.getTaskByActivity(componentName);
+            final TaskInfo info = mTaskOrganizer.getTaskInfo(task.getTaskId());
+            final PictureInPictureParams params = info.getPictureInPictureParams();
+
+            assertNotNull(params);
+            assertNotNull(params.getActions());
+            assertEquals(params.getActions().size(), numberOfActions);
+        });
     }
 
     /** Get app bounds in last applied configuration. */
