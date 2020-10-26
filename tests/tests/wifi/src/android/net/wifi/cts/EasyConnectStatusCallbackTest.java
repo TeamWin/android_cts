@@ -44,7 +44,7 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
     private static final int TEST_WAIT_DURATION_MS = 12_000; // Long delay is necessary, see below
     private WifiManager mWifiManager;
     private static final String TEST_DPP_URI =
-            "DPP:C:81/1;I:Easy_Connect_Demo;M:000102030405;"
+            "DPP:C:81/1,117/40;I:Easy_Connect_Demo;M:000102030405;"
                     + "K:MDkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDIgACDmtXD1Sz6/5B4YRdmTkbkkFLDwk8f0yRnfm1Go"
                     + "kpx/0=;;";
     private final HandlerThread mHandlerThread = new HandlerThread("EasyConnectTest");
