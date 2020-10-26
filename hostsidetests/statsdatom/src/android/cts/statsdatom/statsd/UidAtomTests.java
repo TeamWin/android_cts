@@ -651,29 +651,27 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testGnssStats() throws Exception {
         // Get GnssMetrics as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.GNSS_STATS_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.GNSS_STATS_FIELD_NUMBER);
 
-        if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LOCATION_GPS)) return;
         // Whitelist this app against background location request throttling
         String origWhitelist = getDevice().executeShellCommand(
                 "settings get global location_background_throttle_package_whitelist").trim();
         getDevice().executeShellCommand(String.format(
                 "settings put global location_background_throttle_package_whitelist %s",
-                DEVICE_SIDE_TEST_PACKAGE));
+                DeviceUtils.STATSD_ATOM_TEST_PKG));
 
         try {
-            runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testGpsStatus");
+            DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testGpsStatus");
 
-            Thread.sleep(WAIT_TIME_LONG);
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
             // Trigger a pull and wait for new pull before killing the process.
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
             // Assert about GnssMetrics for the test app.
-            List<Atom> atoms = getGaugeMetricDataList();
+            List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
 
             boolean found = false;
             for (Atom atom : atoms) {
