@@ -749,7 +749,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testOverlayState() throws Exception {
-        if (!hasFeature(FEATURE_WATCH, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_WATCH)) return;
         final int atomTag = Atom.OVERLAY_STATE_CHANGED_FIELD_NUMBER;
 
         Set<Integer> entered = new HashSet<>(
@@ -760,17 +760,19 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(entered, exited);
 
-        createAndUploadConfig(atomTag, false);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        runActivity("StatsdCtsForegroundActivity", "action", "action.show_application_overlay",
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.show_application_overlay",
                 5_000);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
         // The overlay box should appear about 2sec after the app start
-        assertStatesOccurred(stateSet, data, 0,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
                 atom -> atom.getOverlayStateChanged().getState().getNumber());
     }
 
