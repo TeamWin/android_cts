@@ -24,7 +24,7 @@ import static android.server.wm.WindowManagerState.STATE_RESUMED;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static com.google.common.truth.Truth.assertWithMessage;
+import static com.google.common.truth.Truth.assertThat;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
@@ -37,6 +37,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.hardware.input.InputManager;
 import android.os.Binder;
 import android.os.Bundle;
@@ -60,14 +61,13 @@ import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
-import com.android.compatibility.common.util.CtsTouchUtils;
-import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -118,6 +118,7 @@ public class WindowUntrustedTouchTest {
     private Instrumentation mInstrumentation;
     private Context mContext;
     private ContentResolver mContentResolver;
+    private TouchHelper mTouchHelper;
     private InputManager mInputManager;
     private WindowManager mWindowManager;
     private ActivityManager mActivityManager;
@@ -135,16 +136,20 @@ public class WindowUntrustedTouchTest {
     private Toast mToast;
 
     @Rule
-    public ActivityTestRule<TestActivity> rule = new ActivityTestRule<>(TestActivity.class);
+    public TestName testNameRule = new TestName();
+
+    @Rule
+    public ActivityTestRule<TestActivity> activityRule = new ActivityTestRule<>(TestActivity.class);
 
     @Before
     public void setUp() throws Exception {
-        mActivity = rule.getActivity();
+        mActivity = activityRule.getActivity();
         mContainer = mActivity.view;
         mContainer.setOnTouchListener(this::onTouchEvent);
         mInstrumentation = getInstrumentation();
         mContext = mInstrumentation.getContext();
         mContentResolver = mContext.getContentResolver();
+        mTouchHelper = new TouchHelper(mInstrumentation, mWmState);
         mInputManager = mContext.getSystemService(InputManager.class);
         mWindowManager = mContext.getSystemService(WindowManager.class);
         mActivityManager = mContext.getSystemService(ActivityManager.class);
@@ -181,7 +186,7 @@ public class WindowUntrustedTouchTest {
         setBlockUntrustedTouchesMode(FEATURE_MODE_DISABLED);
         addActivityOverlay(APP_A, /* opacity */ .9f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -192,7 +197,7 @@ public class WindowUntrustedTouchTest {
         setBlockUntrustedTouchesMode(FEATURE_MODE_PERMISSIVE);
         addActivityOverlay(APP_A, /* opacity */ .9f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -203,7 +208,7 @@ public class WindowUntrustedTouchTest {
         setBlockUntrustedTouchesMode(FEATURE_MODE_BLOCK);
         addActivityOverlay(APP_A, /* opacity */ .9f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -249,7 +254,7 @@ public class WindowUntrustedTouchTest {
         });
         addSawOverlay(APP_A, WINDOW_1, 9.f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         // Blocks because it's using previous maximum of .8
         assertTouchNotReceived();
@@ -266,7 +271,7 @@ public class WindowUntrustedTouchTest {
         });
         addSawOverlay(APP_A, WINDOW_1, .7f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         // Allows because it's using previous maximum of .8
         assertTouchReceived();
@@ -278,7 +283,7 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneSawWindowAboveThreshold_blocksTouch() throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .9f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -287,7 +292,7 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneSawWindowBelowThreshold_allowsTouch() throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .7f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -296,7 +301,7 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneSawWindowWithZeroOpacity_allowsTouch() throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, 0f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -305,7 +310,7 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneSawWindowAtThreshold_allowsTouch() throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, MAXIMUM_OBSCURING_OPACITY);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -317,7 +322,7 @@ public class WindowUntrustedTouchTest {
         addSawOverlay(APP_A, WINDOW_1, .5f);
         addSawOverlay(APP_A, WINDOW_2, .5f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -329,7 +334,7 @@ public class WindowUntrustedTouchTest {
         addSawOverlay(APP_A, WINDOW_1, .7f);
         addSawOverlay(APP_A, WINDOW_2, .7f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -340,7 +345,7 @@ public class WindowUntrustedTouchTest {
         addSawOverlay(APP_A, WINDOW_1, .7f);
         addSawOverlay(APP_B, WINDOW_2, .7f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -351,7 +356,7 @@ public class WindowUntrustedTouchTest {
         addSawOverlay(APP_A, WINDOW_1, .9f);
         addSawOverlay(APP_SELF, WINDOW_1, .7f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -362,7 +367,7 @@ public class WindowUntrustedTouchTest {
         addSawOverlay(APP_A, WINDOW_1, .7f);
         addSawOverlay(APP_SELF, WINDOW_1, .7f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -375,7 +380,7 @@ public class WindowUntrustedTouchTest {
         addSawOverlay(APP_A, WINDOW_1, .5f);
         addSawOverlay(APP_SELF, WINDOW_1, .7f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -386,7 +391,7 @@ public class WindowUntrustedTouchTest {
         setMaximumObscuringOpacityForTouch(0);
         addSawOverlay(APP_A, WINDOW_1, 0);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -397,7 +402,7 @@ public class WindowUntrustedTouchTest {
         setMaximumObscuringOpacityForTouch(0);
         addSawOverlay(APP_A, WINDOW_1, .1f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -408,7 +413,7 @@ public class WindowUntrustedTouchTest {
         setMaximumObscuringOpacityForTouch(1);
         addSawOverlay(APP_A, WINDOW_1, 1);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -419,7 +424,7 @@ public class WindowUntrustedTouchTest {
         setMaximumObscuringOpacityForTouch(1);
         addSawOverlay(APP_A, WINDOW_1, .9f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -431,7 +436,7 @@ public class WindowUntrustedTouchTest {
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ .5f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -441,7 +446,7 @@ public class WindowUntrustedTouchTest {
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ .9f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -451,7 +456,7 @@ public class WindowUntrustedTouchTest {
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ 0f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -461,7 +466,7 @@ public class WindowUntrustedTouchTest {
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ MIN_POSITIVE_OPACITY);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -471,7 +476,7 @@ public class WindowUntrustedTouchTest {
             throws Throwable {
         addActivityOverlay(APP_A, /* opacity */ .01f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -480,7 +485,7 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneSelfActivityWindow_allowsTouch() throws Throwable {
         addActivityOverlay(APP_SELF, /* opacity */ .9f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -491,7 +496,7 @@ public class WindowUntrustedTouchTest {
         addActivityOverlay(APP_A, /* opacity */ .7f);
         addActivityOverlay(APP_B, /* opacity */ .7f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -502,7 +507,7 @@ public class WindowUntrustedTouchTest {
         addActivityOverlay(APP_A, /* opacity */ .5f);
         addSawOverlay(APP_A, WINDOW_1, .5f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -511,10 +516,10 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneActivityWindowAndOneSelfCustomToastWindow_blocksTouch()
             throws Throwable {
         // Toast has to be before otherwise it would be blocked from background
-        addCustomToastOverlay(APP_SELF);
+        addToastOverlay(APP_SELF, /* custom */ true);
         addActivityOverlay(APP_A, /* opacity */ .5f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -525,7 +530,7 @@ public class WindowUntrustedTouchTest {
         addActivityOverlay(APP_A, /* opacity */ .5f);
         addSawOverlay(APP_SELF, WINDOW_1, .5f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -536,7 +541,7 @@ public class WindowUntrustedTouchTest {
         addActivityOverlay(APP_A, /* opacity */ .5f);
         addSawOverlay(APP_A, WINDOW_1, .5f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -547,7 +552,7 @@ public class WindowUntrustedTouchTest {
         addActivityOverlay(APP_A, /* opacity */ .5f);
         addSawOverlay(APP_B, WINDOW_1, .5f);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -555,19 +560,53 @@ public class WindowUntrustedTouchTest {
     /** Toast windows */
 
     @Test
-    public void testWhenOneCustomToastWindow_blocksTouch() throws Throwable {
-        addCustomToastOverlay(APP_A);
+    public void testWhenSelfTextToastWindow_allowsTouch() throws Throwable {
+        try {
+            addToastOverlay(APP_SELF, /* custom */ false);
+            Rect toast = mWmState.waitForResult("toast bounds",
+                    state -> state.findFirstWindowWithType(
+                            LayoutParams.TYPE_TOAST).getContentFrame());
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+            mTouchHelper.tapOnCenter(toast, mActivity.getDisplayId());
+
+            assertTouchReceived();
+        } finally {
+            // TODO: Cancel the toast instead of waiting (force-stop doesn't remove text toasts)
+            waitForNoToastOverlays();
+        }
+    }
+
+    @Test
+    public void testWhenTextToastWindow_allowsTouch() throws Throwable {
+        try {
+            addToastOverlay(APP_A, /* custom */ false);
+            Rect toast = mWmState.waitForResult("toast bounds",
+                    state -> state.findFirstWindowWithType(
+                            LayoutParams.TYPE_TOAST).getContentFrame());
+
+            mTouchHelper.tapOnCenter(toast, mActivity.getDisplayId());
+
+            assertTouchReceived();
+        } finally {
+            // TODO: Cancel the toast instead of waiting (force-stop doesn't remove text toasts)
+            waitForNoToastOverlays();
+        }
+    }
+
+    @Test
+    public void testWhenOneCustomToastWindow_blocksTouch() throws Throwable {
+        addToastOverlay(APP_A, /* custom */ true);
+
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
 
     @Test
     public void testWhenOneSelfCustomToastWindow_allowsTouch() throws Throwable {
-        addCustomToastOverlay(APP_SELF);
+        addToastOverlay(APP_SELF, /* custom */ true);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -576,9 +615,9 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneCustomToastWindowAndOneSelfSawWindow_blocksTouch()
             throws Throwable {
         addSawOverlay(APP_SELF, WINDOW_1, .9f);
-        addCustomToastOverlay(APP_A);
+        addToastOverlay(APP_A, /* custom */ true);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -587,9 +626,9 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneCustomToastWindowAndOneSawWindowBelowThreshold_blocksTouch()
             throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .5f);
-        addCustomToastOverlay(APP_A);
+        addToastOverlay(APP_A, /* custom */ true);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -598,9 +637,9 @@ public class WindowUntrustedTouchTest {
     public void testWhenOneCustomToastWindowAndOneSawWindowBelowThresholdFromDifferentApp_blocksTouch()
             throws Throwable {
         addSawOverlay(APP_A, WINDOW_1, .5f);
-        addCustomToastOverlay(APP_B);
+        addToastOverlay(APP_B, /* custom */ true);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchNotReceived();
     }
@@ -610,9 +649,9 @@ public class WindowUntrustedTouchTest {
             throws Throwable {
         addActivityOverlay(APP_SELF, /* opacity */ .9f);
         addSawOverlay(APP_A, WINDOW_1, .5f);
-        addCustomToastOverlay(APP_SELF);
+        addToastOverlay(APP_SELF, /* custom */ true);
 
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
+        mTouchHelper.tapOnViewCenter(mContainer);
 
         assertTouchReceived();
     }
@@ -624,64 +663,57 @@ public class WindowUntrustedTouchTest {
         return true;
     }
 
-    private void assertTouchReceived() throws Exception {
-        PollingCheck.check("Expected touch not received on time",
-                TOUCH_TIME_OUT_MS, () -> mTouchesReceived.get() >= 1);
-        int touches = mTouchesReceived.get();
-        assertWithMessage("Number of touches reset unexpectedly").that(touches).isAtLeast(1);
-        assertWithMessage("Got too many touches").that(touches).isAtMost(1);
+    private void assertTouchReceived() {
+        mInstrumentation.waitForIdleSync();
+        assertThat(mTouchesReceived.get()).isEqualTo(1);
     }
 
-    private void assertTouchNotReceived() throws Throwable {
-        // Fail as soon as possible
-        assertWithMessage("Unexpected touch received").that(mTouchesReceived.get()).isEqualTo(0);
-        removeOverlays();
-        // Fail as soon as possible
-        assertWithMessage("Unexpected touch received").that(mTouchesReceived.get()).isEqualTo(0);
-        // Now we sent a sentinel touch and wait to get it back
-        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, rule, mContainer);
-        PollingCheck.check("Expected sentinel touch not received",
-                TOUCH_TIME_OUT_MS, () -> mTouchesReceived.get() >= 1);
-        int touches = mTouchesReceived.get();
-        assertWithMessage("Number of touches reset unexpectedly").that(touches).isAtLeast(1);
-        assertWithMessage("Unexpected touch received").that(touches).isAtMost(1);
+    private void assertTouchNotReceived() {
+        mInstrumentation.waitForIdleSync();
+        assertThat(mTouchesReceived.get()).isEqualTo(0);
     }
 
-    private void addCustomToastOverlay(String packageName) {
+    private void addToastOverlay(String packageName, boolean custom) {
         if (packageName.equals(APP_SELF)) {
-            addMyCustomToastOverlay();
+            addMyToastOverlay(custom);
         } else {
             // We have to use an activity that will display the toast then finish itself because
             // custom toasts cannot be posted from the background.
             Intent intent = new Intent();
             intent.setComponent(repackage(packageName, Components.ToastActivity.COMPONENT));
-            intent.putExtra(Components.ToastActivity.EXTRA_CUSTOM, true);
+            intent.putExtra(Components.ToastActivity.EXTRA_CUSTOM, custom);
             mActivity.startActivity(intent);
         }
         String message = "Toast from app " + packageName + " did not appear on time";
         // TODO: WindowStateProto does not have package/UID information from the window, the current
-        // package test relies on the window name, which is not how toast windows are named. We
-        // should ideally incorporate that information in WindowStateProto and use here.
-        if (!mWmState.waitFor(message,
+        //  package test relies on the window name, which is not how toast windows are named. We
+        //  should ideally incorporate that information in WindowStateProto and use here.
+        if (!mWmState.waitFor("toast window",
                 state -> !state.getMatchingWindowType(LayoutParams.TYPE_TOAST).isEmpty())) {
             fail(message);
         }
     }
 
-    private void addMyCustomToastOverlay() {
+    private void addMyToastOverlay(boolean custom) {
         mActivity.runOnUiThread(() -> {
-            mToast = new Toast(mContext);
-            View view = new View(mContext);
-            view.setBackgroundColor(OVERLAY_COLOR);
-            mToast.setView(view);
-            mToast.setGravity(Gravity.FILL, 0, 0);
-            mToast.setDuration(Toast.LENGTH_LONG);
+            if (custom) {
+                mToast = new Toast(mContext);
+                View view = new View(mContext);
+                view.setBackgroundColor(OVERLAY_COLOR);
+                mToast.setView(view);
+                mToast.setGravity(Gravity.FILL, 0, 0);
+                mToast.setDuration(Toast.LENGTH_LONG);
+            } else {
+                String test =
+                        getClass().getSimpleName() + "." + testNameRule.getMethodName() + "()";
+                mToast = Toast.makeText(mContext, "Toast from " + test, Toast.LENGTH_LONG);
+            }
             mToast.show();
         });
         mInstrumentation.waitForIdleSync();
     }
 
-    private void removeMyCustomToastOverlay() {
+    private void removeMyToastOverlay() {
         mActivity.runOnUiThread(() -> {
             if (mToast != null) {
                 mToast.cancel();
@@ -691,8 +723,12 @@ public class WindowUntrustedTouchTest {
         mInstrumentation.waitForIdleSync();
     }
 
+    private void waitForNoToastOverlays() {
+        waitForNoToastOverlays("Toast windows did not hide on time");
+    }
+
     private void waitForNoToastOverlays(String message) {
-        if (!mWmState.waitFor(message,
+        if (!mWmState.waitFor("no toast windows",
                 state -> state.getMatchingWindowType(LayoutParams.TYPE_TOAST).isEmpty())) {
             fail(message);
         }
@@ -708,7 +744,7 @@ public class WindowUntrustedTouchTest {
         mActivity.startActivity(intent);
         String message = "Activity from app " + packageName + " did not appear on time";
         String activity = ComponentNameUtils.getActivityName(activityComponent);
-        if (!mWmState.waitFor(message,
+        if (!mWmState.waitFor("activity window " + activity,
                 state -> activity.equals(state.getFocusedActivity())
                         && state.hasActivityState(activityComponent, STATE_RESUMED))) {
             fail(message);
@@ -727,7 +763,7 @@ public class WindowUntrustedTouchTest {
         // Base activity focused means no activities on top
         ComponentName component = mActivity.getComponentName();
         String name = ComponentNameUtils.getActivityName(component);
-        if (!mWmState.waitFor(message,
+        if (!mWmState.waitFor("test rule activity focused",
                 state -> name.equals(state.getFocusedActivity())
                         && state.hasActivityState(component, STATE_RESUMED))) {
             fail(message);
@@ -748,14 +784,14 @@ public class WindowUntrustedTouchTest {
         }
         mSawWindowsAdded.add(name);
         String message = "Window " + name + " did not appear on time";
-        if (!mWmState.waitFor(message,
+        if (!mWmState.waitFor("window " + name,
                 state -> state.isWindowVisible(name) && state.isWindowSurfaceShown(name))) {
             fail(message);
         }
     }
 
     private void addMySawOverlay(String name, float opacity) throws Throwable {
-        rule.runOnUiThread(() -> {
+        activityRule.runOnUiThread(() -> {
             View view = new View(mContext);
             view.setBackgroundColor(OVERLAY_COLOR);
             LayoutParams params =
@@ -774,7 +810,7 @@ public class WindowUntrustedTouchTest {
     }
 
     private void removeMySawOverlays() throws Throwable {
-        rule.runOnUiThread(() -> {
+        activityRule.runOnUiThread(() -> {
             for (View view : mSawViewsAdded) {
                 mWindowManager.removeViewImmediate(view);
             }
@@ -784,7 +820,7 @@ public class WindowUntrustedTouchTest {
     }
 
     private void waitForNoSawOverlays(String message) {
-        if (!mWmState.waitFor(message,
+        if (!mWmState.waitFor("no SAW windows",
                 state -> mSawWindowsAdded.stream().allMatch(w -> !state.isWindowVisible(w)))) {
             fail(message);
         }
@@ -799,7 +835,7 @@ public class WindowUntrustedTouchTest {
         waitForNoSawOverlays("SAWs not removed on time");
         removeActivityOverlays();
         waitForNoActivityOverlays("Activities not removed on time");
-        removeMyCustomToastOverlay();
+        removeMyToastOverlay();
         waitForNoToastOverlays("Toasts not removed on time");
     }
 

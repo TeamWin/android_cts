@@ -46,7 +46,9 @@ import android.util.SparseArray;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /** Window Manager State helper class with assert and wait functions. */
@@ -313,6 +315,21 @@ public class WindowManagerStateHelper extends WindowManagerState {
             computeState();
             return waitCondition.test(this);
         });
+    }
+
+    /** Waits for non-null result from {@code function} and returns it. */
+    public <T> T waitForResult(String message, Function<WindowManagerState, T> function) {
+        return waitForResult(message, function, Objects::nonNull);
+    }
+
+    public <T> T waitForResult(String message, Function<WindowManagerState, T> function,
+            Predicate<T> validator) {
+        return Condition.waitForResult(new Condition<T>(message)
+                .setResultSupplier(() -> {
+                    computeState();
+                    return function.apply(this);
+                })
+                .setResultValidator(validator));
     }
 
     /**
