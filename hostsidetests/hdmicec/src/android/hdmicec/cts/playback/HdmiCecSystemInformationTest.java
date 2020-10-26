@@ -21,83 +21,34 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
-import android.hdmicec.cts.CecClientMessage;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecClientWrapper;
-import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RequiredPropertyRule;
-import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 
 /** HDMI CEC system information tests (Section 11.2.6) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
 
-    /** The version number 0x05 refers to CEC v1.4 */
-    private static final int CEC_VERSION_NUMBER = 0x05;
-
     private static final String PROPERTY_LOCALE = "persist.sys.locale";
-
-    public HdmiCecSystemInformationTest() {
-        super(LogicalAddress.PLAYBACK_1);
-    }
 
     @Rule
     public RuleChain ruleChain =
-        RuleChain
-            .outerRule(CecRules.requiresCec(this))
-            .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
-            .around(hdmiCecClient);
+            RuleChain
+                    .outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
+                    .around(hdmiCecClient);
 
-    /**
-     * Test 11.2.6-1
-     * Tests for Ack <Polling Message> message.
-     */
-    @Test
-    public void cect_11_2_6_1_Ack() throws Exception {
-        String command = CecClientMessage.POLL + " " + LogicalAddress.PLAYBACK_1;
-        String expectedOutput = "POLL sent";
-        hdmiCecClient.sendConsoleMessage(command);
-        if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
-            throw new Exception("Could not find " + expectedOutput);
-        }
-    }
-
-    /**
-     * Test 11.2.6-2
-     * Tests that the device sends a <REPORT_PHYSICAL_ADDRESS> in response to a
-     * <GIVE_PHYSICAL_ADDRESS>
-     */
-    @Test
-    public void cect_11_2_6_2_GivePhysicalAddress() throws Exception {
-        hdmiCecClient.sendCecMessage(CecOperand.GIVE_PHYSICAL_ADDRESS);
-        String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
-        /* Check that the physical address taken is valid. */
-        CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
-        int receivedParams = CecMessage.getParams(message);
-        assertThat(HdmiCecConstants.PLAYBACK_DEVICE_TYPE).isEqualTo(receivedParams & 0xFF);
-    }
-
-    /**
-     * Test 11.2.6-6
-     * Tests that the device sends a <CEC_VERSION> in response to a <GET_CEC_VERSION>
-     */
-    @Test
-    public void cect_11_2_6_6_GiveCecVersion() throws Exception {
-        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GET_CEC_VERSION);
-        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
-                                                            CecOperand.CEC_VERSION);
-        assertThat(CecMessage.getParams(message)).isEqualTo(CEC_VERSION_NUMBER);
+    public HdmiCecSystemInformationTest() {
+        super(LogicalAddress.PLAYBACK_1);
     }
 
     /**
