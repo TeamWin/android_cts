@@ -749,7 +749,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testOverlayState() throws Exception {
-        if (DeviceUtils.hasFeature(getDevice(), FEATURE_WATCH)) return;
+        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
         final int atomTag = Atom.OVERLAY_STATE_CHANGED_FIELD_NUMBER;
 
         Set<Integer> entered = new HashSet<>(
@@ -778,28 +778,35 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testPictureInPictureState() throws Exception {
         String supported = getDevice().executeShellCommand("am supports-multiwindow");
-        if (!hasFeature(FEATURE_WATCH, false) ||
-                !hasFeature(FEATURE_PICTURE_IN_PICTURE, true) ||
+        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH) ||
+                !DeviceUtils.hasFeature(getDevice(), FEATURE_PICTURE_IN_PICTURE) ||
                 !supported.contains("true")) {
             LogUtil.CLog.d("Skipping picture in picture atom test.");
             return;
         }
 
-        StatsdConfig.Builder conf = createConfigBuilder();
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        FieldValueMatcher.Builder uidFvm = ConfigUtils.createUidFvm(/*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+
         // PictureInPictureStateChanged atom is used prior to rvc-qpr
-        addAtomEvent(conf, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
-                /*useAttribution=*/false);
+        ConfigUtils.addEventMetric(config, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
+                Collections.singletonList(uidFvm));
         // Picture-in-picture logs' been migrated to UiEvent since rvc-qpr
-        FieldValueMatcher.Builder pkgMatcher = createFvm(UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
-                .setEqString(DEVICE_SIDE_TEST_PACKAGE);
-        addAtomEvent(conf, Atom.UI_EVENT_REPORTED_FIELD_NUMBER, Arrays.asList(pkgMatcher));
-        uploadConfig(conf);
+        FieldValueMatcher.Builder pkgMatcher = ConfigUtils.createFvm(
+                UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
+                .setEqString(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetric(config, Atom.UI_EVENT_REPORTED_FIELD_NUMBER,
+                Arrays.asList(pkgMatcher));
+        ConfigUtils.uploadConfig(getDevice(), config);
 
         LogUtil.CLog.d("Playing video in Picture-in-Picture mode");
-        runActivity("VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Filter out the PictureInPictureStateChanged and UiEventReported atom
         List<EventMetricData> pictureInPictureStateChangedData = data.stream()
