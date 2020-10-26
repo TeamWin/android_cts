@@ -340,7 +340,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     }
 
     /**
-     * Fetches and sanity-checks the events.
+     * Fetches and checks the events.
      */
     private List<SecurityEvent> getEvents() throws Exception {
         List<SecurityEvent> events = null;

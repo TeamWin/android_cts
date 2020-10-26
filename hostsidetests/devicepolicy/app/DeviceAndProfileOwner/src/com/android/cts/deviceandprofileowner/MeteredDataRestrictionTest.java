@@ -172,7 +172,6 @@ public class MeteredDataRestrictionTest extends BaseDeviceAdminTest {
         if (!oldMeteredState) {
             waitForReconnection(oldNetId);
         }
-        // Sanity check.
         assertWifiMeteredStatus(ssid, true);
         assertActiveNetworkMetered(true);
     }

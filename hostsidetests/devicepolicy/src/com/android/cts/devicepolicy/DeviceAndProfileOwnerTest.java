@@ -497,7 +497,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             installAppAsUser(VPN_APP_APK, mUserId);
             waitForBroadcastIdle();
-            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSetWithWhitelist");
+            executeDeviceTestMethod(".AlwaysOnVpnMultiStageTest", "testAlwaysOnSetWithAllowlist");
             rebootAndWaitUntilReady();
             // Make sure profile user initialization is complete before proceeding.
             waitForBroadcastIdle();
@@ -1271,13 +1271,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testLockTask_exitIfNoLongerWhitelisted() throws Exception {
+    public void testLockTask_exitIfNoLongerAllowed() throws Exception {
         if (!mHasFeature) {
             return;
         }
         try {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
-                    "testLockTaskIsExitedIfNotWhitelisted");
+                    "testLockTaskIsExitedIfNotAllowed");
         } finally {
             executeDeviceTestMethod(".LockTaskHostDrivenTest", "testCleanupLockTask_noAsserts");
         }

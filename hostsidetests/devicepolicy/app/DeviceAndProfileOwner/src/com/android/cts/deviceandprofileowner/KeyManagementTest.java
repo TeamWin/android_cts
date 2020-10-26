@@ -168,7 +168,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     private List<Certificate> loadCertificateChain(String assetName) throws Exception {
         final Collection<Certificate> certs = loadCertificatesFromAsset(assetName);
         final ArrayList<Certificate> certChain = new ArrayList(certs);
-        // Some sanity check on the cert chain
+        // Check the cert chain
         assertThat(certs.size()).isGreaterThan(1);
         for (int i = 1; i < certChain.size(); i++) {
             certChain.get(i - 1).verify(certChain.get(i).getPublicKey());

@@ -109,7 +109,7 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
     }
 
     @Test
-    public void testCanRequestInteractAcrossProfiles_packageNotWhitelisted_returnsTrue()
+    public void testCanRequestInteractAcrossProfiles_packageNotAllowed_returnsTrue()
             throws Exception {
         installAppAsUser(TEST_WITH_REQUESTED_PERMISSION_APK, mPrimaryUserId);
         addManagedProfileAndInstallRequiredPackages(TEST_WITH_REQUESTED_PERMISSION_APK);

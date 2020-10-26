@@ -244,7 +244,7 @@ public class CommandReceiverActivity extends Activity {
                     int flags = intent.getIntExtra(EXTRA_VALUE,
                             DevicePolicyManager.LOCK_TASK_FEATURE_NONE);
                     mDpm.setLockTaskFeatures(mAdmin, flags);
-                    // If feature HOME is used, we need to whitelist the current launcher
+                    // If feature HOME is used, we need to allow the current launcher
                     if ((flags & LOCK_TASK_FEATURE_HOME) != 0) {
                         mDpm.setLockTaskPackages(mAdmin,
                                 new String[] {getPackageName(), getCurrentLauncherPackage()});
