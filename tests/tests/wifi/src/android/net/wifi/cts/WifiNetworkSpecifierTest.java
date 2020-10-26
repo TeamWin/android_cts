@@ -173,8 +173,8 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
 
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
-        // Pick any one of the saved networks on the device (assumes that it is in range)
-        mTestNetwork = savedNetworks.get(0);
+        // Pick the last saved network on the device (assumes that it is in range)
+        mTestNetwork = savedNetworks.get(savedNetworks.size()  - 1);
 
         // Wait for Wifi to be disconnected.
         PollingCheck.check(
