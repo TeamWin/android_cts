@@ -1018,10 +1018,6 @@ public class WindowManagerState {
         return null;
     }
 
-    public Rect getStableBounds() {
-        return getDisplay(DEFAULT_DISPLAY).mStableBounds;
-    }
-
     WindowManagerState.WindowState getInputMethodWindowState() {
         return getWindowStateForAppToken(mInputMethodWindowAppToken);
     }
@@ -1055,7 +1051,6 @@ public class WindowManagerState {
         private Rect mAppRect = new Rect();
         private int mDpi;
         private int mFlags;
-        private Rect mStableBounds;
         private String mName;
         private int mSurfaceSize;
         private String mFocusedApp;
@@ -1086,9 +1081,6 @@ public class WindowManagerState {
                 mFlags = infoProto.flags;
             }
             final DisplayFramesProto displayFramesProto = proto.displayFrames;
-            if (displayFramesProto != null) {
-                mStableBounds = extract(displayFramesProto.stableBounds);
-            }
             mSurfaceSize = proto.surfaceSize;
             mFocusedApp = proto.focusedApp;
 
@@ -1177,10 +1169,6 @@ public class WindowManagerState {
 
         Rect getDisplayRect() {
             return mDisplayRect;
-        }
-
-        Rect getStableBounds() {
-            return mStableBounds;
         }
 
         int getFlags() {
@@ -1618,10 +1606,8 @@ public class WindowManagerState {
         private boolean mShown;
         private Rect mContainingFrame;
         private Rect mParentFrame;
-        private Rect mContentFrame;
         private Rect mFrame;
         private Rect mSurfaceInsets = new Rect();
-        private Rect mContentInsets = new Rect();
         private Rect mGivenContentInsets = new Rect();
         private Rect mCrop = new Rect();
 
@@ -1647,8 +1633,6 @@ public class WindowManagerState {
                 mFrame = extract(windowFramesProto.frame);
                 mContainingFrame = extract(windowFramesProto.containingFrame);
                 mParentFrame = extract(windowFramesProto.parentFrame);
-                mContentFrame = extract(windowFramesProto.contentFrame);
-                mContentInsets = extract(windowFramesProto.contentInsets);
             }
             mSurfaceInsets = extract(proto.surfaceInsets);
             if (mName.startsWith(STARTING_WINDOW_PREFIX)) {
@@ -1698,16 +1682,8 @@ public class WindowManagerState {
             return mSurfaceInsets;
         }
 
-        Rect getContentInsets() {
-            return mContentInsets;
-        }
-
         Rect getGivenContentInsets() {
             return mGivenContentInsets;
-        }
-
-        public Rect getContentFrame() {
-            return mContentFrame;
         }
 
         Rect getParentFrame() {
