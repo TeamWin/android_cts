@@ -3925,8 +3925,8 @@ You should be prompted to select credentials; choose the ones you just installed
         Email: someone@example.com
     </string>
     <string name="policy_transparency_update_button_label">Update</string>
-    <string name="dummy_input_method_label">Dummy input method</string>
-    <string name="dummy_accessibility_service_label">Dummy accessibility service</string>
+    <string name="test_input_method_label">Test input method</string>
+    <string name="test_accessibility_service_label">Test accessibility service</string>
     <string name="policy_transparency_test_instructions">
         1. <xliff:g id="set_step" example="Set policy by turning the switch on">%1$s</xliff:g>\n
         2. Open Settings app by clicking the "Open settings" button below. Note that this will open the personal Settings app. If this device has the work settings in a different app or screen, then navigate there, ignoring the button if necessary.\n
@@ -4051,21 +4051,21 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="password_quality_complex">Complex</string>
     <string name="set_permitted_accessibility_services">Set permitted accessibility services</string>
     <string name="permitted_accessibility_services_set_step">
-        Check that \'Dummy Accessibility service\' is not enabled in Settings and disallow \'Dummy Accessibility service\' from permitted accessibility services by turning on
+        Check that \'Test Accessibility service\' is not enabled in Settings and disallow \'Test Accessibility service\' from permitted accessibility services by turning on
         the switch below.
     </string>
     <string name="set_permitted_accessibility_services_action">
-        Enabling \'Dummy Accessibility service\' in the list of accessibility services
+        Enabling \'Test Accessibility service\' in the list of accessibility services
     </string>
     <string name="set_permitted_accessibility_services_widget_label">
         Allow only system accessibility services:
     </string>
     <string name="set_permitted_input_methods">Set permitted input methods</string>
     <string name="permitted_input_methods_set_step">
-        Check that \'Dummy Input method\', along with all other non-system apps, are not enabled in Settings for the managed profile (they may be enabled for the primary profile). Then disallow \'Dummy Input method\' from permitted input methods by turning on the switch below.
+        Check that \'Test Input method\', along with all other non-system apps, are not enabled in Settings for the managed profile (they may be enabled for the primary profile). Then disallow \'Test Input method\' from permitted input methods by turning on the switch below.
     </string>
     <string name="set_permitted_input_methods_action">
-        Enabling \'Dummy Input method\' in the list of input methods (make sure you are enabling it for the managed profile, not primary profile)
+        Enabling \'Test Input method\' in the list of input methods (make sure you are enabling it for the managed profile, not primary profile)
     </string>
     <string name="set_permitted_input_methods_widget_label">
         Allow only system input methods:

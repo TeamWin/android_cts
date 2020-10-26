@@ -565,13 +565,13 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @Test
     @FlakyTest
     @Ignore
-    public void testSanityCheck() throws Exception {
+    public void testBasicCheck() throws Exception {
         if (!mHasFeature) {
             return;
         }
         // Install SimpleApp in work profile only and check activity in it can be launched.
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BasicTest", mProfileUserId);
     }
 
     @Test

@@ -91,7 +91,7 @@
         <activity
             android:name="com.android.cts.deviceandprofileowner.LockTaskUtilityActivity"/>
         <activity
-            android:name="com.android.cts.deviceandprofileowner.LockTaskUtilityActivityIfWhitelisted"
+            android:name="com.android.cts.deviceandprofileowner.LockTaskUtilityActivityIfAllowed"
             android:launchMode="singleInstance"
             android:lockTaskMode="if_whitelisted">
             <intent-filter>

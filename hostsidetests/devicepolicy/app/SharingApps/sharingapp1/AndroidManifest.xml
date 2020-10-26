@@ -16,7 +16,7 @@
   -->
 
 <!--
-  ~ A dummy app used for when you need to install test packages that have a functioning package name
+  ~ A test app used for when you need to install test packages that have a functioning package name
   ~ and UID. For example, you could use it to set permissions or app-ops.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"

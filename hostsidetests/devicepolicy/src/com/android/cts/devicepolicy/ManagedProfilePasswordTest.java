@@ -156,9 +156,9 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
             // Turn on work profile, by unlocking the profile with the device password.
             verifyUserCredential(TEST_PASSWORD, mPrimaryUserId);
 
-            // Verify profile user is running unlocked by running a sanity test on the work profile.
+            // Verify profile user is running unlocked by running a basic test on the work profile.
             installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BasicTest", mProfileUserId);
         } finally {
             // Clean up
             changeUserCredential(/* newCredential= */ null, TEST_PASSWORD, mPrimaryUserId);
@@ -181,7 +181,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
             verifyUserCredential(TEST_PASSWORD, mPrimaryUserId);
             waitForUserUnlock(mProfileUserId);
             installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BasicTest", mProfileUserId);
         } finally {
             changeUserCredential(/* newCredential= */ null, TEST_PASSWORD, mPrimaryUserId);
             // Work-around for http://b/113866275 - password prompt being erroneously shown at the
@@ -210,7 +210,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
             verifyUserCredential(profilePassword, managedProfileUserId);
             verifyUserCredential(primaryPassword, mPrimaryUserId);
             installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BasicTest", mProfileUserId);
         } finally {
             changeUserCredential(
                     /* newCredential= */ null, profilePassword, managedProfileUserId);
