@@ -77,6 +77,7 @@ def main():
     cmd = ("adb -s %s wait-for-device shell am start -d 'file://%s'"
            " -a android.intent.action.VIEW" % (screen_id, dst_scene_file))
     subprocess.Popen(cmd.split())
+    time.sleep(LOAD_SCENE_DELAY)
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
