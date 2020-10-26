@@ -57,18 +57,18 @@ public class CrossProfileTest extends BaseManagedProfileTest {
             Collections.singleton("test.package.name");
 
     private static final Set<String> ALL_CROSS_PROFILE_PACKAGES = Sets.newHashSet(
-            "com.android.cts.dummyapps.dummyapp1",
-            "com.android.cts.dummyapps.dummyapp2",
-            "com.android.cts.dummyapps.dummyapp3",
-            "com.android.cts.dummyapps.dummyapp4");
+            "com.android.cts.testapps.testapp1",
+            "com.android.cts.testapps.testapp2",
+            "com.android.cts.testapps.testapp3",
+            "com.android.cts.testapps.testapp4");
     private static final Set<String> SUBLIST_CROSS_PROFILE_PACKAGES =
             Sets.newHashSet(
-                    "com.android.cts.dummyapps.dummyapp1",
-                    "com.android.cts.dummyapps.dummyapp2");
+                    "com.android.cts.testapps.testapp1",
+                    "com.android.cts.testapps.testapp2");
     private static final Set<String> DIFF_CROSS_PROFILE_PACKAGES =
             Sets.newHashSet(
-                    "com.android.cts.dummyapps.dummyapp3",
-                    "com.android.cts.dummyapps.dummyapp4");
+                    "com.android.cts.testapps.testapp3",
+                    "com.android.cts.testapps.testapp4");
 
     private static final UiAutomation sUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();

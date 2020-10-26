@@ -51,18 +51,18 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     private static final String TEST_APP_APK = "CtsSimpleApp.apk";
     private static final String TEST_APP_PKG = "com.android.cts.launcherapps.simpleapp";
-    private static final String DUMMY_IME_APK = "DummyIme.apk";
-    private static final String DUMMY_IME_PKG = "com.android.cts.dummyime";
-    private static final String DUMMY_IME_COMPONENT = DUMMY_IME_PKG + "/.DummyIme";
+    private static final String TEST_IME_APK = "TestIme.apk";
+    private static final String TEST_IME_PKG = "com.android.cts.testime";
+    private static final String TEST_IME_COMPONENT = TEST_IME_PKG + "/.TestIme";
     private static final String SIMPLE_SMS_APP_PKG = "android.telephony.cts.sms.simplesmsapp";
     private static final String SIMPLE_SMS_APP_APK = "SimpleSmsApp.apk";
-    private static final String DUMMY_LAUNCHER_APK = "DummyLauncher.apk";
-    private static final String DUMMY_LAUNCHER_COMPONENT =
-            "com.android.cts.dummylauncher/android.app.Activity";
+    private static final String TEST_LAUNCHER_APK = "TestLauncher.apk";
+    private static final String TEST_LAUNCHER_COMPONENT =
+            "com.android.cts.testlauncher/android.app.Activity";
     private static final String QUIET_MODE_TOGGLE_ACTIVITY =
-            "com.android.cts.dummylauncher/.QuietModeToggleActivity";
+            "com.android.cts.testlauncher/.QuietModeToggleActivity";
     private static final String EXTRA_QUIET_MODE_STATE =
-            "com.android.cts.dummyactivity.QUIET_MODE_STATE";
+            "com.android.cts.testactivity.QUIET_MODE_STATE";
     public static final String SUSPENSION_CHECKER_CLASS =
             "com.android.cts.suspensionchecker.ActivityLaunchTest";
 
@@ -460,12 +460,12 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         setPersonalAppsSuspended(true);
 
-        installAppAsUser(DUMMY_IME_APK, mPrimaryUserId);
+        installAppAsUser(TEST_IME_APK, mPrimaryUserId);
 
         // Wait until package install broadcast is processed
         waitForBroadcastIdle();
 
-        assertCanStartPersonalApp(DUMMY_IME_PKG, false);
+        assertCanStartPersonalApp(TEST_IME_PKG, false);
         setPersonalAppsSuspended(false);
     }
 
@@ -509,11 +509,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        installAppAsUser(DUMMY_IME_APK, mPrimaryUserId);
-        setupIme(DUMMY_IME_COMPONENT, mPrimaryUserId);
+        installAppAsUser(TEST_IME_APK, mPrimaryUserId);
+        setupIme(TEST_IME_COMPONENT, mPrimaryUserId);
         setPersonalAppsSuspended(true);
         // Active IME should not be suspended.
-        assertCanStartPersonalApp(DUMMY_IME_PKG, true);
+        assertCanStartPersonalApp(TEST_IME_PKG, true);
         setPersonalAppsSuspended(false);
     }
 
@@ -664,8 +664,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         final String defaultLauncher = getDefaultLauncher();
         try {
-            installAppAsUser(DUMMY_LAUNCHER_APK, true, true, mPrimaryUserId);
-            setAndStartLauncher(DUMMY_LAUNCHER_COMPONENT);
+            installAppAsUser(TEST_LAUNCHER_APK, true, true, mPrimaryUserId);
+            setAndStartLauncher(TEST_LAUNCHER_COMPONENT);
             toggleQuietMode(true);
             // Verify that at some point personal app becomes impossible to launch.
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, SUSPENSION_CHECKER_CLASS,
