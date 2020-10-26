@@ -345,7 +345,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
             // Verify event ids are consistent across a consecutive batch.
             for (int batchNumber = 0; batchNumber < 3; batchNumber++) {
-                generateDummySecurityLogs();
+                generateTestSecurityLogs();
                 getDevice().executeShellCommand("dpm force-security-logs");
                 executeDeviceTestMethod(".SecurityLoggingTest", "testVerifyLogIds",
                         Collections.singletonMap(ARG_SECURITY_LOGGING_BATCH_NUMBER,
@@ -419,7 +419,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 + "com.android.cts.deviceandprofileowner/.NotificationListener");
     }
 
-    private void generateDummySecurityLogs() throws Exception {
+    private void generateTestSecurityLogs() throws Exception {
         // Trigger security events of type TAG_ADB_SHELL_CMD.
         for (int i = 0; i < SECURITY_EVENTS_BATCH_SIZE; i++) {
             getDevice().executeShellCommand("echo just_testing_" + i);
