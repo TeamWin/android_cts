@@ -581,6 +581,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        int defaultDisplayWindowingMode = getDefaultDisplayWindowingMode(PIP_ACTIVITY);
 
         // Launch second PIP activity
         launchActivity(PIP_ACTIVITY2, EXTRA_ENTER_PIP, "true");
@@ -590,7 +591,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertTrue(mWmState.containsActivityInWindowingMode(
                 PIP_ACTIVITY2, WINDOWING_MODE_PINNED));
         assertTrue(mWmState.containsActivityInWindowingMode(
-                PIP_ACTIVITY, windowingMode));
+                PIP_ACTIVITY, defaultDisplayWindowingMode));
     }
 
     @Test
@@ -1012,7 +1013,15 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
         mWmState.waitForLastOrientation(ORIENTATION_LANDSCAPE);
-        assertEquals(ORIENTATION_LANDSCAPE, mWmState.getLastOrientation());
+
+        mWmState.computeState(PIP_ACTIVITY);
+        final ActivityTask activityTask =
+                mWmState.getTaskByActivity(PIP_ACTIVITY);
+        if (activityTask.getWindowingMode() == WINDOWING_MODE_FULLSCREEN) {
+            assertEquals(ORIENTATION_LANDSCAPE, mWmState.getLastOrientation());
+        } else {
+            assertEquals(ORIENTATION_LANDSCAPE, activityTask.mOverrideConfiguration.orientation);
+        }
     }
 
     @Test
@@ -1255,6 +1264,12 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         final Rect displayRect = display.getDisplayRect();
         final Rect pinnedStackBounds = getPinnedStackBounds();
         assertTrue(displayRect.contains(pinnedStackBounds));
+    }
+
+    private int getDefaultDisplayWindowingMode(ComponentName activityName) {
+        ActivityTask activityTask = mWmState.getTaskByActivity(activityName);
+        return mWmState.getDisplay(activityTask.mDisplayId)
+                .getWindowingMode();
     }
 
     /**
