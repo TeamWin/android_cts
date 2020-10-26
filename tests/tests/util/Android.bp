@@ -19,6 +19,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
+        "mts",
     ],
     libs: ["android.test.runner"],
     static_libs: [
