@@ -147,6 +147,7 @@ import android.view.Display;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewConfiguration;
 
 import androidx.annotation.NonNull;
@@ -300,6 +301,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
+    protected TouchHelper mTouchHelper = new TouchHelper(mInstrumentation, mWmState);
     // Initialized in setUp to execute with proper permission, such as MANAGE_ACTIVITY_TASKS
     TestTaskOrganizer mTaskOrganizer;
     // If the specific test should run using the task organizer or older API.
@@ -614,93 +616,39 @@ public abstract class ActivityManagerTestBase {
      * @param displayId the display ID to gain focused by inject swipe action
      */
     protected void touchAndCancelOnDisplayCenterSync(int displayId) {
-        WindowManagerState.DisplayContent dc = mWmState.getDisplay(displayId);
-        if (dc == null) {
-            // never get wm state before?
-            mWmState.computeState();
-            dc = mWmState.getDisplay(displayId);
-        }
-        if (dc == null) {
-            log("Cannot tap on display: " + displayId);
-            return;
-        }
-        final Rect bounds = dc.getDisplayRect();
-        final int x = bounds.left + bounds.width() / 2;
-        final int y = bounds.top + bounds.height() / 2;
-        final long downTime = SystemClock.uptimeMillis();
-        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId, true /* sync */);
-
-        final long eventTime = SystemClock.uptimeMillis();
-        final int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
-        final int tapX = x + Math.round(touchSlop / 2.0f);
-        final int tapY = y + Math.round(touchSlop / 2.0f);
-        injectMotion(downTime, eventTime, MotionEvent.ACTION_CANCEL, tapX, tapY, displayId,
-                true /* sync */);
+        mTouchHelper.touchAndCancelOnDisplayCenterSync(displayId);
     }
 
     protected void tapOnDisplaySync(int x, int y, int displayId) {
-        tapOnDisplay(x, y, displayId, true /* sync*/);
+        mTouchHelper.tapOnDisplaySync(x, y, displayId);
     }
 
     private void tapOnDisplay(int x, int y, int displayId, boolean sync) {
-        final long downTime = SystemClock.uptimeMillis();
-        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId, sync);
-
-        final long upTime = SystemClock.uptimeMillis();
-        injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId, sync);
-
-        mWmState.waitForWithAmState(state -> state.getFocusedDisplayId() == displayId,
-                "top focused displayId: " + displayId);
-        // This is needed after a tap in multi-display to ensure that the display focus has really
-        // changed, if needed. The call to syncInputTransaction will wait until focus change has
-        // propagated from WMS to native input before returning.
-        mInstrumentation.getUiAutomation().syncInputTransactions();
+        mTouchHelper.tapOnDisplay(x, y, displayId, sync);
     }
 
     protected void tapOnCenter(Rect bounds, int displayId) {
-        final int tapX = bounds.left + bounds.width() / 2;
-        final int tapY = bounds.top + bounds.height() / 2;
-        tapOnDisplaySync(tapX, tapY, displayId);
+        mTouchHelper.tapOnCenter(bounds, displayId);
+    }
+
+    protected void tapOnViewCenter(View view) {
+        mTouchHelper.tapOnViewCenter(view);
     }
 
     protected void tapOnStackCenter(WindowManagerState.ActivityTask stack) {
-        tapOnCenter(stack.getBounds(), stack.mDisplayId);
+        mTouchHelper.tapOnStackCenter(stack);
     }
 
     protected void tapOnDisplayCenter(int displayId) {
-        final Rect bounds = mWmState.getDisplay(displayId).getDisplayRect();
-        tapOnDisplaySync(bounds.centerX(), bounds.centerY(), displayId);
+        mTouchHelper.tapOnDisplayCenter(displayId);
     }
 
     protected void tapOnDisplayCenterAsync(int displayId) {
-        final Rect bounds = mWmState.getDisplay(displayId).getDisplayRect();
-        tapOnDisplay(bounds.centerX(), bounds.centerY(), displayId, false /* sync */);
-    }
-
-    private static void injectMotion(long downTime, long eventTime, int action,
-            int x, int y, int displayId, boolean sync) {
-        final MotionEvent event = MotionEvent.obtain(downTime, eventTime, action,
-                x, y, 0 /* metaState */);
-        event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-        event.setDisplayId(displayId);
-        getInstrumentation().getUiAutomation().injectInputEvent(event, sync);
+        mTouchHelper.tapOnDisplayCenterAsync(displayId);
     }
 
     public static void injectKey(int keyCode, boolean longPress, boolean sync) {
-        final long downTime = SystemClock.uptimeMillis();
-        int repeatCount = 0;
-        KeyEvent downEvent =
-                new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN, keyCode, repeatCount);
-        getInstrumentation().getUiAutomation().injectInputEvent(downEvent, sync);
-        if (longPress) {
-            repeatCount += 1;
-            KeyEvent repeatEvent = new KeyEvent(downTime, SystemClock.uptimeMillis(),
-                    KeyEvent.ACTION_DOWN, keyCode, repeatCount);
-            getInstrumentation().getUiAutomation().injectInputEvent(repeatEvent, sync);
-        }
-        KeyEvent upEvent = new KeyEvent(downTime, SystemClock.uptimeMillis(),
-                KeyEvent.ACTION_UP, keyCode, 0 /* repeatCount */);
-        getInstrumentation().getUiAutomation().injectInputEvent(upEvent, sync);
+        TouchHelper.injectKey(keyCode, longPress, sync);
     }
 
     protected void removeRootTasksWithActivityTypes(int... activityTypes) {
