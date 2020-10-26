@@ -19,6 +19,8 @@ package android.cts.statsdatom.lib;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.service.battery.BatteryServiceDumpProto;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
@@ -27,6 +29,7 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.result.TestDescription;
@@ -59,6 +62,8 @@ public final class DeviceUtils {
 
     // feature names
     public static final String FEATURE_WATCH = "android.hardware.type.watch";
+
+    public static final String DUMP_BATTERY_CMD = "dumpsys battery";
 
     /**
      * Runs device side tests.
@@ -316,8 +321,24 @@ public final class DeviceUtils {
         device.executeShellCommand("cmd battery unplug");
     }
 
+    public static boolean hasBattery(ITestDevice device) throws Exception {
+        try {
+            BatteryServiceDumpProto batteryProto = getShellCommandOutput(device, BatteryServiceDumpProto.parser(),
+                    String.join(" ", DUMP_BATTERY_CMD, "--proto"));
+            LogUtil.CLog.d("Got battery service dump:\n " + batteryProto.toString());
+            return batteryProto.getIsPresent();
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            LogUtil.CLog.e("Failed to dump batteryservice proto");
+            throw (e);
+        }
+    }
+
     public static void resetBatteryStatus(ITestDevice device) throws Exception {
         device.executeShellCommand("cmd battery reset");
+    }
+
+    public static String getProperty(ITestDevice device, String prop) throws Exception {
+        return device.executeShellCommand("getprop " + prop).replace("\n", "");
     }
 
     /**
