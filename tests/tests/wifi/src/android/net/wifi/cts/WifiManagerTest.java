@@ -78,6 +78,7 @@ import android.util.Log;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -989,18 +990,28 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (!mWifiManager.isPortableHotspotSupported()) {
             return;
         }
-        SoftApConfiguration customConfig = new SoftApConfiguration.Builder()
-                .setBssid(TEST_MAC)
-                .setSsid(TEST_SSID_UNQUOTED)
-                .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
-                .build();
+
         TestExecutor executor = new TestExecutor();
         TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
+        TestSoftApCallback capabilityCallback = new TestSoftApCallback(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        boolean wifiEnabled = mWifiManager.isWifiEnabled();
         try {
             uiAutomation.adoptShellPermissionIdentity();
+            verifyRegisterSoftApCallback(executor, capabilityCallback);
+            SoftApConfiguration.Builder customConfigBuilder = new SoftApConfiguration.Builder()
+                    .setSsid(TEST_SSID_UNQUOTED)
+                    .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK);
 
-            boolean wifiEnabled = mWifiManager.isWifiEnabled();
+            boolean isSupportCustomizedMac = capabilityCallback.getCurrentSoftApCapability()
+                        .areFeaturesSupported(
+                        SoftApCapability.SOFTAP_FEATURE_MAC_ADDRESS_CUSTOMIZATION)
+                    && PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S);
+            if (isSupportCustomizedMac) {
+                customConfigBuilder.setBssid(TEST_MAC);
+            }
+            SoftApConfiguration customConfig = customConfigBuilder.build();
+
             mWifiManager.startLocalOnlyHotspot(customConfig, executor, callback);
             // now wait for callback
             Thread.sleep(TEST_WAIT_DURATION_MS);
@@ -1008,25 +1019,20 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // Verify callback is run on the supplied executor
             assertFalse(callback.onStartedCalled);
             executor.runAll();
-            if (callback.onFailedCalled) {
-                // TODO: b/160752000, customize bssid might not support.
-                // Allow the specific error code.
-                assertEquals(callback.failureReason,
-                        WifiManager.SAP_START_FAILURE_UNSUPPORTED_CONFIGURATION);
-            } else {
-                assertTrue(callback.onStartedCalled);
+            assertTrue(callback.onStartedCalled);
 
-                assertNotNull(callback.reservation);
-                SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
-                assertNotNull(softApConfig);
+            assertNotNull(callback.reservation);
+            SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
+            assertNotNull(softApConfig);
+            if (isSupportCustomizedMac) {
                 assertEquals(TEST_MAC, softApConfig.getBssid());
-                assertEquals(TEST_SSID_UNQUOTED, softApConfig.getSsid());
-                assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
-
-                // clean up
-                stopLocalOnlyHotspot(callback, wifiEnabled);
             }
+            assertEquals(TEST_SSID_UNQUOTED, softApConfig.getSsid());
+            assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
         } finally {
+            // clean up
+            stopLocalOnlyHotspot(callback, wifiEnabled);
+            mWifiManager.unregisterSoftApCallback(capabilityCallback);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -1047,10 +1053,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         TestExecutor executor = new TestExecutor();
         TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        boolean wifiEnabled = mWifiManager.isWifiEnabled();
         try {
             uiAutomation.adoptShellPermissionIdentity();
 
-            boolean wifiEnabled = mWifiManager.isWifiEnabled();
             mWifiManager.startLocalOnlyHotspot(customConfig, executor, callback);
             // now wait for callback
             Thread.sleep(TEST_WAIT_DURATION_MS);
@@ -1065,10 +1071,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertNotNull(softApConfig);
             assertEquals(TEST_SSID_UNQUOTED, softApConfig.getSsid());
             assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
-
+        } finally {
             // clean up
             stopLocalOnlyHotspot(callback, wifiEnabled);
-        } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -1570,6 +1575,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 testSoftApConfig.getAllowedClientList());
         assertEquals(currentConfig.getBlockedClientList(),
                 testSoftApConfig.getBlockedClientList());
+        assertEquals(currentConfig.getMacRandomizationSetting(),
+                testSoftApConfig.getMacRandomizationSetting());
     }
 
     private void turnOffWifiAndTetheredHotspotIfEnabled() throws Exception {
@@ -1615,7 +1622,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             SoftApConfiguration.Builder softApConfigBuilder = new SoftApConfiguration.Builder()
                     .setSsid(TEST_SSID_UNQUOTED)
-                    .setBssid(TEST_MAC)
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                     .setAutoShutdownEnabled(true)
                     .setShutdownTimeoutMillis(100000)
@@ -1624,6 +1630,20 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             // Test SoftApConfiguration set and get
             verifySetGetSoftApConfig(softApConfigBuilder.build());
+
+            boolean isSupportCustomizedMac = callback.getCurrentSoftApCapability()
+                        .areFeaturesSupported(
+                        SoftApCapability.SOFTAP_FEATURE_MAC_ADDRESS_CUSTOMIZATION)
+                    && PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S);
+
+            //Test MAC_ADDRESS_CUSTOMIZATION supported config
+            if (isSupportCustomizedMac) {
+                softApConfigBuilder.setBssid(TEST_MAC)
+                        .setMacRandomizationSetting(SoftApConfiguration.RANDOMIZATION_NONE);
+
+                // Test SoftApConfiguration set and get
+                verifySetGetSoftApConfig(softApConfigBuilder.build());
+            }
 
             // Test CLIENT_FORCE_DISCONNECT supported config.
             if (callback.getCurrentSoftApCapability()
@@ -1676,11 +1696,23 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             turnOffWifiAndTetheredHotspotIfEnabled();
             verifyRegisterSoftApCallback(executor, callback);
 
-            SoftApConfiguration testSoftApConfig = new SoftApConfiguration.Builder()
+
+            int[] supportedChannelList = callback.getCurrentSoftApCapability()
+                    .getSupportedChannelList(SoftApConfiguration.BAND_2GHZ);
+            assertNotEquals(supportedChannelList.length, 0);
+            boolean isSupportCustomizedMac = callback.getCurrentSoftApCapability()
+                    .areFeaturesSupported(
+                    SoftApCapability.SOFTAP_FEATURE_MAC_ADDRESS_CUSTOMIZATION)
+                    && PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S);
+
+            SoftApConfiguration.Builder testSoftApConfigBuilder = new SoftApConfiguration.Builder()
                     .setSsid(TEST_SSID_UNQUOTED)
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
-                    .setChannel(11, SoftApConfiguration.BAND_2GHZ) // Channel 11 = Freq 2462
-                    .build();
+                    .setChannel(11, SoftApConfiguration.BAND_2GHZ);
+
+            if (isSupportCustomizedMac) testSoftApConfigBuilder.setBssid(TEST_MAC);
+
+            SoftApConfiguration testSoftApConfig = testSoftApConfigBuilder.build();
 
             mWifiManager.setSoftApConfiguration(testSoftApConfig);
 
@@ -1701,7 +1733,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                                 && (callback.getOnSoftapInfoChangedCalledCount() > 1
                                 ? 2462 == callback.getCurrentSoftApInfo().getFrequency() : true);
                     });
-
+            // After Soft Ap enabled, check SoftAp info
+            if (isSupportCustomizedMac) {
+                assertEquals(callback.getCurrentSoftApInfo().getBssid(), TEST_MAC);
+            }
+            if (PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S)) {
+                assertNotEquals(callback.getCurrentSoftApInfo().getWifiStandard(),
+                        ScanResult.WIFI_STANDARD_UNKNOWN);
+            }
+        } finally {
             // stop tethering which used to verify stopSoftAp
             mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
 
@@ -1714,7 +1754,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                                 0 == callback.getCurrentSoftApInfo().getBandwidth() &&
                                 0 == callback.getCurrentSoftApInfo().getFrequency();
                     });
-        } finally {
+            assertEquals(callback.getCurrentSoftApInfo().getBssid(), null);
+            assertEquals(ScanResult.WIFI_STANDARD_UNKNOWN,
+                    callback.getCurrentSoftApInfo().getWifiStandard());
             mWifiManager.unregisterSoftApCallback(callback);
             uiAutomation.dropShellPermissionIdentity();
         }
