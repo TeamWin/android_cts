@@ -93,7 +93,7 @@ public class WaitForValidActivityState {
             case WINDOWING_MODE_SPLIT_SCREEN_SECONDARY: return "SPLIT_SCREEN_SECONDARY";
             case WINDOWING_MODE_FREEFORM: return "FREEFORM";
             default:
-                throw new IllegalArgumentException("Unknown WINDOWING_MODE_: " + windowingMode);
+                return "Unknown WINDOWING_MODE_: " + windowingMode;
         }
     }
 
