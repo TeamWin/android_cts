@@ -17,7 +17,6 @@
 package android.provider.cts;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeFalse;
 
@@ -29,9 +28,8 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.os.Process;
-
 import android.net.wifi.WifiManager;
+import android.os.Process;
 import android.util.Log;
 
 import androidx.slice.SliceConvert;
@@ -40,12 +38,12 @@ import androidx.slice.core.SliceAction;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Collections;
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class WifiSliceTest {
@@ -104,14 +102,21 @@ public class WifiSliceTest {
     final Intent requestDefaultAssistant =
             new Intent(ACTION_ASSIST).addCategory(CATEGORY_DEFAULT);
 
-    final ResolveInfo info = pm.resolveActivity(requestDefaultAssistant, 0);
+    final List<ResolveInfo> infos = pm.queryIntentActivities(requestDefaultAssistant, 0);
 
-    if (info != null) {
+    if (!infos.isEmpty()) {
       final int testPid = Process.myPid();
-      final int testUid = pm.getPackageUid(info.activityInfo.packageName,  0);
+      boolean permissionGranted = false;
+      for (ResolveInfo info : infos) {
+        final int testUid = pm.getPackageUid(info.activityInfo.packageName, 0);
 
-      assertThat(mSliceManager.checkSlicePermission(WIFI_SLICE_URI, testPid, testUid))
-              .isEqualTo(PERMISSION_GRANTED);
+        if (mSliceManager.checkSlicePermission(WIFI_SLICE_URI, testPid, testUid)
+                == PERMISSION_GRANTED) {
+          permissionGranted = true;
+          break;
+        }
+      }
+      assertThat(permissionGranted).isTrue();
     }
   }
 
@@ -129,7 +134,7 @@ public class WifiSliceTest {
 
     if (info != null) {
       final int testPid = Process.myPid();
-      final int testUid = pm.getPackageUid(info.activityInfo.packageName,  0);
+      final int testUid = pm.getPackageUid(info.activityInfo.packageName, 0);
 
       assertThat(mSliceManager.checkSlicePermission(WIFI_SLICE_URI, testPid, testUid))
               .isEqualTo(PERMISSION_GRANTED);
