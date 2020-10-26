@@ -857,7 +857,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         boolean isInitialManual = isScreenBrightnessModeManual();
         setScreenBrightnessMode(true);
         setScreenBrightness(200);
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         final int atomTag = Atom.SCREEN_BRIGHTNESS_CHANGED_FIELD_NUMBER;
 
@@ -869,23 +869,26 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(screenMin, screen100, screen200);
 
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testScreenBrightness");
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testScreenBrightness");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Restore initial screen brightness
         setScreenBrightness(initialBrightness);
         setScreenBrightnessMode(isInitialManual);
 
-        popUntilFind(data, screenMin, atom->atom.getScreenBrightnessChanged().getLevel());
-        popUntilFindFromEnd(data, screen200, atom->atom.getScreenBrightnessChanged().getLevel());
+        AtomTestUtils.popUntilFind(data, screenMin,
+                atom -> atom.getScreenBrightnessChanged().getLevel());
+        AtomTestUtils.popUntilFindFromEnd(data, screen200,
+                atom -> atom.getScreenBrightnessChanged().getLevel());
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
-            atom -> atom.getScreenBrightnessChanged().getLevel());
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+                atom -> atom.getScreenBrightnessChanged().getLevel());
     }
+
     public void testSyncState() throws Exception {
         final int atomTag = Atom.SYNC_STATE_CHANGED_FIELD_NUMBER;
         Set<Integer> syncOn = new HashSet<>(Arrays.asList(SyncStateChanged.State.ON_VALUE));
@@ -2234,4 +2237,24 @@ public class UidAtomTests extends DeviceAtomTestCase {
         getDevice().executeShellCommand("am set-standby-bucket "
                 + DeviceUtils.STATSD_ATOM_TEST_PKG + " active");
     }
+
+    private int getScreenBrightness() throws Exception {
+        return Integer.parseInt(
+                getDevice().executeShellCommand("settings get system screen_brightness").trim());
+    }
+
+    private boolean isScreenBrightnessModeManual() throws Exception {
+        String mode = getDevice().executeShellCommand("settings get system screen_brightness_mode");
+        return Integer.parseInt(mode.trim()) == 0;
+    }
+
+    private void setScreenBrightnessMode(boolean manual) throws Exception {
+        getDevice().executeShellCommand(
+                "settings put system screen_brightness_mode " + (manual ? 0 : 1));
+    }
+
+    private void setScreenBrightness(int brightness) throws Exception {
+        getDevice().executeShellCommand("settings put system screen_brightness " + brightness);
+    }
+
 }

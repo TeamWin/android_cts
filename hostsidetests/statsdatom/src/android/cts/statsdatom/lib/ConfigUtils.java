@@ -312,6 +312,13 @@ public final class ConfigUtils {
         uploadConfig(device, config);
     }
 
+    public static void uploadConfigForPushedAtom(ITestDevice device, String pkgName, int atomId)
+            throws Exception {
+        StatsdConfig.Builder config = createConfigBuilder(pkgName);
+        addEventMetric(config, atomId);
+        uploadConfig(device, config);
+    }
+
     public static void uploadConfigForPulledAtom(ITestDevice device, String pkgName, int atomId)
             throws Exception {
         StatsdConfig.Builder config = createConfigBuilder(pkgName);
