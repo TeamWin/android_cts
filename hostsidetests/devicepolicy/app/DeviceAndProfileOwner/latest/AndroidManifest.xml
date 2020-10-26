@@ -88,7 +88,7 @@
              android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
 
         <activity android:name="com.android.cts.deviceandprofileowner.LockTaskUtilityActivity"/>
-        <activity android:name="com.android.cts.deviceandprofileowner.LockTaskUtilityActivityIfWhitelisted"
+        <activity android:name="com.android.cts.deviceandprofileowner.LockTaskUtilityActivityIfAllowed"
              android:launchMode="singleInstance"
              android:lockTaskMode="if_whitelisted"
              android:exported="true">
