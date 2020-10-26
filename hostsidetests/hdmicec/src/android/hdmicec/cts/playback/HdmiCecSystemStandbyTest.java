@@ -40,8 +40,6 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
 
-    private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
-
     private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =
             "hdmi_control_auto_device_off_enabled";
 
@@ -64,8 +62,8 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
         String valToSet = turnOn ? "1" : "0";
         device.executeShellCommand("settings put global "
                 + HDMI_CONTROL_DEVICE_AUTO_OFF + " " + valToSet);
-        device.executeShellCommand("settings get global " + HDMI_CONTROL_DEVICE_AUTO_OFF).trim();
-        return val.equals("1") ? true : false;
+        device.executeShellCommand("settings get global " + HDMI_CONTROL_DEVICE_AUTO_OFF);
+        return val.equals("1");
     }
 
     private void checkDeviceAsleepAfterStandbySent(LogicalAddress source, LogicalAddress destination)

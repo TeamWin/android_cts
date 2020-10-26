@@ -82,7 +82,7 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
 
     /* Make sure device is playback only. Not applicable to playback/audio combinations */
     String deviceTypeCsv = device.executeShellCommand("getprop ro.hdmi.device_type").trim();
-    assumeTrue(deviceTypeCsv.equals(LogicalAddress.PLAYBACK_1.getDeviceType()));
+    assumeTrue(deviceTypeCsv.equals(LogicalAddress.PLAYBACK_1.getDeviceTypeString()));
 
     device.executeShellCommand("reboot");
     device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
