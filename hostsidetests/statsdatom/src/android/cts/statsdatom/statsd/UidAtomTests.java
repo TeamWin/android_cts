@@ -87,6 +87,7 @@ import com.android.os.AtomsProto.WifiScanStateChanged;
 import com.android.os.StatsLog.EventMetricData;
 import com.android.server.notification.SmallHash;
 import com.android.tradefed.log.LogUtil;
+import com.android.tradefed.testtype.DeviceTestCase;
 
 import com.google.common.collect.Range;
 import com.google.protobuf.Descriptors;
@@ -131,6 +132,17 @@ public class UidAtomTests extends DeviceAtomTestCase {
     private static final int WAIT_TIME_FOR_CONFIG_UPDATE_MS = 200;
     private static final int EXTRA_WAIT_TIME_MS = 5_000; // as buffer when app starting/stopping.
     private static final int STATSD_REPORT_WAIT_TIME_MS = 500; // make sure statsd finishes log.
+
+    private static final String FEATURE_AUDIO_OUTPUT = "android.hardware.audio.output";
+    private static final String FEATURE_CAMERA = "android.hardware.camera";
+    private static final String FEATURE_CAMERA_FLASH = "android.hardware.camera.flash";
+    private static final String FEATURE_CAMERA_FRONT = "android.hardware.camera.front";
+    private static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
+    private static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
+    private static final String FEATURE_PC = "android.hardware.type.pc";
+    private static final String FEATURE_PICTURE_IN_PICTURE = "android.software.picture_in_picture";
+    private static final String FEATURE_INCREMENTAL_DELIVERY =
+            "android.software.incremental_delivery";
 
     @Override
     protected void setUp() throws Exception {
@@ -198,7 +210,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testLmkKillOccurred() throws Exception {
-        if (!"true".equals(getProperty("ro.lmk.log_stats"))) {
+        if (!"true".equals(DeviceUtils.getProperty(getDevice(), "ro.lmk.log_stats"))) {
             return;
         }
 
@@ -265,7 +277,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testAudioState() throws Exception {
-        if (!hasFeature(FEATURE_AUDIO_OUTPUT, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_AUDIO_OUTPUT)) return;
 
         final int atomTag = Atom.AUDIO_STATE_CHANGED_FIELD_NUMBER;
         final String name = "testAudioState";
@@ -283,7 +295,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
@@ -409,7 +421,10 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testCameraState() throws Exception {
-        if (!hasFeature(FEATURE_CAMERA, true) && !hasFeature(FEATURE_CAMERA_FRONT, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_CAMERA) && !DeviceUtils.hasFeature(
+                getDevice(), FEATURE_CAMERA_FRONT)) {
+            return;
+        }
 
         final int atomTag = Atom.CAMERA_STATE_CHANGED_FIELD_NUMBER;
         Set<Integer> cameraOn = new HashSet<>(Arrays.asList(CameraStateChanged.State.ON_VALUE));
@@ -426,22 +441,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, WAIT_TIME_LONG,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_LONG,
                 atom -> atom.getCameraStateChanged().getState().getNumber());
     }
 
     public void testDeviceCalculatedPowerUse() throws Exception {
-        if (!hasFeature(FEATURE_LEANBACK_ONLY, false)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LEANBACK_ONLY)) return;
 
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 Atom.DEVICE_CALCULATED_POWER_USE_FIELD_NUMBER);
         DeviceUtils.unplugDevice(getDevice());
 
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
-        Thread.sleep(WAIT_TIME_SHORT);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         Atom atom = ReportUtils.getGaugeMetricAtoms(getDevice()).get(0);
         assertThat(atom.getDeviceCalculatedPowerUse().getComputedPowerNanoAmpSecs())
@@ -451,8 +466,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
 
     public void testDeviceCalculatedPowerBlameUid() throws Exception {
-        if (!hasFeature(FEATURE_LEANBACK_ONLY, false)) return;
-        if (!hasBattery()) {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LEANBACK_ONLY)) return;
+        if (!DeviceUtils.hasBattery(getDevice())) {
             return;
         }
         String kernelVersion = getDevice().executeShellCommand("uname -r");
@@ -464,11 +479,11 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 Atom.DEVICE_CALCULATED_POWER_BLAME_UID_FIELD_NUMBER);
         DeviceUtils.unplugDevice(getDevice());
 
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
-        Thread.sleep(WAIT_TIME_SHORT);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<Atom> atomList = ReportUtils.getGaugeMetricAtoms(getDevice());
         boolean uidFound = false;
