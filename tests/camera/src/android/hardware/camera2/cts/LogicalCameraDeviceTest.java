@@ -1187,13 +1187,15 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
             Map<String, CaptureResult> physicalResultsDual =
                     totalCaptureResultDual.getPhysicalCameraResults();
             for (String physicalId : physicalCameraIds) {
-                 if (physicalResultsDual.containsKey(physicalId)) {
-                     physicalTimestamps[index][i] = physicalResultsDual.get(physicalId).get(
-                             CaptureResult.SENSOR_TIMESTAMP);
-                 } else {
-                     physicalTimestamps[index][i] = -1;
-                 }
-                 index++;
+                assertTrue("Physical capture result camera ID must match the right camera",
+                        physicalResultsDual.get(physicalId).getCameraId().equals(physicalId));
+                if (physicalResultsDual.containsKey(physicalId)) {
+                    physicalTimestamps[index][i] = physicalResultsDual.get(physicalId).get(
+                        CaptureResult.SENSOR_TIMESTAMP);
+                } else {
+                    physicalTimestamps[index][i] = -1;
+                }
+                index++;
             }
         }
 
