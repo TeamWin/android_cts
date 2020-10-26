@@ -113,7 +113,10 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             }
     }
 
-    public void testExtractor() throws Exception {
+    public void SKIP_testExtractor() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testExtract where
+        // checksum is computed over track format attributes, track buffer and buffer
+        // info in both SDK and NDK side and checked for equality
         testExtractor("sinesweepogg.ogg");
         testExtractor("sinesweepoggmkv.mkv");
         testExtractor("sinesweepoggmp4.mp4");
@@ -274,7 +277,11 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             String path, String[] keys, String[] values, boolean testNativeSource);
 
     @Presubmit
-    public void testExtractorFileDurationNative() throws Exception {
+    public void SKIP_testExtractorFileDurationNative() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$FunctionalityTest#testExtract where
+        // checksum is computed over track format attributes, track buffer and buffer
+        // info in both SDK and NDK side and checked for equality. KEY_DURATION for each track is
+        // part of the checksum.
         testExtractorFileDurationNative(
                 "video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
     }
@@ -307,7 +314,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     private static native long getExtractorFileDurationNative(int fd, long offset, long size);
 
     @Presubmit
-    public void testExtractorCachedDurationNative() throws Exception {
+    public void SKIP_testExtractorCachedDurationNative() throws Exception {
+        // duplicate of CtsMediaV2TestCases:ExtractorTest$SetDataSourceTest#testDataSourceNative
         CtsTestServer foo = new CtsTestServer(mContext);
         String url = foo.getAssetUrl("ringer.mp3");
         long cachedDurationUs = getExtractorCachedDurationNative(url, /* testNativeSource = */ false);
@@ -318,7 +326,9 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     private static native long getExtractorCachedDurationNative(String uri, boolean testNativeSource);
 
-    public void testDecoder() throws Exception {
+    public void SKIP_testDecoder() throws Exception {
+        // duplicate of CtsMediaV2TestCases:CodecDecoderTest#testSimpleDecode where checksum  is
+        // computed over decoded output in both SDK and NDK side and checked for equality.
         int testsRun =
             testDecoder("sinesweepogg.ogg") +
             testDecoder("sinesweepoggmkv.mkv") +
@@ -560,7 +570,9 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             boolean useCallback)
             throws IOException;
 
-    public void testVideoPlayback() throws Exception {
+    public void SKIP_testVideoPlayback() throws Exception {
+        // duplicate of
+        // CtsMediaV2TestCases:CodecDecoderSurfaceTest#testSimpleDecodeToSurfaceNative[*]
         int testsRun =
             testVideoPlayback(
                     "video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4") +
