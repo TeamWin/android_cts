@@ -92,7 +92,7 @@ import org.junit.Test;
 public class AtomTests {
     private static final String TAG = AtomTests.class.getSimpleName();
 
-    private static final String MY_PACKAGE_NAME = "com.android.server.cts.device.statsd";
+    private static final String MY_PACKAGE_NAME = "com.android.server.cts.device.statsdatom";
 
     private static final Map<String, Integer> APP_OPS_ENUM_MAP = new ArrayMap<>();
     static {

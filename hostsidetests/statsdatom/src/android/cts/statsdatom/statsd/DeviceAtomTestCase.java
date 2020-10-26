@@ -221,13 +221,6 @@ public class DeviceAtomTestCase extends AtomTestCase {
                 KEY_ACTION, actionValue));
     }
 
-
-    /** Make the test app standby-active so it can run syncs and jobs immediately. */
-    protected void allowImmediateSyncs() throws Exception {
-        getDevice().executeShellCommand("am set-standby-bucket "
-                + DEVICE_SIDE_TEST_PACKAGE + " active");
-    }
-
     /**
      * Runs the specified activity.
      */
