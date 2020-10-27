@@ -1773,13 +1773,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
             waitForDisconnection();
 
-            // Now trigger connection to the first saved network.
+            // Now trigger connection to the last saved network.
             synchronized (mLock) {
                 try {
+                    WifiConfiguration savedNetworkToConnect =
+                            savedNetworks.get(savedNetworks.size() - 1);
                     if (withNetworkId) {
-                        mWifiManager.connect(savedNetworks.get(0).networkId, actionListener);
+                        mWifiManager.connect(savedNetworkToConnect.networkId, actionListener);
                     } else {
-                        mWifiManager.connect(savedNetworks.get(0), actionListener);
+                        mWifiManager.connect(savedNetworkToConnect, actionListener);
                     }
                     // now wait for callback
                     mLock.wait(TEST_WAIT_DURATION_MS);
