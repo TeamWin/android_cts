@@ -1222,48 +1222,47 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testProcessMemorySnapshot() throws Exception {
         // Get ProcessMemorySnapshot as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.PROCESS_MEMORY_SNAPSHOT_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PROCESS_MEMORY_SNAPSHOT_FIELD_NUMBER);
 
         // Start test app and trigger a pull while it is running.
-        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "StatsdCtsForegroundActivity", "action",
                 "action.show_notification")) {
-            Thread.sleep(WAIT_TIME_LONG);
-            setAppBreadcrumbPredicate();
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
         }
 
         // Assert about ProcessMemorySnapshot for the test app, statsd and system server.
-        List<Atom> atoms = getGaugeMetricDataList();
-        int uid = getUid();
+        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         boolean foundTestApp = false;
         boolean foundStatsd = false;
         boolean foundSystemServer = false;
         for (Atom atom : atoms) {
-          ProcessMemorySnapshot snapshot = atom.getProcessMemorySnapshot();
-          if (snapshot.getUid() == uid) {
-              foundTestApp = true;
-              assertThat(snapshot.getProcessName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
-          } else if (snapshot.getProcessName().contains("/statsd")) {
-              foundStatsd = true;
-          } else if (snapshot.getProcessName().equals("system")) {
-              foundSystemServer = true;
-          }
+            ProcessMemorySnapshot snapshot = atom.getProcessMemorySnapshot();
+            if (snapshot.getUid() == uid) {
+                foundTestApp = true;
+                assertThat(snapshot.getProcessName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+            } else if (snapshot.getProcessName().contains("/statsd")) {
+                foundStatsd = true;
+            } else if (snapshot.getProcessName().equals("system")) {
+                foundSystemServer = true;
+            }
 
-          assertThat(snapshot.getPid()).isGreaterThan(0);
-          assertThat(snapshot.getAnonRssAndSwapInKilobytes()).isAtLeast(0);
-          assertThat(snapshot.getAnonRssAndSwapInKilobytes()).isEqualTo(
-                  snapshot.getAnonRssInKilobytes() + snapshot.getSwapInKilobytes());
-          assertThat(snapshot.getRssInKilobytes()).isAtLeast(0);
-          assertThat(snapshot.getAnonRssInKilobytes()).isAtLeast(0);
-          assertThat(snapshot.getSwapInKilobytes()).isAtLeast(0);
+            assertThat(snapshot.getPid()).isGreaterThan(0);
+            assertThat(snapshot.getAnonRssAndSwapInKilobytes()).isAtLeast(0);
+            assertThat(snapshot.getAnonRssAndSwapInKilobytes()).isEqualTo(
+                    snapshot.getAnonRssInKilobytes() + snapshot.getSwapInKilobytes());
+            assertThat(snapshot.getRssInKilobytes()).isAtLeast(0);
+            assertThat(snapshot.getAnonRssInKilobytes()).isAtLeast(0);
+            assertThat(snapshot.getSwapInKilobytes()).isAtLeast(0);
         }
-        assertWithMessage(String.format("Did not find a matching atom for test app uid=%d",uid))
-            .that(foundTestApp).isTrue();
+        assertWithMessage(String.format("Did not find a matching atom for test app uid=%d", uid))
+                .that(foundTestApp).isTrue();
         assertWithMessage("Did not find a matching atom for statsd").that(foundStatsd).isTrue();
         assertWithMessage("Did not find a matching atom for system server")
-            .that(foundSystemServer).isTrue();
+                .that(foundSystemServer).isTrue();
     }
 
     public void testIonHeapSize_optional() throws Exception {
