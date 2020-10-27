@@ -308,9 +308,7 @@ public class JobThrottlingTest {
         setRestrictedBucketEnabled(true);
 
         // Disable coalescing
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
-                "timing_session_coalescing_duration_ms=0");
+        mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
 
         setScreenState(true);
 
@@ -335,9 +333,8 @@ public class JobThrottlingTest {
         setRestrictedBucketEnabled(true);
 
         // Disable coalescing and the parole session
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
-                "timing_session_coalescing_duration_ms=0,max_session_count_restricted=0");
+        mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
+        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
 
         setAirplaneMode(true);
         setScreenState(true);
@@ -377,9 +374,8 @@ public class JobThrottlingTest {
         setRestrictedBucketEnabled(true);
 
         // Disable coalescing and the parole session
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.JOB_SCHEDULER_QUOTA_CONTROLLER_CONSTANTS,
-                "timing_session_coalescing_duration_ms=0,max_session_count_restricted=0");
+        mDeviceConfigStateHelper.set("qc_timing_session_coalescing_duration_ms", "0");
+        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
 
         setAirplaneMode(true);
         setScreenState(true);
