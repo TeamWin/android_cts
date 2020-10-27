@@ -142,8 +142,8 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         DeviceUtils.turnScreenOn(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         DeviceUtils.turnScreenOff(getDevice());
-        // Ensure that the screen off atom is pushed before the config is uploaded
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        // Ensure that the screen on/off atoms are pushed before the config is uploaded.
+        Thread.sleep(5_000);
 
         final int atomTag = Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER;
 
