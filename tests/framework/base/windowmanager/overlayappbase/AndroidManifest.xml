@@ -22,8 +22,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application>
-        <receiver
-            android:name="android.server.wm.overlay.ActionReceiver"
+        <service
+            android:name="android.server.wm.overlay.TestCompanionService"
             android:exported="true" />
         <activity
             android:name="android.server.wm.overlay.OverlayActivity"

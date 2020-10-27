@@ -16,7 +16,7 @@
 
 package android.server.wm.overlay;
 
-import static android.server.wm.overlay.ActionReceiver.BACKGROUND_COLOR;
+import static android.server.wm.overlay.TestCompanionService.BACKGROUND_COLOR;
 
 import android.app.Activity;
 import android.os.Bundle;
