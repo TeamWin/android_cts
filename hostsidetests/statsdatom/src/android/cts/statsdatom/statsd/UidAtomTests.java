@@ -1077,20 +1077,23 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testWifiScan() throws Exception {
-        if (!hasFeature(FEATURE_WIFI, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
 
         final int atom = Atom.WIFI_SCAN_STATE_CHANGED_FIELD_NUMBER;
-        final int key = WifiScanStateChanged.STATE_FIELD_NUMBER;
         final int stateOn = WifiScanStateChanged.State.ON_VALUE;
         final int stateOff = WifiScanStateChanged.State.OFF_VALUE;
         final int minTimeDiffMillis = 250;
         final int maxTimeDiffMillis = 60_000;
-        final boolean demandExactlyTwo = false; // Two scans are performed, so up to 4 atoms logged.
 
-        List<EventMetricData> data = doDeviceMethodOnOff("testWifiScan", atom, key,
-                stateOn, stateOff, minTimeDiffMillis, maxTimeDiffMillis, demandExactlyTwo);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atom, /*useAttributionChain=*/ true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiScan");
+        Thread.sleep(WAIT_TIME_SHORT);
 
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isIn(Range.closed(2, 4));
+        AtomTestUtils.assertTimeDiffBetween(data.get(0), data.get(1), minTimeDiffMillis,
+                maxTimeDiffMillis);
         WifiScanStateChanged a0 = data.get(0).getAtom().getWifiScanStateChanged();
         WifiScanStateChanged a1 = data.get(1).getAtom().getWifiScanStateChanged();
         assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
