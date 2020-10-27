@@ -17,6 +17,7 @@
 package android.server.wm.lifecycle;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
@@ -64,7 +65,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     @Test
     public void testLaunchInFreeform() throws Exception {
         // Launch a fullscreen activity, mainly to prevent setting pending due to task switching.
-        launchActivityAndWait(CallbackTrackingActivity.class);
+        launchActivityInFullscreenAndWait(CallbackTrackingActivity.class);
 
         // Launch an activity in freeform
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
@@ -85,7 +86,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     @Test
     public void testMultiLaunchInFreeform() throws Exception {
         // Launch a fullscreen activity, mainly to prevent setting pending due to task switching.
-        launchActivityAndWait(CallbackTrackingActivity.class);
+        launchActivityInFullscreenAndWait(CallbackTrackingActivity.class);
 
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
@@ -123,7 +124,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     @Test
     public void testLaunchOccludingInFreeform() throws Exception {
         // Launch a fullscreen activity, mainly to prevent setting pending due to task switching.
-        launchActivityAndWait(CallbackTrackingActivity.class);
+        launchActivityInFullscreenAndWait(CallbackTrackingActivity.class);
 
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
@@ -134,7 +135,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
                 .setOptions(launchOptions)
                 .launch();
 
-        final Activity secondActivity = launchActivityAndWait(SecondActivity.class);
+        final Activity secondActivity = launchActivityInFullscreenAndWait(SecondActivity.class);
 
         new Launcher(ThirdActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -181,7 +182,7 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
     @Test
     public void testLaunchTranslucentInFreeform() throws Exception {
         // Launch a fullscreen activity, mainly to prevent setting pending due to task switching.
-        launchActivityAndWait(CallbackTrackingActivity.class);
+        launchActivityInFullscreenAndWait(CallbackTrackingActivity.class);
 
         final ActivityOptions launchOptions = ActivityOptions.makeBasic();
         launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FREEFORM);
@@ -192,7 +193,8 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
                 .setOptions(launchOptions)
                 .launch();
 
-        final Activity transparentActivity = launchActivityAndWait(TranslucentActivity.class);
+        final Activity transparentActivity =
+            launchActivityInFullscreenAndWait(TranslucentActivity.class);
 
         new Launcher(ThirdActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -266,5 +268,14 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
                 "Activity must be paused since another activity started.");
         waitAndAssertActivityState(SDK_27_LAUNCHING_ACTIVITY, STATE_RESUMED,
                 "Activity must be resumed.");
+    }
+
+    private Activity launchActivityInFullscreenAndWait(Class<? extends Activity> activityClass)
+        throws Exception {
+        final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+        launchOptions.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        return new Launcher(activityClass)
+            .setOptions(launchOptions)
+            .launch();
     }
 }
