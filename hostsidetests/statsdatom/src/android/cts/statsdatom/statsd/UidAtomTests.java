@@ -2142,21 +2142,20 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 AppUsageEventOccurred.EventType.MOVE_TO_BACKGROUND_VALUE));
 
         List<Set<Integer>> stateSet = Arrays.asList(onStates, offStates); // state sets, in order
-        createAndUploadConfig(Atom.APP_USAGE_EVENT_OCCURRED_FIELD_NUMBER, false);
-        Thread.sleep(WAIT_TIME_FOR_CONFIG_UPDATE_MS);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.APP_USAGE_EVENT_OCCURRED_FIELD_NUMBER, /*useUidAttributionChain=*/false);
 
-        getDevice().executeShellCommand(String.format(
-                "am start -n '%s' -e %s %s",
-                "com.android.server.cts.device.statsd/.StatsdCtsForegroundActivity",
-                "action", ACTION_SHOW_APPLICATION_OVERLAY));
-        final int waitTime = EXTRA_WAIT_TIME_MS + 5_000; // Overlay may need to sit there a while.
-        Thread.sleep(waitTime + STATSD_REPORT_WAIT_TIME_MS);
+        // Overlay may need to sit there a while.
+        final int waitTime = 10_500;
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", ACTION_SHOW_APPLICATION_OVERLAY, waitTime);
 
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         Function<Atom, Integer> appUsageStateFunction =
                 atom -> atom.getAppUsageEventOccurred().getEventType().getNumber();
-        popUntilFind(data, onStates, appUsageStateFunction); // clear out initial appusage states.s
-        assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
+        // clear out initial appusage states
+        AtomTestUtils.popUntilFind(data, onStates, appUsageStateFunction);
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
     }
 /*
     public void testAppForceStopUsageEvent() throws Exception {
