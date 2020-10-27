@@ -1092,22 +1092,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testLooperStats() throws Exception {
         try {
-            unplugDevice();
+            DeviceUtils.unplugDevice(getDevice());
             setUpLooperStats();
-            StatsdConfig.Builder config = createConfigBuilder();
-            addGaugeAtomWithDimensions(config, Atom.LOOPER_STATS_FIELD_NUMBER, null);
-            uploadConfig(config);
-            Thread.sleep(WAIT_TIME_SHORT);
 
-            runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification", 3_000);
+            ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                    Atom.LOOPER_STATS_FIELD_NUMBER);
 
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_SHORT);
+            DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                    "StatsdCtsForegroundActivity", "action", "action.show_notification", 3_000);
 
-            List<Atom> atomList = getGaugeMetricDataList();
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+
+            List<Atom> atomList = ReportUtils.getGaugeMetricAtoms(getDevice());
 
             boolean found = false;
-            int uid = getUid();
+            int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
             for (Atom atom : atomList) {
                 LooperStats stats = atom.getLooperStats();
                 String notificationServiceFullName =
@@ -1123,21 +1123,21 @@ public class UidAtomTests extends DeviceAtomTestCase {
                     assertThat(stats.getMessageCount()).isGreaterThan(0L);
                     assertThat(stats.getRecordedMessageCount()).isGreaterThan(0L);
                     assertThat(stats.getRecordedTotalLatencyMicros())
-                        .isIn(Range.open(0L, 1000000L));
+                            .isIn(Range.open(0L, 1000000L));
                     assertThat(stats.getRecordedTotalCpuMicros()).isIn(Range.open(0L, 1000000L));
                     assertThat(stats.getRecordedMaxLatencyMicros()).isIn(Range.open(0L, 1000000L));
                     assertThat(stats.getRecordedMaxCpuMicros()).isIn(Range.open(0L, 1000000L));
                     assertThat(stats.getRecordedDelayMessageCount()).isGreaterThan(0L);
                     assertThat(stats.getRecordedTotalDelayMillis())
-                        .isIn(Range.closedOpen(0L, 5000L));
+                            .isIn(Range.closedOpen(0L, 5000L));
                     assertThat(stats.getRecordedMaxDelayMillis()).isIn(Range.closedOpen(0L, 5000L));
                 }
             }
             assertWithMessage(String.format("Did not find a matching atom for uid %d", uid))
-                .that(found).isTrue();
+                    .that(found).isTrue();
         } finally {
             cleanUpLooperStats();
-            plugInAc();
+            DeviceUtils.plugInAc(getDevice());
         }
     }
 
@@ -2183,6 +2183,17 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
     }
 */
+
+    private void setUpLooperStats() throws Exception {
+        getDevice().executeShellCommand("cmd looper_stats enable");
+        getDevice().executeShellCommand("cmd looper_stats sampling_interval 1");
+        getDevice().executeShellCommand("cmd looper_stats reset");
+    }
+
+    private void cleanUpLooperStats() throws Exception {
+        getDevice().executeShellCommand("cmd looper_stats disable");
+    }
+
     private AtomsProto.PackageInstallerV2Reported installPackageUsingV2AndGetReport(
             String[] apkNames) throws Exception {
         createAndUploadConfig(Atom.PACKAGE_INSTALLER_V2_REPORTED_FIELD_NUMBER);
