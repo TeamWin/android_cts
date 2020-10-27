@@ -897,17 +897,18 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(syncOn, syncOff, syncOn, syncOff);
 
-        createAndUploadConfig(atomTag, true);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
         allowImmediateSyncs();
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testSyncState");
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSyncState");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data,
-            /* wait = */ 0 /* don't verify time differences between state changes */,
-            atom -> atom.getSyncStateChanged().getState().getNumber());
+        AtomTestUtils.assertStatesOccurred(stateSet, data,
+                /* wait = */ 0 /* don't verify time differences between state changes */,
+                atom -> atom.getSyncStateChanged().getState().getNumber());
     }
 
     public void testVibratorState() throws Exception {
