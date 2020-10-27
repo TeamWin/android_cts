@@ -16,12 +16,16 @@
 
 package android.telecom.cts;
 
+import static com.android.compatibility.common.util.ShellIdentityUtils
+        .invokeMethodWithShellPermissionsNoReturn;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.app.AppOpsManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -35,6 +39,7 @@ public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
 
     private static final String TEST_EMERGENCY_NUMBER = "5553637";
     private static final Uri TEST_EMERGENCY_URI = Uri.fromParts("tel", TEST_EMERGENCY_NUMBER, null);
+    private static final String CTS_TELECOM_PKG = TelecomManagerTest.class.getPackage().getName();
 
     public void testGetCurrentTtyMode() {
         if (!mShouldTestTelecom) {
@@ -54,6 +59,28 @@ public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
         } catch (InterruptedException e) {
             fail("Couldn't get TTY mode.");
             e.printStackTrace();
+        }
+    }
+
+    public void testHasCompanionInCallServiceAccess() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        AppOpsManager appOpsManager = mContext.getSystemService(AppOpsManager.class);
+        PackageManager packageManager = mContext.getPackageManager();
+        try {
+            final int uid = packageManager.getApplicationInfo(CTS_TELECOM_PKG, 0).uid;
+            invokeMethodWithShellPermissionsNoReturn(appOpsManager,
+                    (appOpsMan) -> appOpsMan.setUidMode(AppOpsManager.OPSTR_MANAGE_ONGOING_CALLS,
+                            uid, AppOpsManager.MODE_ALLOWED));
+            assertTrue(mTelecomManager.hasCompanionInCallServiceAccess());
+            invokeMethodWithShellPermissionsNoReturn(appOpsManager,
+                    (appOpsMan) -> appOpsMan.setUidMode(AppOpsManager.OPSTR_MANAGE_ONGOING_CALLS,
+                            uid, AppOpsManager.opToDefaultMode(
+                                    AppOpsManager.OPSTR_MANAGE_ONGOING_CALLS)));
+            assertFalse(mTelecomManager.hasCompanionInCallServiceAccess());
+        } catch (PackageManager.NameNotFoundException ex) {
+            fail("Couldn't get uid for android.telecom.cts");
         }
     }
 
