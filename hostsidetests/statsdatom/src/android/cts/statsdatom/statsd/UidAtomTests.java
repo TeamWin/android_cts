@@ -527,29 +527,27 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testGnssStats() throws Exception {
         // Get GnssMetrics as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.GNSS_STATS_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.GNSS_STATS_FIELD_NUMBER);
 
-        if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LOCATION_GPS)) return;
         // Whitelist this app against background location request throttling
         String origWhitelist = getDevice().executeShellCommand(
                 "settings get global location_background_throttle_package_whitelist").trim();
         getDevice().executeShellCommand(String.format(
                 "settings put global location_background_throttle_package_whitelist %s",
-                DEVICE_SIDE_TEST_PACKAGE));
+                DeviceUtils.STATSD_ATOM_TEST_PKG));
 
         try {
-            runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testGpsStatus");
+            DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testGpsStatus");
 
-            Thread.sleep(WAIT_TIME_LONG);
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
             // Trigger a pull and wait for new pull before killing the process.
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
             // Assert about GnssMetrics for the test app.
-            List<Atom> atoms = getGaugeMetricDataList();
+            List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
 
             boolean found = false;
             for (Atom atom : atoms) {
@@ -591,7 +589,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testMediaCodecActivity() throws Exception {
-        if (!hasFeature(FEATURE_WATCH, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
         final int atomTag = Atom.MEDIA_CODEC_STATE_CHANGED_FIELD_NUMBER;
 
         // 5 seconds. Starting video tends to be much slower than most other
@@ -611,22 +609,23 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
 
-        runActivity("VideoPlayerActivity", "action", "action.play_video",
-            waitTime);
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "VideoPlayerActivity", "action", "action.play_video",
+                waitTime);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, videoDuration,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, videoDuration,
                 atom -> atom.getMediaCodecStateChanged().getState().getNumber());
     }
 
     public void testOverlayState() throws Exception {
-        if (!hasFeature(FEATURE_WATCH, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
         final int atomTag = Atom.OVERLAY_STATE_CHANGED_FIELD_NUMBER;
 
         Set<Integer> entered = new HashSet<>(
@@ -637,44 +636,53 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(entered, exited);
 
-        createAndUploadConfig(atomTag, false);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        runActivity("StatsdCtsForegroundActivity", "action", "action.show_application_overlay",
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.show_application_overlay",
                 5_000);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
         // The overlay box should appear about 2sec after the app start
-        assertStatesOccurred(stateSet, data, 0,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
                 atom -> atom.getOverlayStateChanged().getState().getNumber());
     }
 
     public void testPictureInPictureState() throws Exception {
         String supported = getDevice().executeShellCommand("am supports-multiwindow");
-        if (!hasFeature(FEATURE_WATCH, false) ||
-                !hasFeature(FEATURE_PICTURE_IN_PICTURE, true) ||
+        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH) ||
+                !DeviceUtils.hasFeature(getDevice(), FEATURE_PICTURE_IN_PICTURE) ||
                 !supported.contains("true")) {
             LogUtil.CLog.d("Skipping picture in picture atom test.");
             return;
         }
 
-        StatsdConfig.Builder conf = createConfigBuilder();
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        FieldValueMatcher.Builder uidFvm = ConfigUtils.createUidFvm(/*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+
         // PictureInPictureStateChanged atom is used prior to rvc-qpr
-        addAtomEvent(conf, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
-                /*useAttribution=*/false);
+        ConfigUtils.addEventMetric(config, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
+                Collections.singletonList(uidFvm));
         // Picture-in-picture logs' been migrated to UiEvent since rvc-qpr
-        FieldValueMatcher.Builder pkgMatcher = createFvm(UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
-                .setEqString(DEVICE_SIDE_TEST_PACKAGE);
-        addAtomEvent(conf, Atom.UI_EVENT_REPORTED_FIELD_NUMBER, Arrays.asList(pkgMatcher));
-        uploadConfig(conf);
+        FieldValueMatcher.Builder pkgMatcher = ConfigUtils.createFvm(
+                UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
+                .setEqString(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetric(config, Atom.UI_EVENT_REPORTED_FIELD_NUMBER,
+                Arrays.asList(pkgMatcher));
+        ConfigUtils.uploadConfig(getDevice(), config);
 
         LogUtil.CLog.d("Playing video in Picture-in-Picture mode");
-        runActivity("VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Filter out the PictureInPictureStateChanged and UiEventReported atom
         List<EventMetricData> pictureInPictureStateChangedData = data.stream()
