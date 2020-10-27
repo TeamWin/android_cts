@@ -370,45 +370,48 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testDavey() throws Exception {
-        if (!DAVEY_ENABLED ) return;
+        if (!DAVEY_ENABLED) return;
         long MAX_DURATION = 2000;
         long MIN_DURATION = 750;
         final int atomTag = Atom.DAVEY_OCCURRED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag, false); // UID is logged without attribution node
 
-        runActivity("DaveyActivity", null, null);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        List<EventMetricData> data = getEventMetricDataList();
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "DaveyActivity", /*actionKey=*/null, /*actionValue=*/null);
+
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).hasSize(1);
         long duration = data.get(0).getAtom().getDaveyOccurred().getJankDurationMillis();
         assertWithMessage("Incorrect jank duration")
-            .that(duration).isIn(Range.closed(MIN_DURATION, MAX_DURATION));
+                .that(duration).isIn(Range.closed(MIN_DURATION, MAX_DURATION));
     }
 
     public void testFlashlightState() throws Exception {
-        if (!hasFeature(FEATURE_CAMERA_FLASH, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_CAMERA_FLASH)) return;
 
         final int atomTag = Atom.FLASHLIGHT_STATE_CHANGED_FIELD_NUMBER;
         final String name = "testFlashlight";
 
         Set<Integer> flashlightOn = new HashSet<>(
-            Arrays.asList(FlashlightStateChanged.State.ON_VALUE));
+                Arrays.asList(FlashlightStateChanged.State.ON_VALUE));
         Set<Integer> flashlightOff = new HashSet<>(
-            Arrays.asList(FlashlightStateChanged.State.OFF_VALUE));
+                Arrays.asList(FlashlightStateChanged.State.OFF_VALUE));
 
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(flashlightOn, flashlightOff);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getFlashlightStateChanged().getState().getNumber());
     }
 
@@ -424,16 +427,16 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(enterForeground, exitForeground);
 
-        createAndUploadConfig(atomTag, false);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getForegroundServiceStateChanged().getState().getNumber());
     }
 
@@ -442,13 +445,13 @@ public class UidAtomTests extends DeviceAtomTestCase {
         final int atomTag = Atom.FOREGROUND_SERVICE_APP_OP_SESSION_ENDED_FIELD_NUMBER;
         final String name = "testForegroundServiceAccessAppOp";
 
-        createAndUploadConfig(atomTag, false);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertWithMessage("Wrong atom size").that(data.size()).isEqualTo(3);
         for (int i = 0; i < data.size(); i++) {
@@ -479,13 +482,13 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testGpsScan() throws Exception {
-        if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LOCATION_GPS)) return;
         // Whitelist this app against background location request throttling
         String origWhitelist = getDevice().executeShellCommand(
                 "settings get global location_background_throttle_package_whitelist").trim();
         getDevice().executeShellCommand(String.format(
                 "settings put global location_background_throttle_package_whitelist %s",
-                DEVICE_SIDE_TEST_PACKAGE));
+                DeviceUtils.STATSD_ATOM_TEST_PKG));
 
         try {
             final int atom = Atom.GPS_SCAN_STATE_CHANGED_FIELD_NUMBER;
@@ -495,11 +498,19 @@ public class UidAtomTests extends DeviceAtomTestCase {
             final int minTimeDiffMillis = 500;
             final int maxTimeDiffMillis = 60_000;
 
-            List<EventMetricData> data = doDeviceMethodOnOff("testGpsScan", atom, key,
-                    stateOn, stateOff, minTimeDiffMillis, maxTimeDiffMillis, true);
+            ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(),
+                    DeviceUtils.STATSD_ATOM_TEST_PKG,
+                    atom, /*useUidAttributionChain=*/true);
 
+            DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests",
+                    "testGpsScan");
+
+            List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+            assertThat(data).hasSize(2);
             GpsScanStateChanged a0 = data.get(0).getAtom().getGpsScanStateChanged();
             GpsScanStateChanged a1 = data.get(1).getAtom().getGpsScanStateChanged();
+            AtomTestUtils.assertTimeDiffBetween(data.get(0), data.get(1), minTimeDiffMillis,
+                    maxTimeDiffMillis);
             assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
             assertThat(a1.getState().getNumber()).isEqualTo(stateOff);
         } finally {
