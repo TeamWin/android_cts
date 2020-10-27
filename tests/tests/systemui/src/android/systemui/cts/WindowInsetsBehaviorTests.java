@@ -664,9 +664,6 @@ public class WindowInsetsBehaviorTests {
             throws InterruptedException {
         assumeTrue(hasSystemGestureFeature());
 
-        final Rect[] rects = new Rect[1];
-        mainThreadRun(() -> rects[0] = mActivity.getViewBound(mActivity.getContentView()));
-        setAndWaitForSystemGestureExclusionRectsListenerTrigger(rects[0]);
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
         mainThreadRun(() -> mSwipeBound = mActivity.getOperationArea(
                 mContentViewWindowInsets.getTappableElementInsets(), mContentViewWindowInsets));
