@@ -1180,23 +1180,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testProcessMemoryHighWaterMark() throws Exception {
         // Get ProcessMemoryHighWaterMark as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.PROCESS_MEMORY_HIGH_WATER_MARK_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PROCESS_MEMORY_HIGH_WATER_MARK_FIELD_NUMBER);
 
         // Start test app and trigger a pull while it is running.
-        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "StatsdCtsForegroundActivity", "action",
                 "action.show_notification")) {
-            Thread.sleep(WAIT_TIME_SHORT);
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
             // Trigger a pull and wait for new pull before killing the process.
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
         // Assert about ProcessMemoryHighWaterMark for the test app, statsd and system server.
-        List<Atom> atoms = getGaugeMetricDataList();
-        int uid = getUid();
+        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         boolean foundTestApp = false;
         boolean foundStatsd = false;
         boolean foundSystemServer = false;
@@ -1204,7 +1203,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             ProcessMemoryHighWaterMark state = atom.getProcessMemoryHighWaterMark();
             if (state.getUid() == uid) {
                 foundTestApp = true;
-                assertThat(state.getProcessName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+                assertThat(state.getProcessName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
                 assertThat(state.getRssHighWaterMarkInBytes()).isGreaterThan(0L);
             } else if (state.getProcessName().contains("/statsd")) {
                 foundStatsd = true;
@@ -1214,11 +1213,11 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 assertThat(state.getRssHighWaterMarkInBytes()).isGreaterThan(0L);
             }
         }
-        assertWithMessage(String.format("Did not find a matching atom for test app uid=%d",uid))
-            .that(foundTestApp).isTrue();
+        assertWithMessage(String.format("Did not find a matching atom for test app uid=%d", uid))
+                .that(foundTestApp).isTrue();
         assertWithMessage("Did not find a matching atom for statsd").that(foundStatsd).isTrue();
         assertWithMessage("Did not find a matching atom for system server")
-            .that(foundSystemServer).isTrue();
+                .that(foundSystemServer).isTrue();
     }
 
     public void testProcessMemorySnapshot() throws Exception {
