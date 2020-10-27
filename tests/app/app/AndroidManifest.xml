@@ -488,6 +488,10 @@
                  android:resource="@xml/shortcuts"/>
         </activity>
 
+        <service android:name="android.app.stubs.TrimMemService"
+            android:exported="true"
+            android:isolatedProcess="true">
+        </service>
     </application>
 
 </manifest>
