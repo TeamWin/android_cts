@@ -912,7 +912,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testVibratorState() throws Exception {
-        if (!checkDeviceFor("checkVibratorSupported")) return;
+        if (!DeviceUtils.checkDeviceFor(getDevice(), "checkVibratorSupported")) return;
 
         final int atomTag = Atom.VIBRATOR_STATE_CHANGED_FIELD_NUMBER;
         final String name = "testVibratorState";
@@ -925,16 +925,16 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
-        assertStatesOccurred(stateSet, data, 300,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 300,
                 atom -> atom.getVibratorStateChanged().getState().getNumber());
     }
 
