@@ -134,6 +134,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     private static final int STATSD_REPORT_WAIT_TIME_MS = 500; // make sure statsd finishes log.
 
     private static final String FEATURE_AUDIO_OUTPUT = "android.hardware.audio.output";
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final String FEATURE_CAMERA = "android.hardware.camera";
     private static final String FEATURE_CAMERA_FLASH = "android.hardware.camera.flash";
     private static final String FEATURE_CAMERA_FRONT = "android.hardware.camera.front";
@@ -970,18 +971,19 @@ public class UidAtomTests extends DeviceAtomTestCase {
     public void testWakeupAlarm() throws Exception {
         // For automotive, all wakeup alarm becomes normal alarm. So this
         // test does not work.
-        if (!hasFeature(FEATURE_AUTOMOTIVE, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
         final int atomTag = Atom.WAKEUP_ALARM_OCCURRED_FIELD_NUMBER;
 
-        StatsdConfig.Builder config = createConfigBuilder();
-        addAtomEvent(config, atomTag, true);  // True: uses attribution.
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWakeupAlarm");
 
-        List<EventMetricData> data = doDeviceMethod("testWakeupAlarm", config);
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isAtLeast(1);
         for (int i = 0; i < data.size(); i++) {
             WakeupAlarmOccurred wao = data.get(i).getAtom().getWakeupAlarmOccurred();
-            assertThat(wao.getTag()).isEqualTo("*walarm*:android.cts.statsd.testWakeupAlarm");
-            assertThat(wao.getPackageName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+            assertThat(wao.getTag()).isEqualTo("*walarm*:android.cts.statsdatom.testWakeupAlarm");
+            assertThat(wao.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         }
     }
 

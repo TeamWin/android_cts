@@ -791,7 +791,7 @@ public class AtomTests {
     @Test
     public void testWakeupAlarm() {
         Context context = InstrumentationRegistry.getContext();
-        String name = "android.cts.statsd.testWakeupAlarm";
+        String name = "android.cts.statsdatom.testWakeupAlarm";
         CountDownLatch onReceiveLatch = new CountDownLatch(1);
         BroadcastReceiver receiver =
                 registerReceiver(context, onReceiveLatch, new IntentFilter(name));
