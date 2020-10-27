@@ -948,17 +948,18 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(wakelockOn, wakelockOff);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testWakelockState");
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWakelockState");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
-            atom -> atom.getWakelockStateChanged().getState().getNumber());
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+                atom -> atom.getWakelockStateChanged().getState().getNumber());
 
-        for (EventMetricData event: data) {
+        for (EventMetricData event : data) {
             String tag = event.getAtom().getWakelockStateChanged().getTag();
             WakeLockLevelEnum type = event.getAtom().getWakelockStateChanged().getType();
             assertThat(tag).isEqualTo(EXPECTED_TAG);
