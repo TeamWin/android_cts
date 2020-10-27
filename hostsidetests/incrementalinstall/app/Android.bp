@@ -24,6 +24,7 @@ android_test_helper_app {
     },
     test_suites: [
         "cts",
+        "general-tests",
     ],
     v4_signature: true,
     static_libs: [
@@ -51,6 +52,7 @@ android_test_helper_app {
     },
     test_suites: [
         "cts",
+        "general-tests",
     ],
     v4_signature: true,
     static_libs: [
@@ -74,6 +76,7 @@ android_test_helper_app {
     },
     test_suites: [
         "cts",
+        "general-tests",
     ],
     v4_signature: true,
     static_libs: [
