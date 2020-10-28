@@ -18,6 +18,7 @@ package android.graphics.fonts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -1110,15 +1111,37 @@ public class FontTest {
 
         Font aFont = new Font.Builder(assets, "fonts/others/samplefont.ttf").build();
         // Copied font must be equals to original one.
-        assertEquals(new Font.Builder(aFont).build(), aFont);
+        Font bFont = new Font.Builder(aFont).build();
+        assertTrue(aFont.isSameSource(bFont));
+        assertTrue(bFont.isSameSource(aFont));
+        assertEquals(aFont, bFont);
+        assertEquals(bFont, aFont);
 
         // Same source font must be equal.
-        assertEquals(new Font.Builder(assets, "fonts/others/samplefont.ttf").build(), aFont);
+        Font cFont = new Font.Builder(assets, "fonts/others/samplefont.ttf").build();
+        assertTrue(aFont.isSameSource(cFont));
+        assertTrue(cFont.isSameSource(aFont));
+        assertEquals(aFont, cFont);
+        assertEquals(cFont, aFont);
 
         // Created font from duplicated buffers must be equal.
-        Font cFont = new Font.Builder(aFont.getBuffer().duplicate()).build();
         Font dFont = new Font.Builder(aFont.getBuffer().duplicate()).build();
-        assertEquals(cFont, dFont);
+        Font eFont = new Font.Builder(aFont.getBuffer().duplicate()).build();
+        assertEquals(dFont, eFont);
+        assertEquals(eFont, dFont);
+
+        // Different parameter should be unequal but sameSource returns true.
+        Font fFont = new Font.Builder(aFont.getBuffer().duplicate())
+                .setFontVariationSettings("'wght' 400").build();
+        assertTrue(aFont.isSameSource(fFont));
+        assertTrue(fFont.isSameSource(aFont));
+        assertNotEquals(aFont, fFont);
+        assertNotEquals(fFont, aFont);
+
+        // Different source must be not equals.
+        Font gFont = new Font.Builder(assets, "fonts/others/samplefont2.ttf").build();
+        assertFalse(aFont.isSameSource(gFont));
+        assertNotEquals(aFont, gFont);
     }
 
     @Test
