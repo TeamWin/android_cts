@@ -1670,27 +1670,25 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testNotificationChannelPreferencesExtraction() throws Exception {
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config,
-                    Atom.PACKAGE_NOTIFICATION_CHANNEL_PREFERENCES_FIELD_NUMBER,
-                    null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
-        runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification");
-        Thread.sleep(WAIT_TIME_SHORT);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PACKAGE_NOTIFICATION_CHANNEL_PREFERENCES_FIELD_NUMBER);
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.show_notification");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<PackageNotificationChannelPreferences> allChannelPreferences = new ArrayList<>();
-        for(Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : getGaugeMetricDataList()) {
             if (atom.hasPackageNotificationChannelPreferences()) {
-               allChannelPreferences.add(atom.getPackageNotificationChannelPreferences());
+                allChannelPreferences.add(atom.getPackageNotificationChannelPreferences());
             }
         }
         assertThat(allChannelPreferences.size()).isGreaterThan(0);
 
         boolean foundTestPackagePreferences = false;
-        int uid = getUid();
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         for (PackageNotificationChannelPreferences pref : allChannelPreferences) {
             assertThat(pref.getUid()).isGreaterThan(0);
             assertTrue(pref.hasChannelId());
@@ -1699,7 +1697,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             assertTrue(pref.hasImportance());
             assertTrue(pref.hasUserLockedFields());
             assertTrue(pref.hasIsDeleted());
-            if(uid == pref.getUid() && pref.getChannelId().equals("StatsdCtsChannel")) {
+            if (uid == pref.getUid() && pref.getChannelId().equals("StatsdCtsChannel")) {
                 assertThat(pref.getChannelName()).isEqualTo("Statsd Cts");
                 assertThat(pref.getDescription()).isEqualTo("Statsd Cts Channel");
                 assertThat(pref.getImportance()).isEqualTo(3);  // IMPORTANCE_DEFAULT
