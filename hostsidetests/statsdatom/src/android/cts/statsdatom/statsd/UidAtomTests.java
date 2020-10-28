@@ -1185,19 +1185,18 @@ public class UidAtomTests extends DeviceAtomTestCase {
     /** Returns IonHeapSize atoms pulled as a simple gauge metric while test app is running. */
     private List<Atom> pullIonHeapSizeAsGaugeMetric() throws Exception {
         // Get IonHeapSize as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.ION_HEAP_SIZE_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.ION_HEAP_SIZE_FIELD_NUMBER);
 
         // Start test app and trigger a pull while it is running.
-        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "StatsdCtsForegroundActivity", "action",
                 "action.show_notification")) {
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
-        return getGaugeMetricDataList();
+        return ReportUtils.getGaugeMetricAtoms(getDevice());
     }
 
     private static void assertIonHeapSize(List<Atom> atoms) {
@@ -1223,32 +1222,31 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Make device side test package a role holder
         String callScreenAppRole = "android.app.role.CALL_SCREENING";
         getDevice().executeShellCommand(
-                "cmd role add-role-holder " + callScreenAppRole + " " + DEVICE_SIDE_TEST_PACKAGE);
+                "cmd role add-role-holder " + callScreenAppRole + " "
+                        + DeviceUtils.STATSD_ATOM_TEST_PKG);
 
         // Set up what to collect
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.ROLE_HOLDER_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.ROLE_HOLDER_FIELD_NUMBER);
 
         boolean verifiedKnowRoleState = false;
 
         // Pull a report
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
-        int testAppId = getAppId(getUid());
+        int testAppId = getAppId(DeviceUtils.getStatsdTestAppUid(getDevice()));
 
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             AtomsProto.RoleHolder roleHolder = atom.getRoleHolder();
 
             assertThat(roleHolder.getPackageName()).isNotNull();
             assertThat(roleHolder.getUid()).isAtLeast(0);
             assertThat(roleHolder.getRole()).isNotNull();
 
-            if (roleHolder.getPackageName().equals(DEVICE_SIDE_TEST_PACKAGE)) {
+            if (roleHolder.getPackageName().equals(DeviceUtils.STATSD_ATOM_TEST_PKG)) {
                 assertThat(getAppId(roleHolder.getUid())).isEqualTo(testAppId);
-                assertThat(roleHolder.getPackageName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+                assertThat(roleHolder.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
                 assertThat(roleHolder.getRole()).isEqualTo(callScreenAppRole);
 
                 verifiedKnowRoleState = true;
@@ -1259,24 +1257,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testDangerousPermissionState() throws Exception {
-        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED =  1 << 8;
-        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED =  1 << 9;
+        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED = 1 << 8;
+        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED = 1 << 9;
 
         // Set up what to collect
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER);
 
         boolean verifiedKnowPermissionState = false;
 
         // Pull a report
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
-        int testAppId = getAppId(getUid());
+        int testAppId = getAppId(DeviceUtils.getStatsdTestAppUid(getDevice()));
 
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             DangerousPermissionState permissionState = atom.getDangerousPermissionState();
 
             assertThat(permissionState.getPermissionName()).isNotNull();
@@ -1290,8 +1286,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
                     assertThat(permissionState.getIsGranted()).isTrue();
                     assertThat(permissionState.getPermissionFlags() & ~(
                             FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED
-                            | FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED))
-                        .isEqualTo(0);
+                                    | FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED))
+                            .isEqualTo(0);
 
                     verifiedKnowPermissionState = true;
                 }
@@ -1303,43 +1299,38 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testDangerousPermissionStateSampled() throws Exception {
         // get full atom for reference
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER);
 
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<DangerousPermissionState> fullDangerousPermissionState = new ArrayList<>();
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             fullDangerousPermissionState.add(atom.getDangerousPermissionState());
         }
 
-        removeConfig(CONFIG_ID);
-        getReportList(); // Clears data.
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice()); // Clears data.
         List<Atom> gaugeMetricDataList = null;
 
         // retries in case sampling returns full list or empty list - which should be extremely rare
         for (int attempt = 0; attempt < 10; attempt++) {
             // Set up what to collect
-            config = createConfigBuilder();
-            addGaugeAtomWithDimensions(config, Atom.DANGEROUS_PERMISSION_STATE_SAMPLED_FIELD_NUMBER,
-                    null);
-            uploadConfig(config);
-            Thread.sleep(WAIT_TIME_SHORT);
+            ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                    Atom.DANGEROUS_PERMISSION_STATE_SAMPLED_FIELD_NUMBER);
 
             // Pull a report
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_SHORT);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
-            gaugeMetricDataList = getGaugeMetricDataList();
+            gaugeMetricDataList = ReportUtils.getGaugeMetricAtoms(getDevice());
             if (gaugeMetricDataList.size() > 0
                     && gaugeMetricDataList.size() < fullDangerousPermissionState.size()) {
                 break;
             }
-            removeConfig(CONFIG_ID);
-            getReportList(); // Clears data.
+            ConfigUtils.removeConfig(getDevice());
+            ReportUtils.clearReports(getDevice()); // Clears data.
         }
         assertThat(gaugeMetricDataList.size()).isGreaterThan(0);
         assertThat(gaugeMetricDataList.size()).isLessThan(fullDangerousPermissionState.size());
