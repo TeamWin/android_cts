@@ -1893,18 +1893,15 @@ public class UidAtomTests extends DeviceAtomTestCase {
     private static final long BLOB_LEASE_EXPIRY_DURATION_MS = 60 * 60 * 1000;
 
     public void testPulledBlobStoreStats() throws Exception {
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config,
-                Atom.BLOB_INFO_FIELD_NUMBER,
-                null);
-        uploadConfig(config);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.BLOB_INFO_FIELD_NUMBER);
 
         final long testStartTimeMs = System.currentTimeMillis();
-        Thread.sleep(WAIT_TIME_SHORT);
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testBlobStore");
-        Thread.sleep(WAIT_TIME_LONG);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBlobStore");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Add commit callback time to test end time to account for async execution
         final long testEndTimeMs =
@@ -1912,10 +1909,11 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         // Find the BlobInfo for the blob created in the test run
         AtomsProto.BlobInfo blobInfo = null;
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             if (atom.hasBlobInfo()) {
                 final AtomsProto.BlobInfo temp = atom.getBlobInfo();
-                if (temp.getCommitters().getCommitter(0).getUid() == getUid()) {
+                if (temp.getCommitters().getCommitter(0).getUid()
+                        == DeviceUtils.getStatsdTestAppUid(getDevice())) {
                     blobInfo = temp;
                     break;
                 }
@@ -1943,7 +1941,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 1);
 
         assertThat(blobInfo.getLeasees().getLeaseeCount()).isGreaterThan(0);
-        assertThat(blobInfo.getLeasees().getLeasee(0).getUid()).isEqualTo(getUid());
+        assertThat(blobInfo.getLeasees().getLeasee(0).getUid()).isEqualTo(
+                DeviceUtils.getStatsdTestAppUid(getDevice()));
 
         // Check that lease expiry time is reasonable
         final long leaseExpiryMs = blobInfo.getLeasees().getLeasee(
