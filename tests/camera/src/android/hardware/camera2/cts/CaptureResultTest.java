@@ -213,6 +213,8 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                     Set<CaptureResult.Key<?>> appearedPartialKeys =
                             new HashSet<CaptureResult.Key<?>>();
                     for (CaptureResult partialResult : partialResults) {
+                        mCollector.expectEquals("Partial capture result camera ID must be correct",
+                                partialResult.getCameraId(), id);
                         List<CaptureResult.Key<?>> partialKeys = partialResult.getKeys();
                         mCollector.expectValuesUnique("Partial result keys: ", partialKeys);
                         for (CaptureResult.Key<?> key : partialKeys) {
@@ -225,6 +227,8 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                     }
 
                     // Test total result against the partial results
+                    mCollector.expectEquals("Total capture result camera ID must be correct",
+                            totalResult.getCameraId(), id);
                     List<CaptureResult.Key<?>> totalResultKeys = totalResult.getKeys();
                     mCollector.expectTrue(
                             "TotalCaptureResult must be a super set of partial capture results",

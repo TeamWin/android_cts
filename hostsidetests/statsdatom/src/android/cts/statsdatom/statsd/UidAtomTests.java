@@ -183,32 +183,6 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(atom.getState()).isEqualTo(AppBreadcrumbReported.State.START);
     }
 
-    public void testCpuTimePerUid() throws Exception {
-        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
-
-        ConfigUtils.uploadConfigForPulledAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.CPU_TIME_PER_UID_FIELD_NUMBER,  /*uidInAttributionChain=*/false);
-
-        // Do some trivial work on the app
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-        // Trigger atom pull
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
-        // Verify correctness of data
-        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
-        boolean found = false;
-        int appUid = DeviceUtils.getStatsdTestAppUid(getDevice());
-        for (Atom atom : atoms) {
-            assertThat(atom.getCpuTimePerUid().getUid()).isEqualTo(appUid);
-            assertThat(atom.getCpuTimePerUid().getUserTimeMicros()).isGreaterThan(0L);
-            assertThat(atom.getCpuTimePerUid().getSysTimeMicros()).isGreaterThan(0L);
-            found = true;
-        }
-        assertWithMessage("Found no CpuTimePerUid atoms from uid " + appUid).that(found).isTrue();
-    }
-
     public void testLmkKillOccurred() throws Exception {
         if (!"true".equals(DeviceUtils.getProperty(getDevice(), "ro.lmk.log_stats"))) {
             return;
@@ -311,115 +285,6 @@ public class UidAtomTests extends DeviceAtomTestCase {
         }
     }
 
-    public void testBleScan() throws Exception {
-        if (!hasFeature(FEATURE_BLUETOOTH_LE, true)) return;
-
-        final int atomTag = Atom.BLE_SCAN_STATE_CHANGED_FIELD_NUMBER;
-        Set<Integer> onState = new HashSet<>(
-                Collections.singletonList(BleScanStateChanged.State.ON_VALUE));
-        Set<Integer> offState = new HashSet<>(
-                Collections.singletonList(BleScanStateChanged.State.OFF_VALUE));
-        final int expectedWait = 3_000;
-        // Add state sets to the list in order.
-        List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useAttributionChain=*/ true);
-
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBleScanUnoptimized");
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        AtomTestUtils.assertStatesOccurred(stateSet, data, expectedWait,
-                atom -> atom.getBleScanStateChanged().getState().getNumber());
-    }
-
-    public void testBleUnoptimizedScan() throws Exception {
-        if (!hasFeature(FEATURE_BLUETOOTH_LE, true)) return;
-
-        final int atomTag = Atom.BLE_SCAN_STATE_CHANGED_FIELD_NUMBER;
-        Set<Integer> onState = new HashSet<>(
-                Collections.singletonList(BleScanStateChanged.State.ON_VALUE));
-        Set<Integer> offState = new HashSet<>(
-                Collections.singletonList(BleScanStateChanged.State.OFF_VALUE));
-        final int minTimeDiffMillis = 1_500;
-        final int maxTimeDiffMillis = 3_000;
-        // Add state sets to the list in order.
-        List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useAttributionChain=*/ true);
-
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBleScanUnoptimized");
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        AtomTestUtils.assertTimeDiffBetween(data.get(0), data.get(1), minTimeDiffMillis,
-                maxTimeDiffMillis);
-        BleScanStateChanged a0 = data.get(0).getAtom().getBleScanStateChanged();
-        assertThat(a0.getState().getNumber()).isEqualTo(BleScanStateChanged.State.ON_VALUE);
-        assertThat(a0.getIsFiltered()).isFalse();
-        assertThat(a0.getIsFirstMatch()).isFalse();
-        assertThat(a0.getIsOpportunistic()).isFalse();
-        BleScanStateChanged a1 = data.get(1).getAtom().getBleScanStateChanged();
-        assertThat(a1.getState().getNumber()).isEqualTo(BleScanStateChanged.State.OFF_VALUE);
-        assertThat(a1.getIsFiltered()).isFalse();
-        assertThat(a1.getIsFirstMatch()).isFalse();
-        assertThat(a1.getIsOpportunistic()).isFalse();
-    }
-
-    public void testBleOpportunisticScan() throws Exception {
-        if (!hasFeature(FEATURE_BLUETOOTH_LE, true)) return;
-
-        final int atomTag = Atom.BLE_SCAN_STATE_CHANGED_FIELD_NUMBER;
-        Set<Integer> onState = new HashSet<>(
-                Collections.singletonList(BleScanStateChanged.State.ON_VALUE));
-        Set<Integer> offState = new HashSet<>(
-                Collections.singletonList(BleScanStateChanged.State.OFF_VALUE));
-        final int minTimeDiffMillis = 1_500;
-        final int maxTimeDiffMillis = 3_000;
-        // Add state sets to the list in order.
-        List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useAttributionChain=*/ true);
-
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests",
-                "testBleScanOpportunistic");
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        AtomTestUtils.assertTimeDiffBetween(data.get(0), data.get(1), minTimeDiffMillis,
-                maxTimeDiffMillis);
-        BleScanStateChanged a0 = data.get(0).getAtom().getBleScanStateChanged();
-        assertThat(a0.getState().getNumber()).isEqualTo(BleScanStateChanged.State.ON_VALUE);
-        assertThat(a0.getIsFiltered()).isFalse();
-        assertThat(a0.getIsFirstMatch()).isFalse();
-        assertThat(a0.getIsOpportunistic()).isTrue();  // This scan is opportunistic.
-        BleScanStateChanged a1 = data.get(1).getAtom().getBleScanStateChanged();
-        assertThat(a1.getState().getNumber()).isEqualTo(BleScanStateChanged.State.OFF_VALUE);
-        assertThat(a1.getIsFiltered()).isFalse();
-        assertThat(a1.getIsFirstMatch()).isFalse();
-        assertThat(a1.getIsOpportunistic()).isTrue();
-    }
-
-    public void testBleScanResult() throws Exception {
-        if (!hasFeature(FEATURE_BLUETOOTH_LE, true)) return;
-
-        final int atom = Atom.BLE_SCAN_RESULT_RECEIVED_FIELD_NUMBER;
-        final int field = BleScanResultReceived.NUM_RESULTS_FIELD_NUMBER;
-        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetric(config, atom, Arrays.asList(
-                ConfigUtils.createUidFvm(/*useAttributionChain=*/ true,
-                        DeviceUtils.STATSD_ATOM_TEST_PKG),
-                ConfigUtils.createFvm(field).setGteInt(0)));
-        ConfigUtils.uploadConfig(getDevice(), config);
-
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBleScanResult");
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isAtLeast(1);
-        BleScanResultReceived a0 = data.get(0).getAtom().getBleScanResultReceived();
-        assertThat(a0.getNumResults()).isAtLeast(1);
-    }
-
     public void testCameraState() throws Exception {
         if (!DeviceUtils.hasFeature(getDevice(), FEATURE_CAMERA) && !DeviceUtils.hasFeature(
                 getDevice(), FEATURE_CAMERA_FRONT)) {
@@ -505,45 +370,48 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testDavey() throws Exception {
-        if (!DAVEY_ENABLED ) return;
+        if (!DAVEY_ENABLED) return;
         long MAX_DURATION = 2000;
         long MIN_DURATION = 750;
         final int atomTag = Atom.DAVEY_OCCURRED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag, false); // UID is logged without attribution node
 
-        runActivity("DaveyActivity", null, null);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        List<EventMetricData> data = getEventMetricDataList();
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "DaveyActivity", /*actionKey=*/null, /*actionValue=*/null);
+
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).hasSize(1);
         long duration = data.get(0).getAtom().getDaveyOccurred().getJankDurationMillis();
         assertWithMessage("Incorrect jank duration")
-            .that(duration).isIn(Range.closed(MIN_DURATION, MAX_DURATION));
+                .that(duration).isIn(Range.closed(MIN_DURATION, MAX_DURATION));
     }
 
     public void testFlashlightState() throws Exception {
-        if (!hasFeature(FEATURE_CAMERA_FLASH, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_CAMERA_FLASH)) return;
 
         final int atomTag = Atom.FLASHLIGHT_STATE_CHANGED_FIELD_NUMBER;
         final String name = "testFlashlight";
 
         Set<Integer> flashlightOn = new HashSet<>(
-            Arrays.asList(FlashlightStateChanged.State.ON_VALUE));
+                Arrays.asList(FlashlightStateChanged.State.ON_VALUE));
         Set<Integer> flashlightOff = new HashSet<>(
-            Arrays.asList(FlashlightStateChanged.State.OFF_VALUE));
+                Arrays.asList(FlashlightStateChanged.State.OFF_VALUE));
 
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(flashlightOn, flashlightOff);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getFlashlightStateChanged().getState().getNumber());
     }
 
@@ -559,16 +427,16 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(enterForeground, exitForeground);
 
-        createAndUploadConfig(atomTag, false);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getForegroundServiceStateChanged().getState().getNumber());
     }
 
@@ -577,13 +445,13 @@ public class UidAtomTests extends DeviceAtomTestCase {
         final int atomTag = Atom.FOREGROUND_SERVICE_APP_OP_SESSION_ENDED_FIELD_NUMBER;
         final String name = "testForegroundServiceAccessAppOp";
 
-        createAndUploadConfig(atomTag, false);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertWithMessage("Wrong atom size").that(data.size()).isEqualTo(3);
         for (int i = 0; i < data.size(); i++) {
@@ -614,13 +482,13 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testGpsScan() throws Exception {
-        if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LOCATION_GPS)) return;
         // Whitelist this app against background location request throttling
         String origWhitelist = getDevice().executeShellCommand(
                 "settings get global location_background_throttle_package_whitelist").trim();
         getDevice().executeShellCommand(String.format(
                 "settings put global location_background_throttle_package_whitelist %s",
-                DEVICE_SIDE_TEST_PACKAGE));
+                DeviceUtils.STATSD_ATOM_TEST_PKG));
 
         try {
             final int atom = Atom.GPS_SCAN_STATE_CHANGED_FIELD_NUMBER;
@@ -630,11 +498,19 @@ public class UidAtomTests extends DeviceAtomTestCase {
             final int minTimeDiffMillis = 500;
             final int maxTimeDiffMillis = 60_000;
 
-            List<EventMetricData> data = doDeviceMethodOnOff("testGpsScan", atom, key,
-                    stateOn, stateOff, minTimeDiffMillis, maxTimeDiffMillis, true);
+            ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(),
+                    DeviceUtils.STATSD_ATOM_TEST_PKG,
+                    atom, /*useUidAttributionChain=*/true);
 
+            DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests",
+                    "testGpsScan");
+
+            List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+            assertThat(data).hasSize(2);
             GpsScanStateChanged a0 = data.get(0).getAtom().getGpsScanStateChanged();
             GpsScanStateChanged a1 = data.get(1).getAtom().getGpsScanStateChanged();
+            AtomTestUtils.assertTimeDiffBetween(data.get(0), data.get(1), minTimeDiffMillis,
+                    maxTimeDiffMillis);
             assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
             assertThat(a1.getState().getNumber()).isEqualTo(stateOff);
         } finally {
@@ -651,29 +527,27 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testGnssStats() throws Exception {
         // Get GnssMetrics as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.GNSS_STATS_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.GNSS_STATS_FIELD_NUMBER);
 
-        if (!hasFeature(FEATURE_LOCATION_GPS, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LOCATION_GPS)) return;
         // Whitelist this app against background location request throttling
         String origWhitelist = getDevice().executeShellCommand(
                 "settings get global location_background_throttle_package_whitelist").trim();
         getDevice().executeShellCommand(String.format(
                 "settings put global location_background_throttle_package_whitelist %s",
-                DEVICE_SIDE_TEST_PACKAGE));
+                DeviceUtils.STATSD_ATOM_TEST_PKG));
 
         try {
-            runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testGpsStatus");
+            DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testGpsStatus");
 
-            Thread.sleep(WAIT_TIME_LONG);
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
             // Trigger a pull and wait for new pull before killing the process.
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
             // Assert about GnssMetrics for the test app.
-            List<Atom> atoms = getGaugeMetricDataList();
+            List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
 
             boolean found = false;
             for (Atom atom : atoms) {
@@ -715,7 +589,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testMediaCodecActivity() throws Exception {
-        if (!hasFeature(FEATURE_WATCH, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
         final int atomTag = Atom.MEDIA_CODEC_STATE_CHANGED_FIELD_NUMBER;
 
         // 5 seconds. Starting video tends to be much slower than most other
@@ -735,22 +609,23 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
 
-        runActivity("VideoPlayerActivity", "action", "action.play_video",
-            waitTime);
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "VideoPlayerActivity", "action", "action.play_video",
+                waitTime);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, videoDuration,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, videoDuration,
                 atom -> atom.getMediaCodecStateChanged().getState().getNumber());
     }
 
     public void testOverlayState() throws Exception {
-        if (!hasFeature(FEATURE_WATCH, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
         final int atomTag = Atom.OVERLAY_STATE_CHANGED_FIELD_NUMBER;
 
         Set<Integer> entered = new HashSet<>(
@@ -761,44 +636,53 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(entered, exited);
 
-        createAndUploadConfig(atomTag, false);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        runActivity("StatsdCtsForegroundActivity", "action", "action.show_application_overlay",
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.show_application_overlay",
                 5_000);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
         // The overlay box should appear about 2sec after the app start
-        assertStatesOccurred(stateSet, data, 0,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
                 atom -> atom.getOverlayStateChanged().getState().getNumber());
     }
 
     public void testPictureInPictureState() throws Exception {
         String supported = getDevice().executeShellCommand("am supports-multiwindow");
-        if (!hasFeature(FEATURE_WATCH, false) ||
-                !hasFeature(FEATURE_PICTURE_IN_PICTURE, true) ||
+        if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH) ||
+                !DeviceUtils.hasFeature(getDevice(), FEATURE_PICTURE_IN_PICTURE) ||
                 !supported.contains("true")) {
             LogUtil.CLog.d("Skipping picture in picture atom test.");
             return;
         }
 
-        StatsdConfig.Builder conf = createConfigBuilder();
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        FieldValueMatcher.Builder uidFvm = ConfigUtils.createUidFvm(/*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+
         // PictureInPictureStateChanged atom is used prior to rvc-qpr
-        addAtomEvent(conf, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
-                /*useAttribution=*/false);
+        ConfigUtils.addEventMetric(config, Atom.PICTURE_IN_PICTURE_STATE_CHANGED_FIELD_NUMBER,
+                Collections.singletonList(uidFvm));
         // Picture-in-picture logs' been migrated to UiEvent since rvc-qpr
-        FieldValueMatcher.Builder pkgMatcher = createFvm(UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
-                .setEqString(DEVICE_SIDE_TEST_PACKAGE);
-        addAtomEvent(conf, Atom.UI_EVENT_REPORTED_FIELD_NUMBER, Arrays.asList(pkgMatcher));
-        uploadConfig(conf);
+        FieldValueMatcher.Builder pkgMatcher = ConfigUtils.createFvm(
+                UiEventReported.PACKAGE_NAME_FIELD_NUMBER)
+                .setEqString(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetric(config, Atom.UI_EVENT_REPORTED_FIELD_NUMBER,
+                Arrays.asList(pkgMatcher));
+        ConfigUtils.uploadConfig(getDevice(), config);
 
         LogUtil.CLog.d("Playing video in Picture-in-Picture mode");
-        runActivity("VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "VideoPlayerActivity", "action", "action.play_video_picture_in_picture_mode");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Filter out the PictureInPictureStateChanged and UiEventReported atom
         List<EventMetricData> pictureInPictureStateChangedData = data.stream()

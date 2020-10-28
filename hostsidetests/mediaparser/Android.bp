@@ -1,4 +1,5 @@
-// Copyright (C) 2008 The Android Open Source Project
+//
+// Copyright 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,24 +12,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-android_test {
-    name: "CtsUtilTestCases",
+java_test_host {
+    name: "CtsMediaParserHostTestCases",
     defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
+    srcs: [
+        "src/**/*.java",
+    ],
     test_suites: [
         "cts",
+        "vts10",
         "general-tests",
-        "mts",
     ],
-    libs: ["android.test.runner"],
+    libs: [
+        "cts-tradefed",
+        "tradefed",
+        "compatibility-host-util",
+    ],
     static_libs: [
-        "androidx.annotation_annotation",
-        "androidx.test.rules",
-        "ctstestrunner-axt",
-        "cts-install-lib",
-        "core-test-rules", // for libcore.dalvik.system.CloseGuardSupport
+        "cts-host-utils",
     ],
-    srcs: ["src/**/*.java"],
-    platform_apis: true,
+    data: [
+      ":CtsMediaParserTestCasesApp",
+    ]
 }

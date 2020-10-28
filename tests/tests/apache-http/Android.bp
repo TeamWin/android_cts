@@ -1,4 +1,4 @@
-// Copyright (C) 2008 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,22 +13,28 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsUtilTestCases",
+    name: "CtsApacheHttpTestCases",
     defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
+    sdk_version: "test_current",
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
+    libs: [
+        "android.test.base",
+        "org.apache.http.legacy",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "mockwebserver",
+        "ctstestserver",
+    ],
+    jni_libs: [
+        "libcts_jni",
+    ],
     test_suites: [
         "cts",
         "general-tests",
-        "mts",
     ],
-    libs: ["android.test.runner"],
-    static_libs: [
-        "androidx.annotation_annotation",
-        "androidx.test.rules",
-        "ctstestrunner-axt",
-        "cts-install-lib",
-        "core-test-rules", // for libcore.dalvik.system.CloseGuardSupport
-    ],
-    srcs: ["src/**/*.java"],
-    platform_apis: true,
+    compile_multilib: "both",
 }
