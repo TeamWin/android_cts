@@ -1371,24 +1371,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testDangerousPermissionState() throws Exception {
-        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED =  1 << 8;
-        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED =  1 << 9;
+        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED = 1 << 8;
+        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED = 1 << 9;
 
         // Set up what to collect
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER);
 
         boolean verifiedKnowPermissionState = false;
 
         // Pull a report
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
-        int testAppId = getAppId(getUid());
+        int testAppId = getAppId(DeviceUtils.getStatsdTestAppUid(getDevice()));
 
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             DangerousPermissionState permissionState = atom.getDangerousPermissionState();
 
             assertThat(permissionState.getPermissionName()).isNotNull();
@@ -1402,8 +1400,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
                     assertThat(permissionState.getIsGranted()).isTrue();
                     assertThat(permissionState.getPermissionFlags() & ~(
                             FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED
-                            | FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED))
-                        .isEqualTo(0);
+                                    | FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED))
+                            .isEqualTo(0);
 
                     verifiedKnowPermissionState = true;
                 }
