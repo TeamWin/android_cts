@@ -1636,33 +1636,31 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testNotificationPackagePreferenceExtraction() throws Exception {
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config,
-                    Atom.PACKAGE_NOTIFICATION_PREFERENCES_FIELD_NUMBER,
-                    null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
-        runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification");
-        Thread.sleep(WAIT_TIME_SHORT);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PACKAGE_NOTIFICATION_PREFERENCES_FIELD_NUMBER);
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.show_notification");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<PackageNotificationPreferences> allPreferences = new ArrayList<>();
-        for (Atom atom : getGaugeMetricDataList()){
-            if(atom.hasPackageNotificationPreferences()) {
+        for (Atom atom : getGaugeMetricDataList()) {
+            if (atom.hasPackageNotificationPreferences()) {
                 allPreferences.add(atom.getPackageNotificationPreferences());
             }
         }
         assertThat(allPreferences.size()).isGreaterThan(0);
 
         boolean foundTestPackagePreferences = false;
-        int uid = getUid();
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         for (PackageNotificationPreferences pref : allPreferences) {
             assertThat(pref.getUid()).isGreaterThan(0);
             assertTrue(pref.hasImportance());
             assertTrue(pref.hasVisibility());
             assertTrue(pref.hasUserLockedFields());
-            if(pref.getUid() == uid){
+            if (pref.getUid() == uid) {
                 assertThat(pref.getImportance()).isEqualTo(-1000);  //UNSPECIFIED_IMPORTANCE
                 assertThat(pref.getVisibility()).isEqualTo(-1000);  //UNSPECIFIED_VISIBILITY
                 foundTestPackagePreferences = true;
