@@ -452,7 +452,7 @@ public class WindowInsetsBehaviorTests {
 
         int count = 0;
 
-        for (int i = theToppestLine; i < theBottomestLine; i += mDensityPerCm) {
+        for (int i = theToppestLine; i < theBottomestLine; i += mDensityPerCm * 2) {
             if (callback != null) {
                 callback.accept(new Point(theLeftestLine, i),
                         new Point(viewBoundary.centerX(), i));
@@ -477,7 +477,7 @@ public class WindowInsetsBehaviorTests {
         final int theBottomestLine = viewBoundary.bottom - 1;
 
         int count = 0;
-        for (int i = theToppestLine; i < theBottomestLine; i += mDensityPerCm) {
+        for (int i = theToppestLine; i < theBottomestLine; i += mDensityPerCm * 2) {
             if (callback != null) {
                 callback.accept(new Point(theRightestLine, i),
                         new Point(viewBoundary.centerX(), i));
@@ -511,7 +511,7 @@ public class WindowInsetsBehaviorTests {
         final int theRightestLine = viewBoundary.right - 1;
 
         int count = 0;
-        for (int i = theLeftestLine; i < theRightestLine; i += mDensityPerCm) {
+        for (int i = theLeftestLine; i < theRightestLine; i += mDensityPerCm * 2) {
             if (callback != null) {
                 callback.accept(new Point(i, theToppestLine),
                         new Point(i, viewBoundary.centerY()));
@@ -536,7 +536,7 @@ public class WindowInsetsBehaviorTests {
         final int theBottomestLine = viewBoundary.bottom - 1;
 
         int count = 0;
-        for (int i = theLeftestLine; i < theRightestLine; i += mDensityPerCm) {
+        for (int i = theLeftestLine; i < theRightestLine; i += mDensityPerCm * 2) {
             if (callback != null) {
                 callback.accept(new Point(i, theBottomestLine),
                         new Point(i, viewBoundary.centerY()));
@@ -588,7 +588,7 @@ public class WindowInsetsBehaviorTests {
         }
 
         int nextTop = rect.top;
-        while (nextTop >= rect.bottom) {
+        while (nextTop < rect.bottom) {
             final int top = nextTop;
             int bottom = top + exclusionHeightLimit;
             if (bottom > rect.bottom) {
@@ -597,7 +597,7 @@ public class WindowInsetsBehaviorTests {
 
             bounds.add(new Rect(rect.left, top, rect.right, bottom));
 
-            nextTop += bottom;
+            nextTop = bottom;
         }
 
         return bounds;
