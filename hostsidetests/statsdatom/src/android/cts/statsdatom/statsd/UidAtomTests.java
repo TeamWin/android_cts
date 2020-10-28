@@ -1727,21 +1727,23 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testIntegrityCheckAtomReportedDuringInstall() throws Exception {
-        createAndUploadConfig(AtomsProto.Atom.INTEGRITY_CHECK_RESULT_REPORTED_FIELD_NUMBER);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.INTEGRITY_CHECK_RESULT_REPORTED_FIELD_NUMBER);
 
-        getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
-        installTestApp();
+        DeviceUtils.uninstallStatsdTestApp(getDevice());
+        DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
 
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertThat(data.size()).isEqualTo(1);
         assertThat(data.get(0).getAtom().hasIntegrityCheckResultReported()).isTrue();
         IntegrityCheckResultReported result = data.get(0)
                 .getAtom().getIntegrityCheckResultReported();
-        assertThat(result.getPackageName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+        assertThat(result.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         // we do not assert on certificates since it seem to differ by device.
         assertThat(result.getInstallerPackageName()).isEqualTo("adb");
-        assertThat(result.getVersionCode()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE_VERSION);
+        long testPackageVersion = 10;
+        assertThat(result.getVersionCode()).isEqualTo(testPackageVersion);
         assertThat(result.getResponse()).isEqualTo(ALLOWED);
         assertThat(result.getCausedByAppCertRule()).isFalse();
         assertThat(result.getCausedByInstallerRule()).isFalse();
