@@ -58,6 +58,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.Process
 import android.platform.test.annotations.AppModeFull
 import android.provider.ContactsContract
 import android.telephony.TelephonyManager
@@ -89,8 +90,11 @@ class AppOpsLoggingTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
 
-    private val myUid = android.os.Process.myUid()
+    private val myUid = Process.myUid()
+    private val myUserHandle = Process.myUserHandle()
     private val myPackage = context.packageName
+
+    private var wasLocationEnabled = false
 
     private lateinit var testService: IAppOpsUserService
     private lateinit var serviceConnection: ServiceConnection
@@ -99,6 +103,23 @@ class AppOpsLoggingTest {
     private val noted = mutableListOf<Pair<SyncNotedAppOp, Array<StackTraceElement>>>()
     private val selfNoted = mutableListOf<Pair<SyncNotedAppOp, Array<StackTraceElement>>>()
     private val asyncNoted = mutableListOf<AsyncNotedAppOp>()
+
+    @Before
+    fun setLocationEnabled() {
+        val locationManager = context.getSystemService(LocationManager::class.java)
+        runWithShellPermissionIdentity {
+            wasLocationEnabled = locationManager.isLocationEnabled
+            locationManager.setLocationEnabledForUser(true, myUserHandle)
+        }
+    }
+
+    @After
+    fun restoreLocationEnabled() {
+        val locationManager = context.getSystemService(LocationManager::class.java)
+        runWithShellPermissionIdentity {
+            locationManager.setLocationEnabledForUser(wasLocationEnabled, myUserHandle)
+        }
+    }
 
     @Before
     fun loadNativeCode() {
@@ -704,7 +725,7 @@ class AppOpsLoggingTest {
         private val handler = Handler(Looper.getMainLooper())
         private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
 
-        private val myUid = android.os.Process.myUid()
+        private val myUid = Process.myUid()
         private val myPackage = context.packageName
 
         override fun noteSyncOp() {
