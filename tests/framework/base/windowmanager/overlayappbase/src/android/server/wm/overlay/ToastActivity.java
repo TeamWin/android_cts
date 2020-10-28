@@ -19,11 +19,14 @@ package android.server.wm.overlay;
 import static android.server.wm.overlay.ActionReceiver.BACKGROUND_COLOR;
 
 import android.app.Activity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Toast;
 
 public class ToastActivity extends Activity {
+    private static final String TAG = "ToastActivity";
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -38,8 +41,10 @@ public class ToastActivity extends Activity {
             toast.setView(view);
             toast.setGravity(Gravity.FILL, 0, 0);
             toast.setDuration(Toast.LENGTH_LONG);
+            Log.d(TAG, "Posting custom toast");
         } else {
             toast = Toast.makeText(this, "Toast window", Toast.LENGTH_LONG);
+            Log.d(TAG, "Posting text toast");
         }
         toast.show();
         finish();
