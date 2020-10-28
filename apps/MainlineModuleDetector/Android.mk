@@ -29,6 +29,6 @@ LOCAL_PACKAGE_NAME := MainlineModuleDetector
 
 LOCAL_SDK_VERSION := current
 
-LOCAL_COMPATIBILITY_SUITE := cts sts
+LOCAL_COMPATIBILITY_SUITE := cts general-tests sts
 
 include $(BUILD_CTS_PACKAGE)

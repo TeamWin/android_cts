@@ -26,6 +26,7 @@ java_test_host {
     ],
     test_suites: [
         "cts",
+        "general-tests",
     ],
     data: [
         ":IncrementalTestAppDynamicAsset",
