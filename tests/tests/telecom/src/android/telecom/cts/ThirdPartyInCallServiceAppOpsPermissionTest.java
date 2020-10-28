@@ -63,6 +63,9 @@ public class ThirdPartyInCallServiceAppOpsPermissionTest extends BaseTelecomTest
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        if (!mShouldTestTelecom) {
+            return;
+        }
         mContext = getInstrumentation().getContext();
         mAppOpsManager = mContext.getSystemService(AppOpsManager.class);
         mPackageManager = mContext.getPackageManager();
@@ -83,6 +86,9 @@ public class ThirdPartyInCallServiceAppOpsPermissionTest extends BaseTelecomTest
     }
 
     public void testWithoutAppOpsPermission() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         setInCallServiceAppOpsPermission(false);
         int previousCallCount = mICtsThirdPartyInCallServiceControl.getLocalCallCount();
         addAndVerifyNewIncomingCall(TEST_URI, null);
@@ -93,6 +99,9 @@ public class ThirdPartyInCallServiceAppOpsPermissionTest extends BaseTelecomTest
     }
 
     public void testWithAppOpsPermission() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         // Grant App Ops Permission
         setInCallServiceAppOpsPermission(true);
 
