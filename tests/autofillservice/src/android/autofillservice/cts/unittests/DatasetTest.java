@@ -21,9 +21,15 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertThrows;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+
 import android.app.slice.Slice;
 import android.app.slice.SliceSpec;
+import android.content.ClipData;
+import android.content.IntentSender;
 import android.net.Uri;
+import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.Dataset;
 import android.service.autofill.InlinePresentation;
@@ -45,6 +51,7 @@ import java.util.regex.Pattern;
 public class DatasetTest {
 
     private final AutofillId mId = new AutofillId(42);
+    private final AutofillId mId2 = new AutofillId(43);
     private final AutofillValue mValue = AutofillValue.forText("ValuableLikeGold");
     private final Pattern mFilter = Pattern.compile("whatever");
     private final InlinePresentation mInlinePresentation = new InlinePresentation(
@@ -52,6 +59,9 @@ public class DatasetTest {
                     new SliceSpec("DatasetTest", 1)).build(),
             new InlinePresentationSpec.Builder(new Size(10, 10),
                     new Size(50, 50)).build(), /* pinned= */ false);
+    private final ClipData mContent = new ClipData("sample label", new String[] {"image/png"},
+            new ClipData.Item("content://example/0"));
+    private final IntentSender mAuth = mock(IntentSender.class);
 
     private final RemoteViews mPresentation = mock(RemoteViews.class);
 
@@ -176,6 +186,98 @@ public class DatasetTest {
     }
 
     @Test
+    public void testBuilder_setValue() {
+        Dataset.Builder builder = new Dataset.Builder().setValue(mId, mValue);
+        Dataset dataset = builder.build();
+        assertThat(dataset.getFieldIds()).isEqualTo(singletonList(mId));
+        assertThat(dataset.getFieldValues()).isEqualTo(singletonList(mValue));
+    }
+
+    @Test
+    public void testBuilder_setValueForMultipleFields() {
+        Dataset.Builder builder = new Dataset.Builder()
+                .setValue(mId, mValue)
+                .setValue(mId2, mValue);
+        Dataset dataset = builder.build();
+        assertThat(dataset.getFieldIds()).isEqualTo(asList(mId, mId2));
+        assertThat(dataset.getFieldValues()).isEqualTo(asList(mValue, mValue));
+    }
+
+    @Test
+    public void testBuilder_setValueAcceptsNullValue() {
+        // It's valid to pass null value, e.g. when wanting to trigger the auth flow.
+        Dataset.Builder builder = new Dataset.Builder().setValue(mId, null);
+        Dataset dataset = builder.build();
+        assertThat(dataset.getFieldIds()).isEqualTo(singletonList(mId));
+        assertThat(dataset.getFieldValues()).isEqualTo(singletonList(null));
+    }
+
+    @Test
+    public void testBuilder_setValueWithAuthentication() {
+        Dataset.Builder builder = new Dataset.Builder()
+                .setValue(mId, mValue)
+                .setAuthentication(mAuth);
+        Dataset dataset = builder.build();
+        assertThat(dataset.getFieldIds()).isEqualTo(singletonList(mId));
+        assertThat(dataset.getFieldValues()).isEqualTo(singletonList(mValue));
+        assertThat(dataset.getAuthentication()).isEqualTo(mAuth);
+    }
+
+    @Test
+    public void testBuilder_setContent() {
+        Dataset.Builder builder = new Dataset.Builder().setContent(mId, mContent);
+        Dataset dataset = builder.build();
+        assertThat(dataset.getFieldIds()).isEqualTo(singletonList(mId));
+        assertThat(dataset.getFieldContent()).isEqualTo(mContent);
+        assertThat(dataset.getFieldValues()).isEqualTo(singletonList(null));
+    }
+
+    @Test
+    public void testBuilder_setContentAcceptsNullContent() {
+        // It's valid to pass null content, e.g. when wanting to trigger the auth flow.
+        Dataset.Builder builder = new Dataset.Builder().setContent(mId, null);
+        Dataset dataset = builder.build();
+        assertThat(dataset.getFieldIds()).isEqualTo(singletonList(mId));
+        assertThat(dataset.getFieldContent()).isNull();
+        assertThat(dataset.getFieldValues()).isEqualTo(singletonList(null));
+    }
+
+    @Test
+    public void testBuilder_setContentWithAuthentication() {
+        Dataset.Builder builder = new Dataset.Builder()
+                .setContent(mId, mContent)
+                .setAuthentication(mAuth);
+        Dataset dataset = builder.build();
+        assertThat(dataset.getFieldIds()).isEqualTo(singletonList(mId));
+        assertThat(dataset.getFieldContent()).isEqualTo(mContent);
+        assertThat(dataset.getAuthentication()).isEqualTo(mAuth);
+        assertThat(dataset.getFieldValues()).isEqualTo(singletonList(null));
+    }
+
+    @Test
+    public void testBuilder_settingBothContentAndValuesIsNotAllowed() {
+        // Setting both content and value for the same field is not allowed.
+        Dataset.Builder builder = new Dataset.Builder();
+        builder.setContent(mId, mContent);
+        builder.setValue(mId, mValue);
+        assertThrows(IllegalStateException.class, builder::build);
+
+        // Setting both content and value, even if for different fields, is not allowed.
+        builder = new Dataset.Builder();
+        builder.setContent(mId, mContent);
+        builder.setValue(mId2, mValue);
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Test
+    public void testBuilder_settingContentForMultipleFieldsIsNotAllowed() {
+        Dataset.Builder builder = new Dataset.Builder();
+        builder.setContent(mId, mContent);
+        builder.setContent(mId2, mContent);
+        assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Test
     public void testBuild_noValues() {
         final Dataset.Builder builder = new Dataset.Builder();
         assertThrows(IllegalStateException.class, () -> builder.build());
@@ -203,5 +305,41 @@ public class DatasetTest {
         assertThrows(IllegalStateException.class,
                 () -> builder.setFieldInlinePresentation(mId, mValue, mFilter,
                         mInlinePresentation));
+        assertThrows(IllegalStateException.class, () -> builder.setContent(mId, mContent));
+    }
+
+    @Test
+    public void testWriteToParcel_values() throws Exception {
+        Dataset dataset = new Dataset.Builder(mInlinePresentation)
+                .setValue(mId, mValue)
+                .setValue(mId2, mValue)
+                .setId("test-dataset-id")
+                .build();
+        Parcel parcel = Parcel.obtain();
+        dataset.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        Dataset result = Dataset.CREATOR.createFromParcel(parcel);
+        assertThat(result.getId()).isEqualTo(dataset.getId());
+        assertThat(result.getFieldIds()).isEqualTo(asList(mId, mId2));
+        assertThat(result.getFieldValues()).isEqualTo(asList(mValue, mValue));
+        assertThat(result.getFieldContent()).isNull();
+    }
+
+    @Test
+    public void testWriteToParcel_content() throws Exception {
+        Dataset dataset = new Dataset.Builder(mInlinePresentation)
+                .setContent(mId, mContent)
+                .setId("test-dataset-id")
+                .build();
+        Parcel parcel = Parcel.obtain();
+        dataset.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        Dataset result = Dataset.CREATOR.createFromParcel(parcel);
+        assertThat(result.getId()).isEqualTo(dataset.getId());
+        assertThat(result.getFieldIds()).isEqualTo(singletonList(mId));
+        assertThat(result.getFieldContent().getItemCount()).isEqualTo(mContent.getItemCount());
+        assertThat(dataset.getFieldValues()).isEqualTo(singletonList(null));
     }
 }
