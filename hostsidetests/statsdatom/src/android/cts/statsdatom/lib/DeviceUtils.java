@@ -341,6 +341,19 @@ public final class DeviceUtils {
         return device.executeShellCommand("getprop " + prop).replace("\n", "");
     }
 
+    public static boolean checkDeviceFor(ITestDevice device, String methodName) throws Exception {
+        try {
+            runDeviceTestsOnStatsdApp(device, ".Checkers", methodName);
+            // Test passes, meaning that the answer is true.
+            LogUtil.CLog.d(methodName + "() indicates true.");
+            return true;
+        } catch (AssertionError e) {
+            // Method is designed to fail if the answer is false.
+            LogUtil.CLog.d(methodName + "() indicates false.");
+            return false;
+        }
+    }
+
     /**
      * Runs a (background) service to perform the given action.
      * @param actionValue the action code constants indicating the desired action to perform.
