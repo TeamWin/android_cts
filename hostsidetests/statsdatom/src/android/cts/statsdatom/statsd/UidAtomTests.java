@@ -1847,35 +1847,40 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 */
     public void testPushedBlobStoreStats() throws Exception {
-        StatsdConfig.Builder conf = createConfigBuilder();
-        addAtomEvent(conf, Atom.BLOB_COMMITTED_FIELD_NUMBER, false);
-        addAtomEvent(conf, Atom.BLOB_LEASED_FIELD_NUMBER, false);
-        addAtomEvent(conf, Atom.BLOB_OPENED_FIELD_NUMBER, false);
-        uploadConfig(conf);
+        StatsdConfig.Builder conf = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(conf,
+                Atom.BLOB_COMMITTED_FIELD_NUMBER, /*useUidAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(conf,
+                Atom.BLOB_LEASED_FIELD_NUMBER, /*useUidAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(conf,
+                Atom.BLOB_OPENED_FIELD_NUMBER, /*useUidAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), conf);
 
-        Thread.sleep(WAIT_TIME_SHORT);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBlobStore");
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testBlobStore");
-
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).hasSize(3);
 
         BlobCommitted blobCommitted = data.get(0).getAtom().getBlobCommitted();
         final long blobId = blobCommitted.getBlobId();
         final long blobSize = blobCommitted.getSize();
-        assertThat(blobCommitted.getUid()).isEqualTo(getUid());
+        assertThat(blobCommitted.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(blobId).isNotEqualTo(0);
         assertThat(blobSize).isNotEqualTo(0);
         assertThat(blobCommitted.getResult()).isEqualTo(BlobCommitted.Result.SUCCESS);
 
         BlobLeased blobLeased = data.get(1).getAtom().getBlobLeased();
-        assertThat(blobLeased.getUid()).isEqualTo(getUid());
+        assertThat(blobLeased.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(blobLeased.getBlobId()).isEqualTo(blobId);
         assertThat(blobLeased.getSize()).isEqualTo(blobSize);
         assertThat(blobLeased.getResult()).isEqualTo(BlobLeased.Result.SUCCESS);
 
         BlobOpened blobOpened = data.get(2).getAtom().getBlobOpened();
-        assertThat(blobOpened.getUid()).isEqualTo(getUid());
+        assertThat(blobOpened.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(blobOpened.getBlobId()).isEqualTo(blobId);
         assertThat(blobOpened.getSize()).isEqualTo(blobSize);
         assertThat(blobOpened.getResult()).isEqualTo(BlobOpened.Result.SUCCESS);
