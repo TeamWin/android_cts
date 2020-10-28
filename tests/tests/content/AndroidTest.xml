@@ -35,6 +35,10 @@
         <option name="cleanup" value="true" />
         <option name="push" value="CtsContentTestCases.apk->/data/local/tmp/cts/content/CtsContentTestCases.apk" />
         <option name="push" value="CtsContentEmptyTestApp.apk->/data/local/tmp/cts/content/CtsContentEmptyTestApp.apk" />
+        <option name="push" value="CtsContentLongPackageNameTestApp.apk->/data/local/tmp/cts/content/CtsContentLongPackageNameTestApp.apk" />
+        <option name="push" value="CtsContentLongSharedUserIdTestApp.apk->/data/local/tmp/cts/content/CtsContentLongSharedUserIdTestApp.apk" />
+        <option name="push" value="CtsContentMaxPackageNameTestApp.apk->/data/local/tmp/cts/content/CtsContentMaxPackageNameTestApp.apk" />
+        <option name="push" value="CtsContentMaxSharedUserIdTestApp.apk->/data/local/tmp/cts/content/CtsContentMaxSharedUserIdTestApp.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">

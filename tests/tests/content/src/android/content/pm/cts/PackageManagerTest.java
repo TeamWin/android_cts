@@ -83,6 +83,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -139,10 +140,31 @@ public class PackageManagerTest {
             MATCH_DISABLED_COMPONENTS, MATCH_SYSTEM_ONLY, MATCH_FACTORY_ONLY, MATCH_INSTANT,
             MATCH_APEX, MATCH_HIDDEN_UNTIL_INSTALLED_COMPONENTS};
 
+    private static final String SAMPLE_APK_BASE = "/data/local/tmp/cts/content/";
+    private static final String LONG_PACKAGE_NAME_APK = SAMPLE_APK_BASE
+            + "CtsContentLongPackageNameTestApp.apk";
+    private static final String LONG_SHARED_USER_ID_APK = SAMPLE_APK_BASE
+            + "CtsContentLongSharedUserIdTestApp.apk";
+    private static final String MAX_PACKAGE_NAME_APK = SAMPLE_APK_BASE
+            + "CtsContentMaxPackageNameTestApp.apk";
+    private static final String MAX_SHARED_USER_ID_APK = SAMPLE_APK_BASE
+            + "CtsContentMaxSharedUserIdTestApp.apk";
+    private static final String EMPTY_APP_PACKAGE_NAME = "android.content.cts.emptytestapp";
+    private static final String EMPTY_APP_MAX_PACKAGE_NAME = "android.content.cts.emptytestapp27j"
+            + "EBRNRG3ozwBsGr1sVIM9U0bVTI2TdyIyeRkZgW4JrJefwNIBAmCg4AzqXiCvG6JjqA0uTCWSFu2YqAVxVd"
+            + "iRKAay19k5VFlSaM7QW9uhvlrLQqsTW01ofFzxNDbp2QfIFHZR6rebKzKBz6byQFM0DYQnYMwFWXjWkMPN"
+            + "dqkRLykoFLyBup53G68k2n8w";
+
     @Before
     public void setup() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mPackageManager = mContext.getPackageManager();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        uninstallPackage(EMPTY_APP_PACKAGE_NAME);
+        uninstallPackage(EMPTY_APP_MAX_PACKAGE_NAME);
     }
 
     @Test
@@ -1254,5 +1276,33 @@ public class PackageManagerTest {
             }
             foundPackages.add(pi.packageName);
         }
+    }
+
+    @Test
+    public void testInstall_withLongPackageName_fail() {
+        assertThat(installPackage(LONG_PACKAGE_NAME_APK)).isFalse();
+    }
+
+    @Test
+    public void testInstall_withLongSharedUserId_fail() {
+        assertThat(installPackage(LONG_SHARED_USER_ID_APK)).isFalse();
+    }
+
+    @Test
+    public void testInstall_withMaxPackageName_success() {
+        assertThat(installPackage(MAX_PACKAGE_NAME_APK)).isTrue();
+    }
+
+    @Test
+    public void testInstall_withMaxSharedUserId_success() {
+        assertThat(installPackage(MAX_SHARED_USER_ID_APK)).isTrue();
+    }
+
+    private boolean installPackage(String apkPath) {
+        return SystemUtil.runShellCommand("pm install -t " + apkPath).equals("Success\n");
+    }
+
+    private void uninstallPackage(String packageName) {
+        SystemUtil.runShellCommand("pm uninstall " + packageName);
     }
 }
