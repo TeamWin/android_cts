@@ -1671,33 +1671,34 @@ public class UidAtomTests extends DeviceAtomTestCase {
         final String encoded = "ChpzY3JlZW5fYXV0b19icmlnaHRuZXNzX2FkagoKZm9udF9zY2FsZQ";
         final String font_scale = "font_scale";
         SettingSnapshot snapshot = null;
+        final float originalFontScale = Float.parseFloat(
+                getDevice().executeShellCommand("settings get system font_scale"));
 
         // Set whitelist through device config.
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         getDevice().executeShellCommand(
                 "device_config put settings_stats SystemFeature__float_whitelist " + encoded);
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Set font_scale value
         getDevice().executeShellCommand("settings put system font_scale 1.5");
 
         // Get SettingSnapshot as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.SETTING_SNAPSHOT_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.SETTING_SNAPSHOT_FIELD_NUMBER);
 
         // Start test app and trigger a pull while it is running.
-        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "StatsdCtsForegroundActivity", "action",
                 "action.show_notification")) {
-            Thread.sleep(WAIT_TIME_SHORT);
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
             // Trigger a pull and wait for new pull before killing the process.
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
         // Test the size of atoms. It should contain at least "font_scale" and
         // "screen_auto_brightness_adj" two setting values.
-        List<Atom> atoms = getGaugeMetricDataList();
+        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
         assertThat(atoms.size()).isAtLeast(2);
         for (Atom atom : atoms) {
             SettingSnapshot settingSnapshot = atom.getSettingSnapshot();
@@ -1707,19 +1708,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
             }
         }
 
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Test the data of atom.
         assertNotNull(snapshot);
         // Get font_scale value and test value type.
-        final float fontScale = Float.parseFloat(
+        final float newFontScale = Float.parseFloat(
                 getDevice().executeShellCommand("settings get system font_scale"));
         assertThat(snapshot.getType()).isEqualTo(
                 SettingSnapshot.SettingsValueType.ASSIGNED_FLOAT_TYPE);
         assertThat(snapshot.getBoolValue()).isEqualTo(false);
         assertThat(snapshot.getIntValue()).isEqualTo(0);
-        assertThat(snapshot.getFloatValue()).isEqualTo(fontScale);
+        assertThat(snapshot.getFloatValue()).isEqualTo(newFontScale);
         assertThat(snapshot.getStrValue()).isEqualTo("");
         assertThat(snapshot.getUserId()).isEqualTo(0);
+
+        // Restore the font value.
+        getDevice().executeShellCommand("settings put system font_scale " + originalFontScale);
     }
 
     public void testIntegrityCheckAtomReportedDuringInstall() throws Exception {
