@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.zip.CRC32;
 
 @MediaHeavyPresubmitTest
@@ -874,7 +875,9 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
         boolean mDoChecksum;
         boolean mQueuedEos;
         ArrayList<Long> mTimeStamps;
-        ArrayList<String> mWarnings;
+        // We might add items when iterating mWarnings.
+        // Use CopyOnWrieArrayList to avoid ConcurrentModificationException.
+        CopyOnWriteArrayList<String> mWarnings;
         Vector<Long> mRenderedTimeStamps; // using Vector as it is implicitly synchronized
         long mLastRenderNanoTime;
         int mFramesNotifiedRendered;
@@ -891,7 +894,7 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
             mDoChecksum = false;
             mQueuedEos = false;
             mTimeStamps = new ArrayList<Long>();
-            mWarnings = new ArrayList<String>();
+            mWarnings = new CopyOnWriteArrayList<String>();
             mRenderedTimeStamps = new Vector<Long>();
             mLastRenderNanoTime = System.nanoTime();
             mFramesNotifiedRendered = 0;
