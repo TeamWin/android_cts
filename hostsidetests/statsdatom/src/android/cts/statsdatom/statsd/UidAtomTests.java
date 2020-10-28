@@ -1299,19 +1299,18 @@ public class UidAtomTests extends DeviceAtomTestCase {
     /** Returns IonHeapSize atoms pulled as a simple gauge metric while test app is running. */
     private List<Atom> pullIonHeapSizeAsGaugeMetric() throws Exception {
         // Get IonHeapSize as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.ION_HEAP_SIZE_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.ION_HEAP_SIZE_FIELD_NUMBER);
 
         // Start test app and trigger a pull while it is running.
-        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "StatsdCtsForegroundActivity", "action",
                 "action.show_notification")) {
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
-        return getGaugeMetricDataList();
+        return ReportUtils.getGaugeMetricAtoms(getDevice());
     }
 
     private static void assertIonHeapSize(List<Atom> atoms) {
