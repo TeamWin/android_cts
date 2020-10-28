@@ -34,7 +34,7 @@ public class NintendoSwitchProTest extends InputHidTestCase {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         super.setUp();
         /**
          * During probe, hid-nintendo sends commands to the joystick and waits for some of those
