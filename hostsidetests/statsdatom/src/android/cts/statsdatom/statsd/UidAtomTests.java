@@ -1745,22 +1745,26 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testNotificationReported() throws Exception {
-        StatsdConfig.Builder config = getPulledConfig();
-        addAtomEvent(config, Atom.NOTIFICATION_REPORTED_FIELD_NUMBER,
-            Arrays.asList(createFvm(NotificationReported.PACKAGE_NAME_FIELD_NUMBER)
-                              .setEqString(DEVICE_SIDE_TEST_PACKAGE)));
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
-        runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification");
-        Thread.sleep(WAIT_TIME_SHORT);
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        FieldValueMatcher.Builder fvm = ConfigUtils.createFvm(
+                NotificationReported.PACKAGE_NAME_FIELD_NUMBER).setEqString(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetric(config, Atom.NOTIFICATION_REPORTED_FIELD_NUMBER,
+                Collections.singletonList(fvm));
+        ConfigUtils.uploadConfig(getDevice(), config);
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.show_notification");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).hasSize(1);
         assertThat(data.get(0).getAtom().hasNotificationReported()).isTrue();
         AtomsProto.NotificationReported n = data.get(0).getAtom().getNotificationReported();
-        assertThat(n.getPackageName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
-        assertThat(n.getUid()).isEqualTo(getUid());
+        assertThat(n.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        assertThat(n.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(n.getNotificationIdHash()).isEqualTo(1);  // smallHash(0x7f080001)
         assertThat(n.getChannelIdHash()).isEqualTo(SmallHash.hash("StatsdCtsChannel"));
         assertThat(n.getGroupIdHash()).isEqualTo(0);
