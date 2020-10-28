@@ -21,7 +21,7 @@ import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
-import static android.server.wm.overlay.Components.TestCompanionService.ACTION_OVERLAY;
+import static android.server.wm.overlay.Components.TestCompanionService.ACTION_SHOW_SYSTEM_ALERT_WINDOW;
 import static android.server.wm.overlay.Components.TestCompanionService.EXTRA_NAME;
 import static android.server.wm.overlay.Components.TestCompanionService.EXTRA_OPACITY;
 
@@ -45,7 +45,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.hardware.input.InputManager;
 import android.os.Bundle;
-import android.os.ConditionVariable;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
@@ -54,6 +53,7 @@ import android.provider.Settings;
 import android.server.wm.overlay.Components;
 import android.util.ArrayMap;
 import android.util.ArraySet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -82,6 +82,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Presubmit
 public class WindowUntrustedTouchTest {
+    private static final String TAG = "WindowUntrustedTouchTest";
+
     /**
      * Opacity (or alpha) is represented as a half-precision floating point number (16b) in surface
      * flinger and the conversion from the single-precision float provided to window manager happens
@@ -567,36 +569,24 @@ public class WindowUntrustedTouchTest {
 
     @Test
     public void testWhenSelfTextToastWindow_allowsTouch() throws Throwable {
-        try {
-            addToastOverlay(APP_SELF, /* custom */ false);
-            Rect toast = mWmState.waitForResult("toast bounds",
-                    state -> state.findFirstWindowWithType(
-                            LayoutParams.TYPE_TOAST).getContentFrame());
+        addToastOverlay(APP_SELF, /* custom */ false);
+        Rect toast = mWmState.waitForResult("toast bounds",
+                state -> state.findFirstWindowWithType(LayoutParams.TYPE_TOAST).getContentFrame());
 
-            mTouchHelper.tapOnCenter(toast, mActivity.getDisplayId());
+        mTouchHelper.tapOnCenter(toast, mActivity.getDisplayId());
 
-            assertTouchReceived();
-        } finally {
-            // TODO: Cancel the toast instead of waiting (force-stop doesn't remove text toasts)
-            waitForNoToastOverlays();
-        }
+        assertTouchReceived();
     }
 
     @Test
     public void testWhenTextToastWindow_allowsTouch() throws Throwable {
-        try {
-            addToastOverlay(APP_A, /* custom */ false);
-            Rect toast = mWmState.waitForResult("toast bounds",
-                    state -> state.findFirstWindowWithType(
-                            LayoutParams.TYPE_TOAST).getContentFrame());
+        addToastOverlay(APP_A, /* custom */ false);
+        Rect toast = mWmState.waitForResult("toast bounds",
+                state -> state.findFirstWindowWithType(LayoutParams.TYPE_TOAST).getContentFrame());
 
-            mTouchHelper.tapOnCenter(toast, mActivity.getDisplayId());
+        mTouchHelper.tapOnCenter(toast, mActivity.getDisplayId());
 
-            assertTouchReceived();
-        } finally {
-            // TODO: Cancel the toast instead of waiting (force-stop doesn't remove text toasts)
-            waitForNoToastOverlays();
-        }
+        assertTouchReceived();
     }
 
     @Test
@@ -679,25 +669,36 @@ public class WindowUntrustedTouchTest {
         assertThat(mTouchesReceived.get()).isEqualTo(0);
     }
 
-    private void addToastOverlay(String packageName, boolean custom) {
+    private void addToastOverlay(String packageName, boolean custom) throws Exception {
+        // Making sure there are no toasts currently since we can only check for the presence of
+        // *any* toast afterwards and we don't want to be in a situation where this method returned
+        // because another toast was being displayed.
+        waitForNoToastOverlays();
         if (packageName.equals(APP_SELF)) {
             addMyToastOverlay(custom);
         } else {
-            // We have to use an activity that will display the toast then finish itself because
-            // custom toasts cannot be posted from the background.
-            Intent intent = new Intent();
-            intent.setComponent(repackage(packageName, Components.ToastActivity.COMPONENT));
-            intent.putExtra(Components.ToastActivity.EXTRA_CUSTOM, custom);
-            mActivity.startActivity(intent);
+            if (custom) {
+                // We have to use an activity that will display the toast then finish itself because
+                // custom toasts cannot be posted from the background.
+                Intent intent = new Intent();
+                intent.setComponent(repackage(packageName, Components.ToastActivity.COMPONENT));
+                mActivity.startActivity(intent);
+            } else {
+                sendMessage(packageName, Components.TestCompanionService.ACTION_SHOW_TOAST);
+            }
         }
         String message = "Toast from app " + packageName + " did not appear on time";
         // TODO: WindowStateProto does not have package/UID information from the window, the current
         //  package test relies on the window name, which is not how toast windows are named. We
         //  should ideally incorporate that information in WindowStateProto and use here.
-        if (!mWmState.waitFor("toast window",
-                state -> !state.getMatchingWindowType(LayoutParams.TYPE_TOAST).isEmpty())) {
+        if (!mWmState.waitFor("toast window", this::hasVisibleToast)) {
             fail(message);
         }
+    }
+
+    private boolean hasVisibleToast(WindowManagerState state) {
+        return !state.getMatchingWindowType(LayoutParams.TYPE_TOAST).isEmpty()
+                && state.findFirstWindowWithType(LayoutParams.TYPE_TOAST).isSurfaceShown();
     }
 
     private void addMyToastOverlay(boolean custom) {
@@ -785,7 +786,7 @@ public class WindowUntrustedTouchTest {
             Bundle data = new Bundle();
             data.putString(EXTRA_NAME, name);
             data.putFloat(EXTRA_OPACITY, opacity);
-            sendMessage(packageName, ACTION_OVERLAY, data);
+            sendMessage(packageName, ACTION_SHOW_SYSTEM_ALERT_WINDOW, data);
         }
         mSawWindowsAdded.add(name);
         String message = "Window " + name + " did not appear on time";
@@ -869,6 +870,10 @@ public class WindowUntrustedTouchTest {
         return new ComponentName(packageName, baseComponent.getClassName());
     }
 
+    private void sendMessage(String packageName, int action) throws Exception {
+        sendMessage(packageName, action, /* data */ null);
+    }
+
     private void sendMessage(String packageName, int action, Bundle data) throws Exception {
         Message message = Message.obtain(null, action);
         message.setData(data);
@@ -921,13 +926,16 @@ public class WindowUntrustedTouchTest {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            future.complete(service);
+            if (future.isDone()) {
+                Log.d(TAG, name.flattenToShortString() + " reconnected");
+            }
+            future.obtrudeValue(service);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            // The helper app died, fail test early
-            throw new AssertionError(name + " disconnected");
+            // The helper app died, windows will be removed and assertions will fail, so just log.
+            Log.e(TAG, name.flattenToShortString() + " disconnected");
         }
     }
 }
