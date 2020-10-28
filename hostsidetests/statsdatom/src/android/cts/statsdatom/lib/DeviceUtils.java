@@ -321,6 +321,10 @@ public final class DeviceUtils {
         device.executeShellCommand("cmd battery unplug");
     }
 
+    public static void plugInAc(ITestDevice device) throws Exception {
+        device.executeShellCommand("cmd battery set ac 1");
+    }
+
     public static boolean hasBattery(ITestDevice device) throws Exception {
         try {
             BatteryServiceDumpProto batteryProto = getShellCommandOutput(device, BatteryServiceDumpProto.parser(),
