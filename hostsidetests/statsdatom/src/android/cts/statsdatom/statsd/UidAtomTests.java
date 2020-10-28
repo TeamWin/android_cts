@@ -1488,16 +1488,15 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testAppOps() throws Exception {
         // Set up what to collect
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.APP_OPS_FIELD_NUMBER, null);
-        uploadConfig(config);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.APP_OPS_FIELD_NUMBER);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testAppOps");
-        Thread.sleep(WAIT_TIME_SHORT);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testAppOps");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Pull a report
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         ArrayList<Integer> expectedOps = new ArrayList<>();
         for (int i = 0; i < NUM_APP_OPS; i++) {
@@ -1511,10 +1510,10 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 expectedOps.remove(expectedOps.indexOf(valueDescriptor.getNumber()));
             }
         }
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
 
             AppOps appOps = atom.getAppOps();
-            if (appOps.getPackageName().equals(TEST_PACKAGE_NAME)) {
+            if (appOps.getPackageName().equals(DeviceUtils.STATSD_ATOM_TEST_PKG)) {
                 if (appOps.getOpId().getNumber() == -1) {
                     continue;
                 }
