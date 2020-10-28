@@ -1413,43 +1413,38 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testDangerousPermissionStateSampled() throws Exception {
         // get full atom for reference
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER);
 
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<DangerousPermissionState> fullDangerousPermissionState = new ArrayList<>();
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             fullDangerousPermissionState.add(atom.getDangerousPermissionState());
         }
 
-        removeConfig(CONFIG_ID);
-        getReportList(); // Clears data.
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice()); // Clears data.
         List<Atom> gaugeMetricDataList = null;
 
         // retries in case sampling returns full list or empty list - which should be extremely rare
         for (int attempt = 0; attempt < 10; attempt++) {
             // Set up what to collect
-            config = createConfigBuilder();
-            addGaugeAtomWithDimensions(config, Atom.DANGEROUS_PERMISSION_STATE_SAMPLED_FIELD_NUMBER,
-                    null);
-            uploadConfig(config);
-            Thread.sleep(WAIT_TIME_SHORT);
+            ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                    Atom.DANGEROUS_PERMISSION_STATE_SAMPLED_FIELD_NUMBER);
 
             // Pull a report
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_SHORT);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
-            gaugeMetricDataList = getGaugeMetricDataList();
+            gaugeMetricDataList = ReportUtils.getGaugeMetricAtoms(getDevice());
             if (gaugeMetricDataList.size() > 0
                     && gaugeMetricDataList.size() < fullDangerousPermissionState.size()) {
                 break;
             }
-            removeConfig(CONFIG_ID);
-            getReportList(); // Clears data.
+            ConfigUtils.removeConfig(getDevice());
+            ReportUtils.clearReports(getDevice()); // Clears data.
         }
         assertThat(gaugeMetricDataList.size()).isGreaterThan(0);
         assertThat(gaugeMetricDataList.size()).isLessThan(fullDangerousPermissionState.size());
