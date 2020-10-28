@@ -134,6 +134,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     private static final int STATSD_REPORT_WAIT_TIME_MS = 500; // make sure statsd finishes log.
 
     private static final String FEATURE_AUDIO_OUTPUT = "android.hardware.audio.output";
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final String FEATURE_CAMERA = "android.hardware.camera";
     private static final String FEATURE_CAMERA_FLASH = "android.hardware.camera.flash";
     private static final String FEATURE_CAMERA_FRONT = "android.hardware.camera.front";
@@ -143,6 +144,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     private static final String FEATURE_PICTURE_IN_PICTURE = "android.software.picture_in_picture";
     private static final String FEATURE_INCREMENTAL_DELIVERY =
             "android.software.incremental_delivery";
+    private static final String FEATURE_WIFI = "android.hardware.wifi";
 
     @Override
     protected void setUp() throws Exception {
@@ -837,17 +839,18 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(wakelockOn, wakelockOff);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testWakelockState");
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWakelockState");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
-            atom -> atom.getWakelockStateChanged().getState().getNumber());
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+                atom -> atom.getWakelockStateChanged().getState().getNumber());
 
-        for (EventMetricData event: data) {
+        for (EventMetricData event : data) {
             String tag = event.getAtom().getWakelockStateChanged().getTag();
             WakeLockLevelEnum type = event.getAtom().getWakelockStateChanged().getType();
             assertThat(tag).isEqualTo(EXPECTED_TAG);
@@ -858,24 +861,25 @@ public class UidAtomTests extends DeviceAtomTestCase {
     public void testWakeupAlarm() throws Exception {
         // For automotive, all wakeup alarm becomes normal alarm. So this
         // test does not work.
-        if (!hasFeature(FEATURE_AUTOMOTIVE, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
         final int atomTag = Atom.WAKEUP_ALARM_OCCURRED_FIELD_NUMBER;
 
-        StatsdConfig.Builder config = createConfigBuilder();
-        addAtomEvent(config, atomTag, true);  // True: uses attribution.
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWakeupAlarm");
 
-        List<EventMetricData> data = doDeviceMethod("testWakeupAlarm", config);
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isAtLeast(1);
         for (int i = 0; i < data.size(); i++) {
             WakeupAlarmOccurred wao = data.get(i).getAtom().getWakeupAlarmOccurred();
-            assertThat(wao.getTag()).isEqualTo("*walarm*:android.cts.statsd.testWakeupAlarm");
-            assertThat(wao.getPackageName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+            assertThat(wao.getTag()).isEqualTo("*walarm*:android.cts.statsdatom.testWakeupAlarm");
+            assertThat(wao.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         }
     }
 
     public void testWifiLockHighPerf() throws Exception {
-        if (!hasFeature(FEATURE_WIFI, true)) return;
-        if (!hasFeature(FEATURE_PC, false)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_PC)) return;
 
         final int atomTag = Atom.WIFI_LOCK_STATE_CHANGED_FIELD_NUMBER;
         Set<Integer> lockOn = new HashSet<>(Arrays.asList(WifiLockStateChanged.State.ON_VALUE));
@@ -884,25 +888,26 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(lockOn, lockOff);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testWifiLockHighPerf");
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiLockHighPerf");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getWifiLockStateChanged().getState().getNumber());
 
         for (EventMetricData event : data) {
             assertThat(event.getAtom().getWifiLockStateChanged().getMode())
-                .isEqualTo(WifiModeEnum.WIFI_MODE_FULL_HIGH_PERF);
+                    .isEqualTo(WifiModeEnum.WIFI_MODE_FULL_HIGH_PERF);
         }
     }
 
     public void testWifiLockLowLatency() throws Exception {
-        if (!hasFeature(FEATURE_WIFI, true)) return;
-        if (!hasFeature(FEATURE_PC, false)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_PC)) return;
 
         final int atomTag = Atom.WIFI_LOCK_STATE_CHANGED_FIELD_NUMBER;
         Set<Integer> lockOn = new HashSet<>(Arrays.asList(WifiLockStateChanged.State.ON_VALUE));
@@ -911,25 +916,26 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(lockOn, lockOff);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testWifiLockLowLatency");
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiLockLowLatency");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getWifiLockStateChanged().getState().getNumber());
 
         for (EventMetricData event : data) {
             assertThat(event.getAtom().getWifiLockStateChanged().getMode())
-                .isEqualTo(WifiModeEnum.WIFI_MODE_FULL_LOW_LATENCY);
+                    .isEqualTo(WifiModeEnum.WIFI_MODE_FULL_LOW_LATENCY);
         }
     }
 
     public void testWifiMulticastLock() throws Exception {
-        if (!hasFeature(FEATURE_WIFI, true)) return;
-        if (!hasFeature(FEATURE_PC, false)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_PC)) return;
 
         final int atomTag = Atom.WIFI_MULTICAST_LOCK_STATE_CHANGED_FIELD_NUMBER;
         Set<Integer> lockOn = new HashSet<>(
@@ -942,37 +948,41 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(lockOn, lockOff);
 
-        createAndUploadConfig(atomTag, true);
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testWifiMulticastLock");
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiMulticastLock");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getWifiMulticastLockStateChanged().getState().getNumber());
 
-        for (EventMetricData event: data) {
+        for (EventMetricData event : data) {
             String tag = event.getAtom().getWifiMulticastLockStateChanged().getTag();
             assertThat(tag).isEqualTo(EXPECTED_TAG);
         }
     }
 
     public void testWifiScan() throws Exception {
-        if (!hasFeature(FEATURE_WIFI, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
 
         final int atom = Atom.WIFI_SCAN_STATE_CHANGED_FIELD_NUMBER;
-        final int key = WifiScanStateChanged.STATE_FIELD_NUMBER;
         final int stateOn = WifiScanStateChanged.State.ON_VALUE;
         final int stateOff = WifiScanStateChanged.State.OFF_VALUE;
         final int minTimeDiffMillis = 250;
         final int maxTimeDiffMillis = 60_000;
-        final boolean demandExactlyTwo = false; // Two scans are performed, so up to 4 atoms logged.
 
-        List<EventMetricData> data = doDeviceMethodOnOff("testWifiScan", atom, key,
-                stateOn, stateOff, minTimeDiffMillis, maxTimeDiffMillis, demandExactlyTwo);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atom, /*useAttributionChain=*/ true);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiScan");
+        Thread.sleep(WAIT_TIME_SHORT);
 
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isIn(Range.closed(2, 4));
+        AtomTestUtils.assertTimeDiffBetween(data.get(0), data.get(1), minTimeDiffMillis,
+                maxTimeDiffMillis);
         WifiScanStateChanged a0 = data.get(0).getAtom().getWifiScanStateChanged();
         WifiScanStateChanged a1 = data.get(1).getAtom().getWifiScanStateChanged();
         assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
