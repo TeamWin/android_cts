@@ -24,7 +24,7 @@ import android.net.Uri;
  * Provider for the sync test.
  */
 public class StatsdProvider extends ContentProvider {
-    public static final String AUTHORITY = "com.android.server.cts.device.statsd.provider";
+    public static final String AUTHORITY = "com.android.server.cts.device.statsdatom.provider";
 
     @Override
     public boolean onCreate() {
