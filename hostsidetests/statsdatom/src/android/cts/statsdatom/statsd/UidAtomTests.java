@@ -1560,14 +1560,14 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testWriteRawTestAtom() throws Exception {
         final int atomTag = Atom.TEST_ATOM_REPORTED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag, true);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testWriteRawTestAtom");
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWriteRawTestAtom");
 
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).hasSize(4);
 
         TestAtomReported atom = data.get(0).getAtom().getTestAtomReported();
@@ -1575,7 +1575,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(attrChain).hasSize(2);
         assertThat(attrChain.get(0).getUid()).isEqualTo(1234);
         assertThat(attrChain.get(0).getTag()).isEqualTo("tag1");
-        assertThat(attrChain.get(1).getUid()).isEqualTo(getUid());
+        assertThat(attrChain.get(1).getUid()).isEqualTo(
+                DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(attrChain.get(1).getTag()).isEqualTo("tag2");
 
         assertThat(atom.getIntField()).isEqualTo(42);
@@ -1585,7 +1586,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(atom.getBooleanField()).isFalse();
         assertThat(atom.getState().getNumber()).isEqualTo(TestAtomReported.State.ON_VALUE);
         assertThat(atom.getBytesField().getExperimentIdList())
-            .containsExactly(1L, 2L, 3L).inOrder();
+                .containsExactly(1L, 2L, 3L).inOrder();
 
 
         atom = data.get(1).getAtom().getTestAtomReported();
@@ -1593,7 +1594,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(attrChain).hasSize(2);
         assertThat(attrChain.get(0).getUid()).isEqualTo(9999);
         assertThat(attrChain.get(0).getTag()).isEqualTo("tag9999");
-        assertThat(attrChain.get(1).getUid()).isEqualTo(getUid());
+        assertThat(attrChain.get(1).getUid()).isEqualTo(
+                DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(attrChain.get(1).getTag()).isEmpty();
 
         assertThat(atom.getIntField()).isEqualTo(100);
@@ -1603,12 +1605,13 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(atom.getBooleanField()).isTrue();
         assertThat(atom.getState().getNumber()).isEqualTo(TestAtomReported.State.UNKNOWN_VALUE);
         assertThat(atom.getBytesField().getExperimentIdList())
-            .containsExactly(1L, 2L, 3L).inOrder();
+                .containsExactly(1L, 2L, 3L).inOrder();
 
         atom = data.get(2).getAtom().getTestAtomReported();
         attrChain = atom.getAttributionNodeList();
         assertThat(attrChain).hasSize(1);
-        assertThat(attrChain.get(0).getUid()).isEqualTo(getUid());
+        assertThat(attrChain.get(0).getUid()).isEqualTo(
+                DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(attrChain.get(0).getTag()).isEqualTo("tag1");
 
         assertThat(atom.getIntField()).isEqualTo(-256);
@@ -1618,12 +1621,13 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(atom.getBooleanField()).isTrue();
         assertThat(atom.getState().getNumber()).isEqualTo(TestAtomReported.State.OFF_VALUE);
         assertThat(atom.getBytesField().getExperimentIdList())
-            .containsExactly(1L, 2L, 3L).inOrder();
+                .containsExactly(1L, 2L, 3L).inOrder();
 
         atom = data.get(3).getAtom().getTestAtomReported();
         attrChain = atom.getAttributionNodeList();
         assertThat(attrChain).hasSize(1);
-        assertThat(attrChain.get(0).getUid()).isEqualTo(getUid());
+        assertThat(attrChain.get(0).getUid()).isEqualTo(
+                DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(attrChain.get(0).getTag()).isEmpty();
 
         assertThat(atom.getIntField()).isEqualTo(0);
