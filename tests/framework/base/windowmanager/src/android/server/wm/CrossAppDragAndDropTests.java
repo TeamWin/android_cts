@@ -47,7 +47,7 @@ import org.junit.Test;
  *     atest CtsWindowManagerDeviceTestCases:CrossAppDragAndDropTests
  */
 @Presubmit
-@AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_STACKS")
+@AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_TASKS")
 public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     private static final String TAG = "CrossAppDragAndDrop";
 
