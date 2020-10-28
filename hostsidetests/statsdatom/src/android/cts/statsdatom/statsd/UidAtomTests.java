@@ -1533,28 +1533,29 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testANROccurred() throws Exception {
         final int atomTag = Atom.ANR_OCCURRED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag, false);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/false);
 
-        try (AutoCloseable a = withActivity("ANRActivity", null, null)) {
-            Thread.sleep(WAIT_TIME_SHORT);
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "ANRActivity", null, null)) {
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
             getDevice().executeShellCommand(
-                    "am broadcast -a action_anr -p " + DEVICE_SIDE_TEST_PACKAGE);
+                    "am broadcast -a action_anr -p " + DeviceUtils.STATSD_ATOM_TEST_PKG);
             Thread.sleep(20_000);
         }
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertThat(data).hasSize(1);
         assertThat(data.get(0).getAtom().hasAnrOccurred()).isTrue();
         ANROccurred atom = data.get(0).getAtom().getAnrOccurred();
         assertThat(atom.getIsInstantApp().getNumber())
-            .isEqualTo(ANROccurred.InstantApp.FALSE_VALUE);
+                .isEqualTo(ANROccurred.InstantApp.FALSE_VALUE);
         assertThat(atom.getForegroundState().getNumber())
-            .isEqualTo(ANROccurred.ForegroundState.FOREGROUND_VALUE);
+                .isEqualTo(ANROccurred.ForegroundState.FOREGROUND_VALUE);
         assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
-        assertThat(atom.getPackageName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+        assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
     }
 
     public void testWriteRawTestAtom() throws Exception {
