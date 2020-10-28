@@ -1336,32 +1336,31 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Make device side test package a role holder
         String callScreenAppRole = "android.app.role.CALL_SCREENING";
         getDevice().executeShellCommand(
-                "cmd role add-role-holder " + callScreenAppRole + " " + DEVICE_SIDE_TEST_PACKAGE);
+                "cmd role add-role-holder " + callScreenAppRole + " "
+                        + DeviceUtils.STATSD_ATOM_TEST_PKG);
 
         // Set up what to collect
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.ROLE_HOLDER_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.ROLE_HOLDER_FIELD_NUMBER);
 
         boolean verifiedKnowRoleState = false;
 
         // Pull a report
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
-        int testAppId = getAppId(getUid());
+        int testAppId = getAppId(DeviceUtils.getStatsdTestAppUid(getDevice()));
 
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             AtomsProto.RoleHolder roleHolder = atom.getRoleHolder();
 
             assertThat(roleHolder.getPackageName()).isNotNull();
             assertThat(roleHolder.getUid()).isAtLeast(0);
             assertThat(roleHolder.getRole()).isNotNull();
 
-            if (roleHolder.getPackageName().equals(DEVICE_SIDE_TEST_PACKAGE)) {
+            if (roleHolder.getPackageName().equals(DeviceUtils.STATSD_ATOM_TEST_PKG)) {
                 assertThat(getAppId(roleHolder.getUid())).isEqualTo(testAppId);
-                assertThat(roleHolder.getPackageName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+                assertThat(roleHolder.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
                 assertThat(roleHolder.getRole()).isEqualTo(callScreenAppRole);
 
                 verifiedKnowRoleState = true;
