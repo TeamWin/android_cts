@@ -234,6 +234,9 @@ public abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFi
         Helper.resetApplicationAutofillOptions(sContext);
 
         tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest();
+
+        // Clear AutofillOptions.
+        Helper.clearApplicationAutofillOptions(sContext);
     }
 
     protected abstract void tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest()
