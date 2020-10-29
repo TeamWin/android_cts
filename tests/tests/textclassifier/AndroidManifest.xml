@@ -30,7 +30,7 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".TextViewActivity"/>
+        <activity android:name=".TextViewActivity" android:theme="@style/NoAnimation"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
