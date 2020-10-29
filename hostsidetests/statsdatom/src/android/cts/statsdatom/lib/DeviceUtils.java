@@ -321,6 +321,10 @@ public final class DeviceUtils {
         device.executeShellCommand("cmd battery unplug");
     }
 
+    public static void plugInAc(ITestDevice device) throws Exception {
+        device.executeShellCommand("cmd battery set ac 1");
+    }
+
     public static boolean hasBattery(ITestDevice device) throws Exception {
         try {
             BatteryServiceDumpProto batteryProto = getShellCommandOutput(device, BatteryServiceDumpProto.parser(),
@@ -339,6 +343,19 @@ public final class DeviceUtils {
 
     public static String getProperty(ITestDevice device, String prop) throws Exception {
         return device.executeShellCommand("getprop " + prop).replace("\n", "");
+    }
+
+    public static boolean checkDeviceFor(ITestDevice device, String methodName) throws Exception {
+        try {
+            runDeviceTestsOnStatsdApp(device, ".Checkers", methodName);
+            // Test passes, meaning that the answer is true.
+            LogUtil.CLog.d(methodName + "() indicates true.");
+            return true;
+        } catch (AssertionError e) {
+            // Method is designed to fail if the answer is false.
+            LogUtil.CLog.d(methodName + "() indicates false.");
+            return false;
+        }
     }
 
     /**

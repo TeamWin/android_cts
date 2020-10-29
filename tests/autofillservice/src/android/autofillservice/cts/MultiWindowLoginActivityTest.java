@@ -48,7 +48,7 @@ import org.junit.rules.TestRule;
 
 import java.util.concurrent.TimeoutException;
 
-@AppModeFull(reason = "This test requires android.permission.MANAGE_ACTIVITY_STACKS")
+@AppModeFull(reason = "This test requires android.permission.MANAGE_ACTIVITY_TASKS")
 public class MultiWindowLoginActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<MultiWindowLoginActivity> {
 

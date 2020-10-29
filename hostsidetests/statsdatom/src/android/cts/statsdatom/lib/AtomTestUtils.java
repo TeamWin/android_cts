@@ -128,5 +128,51 @@ public final class AtomTestUtils {
                 .that(timestampNs % fiveMinutesInNs).isEqualTo(0);
     }
 
+    /**
+     * Removes all elements from data prior to the first occurrence of an element of state. After
+     * this method is called, the first element of data (if non-empty) is guaranteed to be an
+     * element in state.
+     *
+     * @param getStateFromAtom expression that takes in an Atom and returns the state it contains
+     */
+    public static void popUntilFind(List<StatsLog.EventMetricData> data, Set<Integer> state,
+            Function<AtomsProto.Atom, Integer> getStateFromAtom) {
+        int firstStateIdx;
+        for (firstStateIdx = 0; firstStateIdx < data.size(); firstStateIdx++) {
+            AtomsProto.Atom atom = data.get(firstStateIdx).getAtom();
+            if (state.contains(getStateFromAtom.apply(atom))) {
+                break;
+            }
+        }
+        if (firstStateIdx == 0) {
+            // First first element already is in state, so there's nothing to do.
+            return;
+        }
+        data.subList(0, firstStateIdx).clear();
+    }
+
+    /**
+     * Removes all elements from data after the last occurrence of an element of state. After this
+     * method is called, the last element of data (if non-empty) is guaranteed to be an element in
+     * state.
+     *
+     * @param getStateFromAtom expression that takes in an Atom and returns the state it contains
+     */
+    public static void popUntilFindFromEnd(List<StatsLog.EventMetricData> data, Set<Integer> state,
+            Function<AtomsProto.Atom, Integer> getStateFromAtom) {
+        int lastStateIdx;
+        for (lastStateIdx = data.size() - 1; lastStateIdx >= 0; lastStateIdx--) {
+            AtomsProto.Atom atom = data.get(lastStateIdx).getAtom();
+            if (state.contains(getStateFromAtom.apply(atom))) {
+                break;
+            }
+        }
+        if (lastStateIdx == data.size() - 1) {
+            // Last element already is in state, so there's nothing to do.
+            return;
+        }
+        data.subList(lastStateIdx + 1, data.size()).clear();
+    }
+
     private AtomTestUtils() {}
 }

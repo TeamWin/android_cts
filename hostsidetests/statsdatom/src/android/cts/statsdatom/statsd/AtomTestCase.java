@@ -890,16 +890,6 @@ public class AtomTestCase extends BaseTestCase {
         getDevice().executeShellCommand("dumpsys binder_calls_stats --no-sampling");
     }
 
-    protected void setUpLooperStats() throws Exception {
-        getDevice().executeShellCommand("cmd looper_stats enable");
-        getDevice().executeShellCommand("cmd looper_stats sampling_interval 1");
-        getDevice().executeShellCommand("cmd looper_stats reset");
-    }
-
-    protected void cleanUpLooperStats() throws Exception {
-        getDevice().executeShellCommand("cmd looper_stats disable");
-    }
-
     public void setAppBreadcrumbPredicate() throws Exception {
         doAppBreadcrumbReportedStart(1);
     }
@@ -929,15 +919,6 @@ public class AtomTestCase extends BaseTestCase {
         getDevice().executeShellCommand("cmd battery set level " + level);
     }
 
-    protected int getScreenBrightness() throws Exception {
-        return Integer.parseInt(
-                getDevice().executeShellCommand("settings get system screen_brightness").trim());
-    }
-
-    protected void setScreenBrightness(int brightness) throws Exception {
-        getDevice().executeShellCommand("settings put system screen_brightness " + brightness);
-    }
-
     // Gets whether "Always on Display" setting is enabled.
     // In rare cases, this is different from whether the device can enter SCREEN_STATE_DOZE.
     protected String getAodState() throws Exception {
@@ -946,16 +927,6 @@ public class AtomTestCase extends BaseTestCase {
 
     protected void setAodState(String state) throws Exception {
         getDevice().executeShellCommand("settings put secure doze_always_on " + state);
-    }
-
-    protected boolean isScreenBrightnessModeManual() throws Exception {
-        String mode = getDevice().executeShellCommand("settings get system screen_brightness_mode");
-        return Integer.parseInt(mode.trim()) == 0;
-    }
-
-    protected void setScreenBrightnessMode(boolean manual) throws Exception {
-        getDevice().executeShellCommand(
-                "settings put system screen_brightness_mode " + (manual ? 0 : 1));
     }
 
     protected void enterDozeModeLight() throws Exception {

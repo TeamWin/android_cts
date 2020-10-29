@@ -22,6 +22,7 @@ public final class HdmiCecConstants {
 
     public static final String PHYSICAL_ADDRESS_NAME = "cec-phy-addr";
     public static final int REBOOT_TIMEOUT = 60000;
+    public static final int TIMEOUT_CEC_REINIT_SECONDS = 5;
 
     public static final int DEFAULT_PHYSICAL_ADDRESS = 0x1000;
     public static final int TV_PHYSICAL_ADDRESS = 0x0000;
@@ -55,6 +56,10 @@ public final class HdmiCecConstants {
     public static final int ABORT_INVALID_OPERAND = 3;
     public static final int ABORT_REFUSED = 4;
     public static final int ABORT_UNABLE_TO_DETERMINE = 5;
+
+    // CEC versions
+    public static final int CEC_VERSION_1_4 = 0x05;
+    public static final int CEC_VERSION_2_0 = 0x06;
 
     // CEC Device feature list
     public static final String HDMI_CEC_FEATURE = "feature:android.hardware.hdmi.cec";

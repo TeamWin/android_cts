@@ -36,7 +36,7 @@ public class StatsdAuthenticator extends Service {
     private static final String TAG = "AtomTestsAuthenticator";
 
     private static final String ACCOUNT_NAME = "StatsdCts";
-    private static final String ACCOUNT_TYPE = "com.android.cts.statsd";
+    private static final String ACCOUNT_TYPE = "com.android.cts.statsdatom";
     private static Authenticator sInstance;
 
     @Override

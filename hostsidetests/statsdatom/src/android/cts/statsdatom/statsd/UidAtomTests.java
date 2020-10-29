@@ -706,7 +706,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testScheduledJobState() throws Exception {
-        String expectedName = "com.android.server.cts.device.statsd/.StatsdJobService";
+        String expectedName = "com.android.server.cts.device.statsdatom/.StatsdJobService";
         final int atomTag = Atom.SCHEDULED_JOB_STATE_CHANGED_FIELD_NUMBER;
         Set<Integer> jobSchedule = new HashSet<>(
                 Arrays.asList(ScheduledJobStateChanged.State.SCHEDULED_VALUE));
@@ -718,19 +718,20 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(jobSchedule, jobOn, jobOff);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
         allowImmediateSyncs();
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testScheduledJob");
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testScheduledJob");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
-        assertStatesOccurred(stateSet, data, 0,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
                 atom -> atom.getScheduledJobStateChanged().getState().getNumber());
 
         for (EventMetricData e : data) {
             assertThat(e.getAtom().getScheduledJobStateChanged().getJobName())
-                .isEqualTo(expectedName);
+                    .isEqualTo(expectedName);
         }
     }
 
@@ -740,7 +741,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         boolean isInitialManual = isScreenBrightnessModeManual();
         setScreenBrightnessMode(true);
         setScreenBrightness(200);
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         final int atomTag = Atom.SCREEN_BRIGHTNESS_CHANGED_FIELD_NUMBER;
 
@@ -752,23 +753,26 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(screenMin, screen100, screen200);
 
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testScreenBrightness");
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testScreenBrightness");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Restore initial screen brightness
         setScreenBrightness(initialBrightness);
         setScreenBrightnessMode(isInitialManual);
 
-        popUntilFind(data, screenMin, atom->atom.getScreenBrightnessChanged().getLevel());
-        popUntilFindFromEnd(data, screen200, atom->atom.getScreenBrightnessChanged().getLevel());
+        AtomTestUtils.popUntilFind(data, screenMin,
+                atom -> atom.getScreenBrightnessChanged().getLevel());
+        AtomTestUtils.popUntilFindFromEnd(data, screen200,
+                atom -> atom.getScreenBrightnessChanged().getLevel());
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
-            atom -> atom.getScreenBrightnessChanged().getLevel());
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
+                atom -> atom.getScreenBrightnessChanged().getLevel());
     }
+
     public void testSyncState() throws Exception {
         final int atomTag = Atom.SYNC_STATE_CHANGED_FIELD_NUMBER;
         Set<Integer> syncOn = new HashSet<>(Arrays.asList(SyncStateChanged.State.ON_VALUE));
@@ -777,21 +781,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(syncOn, syncOff, syncOn, syncOff);
 
-        createAndUploadConfig(atomTag, true);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
         allowImmediateSyncs();
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testSyncState");
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSyncState");
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data,
-            /* wait = */ 0 /* don't verify time differences between state changes */,
-            atom -> atom.getSyncStateChanged().getState().getNumber());
+        AtomTestUtils.assertStatesOccurred(stateSet, data,
+                /* wait = */ 0 /* don't verify time differences between state changes */,
+                atom -> atom.getSyncStateChanged().getState().getNumber());
     }
 
     public void testVibratorState() throws Exception {
-        if (!checkDeviceFor("checkVibratorSupported")) return;
+        if (!DeviceUtils.checkDeviceFor(getDevice(), "checkVibratorSupported")) return;
 
         final int atomTag = Atom.VIBRATOR_STATE_CHANGED_FIELD_NUMBER;
         final String name = "testVibratorState";
@@ -804,16 +809,16 @@ public class UidAtomTests extends DeviceAtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(onState, offState);
 
-        createAndUploadConfig(atomTag, true);  // True: uses attribution.
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag, /*useUidAttributionChain=*/true);
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", name);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", name);
 
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
-        assertStatesOccurred(stateSet, data, 300,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 300,
                 atom -> atom.getVibratorStateChanged().getState().getNumber());
     }
 
@@ -976,22 +981,22 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     public void testLooperStats() throws Exception {
         try {
-            unplugDevice();
+            DeviceUtils.unplugDevice(getDevice());
             setUpLooperStats();
-            StatsdConfig.Builder config = createConfigBuilder();
-            addGaugeAtomWithDimensions(config, Atom.LOOPER_STATS_FIELD_NUMBER, null);
-            uploadConfig(config);
-            Thread.sleep(WAIT_TIME_SHORT);
 
-            runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification", 3_000);
+            ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                    Atom.LOOPER_STATS_FIELD_NUMBER);
 
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_SHORT);
+            DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                    "StatsdCtsForegroundActivity", "action", "action.show_notification", 3_000);
 
-            List<Atom> atomList = getGaugeMetricDataList();
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+
+            List<Atom> atomList = ReportUtils.getGaugeMetricAtoms(getDevice());
 
             boolean found = false;
-            int uid = getUid();
+            int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
             for (Atom atom : atomList) {
                 LooperStats stats = atom.getLooperStats();
                 String notificationServiceFullName =
@@ -1007,43 +1012,42 @@ public class UidAtomTests extends DeviceAtomTestCase {
                     assertThat(stats.getMessageCount()).isGreaterThan(0L);
                     assertThat(stats.getRecordedMessageCount()).isGreaterThan(0L);
                     assertThat(stats.getRecordedTotalLatencyMicros())
-                        .isIn(Range.open(0L, 1000000L));
+                            .isIn(Range.open(0L, 1000000L));
                     assertThat(stats.getRecordedTotalCpuMicros()).isIn(Range.open(0L, 1000000L));
                     assertThat(stats.getRecordedMaxLatencyMicros()).isIn(Range.open(0L, 1000000L));
                     assertThat(stats.getRecordedMaxCpuMicros()).isIn(Range.open(0L, 1000000L));
                     assertThat(stats.getRecordedDelayMessageCount()).isGreaterThan(0L);
                     assertThat(stats.getRecordedTotalDelayMillis())
-                        .isIn(Range.closedOpen(0L, 5000L));
+                            .isIn(Range.closedOpen(0L, 5000L));
                     assertThat(stats.getRecordedMaxDelayMillis()).isIn(Range.closedOpen(0L, 5000L));
                 }
             }
             assertWithMessage(String.format("Did not find a matching atom for uid %d", uid))
-                .that(found).isTrue();
+                    .that(found).isTrue();
         } finally {
             cleanUpLooperStats();
-            plugInAc();
+            DeviceUtils.plugInAc(getDevice());
         }
     }
 
     public void testProcessMemoryState() throws Exception {
         // Get ProcessMemoryState as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.PROCESS_MEMORY_STATE_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PROCESS_MEMORY_STATE_FIELD_NUMBER);
 
         // Start test app.
-        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "StatsdCtsForegroundActivity", "action",
                 "action.show_notification")) {
-            Thread.sleep(WAIT_TIME_LONG);
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
             // Trigger a pull and wait for new pull before killing the process.
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
         // Assert about ProcessMemoryState for the test app.
         List<Atom> atoms = getGaugeMetricDataList();
-        int uid = getUid();
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         boolean found = false;
         for (Atom atom : atoms) {
             ProcessMemoryState state = atom.getProcessMemoryState();
@@ -1051,7 +1055,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 continue;
             }
             found = true;
-            assertThat(state.getProcessName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+            assertThat(state.getProcessName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
             assertThat(state.getOomAdjScore()).isAtLeast(0);
             assertThat(state.getPageFault()).isAtLeast(0L);
             assertThat(state.getPageMajorFault()).isAtLeast(0L);
@@ -1060,28 +1064,27 @@ public class UidAtomTests extends DeviceAtomTestCase {
             assertThat(state.getSwapInBytes()).isAtLeast(0L);
         }
         assertWithMessage(String.format("Did not find a matching atom for uid %d", uid))
-            .that(found).isTrue();
+                .that(found).isTrue();
     }
 
     public void testProcessMemoryHighWaterMark() throws Exception {
         // Get ProcessMemoryHighWaterMark as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.PROCESS_MEMORY_HIGH_WATER_MARK_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PROCESS_MEMORY_HIGH_WATER_MARK_FIELD_NUMBER);
 
         // Start test app and trigger a pull while it is running.
-        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "StatsdCtsForegroundActivity", "action",
                 "action.show_notification")) {
-            Thread.sleep(WAIT_TIME_SHORT);
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
             // Trigger a pull and wait for new pull before killing the process.
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
         // Assert about ProcessMemoryHighWaterMark for the test app, statsd and system server.
-        List<Atom> atoms = getGaugeMetricDataList();
-        int uid = getUid();
+        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         boolean foundTestApp = false;
         boolean foundStatsd = false;
         boolean foundSystemServer = false;
@@ -1089,7 +1092,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             ProcessMemoryHighWaterMark state = atom.getProcessMemoryHighWaterMark();
             if (state.getUid() == uid) {
                 foundTestApp = true;
-                assertThat(state.getProcessName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+                assertThat(state.getProcessName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
                 assertThat(state.getRssHighWaterMarkInBytes()).isGreaterThan(0L);
             } else if (state.getProcessName().contains("/statsd")) {
                 foundStatsd = true;
@@ -1099,57 +1102,56 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 assertThat(state.getRssHighWaterMarkInBytes()).isGreaterThan(0L);
             }
         }
-        assertWithMessage(String.format("Did not find a matching atom for test app uid=%d",uid))
-            .that(foundTestApp).isTrue();
+        assertWithMessage(String.format("Did not find a matching atom for test app uid=%d", uid))
+                .that(foundTestApp).isTrue();
         assertWithMessage("Did not find a matching atom for statsd").that(foundStatsd).isTrue();
         assertWithMessage("Did not find a matching atom for system server")
-            .that(foundSystemServer).isTrue();
+                .that(foundSystemServer).isTrue();
     }
 
     public void testProcessMemorySnapshot() throws Exception {
         // Get ProcessMemorySnapshot as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.PROCESS_MEMORY_SNAPSHOT_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PROCESS_MEMORY_SNAPSHOT_FIELD_NUMBER);
 
         // Start test app and trigger a pull while it is running.
-        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "StatsdCtsForegroundActivity", "action",
                 "action.show_notification")) {
-            Thread.sleep(WAIT_TIME_LONG);
-            setAppBreadcrumbPredicate();
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
         }
 
         // Assert about ProcessMemorySnapshot for the test app, statsd and system server.
-        List<Atom> atoms = getGaugeMetricDataList();
-        int uid = getUid();
+        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         boolean foundTestApp = false;
         boolean foundStatsd = false;
         boolean foundSystemServer = false;
         for (Atom atom : atoms) {
-          ProcessMemorySnapshot snapshot = atom.getProcessMemorySnapshot();
-          if (snapshot.getUid() == uid) {
-              foundTestApp = true;
-              assertThat(snapshot.getProcessName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
-          } else if (snapshot.getProcessName().contains("/statsd")) {
-              foundStatsd = true;
-          } else if (snapshot.getProcessName().equals("system")) {
-              foundSystemServer = true;
-          }
+            ProcessMemorySnapshot snapshot = atom.getProcessMemorySnapshot();
+            if (snapshot.getUid() == uid) {
+                foundTestApp = true;
+                assertThat(snapshot.getProcessName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+            } else if (snapshot.getProcessName().contains("/statsd")) {
+                foundStatsd = true;
+            } else if (snapshot.getProcessName().equals("system")) {
+                foundSystemServer = true;
+            }
 
-          assertThat(snapshot.getPid()).isGreaterThan(0);
-          assertThat(snapshot.getAnonRssAndSwapInKilobytes()).isAtLeast(0);
-          assertThat(snapshot.getAnonRssAndSwapInKilobytes()).isEqualTo(
-                  snapshot.getAnonRssInKilobytes() + snapshot.getSwapInKilobytes());
-          assertThat(snapshot.getRssInKilobytes()).isAtLeast(0);
-          assertThat(snapshot.getAnonRssInKilobytes()).isAtLeast(0);
-          assertThat(snapshot.getSwapInKilobytes()).isAtLeast(0);
+            assertThat(snapshot.getPid()).isGreaterThan(0);
+            assertThat(snapshot.getAnonRssAndSwapInKilobytes()).isAtLeast(0);
+            assertThat(snapshot.getAnonRssAndSwapInKilobytes()).isEqualTo(
+                    snapshot.getAnonRssInKilobytes() + snapshot.getSwapInKilobytes());
+            assertThat(snapshot.getRssInKilobytes()).isAtLeast(0);
+            assertThat(snapshot.getAnonRssInKilobytes()).isAtLeast(0);
+            assertThat(snapshot.getSwapInKilobytes()).isAtLeast(0);
         }
-        assertWithMessage(String.format("Did not find a matching atom for test app uid=%d",uid))
-            .that(foundTestApp).isTrue();
+        assertWithMessage(String.format("Did not find a matching atom for test app uid=%d", uid))
+                .that(foundTestApp).isTrue();
         assertWithMessage("Did not find a matching atom for statsd").that(foundStatsd).isTrue();
         assertWithMessage("Did not find a matching atom for system server")
-            .that(foundSystemServer).isTrue();
+                .that(foundSystemServer).isTrue();
     }
 
     public void testIonHeapSize_optional() throws Exception {
@@ -2021,21 +2023,20 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 AppUsageEventOccurred.EventType.MOVE_TO_BACKGROUND_VALUE));
 
         List<Set<Integer>> stateSet = Arrays.asList(onStates, offStates); // state sets, in order
-        createAndUploadConfig(Atom.APP_USAGE_EVENT_OCCURRED_FIELD_NUMBER, false);
-        Thread.sleep(WAIT_TIME_FOR_CONFIG_UPDATE_MS);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.APP_USAGE_EVENT_OCCURRED_FIELD_NUMBER, /*useUidAttributionChain=*/false);
 
-        getDevice().executeShellCommand(String.format(
-                "am start -n '%s' -e %s %s",
-                "com.android.server.cts.device.statsd/.StatsdCtsForegroundActivity",
-                "action", ACTION_SHOW_APPLICATION_OVERLAY));
-        final int waitTime = EXTRA_WAIT_TIME_MS + 5_000; // Overlay may need to sit there a while.
-        Thread.sleep(waitTime + STATSD_REPORT_WAIT_TIME_MS);
+        // Overlay may need to sit there a while.
+        final int waitTime = 10_500;
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", ACTION_SHOW_APPLICATION_OVERLAY, waitTime);
 
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         Function<Atom, Integer> appUsageStateFunction =
                 atom -> atom.getAppUsageEventOccurred().getEventType().getNumber();
-        popUntilFind(data, onStates, appUsageStateFunction); // clear out initial appusage states.s
-        assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
+        // clear out initial appusage states
+        AtomTestUtils.popUntilFind(data, onStates, appUsageStateFunction);
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
     }
 /*
     public void testAppForceStopUsageEvent() throws Exception {
@@ -2067,6 +2068,17 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
     }
 */
+
+    private void setUpLooperStats() throws Exception {
+        getDevice().executeShellCommand("cmd looper_stats enable");
+        getDevice().executeShellCommand("cmd looper_stats sampling_interval 1");
+        getDevice().executeShellCommand("cmd looper_stats reset");
+    }
+
+    private void cleanUpLooperStats() throws Exception {
+        getDevice().executeShellCommand("cmd looper_stats disable");
+    }
+
     private AtomsProto.PackageInstallerV2Reported installPackageUsingV2AndGetReport(
             String[] apkNames) throws Exception {
         createAndUploadConfig(Atom.PACKAGE_INSTALLER_V2_REPORTED_FIELD_NUMBER);
@@ -2111,4 +2123,30 @@ public class UidAtomTests extends DeviceAtomTestCase {
         final File file = buildHelper.getTestFile(fileName);
         return file.length();
     }
+
+    /** Make the test app standby-active so it can run syncs and jobs immediately. */
+    private void allowImmediateSyncs() throws Exception {
+        getDevice().executeShellCommand("am set-standby-bucket "
+                + DeviceUtils.STATSD_ATOM_TEST_PKG + " active");
+    }
+
+    private int getScreenBrightness() throws Exception {
+        return Integer.parseInt(
+                getDevice().executeShellCommand("settings get system screen_brightness").trim());
+    }
+
+    private boolean isScreenBrightnessModeManual() throws Exception {
+        String mode = getDevice().executeShellCommand("settings get system screen_brightness_mode");
+        return Integer.parseInt(mode.trim()) == 0;
+    }
+
+    private void setScreenBrightnessMode(boolean manual) throws Exception {
+        getDevice().executeShellCommand(
+                "settings put system screen_brightness_mode " + (manual ? 0 : 1));
+    }
+
+    private void setScreenBrightness(int brightness) throws Exception {
+        getDevice().executeShellCommand("settings put system screen_brightness " + brightness);
+    }
+
 }
