@@ -19,6 +19,7 @@ package android.view.textclassifier.cts;
 import static androidx.test.espresso.action.ViewActions.actionWithAssertions;
 
 import android.text.Layout;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -33,10 +34,13 @@ import androidx.test.espresso.action.Tapper;
 
 import org.hamcrest.Matcher;
 
+import java.util.Arrays;
+
 /**
  * Espresso utils to perform actions on a TextView.
  */
 public final class TextViewActions {
+    private static final String TAG = "TextViewActions";
 
     /**
      * Tap on the text at the given character index.
@@ -88,14 +92,15 @@ public final class TextViewActions {
             final int line = layout.getLineForOffset(mIndex);
             final int[] xy = new int[2];
             textView.getLocationOnScreen(xy);
-            return new float[]{
+            float[] coordinates = new float[]{
                     layout.getPrimaryHorizontal(mIndex)
                             + textView.getTotalPaddingLeft()
                             - textView.getScrollX()
                             + xy[0],
                     layout.getLineTop(line) + textView.getTotalPaddingTop() - textView.getScrollY()
-                            + xy[1]
-            };
+                            + xy[1]};
+            Log.d(TAG, "calculateCoordinates: " + Arrays.toString(coordinates));
+            return coordinates;
         }
     }
 
