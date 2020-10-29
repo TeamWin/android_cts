@@ -29,6 +29,7 @@ import android.content.Context;
 import android.location.LocationManager;
 import android.os.UserHandle;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -88,6 +89,15 @@ public class TimeManagerTest {
                         >= TimeZoneCapabilities.CAPABILITY_NOT_APPLICABLE) {
                     assertTrue(timeManager.updateTimeZoneConfiguration(configUpdate));
                     expectedListenerTriggerCount++;
+                    waitForListenerCallbackCount(
+                            expectedListenerTriggerCount, listenerTriggerCount);
+
+                    // Reset the config to what it was when the test started.
+                    TimeZoneConfiguration resetConfigUpdate = new TimeZoneConfiguration.Builder()
+                            .setAutoDetectionEnabled(!newAutoDetectionEnabledValue)
+                            .build();
+                    assertTrue(timeManager.updateTimeZoneConfiguration(resetConfigUpdate));
+                    expectedListenerTriggerCount++;
                 } else {
                     assertFalse(timeManager.updateTimeZoneConfiguration(configUpdate));
                 }
@@ -105,16 +115,18 @@ public class TimeManagerTest {
                         >= TimeZoneCapabilities.CAPABILITY_NOT_APPLICABLE) {
                     assertTrue(timeManager.updateTimeZoneConfiguration(configUpdate));
                     expectedListenerTriggerCount++;
+                    waitForListenerCallbackCount(
+                            expectedListenerTriggerCount, listenerTriggerCount);
+
+                    // Reset the config to what it was when the test started.
+                    TimeZoneConfiguration resetConfigUpdate = new TimeZoneConfiguration.Builder()
+                            .setGeoDetectionEnabled(!newGeoDetectionEnabledValue)
+                            .build();
+                    assertTrue(timeManager.updateTimeZoneConfiguration(resetConfigUpdate));
+                    expectedListenerTriggerCount++;
                 } else {
                     assertFalse(timeManager.updateTimeZoneConfiguration(configUpdate));
                 }
-            }
-            waitForListenerCallbackCount(expectedListenerTriggerCount, listenerTriggerCount);
-
-            // Reset the config to what it was when the test started, if needed.
-            if (expectedListenerTriggerCount > 0) {
-                assertTrue(timeManager.updateTimeZoneConfiguration(originalConfig));
-                expectedListenerTriggerCount++;
             }
             waitForListenerCallbackCount(expectedListenerTriggerCount, listenerTriggerCount);
         } finally {
@@ -130,6 +142,7 @@ public class TimeManagerTest {
      * Registers a {@link android.app.time.TimeManager.TimeZoneDetectorListener}, makes changes
      * to the "location enabled" setting and checks that the listener is called.
      */
+    @Ignore("http://b/171953500")
     @Test
     public void testLocationManagerAffectsCapabilities() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
