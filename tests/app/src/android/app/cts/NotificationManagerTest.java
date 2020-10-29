@@ -3686,7 +3686,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             if (key.contains(mListener.getPackageName())) {
                 rankingMap.getRanking(key, outRanking);
                 assertTrue(outRanking.isConversation());
-                assertEquals(SHARE_SHORTCUT_ID, outRanking.getShortcutInfo().getId());
+                assertEquals(SHARE_SHORTCUT_ID, outRanking.getConversationShortcutInfo().getId());
             }
         }
     }
