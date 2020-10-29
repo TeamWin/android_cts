@@ -44,6 +44,12 @@ public class ImsUtils {
     // Id for compressed auto configuration xml.
     public static final int ITEM_COMPRESSED = 2001;
 
+    public static boolean shouldTestTelephony() {
+        final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+    }
+
     public static boolean shouldTestImsService() {
         final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
                 .getPackageManager();

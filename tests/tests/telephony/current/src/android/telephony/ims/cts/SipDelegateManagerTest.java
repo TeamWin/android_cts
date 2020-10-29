@@ -93,7 +93,8 @@ public class SipDelegateManagerTest {
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
-        if (!ImsUtils.shouldTestImsService()) {
+        // First, only populate test slot/sub
+        if (!ImsUtils.shouldTestTelephony()) {
             return;
         }
 
@@ -102,6 +103,11 @@ public class SipDelegateManagerTest {
         sTestSub = ImsUtils.getPreferredActiveSubId();
         sTestSlot = SubscriptionManager.getSlotIndex(sTestSub);
         if (tm.getSimState(sTestSlot) != TelephonyManager.SIM_STATE_READY) {
+            return;
+        }
+        // Next, only start tests that require ImsResolver to bind to test ImsService if
+        // feature FEATURE_TELEPHONY_IMS is supported on this device.
+        if (!ImsUtils.shouldTestImsService()) {
             return;
         }
         sServiceConnector = new ImsServiceConnector(InstrumentationRegistry.getInstrumentation());
@@ -117,6 +123,7 @@ public class SipDelegateManagerTest {
 
     @AfterClass
     public static void afterAllTests() throws Exception {
+        // Only clean up ImsResolver overrides if feature FEATURE_TELEPHONY_IMS is supported.
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -139,7 +146,7 @@ public class SipDelegateManagerTest {
 
     @Before
     public void beforeTest() {
-        if (!ImsUtils.shouldTestImsService()) {
+        if (!ImsUtils.shouldTestTelephony()) {
             return;
         }
         TelephonyManager tm = (TelephonyManager) InstrumentationRegistry.getInstrumentation()
@@ -168,20 +175,52 @@ public class SipDelegateManagerTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-        // Unbind the ImsService after the test completes.
+        // Unbind the ImsService after the test completes only if feature FEATURE_TELEPHONY_IMS
+        // is enabled.
         if (sServiceConnector != null) {
             sServiceConnector.disconnectCarrierImsService();
         }
     }
 
     @Test
+    // Note this test can run on devices with only feature FEATURE_TELEPHONY, so ImsResolver may not
+    // be running.
     public void testIncorrectPermissions() throws Exception {
-        SipDelegateManager sipDelegateManager = getSipDelegateManager();
+        if (!ImsUtils.shouldTestTelephony()) {
+            return;
+        }
+        SipDelegateManager manager = getSipDelegateManager();
         try {
-            sipDelegateManager.isSupported();
+            manager.isSupported();
             fail("isSupported requires READ_PRIVILEGED_PHONE_STATE");
         } catch (SecurityException e) {
             //expected
+        }
+    }
+
+    @Test
+    // Note this test can run on devices with only feature FEATURE_TELEPHONY, so ImsResolver may not
+    // be running.
+    public void testFeatureImsNotSupported() throws Exception {
+        if (!ImsUtils.shouldTestTelephony()) {
+            return;
+        }
+        if (ImsUtils.shouldTestImsService()) {
+            // Return if FEATURE_TELEPHONY_IMS is supported, we only want to test devices where
+            // telephony is supported, but IMS isn't.
+            return;
+        }
+        SipDelegateManager manager = getSipDelegateManager();
+        try {
+            // If FEATURE_TELEPHONY_IMS is not supported this should already return false.
+            Boolean result = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                    manager, SipDelegateManager::isSupported, ImsException.class,
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+            assertNotNull(result);
+            assertFalse("isSupported should return false on devices that do not support "
+                    + "feature FEATURE_TELEPHONY_IMS", result);
+        } catch (SecurityException e) {
+            fail("isSupported requires READ_PRIVILEGED_PHONE_STATE permission");
         }
     }
 
