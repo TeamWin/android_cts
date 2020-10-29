@@ -16,9 +16,6 @@
 
 package android.server.wm.app;
 
-import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
-import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
-import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
@@ -35,6 +32,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PA
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT;
 import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
+import static android.server.wm.app.Components.PipActivity.EXTRA_NUMBER_OF_CUSTOM_ACTIONS;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
@@ -47,21 +45,25 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
 import android.app.Activity;
-import android.app.ActivityOptions;
+import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
+import android.app.RemoteAction;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.graphics.Rect;
+import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.server.wm.CommandSession;
 import android.util.Log;
 import android.util.Rational;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PipActivity extends AbstractLifecycleLogActivity {
 
@@ -192,6 +194,19 @@ public class PipActivity extends AbstractLifecycleLogActivity {
             startActivity(launchIntent);
         }
 
+        // Set custom actions if requested
+        if (getIntent().hasExtra(EXTRA_NUMBER_OF_CUSTOM_ACTIONS)) {
+            final int numberOfCustomActions = Integer.valueOf(
+                    getIntent().getStringExtra(EXTRA_NUMBER_OF_CUSTOM_ACTIONS));
+            final PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
+            final List<RemoteAction> actions = new ArrayList<>(numberOfCustomActions);
+            for (int i = 0; i< numberOfCustomActions; i++) {
+                actions.add(createRemoteAction(i));
+            }
+            builder.setActions(actions);
+            setPictureInPictureParams(builder.build());
+        }
+
         // Register the broadcast receiver
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_ENTER_PIP);
@@ -299,20 +314,6 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     }
 
     /**
-     * Launches a new instance of the PipActivity directly into the pinned stack.
-     */
-    static void launchActivityIntoPinnedStack(Activity caller, Rect bounds) {
-        final Intent intent = new Intent(caller, PipActivity.class);
-        intent.setFlags(FLAG_ACTIVITY_CLEAR_TASK | FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
-
-        final ActivityOptions options = ActivityOptions.makeBasic();
-        options.setLaunchBounds(bounds);
-        options.setLaunchWindowingMode(WINDOWING_MODE_PINNED);
-        caller.startActivity(intent, options.toBundle());
-    }
-
-    /**
      * Launches a new instance of the PipActivity in the same task that will automatically enter
      * PiP.
      */
@@ -330,5 +331,13 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         return new Rational(
                 Integer.valueOf(intent.getStringExtra(extraNum)),
                 Integer.valueOf(intent.getStringExtra(extraDenom)));
+    }
+
+    /** @return {@link RemoteAction} instance titled after a given index */
+    private RemoteAction createRemoteAction(int index) {
+        return new RemoteAction(Icon.createWithResource(this, R.drawable.red),
+                "action " + index,
+                "contentDescription " + index,
+                PendingIntent.getBroadcast(this, 0, new Intent(), PendingIntent.FLAG_IMMUTABLE));
     }
 }

@@ -452,6 +452,8 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
         // Dismiss keyguard when activity show.
         public static final String EXTRA_DISMISS_KEYGUARD = "dismiss_keyguard";
+        // Number of custom actions should be set onto PictureInPictureParams
+        public static final String EXTRA_NUMBER_OF_CUSTOM_ACTIONS = "number_of_custom_actions";
     }
 
     /**
