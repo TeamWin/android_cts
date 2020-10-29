@@ -23,7 +23,8 @@ import android.server.wm.component.ComponentsBase;
 public class Components extends ComponentsBase {
     public interface TestCompanionService {
         ComponentName COMPONENT = component("TestCompanionService");
-        int ACTION_OVERLAY = 0;
+        int ACTION_SHOW_SYSTEM_ALERT_WINDOW = 0;
+        int ACTION_SHOW_TOAST = 1;
         String EXTRA_NAME = "name";
         String EXTRA_OPACITY = "opacity";
     }
