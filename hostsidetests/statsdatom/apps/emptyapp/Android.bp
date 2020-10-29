@@ -13,14 +13,14 @@
 // limitations under the License.
 
 android_test_helper_app {
-    name: "CtsStatsdEmptyApp",
+    name: "CtsStatsdAtomEmptyApp",
     defaults: ["cts_defaults"],
     sdk_version: "current",
     v4_signature: true,
 }
 
 android_test_helper_app {
-    name: "CtsStatsdEmptySplitApp",
+    name: "CtsStatsdAtomEmptySplitApp",
     defaults: ["cts_defaults"],
     sdk_version: "current",
     v4_signature: true,
