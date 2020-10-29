@@ -16,6 +16,9 @@
 
 package android.view.textclassifier.cts;
 
+import static android.provider.Settings.Global.ANIMATOR_DURATION_SCALE;
+import static android.provider.Settings.Global.TRANSITION_ANIMATION_SCALE;
+
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.RootMatchers.isPlatformPopup;
@@ -31,13 +34,16 @@ import static org.hamcrest.CoreMatchers.is;
 
 import android.app.PendingIntent;
 import android.app.RemoteAction;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.provider.Settings;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLinks;
@@ -48,6 +54,10 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -55,6 +65,7 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TextViewIntegrationTest {
+    private final static String LOG_TAG = "TextViewIntegrationTest";
     private final static String TOOLBAR_TAG = "floating_toolbar";
 
     private final SimpleTextClassifier mSimpleTextClassifier = new SimpleTextClassifier();
@@ -62,6 +73,37 @@ public class TextViewIntegrationTest {
     @Rule
     public ActivityScenarioRule<TextViewActivity> rule = new ActivityScenarioRule<>(
             TextViewActivity.class);
+
+    private static float sOriginalAnimationDurationScale;
+    private static float sOriginalTransitionAnimationDurationScale;
+
+    @BeforeClass
+    public static void disableAnimation() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            ContentResolver resolver =
+                    ApplicationProvider.getApplicationContext().getContentResolver();
+            sOriginalAnimationDurationScale =
+                    Settings.Global.getFloat(resolver, ANIMATOR_DURATION_SCALE, 1f);
+            Settings.Global.putFloat(resolver, ANIMATOR_DURATION_SCALE, 0);
+
+            sOriginalTransitionAnimationDurationScale =
+                    Settings.Global.getFloat(resolver, TRANSITION_ANIMATION_SCALE, 1f);
+            Settings.Global.putFloat(resolver, TRANSITION_ANIMATION_SCALE, 0);
+        });
+    }
+
+    @AfterClass
+    public static void restoreAnimation() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Settings.Global.putFloat(
+                    ApplicationProvider.getApplicationContext().getContentResolver(),
+                    ANIMATOR_DURATION_SCALE, sOriginalAnimationDurationScale);
+
+            Settings.Global.putFloat(
+                    ApplicationProvider.getApplicationContext().getContentResolver(),
+                    TRANSITION_ANIMATION_SCALE, sOriginalTransitionAnimationDurationScale);
+        });
+    }
 
     @Test
     public void smartLinkify() throws Exception {
@@ -82,8 +124,8 @@ public class TextViewIntegrationTest {
             clickIndex.set(
                     (span.getTextLink().getStart() + span.getTextLink().getEnd()) / 2);
         });
-
         // Click on the span.
+        Log.d(LOG_TAG, "clickIndex = " + clickIndex.get());
         onView(withId(R.id.textview)).perform(TextViewActions.tapOnTextAtIndex(clickIndex.get()));
 
         assertFloatingToolbarIsDisplayed();
