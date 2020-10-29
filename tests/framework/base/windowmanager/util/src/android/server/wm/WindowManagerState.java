@@ -889,6 +889,10 @@ public class WindowManagerState {
                 .collect(Collectors.toList());
     }
 
+    List<WindowState> getWindows() {
+        return new ArrayList<>(mWindowStates);
+    }
+
     List<WindowState> getMatchingWindowType(int type) {
         return getMatchingWindows(ws -> type == ws.mType).collect(Collectors.toList());
     }
@@ -1741,6 +1745,11 @@ public class WindowManagerState {
             return "WindowState: {" + mAppToken + " " + mName
                     + getWindowTypeSuffix(mWindowType) + "}" + " type=" + mType
                     + " cf=" + mContainingFrame + " pf=" + mParentFrame;
+        }
+
+        public String toLongString() {
+            return toString() + " f=" + mFrame + " crop=" + mCrop + " isSurfaceShown="
+                    + isSurfaceShown();
         }
     }
 
