@@ -156,12 +156,13 @@ private:
 };
 
 jint nativeWindowSetFrameRate(JNIEnv* env, jclass, jobject jSurface, jfloat frameRate,
-                              jint compatibility) {
+                              jint compatibility, jboolean shouldBeSeamless) {
     ANativeWindow* window = nullptr;
     if (jSurface) {
         window = ANativeWindow_fromSurface(env, jSurface);
     }
-    return ANativeWindow_setFrameRate(window, frameRate, compatibility);
+    return ANativeWindow_setFrameRateWithSeamlessness(window, frameRate, compatibility,
+            shouldBeSeamless);
 }
 
 jlong surfaceControlCreate(JNIEnv* env, jclass, jobject jParentSurface, jstring jName, jint left,
@@ -195,11 +196,12 @@ void surfaceControlDestroy(JNIEnv*, jclass, jlong surfaceControlLong) {
 }
 
 void surfaceControlSetFrameRate(JNIEnv*, jclass, jlong surfaceControlLong, jfloat frameRate,
-                                int compatibility) {
+                                jint compatibility, jboolean shouldBeSeamless) {
     ASurfaceControl* surfaceControl =
             reinterpret_cast<Surface*>(surfaceControlLong)->getSurfaceControl();
     ASurfaceTransaction* transaction = ASurfaceTransaction_create();
-    ASurfaceTransaction_setFrameRate(transaction, surfaceControl, frameRate, compatibility);
+    ASurfaceTransaction_setFrameRateWithSeamlessness(transaction, surfaceControl, frameRate,
+            compatibility, bool(shouldBeSeamless));
     ASurfaceTransaction_apply(transaction);
     ASurfaceTransaction_delete(transaction);
 }
@@ -239,12 +241,12 @@ jboolean surfaceControlPostBuffer(JNIEnv*, jclass, jlong surfaceControlLong, jin
 }
 
 const std::array<JNINativeMethod, 6> JNI_METHODS = {{
-        {"nativeWindowSetFrameRate", "(Landroid/view/Surface;FI)I",
+        {"nativeWindowSetFrameRate", "(Landroid/view/Surface;FIZ)I",
          (void*)nativeWindowSetFrameRate},
         {"nativeSurfaceControlCreate", "(Landroid/view/Surface;Ljava/lang/String;IIII)J",
          (void*)surfaceControlCreate},
         {"nativeSurfaceControlDestroy", "(J)V", (void*)surfaceControlDestroy},
-        {"nativeSurfaceControlSetFrameRate", "(JFI)V", (void*)surfaceControlSetFrameRate},
+        {"nativeSurfaceControlSetFrameRate", "(JFIZ)V", (void*)surfaceControlSetFrameRate},
         {"nativeSurfaceControlSetVisibility", "(JZ)V", (void*)surfaceControlSetVisibility},
         {"nativeSurfaceControlPostBuffer", "(JI)Z", (void*)surfaceControlPostBuffer},
 }};
