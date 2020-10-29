@@ -44,9 +44,11 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.app.Components;
 import android.server.wm.settings.SettingsSession;
 import android.util.ArraySet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -77,6 +79,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Presubmit
 public class WindowInputTests {
+    private static final String TAG = "WindowInputTests";
     private final int TOTAL_NUMBER_OF_CLICKS = 100;
     private final ActivityTestRule<TestActivity> mActivityRule =
             new ActivityTestRule<>(TestActivity.class);
@@ -85,7 +88,7 @@ public class WindowInputTests {
     private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     private TestActivity mActivity;
     private View mView;
-    private final Random mRandom = new Random();
+    private final Random mRandom = new Random(1);
 
     private int mClickCount = 0;
 
@@ -139,10 +142,26 @@ public class WindowInputTests {
                 wm.updateViewLayout(mView, p);
             });
             mInstrumentation.waitForIdleSync();
+            int previousCount = mClickCount;
+
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+
+            mInstrumentation.waitForIdleSync();
+            if (mClickCount != previousCount + 1) {
+                dumpWindows("Dumping windows due to failure");
+                fail("Tap #" + i + " on " + locationInWindow + " failed");
+            }
         }
 
         assertEquals(TOTAL_NUMBER_OF_CLICKS, mClickCount);
+    }
+
+    private void dumpWindows(String message) {
+        Log.d(TAG, message);
+        mWmState.computeState();
+        for (WindowState window : mWmState.getWindows()) {
+            Log.d(TAG, "    => " + window.toLongString());
+        }
     }
 
     private void selectRandomLocationInWindow(Rect bounds, Point outLocation) {
