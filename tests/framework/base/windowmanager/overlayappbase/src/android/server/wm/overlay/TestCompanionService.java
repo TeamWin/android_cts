@@ -16,58 +16,64 @@
 
 package android.server.wm.overlay;
 
-import static android.server.wm.overlay.Components.ActionReceiver.ACTION_OVERLAY;
-import static android.server.wm.overlay.Components.ActionReceiver.ACTION_PING;
-import static android.server.wm.overlay.Components.ActionReceiver.CALLBACK_PONG;
-import static android.server.wm.overlay.Components.ActionReceiver.EXTRA_CALLBACK;
-import static android.server.wm.overlay.Components.ActionReceiver.EXTRA_NAME;
-import static android.server.wm.overlay.Components.ActionReceiver.EXTRA_OPACITY;
+import static android.server.wm.overlay.Components.TestCompanionService.ACTION_OVERLAY;
+import static android.server.wm.overlay.Components.TestCompanionService.EXTRA_NAME;
+import static android.server.wm.overlay.Components.TestCompanionService.EXTRA_OPACITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import android.content.BroadcastReceiver;
+import android.annotation.SuppressLint;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
-import android.os.Parcel;
-import android.os.RemoteException;
-import android.util.Log;
+import android.os.Message;
+import android.os.Messenger;
+import android.util.ArrayMap;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 
+import androidx.annotation.Nullable;
 
-public class ActionReceiver extends BroadcastReceiver {
-    private static final String TAG = "ActionReceiver";
+import java.util.Map;
+
+
+public class TestCompanionService extends Service {
+    private static final String TAG = "TestCompanionService";
     public static final int BACKGROUND_COLOR = 0xFF00FF00;
 
+    private final Handler mHandler = new ServiceHandler();
+    private final Map<Integer, Runnable> mActions = new ArrayMap<>();
+    private Messenger mMessenger;
+    private Bundle mData;
+
     @Override
-    public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
-        switch (action) {
-            case ACTION_OVERLAY:
-                String name = intent.getStringExtra(EXTRA_NAME);
-                float opacity = intent.getFloatExtra(EXTRA_OPACITY, 1f);
-                overlay(context, name, opacity);
-                break;
-            case ACTION_PING:
-                IBinder callback = intent.getExtras().getBinder(EXTRA_CALLBACK);
-                try {
-                    callback.transact(CALLBACK_PONG, Parcel.obtain(), null, IBinder.FLAG_ONEWAY);
-                } catch (RemoteException e) {
-                    Log.e(TAG, "Caller (test) died while sending response to ping", e);
-                }
-                break;
-            default:
-                Log.e(TAG, "Unknown action " + action);
-                break;
-        }
+    public void onCreate() {
+        mMessenger = new Messenger(mHandler);
+        mActions.put(ACTION_OVERLAY, this::onOverlay);
     }
 
-    private void overlay(Context context, String name, float opacity) {
-        Context windowContext = getContextForOverlay(context);
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mMessenger.getBinder();
+    }
+
+    @Override
+    public void onDestroy() {
+        mHandler.removeCallbacksAndMessages(null);
+    }
+
+    protected void onOverlay() {
+        String name = mData.getString(EXTRA_NAME);
+        float opacity = mData.getFloat(EXTRA_OPACITY);
+
+        Context windowContext = getContextForOverlay(this);
         View view = new View(windowContext);
         view.setBackgroundColor(BACKGROUND_COLOR);
         LayoutParams params =
@@ -88,5 +94,19 @@ public class ActionReceiver extends BroadcastReceiver {
         Display display = displayManager.getDisplay(DEFAULT_DISPLAY);
         Context displayContext = context.createDisplayContext(display);
         return displayContext.createWindowContext(LayoutParams.TYPE_APPLICATION_OVERLAY, null);
+    }
+
+    protected void onUnknownAction(int message) {
+        throw new IllegalArgumentException("Unknown action " + message);
+    }
+
+    /** Suppressing since all messages are short-lived and we clear the queue on exit. */
+    @SuppressLint("HandlerLeak")
+    private class ServiceHandler extends Handler {
+        @Override
+        public void handleMessage(Message message) {
+            mData = message.getData();
+            mActions.getOrDefault(message.what, () -> onUnknownAction(message.what)).run();
+        }
     }
 }
