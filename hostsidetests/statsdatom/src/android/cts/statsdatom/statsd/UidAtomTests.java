@@ -1527,33 +1527,31 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testNotificationPackagePreferenceExtraction() throws Exception {
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config,
-                    Atom.PACKAGE_NOTIFICATION_PREFERENCES_FIELD_NUMBER,
-                    null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
-        runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification");
-        Thread.sleep(WAIT_TIME_SHORT);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PACKAGE_NOTIFICATION_PREFERENCES_FIELD_NUMBER);
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.show_notification");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<PackageNotificationPreferences> allPreferences = new ArrayList<>();
-        for (Atom atom : getGaugeMetricDataList()){
-            if(atom.hasPackageNotificationPreferences()) {
+        for (Atom atom : getGaugeMetricDataList()) {
+            if (atom.hasPackageNotificationPreferences()) {
                 allPreferences.add(atom.getPackageNotificationPreferences());
             }
         }
         assertThat(allPreferences.size()).isGreaterThan(0);
 
         boolean foundTestPackagePreferences = false;
-        int uid = getUid();
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         for (PackageNotificationPreferences pref : allPreferences) {
             assertThat(pref.getUid()).isGreaterThan(0);
             assertTrue(pref.hasImportance());
             assertTrue(pref.hasVisibility());
             assertTrue(pref.hasUserLockedFields());
-            if(pref.getUid() == uid){
+            if (pref.getUid() == uid) {
                 assertThat(pref.getImportance()).isEqualTo(-1000);  //UNSPECIFIED_IMPORTANCE
                 assertThat(pref.getVisibility()).isEqualTo(-1000);  //UNSPECIFIED_VISIBILITY
                 foundTestPackagePreferences = true;
@@ -1563,27 +1561,25 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testNotificationChannelPreferencesExtraction() throws Exception {
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config,
-                    Atom.PACKAGE_NOTIFICATION_CHANNEL_PREFERENCES_FIELD_NUMBER,
-                    null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
-        runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification");
-        Thread.sleep(WAIT_TIME_SHORT);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PACKAGE_NOTIFICATION_CHANNEL_PREFERENCES_FIELD_NUMBER);
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.show_notification");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<PackageNotificationChannelPreferences> allChannelPreferences = new ArrayList<>();
-        for(Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : getGaugeMetricDataList()) {
             if (atom.hasPackageNotificationChannelPreferences()) {
-               allChannelPreferences.add(atom.getPackageNotificationChannelPreferences());
+                allChannelPreferences.add(atom.getPackageNotificationChannelPreferences());
             }
         }
         assertThat(allChannelPreferences.size()).isGreaterThan(0);
 
         boolean foundTestPackagePreferences = false;
-        int uid = getUid();
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         for (PackageNotificationChannelPreferences pref : allChannelPreferences) {
             assertThat(pref.getUid()).isGreaterThan(0);
             assertTrue(pref.hasChannelId());
@@ -1592,7 +1588,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             assertTrue(pref.hasImportance());
             assertTrue(pref.hasUserLockedFields());
             assertTrue(pref.hasIsDeleted());
-            if(uid == pref.getUid() && pref.getChannelId().equals("StatsdCtsChannel")) {
+            if (uid == pref.getUid() && pref.getChannelId().equals("StatsdCtsChannel")) {
                 assertThat(pref.getChannelName()).isEqualTo("Statsd Cts");
                 assertThat(pref.getDescription()).isEqualTo("Statsd Cts Channel");
                 assertThat(pref.getImportance()).isEqualTo(3);  // IMPORTANCE_DEFAULT
@@ -1603,19 +1599,17 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testNotificationChannelGroupPreferencesExtraction() throws Exception {
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config,
-                    Atom.PACKAGE_NOTIFICATION_CHANNEL_GROUP_PREFERENCES_FIELD_NUMBER,
-                    null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
-        runActivity("StatsdCtsForegroundActivity", "action", "action.create_channel_group");
-        Thread.sleep(WAIT_TIME_SHORT);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PACKAGE_NOTIFICATION_CHANNEL_GROUP_PREFERENCES_FIELD_NUMBER);
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.create_channel_group");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<PackageNotificationChannelGroupPreferences> allGroupPreferences = new ArrayList<>();
-        for(Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : getGaugeMetricDataList()) {
             if (atom.hasPackageNotificationChannelGroupPreferences()) {
                 allGroupPreferences.add(atom.getPackageNotificationChannelGroupPreferences());
             }
@@ -1623,15 +1617,15 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(allGroupPreferences.size()).isGreaterThan(0);
 
         boolean foundTestPackagePreferences = false;
-        int uid = getUid();
-        for(PackageNotificationChannelGroupPreferences pref : allGroupPreferences) {
+        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
+        for (PackageNotificationChannelGroupPreferences pref : allGroupPreferences) {
             assertThat(pref.getUid()).isGreaterThan(0);
             assertTrue(pref.hasGroupId());
             assertTrue(pref.hasGroupName());
             assertTrue(pref.hasDescription());
             assertTrue(pref.hasIsBlocked());
             assertTrue(pref.hasUserLockedFields());
-            if(uid == pref.getUid() && pref.getGroupId().equals("StatsdCtsGroup")) {
+            if (uid == pref.getUid() && pref.getGroupId().equals("StatsdCtsGroup")) {
                 assertThat(pref.getGroupName()).isEqualTo("Statsd Cts Group");
                 assertThat(pref.getDescription()).isEqualTo("StatsdCtsGroup Description");
                 assertThat(pref.getIsBlocked()).isFalse();
@@ -1642,22 +1636,26 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testNotificationReported() throws Exception {
-        StatsdConfig.Builder config = getPulledConfig();
-        addAtomEvent(config, Atom.NOTIFICATION_REPORTED_FIELD_NUMBER,
-            Arrays.asList(createFvm(NotificationReported.PACKAGE_NAME_FIELD_NUMBER)
-                              .setEqString(DEVICE_SIDE_TEST_PACKAGE)));
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
-        runActivity("StatsdCtsForegroundActivity", "action", "action.show_notification");
-        Thread.sleep(WAIT_TIME_SHORT);
+        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        FieldValueMatcher.Builder fvm = ConfigUtils.createFvm(
+                NotificationReported.PACKAGE_NAME_FIELD_NUMBER).setEqString(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetric(config, Atom.NOTIFICATION_REPORTED_FIELD_NUMBER,
+                Collections.singletonList(fvm));
+        ConfigUtils.uploadConfig(getDevice(), config);
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.show_notification");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).hasSize(1);
         assertThat(data.get(0).getAtom().hasNotificationReported()).isTrue();
         AtomsProto.NotificationReported n = data.get(0).getAtom().getNotificationReported();
-        assertThat(n.getPackageName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
-        assertThat(n.getUid()).isEqualTo(getUid());
+        assertThat(n.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        assertThat(n.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(n.getNotificationIdHash()).isEqualTo(1);  // smallHash(0x7f080001)
         assertThat(n.getChannelIdHash()).isEqualTo(SmallHash.hash("StatsdCtsChannel"));
         assertThat(n.getGroupIdHash()).isEqualTo(0);
