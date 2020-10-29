@@ -32,7 +32,6 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.wifi.WifiManager;
 import android.net.wifi.aware.AttachCallback;
-import android.net.wifi.aware.AwareResources;
 import android.net.wifi.aware.Characteristics;
 import android.net.wifi.aware.DiscoverySession;
 import android.net.wifi.aware.DiscoverySessionCallback;
@@ -59,7 +58,6 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,10 +80,6 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     private static final int MIN_DISTANCE_MM = 1 * 1000;
     private static final int MAX_DISTANCE_MM = 3 * 1000;
     private static final byte[] PMK_VALID = "01234567890123456789012345678901".getBytes();
-
-    private static final String KEY_CAPABILITY_MAX_PUBLISH_SESSIONS = "\"maxPublishes\"";
-    private static final String KEY_CAPABILITY_MAX_SUBSCRIBE_SESSIONS = "\"maxSubscribes\"";
-    private static final String KEY_CAPABILITY_MAX_NDP_NUMBERS = "\"maxNdpSessions\"";
 
     private final Object mLock = new Object();
     private final HandlerThread mHandlerThread = new HandlerThread("SingleDeviceTest");
@@ -434,17 +428,6 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         Thread.sleep(INTERVAL_BETWEEN_TESTS_SECS * 1000);
     }
 
-    private HashMap<String, String> getCapability() {
-        HashMap<String, String> capabilities = new HashMap<>();
-        String output = SystemUtil.runShellCommand("cmd wifiaware state_mgr get_capabilities");
-        for (String capability : output.substring(1, output.length() - 1).split(",")) {
-            String[] keyValue = capability.split(":");
-            assertEquals(keyValue.length, 2);
-            capabilities.put(keyValue[0], keyValue[1]);
-        }
-        return capabilities;
-    }
-
     /**
      * Validate:
      * - Characteristics are available
@@ -469,27 +452,6 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                     characteristics.isInstantCommunicationModeSupported());
             mWifiAwareManager.enableInstantCommunicationMode(false);
         }
-    }
-
-    /**
-     * Validate:
-     * - AwareResources are available
-     * - AwareResources values are legitimate. When no resources are used, the value should equal to
-     *   the capability.
-     */
-    public void testAvailableAwareResources() {
-        if (!(TestUtils.shouldTestWifiAware(getContext()) && BuildCompat.isAtLeastS())) {
-            return;
-        }
-        HashMap<String, String> capabilities = getCapability();
-        AwareResources resources = mWifiAwareManager.getAvailableAwareResources();
-        assertNotNull("Available aware resources are null", resources);
-        assertEquals(Integer.parseInt(capabilities.get(KEY_CAPABILITY_MAX_PUBLISH_SESSIONS)),
-                resources.getNumOfAvailablePublishSessions());
-        assertEquals(Integer.parseInt(capabilities.get(KEY_CAPABILITY_MAX_SUBSCRIBE_SESSIONS)),
-                resources.getNumOfAvailableSubscribeSessions());
-        assertEquals(Integer.parseInt(capabilities.get(KEY_CAPABILITY_MAX_NDP_NUMBERS)),
-                resources.getNumOfAvailableDataPaths());
     }
 
     /**
@@ -589,11 +551,6 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         PublishConfig publishConfig = new PublishConfig.Builder().setServiceName(
                 serviceName).build();
         DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
-        int numOfAllPublishSessions = 0;
-        if (BuildCompat.isAtLeastS()) {
-            numOfAllPublishSessions = mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailablePublishSessions();
-        }
 
         // 1. publish
         session.publish(publishConfig, discoveryCb, mHandler);
@@ -605,10 +562,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
         assertFalse(discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
-        if (BuildCompat.isAtLeastS()) {
-            assertEquals(numOfAllPublishSessions - 1, mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailablePublishSessions());
-        }
+
         // 2. update-publish
         publishConfig = new PublishConfig.Builder().setServiceName(
                 serviceName).setServiceSpecificInfo("extras".getBytes()).build();
@@ -625,10 +579,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         discoverySession.updatePublish(publishConfig);
         assertFalse("Publish update post destroy", discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
-        if (BuildCompat.isAtLeastS()) {
-            assertEquals(numOfAllPublishSessions, mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailablePublishSessions());
-        }
+
         session.close();
     }
 
@@ -688,11 +639,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         SubscribeConfig subscribeConfig = new SubscribeConfig.Builder().setServiceName(
                 serviceName).build();
         DiscoverySessionCallbackTest discoveryCb = new DiscoverySessionCallbackTest();
-        int numOfAllSubscribeSessions = 0;
-        if (BuildCompat.isAtLeastS()) {
-            numOfAllSubscribeSessions = mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailableSubscribeSessions();
-        }
+
         // 1. subscribe
         session.subscribe(subscribeConfig, discoveryCb, mHandler);
         assertTrue("Subscribe started",
@@ -703,10 +650,6 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SERVICE_DISCOVERED));
         assertFalse(discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
-        if (BuildCompat.isAtLeastS()) {
-            assertEquals(numOfAllSubscribeSessions - 1, mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailableSubscribeSessions());
-        }
 
         // 2. update-subscribe
         boolean rttSupported = getContext().getPackageManager().hasSystemFeature(
@@ -732,10 +675,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         discoverySession.updateSubscribe(subscribeConfig);
         assertFalse("Subscribe update post destroy", discoveryCb.waitForCallback(
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
-        if (BuildCompat.isAtLeastS()) {
-            assertEquals(numOfAllSubscribeSessions, mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailableSubscribeSessions());
-        }
+
         session.close();
     }
 
