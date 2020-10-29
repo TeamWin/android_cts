@@ -18,6 +18,7 @@ package com.android.compatibility.common.util.enterprise;
 
 import static android.app.UiAutomation.FLAG_DONT_USE_ACCESSIBILITY;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -71,11 +72,16 @@ public final class DeviceState implements TestRule {
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
     private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
+    private static final String SKIP_TESTS_REASON_KEY = "skip-tests-reason";
     private final boolean mSkipTestTeardown;
+    private boolean mSkipTests;
+    private String mSkipTestsReason;
 
     public DeviceState() {
         Bundle arguments = InstrumentationRegistry.getArguments();
         mSkipTestTeardown = Boolean.parseBoolean(arguments.getString(SKIP_TEST_TEARDOWN_KEY, "false"));
+        mSkipTestsReason = arguments.getString(SKIP_TESTS_REASON_KEY, "");
+        mSkipTests = !mSkipTestsReason.isEmpty();
     }
 
     @Override public Statement apply(final Statement base,
@@ -92,6 +98,8 @@ public final class DeviceState implements TestRule {
     private Statement applyTest(final Statement base, final Description description) {
         return new Statement() {
             @Override public void evaluate() throws Throwable {
+                assumeFalse(mSkipTestsReason, mSkipTests);
+
                 if (description.getAnnotation(RequireRunOnPrimaryUser.class) != null) {
                     assumeTrue("@RequireRunOnPrimaryUser tests only run on primary user",
                             isRunningOnPrimaryUser());
