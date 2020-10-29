@@ -591,4 +591,28 @@ public class BaseInputConnectionTest {
         assertEquals(2, surroundingText5.getSelectionEnd());
         assertEquals(3, surroundingText5.getOffset());
     }
+
+    @Test
+    public void testInvalidGetTextBeforeOrAfterCursorRequest() {
+        final CharSequence source = InputConnectionTestUtils.formatString("hello[]");
+        final BaseInputConnection connection = createConnectionWithSelection(source);
+
+        // getTextBeforeCursor
+        assertEquals("", connection.getTextBeforeCursor(0, 0).toString());
+        assertEquals("", connection.getTextBeforeCursor(
+                0, BaseInputConnection.GET_TEXT_WITH_STYLES).toString());
+        assertEquals("hello", connection.getTextBeforeCursor(10, 0).toString());
+        assertEquals("hello", connection.getTextBeforeCursor(
+                100, BaseInputConnection.GET_TEXT_WITH_STYLES).toString());
+        assertNull(connection.getTextBeforeCursor(-1, 0));
+
+        // getTextAfterCursor
+        assertEquals("", connection.getTextAfterCursor(0, 0).toString());
+        assertEquals("", connection.getTextAfterCursor(
+                0, BaseInputConnection.GET_TEXT_WITH_STYLES).toString());
+        assertEquals("", connection.getTextAfterCursor(100, 0).toString());
+        assertEquals("", connection.getTextAfterCursor(
+                100, BaseInputConnection.GET_TEXT_WITH_STYLES).toString());
+        assertNull(connection.getTextAfterCursor(-10, 0));
+    }
 }
