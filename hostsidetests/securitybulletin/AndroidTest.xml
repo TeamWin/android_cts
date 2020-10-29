@@ -271,6 +271,7 @@
         <!--__________________-->
         <!-- Bulletin 2020-11 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2019-2126->/data/local/tmp/CVE-2019-2126" />
         <option name="push" value="CVE-2020-0450->/data/local/tmp/CVE-2020-0450" />
         <option name="push" value="CVE-2020-0409->/data/local/tmp/CVE-2020-0409" />
 
