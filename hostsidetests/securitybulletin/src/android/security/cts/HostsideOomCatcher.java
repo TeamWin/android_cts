@@ -51,7 +51,7 @@ public class HostsideOomCatcher {
 
     private static final String LOG_TAG = "HostsideOomCatcher";
 
-    private static final long LOW_MEMORY_DEVICE_THRESHOLD_KB = 1024 * 1024; // 1GB
+    private static final long LOW_MEMORY_DEVICE_THRESHOLD_KB = (long)(1.5 * 1024 * 1024); //1.5GB
     private static Map<String, WeakReference<BackgroundDeviceAction>> oomCatchers =
             new ConcurrentHashMap<>();
     private static Map<String, Long> totalMemories = new ConcurrentHashMap<>();
