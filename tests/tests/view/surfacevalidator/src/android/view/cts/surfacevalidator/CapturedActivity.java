@@ -86,6 +86,7 @@ public class CapturedActivity extends Activity {
     private volatile boolean mOnWatch;
     private CountDownLatch mCountDownLatch;
     private boolean mProjectionServiceBound = false;
+    private Point mLogicalDisplaySize = new Point();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -113,6 +114,10 @@ public class CapturedActivity extends Activity {
 
         mCountDownLatch = new CountDownLatch(1);
         bindMediaProjectionService();
+    }
+
+    public void setLogicalDisplaySize(Point logicalDisplaySize) {
+        mLogicalDisplaySize.set(logicalDisplaySize.x, logicalDisplaySize.y);
     }
 
     public void dismissPermissionDialog() {
@@ -232,17 +237,8 @@ public class CapturedActivity extends Activity {
             Log.d(TAG, "Starting capture");
 
             Display display = getWindow().getDecorView().getDisplay();
-            Point size = new Point();
             DisplayMetrics metrics = new DisplayMetrics();
             display.getMetrics(metrics);
-
-            final DisplayManager displayManager =
-                    (DisplayManager) CapturedActivity.this.getSystemService(
-                    Context.DISPLAY_SERVICE);
-            final Display defaultDisplay = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
-            final int rotation = defaultDisplay.getRotation();
-            Display.Mode mode = defaultDisplay.getMode();
-            size = new Point(mode.getPhysicalWidth(), mode.getPhysicalHeight());
 
             View testAreaView = findViewById(android.R.id.content);
             Rect boundsToCheck = new Rect(0, 0, testAreaView.getWidth(), testAreaView.getHeight());
@@ -256,11 +252,11 @@ public class CapturedActivity extends Activity {
             }
 
             mSurfacePixelValidator = new SurfacePixelValidator2(CapturedActivity.this,
-                    size, boundsToCheck, animationTestCase.getChecker());
-            Log.d("MediaProjection", "Size is " + size.toString()
-                    + ", bounds are " + boundsToCheck.toShortString());
+                mLogicalDisplaySize, boundsToCheck, animationTestCase.getChecker());
+                Log.d("MediaProjection", "Size is " + mLogicalDisplaySize.toString()
+                + ", bounds are " + boundsToCheck.toShortString());
             mVirtualDisplay = mMediaProjection.createVirtualDisplay("CtsCapturedActivity",
-                    size.x, size.y,
+                    mLogicalDisplaySize.x, mLogicalDisplaySize.y,
                     metrics.densityDpi,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                     mSurfacePixelValidator.getSurface(),
