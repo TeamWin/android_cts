@@ -14,24 +14,6 @@
 
 LOCAL_PATH:= $(call my-dir)
 
-# CtsCameraUtils package
-
-include $(CLEAR_VARS)
-
-LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util-axt \
-	mockito-target-minus-junit4 \
-	android-ex-camera2
-
-LOCAL_SRC_FILES := \
-	$(call all-java-files-under, utils/src) \
-	$(call all-renderscript-files-under, utils/src)
-
-LOCAL_MODULE := CtsCameraUtils
-
-LOCAL_SDK_VERSION := test_current
--include cts/error_prone_rules_tests.mk
-include $(BUILD_STATIC_JAVA_LIBRARY)
-
 # Reusable Camera performance test classes and helpers
 include $(CLEAR_VARS)
 
