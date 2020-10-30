@@ -16,7 +16,7 @@
 
 package android.server.wm.overlay;
 
-import static android.server.wm.overlay.ActionReceiver.BACKGROUND_COLOR;
+import static android.server.wm.overlay.TestCompanionService.BACKGROUND_COLOR;
 
 import android.app.Activity;
 import android.util.Log;
@@ -32,20 +32,13 @@ public class ToastActivity extends Activity {
         super.onResume();
         // For toast matters, foreground means having an activity resumed on screen, so doing this
         // on onResume()
-        boolean custom = getIntent().getBooleanExtra(Components.ToastActivity.EXTRA_CUSTOM, false);
-        final Toast toast;
-        if (custom) {
-            toast = new Toast(this);
-            View view = new View(this);
-            view.setBackgroundColor(BACKGROUND_COLOR);
-            toast.setView(view);
-            toast.setGravity(Gravity.FILL, 0, 0);
-            toast.setDuration(Toast.LENGTH_LONG);
-            Log.d(TAG, "Posting custom toast");
-        } else {
-            toast = Toast.makeText(this, "Toast window", Toast.LENGTH_LONG);
-            Log.d(TAG, "Posting text toast");
-        }
+        Toast toast = new Toast(this);
+        View view = new View(this);
+        view.setBackgroundColor(BACKGROUND_COLOR);
+        toast.setView(view);
+        toast.setGravity(Gravity.FILL, 0, 0);
+        toast.setDuration(Toast.LENGTH_LONG);
+        Log.d(TAG, "Posting custom toast");
         toast.show();
         finish();
     }

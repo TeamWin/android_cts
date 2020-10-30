@@ -64,7 +64,7 @@ class CustomPipActionsTests : PipTestBase() {
         Icon.createWithResource(resources, android.systemui.cts.R.drawable.ic_save)
 
     private val maxPipActions: Int =
-        ActivityTaskManager.getService().getMaxNumPictureInPictureActions(context.activityToken)
+        ActivityTaskManager.getMaxNumPictureInPictureActions(context)
 
     @Before
     override fun setUp() {
@@ -83,43 +83,6 @@ class CustomPipActionsTests : PipTestBase() {
         val action = "Custom Action"
         launchPipMenuWithActions(createClearActionsList(listOf(action)))
         assertActionButtonPresent(action)
-    }
-
-    /** Ensure it is possible to set [maxPipActions] many custom actions. */
-    @Test
-    fun pipMenu_canHave_maxNumberOfActions() {
-        val titles = List(maxPipActions) { num: Int ->
-            "Action $num"
-        }
-        val actions = createClearActionsList(titles)
-
-        launchPipMenuWithActions(actions)
-
-        titles.forEach { title ->
-            assertActionButtonPresent(title)
-        }
-
-        // also ensure the default buttons are still there
-        assertFullscreenAndCloseButtons()
-    }
-
-    /** Ensure the pip menu cannot display more than [maxPipActions] custom actions. */
-    @Test
-    fun pipMenu_cannotHave_moreThan_maxNumberOfActions() {
-        val titles = List(maxPipActions + 1) { num ->
-            "Action $num"
-        }
-        val actions = createClearActionsList(titles)
-
-        launchPipMenuWithActions(actions)
-
-        // ensure the first maxPipActions are there
-        titles.take(maxPipActions).forEach { title ->
-            assertActionButtonPresent(title)
-        }
-
-        // also make sure the last button with is absent
-        assertActionButtonGone(titles.last())
     }
 
     /** Ensure it's possible for a custom action to clear all custom actions (including itself). */

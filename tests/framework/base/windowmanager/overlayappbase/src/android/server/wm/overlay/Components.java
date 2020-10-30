@@ -21,14 +21,12 @@ import android.os.Binder;
 import android.server.wm.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
-    public interface ActionReceiver {
-        ComponentName COMPONENT = component("ActionReceiver");
-        String ACTION_OVERLAY = "overlay";
-        String ACTION_PING = "ping";
+    public interface TestCompanionService {
+        ComponentName COMPONENT = component("TestCompanionService");
+        int ACTION_SHOW_SYSTEM_ALERT_WINDOW = 0;
+        int ACTION_SHOW_TOAST = 1;
         String EXTRA_NAME = "name";
         String EXTRA_OPACITY = "opacity";
-        String EXTRA_CALLBACK = "callback";
-        int CALLBACK_PONG = Binder.FIRST_CALL_TRANSACTION;
     }
 
     public interface OverlayActivity {

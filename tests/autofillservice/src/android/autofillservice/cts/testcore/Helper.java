@@ -1584,6 +1584,13 @@ public final class Helper {
         context.getApplicationContext().setAutofillOptions(options);
     }
 
+    /**
+     * Clear AutofillOptions.
+     */
+    public static void clearApplicationAutofillOptions(@NonNull Context context) {
+        context.getApplicationContext().setAutofillOptions(null);
+    }
+
     private Helper() {
         throw new UnsupportedOperationException("contain static methods only");
     }

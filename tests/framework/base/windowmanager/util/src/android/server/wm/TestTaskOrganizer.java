@@ -122,7 +122,7 @@ class TestTaskOrganizer extends TaskOrganizer {
         applyTransaction(t);
     }
 
-    private ActivityManager.RunningTaskInfo getTaskInfo(int taskId) {
+    ActivityManager.RunningTaskInfo getTaskInfo(int taskId) {
         ActivityManager.RunningTaskInfo taskInfo = mKnownTasks.get(taskId);
         if (taskInfo != null) return taskInfo;
 
