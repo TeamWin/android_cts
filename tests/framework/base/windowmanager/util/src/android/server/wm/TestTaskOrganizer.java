@@ -61,6 +61,7 @@ class TestTaskOrganizer extends TaskOrganizer {
         registerOrganizerIfNeeded();
         ActivityManager.RunningTaskInfo taskInfo = getTaskInfo(taskId);
         final WindowContainerTransaction t = new WindowContainerTransaction();
+        t.setBounds(taskInfo.getToken(), null);
         t.reparent(taskInfo.getToken(), mRootPrimary.getToken(), true /* onTop */);
         applyTransaction(t);
     }
