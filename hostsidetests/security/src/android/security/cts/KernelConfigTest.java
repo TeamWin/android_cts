@@ -174,8 +174,10 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
                     (configSet.contains("CONFIG_ARM64_SW_TTBR0_PAN=y") ||
                     configSet.contains("CONFIG_ARM64_PAN=y")));
         } else if (CpuFeatures.isArm32(mDevice)) {
-            assertTrue("Linux kernel must have PAN emulation enabled: CONFIG_CPU_SW_DOMAIN_PAN=y",
-                    configSet.contains("CONFIG_CPU_SW_DOMAIN_PAN=y"));
+            assertTrue("Linux kernel must have PAN emulation enabled: " +
+                    "CONFIG_CPU_SW_DOMAIN_PAN=y or CONFIG_CPU_TTBR0_PAN=y",
+                    (configSet.contains("CONFIG_CPU_SW_DOMAIN_PAN=y") ||
+                    configSet.contains("CONFIG_CPU_TTBR0_PAN=y")));
         }
     }
 
