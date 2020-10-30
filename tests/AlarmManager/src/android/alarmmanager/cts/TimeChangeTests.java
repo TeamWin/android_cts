@@ -94,7 +94,7 @@ public class TimeChangeTests {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         final Intent alarmIntent = new Intent(ACTION_ALARM)
                 .setPackage(mContext.getPackageName())
                 .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
