@@ -61,6 +61,7 @@ import android.os.SystemClock;
 import android.permission.cts.appthataccesseslocation.IAccessLocationOnCommand;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
+import android.platform.test.annotations.SystemUserOnly;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
@@ -584,6 +585,7 @@ public class LocationAccessCheckTest {
         assertNull(getNotification(true));
     }
 
+    @SystemUserOnly(reason = "b/172259935")
     @Test
     @SecurityTest(minPatchLevel = "2019-12-01")
     public void notificationIsShownAgainAfterClear() throws Throwable {
@@ -604,6 +606,7 @@ public class LocationAccessCheckTest {
         assertNotNull(getNotification(true));
     }
 
+    @SystemUserOnly(reason = "b/172259935")
     @Test
     public void notificationIsShownAgainAfterUninstallAndReinstall() throws Throwable {
         accessLocation();

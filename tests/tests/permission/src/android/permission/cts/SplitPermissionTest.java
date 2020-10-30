@@ -44,6 +44,7 @@ import static org.junit.Assert.assertEquals;
 import android.app.UiAutomation;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.SystemUserOnly;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
@@ -235,6 +236,7 @@ public class SplitPermissionTest {
      * implicitly due to splits.
      */
     @Test
+    @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void nonInheritedStateLowTargetSDKPreM() throws Exception {
         install(APK_CONTACTS_15);
 
@@ -343,6 +345,7 @@ public class SplitPermissionTest {
      * <p>(Pre-M version of test)
      */
     @Test
+    @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void inheritGrantedPermissionStatePreM() throws Exception {
         install(APK_CONTACTS_16);
 
@@ -410,6 +413,7 @@ public class SplitPermissionTest {
      * <p>(Pre-M version of test)
      */
     @Test
+    @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void grantNewSplitPermissionStatePreM() throws Exception {
         install(APK_CONTACTS_15);
         revokePermission(APP_PKG, READ_CONTACTS);
@@ -512,6 +516,7 @@ public class SplitPermissionTest {
      * cannot deal with revoked permissions. Hence only the user should ever explicitly do that.
      */
     @Test
+    @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void newPermissionGetRevokedOnUpgradePreM() throws Exception {
         install(APK_CONTACTS_15);
 
