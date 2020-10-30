@@ -1190,8 +1190,9 @@ public class PhoneStateListenerTest {
                     }
                 }
             };
-            mTelephonyManager.listen(PhoneStateListener.LISTEN_PHYSICAL_CHANNEL_CONFIGURATION,
-                    mListener);
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.listen(PhoneStateListener.LISTEN_PHYSICAL_CHANNEL_CONFIGURATION,
+                            mListener));
         });
 
         synchronized (mLock) {
