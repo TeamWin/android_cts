@@ -2019,7 +2019,8 @@ public class NotificationManagerTest extends AndroidTestCase {
                                 .bigPicture(Bitmap.createBitmap(100, 100, Bitmap.Config.RGB_565))
                                 .bigLargeIcon(
                                         Icon.createWithResource(getContext(), R.drawable.icon_blue))
-                                .setSummaryText("summary"))
+                                .setSummaryText("summary")
+                                .bigPictureContentDescription("content description"))
                         .build();
         mNotificationManager.notify(id, notification);
 

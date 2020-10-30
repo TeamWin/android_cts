@@ -883,6 +883,22 @@ public class NotificationTest extends AndroidTestCase {
         assertMessageEquals(secondExpectedMessage, actualMessages.get(1));
     }
 
+    public void testNotification_isBigPictureStyle_pictureContentDescriptionSet() {
+        final String contentDescription = "content description";
+
+        final Notification.BigPictureStyle bigPictureStyle = new Notification.BigPictureStyle()
+                .bigPictureContentDescription(contentDescription);
+
+        mNotification = new Notification.Builder(mContext, CHANNEL.getId())
+                .setStyle(bigPictureStyle)
+                .build();
+
+        final CharSequence notificationContentDescription =
+                mNotification.extras.getCharSequence(
+                        Notification.EXTRA_PICTURE_CONTENT_DESCRIPTION);
+        assertEquals(contentDescription, notificationContentDescription);
+    }
+
     private static void assertMessageEquals(
             Notification.MessagingStyle.Message expected,
             Notification.MessagingStyle.Message actual) {
