@@ -1029,9 +1029,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         installAppAsUser(INTENT_RECEIVER_APK, userId);
         installAppAsUser(DEVICE_OWNER_APK, userId);
         setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
-
-        switchUser(userId);
-        waitForBroadcastIdle();
         wakeupAndDismissKeyguard();
 
         // Setting the same affiliation ids on both users
