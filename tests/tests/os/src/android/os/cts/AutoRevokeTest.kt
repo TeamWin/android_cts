@@ -26,6 +26,7 @@ import android.content.pm.PackageManager.PERMISSION_DENIED
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Resources
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
@@ -35,6 +36,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Switch
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
+import com.android.compatibility.common.util.LogcatInspector
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
@@ -58,6 +60,7 @@ import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.InputStream
 import java.lang.reflect.Modifier
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -297,10 +300,20 @@ class AutoRevokeTest {
     }
 
     private fun runAutoRevoke() {
-        for (i in 0 until 2)  {
-            runShellCommand("cmd jobscheduler run -u 0 " +
+        val logcat = Logcat()
+
+        // Sometimes first run observes stale package data
+        // so run twice to prevent that
+        repeat(2) {
+            val mark = logcat.mark(LOG_TAG)
+            eventually {
+                runShellCommand("cmd jobscheduler run -u 0 " +
                     "-f ${context.packageManager.permissionControllerPackageName} 2")
-            Thread.sleep(100)
+            }
+            logcat.assertLogcatContainsInOrder("*:*", 30_000,
+                    mark,
+                    "onStartJob",
+                    "Done auto-revoke for user")
         }
     }
 
@@ -497,4 +510,12 @@ inline fun <reified T> constToString(prefix: String, value: Int): String {
 
 inline fun <T> T?.assertNotNull(errorMsg: () -> String): T {
     return if (this == null) throw AssertionError(errorMsg()) else this
+}
+
+class Logcat() : LogcatInspector() {
+    override fun executeShellCommand(command: String?): InputStream {
+        val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
+        return ParcelFileDescriptor.AutoCloseInputStream(
+                instrumentation.uiAutomation.executeShellCommand(command))
+    }
 }
