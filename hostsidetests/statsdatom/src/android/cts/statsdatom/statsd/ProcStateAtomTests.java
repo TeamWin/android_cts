@@ -15,12 +15,21 @@
  */
 package android.cts.statsdatom.statsd;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.ProcessStateEnum; // From enums.proto for atoms.proto's UidProcessStateChanged.
+import android.cts.statsdatom.lib.AtomTestUtils;
+import android.cts.statsdatom.lib.ConfigUtils;
+import android.cts.statsdatom.lib.DeviceUtils;
+import android.cts.statsdatom.lib.ReportUtils;
 
 import com.android.os.AtomsProto.Atom;
 import com.android.os.StatsLog.EventMetricData;
+import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.IBuildReceiver;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -33,14 +42,14 @@ import java.util.stream.Stream;
 /**
  * Statsd atom tests that are done via app, for atoms that report a uid.
  */
-public class ProcStateAtomTests extends DeviceAtomTestCase {
+public class ProcStateAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TAG = "Statsd.ProcStateAtomTests";
 
     private static final String DEVICE_SIDE_FG_ACTIVITY_COMPONENT
-            = "com.android.server.cts.device.statsd/.StatsdCtsForegroundActivity";
+            = "com.android.server.cts.device.statsdatom/.StatsdCtsForegroundActivity";
     private static final String DEVICE_SIDE_FG_SERVICE_COMPONENT
-            = "com.android.server.cts.device.statsd/.StatsdCtsForegroundService";
+            = "com.android.server.cts.device.statsdatom/.StatsdCtsForegroundService";
 
     // Constants from the device-side tests (not directly accessible here).
     private static final String ACTION_END_IMMEDIATELY = "action.end_immediately";
@@ -57,7 +66,7 @@ public class ProcStateAtomTests extends DeviceAtomTestCase {
 
     private static final int WAIT_TIME_FOR_CONFIG_UPDATE_MS = 200;
     // ActivityManager can take a while to register screen state changes, mandating an extra delay.
-    private static final int WAIT_TIME_FOR_CONFIG_AND_SCREEN_MS = 1_000;
+    private static final int WAIT_TIME_FOR_SCREEN_MS = 1_000;
     private static final int EXTRA_WAIT_TIME_MS = 5_000; // as buffer when proc state changing.
     private static final int STATSD_REPORT_WAIT_TIME_MS = 500; // make sure statsd finishes log.
 
@@ -108,9 +117,29 @@ public class ProcStateAtomTests extends DeviceAtomTestCase {
 
     private static final int PROC_STATE_ATOM_TAG = Atom.UID_PROCESS_STATE_CHANGED_FIELD_NUMBER;
 
+    private IBuildInfo mCtsBuild;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        assertThat(mCtsBuild).isNotNull();
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice());
+        DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice());
+        DeviceUtils.uninstallStatsdTestApp(getDevice());
+        super.tearDown();
+    }
+
+    @Override
+    public void setBuild(IBuildInfo buildInfo) {
+        mCtsBuild = buildInfo;
     }
 
     public void testForegroundService() throws Exception {
@@ -119,16 +148,17 @@ public class ProcStateAtomTests extends DeviceAtomTestCase {
         Set<Integer> offStates = complement(onStates);
 
         List<Set<Integer>> stateSet = Arrays.asList(onStates, offStates); // state sets, in order
-        createAndUploadConfig(PROC_STATE_ATOM_TAG, false);  // False: does not use attribution.
-        Thread.sleep(WAIT_TIME_FOR_CONFIG_UPDATE_MS);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                PROC_STATE_ATOM_TAG, /*useUidAttributionChain=*/false);
 
-        executeForegroundService();
+        executeForegroundService(getDevice());
         final int waitTime = SLEEP_OF_FOREGROUND_SERVICE;
         Thread.sleep(waitTime + STATSD_REPORT_WAIT_TIME_MS + EXTRA_WAIT_TIME_MS);
 
-        List<EventMetricData> data = getEventMetricDataList();
-        popUntilFind(data, onStates, PROC_STATE_FUNCTION); // clear out initial proc states.
-        assertStatesOccurred(stateSet, data, waitTime, PROC_STATE_FUNCTION);
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomTestUtils.popUntilFind(data, onStates,
+                PROC_STATE_FUNCTION); // clear out initial proc states.
+        AtomTestUtils.assertStatesOccurred(stateSet, data, waitTime, PROC_STATE_FUNCTION);
     }
 
     public void testForeground() throws Exception {
@@ -137,17 +167,17 @@ public class ProcStateAtomTests extends DeviceAtomTestCase {
         // There are no offStates, since the app remains in foreground until killed.
 
         List<Set<Integer>> stateSet = Arrays.asList(onStates); // state sets, in order
-        createAndUploadConfig(PROC_STATE_ATOM_TAG, false);  // False: does not use attribution.
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                PROC_STATE_ATOM_TAG, /*useUidAttributionChain=*/false);
 
-        Thread.sleep(WAIT_TIME_FOR_CONFIG_AND_SCREEN_MS);
-
-        executeForegroundActivity(ACTION_SHOW_APPLICATION_OVERLAY);
+        executeForegroundActivity(getDevice(), ACTION_SHOW_APPLICATION_OVERLAY);
         final int waitTime = EXTRA_WAIT_TIME_MS + 5_000; // Overlay may need to sit there a while.
         Thread.sleep(waitTime + STATSD_REPORT_WAIT_TIME_MS);
 
-        List<EventMetricData> data = getEventMetricDataList();
-        popUntilFind(data, onStates, PROC_STATE_FUNCTION); // clear out initial proc states.
-        assertStatesOccurred(stateSet, data, 0, PROC_STATE_FUNCTION);
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomTestUtils.popUntilFind(data, onStates,
+                PROC_STATE_FUNCTION); // clear out initial proc states.
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 0, PROC_STATE_FUNCTION);
     }
 
     public void testBackground() throws Exception {
@@ -155,16 +185,17 @@ public class ProcStateAtomTests extends DeviceAtomTestCase {
         Set<Integer> offStates = complement(onStates);
 
         List<Set<Integer>> stateSet = Arrays.asList(onStates, offStates); // state sets, in order
-        createAndUploadConfig(PROC_STATE_ATOM_TAG, false);  // False: does not use attribution.
-        Thread.sleep(WAIT_TIME_FOR_CONFIG_UPDATE_MS);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                PROC_STATE_ATOM_TAG, /*useUidAttributionChain=*/false);
 
-        executeBackgroundService(ACTION_BACKGROUND_SLEEP);
+        DeviceUtils.executeBackgroundService(getDevice(), ACTION_BACKGROUND_SLEEP);
         final int waitTime = SLEEP_OF_ACTION_BACKGROUND_SLEEP;
         Thread.sleep(waitTime + STATSD_REPORT_WAIT_TIME_MS + EXTRA_WAIT_TIME_MS);
 
-        List<EventMetricData> data = getEventMetricDataList();
-        popUntilFind(data, onStates, PROC_STATE_FUNCTION); // clear out initial proc states.
-        assertStatesOccurred(stateSet, data, waitTime, PROC_STATE_FUNCTION);
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomTestUtils.popUntilFind(data, onStates,
+                PROC_STATE_FUNCTION); // clear out initial proc states.
+        AtomTestUtils.assertStatesOccurred(stateSet, data, waitTime, PROC_STATE_FUNCTION);
     }
 
     public void testTop() throws Exception {
@@ -173,45 +204,47 @@ public class ProcStateAtomTests extends DeviceAtomTestCase {
         Set<Integer> offStates = complement(onStates);
 
         List<Set<Integer>> stateSet = Arrays.asList(onStates, offStates); // state sets, in order
-        createAndUploadConfig(PROC_STATE_ATOM_TAG, false);  // False: does not use attribution.
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                PROC_STATE_ATOM_TAG, /*useUidAttributionChain=*/false);
 
-        Thread.sleep(WAIT_TIME_FOR_CONFIG_AND_SCREEN_MS);
-
-        executeForegroundActivity(ACTION_SLEEP_WHILE_TOP);
+        executeForegroundActivity(getDevice(), ACTION_SLEEP_WHILE_TOP);
         final int waitTime = SLEEP_OF_ACTION_SLEEP_WHILE_TOP;
         Thread.sleep(waitTime + STATSD_REPORT_WAIT_TIME_MS + EXTRA_WAIT_TIME_MS);
 
-        List<EventMetricData> data = getEventMetricDataList();
-        popUntilFind(data, onStates, PROC_STATE_FUNCTION); // clear out initial proc states.
-        assertStatesOccurred(stateSet, data, waitTime, PROC_STATE_FUNCTION);
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomTestUtils.popUntilFind(data, onStates,
+                PROC_STATE_FUNCTION); // clear out initial proc states.
+        AtomTestUtils.assertStatesOccurred(stateSet, data, waitTime, PROC_STATE_FUNCTION);
     }
 
     public void testTopSleeping() throws Exception {
-        if (!hasFeature(FEATURE_WATCH, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_WATCH)) return;
         Set<Integer> onStates = new HashSet<>(Arrays.asList(
                 ProcessStateEnum.PROCESS_STATE_TOP_SLEEPING_VALUE));
         Set<Integer> offStates = complement(onStates);
 
         List<Set<Integer>> stateSet = Arrays.asList(onStates, offStates); // state sets, in order
-        createAndUploadConfig(PROC_STATE_ATOM_TAG, false);  //False: does not use attribution.
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                PROC_STATE_ATOM_TAG, /*useUidAttributionChain=*/false);
 
-        turnScreenOn();
-        Thread.sleep(WAIT_TIME_FOR_CONFIG_AND_SCREEN_MS);
+        DeviceUtils.turnScreenOn(getDevice());
+        Thread.sleep(WAIT_TIME_FOR_SCREEN_MS);
 
-        executeForegroundActivity(ACTION_SLEEP_WHILE_TOP);
+        executeForegroundActivity(getDevice(), ACTION_SLEEP_WHILE_TOP);
         // ASAP, turn off the screen to make proc state -> top_sleeping.
-        turnScreenOff();
+        DeviceUtils.turnScreenOff(getDevice());
         final int waitTime = SLEEP_OF_ACTION_SLEEP_WHILE_TOP + EXTRA_WAIT_TIME_MS;
         Thread.sleep(waitTime + STATSD_REPORT_WAIT_TIME_MS);
 
-        List<EventMetricData> data = getEventMetricDataList();
-        popUntilFind(data, new HashSet<>(Arrays.asList(ProcessStateEnum.PROCESS_STATE_TOP_VALUE)),
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomTestUtils.popUntilFind(data,
+                new HashSet<>(Arrays.asList(ProcessStateEnum.PROCESS_STATE_TOP_VALUE)),
                 PROC_STATE_FUNCTION); // clear out anything prior to it entering TOP.
-        popUntilFind(data, onStates, PROC_STATE_FUNCTION); // clear out TOP itself.
+        AtomTestUtils.popUntilFind(data, onStates, PROC_STATE_FUNCTION); // clear out TOP itself.
         // reset screen back on
-        turnScreenOn();
+        DeviceUtils.turnScreenOn(getDevice());
         // Don't check the wait time, since it's up to the system how long top sleeping persists.
-        assertStatesOccurred(stateSet, data, 0, PROC_STATE_FUNCTION);
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 0, PROC_STATE_FUNCTION);
     }
 
     public void testCached() throws Exception {
@@ -219,8 +252,8 @@ public class ProcStateAtomTests extends DeviceAtomTestCase {
         Set<Integer> offStates = complement(onStates);
 
         List<Set<Integer>> stateSet = Arrays.asList(onStates, offStates); // state sets, in order
-        createAndUploadConfig(PROC_STATE_ATOM_TAG, false);  // False: des not use attribution.
-        Thread.sleep(WAIT_TIME_FOR_CONFIG_UPDATE_MS);
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                PROC_STATE_ATOM_TAG, /*useUidAttributionChain=*/false);
 
         // The schedule is as follows
         // #1. The system may do anything it wants, such as moving the app into a cache state.
@@ -230,25 +263,26 @@ public class ProcStateAtomTests extends DeviceAtomTestCase {
         // #4. We start a foreground activity, moving the app out of cache.
 
         // Start extremely short-lived activity, so app goes into cache state (#1 - #3 above).
-        executeBackgroundService(ACTION_END_IMMEDIATELY);
+        DeviceUtils.executeBackgroundService(getDevice(), ACTION_END_IMMEDIATELY);
         final int cacheTime = 2_000; // process should be in cached state for up to this long
         Thread.sleep(cacheTime);
         // Now forcibly bring the app out of cache (#4 above).
-        executeForegroundActivity(ACTION_SHOW_APPLICATION_OVERLAY);
+        executeForegroundActivity(getDevice(), ACTION_SHOW_APPLICATION_OVERLAY);
         // Now check the data *before* the app enters cache again (to avoid another cache event).
 
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         // First, clear out any incidental cached states of step #1, prior to step #2.
-        popUntilFind(data, BG_STATES, PROC_STATE_FUNCTION);
+        AtomTestUtils.popUntilFind(data, BG_STATES, PROC_STATE_FUNCTION);
         // Now clear out the bg state from step #2 (since we are interested in the cache after it).
-        popUntilFind(data, onStates, PROC_STATE_FUNCTION);
+        AtomTestUtils.popUntilFind(data, onStates, PROC_STATE_FUNCTION);
         // The result is that data should start at step #3, definitively in a cached state.
-        assertStatesOccurred(stateSet, data, 1_000, PROC_STATE_FUNCTION);
+        AtomTestUtils.assertStatesOccurred(stateSet, data, 1_000, PROC_STATE_FUNCTION);
     }
 
     public void testValidityOfStates() throws Exception {
         assertWithMessage("UNKNOWN_TO_PROTO should not be a valid state")
-            .that(ALL_STATES).doesNotContain(ProcessStateEnum.PROCESS_STATE_UNKNOWN_TO_PROTO_VALUE);
+                .that(ALL_STATES).doesNotContain(
+                ProcessStateEnum.PROCESS_STATE_UNKNOWN_TO_PROTO_VALUE);
     }
 
     /** Returns the a set containing elements of a that are not elements of b. */
@@ -265,21 +299,23 @@ public class ProcStateAtomTests extends DeviceAtomTestCase {
 
     /**
      * Runs an activity (in the foreground) to perform the given action.
+     *
      * @param actionValue the action code constants indicating the desired action to perform.
      */
-    private void executeForegroundActivity(String actionValue) throws Exception {
-        getDevice().executeShellCommand(String.format(
+    private static void executeForegroundActivity(ITestDevice device, String actionValue)
+            throws Exception {
+        device.executeShellCommand(String.format(
                 "am start -n '%s' -e %s %s",
                 DEVICE_SIDE_FG_ACTIVITY_COMPONENT,
-                KEY_ACTION, actionValue));
+                "action", actionValue));
     }
 
     /**
      * Runs a simple foreground service.
      */
-    private void executeForegroundService() throws Exception {
-        executeForegroundActivity(ACTION_END_IMMEDIATELY);
-        getDevice().executeShellCommand(String.format(
+    private static void executeForegroundService(ITestDevice device) throws Exception {
+        executeForegroundActivity(device, ACTION_END_IMMEDIATELY);
+        device.executeShellCommand(String.format(
                 "am startservice -n '%s'", DEVICE_SIDE_FG_SERVICE_COMPONENT));
     }
 }
