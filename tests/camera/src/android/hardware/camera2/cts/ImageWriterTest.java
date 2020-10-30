@@ -312,7 +312,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
             imageInvalidAccessTestAfterClose(inputImage, closedPlane, closedBuffer);
 
             outputImage = listenerForWriter.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
-            mCollector.expectTrue("ImageWriter 1st output image should match 1st input image",
+            mCollector.expectTrue("ImageWriter 1st output image should match 1st camera image",
                     isImageStronglyEqual(cameraImage, outputImage));
             if (DEBUG) {
                 String img1FileName = mDebugFileNameBase + "/" + maxSize + "_image1_copy.yuv";
