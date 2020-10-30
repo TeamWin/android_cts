@@ -983,10 +983,13 @@ public abstract class ActivityManagerTestBase {
                         new Rect(0, 0, taskWidth, taskHeight)));
     }
 
-    protected void pressAppSwitchButtonAndWaitForRecents() {
+    protected boolean pressAppSwitchButtonAndWaitForRecents() {
         pressAppSwitchButton();
-        mWmState.waitForRecentsActivityVisible();
-        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        final boolean isRecentsVisible = mWmState.waitForRecentsActivityVisible();
+        if (isRecentsVisible) {
+            mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        }
+        return isRecentsVisible;
     }
 
     protected boolean supportsVrMode() {
