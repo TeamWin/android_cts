@@ -66,7 +66,7 @@ public class FileObserverTestLegacyPath extends AndroidTestCase {
         cv.put(MediaStore.Files.FileColumns.RELATIVE_PATH, "DCIM/testdir");
         cv.put(MediaStore.Files.FileColumns.MIME_TYPE, "image/jpg");
 
-        Uri imageUri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        Uri imageUri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL);
 
         Uri fileUri = con.getContentResolver().insert(imageUri, cv);
 
