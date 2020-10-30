@@ -1287,6 +1287,7 @@ public class CameraTestUtils extends Assert {
         for (int i = 0; i < planes.length; i++) {
             buffer = planes[i].getBuffer();
             assertNotNull("Fail to get bytebuffer from plane", buffer);
+            buffer.rewind();
             rowStride = planes[i].getRowStride();
             pixelStride = planes[i].getPixelStride();
             assertTrue("pixel stride " + pixelStride + " is invalid", pixelStride > 0);
