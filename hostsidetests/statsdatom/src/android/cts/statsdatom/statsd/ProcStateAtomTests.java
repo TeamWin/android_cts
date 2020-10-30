@@ -33,9 +33,27 @@ import java.util.stream.Stream;
 /**
  * Statsd atom tests that are done via app, for atoms that report a uid.
  */
-public class ProcStateAtomTests extends ProcStateTestCase {
+public class ProcStateAtomTests extends DeviceAtomTestCase {
 
     private static final String TAG = "Statsd.ProcStateAtomTests";
+
+    private static final String DEVICE_SIDE_FG_ACTIVITY_COMPONENT
+            = "com.android.server.cts.device.statsd/.StatsdCtsForegroundActivity";
+    private static final String DEVICE_SIDE_FG_SERVICE_COMPONENT
+            = "com.android.server.cts.device.statsd/.StatsdCtsForegroundService";
+
+    // Constants from the device-side tests (not directly accessible here).
+    private static final String ACTION_END_IMMEDIATELY = "action.end_immediately";
+    private static final String ACTION_BACKGROUND_SLEEP = "action.background_sleep";
+    private static final String ACTION_SLEEP_WHILE_TOP = "action.sleep_top";
+    private static final String ACTION_LONG_SLEEP_WHILE_TOP = "action.long_sleep_top";
+    private static final String ACTION_SHOW_APPLICATION_OVERLAY = "action.show_application_overlay";
+
+    // Sleep times (ms) that actions invoke device-side.
+    private static final int SLEEP_OF_ACTION_SLEEP_WHILE_TOP = 2_000;
+    private static final int SLEEP_OF_ACTION_LONG_SLEEP_WHILE_TOP = 60_000;
+    private static final int SLEEP_OF_ACTION_BACKGROUND_SLEEP = 2_000;
+    private static final int SLEEP_OF_FOREGROUND_SERVICE = 2_000;
 
     private static final int WAIT_TIME_FOR_CONFIG_UPDATE_MS = 200;
     // ActivityManager can take a while to register screen state changes, mandating an extra delay.
@@ -243,5 +261,25 @@ public class ProcStateAtomTests extends ProcStateTestCase {
     /** Returns the set of all states that are not in set. */
     private Set<Integer> complement(Set<Integer> set) {
         return difference(ALL_STATES, set);
+    }
+
+    /**
+     * Runs an activity (in the foreground) to perform the given action.
+     * @param actionValue the action code constants indicating the desired action to perform.
+     */
+    private void executeForegroundActivity(String actionValue) throws Exception {
+        getDevice().executeShellCommand(String.format(
+                "am start -n '%s' -e %s %s",
+                DEVICE_SIDE_FG_ACTIVITY_COMPONENT,
+                KEY_ACTION, actionValue));
+    }
+
+    /**
+     * Runs a simple foreground service.
+     */
+    private void executeForegroundService() throws Exception {
+        executeForegroundActivity(ACTION_END_IMMEDIATELY);
+        getDevice().executeShellCommand(String.format(
+                "am startservice -n '%s'", DEVICE_SIDE_FG_SERVICE_COMPONENT));
     }
 }
