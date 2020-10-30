@@ -3795,9 +3795,17 @@ public class NotificationManagerTest extends AndroidTestCase {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             ComponentName componentName = TestNotificationListener.getComponentName();
             mNotificationManager.setNotificationListenerAccessGranted(
-                    componentName, true);
+                    componentName, true, true);
 
             assertThat(
+                    mNotificationManager.getEnabledNotificationListeners(),
+                    hasItem(componentName));
+
+            mNotificationManager.setNotificationListenerAccessGranted(
+                    componentName, false, false);
+
+            assertThat(
+                    "Non-user-set changes should not override user-set",
                     mNotificationManager.getEnabledNotificationListeners(),
                     hasItem(componentName));
         });
