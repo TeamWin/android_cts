@@ -87,6 +87,19 @@ public class TestMediaCodec extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/34779227
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @Test
+    @SecurityTest(minPatchLevel = "2017-07")
+    public void testPocCVE_2017_0675() throws Exception {
+        String inputFiles[] = {"cve_2017_0675.hevc"};
+        runHevcDecodeMemTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1",
+                getDevice());
+    }
+
+    /**
      * b/65719872
      * Vulnerability Behaviour: SIGSEGV in self
      **/
@@ -167,6 +180,32 @@ public class TestMediaCodec extends SecurityTestCase {
      * To prevent merge conflicts, add AVC decoder tests for O below this comment,
      * before any existing test methods
      ******************************************************************************/
+
+    /**
+     * b/33552073
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @Test
+    @SecurityTest(minPatchLevel = "2017-03")
+    public void testPocCVE_2017_0495() throws Exception {
+        String inputFiles[] = {"cve_2017_0495.h264"};
+        runAvcDecodeMemTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --output /dev/null",
+                getDevice());
+    }
+
+    /**
+     * b/33450635
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @Test
+    @SecurityTest(minPatchLevel = "2017-03")
+    public void testPocCVE_2017_0469() throws Exception {
+        String inputFiles[] = {"cve_2017_0469.h264"};
+        runAvcDecodeMemTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --output /dev/null",
+                getDevice());
+    }
 
     /**
      * b/33551775
@@ -298,6 +337,19 @@ public class TestMediaCodec extends SecurityTestCase {
      * To prevent merge conflicts, add MPEG2 decoder tests for O below this comment,
      * before any existing test methods
      ******************************************************************************/
+
+    /**
+     * b/34093073
+     * Vulnerability Behaviour: SIGSEGV in self
+     **/
+    @Test
+    @SecurityTest(minPatchLevel = "2017-04")
+    public void testPocCVE_2017_0557() throws Exception {
+        String inputFiles[] = {"cve_2017_0557.m2v"};
+        runMpeg2DecodeTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_cores 2 --num_frames -1",
+                getDevice());
+    }
 
     /**
      * b/62887820
