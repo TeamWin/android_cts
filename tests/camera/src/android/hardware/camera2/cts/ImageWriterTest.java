@@ -315,9 +315,9 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
             mCollector.expectTrue("ImageWriter 1st output image should match 1st camera image",
                     isImageStronglyEqual(cameraImage, outputImage));
             if (DEBUG) {
-                String img1FileName = mDebugFileNameBase + "/" + maxSize + "_image1_copy.yuv";
+                String img1FileName = mDebugFileNameBase + "/" + maxSize + "_image1_camera.yuv";
                 String outputImg1FileName = mDebugFileNameBase + "/" + maxSize
-                        + "_outputImage2_copy.yuv";
+                        + "_image1_output.yuv";
                 dumpFile(img1FileName, getDataFromImage(cameraImage));
                 dumpFile(outputImg1FileName, getDataFromImage(outputImage));
             }
@@ -335,7 +335,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
             // make a copy of image1 data, as it will be closed after queueInputImage;
             byte[] img1Data = getDataFromImage(cameraImage);
             if (DEBUG) {
-                String img2FileName = mDebugFileNameBase + "/" + maxSize + "_image2.yuv";
+                String img2FileName = mDebugFileNameBase + "/" + maxSize + "_image2_camera.yuv";
                 dumpFile(img2FileName, img1Data);
             }
 
@@ -353,7 +353,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
 
             if (DEBUG) {
                 String outputImgFileName = mDebugFileNameBase + "/" + maxSize +
-                        "_outputImage2.yuv";
+                        "_image2_output.yuv";
                 dumpFile(outputImgFileName, outputImageData);
             }
             // No need to close inputImage, as it is sent to the surface after queueInputImage;
