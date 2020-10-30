@@ -121,7 +121,7 @@ public class DrawFramesActivity extends Activity implements Window.OnFrameMetric
 
     private void spinSleep(int durationMs) {
         long until = System.currentTimeMillis() + durationMs;
-        while (System.currentTimeMillis() < until) {}
+        while (System.currentTimeMillis() <= until) {}
     }
 
     private void scheduleDraw() {
