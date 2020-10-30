@@ -117,12 +117,72 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
     @Test
     public void testRegisterUnregister() throws Exception {
-        FocusChangedListener listener = new FocusChangedListener();
+        FocusChangedListener listener1 = new FocusChangedListener();
         FocusChangedListener listener2 = new FocusChangedListener();
-        mManager.addFocusListener(listener, 1);
-        mManager.addFocusListener(listener2, 1);
-        mManager.removeFocusListener(listener);
+
+        mManager.addFocusListener(listener1, APP_FOCUS_TYPE_NAVIGATION);
+        mManager.addFocusListener(listener2, APP_FOCUS_TYPE_NAVIGATION);
+        mManager.removeFocusListener(listener1);
+
+        assertThat(mManager.requestAppFocus(APP_FOCUS_TYPE_NAVIGATION,
+                new FocusOwnershipCallback()))
+                .isEqualTo(CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED);
+        // listener1 is unregistered from all types of app, no events are expected.
+        assertThat(listener1.waitForFocusChangedAndAssert(
+                DEFAULT_WAIT_TIMEOUT_MS, APP_FOCUS_TYPE_NAVIGATION, true)).isFalse();
+        assertThat(listener2.waitForFocusChangedAndAssert(
+                DEFAULT_WAIT_TIMEOUT_MS, APP_FOCUS_TYPE_NAVIGATION, true)).isTrue();
+
         mManager.removeFocusListener(listener2);
+
+        assertThat(mManager.requestAppFocus(APP_FOCUS_TYPE_NAVIGATION,
+                new FocusOwnershipCallback()))
+                .isEqualTo(CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED);
+        // listener1 is unregistered from all types of app, no events are expected.
+        assertThat(listener1.waitForFocusChangedAndAssert(
+                DEFAULT_WAIT_TIMEOUT_MS, APP_FOCUS_TYPE_NAVIGATION, true)).isFalse();
+        // listener2 is unregistered from all types of app, no events are expected.
+        assertThat(listener2.waitForFocusChangedAndAssert(
+                DEFAULT_WAIT_TIMEOUT_MS, APP_FOCUS_TYPE_NAVIGATION, true)).isFalse();
+
+        // Double unregistering should be okay.
+        mManager.removeFocusListener(listener1);
+        mManager.removeFocusListener(listener2);
+    }
+
+    @Test
+    public void testRegisterUnregisterSpecificApp() throws Exception {
+        FocusChangedListener listener1 = new FocusChangedListener();
+        FocusChangedListener listener2 = new FocusChangedListener();
+
+        mManager.addFocusListener(listener1, APP_FOCUS_TYPE_NAVIGATION);
+        mManager.addFocusListener(listener2, APP_FOCUS_TYPE_NAVIGATION);
+        mManager.removeFocusListener(listener1, APP_FOCUS_TYPE_NAVIGATION);
+
+        assertThat(mManager.requestAppFocus(APP_FOCUS_TYPE_NAVIGATION,
+                new FocusOwnershipCallback()))
+                .isEqualTo(CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED);
+        // listener1 is unregistered from navigation app, no events are expected.
+        assertThat(listener1.waitForFocusChangedAndAssert(
+                DEFAULT_WAIT_TIMEOUT_MS, APP_FOCUS_TYPE_NAVIGATION, true)).isFalse();
+        assertThat(listener2.waitForFocusChangedAndAssert(
+                DEFAULT_WAIT_TIMEOUT_MS, APP_FOCUS_TYPE_NAVIGATION, true)).isTrue();
+
+        mManager.removeFocusListener(listener2, APP_FOCUS_TYPE_NAVIGATION);
+
+        assertThat(mManager.requestAppFocus(APP_FOCUS_TYPE_NAVIGATION,
+                new FocusOwnershipCallback()))
+                .isEqualTo(CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED);
+        // listener1 is unregistered from navigation app, no events are expected.
+        assertThat(listener1.waitForFocusChangedAndAssert(
+                DEFAULT_WAIT_TIMEOUT_MS, APP_FOCUS_TYPE_NAVIGATION, true)).isFalse();
+        // listener2 is unregistered from navigation app, no events are expected.
+        assertThat(listener2.waitForFocusChangedAndAssert(
+                DEFAULT_WAIT_TIMEOUT_MS, APP_FOCUS_TYPE_NAVIGATION, true)).isFalse();
+
+        // Double unregistering should be okay.
+        mManager.removeFocusListener(listener1, APP_FOCUS_TYPE_NAVIGATION);
+        mManager.removeFocusListener(listener2, APP_FOCUS_TYPE_NAVIGATION);
     }
 
     @AppModeFull(reason = "Test relies on other server to connect to.")
