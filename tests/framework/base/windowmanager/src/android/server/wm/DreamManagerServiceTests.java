@@ -52,7 +52,7 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
     private static final long ACTIVITY_STOP_TIMEOUT = 3000;
 
     // Timeout after which the dream should have been forcefully stopped
-    private static final long ACTIVITY_FORCE_STOP_TIMEOUT = 5500;
+    private static final long ACTIVITY_FORCE_STOP_TIMEOUT = 6500;
 
     private ComponentName mDreamActivityName;
 
