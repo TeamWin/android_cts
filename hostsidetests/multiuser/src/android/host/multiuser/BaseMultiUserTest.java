@@ -187,6 +187,11 @@ public abstract class BaseMultiUserTest implements IDeviceTest {
                 .that(getDevice().listUsers()).doesNotContain(userId);
     }
 
+    protected void assertUserPresent(int userId) throws Exception {
+        assertWithMessage("User ID %s should be present", userId)
+                .that(getDevice().listUsers()).contains(userId);
+    }
+
     /*
      * Waits for userId to removed or at removing state.
      * Returns true if user is removed or at removing state.
