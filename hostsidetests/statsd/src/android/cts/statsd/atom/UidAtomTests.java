@@ -1544,7 +1544,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         Thread.sleep(WAIT_TIME_SHORT);
 
         try (AutoCloseable a = withActivity("ANRActivity", null, null)) {
-            Thread.sleep(WAIT_TIME_SHORT);
+            Thread.sleep(WAIT_TIME_LONG * 2);
             getDevice().executeShellCommand(
                     "am broadcast -a action_anr -p " + DEVICE_SIDE_TEST_PACKAGE);
             Thread.sleep(20_000);

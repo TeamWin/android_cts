@@ -953,7 +953,7 @@ public class AtomTests {
         // shortly afterwards.
         Intent intent = new Intent(context, IsolatedProcessService.class);
         context.startService(intent);
-        sleep(500);
+        sleep(2_000);
         context.stopService(intent);
     }
 
