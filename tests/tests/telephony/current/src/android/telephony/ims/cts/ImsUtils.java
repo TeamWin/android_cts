@@ -30,8 +30,13 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class ImsUtils {
     public static final boolean VDBG = false;
@@ -153,5 +158,56 @@ public class ImsUtils {
             retryCounter++;
         }
         return false;
+    }
+
+    /**
+     * compress the gzip format data
+     * @hide
+     */
+    public static byte[] compressGzip(byte[] data) {
+        if (data == null || data.length == 0) {
+            return data;
+        }
+        byte[] out = null;
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+            GZIPOutputStream gzipCompressingStream =
+                    new GZIPOutputStream(outputStream);
+            gzipCompressingStream.write(data);
+            gzipCompressingStream.close();
+            out = outputStream.toByteArray();
+            outputStream.close();
+        } catch (IOException e) {
+        }
+        return out;
+    }
+
+    /**
+     * decompress the gzip format data
+     * @hide
+     */
+    public static byte[] decompressGzip(byte[] data) {
+        if (data == null || data.length == 0) {
+            return data;
+        }
+        byte[] out = null;
+        try {
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            GZIPInputStream gzipDecompressingStream =
+                    new GZIPInputStream(inputStream);
+            byte[] buf = new byte[1024];
+            int size = gzipDecompressingStream.read(buf);
+            while (size >= 0) {
+                outputStream.write(buf, 0, size);
+                size = gzipDecompressingStream.read(buf);
+            }
+            gzipDecompressingStream.close();
+            inputStream.close();
+            out = outputStream.toByteArray();
+            outputStream.close();
+        } catch (IOException e) {
+        }
+        return out;
     }
 }
