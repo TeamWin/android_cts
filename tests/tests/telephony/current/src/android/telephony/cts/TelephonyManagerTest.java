@@ -3021,8 +3021,8 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testGetCdmaEnhancedRoamingIndicatorIconIndex() {
-        int index = mTelephonyManager.getCdmaEnhancedRoamingIndicatorIconIndex();
+    public void testGetCdmaEnhancedRoamingIndicatorDisplayNumber() {
+        int index = mTelephonyManager.getCdmaEnhancedRoamingIndicatorDisplayNumber();
         int phoneType = mTelephonyManager.getPhoneType();
         if (phoneType == TelephonyManager.PHONE_TYPE_CDMA) {
             assertTrue(index >= 0 && index <= 255);

@@ -24,6 +24,7 @@ import static android.location.LocationManager.GPS_PROVIDER;
 import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
 import static android.location.LocationManager.PROVIDERS_CHANGED_ACTION;
+import static android.location.LocationRequest.PASSIVE_INTERVAL;
 import static android.os.PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF;
 import static android.os.PowerManager.LOCATION_MODE_GPS_DISABLED_WHEN_SCREEN_OFF;
 import static android.os.PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF;
@@ -327,6 +328,23 @@ public class LocationManagerFineTest {
             fail("Should throw IllegalArgumentException if listener is null!");
         } catch (IllegalArgumentException e) {
             // expected
+        }
+    }
+
+    @Test
+    public void testRequestLocationUpdates_Passive() throws Exception {
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(
+                    TEST_PROVIDER,
+                    new LocationRequest.Builder(PASSIVE_INTERVAL)
+                            .setMinUpdateIntervalMillis(0)
+                            .build(),
+                    Runnable::run,
+                    capture);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc);
         }
     }
 

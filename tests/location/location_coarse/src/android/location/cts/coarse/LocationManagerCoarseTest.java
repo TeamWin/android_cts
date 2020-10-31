@@ -19,6 +19,7 @@ package android.location.cts.coarse;
 import static android.location.LocationManager.GPS_PROVIDER;
 import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
+import static android.location.LocationRequest.PASSIVE_INTERVAL;
 import static android.provider.Settings.Secure.LOCATION_COARSE_ACCURACY_M;
 
 import static androidx.test.ext.truth.location.LocationSubject.assertThat;
@@ -39,6 +40,7 @@ import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.location.LocationRequest;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
 import android.location.cts.common.ProximityPendingIntentCapture;
@@ -166,9 +168,40 @@ public class LocationManagerCoarseTest {
         }
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
-            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, Runnable::run, capture);
+            mManager.requestLocationUpdates(
+                    TEST_PROVIDER,
+                    new LocationRequest.Builder(0)
+                            .build(),
+                    Runnable::run,
+                    capture);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, mMaxCoarseFudgeDistanceM);
+            mManager.setTestProviderLocation(TEST_PROVIDER, createLocation(TEST_PROVIDER, mRandom));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNull();
+        }
+    }
+
+    @Test
+    public void testRequestLocationUpdates_Passive() throws Exception {
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
+            Bundle extras = new Bundle();
+            extras.putParcelable(Location.EXTRA_NO_GPS_LOCATION, new Location(loc));
+            loc.setExtras(extras);
+        }
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(
+                    TEST_PROVIDER,
+                    new LocationRequest.Builder(PASSIVE_INTERVAL)
+                            .setMinUpdateIntervalMillis(0)
+                            .build(),
+                    Runnable::run,
+                    capture);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc);
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNearby(loc, mMaxCoarseFudgeDistanceM);
+            mManager.setTestProviderLocation(TEST_PROVIDER, createLocation(TEST_PROVIDER, mRandom));
+            assertThat(capture.getNextLocation(TIMEOUT_MS)).isNull();
         }
     }
 
