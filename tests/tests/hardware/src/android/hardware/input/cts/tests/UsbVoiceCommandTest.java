@@ -18,8 +18,6 @@ package android.hardware.input.cts.tests;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
-import static org.junit.Assert.assertEquals;
-
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -55,6 +53,7 @@ public class UsbVoiceCommandTest extends InputHidTestCase {
     private final PackageManager mPackageManager =
             InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
     private final Intent mVoiceIntent;
+    private final Intent mWebIntent;
     private final List<String> mExcludedPackages = new ArrayList<String>();
 
     // Simulates the behavior of Google Gamepad with Voice Command buttons.
@@ -62,26 +61,29 @@ public class UsbVoiceCommandTest extends InputHidTestCase {
         super(R.raw.google_gamepad_usb_register);
         mVoiceIntent = new Intent(RecognizerIntent.ACTION_VOICE_SEARCH_HANDS_FREE);
         mVoiceIntent.putExtra(RecognizerIntent.EXTRA_SECURE, true);
+        mWebIntent = new Intent(RecognizerIntent.ACTION_WEB_SEARCH);
     }
 
     private void setPackageState(boolean enabled) throws Exception {
         runWithShellPermissionIdentity(mUiAutomation, () -> {
             for (int i = 0; i < mExcludedPackages.size(); i++) {
                 if (enabled) {
-                    mUiDevice.executeShellCommand("pm enable " + mExcludedPackages.get(i));
+                    mPackageManager.setApplicationEnabledSetting(
+                            mExcludedPackages.get(i),
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                            PackageManager.DONT_KILL_APP);
                 } else {
-                    mUiDevice.executeShellCommand("pm disable " + mExcludedPackages.get(i));
+                    mPackageManager.setApplicationEnabledSetting(
+                            mExcludedPackages.get(i),
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                            PackageManager.DONT_KILL_APP);
                 }
             }
         });
     }
 
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-
-        mUiAutomation.adoptShellPermissionIdentity();
-        List<ResolveInfo> list = mPackageManager.queryIntentActivities(mVoiceIntent,
+    private void addExcludedPackages(Intent intent) {
+        final List<ResolveInfo> list = mPackageManager.queryIntentActivities(intent,
                 PackageManager.GET_ACTIVITIES | PackageManager.GET_META_DATA);
 
         for (int i = 0; i < list.size(); i++) {
@@ -91,6 +93,15 @@ public class UsbVoiceCommandTest extends InputHidTestCase {
                 mExcludedPackages.add(info.activityInfo.packageName);
             }
         }
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        // Exclude packages for voice intent
+        addExcludedPackages(mVoiceIntent);
+        // Exclude packages for web intent
+        addExcludedPackages(mWebIntent);
         // Set packages state to be disabled.
         setPackageState(false);
     }
@@ -113,12 +124,6 @@ public class UsbVoiceCommandTest extends InputHidTestCase {
      */
     @Test
     public void testVoiceAssistantKey() throws Exception {
-
-        final ResolveInfo resolveInfo = mPackageManager.resolveActivity(mVoiceIntent, 0);
-        /* Verify InputAssistantActivity is the preferred activity by resolver */
-        assertEquals("InputAssistantActivity should be the preferred voice assistant activity",
-                mActivityRule.getActivity().getPackageName(),
-                resolveInfo.activityInfo.packageName);
         /* Inject assistant key from hid device */
         testInputEvents(R.raw.google_gamepad_assistkey);
 
