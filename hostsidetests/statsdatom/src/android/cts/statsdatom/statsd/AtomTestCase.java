@@ -907,10 +907,6 @@ public class AtomTestCase extends BaseTestCase {
                 "cmd stats log-app-breadcrumb %d %d", label, state));
     }
 
-    protected void setBatteryLevel(int level) throws Exception {
-        getDevice().executeShellCommand("cmd battery set level " + level);
-    }
-
     protected void enterDozeModeLight() throws Exception {
         getDevice().executeShellCommand("dumpsys deviceidle force-idle light");
     }

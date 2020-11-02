@@ -235,10 +235,10 @@ public class HostAtomTests extends AtomTestCase {
     }
 
     public void testBatteryLevelChangedAtom() throws Exception {
-        if (!hasFeature(FEATURE_AUTOMOTIVE, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
         // Setup, set battery level to full.
         setBatteryLevel(100);
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         final int atomTag = Atom.BATTERY_LEVEL_CHANGED_FIELD_NUMBER;
 
@@ -252,30 +252,30 @@ public class HostAtomTests extends AtomTestCase {
         List<Set<Integer>> stateSet = Arrays.asList(batteryLow, battery25p, battery50p,
                 battery75p, batteryFull);
 
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
 
         // Trigger events in same order.
         setBatteryLevel(2);
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         setBatteryLevel(25);
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         setBatteryLevel(50);
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         setBatteryLevel(75);
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         setBatteryLevel(100);
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Unfreeze battery state after test
         DeviceUtils.resetBatteryStatus(getDevice());
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getBatteryLevelChanged().getBatteryLevel());
     }
 
@@ -720,5 +720,9 @@ public class HostAtomTests extends AtomTestCase {
 
     private void plugInWireless() throws Exception {
         getDevice().executeShellCommand("cmd battery set wireless 1");
+    }
+
+    private void setBatteryLevel(int level) throws Exception {
+        getDevice().executeShellCommand("cmd battery set level " + level);
     }
 }
