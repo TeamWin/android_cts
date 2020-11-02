@@ -97,11 +97,11 @@ public class ProviderTestUtils {
         final HashSet<String> testVolumes = new HashSet<>();
         final Set<String> volumeNames = MediaStore.getExternalVolumeNames(
                 InstrumentationRegistry.getTargetContext());
+        // Run tests only on VISIBLE volumes which are FUSE mounted and indexed by MediaProvider
         for (String vol : volumeNames) {
             final File mountedPath = getVolumePath(vol);
-            if (mountedPath == null) continue;
-            final Matcher matcher = PATTERN_STORAGE_PATH.matcher(mountedPath.getPath());
-            if (matcher.find()) {
+            if (mountedPath == null || mountedPath.getAbsolutePath() == null) continue;
+            if (mountedPath.getAbsolutePath().startsWith("/storage/")) {
                 testVolumes.add(vol);
             }
         }
