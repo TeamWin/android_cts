@@ -58,6 +58,8 @@ public class HostAtomTests extends AtomTestCase {
     private static final String WAKE_LOCK_FILE = "/proc/wakelocks";
     private static final String WAKE_SOURCES_FILE = "/d/wakeup_sources";
 
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
+
     // Bitmask of radio access technologies that all GSM phones should at least partially support
     protected static final long NETWORK_TYPE_BITMASK_GSM_ALL =
             (1 << (NetworkTypeEnum.NETWORK_TYPE_GSM_VALUE - 1))
@@ -133,10 +135,10 @@ public class HostAtomTests extends AtomTestCase {
     }
 
     public void testChargingStateChangedAtom() throws Exception {
-        if (!hasFeature(FEATURE_AUTOMOTIVE, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
         // Setup, set charging state to full.
-        setChargingState(5);
-        Thread.sleep(WAIT_TIME_SHORT);
+        DeviceUtils.setChargingState(getDevice(), 5);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         final int atomTag = Atom.CHARGING_STATE_CHANGED_FIELD_NUMBER;
 
@@ -155,30 +157,30 @@ public class HostAtomTests extends AtomTestCase {
         List<Set<Integer>> stateSet = Arrays.asList(batteryUnknownStates, batteryChargingStates,
                 batteryDischargingStates, batteryNotChargingStates, batteryFullStates);
 
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
 
         // Trigger events in same order.
-        setChargingState(1);
-        Thread.sleep(WAIT_TIME_SHORT);
-        setChargingState(2);
-        Thread.sleep(WAIT_TIME_SHORT);
-        setChargingState(3);
-        Thread.sleep(WAIT_TIME_SHORT);
-        setChargingState(4);
-        Thread.sleep(WAIT_TIME_SHORT);
-        setChargingState(5);
-        Thread.sleep(WAIT_TIME_SHORT);
+        DeviceUtils.setChargingState(getDevice(), 1);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.setChargingState(getDevice(), 2);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.setChargingState(getDevice(), 3);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.setChargingState(getDevice(), 4);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.setChargingState(getDevice(), 5);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Unfreeze battery state after test
         DeviceUtils.resetBatteryStatus(getDevice());
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getChargingStateChanged().getState().getNumber());
     }
 
