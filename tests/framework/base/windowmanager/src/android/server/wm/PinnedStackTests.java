@@ -72,6 +72,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -1288,8 +1289,12 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private void assertValidPictureInPictureCallbackOrder(ComponentName activityName,
             int windowingMode) {
         final ActivityLifecycleCounts lifecycles = new ActivityLifecycleCounts(activityName);
-        assertEquals(getActivityName(activityName) + " onConfigurationChanged()",
-                1, lifecycles.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED));
+        // There might be one additional config change caused by smallest screen width change when
+        // there are cutout areas on the left & right edges of the display.
+        assertThat(getActivityName(activityName) +
+                        " onConfigurationChanged() shouldn't be triggered more than 2 times",
+                lifecycles.getCount(ActivityCallback.ON_CONFIGURATION_CHANGED),
+                lessThanOrEqualTo(2));
         assertEquals(getActivityName(activityName) + " onMultiWindowModeChanged",
                 windowingMode == WINDOWING_MODE_FULLSCREEN ? 1 : 0,
                 lifecycles.getCount(ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED));
