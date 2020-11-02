@@ -2821,6 +2821,146 @@ public class TelephonyManagerTest {
                         mTelephonyManager, getPolicyHelper));
     }
 
+    @Test
+    public void testThermalDataEnable() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_THERMAL,
+                        false));
+
+        boolean isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
+                        TelephonyManager.DATA_ENABLED_REASON_THERMAL));
+        assertFalse(isDataEnabledForReason);
+
+        boolean isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
+        assertFalse(isDataConnectionAvailable);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_THERMAL,
+                        true));
+
+        isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
+                        TelephonyManager.DATA_ENABLED_REASON_THERMAL));
+        assertTrue(isDataEnabledForReason);
+
+        isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
+        assertTrue(isDataConnectionAvailable);
+    }
+
+    @Test
+    public void testPolicyDataEnable() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_POLICY,
+                        false));
+
+        boolean isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
+                        TelephonyManager.DATA_ENABLED_REASON_POLICY));
+        assertFalse(isDataEnabledForReason);
+
+        boolean isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
+        assertFalse(isDataConnectionAvailable);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_POLICY,
+                        true));
+
+        isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
+                        TelephonyManager.DATA_ENABLED_REASON_POLICY));
+        assertTrue(isDataEnabledForReason);
+
+        isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
+        assertTrue(isDataConnectionAvailable);
+    }
+
+    @Test
+    public void testCarrierDataEnable() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_CARRIER,
+                        false));
+
+        waitForMs(100);
+        boolean isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
+                        TelephonyManager.DATA_ENABLED_REASON_CARRIER));
+        assertFalse(isDataEnabledForReason);
+
+        boolean isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
+        assertFalse(isDataConnectionAvailable);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_CARRIER,
+                        true));
+
+        waitForMs(100);
+        isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
+                        TelephonyManager.DATA_ENABLED_REASON_CARRIER));
+        assertTrue(isDataEnabledForReason);
+        isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
+        assertTrue(isDataConnectionAvailable);
+    }
+
+    @Test
+    public void testUserDataEnable() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_USER,
+                        false));
+
+        boolean isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
+                        TelephonyManager.DATA_ENABLED_REASON_USER));
+        assertFalse(isDataEnabledForReason);
+
+        boolean isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
+        assertFalse(isDataConnectionAvailable);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                (tm) -> tm.setDataEnabledForReason(TelephonyManager.DATA_ENABLED_REASON_USER,
+                        true));
+
+        isDataEnabledForReason = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataEnabledForReason(
+                        TelephonyManager.DATA_ENABLED_REASON_USER));
+        assertTrue(isDataEnabledForReason);
+        isDataConnectionAvailable = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isDataConnectionAllowed());
+        assertTrue(isDataConnectionAvailable);
+    }
+
     /**
      * Validate Emergency Number address that only contains the dialable character.
      *
@@ -3025,6 +3165,18 @@ public class TelephonyManagerTest {
      * @return whether to proceed the test
      */
     private boolean supportSetFplmn() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return false;
+        }
+        return mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM;
+    }
+
+    /**
+     * Verify that the phone is supporting the action of setForbiddenPlmn.
+     *
+     * @return whether to proceed the test
+     */
+    private boolean test() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return false;
         }
