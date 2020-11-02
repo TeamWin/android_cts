@@ -325,6 +325,15 @@ public final class DeviceUtils {
         device.executeShellCommand("cmd battery set ac 1");
     }
 
+    public static void turnScreenOn(ITestDevice device) throws Exception {
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        device.executeShellCommand("wm dismiss-keyguard");
+    }
+
+    public static void turnScreenOff(ITestDevice device) throws Exception {
+        device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+    }
+
     public static boolean hasBattery(ITestDevice device) throws Exception {
         try {
             BatteryServiceDumpProto batteryProto = getShellCommandOutput(device, BatteryServiceDumpProto.parser(),
