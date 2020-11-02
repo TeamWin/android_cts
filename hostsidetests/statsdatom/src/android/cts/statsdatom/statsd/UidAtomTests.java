@@ -120,12 +120,12 @@ public class UidAtomTests extends DeviceAtomTestCase {
     private static final int NUM_APP_OPS = AttributedAppOps.getDefaultInstance().getOp().
             getDescriptorForType().getValues().size() - 1;
 
-    private static final String TEST_INSTALL_APK = "CtsStatsdEmptyApp.apk";
-    private static final String TEST_INSTALL_APK_BASE = "CtsStatsdEmptySplitApp.apk";
-    private static final String TEST_INSTALL_APK_SPLIT = "CtsStatsdEmptySplitApp_pl.apk";
+    private static final String TEST_INSTALL_APK = "CtsStatsdAtomEmptyApp.apk";
+    private static final String TEST_INSTALL_APK_BASE = "CtsStatsdAtomEmptySplitApp.apk";
+    private static final String TEST_INSTALL_APK_SPLIT = "CtsStatsdAtomEmptySplitApp_pl.apk";
     private static final String TEST_INSTALL_PACKAGE =
-            "com.android.cts.device.statsd.emptyapp";
-    private static final String TEST_REMOTE_DIR = "/data/local/tmp/statsd";
+            "com.android.cts.device.statsdatom.emptyapp";
+    private static final String TEST_REMOTE_DIR = "/data/local/tmp/statsdatom";
     private static final String ACTION_SHOW_APPLICATION_OVERLAY = "action.show_application_overlay";
     private static final String ACTION_LONG_SLEEP_WHILE_TOP = "action.long_sleep_top";
 
@@ -1989,7 +1989,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testPackageInstallerV2MetricsReported() throws Throwable {
-        if (!hasFeature(FEATURE_INCREMENTAL_DELIVERY, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_INCREMENTAL_DELIVERY)) return;
         final AtomsProto.PackageInstallerV2Reported report = installPackageUsingV2AndGetReport(
                 new String[]{TEST_INSTALL_APK});
         assertTrue(report.getIsIncremental());
@@ -2003,7 +2003,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     public void testPackageInstallerV2MetricsReportedForSplits() throws Throwable {
-        if (!hasFeature(FEATURE_INCREMENTAL_DELIVERY, true)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_INCREMENTAL_DELIVERY)) return;
 
         final AtomsProto.PackageInstallerV2Reported report = installPackageUsingV2AndGetReport(
                 new String[]{TEST_INSTALL_APK_BASE, TEST_INSTALL_APK_SPLIT});
@@ -2084,14 +2084,15 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     private AtomsProto.PackageInstallerV2Reported installPackageUsingV2AndGetReport(
             String[] apkNames) throws Exception {
-        createAndUploadConfig(Atom.PACKAGE_INSTALLER_V2_REPORTED_FIELD_NUMBER);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.PACKAGE_INSTALLER_V2_REPORTED_FIELD_NUMBER);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         installPackageUsingIncremental(apkNames, TEST_REMOTE_DIR);
         assertTrue(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE));
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<AtomsProto.PackageInstallerV2Reported> reports = new ArrayList<>();
-        for(EventMetricData data : getEventMetricDataList()) {
+        for (EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
             if (data.getAtom().hasPackageInstallerV2Reported()) {
                 reports.add(data.getAtom().getPackageInstallerV2Reported());
             }
