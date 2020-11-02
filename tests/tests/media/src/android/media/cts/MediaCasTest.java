@@ -59,6 +59,7 @@ public class MediaCasTest extends AndroidTestCase {
     private static final int sClearKeySystemId = 0xF6D8;
     private static final int API_LEVEL_BEFORE_CAS_SESSION = 28;
     private boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
     // ClearKey CAS/Descrambler test vectors
     private static final String sProvisionStr =
@@ -568,6 +569,32 @@ public class MediaCasTest extends AndroidTestCase {
         }
     }
 
+    /**
+     * Test Set Event Listener in MediaCas Constructor.
+     */
+    public void testConstructWithEventListener() throws Exception {
+        MediaCas mediaCas = null;
+        if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
+
+        try {
+            TestEventListener listener = new TestEventListener();
+            HandlerThread thread = new HandlerThread("EventListenerHandlerThread");
+            thread.start();
+            Handler handler = new Handler(thread.getLooper());
+
+            mediaCas = new MediaCas(getContext(), sClearKeySystemId, null,
+                android.media.tv.TvInputService.PRIORITY_HINT_USE_CASE_TYPE_LIVE, handler,
+                listener);
+
+            thread.interrupt();
+
+        } finally {
+            if (mediaCas != null) {
+                mediaCas.close();
+            }
+        }
+    }
+
     private class TestEventListener implements MediaCas.EventListener {
         private final CountDownLatch mLatch = new CountDownLatch(1);
         private final MediaCas mMediaCas;
@@ -576,6 +603,14 @@ public class MediaCasTest extends AndroidTestCase {
         private final int mArg;
         private final byte[] mData;
         private boolean mIsIdential;
+
+        TestEventListener() {
+            mMediaCas = null;
+            mEvent = 0;
+            mArg = 0;
+            mData = null;
+            mSession = null;
+        }
 
         TestEventListener(MediaCas mediaCas, int event, int arg, byte[] data) {
             mMediaCas = mediaCas;
