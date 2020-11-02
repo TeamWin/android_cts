@@ -138,6 +138,13 @@ class TestTaskOrganizer extends TaskOrganizer {
     @Override
     public void onTaskAppeared(@NonNull ActivityManager.RunningTaskInfo taskInfo,
             SurfaceControl leash) {
+        if (taskInfo.hasParentTask()) {
+            // Tasks with parent created by organizer are also organized now, update the surface as
+            // well to prevent timeout tests when polling for Activity#hasWindowFocus.
+            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+            t.setVisibility(leash, true /* visible */);
+            t.apply();
+        }
         addTask(taskInfo);
     }
 
