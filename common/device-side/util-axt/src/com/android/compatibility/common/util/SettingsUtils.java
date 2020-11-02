@@ -197,4 +197,11 @@ public final class SettingsUtils {
     public static String getSecureSetting(String key) {
         return SystemUtil.runShellCommand("settings --user current get secure " + key).trim();
     }
+
+    /**
+     * Get a global setting for the system user. Trims ending new line.
+     */
+    public static String getSecureSettingAsSystemUser(String key) {
+        return SystemUtil.runShellCommand("settings --user 0 get secure " + key).trim();
+    }
 }
