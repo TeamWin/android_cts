@@ -91,7 +91,8 @@ public class HostAtomTests extends AtomTestCase {
         turnScreenOn();
         Thread.sleep(WAIT_TIME_SHORT);
         turnScreenOff();
-        Thread.sleep(WAIT_TIME_SHORT);
+        // Ensure that the screen off atom is pushed before the config is uploaded
+        Thread.sleep(WAIT_TIME_LONG);
 
         final int atomTag = Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER;
 
