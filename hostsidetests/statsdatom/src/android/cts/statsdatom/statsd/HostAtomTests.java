@@ -18,7 +18,10 @@ package android.cts.statsdatom.statsd;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.cts.statsdatom.lib.AtomTestUtils;
+import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
+import android.cts.statsdatom.lib.ReportUtils;
 import android.os.BatteryPluggedStateEnum;
 import android.os.BatteryStatusEnum;
 import android.platform.test.annotations.RestrictedBuildTest;
@@ -88,11 +91,11 @@ public class HostAtomTests extends AtomTestCase {
         // on and the device doesn't support STATE_DOZE, the screen sadly goes back to STATE_ON.
         String aodState = getAodState();
         setAodState("0");
-        turnScreenOn();
-        Thread.sleep(WAIT_TIME_SHORT);
-        turnScreenOff();
+        DeviceUtils.turnScreenOn(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.turnScreenOff(getDevice());
         // Ensure that the screen off atom is pushed before the config is uploaded
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         final int atomTag = Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER;
 
@@ -109,23 +112,23 @@ public class HostAtomTests extends AtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(screenOnStates, screenOffStates);
 
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
 
         // Trigger events in same order.
-        turnScreenOn();
-        Thread.sleep(WAIT_TIME_LONG);
-        turnScreenOff();
-        Thread.sleep(WAIT_TIME_LONG);
+        DeviceUtils.turnScreenOn(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        DeviceUtils.turnScreenOff(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         // reset screen to on
-        turnScreenOn();
+        DeviceUtils.turnScreenOn(getDevice());
         // Restores AoD to initial state.
         setAodState(aodState);
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_LONG,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_LONG,
                 atom -> atom.getScreenStateChanged().getState().getNumber());
     }
 
@@ -698,4 +701,15 @@ public class HostAtomTests extends AtomTestCase {
                     .isNotEqualTo(0L);
         }
     }
+
+    // Gets whether "Always on Display" setting is enabled.
+    // In rare cases, this is different from whether the device can enter SCREEN_STATE_DOZE.
+    private String getAodState() throws Exception {
+        return getDevice().executeShellCommand("settings get secure doze_always_on");
+    }
+
+    private void setAodState(String state) throws Exception {
+        getDevice().executeShellCommand("settings put secure doze_always_on " + state);
+    }
+
 }

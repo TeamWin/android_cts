@@ -919,16 +919,6 @@ public class AtomTestCase extends BaseTestCase {
         getDevice().executeShellCommand("cmd battery set level " + level);
     }
 
-    // Gets whether "Always on Display" setting is enabled.
-    // In rare cases, this is different from whether the device can enter SCREEN_STATE_DOZE.
-    protected String getAodState() throws Exception {
-        return getDevice().executeShellCommand("settings get secure doze_always_on");
-    }
-
-    protected void setAodState(String state) throws Exception {
-        getDevice().executeShellCommand("settings put secure doze_always_on " + state);
-    }
-
     protected void enterDozeModeLight() throws Exception {
         getDevice().executeShellCommand("dumpsys deviceidle force-idle light");
     }
