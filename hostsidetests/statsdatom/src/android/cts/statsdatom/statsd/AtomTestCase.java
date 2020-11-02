@@ -854,14 +854,6 @@ public class AtomTestCase extends BaseTestCase {
         getDevice().executeShellCommand("cmd battery set ac 1");
     }
 
-    protected void plugInUsb() throws Exception {
-        getDevice().executeShellCommand("cmd battery set usb 1");
-    }
-
-    protected void plugInWireless() throws Exception {
-        getDevice().executeShellCommand("cmd battery set wireless 1");
-    }
-
     protected void enableLooperStats() throws Exception {
         getDevice().executeShellCommand("cmd looper_stats enable");
     }

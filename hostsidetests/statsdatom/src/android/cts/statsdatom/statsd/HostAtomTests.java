@@ -185,10 +185,10 @@ public class HostAtomTests extends AtomTestCase {
     }
 
     public void testPluggedStateChangedAtom() throws Exception {
-        if (!hasFeature(FEATURE_AUTOMOTIVE, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
         // Setup, unplug device.
-        unplugDevice();
-        Thread.sleep(WAIT_TIME_SHORT);
+        DeviceUtils.unplugDevice(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         final int atomTag = Atom.PLUGGED_STATE_CHANGED_FIELD_NUMBER;
 
@@ -205,32 +205,32 @@ public class HostAtomTests extends AtomTestCase {
         List<Set<Integer>> stateSet = Arrays.asList(acStates, unpluggedStates, usbStates,
                 unpluggedStates, wirelessStates, unpluggedStates);
 
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
 
         // Trigger events in same order.
-        plugInAc();
-        Thread.sleep(WAIT_TIME_SHORT);
-        unplugDevice();
-        Thread.sleep(WAIT_TIME_SHORT);
+        DeviceUtils.plugInAc(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.unplugDevice(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         plugInUsb();
-        Thread.sleep(WAIT_TIME_SHORT);
-        unplugDevice();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.unplugDevice(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         plugInWireless();
-        Thread.sleep(WAIT_TIME_SHORT);
-        unplugDevice();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.unplugDevice(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Unfreeze battery state after test
         DeviceUtils.resetBatteryStatus(getDevice());
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getPluggedStateChanged().getState().getNumber());
     }
 
@@ -714,4 +714,11 @@ public class HostAtomTests extends AtomTestCase {
         getDevice().executeShellCommand("settings put secure doze_always_on " + state);
     }
 
+    private void plugInUsb() throws Exception {
+        getDevice().executeShellCommand("cmd battery set usb 1");
+    }
+
+    private void plugInWireless() throws Exception {
+        getDevice().executeShellCommand("cmd battery set wireless 1");
+    }
 }
