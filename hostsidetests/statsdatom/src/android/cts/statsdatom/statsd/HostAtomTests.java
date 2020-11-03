@@ -54,6 +54,8 @@ public class HostAtomTests extends AtomTestCase {
 
     private static final String TAG = "Statsd.HostAtomTests";
 
+    private static final boolean OPTIONAL_TESTS_ENABLED = false;
+
     // Either file must exist to read kernel wake lock stats.
     private static final String WAKE_LOCK_FILE = "/proc/wakelocks";
     private static final String WAKE_SOURCES_FILE = "/d/wakeup_sources";
@@ -552,20 +554,17 @@ public class HostAtomTests extends AtomTestCase {
     public void testOnDevicePowerMeasurement() throws Exception {
         if (!OPTIONAL_TESTS_ENABLED) return;
 
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.ON_DEVICE_POWER_MEASUREMENT_FIELD_NUMBER, null);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.ON_DEVICE_POWER_MEASUREMENT_FIELD_NUMBER);
 
-        uploadConfig(config);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
-        Thread.sleep(WAIT_TIME_LONG);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_LONG);
+        List<Atom> dataList = ReportUtils.getGaugeMetricAtoms(getDevice());
 
-        List<Atom> dataList = getGaugeMetricDataList();
-
-        for (Atom atom: dataList) {
+        for (Atom atom : dataList) {
             assertThat(atom.getOnDevicePowerMeasurement().getMeasurementTimestampMillis())
-                .isAtLeast(0L);
+                    .isAtLeast(0L);
             assertThat(atom.getOnDevicePowerMeasurement().getEnergyMicrowattSecs()).isAtLeast(0L);
         }
     }
