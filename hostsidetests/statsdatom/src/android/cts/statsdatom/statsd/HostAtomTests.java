@@ -373,23 +373,21 @@ public class HostAtomTests extends AtomTestCase {
 
     @RestrictedBuildTest
     public void testFullBatteryCapacity() throws Exception {
-        if (!hasFeature(FEATURE_WATCH, false)) return;
-        if (!hasFeature(FEATURE_AUTOMOTIVE, false)) return;
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.FULL_BATTERY_CAPACITY_FIELD_NUMBER, null);
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_WATCH)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
 
-        uploadConfig(config);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.FULL_BATTERY_CAPACITY_FIELD_NUMBER);
 
-        Thread.sleep(WAIT_TIME_LONG);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_LONG);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
-        List<Atom> data = getGaugeMetricDataList();
+        List<Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
 
         assertThat(data).isNotEmpty();
         Atom atom = data.get(0);
         assertThat(atom.getFullBatteryCapacity().hasCapacityMicroAmpereHour()).isTrue();
-        if (hasBattery()) {
+        if (DeviceUtils.hasBattery(getDevice())) {
             assertThat(atom.getFullBatteryCapacity().getCapacityMicroAmpereHour()).isGreaterThan(0);
         }
     }
