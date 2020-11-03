@@ -65,6 +65,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.fonts.FontStyle;
 import android.icu.lang.UCharacter;
 import android.net.Uri;
 import android.os.Bundle;
@@ -199,6 +200,8 @@ public class TextViewTest {
         }
     };
     private static final int CLICK_TIMEOUT = ViewConfiguration.getDoubleTapTimeout() + 50;
+    private static final int BOLD_TEXT_ADJUSTMENT =
+            FontStyle.FONT_WEIGHT_BOLD - FontStyle.FONT_WEIGHT_NORMAL;
 
     private CharSequence mTransformedText;
     private Handler mHandler = new Handler(Looper.getMainLooper());
@@ -323,45 +326,46 @@ public class TextViewTest {
     }
 
     @Test
-    public void testForceBoldText_textIsBolded() throws Throwable {
+    public void testFontWeightAdjustment_forceBoldTextEnabled_textIsBolded() throws Throwable {
         mActivityRule.runOnUiThread(() -> mTextView = findTextView(R.id.textview_text));
         mInstrumentation.waitForIdleSync();
 
-        assertEquals(400, mTextView.getTypeface().getWeight());
+        assertEquals(FontStyle.FONT_WEIGHT_NORMAL, mTextView.getTypeface().getWeight());
 
         Configuration cf = new Configuration();
-        cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_YES;
+        cf.fontWeightAdjustment = BOLD_TEXT_ADJUSTMENT;
         mActivityRule.runOnUiThread(() -> mTextView.dispatchConfigurationChanged(cf));
         mInstrumentation.waitForIdleSync();
 
         Typeface forceBoldedPaintTf = mTextView.getPaint().getTypeface();
-        assertEquals(700, forceBoldedPaintTf.getWeight());
-        assertEquals(400, mTextView.getTypeface().getWeight());
+        assertEquals(FontStyle.FONT_WEIGHT_BOLD, forceBoldedPaintTf.getWeight());
+        assertEquals(FontStyle.FONT_WEIGHT_NORMAL, mTextView.getTypeface().getWeight());
     }
 
     @Test
-    public void testForceBoldText_textIsUnbolded() throws Throwable {
+    public void testFontWeightAdjustment_forceBoldTextDisabled_textIsUnbolded() throws Throwable {
         Configuration cf = new Configuration();
-        cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_YES;
+        cf.fontWeightAdjustment = BOLD_TEXT_ADJUSTMENT;
         mActivityRule.runOnUiThread(() -> {
             mTextView = findTextView(R.id.textview_text);
             mTextView.dispatchConfigurationChanged(cf);
-            cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_NO;
+            cf.fontWeightAdjustment = 0;
             mTextView.dispatchConfigurationChanged(cf);
         });
         mInstrumentation.waitForIdleSync();
 
         Typeface forceUnboldedPaintTf = mTextView.getPaint().getTypeface();
-        assertEquals(400, forceUnboldedPaintTf.getWeight());
-        assertEquals(400, mTextView.getTypeface().getWeight());
+        assertEquals(FontStyle.FONT_WEIGHT_NORMAL, forceUnboldedPaintTf.getWeight());
+        assertEquals(FontStyle.FONT_WEIGHT_NORMAL, mTextView.getTypeface().getWeight());
     }
 
     @Test
-    public void testForceBoldText_originalTypefaceKeptWhenEnabled() throws Throwable {
+    public void testFontWeightAdjustment_forceBoldTextEnabled_originalTypefaceKeptWhenEnabled()
+            throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             mTextView = findTextView(R.id.textview_text);
             Configuration cf = new Configuration();
-            cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_YES;
+            cf.fontWeightAdjustment = BOLD_TEXT_ADJUSTMENT;
             mTextView.dispatchConfigurationChanged(cf);
             mTextView.setTypeface(Typeface.MONOSPACE);
         });
@@ -371,16 +375,18 @@ public class TextViewTest {
 
         Typeface forceBoldedPaintTf = mTextView.getPaint().getTypeface();
         assertTrue(forceBoldedPaintTf.isBold());
-        assertEquals(Typeface.create(Typeface.MONOSPACE, 700, false), forceBoldedPaintTf);
+        assertEquals(Typeface.create(Typeface.MONOSPACE,
+                FontStyle.FONT_WEIGHT_BOLD, false), forceBoldedPaintTf);
     }
 
 
     @Test
-    public void testForceBoldText_originalTypefaceIsKeptWhenDisabled() throws Throwable {
+    public void testFontWeightAdjustment_forceBoldTextDisabled_originalTypefaceIsKept()
+            throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             mTextView = findTextView(R.id.textview_text);
             Configuration cf = new Configuration();
-            cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_NO;
+            cf.fontWeightAdjustment = 0;
             mTextView.dispatchConfigurationChanged(cf);
             mTextView.setTypeface(Typeface.MONOSPACE);
         });
@@ -391,19 +397,53 @@ public class TextViewTest {
     }
 
     @Test
-    public void testForceBoldText_boldTypefaceIsBoldedWhenEnabled() throws Throwable {
+    public void testFontWeightAdjustment_forceBoldTextEnabled_boldTypefaceIsBolded()
+            throws Throwable {
         Typeface originalTypeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD);
         mActivityRule.runOnUiThread(() -> {
             mTextView = findTextView(R.id.textview_text);
             Configuration cf = new Configuration();
-            cf.forceBoldText = Configuration.FORCE_BOLD_TEXT_YES;
+            cf.fontWeightAdjustment = BOLD_TEXT_ADJUSTMENT;
             mTextView.dispatchConfigurationChanged(cf);
             mTextView.setTypeface(originalTypeface);
         });
         mInstrumentation.waitForIdleSync();
 
         assertEquals(originalTypeface, mTextView.getTypeface());
-        assertEquals(1000, mTextView.getPaint().getTypeface().getWeight());
+        assertEquals(FontStyle.FONT_WEIGHT_MAX,
+                mTextView.getPaint().getTypeface().getWeight());
+    }
+
+    @Test
+    public void testFontWeightAdjustment_adjustmentIsNegative_fontWeightIsLower() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.fontWeightAdjustment = -200;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(Typeface.MONOSPACE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Typeface.MONOSPACE, mTextView.getTypeface());
+        assertEquals(200, mTextView.getPaint().getTypeface().getWeight());
+    }
+
+    @Test
+    public void testFontWeightAdjustment_adjustmentIsNegative_fontWeightIsMinimum()
+            throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = findTextView(R.id.textview_text);
+            Configuration cf = new Configuration();
+            cf.fontWeightAdjustment = -500;
+            mTextView.dispatchConfigurationChanged(cf);
+            mTextView.setTypeface(Typeface.MONOSPACE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertEquals(Typeface.MONOSPACE, mTextView.getTypeface());
+        assertEquals(FontStyle.FONT_WEIGHT_MIN,
+                mTextView.getPaint().getTypeface().getWeight());
     }
 
     @Test
