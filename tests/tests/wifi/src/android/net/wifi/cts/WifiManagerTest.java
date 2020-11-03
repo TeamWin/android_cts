@@ -1771,10 +1771,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             waitForDisconnection();
 
             // Now trigger connection to the last saved network.
+            WifiConfiguration savedNetworkToConnect =
+                    savedNetworks.get(savedNetworks.size() - 1);
             synchronized (mLock) {
                 try {
-                    WifiConfiguration savedNetworkToConnect =
-                            savedNetworks.get(savedNetworks.size() - 1);
                     if (withNetworkId) {
                         mWifiManager.connect(savedNetworkToConnect.networkId, actionListener);
                     } else {
@@ -1789,7 +1789,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertTrue(actionListener.onSuccessCalled);
             // Wait for connection to complete & ensure we are connected to the saved network.
             waitForConnection();
-            assertEquals(savedNetworks.get(0).networkId,
+            assertEquals(savedNetworkToConnect.networkId,
                     mWifiManager.getConnectionInfo().getNetworkId());
         } finally {
             // Re-enable all saved networks before exiting.
