@@ -40,7 +40,10 @@ import com.android.os.AtomsProto.SimSlotState;
 import com.android.os.AtomsProto.SupportedRadioAccessFamily;
 import com.android.os.StatsLog.ConfigMetricsReportList;
 import com.android.os.StatsLog.EventMetricData;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.log.LogUtil;
+import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.IBuildReceiver;
 
 import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
@@ -60,7 +63,7 @@ import java.util.regex.Pattern;
 /**
  * Statsd atom tests that are done via adb (hostside).
  */
-public class HostAtomTests extends AtomTestCase {
+public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TAG = "Statsd.HostAtomTests";
 
@@ -105,6 +108,8 @@ public class HostAtomTests extends AtomTestCase {
             | (1 << (NetworkTypeEnum.NETWORK_TYPE_EVDO_A_VALUE - 1))
             | (1 << (NetworkTypeEnum.NETWORK_TYPE_EHRPD_VALUE - 1));
 
+    private IBuildInfo mCtsBuild;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -121,6 +126,11 @@ public class HostAtomTests extends AtomTestCase {
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
         super.tearDown();
+    }
+
+    @Override
+    public void setBuild(IBuildInfo buildInfo) {
+        mCtsBuild = buildInfo;
     }
 
     public void testScreenStateChangedAtom() throws Exception {
