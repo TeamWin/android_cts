@@ -77,6 +77,15 @@ public class TestBase extends WifiJUnit3TestBase {
         return pm.hasSystemFeature(PackageManager.FEATURE_WIFI_RTT);
     }
 
+    /**
+     * Returns a flag indicating whether or not Wi-Fi Aware should be tested. Wi-Fi Aware
+     * should be tested if the feature is supported on the current device.
+     */
+    static boolean shouldTestWifiAware(Context context) {
+        final PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE);
+    }
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
