@@ -51,9 +51,10 @@ class TestTaskOrganizer extends TaskOrganizer {
     void unregisterOrganizerIfNeeded() {
         if (!mRegistered) return;
         mRegistered = false;
-
-        dismissedSplitScreen();
-        super.unregisterOrganizer();
+        NestedShellPermission.run(() -> {
+            dismissedSplitScreen();
+            super.unregisterOrganizer();
+        });
     }
 
     void putTaskInSplitPrimary(int taskId) {
@@ -66,30 +67,32 @@ class TestTaskOrganizer extends TaskOrganizer {
     }
 
     void dismissedSplitScreen() {
-        // Re-set default launch root.
-        setLaunchRoot(Display.DEFAULT_DISPLAY, null);
+        NestedShellPermission.run(() -> {
+            // Re-set default launch root.
+            setLaunchRoot(Display.DEFAULT_DISPLAY, null);
 
-        // Re-parent everything back to the display from the splits so that things are as they were.
-        final List<ActivityManager.RunningTaskInfo> children = new ArrayList<>();
-        final List<ActivityManager.RunningTaskInfo> primaryChildren =
-                getChildTasks(mRootPrimary.getToken(), null /* activityTypes */);
-        if (primaryChildren != null && !primaryChildren.isEmpty()) {
-            children.addAll(primaryChildren);
-        }
-        final List<ActivityManager.RunningTaskInfo> secondaryChildren =
-                getChildTasks(mRootSecondary.getToken(), null /* activityTypes */);
-        if (secondaryChildren != null && !secondaryChildren.isEmpty()) {
-            children.addAll(secondaryChildren);
-        }
-        if (children.isEmpty()) {
-            return;
-        }
+            // Re-parent everything back to the display from the splits so that things are as they were.
+            final List<ActivityManager.RunningTaskInfo> children = new ArrayList<>();
+            final List<ActivityManager.RunningTaskInfo> primaryChildren =
+                    getChildTasks(mRootPrimary.getToken(), null /* activityTypes */);
+            if (primaryChildren != null && !primaryChildren.isEmpty()) {
+                children.addAll(primaryChildren);
+            }
+            final List<ActivityManager.RunningTaskInfo> secondaryChildren =
+                    getChildTasks(mRootSecondary.getToken(), null /* activityTypes */);
+            if (secondaryChildren != null && !secondaryChildren.isEmpty()) {
+                children.addAll(secondaryChildren);
+            }
+            if (children.isEmpty()) {
+                return;
+            }
 
-        final WindowContainerTransaction t = new WindowContainerTransaction();
-        for (ActivityManager.RunningTaskInfo task : children) {
-            t.reparent(task.getToken(), null /* parent */, true /* onTop */);
-        }
-        applyTransaction(t);
+            final WindowContainerTransaction t = new WindowContainerTransaction();
+            for (ActivityManager.RunningTaskInfo task : children) {
+                t.reparent(task.getToken(), null /* parent */, true /* onTop */);
+            }
+            applyTransaction(t);
+        });
     }
 
     /** Also completes the process of entering split mode. */
@@ -145,7 +148,7 @@ class TestTaskOrganizer extends TaskOrganizer {
             t.setVisibility(leash, true /* visible */);
             t.apply();
         }
-        addTask(taskInfo);
+        NestedShellPermission.run(() -> addTask(taskInfo));
     }
 
     @Override
@@ -155,7 +158,7 @@ class TestTaskOrganizer extends TaskOrganizer {
 
     @Override
     public void onTaskInfoChanged(ActivityManager.RunningTaskInfo taskInfo) {
-        addTask(taskInfo);
+        NestedShellPermission.run(() -> addTask(taskInfo));
     }
 
     private void addTask(ActivityManager.RunningTaskInfo taskInfo) {

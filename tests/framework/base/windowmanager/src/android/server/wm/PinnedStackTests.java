@@ -1268,7 +1268,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     private void assertNumberOfActions(ComponentName componentName, int numberOfActions) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        runWithShellPermission(() -> {
             final ActivityTask task = mWmState.getTaskByActivity(componentName);
             final TaskInfo info = mTaskOrganizer.getTaskInfo(task.getTaskId());
             final PictureInPictureParams params = info.getPictureInPictureParams();
