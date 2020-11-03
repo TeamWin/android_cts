@@ -69,6 +69,7 @@ public class HostAtomTests extends AtomTestCase {
     private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final String FEATURE_WATCH = "android.hardware.type.watch";
     private static final String FEATURE_WIFI = "android.hardware.wifi";
+    private static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
 
     // Bitmask of radio access technologies that all GSM phones should at least partially support
     protected static final long NETWORK_TYPE_BITMASK_GSM_ALL =
@@ -625,13 +626,13 @@ public class HostAtomTests extends AtomTestCase {
     }
 
     public void testConnectivityStateChange() throws Exception {
-        if (!hasFeature(FEATURE_WIFI, true)) return;
-        if (!hasFeature(FEATURE_WATCH, false)) return;
-        if (!hasFeature(FEATURE_LEANBACK_ONLY, false)) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_WATCH)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_LEANBACK_ONLY)) return;
 
         final int atomTag = Atom.CONNECTIVITY_STATE_CHANGED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
 
         turnOnAirplaneMode();
         // wait long enough for airplane mode events to propagate.
@@ -640,18 +641,18 @@ public class HostAtomTests extends AtomTestCase {
         // wait long enough for the device to restore connection
         Thread.sleep(13_000);
 
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         // at least 1 disconnect and 1 connect
         assertThat(data.size()).isAtLeast(2);
         boolean foundDisconnectEvent = false;
         boolean foundConnectEvent = false;
         for (EventMetricData d : data) {
             ConnectivityStateChanged atom = d.getAtom().getConnectivityStateChanged();
-            if(atom.getState().getNumber()
+            if (atom.getState().getNumber()
                     == ConnectivityStateChanged.State.DISCONNECTED_VALUE) {
                 foundDisconnectEvent = true;
             }
-            if(atom.getState().getNumber()
+            if (atom.getState().getNumber()
                     == ConnectivityStateChanged.State.CONNECTED_VALUE) {
                 foundConnectEvent = true;
             }
@@ -767,6 +768,14 @@ public class HostAtomTests extends AtomTestCase {
     private void turnBatterySaverOn() throws Exception {
         DeviceUtils.unplugDevice(getDevice());
         getDevice().executeShellCommand("settings put global low_power 1");
+    }
+
+    private void turnOnAirplaneMode() throws Exception {
+        getDevice().executeShellCommand("cmd connectivity airplane-mode enable");
+    }
+
+    private void turnOffAirplaneMode() throws Exception {
+        getDevice().executeShellCommand("cmd connectivity airplane-mode disable");
     }
 
     /** Gets reports from the statsd data incident section from the stats dumpsys. */

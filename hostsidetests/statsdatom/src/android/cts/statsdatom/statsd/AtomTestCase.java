@@ -113,7 +113,6 @@ public class AtomTestCase extends BaseTestCase {
     public static final String FEATURE_CAMERA = "android.hardware.camera";
     public static final String FEATURE_CAMERA_FLASH = "android.hardware.camera.flash";
     public static final String FEATURE_CAMERA_FRONT = "android.hardware.camera.front";
-    public static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
     public static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
     public static final String FEATURE_PC = "android.hardware.type.pc";
     public static final String FEATURE_PICTURE_IN_PICTURE = "android.software.picture_in_picture";
@@ -935,14 +934,6 @@ public class AtomTestCase extends BaseTestCase {
                     + featureName);
         }
         return hasIt == requiredAnswer;
-    }
-
-    protected void turnOnAirplaneMode() throws Exception {
-        getDevice().executeShellCommand("cmd connectivity airplane-mode enable");
-    }
-
-    protected void turnOffAirplaneMode() throws Exception {
-        getDevice().executeShellCommand("cmd connectivity airplane-mode disable");
     }
 
     /**
