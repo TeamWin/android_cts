@@ -521,12 +521,12 @@ public class SplitTests extends BaseAppSecurityTest {
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
     public void testRequiredSplitMissing_full() throws Exception {
-        testSingleBase(false);
+        testRequiredSplitMissing(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testRequiredSplitMissing_instant() throws Exception {
-        testSingleBase(true);
+        testRequiredSplitMissing(true);
     }
     private void testRequiredSplitMissing(boolean instant) throws Exception {
         new InstallMultiple(instant).addFile(APK_NEED_SPLIT_BASE)
@@ -536,12 +536,12 @@ public class SplitTests extends BaseAppSecurityTest {
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
     public void testRequiredSplitInstalledFeature_full() throws Exception {
-        testSingleBase(false);
+        testRequiredSplitInstalledFeature(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testRequiredSplitInstalledFeature_instant() throws Exception {
-        testSingleBase(true);
+        testRequiredSplitInstalledFeature(true);
     }
     private void testRequiredSplitInstalledFeature(boolean instant) throws Exception {
         new InstallMultiple(instant).addFile(APK_NEED_SPLIT_BASE).addFile(APK_NEED_SPLIT_FEATURE)
@@ -551,12 +551,12 @@ public class SplitTests extends BaseAppSecurityTest {
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
     public void testRequiredSplitInstalledConfig_full() throws Exception {
-        testSingleBase(false);
+        testRequiredSplitInstalledConfig(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testRequiredSplitInstalledConfig_instant() throws Exception {
-        testSingleBase(true);
+        testRequiredSplitInstalledConfig(true);
     }
     private void testRequiredSplitInstalledConfig(boolean instant) throws Exception {
         new InstallMultiple(instant).addFile(APK_NEED_SPLIT_BASE).addFile(APK_NEED_SPLIT_CONFIG)
@@ -566,12 +566,12 @@ public class SplitTests extends BaseAppSecurityTest {
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
     public void testRequiredSplitRemoved_full() throws Exception {
-        testSingleBase(false);
+        testRequiredSplitRemoved(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testRequiredSplitRemoved_instant() throws Exception {
-        testSingleBase(true);
+        testRequiredSplitRemoved(true);
     }
     private void testRequiredSplitRemoved(boolean instant) throws Exception {
         // start with a base and two splits
@@ -581,9 +581,9 @@ public class SplitTests extends BaseAppSecurityTest {
                 .addFile(APK_NEED_SPLIT_CONFIG)
                 .run();
         // it's okay to remove one of the splits
-        new InstallMultiple(instant).inheritFrom(PKG).removeSplit("split_feature").run();
+        new InstallMultiple(instant).inheritFrom(PKG).removeSplit("feature").run();
         // but, not to remove all of them
-        new InstallMultiple(instant).inheritFrom(PKG).removeSplit("split_config.xxhdpi")
+        new InstallMultiple(instant).inheritFrom(PKG).removeSplit("config.xxhdpi")
                 .runExpectingFailure("INSTALL_FAILED_MISSING_SPLIT");
     }
 
