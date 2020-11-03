@@ -572,13 +572,13 @@ public class HostAtomTests extends AtomTestCase {
     // Explicitly tests if the adb command to log a breadcrumb is working.
     public void testBreadcrumbAdb() throws Exception {
         final int atomTag = Atom.APP_BREADCRUMB_REPORTED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
 
-        doAppBreadcrumbReportedStart(1);
-        Thread.sleep(WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         AppBreadcrumbReported atom = data.get(0).getAtom().getAppBreadcrumbReported();
         assertThat(atom.getLabel()).isEqualTo(1);
         assertThat(atom.getState().getNumber()).isEqualTo(AppBreadcrumbReported.State.START_VALUE);
