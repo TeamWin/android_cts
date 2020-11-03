@@ -907,16 +907,6 @@ public class AtomTestCase extends BaseTestCase {
                 "cmd stats log-app-breadcrumb %d %d", label, state));
     }
 
-    protected void turnBatterySaverOn() throws Exception {
-        unplugDevice();
-        getDevice().executeShellCommand("settings put global low_power 1");
-    }
-
-    protected void turnBatterySaverOff() throws Exception {
-        getDevice().executeShellCommand("settings put global low_power 0");
-        getDevice().executeShellCommand("cmd battery reset");
-    }
-
     protected void rebootDevice() throws Exception {
         getDevice().rebootUntilOnline();
     }

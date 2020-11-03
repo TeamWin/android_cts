@@ -316,10 +316,10 @@ public class HostAtomTests extends AtomTestCase {
     }
 
     public void testBatterySaverModeStateChangedAtom() throws Exception {
-        if (!hasFeature(FEATURE_AUTOMOTIVE, false)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
         // Setup, turn off battery saver.
         turnBatterySaverOff();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         final int atomTag = Atom.BATTERY_SAVER_MODE_STATE_CHANGED_FIELD_NUMBER;
 
@@ -331,20 +331,20 @@ public class HostAtomTests extends AtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(batterySaverOn, batterySaverOff);
 
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
 
         // Trigger events in same order.
         turnBatterySaverOn();
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         turnBatterySaverOff();
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_LONG,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_LONG,
                 atom -> atom.getBatterySaverModeStateChanged().getState().getNumber());
     }
 
@@ -738,6 +738,16 @@ public class HostAtomTests extends AtomTestCase {
 
     private void enterDozeModeDeep() throws Exception {
         getDevice().executeShellCommand("dumpsys deviceidle force-idle deep");
+    }
+
+    private void turnBatterySaverOff() throws Exception {
+        getDevice().executeShellCommand("settings put global low_power 0");
+        getDevice().executeShellCommand("cmd battery reset");
+    }
+
+    private void turnBatterySaverOn() throws Exception {
+        DeviceUtils.unplugDevice(getDevice());
+        getDevice().executeShellCommand("settings put global low_power 1");
     }
 
 }
