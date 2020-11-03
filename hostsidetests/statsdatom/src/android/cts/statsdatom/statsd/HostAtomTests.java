@@ -24,6 +24,7 @@ import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 import android.os.BatteryPluggedStateEnum;
 import android.os.BatteryStatusEnum;
+import android.os.StatsDataDumpProto;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.server.DeviceIdleModeEnum;
 import android.view.DisplayStateEnum;
@@ -39,9 +40,12 @@ import com.android.os.AtomsProto.SimSlotState;
 import com.android.os.AtomsProto.SupportedRadioAccessFamily;
 import com.android.os.StatsLog.ConfigMetricsReportList;
 import com.android.os.StatsLog.EventMetricData;
+import com.android.tradefed.log.LogUtil;
 
 import com.google.common.collect.Range;
+import com.google.protobuf.ByteString;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +59,8 @@ public class HostAtomTests extends AtomTestCase {
     private static final String TAG = "Statsd.HostAtomTests";
 
     private static final boolean OPTIONAL_TESTS_ENABLED = false;
+
+    private static final String DUMPSYS_STATS_CMD = "dumpsys stats";
 
     // Either file must exist to read kernel wake lock stats.
     private static final String WAKE_LOCK_FILE = "/proc/wakelocks";
@@ -587,11 +593,11 @@ public class HostAtomTests extends AtomTestCase {
     // Test dumpsys stats --proto.
     public void testDumpsysStats() throws Exception {
         final int atomTag = Atom.APP_BREADCRUMB_REPORTED_FIELD_NUMBER;
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
 
-        doAppBreadcrumbReportedStart(1);
-        Thread.sleep(WAIT_TIME_SHORT);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Get the stats incident section.
         List<ConfigMetricsReportList> listList = getReportsFromStatsDataDumpProto();
@@ -599,19 +605,20 @@ public class HostAtomTests extends AtomTestCase {
 
         // Extract the relevant report from the incident section.
         ConfigMetricsReportList ourList = null;
-        int hostUid = getHostUid();
+        int hostUid = DeviceUtils.getHostUid(getDevice());
         for (ConfigMetricsReportList list : listList) {
             ConfigMetricsReportList.ConfigKey configKey = list.getConfigKey();
-            if (configKey.getUid() == hostUid && configKey.getId() == CONFIG_ID) {
+            if (configKey.getUid() == hostUid && configKey.getId() == ConfigUtils.CONFIG_ID) {
                 ourList = list;
                 break;
             }
         }
-        assertWithMessage(String.format("Could not find list for uid=%d id=%d", hostUid, CONFIG_ID))
-            .that(ourList).isNotNull();
+        assertWithMessage(String.format("Could not find list for uid=%d id=%d", hostUid,
+                ConfigUtils.CONFIG_ID))
+                .that(ourList).isNotNull();
 
         // Make sure that the report is correct.
-        List<EventMetricData> data = getEventMetricDataList(ourList);
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(ourList);
         AppBreadcrumbReported atom = data.get(0).getAtom().getAppBreadcrumbReported();
         assertThat(atom.getLabel()).isEqualTo(1);
         assertThat(atom.getState().getNumber()).isEqualTo(AppBreadcrumbReported.State.START_VALUE);
@@ -762,4 +769,24 @@ public class HostAtomTests extends AtomTestCase {
         getDevice().executeShellCommand("settings put global low_power 1");
     }
 
+    /** Gets reports from the statsd data incident section from the stats dumpsys. */
+    private List<ConfigMetricsReportList> getReportsFromStatsDataDumpProto() throws Exception {
+        try {
+            StatsDataDumpProto statsProto = DeviceUtils.getShellCommandOutput(
+                    getDevice(),
+                    StatsDataDumpProto.parser(),
+                    String.join(" ", DUMPSYS_STATS_CMD, "--proto"));
+            // statsProto holds repeated bytes, which we must parse into ConfigMetricsReportLists.
+            List<ConfigMetricsReportList> reports
+                    = new ArrayList<>(statsProto.getConfigMetricsReportListCount());
+            for (ByteString reportListBytes : statsProto.getConfigMetricsReportListList()) {
+                reports.add(ConfigMetricsReportList.parseFrom(reportListBytes));
+            }
+            LogUtil.CLog.d("Got dumpsys stats output:\n " + reports.toString());
+            return reports;
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            LogUtil.CLog.e("Failed to dumpsys stats proto");
+            throw (e);
+        }
+    }
 }

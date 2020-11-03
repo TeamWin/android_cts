@@ -477,25 +477,6 @@ public class AtomTestCase extends BaseTestCase {
         }
     }
 
-    /** Gets reports from the statsd data incident section from the stats dumpsys. */
-    protected List<ConfigMetricsReportList> getReportsFromStatsDataDumpProto() throws Exception {
-        try {
-            StatsDataDumpProto statsProto = getDump(StatsDataDumpProto.parser(),
-                    String.join(" ", DUMPSYS_STATS_CMD, "--proto"));
-            // statsProto holds repeated bytes, which we must parse into ConfigMetricsReportLists.
-            List<ConfigMetricsReportList> reports
-                    = new ArrayList<>(statsProto.getConfigMetricsReportListCount());
-            for (ByteString reportListBytes : statsProto.getConfigMetricsReportListList()) {
-                reports.add(ConfigMetricsReportList.parseFrom(reportListBytes));
-            }
-            LogUtil.CLog.d("Got dumpsys stats output:\n " + reports.toString());
-            return reports;
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-            LogUtil.CLog.e("Failed to dumpsys stats proto");
-            throw (e);
-        }
-    }
-
     protected List<ProcessStatsProto> getProcStatsProto() throws Exception {
         try {
 
