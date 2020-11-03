@@ -60,6 +60,7 @@ public class HostAtomTests extends AtomTestCase {
 
     private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final String FEATURE_WATCH = "android.hardware.type.watch";
+    private static final String FEATURE_WIFI = "android.hardware.wifi";
 
     // Bitmask of radio access technologies that all GSM phones should at least partially support
     protected static final long NETWORK_TYPE_BITMASK_GSM_ALL =
@@ -86,6 +87,19 @@ public class HostAtomTests extends AtomTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        assertThat(mCtsBuild).isNotNull();
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice());
+        DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice());
+        DeviceUtils.uninstallStatsdTestApp(getDevice());
+        super.tearDown();
     }
 
     public void testScreenStateChangedAtom() throws Exception {
@@ -484,22 +498,21 @@ public class HostAtomTests extends AtomTestCase {
     }
 
     public void testWifiActivityInfo() throws Exception {
-        if (!hasFeature(FEATURE_WIFI, true)) return;
-        if (!hasFeature(FEATURE_WATCH, false)) return;
-        if (!checkDeviceFor("checkWifiEnhancedPowerReportingSupported")) return;
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_WATCH)) return;
+        if (!DeviceUtils.checkDeviceFor(getDevice(), "checkWifiEnhancedPowerReportingSupported")) {
+            return;
+        }
 
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.WIFI_ACTIVITY_INFO_FIELD_NUMBER, null);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.WIFI_ACTIVITY_INFO_FIELD_NUMBER);
 
-        uploadConfig(config);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
-        Thread.sleep(WAIT_TIME_LONG);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_LONG);
+        List<Atom> dataList = ReportUtils.getGaugeMetricAtoms(getDevice());
 
-        List<Atom> dataList = getGaugeMetricDataList();
-
-        for (Atom atom: dataList) {
+        for (Atom atom : dataList) {
             assertThat(atom.getWifiActivityInfo().getTimestampMillis()).isGreaterThan(0L);
             assertThat(atom.getWifiActivityInfo().getStackState()).isAtLeast(0);
             assertThat(atom.getWifiActivityInfo().getControllerIdleTimeMillis()).isGreaterThan(0L);
