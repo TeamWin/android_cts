@@ -19,112 +19,129 @@ package android.os.cts;
 import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
+import android.os.ConditionVariable;
 import android.os.FileObserver;
 import android.provider.MediaStore;
 import android.test.AndroidTestCase;
-import android.util.Log;
 import java.io.File;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 
 public class FileObserverTestLegacyPath extends AndroidTestCase {
-    Context con;
-    File testdir;
-    PathFileObserver fileObserver;
-    String imageName;
-
-    final static int mask = FileObserver.OPEN | FileObserver.CREATE | FileObserver.MODIFY;
+    ConditionVariable mCond;
+    Context mContext;
+    File mTestDir;
 
     @Override
     protected void setUp() throws Exception {
-        con = getContext();
+        mContext = getContext();
+        mCond = new ConditionVariable();
 
-        testdir = new File("/sdcard/DCIM/testdir");
-        testdir.delete();
-        testdir.mkdirs();
-
-        fileObserver = new PathFileObserver(testdir, mask);
-        fileObserver.startWatching();
+        mTestDir = new File("/sdcard/DCIM/testdir");
+        mTestDir.delete();
+        mTestDir.mkdirs();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        fileObserver.stopWatching();
-        testdir.delete();
+        mTestDir.delete();
     }
 
+    /* This test creates a jpg image file and write some test data to that
+     * file.
+     * It verifies that FileObserver is able to catch the CREATE, OPEN and
+     * MODIFY events on that file, ensuring that, in the case of a FUSE mounted
+     * file system, changes applied to the lower file system will be detected
+     * by a monitored FUSE folder.
+     * Instead of checking if the set of generated events if exactly the same
+     * as the set of expected events, the test checks if the set of generated
+     * events contains CREATE, OPEN and MODIFY. This because there may be other
+     * services (e.g., file indexing) that may access the newly created file,
+     * generating spurious events that this test doesn't care of and filters
+     * them out. */
     public void testCreateFile() throws Exception {
-        /* Create an image file and write some test data */
-        imageName = "image" + System.currentTimeMillis() + ".jpg";
+        String imageName = "image" + System.currentTimeMillis() + ".jpg";
+
+        final Integer eventsMask = FileObserver.OPEN | FileObserver.CREATE | FileObserver.MODIFY;
+        PathFileObserver fileObserver =
+                new PathFileObserver(mTestDir, eventsMask, mCond, Map.of(imageName, eventsMask));
+        fileObserver.startWatching();
 
         ContentValues cv = new ContentValues();
         cv.put(MediaStore.Files.FileColumns.DISPLAY_NAME, imageName);
         cv.put(MediaStore.Files.FileColumns.RELATIVE_PATH, "DCIM/testdir");
         cv.put(MediaStore.Files.FileColumns.MIME_TYPE, "image/jpg");
 
-        Uri imageUri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        Uri imageUri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL);
 
-        Uri fileUri = con.getContentResolver().insert(imageUri, cv);
+        Uri fileUri = mContext.getContentResolver().insert(imageUri, cv);
 
-        OutputStream os = con.getContentResolver().openOutputStream(fileUri);
+        OutputStream os = mContext.getContentResolver().openOutputStream(fileUri);
         os.write("TEST".getBytes("UTF-8"));
         os.close();
 
-        /* Wait for 2 seconds for the inotify events to be catched */
-        Thread.sleep(2000);
+        /* Wait for for the inotify events to be catched. A timeout occurs
+         * after 2 seconds. */
+        mCond.block(2000);
+
+        int detectedEvents = fileObserver.getEvents().getOrDefault(imageName, 0);
 
         /* Verify if the received events correspond to the ones that were requested */
-        int catched_events = fileObserver.getEvents().getOrDefault(imageName, 0);
-        assertEquals("Uncatched some of the events", PathFileObserver.eventsToSet(mask),
-                PathFileObserver.eventsToSet(catched_events & mask));
+        assertEquals("Uncatched some of the events", PathFileObserver.eventsToSet(eventsMask),
+                PathFileObserver.eventsToSet(detectedEvents & eventsMask));
+
+        fileObserver.stopWatching();
     }
 
     static public class PathFileObserver extends FileObserver {
-        static final String TAG = "FileObserverTestLegacyPath";
+        Map<String, Integer> mGeneratedEventsMap;
+        Map<String, Integer> mMonitoredEventsMap;
+        final ConditionVariable mCond;
+        final int mEventsMask;
 
-        final int mask;
-        HashMap<String, Integer> events_map = new HashMap<>();
+        public PathFileObserver(final File root, final int mask, ConditionVariable condition,
+                Map<String, Integer> monitoredFiles) {
+            super(root, FileObserver.ALL_EVENTS);
 
-        public PathFileObserver(final File root, final int mask) {
-            super(root, mask);
-            this.mask = mask;
+            mEventsMask = mask;
+            mCond = condition;
+            mGeneratedEventsMap = new HashMap<>();
+            mMonitoredEventsMap = monitoredFiles;
         }
 
-        public PathFileObserver(final String path, final int mask) {
-            super(path, mask);
-            this.mask = mask;
-        }
-
-        public HashMap<String, Integer> getEvents() { return events_map; }
+        public Map<String, Integer> getEvents() { return mGeneratedEventsMap; }
 
         public void onEvent(final int event, final String path) {
             /* There might be some extra flags introduced by inotify.h.  Remove
              * them. */
-            final int filtered_event = event & FileObserver.ALL_EVENTS;
-            if (filtered_event == 0)
+            final int filteredEvent = event & FileObserver.ALL_EVENTS;
+            if (filteredEvent == 0)
                 return;
 
-            /* For every received event update the event bitmap of the
-             * associated file. */
-            int detected_events = events_map.getOrDefault(path, 0).intValue();
-            events_map.put(path, detected_events | filtered_event);
+            /* Update the event bitmap of the associated file. */
+            mGeneratedEventsMap.put(
+                    path, filteredEvent | mGeneratedEventsMap.getOrDefault(path, 0));
 
-            final String str_event = event2str(filtered_event);
-            final String txt = "Test Success onEvent: \n\t- event: " + str_event + " ("
-                    + filtered_event + ");\n\t- path: " + path + "\n";
-            Log.d(TAG, txt);
+            /* Release the condition variable only if at least all the matching
+             * events have been catched for every monitored file. */
+            for (String file : mMonitoredEventsMap.keySet()) {
+                int monitoredEvents = mMonitoredEventsMap.getOrDefault(file, 0);
+                int generatedEvents = mGeneratedEventsMap.getOrDefault(file, 0);
+
+                if ((generatedEvents & monitoredEvents) != monitoredEvents)
+                    return;
+            }
+
+            mCond.open();
         }
-
-        public void close() { super.finalize(); }
 
         static public HashSet<String> eventsToSet(int events) {
             HashSet<String> set = new HashSet<String>();
             while (events != 0) {
                 int lowestEvent = Integer.lowestOneBit(events);
+
                 set.add(event2str(lowestEvent));
                 events &= ~lowestEvent;
             }
