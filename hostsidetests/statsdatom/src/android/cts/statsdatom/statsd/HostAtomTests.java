@@ -523,26 +523,30 @@ public class HostAtomTests extends AtomTestCase {
     }
 
     public void testBuildInformation() throws Exception {
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.BUILD_INFORMATION_FIELD_NUMBER, null);
-        uploadConfig(config);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.BUILD_INFORMATION_FIELD_NUMBER);
 
-        Thread.sleep(WAIT_TIME_LONG);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_LONG);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
-        List<Atom> data = getGaugeMetricDataList();
+        List<Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
+
         assertThat(data).isNotEmpty();
         BuildInformation atom = data.get(0).getBuildInformation();
-        assertThat(getProperty("ro.product.brand")).isEqualTo(atom.getBrand());
-        assertThat(getProperty("ro.product.name")).isEqualTo(atom.getProduct());
-        assertThat(getProperty("ro.product.device")).isEqualTo(atom.getDevice());
-        assertThat(getProperty("ro.build.version.release_or_codename")).isEqualTo(atom.getVersionRelease());
-        assertThat(getProperty("ro.build.id")).isEqualTo(atom.getId());
-        assertThat(getProperty("ro.build.version.incremental"))
-            .isEqualTo(atom.getVersionIncremental());
-        assertThat(getProperty("ro.build.type")).isEqualTo(atom.getType());
-        assertThat(getProperty("ro.build.tags")).isEqualTo(atom.getTags());
+        assertThat(DeviceUtils.getProperty(getDevice(), "ro.product.brand")).isEqualTo(
+                atom.getBrand());
+        assertThat(DeviceUtils.getProperty(getDevice(), "ro.product.name")).isEqualTo(
+                atom.getProduct());
+        assertThat(DeviceUtils.getProperty(getDevice(), "ro.product.device")).isEqualTo(
+                atom.getDevice());
+        assertThat(DeviceUtils.getProperty(getDevice(),
+                "ro.build.version.release_or_codename")).isEqualTo(
+                atom.getVersionRelease());
+        assertThat(DeviceUtils.getProperty(getDevice(), "ro.build.id")).isEqualTo(atom.getId());
+        assertThat(DeviceUtils.getProperty(getDevice(), "ro.build.version.incremental"))
+                .isEqualTo(atom.getVersionIncremental());
+        assertThat(DeviceUtils.getProperty(getDevice(), "ro.build.type")).isEqualTo(atom.getType());
+        assertThat(DeviceUtils.getProperty(getDevice(), "ro.build.tags")).isEqualTo(atom.getTags());
     }
 
     public void testOnDevicePowerMeasurement() throws Exception {
