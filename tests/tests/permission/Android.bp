@@ -33,9 +33,11 @@ android_test {
         "androidx.annotation_annotation",
         "platformprotosnano",
         "permission-test-util-lib",
+        "nativetesthelper",
     ],
     jni_libs: [
         "libctspermission_jni",
+        "libpermissionmanager_native_test",
         "libnativehelper_compat_libc++",
     ],
     srcs: [

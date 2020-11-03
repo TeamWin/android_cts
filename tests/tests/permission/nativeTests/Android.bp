@@ -1,4 +1,4 @@
-// Copyright (C) 2010 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,45 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_test_library {
-    name: "libctspermission_jni",
-    sdk_version: "current",
-    srcs: [
-        "CtsPermissionsJniOnLoad.cpp",
-        "android_permission_cts_FileUtils.cpp",
-    ],
-    shared_libs: [
-        "libnativehelper_compat_libc++",
-        "liblog",
-    ],
-    stl: "c++_static",
-    cflags: [
-        "-Wno-unused-parameter",
-    ],
-    gtest: false,
-}
+cc_test {
+    name: "CtsPermissionManagerNativeTestCases",
 
-cc_test_library {
-    name: "libpermissionmanager_native_test",
-    sdk_version: "current",
     compile_multilib: "both",
-    srcs: [
-        "PermissionManagerNativeJniTest.cpp"
-    ],
+    multilib: {
+        lib32: {
+            suffix: "32",
+        },
+        lib64: {
+            suffix: "64",
+        },
+    },
+
+    srcs: ["src/PermissionManagerNativeTest.cpp"],
+
     shared_libs: [
-        "libandroid",
         "liblog",
+        "libandroid",
     ],
+
     static_libs: [
+        "libgtest_ndk_c++",
         "libbase_ndk",
     ],
-    whole_static_libs: [
-        "libnativetesthelper_jni"
-    ],
-    gtest: false,
     stl: "libc++_static",
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+
     cflags: [
         "-Werror",
         "-Wall",
     ],
+
+    sdk_version: "current",
 }
