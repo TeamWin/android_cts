@@ -702,19 +702,17 @@ public class HostAtomTests extends AtomTestCase {
     }
 
     public void testSupportedRadioAccessFamily() throws Exception {
-        if (!hasFeature(FEATURE_TELEPHONY, true)) {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELEPHONY)) {
             return;
         }
 
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.SUPPORTED_RADIO_ACCESS_FAMILY_FIELD_NUMBER, null);
-        uploadConfig(config);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.SUPPORTED_RADIO_ACCESS_FAMILY_FIELD_NUMBER);
 
-        Thread.sleep(WAIT_TIME_LONG);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_LONG);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
-        List<Atom> data = getGaugeMetricDataList();
+        List<Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
         assertThat(data).isNotEmpty();
         SupportedRadioAccessFamily atom = data.get(0).getSupportedRadioAccessFamily();
         if (hasGsmPhone()) {
