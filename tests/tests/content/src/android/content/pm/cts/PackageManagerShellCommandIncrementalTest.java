@@ -368,16 +368,12 @@ public class PackageManagerShellCommandIncrementalTest {
         intent.putExtra(Intent.EXTRA_PACKAGE_NAME, TEST_APP_PACKAGE);
         HandlerThread responseThread = new HandlerThread("response");
         responseThread.start();
-        // Should receive at least one startable broadcast and one fully_loaded broadcast
-        final Semaphore startableSemaphore = new Semaphore(0);
+        // Should receive at least one fully_loaded broadcast
         final Semaphore fullyLoadedSemaphore = new Semaphore(0);
         final RemoteCallback callback = new RemoteCallback(
                 bundle -> {
                     if (bundle == null) {
                         return;
-                    }
-                    if (bundle.getString("intent").equals(Intent.ACTION_PACKAGE_STARTABLE)) {
-                        startableSemaphore.release();
                     }
                     if (bundle.getString("intent").equals(Intent.ACTION_PACKAGE_FULLY_LOADED)) {
                         fullyLoadedSemaphore.release();
@@ -387,8 +383,7 @@ public class PackageManagerShellCommandIncrementalTest {
         );
         intent.putExtra("callback", callback);
         InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
-        return () -> startableSemaphore.tryAcquire(10, TimeUnit.SECONDS)
-                && fullyLoadedSemaphore.tryAcquire(10, TimeUnit.SECONDS);
+        return () -> fullyLoadedSemaphore.tryAcquire(10, TimeUnit.SECONDS);
     }
 
 
