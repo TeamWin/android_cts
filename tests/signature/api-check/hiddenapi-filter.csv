@@ -34,3 +34,5 @@ Landroid/bluetooth/BluetoothCodecStatus;->EXTRA_CODEC_STATUS:Ljava/lang/String;
 Landroid/bluetooth/BluetoothCodecStatus;->getCodecConfig()Landroid/bluetooth/BluetoothCodecConfig;
 Landroid/bluetooth/BluetoothCodecStatus;->getCodecsLocalCapabilities()[Landroid/bluetooth/BluetoothCodecConfig;
 Landroid/bluetooth/BluetoothCodecStatus;->getCodecsSelectableCapabilities()[Landroid/bluetooth/BluetoothCodecConfig;
+# This API was moved from blocklist to unsupported list (b/159022482)
+Landroid/telephony/SmsManager;->deleteMessageFromIcc(I)Z
