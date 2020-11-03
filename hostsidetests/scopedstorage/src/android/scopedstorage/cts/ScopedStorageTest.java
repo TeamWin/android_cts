@@ -2888,6 +2888,48 @@ public class ScopedStorageTest {
     }
 
     /**
+     * b/171768780: Test that scan doesn't skip scanning renamed hidden file.
+     */
+    @Test
+    public void testScanUpdatesMetadataForRenamedHiddenFile() throws Exception {
+        final File hiddenFile = new File(getPicturesDir(), ".hidden_" + IMAGE_FILE_NAME);
+        final File jpgFile = new File(getPicturesDir(), IMAGE_FILE_NAME);
+        try {
+            // Copy the image content to hidden file
+            try (InputStream in =
+                         getContext().getResources().openRawResource(R.raw.img_with_metadata);
+                 FileOutputStream out = new FileOutputStream(hiddenFile)) {
+                FileUtils.copy(in, out);
+                out.getFD().sync();
+            }
+            Uri scanUri = MediaStore.scanFile(getContentResolver(), hiddenFile);
+            assertNotNull(scanUri);
+
+            // Rename hidden file to non-hidden
+            assertCanRenameFile(hiddenFile, jpgFile);
+
+            try (Cursor c = queryFile(jpgFile, MediaStore.MediaColumns.DATE_TAKEN)) {
+                assertTrue(c.moveToFirst());
+                // The file is not scanned yet, hence the metadata is not updated yet.
+                assertThat(c.getString(0)).isNull();
+            }
+
+            // Scan the file to update the metadata for renamed hidden file.
+            scanUri = MediaStore.scanFile(getContentResolver(), jpgFile);
+            assertNotNull(scanUri);
+
+            // Scan should be able to update metadata even if File.lastModifiedTime hasn't changed.
+            try (Cursor c = queryFile(jpgFile, MediaStore.MediaColumns.DATE_TAKEN)) {
+                assertTrue(c.moveToFirst());
+                assertThat(c.getString(0)).isNotNull();
+            }
+        } finally {
+            hiddenFile.delete();
+            jpgFile.delete();
+        }
+    }
+
+    /**
      * Checks restrictions for opening pending and trashed files by different apps. Assumes that
      * given {@code testApp} is already installed and has READ_EXTERNAL_STORAGE permission. This
      * method doesn't uninstall given {@code testApp} at the end.
