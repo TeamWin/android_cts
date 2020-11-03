@@ -4640,6 +4640,7 @@
         </receiver>
 
         <activity android:name=".car.CarDockTestActivity"
+                android:exported="true"
                 android:label="@string/car_dock_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4666,6 +4667,7 @@
 
         <!-- See explaination in CarDockTestActivity.java -->
         <activity-alias android:name=".car.CarDockActivity1"
+                android:exported="true"
             android:targetActivity=".car.CarDockActivity" >
             <meta-data
                 android:name="android.dock_home"
@@ -4679,6 +4681,7 @@
 
         <activity-alias android:name=".car.CarDockActivity2"
             android:targetActivity=".car.CarDockActivity"
+                android:exported="true"
             android:enabled="false" >
             <meta-data
                 android:name="android.dock_home"
@@ -4691,6 +4694,7 @@
         </activity-alias>
 
         <activity android:name=".car.GearSelectionTestActivity"
+                android:exported="true"
                 android:label="@string/gear_selection_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4705,6 +4709,7 @@
         </activity>
 
         <activity android:name=".car.NightModeTestActivity"
+                android:exported="true"
                 android:label="@string/night_mode_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -4719,6 +4724,7 @@
         </activity>
 
         <activity android:name=".car.ParkingBrakeOnTestActivity"
+                android:exported="true"
                 android:label="@string/parking_brake_on_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
