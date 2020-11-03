@@ -22,6 +22,8 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RecentTaskInfo;
@@ -75,7 +77,9 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -470,15 +474,11 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         assertNotNull(conInf);
     }
 
-    /**
-     * Due to the corresponding API is hidden in R and will be public in S, this test
-     * is commented and will be un-commented in Android S.
-     *
     public void testUpdateMccMncConfiguration() throws Exception {
         // Store the original mcc mnc to set back
         String[] mccMncConfigOriginal = new String[2];
         // Store other configs to check they won't be affected
-        Set<String> otherConfigsOriginal = new HashSet<String>();
+        Set<String> otherConfigsOriginal = new HashSet<>();
         getMccMncConfigsAndOthers(mccMncConfigOriginal, otherConfigsOriginal);
 
         String[] mccMncConfigToUpdate = new String[] {MCC_TO_UPDATE, MNC_TO_UPDATE};
@@ -488,12 +488,12 @@ public class ActivityManagerTest extends InstrumentationTestCase {
 
         if (success) {
             String[] mccMncConfigUpdated = new String[2];
-            Set<String> otherConfigsUpdated = new HashSet<String>();
+            Set<String> otherConfigsUpdated = new HashSet<>();
             getMccMncConfigsAndOthers(mccMncConfigUpdated, otherConfigsUpdated);
             // Check the mcc mnc are updated as expected
-            assertTrue(Arrays.equals(mccMncConfigToUpdate, mccMncConfigUpdated));
+            assertArrayEquals(mccMncConfigToUpdate, mccMncConfigUpdated);
             // Check other configs are not changed
-            assertTrue(otherConfigsOriginal.equals(otherConfigsUpdated));
+            assertEquals(otherConfigsOriginal, otherConfigsUpdated);
         }
 
         // Set mcc mnc configs back in the end of the test
@@ -501,13 +501,7 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                 (am) -> am.updateMccMncConfiguration(mccMncConfigOriginal[0],
                         mccMncConfigOriginal[1]));
     }
-     */
 
-    /**
-     * Due to the corresponding API is hidden in R and will be public in S, this method
-     * for test "testUpdateMccMncConfiguration" is commented and will be un-commented in
-     * Android S.
-     *
     private void getMccMncConfigsAndOthers(String[] mccMncConfigs, Set<String> otherConfigs)
             throws Exception {
         String[] configs = SystemUtil.runShellCommand(
@@ -524,7 +518,6 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             }
         }
     }
-    */
 
     /**
      * Simple test for {@link ActivityManager#isUserAMonkey()} - verifies its false.
