@@ -83,11 +83,11 @@ import org.mockito.Mockito;
 import java.util.Objects;
 
 /**
- * Test {@link OnReceiveContentCallback} and its integration with {@link TextView}.
+ * Tests for {@link TextView#onReceiveContent} and related code.
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class TextViewOnReceiveContentCallbackTest {
+public class TextViewOnReceiveContentTest {
     public static final Uri SAMPLE_CONTENT_URI = Uri.parse("content://com.example/path");
     @Rule
     public ActivityTestRule<TextViewCtsActivity> mActivityRule =

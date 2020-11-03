@@ -550,6 +550,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
         builder.setUntrusted(false);
         if (BuildCompat.isAtLeastS()) {
             builder.setOemPaid(false);
+            builder.setOemPrivate(false);
             builder.setSubscriptionId(TEST_SUB_ID);
             builder.setPriorityGroup(TEST_PRIORITY_GROUP);
         }
@@ -578,6 +579,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
         assertFalse(suggestion.isUntrusted());
         if (BuildCompat.isAtLeastS()) {
             assertFalse(suggestion.isOemPaid());
+            assertFalse(suggestion.isOemPrivate());
             assertEquals(TEST_PRIORITY_GROUP, suggestion.getPriorityGroup());
             assertEquals(TEST_SUB_ID, suggestion.getSubscriptionId());
         }

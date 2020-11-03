@@ -16,6 +16,9 @@
 
 package com.android.cts.devicepolicy;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import android.platform.test.annotations.FlakyTest;
 
 import org.junit.Test;
@@ -27,6 +30,8 @@ import java.util.Collections;
  */
 public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
 
+    private final static String FEATURE_INCREMENTAL_DELIVERY =
+            "android.software.incremental_delivery";
     private boolean mHasLauncherApps;
     private String mSerialNumber;
     private int mCurrentUserId;
@@ -58,6 +63,19 @@ public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
             return;
         }
         installAppAsUser(SIMPLE_APP_APK, mCurrentUserId);
+        runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
+                LAUNCHER_TESTS_CLASS, "testSimpleAppInstalledForUser",
+                mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));
+    }
+
+    //TODO(b/171574935): make sure to migrate this to the new test infra
+    @Test
+    public void testInstallAppMainUserIncremental() throws Exception {
+        assumeTrue(getDevice().hasFeature(FEATURE_INCREMENTAL_DELIVERY));
+        if (!mHasLauncherApps) {
+            return;
+        }
+        installAppIncremental(SIMPLE_APP_APK);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS, "testSimpleAppInstalledForUser",
                 mCurrentUserId, Collections.singletonMap(PARAM_TEST_USER, mSerialNumber));

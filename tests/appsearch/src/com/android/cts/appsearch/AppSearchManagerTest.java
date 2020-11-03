@@ -181,7 +181,7 @@ public class AppSearchManagerTest {
                         .setBody("This is the body of the testPut email")
                         .build();
         GenericDocument inDoc = new GenericDocument.Builder<>("uri2", "Generic")
-                .setProperty("foo", "body").build();
+                .setPropertyString("foo", "body").build();
         checkIsSuccess(mAppSearch.putDocuments(
                 new PutDocumentsRequest.Builder().addGenericDocument(inEmail, inDoc).build()));
 
@@ -226,11 +226,11 @@ public class AppSearchManagerTest {
 
         // Delete the document
         checkIsSuccess(mAppSearch.removeByUri(
-                new RemoveByUriRequest.Builder().addUris("uri1").build()));
+                new RemoveByUriRequest.Builder().addUri("uri1").build()));
 
         // Make sure it's really gone
         AppSearchBatchResult<String, GenericDocument> getResult = mAppSearch.getByUri(
-                new GetByUriRequest.Builder().addUris("uri1", "uri2").build());
+                new GetByUriRequest.Builder().addUri("uri1", "uri2").build());
 
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
@@ -273,7 +273,7 @@ public class AppSearchManagerTest {
 
         // Make sure it's really gone
         AppSearchBatchResult<String, GenericDocument> getResult = mAppSearch.getByUri(
-                new GetByUriRequest.Builder().addUris("uri1", "uri2", "uri3").build());
+                new GetByUriRequest.Builder().addUri("uri1", "uri2", "uri3").build());
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -284,7 +284,7 @@ public class AppSearchManagerTest {
 
     private List<GenericDocument> doGet(String... uris) {
         AppSearchBatchResult<String, GenericDocument> result = mAppSearch.getByUri(
-                new GetByUriRequest.Builder().addUris(uris).build());
+                new GetByUriRequest.Builder().addUri(uris).build());
         checkIsSuccess(result);
         assertThat(result.getSuccesses()).hasSize(uris.length);
         assertThat(result.getFailures()).isEmpty();
@@ -299,7 +299,7 @@ public class AppSearchManagerTest {
         AppSearchResult<List<SearchResult>> result = mAppSearch.query(
                 queryExpression,
                 new SearchSpec.Builder()
-                        .setSchemaTypes(schemaTypes)
+                        .addSchema(schemaTypes)
                         .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                         .build());
         checkIsSuccess(result);

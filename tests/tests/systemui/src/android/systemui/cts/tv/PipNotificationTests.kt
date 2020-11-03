@@ -19,6 +19,7 @@ package android.systemui.cts.tv
 import android.app.NotificationManager
 import android.content.Intent
 import android.platform.test.annotations.Postsubmit
+import android.server.wm.Condition
 import android.server.wm.annotation.Group2
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
 import android.systemui.tv.cts.PipActivity
@@ -63,14 +64,14 @@ class PipNotificationTests : PipTestBase() {
     @Before
     override fun setUp() {
         super.setUp()
-        toggleListenerAccess(allow = true)
+        setNotificationListenerEnabled(enabled = true)
         notificationListener.clearNotifications()
     }
 
     @After
     fun tearDown() {
         stopPackage(PIP_ACTIVITY.packageName)
-        toggleListenerAccess(allow = false)
+        setNotificationListenerEnabled(enabled = false)
     }
 
     /** Ensure a notification is posted when an app is in pip mode. */
@@ -186,9 +187,9 @@ class PipNotificationTests : PipTestBase() {
     }
 
     /** Enable/disable the [PipNotificationListenerService] listening to notifications. */
-    private fun toggleListenerAccess(allow: Boolean) {
+    private fun setNotificationListenerEnabled(enabled: Boolean) {
         val listenerName = PipNotificationListenerService.componentName
-        val cmd = if (allow) {
+        val cmd = if (enabled) {
             CMD_TEMPLATE_NOTIFICATION_ALLOW_LISTENER
         } else {
             CMD_TEMPLATE_NOTIFICATION_DISALLOW_LISTENER
@@ -196,12 +197,19 @@ class PipNotificationTests : PipTestBase() {
         executeShellCommand(cmd.format(listenerName.flattenToShortString()))
 
         // Ensure we were successful
-        assertEquals(allow, notificationManager.isNotificationListenerAccessGranted(listenerName))
+        assertEquals(enabled, notificationManager.isNotificationListenerAccessGranted(listenerName))
+
+        // If enabling, wait for NotificationListenerService to get connected.
+        if (enabled) {
+            Condition.waitFor("PipNotificationListenerService is connected") {
+                PipNotificationListenerService.instance != null
+            }
+        }
     }
 
     private val notificationListener: PipNotificationListenerService
         get() = PipNotificationListenerService.instance
-            ?: error("PipNotificationListenerService not connected!")
+            ?: error("PipNotificationListenerService is not connected")
 
     /** Launches an app into pip mode and sets its media session title. */
     private fun launchPipWithMediaTitle(title: String) {
