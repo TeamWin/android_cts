@@ -261,7 +261,7 @@ public class TunerTest {
         status.getGuardInterval();
         status.getInterleaving();
         status.getIsdbtSegment();
-        status.getModulationsExt();
+        status.getExtendedModulations();
         status.getSystemId();
         status.getTransmissionMode();
         status.getTsDataRate();
