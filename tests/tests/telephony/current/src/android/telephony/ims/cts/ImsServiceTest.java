@@ -46,6 +46,7 @@ import android.telephony.ims.ImsMmTelManager;
 import android.telephony.ims.ImsRcsManager;
 import android.telephony.ims.ImsReasonInfo;
 import android.telephony.ims.ProvisioningManager;
+import android.telephony.ims.RcsUceAdapter;
 import android.telephony.ims.RegistrationManager;
 import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.feature.MmTelFeature;
@@ -1381,10 +1382,11 @@ public class ImsServiceTest {
         }
 
         // A queue to receive capability changed
-        LinkedBlockingQueue<RcsImsCapabilities> mQueue = new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<Integer> mQueue = new LinkedBlockingQueue<>();
         ImsRcsManager.AvailabilityCallback callback = new ImsRcsManager.AvailabilityCallback() {
             @Override
-            public void onAvailabilityChanged(RcsImsCapabilities capabilities) {
+            public void onAvailabilityChanged(
+                    @RcsUceAdapter.RcsImsCapabilityFlag int capabilities) {
                 mQueue.offer(capabilities);
             }
         };
@@ -1398,11 +1400,12 @@ public class ImsServiceTest {
         }
 
         // We should not have any availabilities here, we notified the framework earlier.
-        RcsImsCapabilities capCb = waitForResult(mQueue);
+        //RcsImsCapabilities capCb = waitForResult(mQueue);
+        int capCb = waitForResult(mQueue);
 
         // The SIP OPTIONS capability from onAvailabilityChanged should be disabled.
         // Moreover, ImsRcsManager#isAvailable also return FALSE with SIP OPTIONS
-        assertTrue(capCb.isCapable(RCS_CAP_NONE));
+        assertEquals(capCb, RCS_CAP_NONE);
         try {
             automan.adoptShellPermissionIdentity();
             assertFalse(imsRcsManager.isAvailable(RCS_CAP_OPTIONS));
@@ -1418,7 +1421,7 @@ public class ImsServiceTest {
 
         // The SIP OPTIONS capability from onAvailabilityChanged should be enabled.
         // Verify ImsRcsManager#isAvailable also return true with SIP OPTIONS
-        assertTrue(capCb.isCapable(RCS_CAP_OPTIONS));
+        assertEquals(capCb, RCS_CAP_OPTIONS);
         try {
             automan.adoptShellPermissionIdentity();
             assertTrue(imsRcsManager.isAvailable(RCS_CAP_OPTIONS));
