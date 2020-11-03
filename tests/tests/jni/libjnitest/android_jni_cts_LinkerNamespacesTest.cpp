@@ -55,7 +55,7 @@ static const std::string kProductLibraryPath = "/product/" LIB_DIR;
 static const std::vector<std::regex> kSystemPathRegexes = {
     std::regex("/system/lib(64)?"),
     std::regex("/apex/com\\.android\\.[^/]*/lib(64)?"),
-    std::regex("/system/lib/arm(64)?"), // when CTS runs in ARM ABI on non-ARM CPU. http://b/149852946
+    std::regex("/system/(lib/arm|lib64/arm64)"), // when CTS runs in ARM ABI on non-ARM CPU. http://b/149852946
 };
 
 static const std::string kWebViewPlatSupportLib = "libwebviewchromium_plat_support.so";
