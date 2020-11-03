@@ -19,11 +19,13 @@ package android.compat.sjp.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
+import static java.util.stream.Collectors.toSet;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -43,7 +45,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.jf.dexlib2.DexFileFactory;
 import org.jf.dexlib2.Opcodes;
@@ -248,6 +249,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         }
         for (Entry<String, Collection<DeviceFile>> entry : allClasses.asMap().entrySet()) {
             if (entry.getValue().size() > 1) {
+                CLog.i("Class %s is duplicated in %s", entry.getKey(),
+                    entry.getValue().stream().map(x -> x.getJarName()).collect(toSet()));
+
                 duplicateClasses.putAll(entry.getKey(), entry.getValue());
             }
         }
@@ -260,8 +264,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
     private void checkClassDuplicatesMatchWhitelist(Set<DeviceFile> jars, Set<String> whitelist)
             throws Exception {
         // Collect classes which appear in at least two distinct jar files.
-        Set<String> duplicateClasses = getDuplicateClasses(jars).keySet();
-        assertThat(duplicateClasses).isEqualTo(whitelist);
+        Multimap<String, DeviceFile> duplicateClasses = getDuplicateClasses(jars);
+        assertThat(duplicateClasses.keySet()).isEqualTo(whitelist);
     }
 
     /**
@@ -292,7 +296,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
     private Set<DeviceFile> pullJarsFromEnvVariable(File tmpDir, String variable) {
         return Arrays.asList(getEnvVariable(variable).split(":")).stream()
             .map(fileName -> pullFromDevice(fileName, tmpDir))
-            .collect(Collectors.toSet());
+            .collect(toSet());
     }
 
     private void runWithTempDir(TempDirRunnable runnable) throws Exception {
@@ -319,6 +323,10 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         public DeviceFile(String devicePath, String hostPath) {
             this.devicePath = devicePath;
             this.hostPath = hostPath;
+        }
+
+        public String getJarName() {
+            return devicePath.substring(devicePath.lastIndexOf('/') + 1);
         }
 
         @Override
