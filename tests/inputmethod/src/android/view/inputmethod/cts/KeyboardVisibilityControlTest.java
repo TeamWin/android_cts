@@ -32,7 +32,6 @@ import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
@@ -70,7 +69,6 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -88,6 +86,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -105,6 +104,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             Uri.parse("https://example.com/android/view/inputmethod/ctstestapp");
     private static final String EXTRA_KEY_SHOW_DIALOG =
             "android.view.inputmethod.ctstestapp.EXTRA_KEY_SHOW_DIALOG";
+    private static final String EXTRA_KEY_PRIVATE_IME_OPTIONS =
+            "android.view.inputmethod.ctstestapp.EXTRA_KEY_PRIVATE_IME_OPTIONS";
 
     private static final String ACTION_TRIGGER = "broadcast_action_trigger";
     private static final String EXTRA_DISMISS_DIALOG = "extra_dismiss_dialog";
@@ -540,6 +541,18 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         runImeVisibilityWhenImeTransitionBetweenActivities(true /* instant */);
     }
 
+    @AppModeFull
+    @Test
+    public void testImeInvisibleWhenForceStopPkgProcess_Full() throws Exception {
+        runImeVisibilityTestWhenForceStopPackage(false /* instant */);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testImeInvisibleWhenForceStopPkgProcess_Instant() throws Exception {
+        runImeVisibilityTestWhenForceStopPackage(true /* instant */);
+    }
+
     private void runImeVisibilityWhenImeTransitionBetweenActivities(boolean instant)
             throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
@@ -576,7 +589,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             expectImeVisible(TIMEOUT);
 
             // Launcher another test activity from another process with popup dialog.
-            launchRemoteDialogActivitySync(TEST_ACTIVITY, instant, TIMEOUT);
+            launchRemoteActivitySync(TEST_ACTIVITY, instant, TIMEOUT,
+                    Map.of(EXTRA_KEY_SHOW_DIALOG, "true"));
             // Dismiss dialog and back to original test activity
             triggerActionWithBroadcast(ACTION_TRIGGER, TEST_ACTIVITY.getPackageName(),
                     EXTRA_DISMISS_DIALOG);
@@ -598,16 +612,46 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         }
     }
 
-    private void launchRemoteDialogActivitySync(ComponentName componentName, boolean instant,
-            long timeout) {
+    private void runImeVisibilityTestWhenForceStopPackage(boolean instant) throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+
+            // Launch test activity with focusing an editor from remote process and expect the
+            // IME is visible.
+            launchRemoteActivitySync(TEST_ACTIVITY, instant, TIMEOUT,
+                    Map.of(EXTRA_KEY_PRIVATE_IME_OPTIONS, marker));
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.VISIBLE, TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Force stop test app package, and then expect IME should be invisible after the remote
+            // process stopped by forceStopPackage.
+            TestUtils.forceStopPackage(TEST_ACTIVITY.getPackageName());
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+        }
+    }
+
+    private void launchRemoteActivitySync(ComponentName componentName, boolean instant,
+             long timeout, Map<String, String> extras) {
         final StringBuilder commandBuilder = new StringBuilder();
         if (instant) {
-            final Uri uri = formatStringIntentParam(
-                    TEST_ACTIVITY_URI, EXTRA_KEY_SHOW_DIALOG, "true");
+            final Uri uri = formatStringIntentParam(TEST_ACTIVITY_URI, extras);
             commandBuilder.append(String.format("am start -a %s -c %s %s",
                     Intent.ACTION_VIEW, Intent.CATEGORY_BROWSABLE, uri.toString()));
         } else {
             commandBuilder.append("am start -n ").append(componentName.flattenToShortString());
+            if (extras != null) {
+                extras.forEach((key, value) -> commandBuilder.append(" --es ")
+                        .append(key).append(" ").append(value));
+            }
         }
 
         runWithShellPermissionIdentity(() -> {
@@ -620,12 +664,13 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     }
 
     @NonNull
-    private static Uri formatStringIntentParam(@NonNull Uri uri, @NonNull String key,
-            @Nullable String value) {
-        if (value == null) {
+    private static Uri formatStringIntentParam(@NonNull Uri uri, Map<String, String> extras) {
+        if (extras == null) {
             return uri;
         }
-        return uri.buildUpon().appendQueryParameter(key, value).build();
+        final Uri.Builder builder = uri.buildUpon();
+        extras.forEach(builder::appendQueryParameter);
+        return builder.build();
     }
 
     private void triggerActionWithBroadcast(String action, String receiverPackage, String extra) {
