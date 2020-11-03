@@ -78,6 +78,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             "Landroid/annotation/SdkConstant;",
             "Landroid/annotation/SdkConstant$SdkConstantType;",
             "Landroid/annotation/StringDef;",
+            "Landroid/annotation/SuppressLint;",
             "Landroid/annotation/SystemApi;",
             "Landroid/annotation/SystemApi$Client;",
             "Landroid/annotation/SystemApi$Container;",
