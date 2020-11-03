@@ -112,6 +112,7 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApkOnlyStagedRollback() throws Exception {
+        assumeSystemUser();
         run("testApkOnlyEnableRollback");
         getDevice().reboot();
         run("testApkOnlyCommitRollback");
