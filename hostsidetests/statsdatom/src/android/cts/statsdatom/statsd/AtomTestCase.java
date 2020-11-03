@@ -956,13 +956,6 @@ public class AtomTestCase extends BaseTestCase {
         return hasIt == requiredAnswer;
     }
 
-    /**
-     * Determines if the device has |file|.
-     */
-    protected boolean doesFileExist(String file) throws Exception {
-        return getDevice().doesFileExist(file);
-    }
-
     protected void turnOnAirplaneMode() throws Exception {
         getDevice().executeShellCommand("cmd connectivity airplane-mode enable");
     }

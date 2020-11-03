@@ -455,16 +455,14 @@ public class HostAtomTests extends AtomTestCase {
         if (!kernelWakelockStatsExist()) {
             return;
         }
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.KERNEL_WAKELOCK_FIELD_NUMBER, null);
 
-        uploadConfig(config);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.KERNEL_WAKELOCK_FIELD_NUMBER);
 
-        Thread.sleep(WAIT_TIME_LONG);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_LONG);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
-        List<Atom> data = getGaugeMetricDataList();
+        List<Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
 
         assertThat(data).isNotEmpty();
         for (Atom atom : data) {
@@ -711,6 +709,13 @@ public class HostAtomTests extends AtomTestCase {
 
     private void plugInWireless() throws Exception {
         getDevice().executeShellCommand("cmd battery set wireless 1");
+    }
+
+    /**
+     * Determines if the device has |file|.
+     */
+    private boolean doesFileExist(String file) throws Exception {
+        return getDevice().doesFileExist(file);
     }
 
     private void setBatteryLevel(int level) throws Exception {
