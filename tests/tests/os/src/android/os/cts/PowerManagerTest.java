@@ -41,7 +41,7 @@ public class PowerManagerTest extends AndroidTestCase {
     private static final String TAG = "PowerManagerTest";
     public static final long TIME = 3000;
     public static final int MORE_TIME = 300;
-    private static final int BROADCAST_TIMEOUT_SECONDS = 60;
+    private static final int BROADCAST_TIMEOUT_SECONDS = 70;
     private static final Duration LONG_DISCHARGE_DURATION = Duration.ofMillis(2000);
     private static final Duration SHORT_DISCHARGE_DURATION = Duration.ofMillis(1000);
 
