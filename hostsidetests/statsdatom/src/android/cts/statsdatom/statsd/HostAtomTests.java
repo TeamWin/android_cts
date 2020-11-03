@@ -282,7 +282,7 @@ public class HostAtomTests extends AtomTestCase {
     public void testDeviceIdleModeStateChangedAtom() throws Exception {
         // Setup, leave doze mode.
         leaveDozeMode();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         final int atomTag = Atom.DEVICE_IDLE_MODE_STATE_CHANGED_FIELD_NUMBER;
 
@@ -296,22 +296,22 @@ public class HostAtomTests extends AtomTestCase {
         // Add state sets to the list in order.
         List<Set<Integer>> stateSet = Arrays.asList(dozeLight, dozeDeep, dozeOff);
 
-        createAndUploadConfig(atomTag);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag);
 
         // Trigger events in same order.
         enterDozeModeLight();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         enterDozeModeDeep();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         leaveDozeMode();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();;
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         // Assert that the events happened in the expected order.
-        assertStatesOccurred(stateSet, data, WAIT_TIME_SHORT,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getDeviceIdleModeStateChanged().getState().getNumber());
     }
 
@@ -725,4 +725,19 @@ public class HostAtomTests extends AtomTestCase {
     private void setBatteryLevel(int level) throws Exception {
         getDevice().executeShellCommand("cmd battery set level " + level);
     }
+
+    private void leaveDozeMode() throws Exception {
+        getDevice().executeShellCommand("dumpsys deviceidle unforce");
+        getDevice().executeShellCommand("dumpsys deviceidle disable");
+        getDevice().executeShellCommand("dumpsys deviceidle enable");
+    }
+
+    private void enterDozeModeLight() throws Exception {
+        getDevice().executeShellCommand("dumpsys deviceidle force-idle light");
+    }
+
+    private void enterDozeModeDeep() throws Exception {
+        getDevice().executeShellCommand("dumpsys deviceidle force-idle deep");
+    }
+
 }

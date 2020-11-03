@@ -907,20 +907,6 @@ public class AtomTestCase extends BaseTestCase {
                 "cmd stats log-app-breadcrumb %d %d", label, state));
     }
 
-    protected void enterDozeModeLight() throws Exception {
-        getDevice().executeShellCommand("dumpsys deviceidle force-idle light");
-    }
-
-    protected void enterDozeModeDeep() throws Exception {
-        getDevice().executeShellCommand("dumpsys deviceidle force-idle deep");
-    }
-
-    protected void leaveDozeMode() throws Exception {
-        getDevice().executeShellCommand("dumpsys deviceidle unforce");
-        getDevice().executeShellCommand("dumpsys deviceidle disable");
-        getDevice().executeShellCommand("dumpsys deviceidle enable");
-    }
-
     protected void turnBatterySaverOn() throws Exception {
         unplugDevice();
         getDevice().executeShellCommand("settings put global low_power 1");
