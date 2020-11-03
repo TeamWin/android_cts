@@ -1,4 +1,4 @@
-// Copyright (C) 2014 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsUsageStatsTestCases",
+android_test_helper_app {
+    name: "CtsUsageStatsTestApp2",
     defaults: ["cts_defaults"],
     platform_apis: true,
     static_libs: [
@@ -28,11 +28,12 @@ android_test {
         "android.test.base",
         "android.test.runner",
     ],
-    srcs: ["src/**/*.java", "TestApp1/**/*.java", "TestApp1/**/*.aidl", "TestApp2/**/*.java"],
+    srcs: ["src/**/*.java", "aidl/**/*.aidl"],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
         "mts"
     ],
+    sdk_version: "test_current"
 }
