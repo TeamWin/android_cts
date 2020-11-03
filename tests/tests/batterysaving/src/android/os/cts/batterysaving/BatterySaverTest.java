@@ -89,7 +89,6 @@ public class BatterySaverTest extends BatterySavingTestBase {
 
             // Unplug the charger.
             runDumpsysBatteryUnplug();
-            Thread.sleep(1000);
             // Verify battery saver gets toggled.
             manager.setPowerSaveModeEnabled(true);
             assertTrue(manager.isPowerSaveMode());
