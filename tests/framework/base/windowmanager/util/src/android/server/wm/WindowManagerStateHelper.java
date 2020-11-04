@@ -143,11 +143,13 @@ public class WindowManagerStateHelper extends WindowManagerState {
         waitForValidState(homeActivity);
     }
 
-    public void waitForRecentsActivityVisible() {
+    /** @return {@code true} if the recents is visible; {@code false} if timeout occurs. */
+    public boolean waitForRecentsActivityVisible() {
         if (isHomeRecentsComponent()) {
             waitForHomeActivityVisible();
+            return true;
         } else {
-            waitForWithAmState(WindowManagerState::isRecentsActivityVisible,
+            return waitForWithAmState(WindowManagerState::isRecentsActivityVisible,
                     "recents activity to be visible");
         }
     }
