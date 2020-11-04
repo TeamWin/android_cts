@@ -2751,7 +2751,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_networking" />
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
         <activity android:name=".wifiaware.TestListActivity"
                   android:label="@string/aware_test"
@@ -3045,63 +3045,63 @@
                   android:label="@string/wifi_test_network_request_specific"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestPatternNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_pattern"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestUnavailableNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_unavailable"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestInvalidCredentialNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_invalid_credential"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidBssidTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid_bssid"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidPostConnectTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid_post_connect"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionConnectionFailureTestActivity"
                   android:label="@string/wifi_test_network_suggestion_connection_failure"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionModificationInPlaceTestActivity"
                   android:label="@string/wifi_test_network_suggestion_modification_in_place"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.GoNegRequesterTestListActivity"
