@@ -691,14 +691,11 @@ public class MotionEventTest {
             assertEquals(Math.sin(angle) * RADIUS, c.x, RAW_COORD_TOLERANCE);
             assertEquals(-Math.cos(angle) * RADIUS, c.y, RAW_COORD_TOLERANCE);
             assertEquals(Math.tan(angle), Math.tan(c.orientation), 0.1);
+
+            // Applying the transformation should preserve the raw X and Y of all pointers.
+            assertEquals(originalRawCoords[i].x, event.getRawX(i), RAW_COORD_TOLERANCE);
+            assertEquals(originalRawCoords[i].y, event.getRawY(i), RAW_COORD_TOLERANCE);
         }
-
-        // Applying the transformation should preserve the raw X and Y of the first pointer.
-        assertEquals(originalRawCoords[0].x, event.getRawX(), RAW_COORD_TOLERANCE);
-        assertEquals(originalRawCoords[0].y, event.getRawY(), RAW_COORD_TOLERANCE);
-
-        // TODO(b/124116082) Verify whether transformations on MotionEvents should preserve raw X
-        // and Y for all pointers.
     }
 
     private void dump(String label, MotionEvent ev) {
