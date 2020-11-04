@@ -382,6 +382,20 @@ public class LocationManagerFineTest {
             // expected
         }
 
+        PendingIntent immutablePI = PendingIntent.getBroadcast(mContext, 0,
+                new Intent("IMMUTABLE_TEST_ACTION")
+                        .setPackage(mContext.getPackageName())
+                        .addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        try {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, immutablePI);
+            fail("Should throw IllegalArgumentException if pending intent is immutable!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        } finally {
+            immutablePI.cancel();
+        }
+
         try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
             mManager.requestLocationUpdates(null, 0, 0, capture.getPendingIntent());
             fail("Should throw IllegalArgumentException if provider is null!");
