@@ -29,6 +29,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ATTR_IME_ACTIVITY;
+import static android.server.wm.app.Components.TURN_SCREEN_ON_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.ime;
@@ -49,6 +50,7 @@ import android.content.ComponentName;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.app.Components;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -211,6 +213,40 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         mWmState.computeState();
         mWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, false);
         assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+    }
+
+    @Test
+    public void testTurnScreenOnActivity_withSecureKeyguardAndAod() {
+        final AodSession aodSession = createManagedAodSession();
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        lockScreenSession.setLockCredential();
+        testTurnScreenOnActivity_withSecureKeyguard(aodSession, lockScreenSession,
+                false /* enableAod */);
+        testTurnScreenOnActivity_withSecureKeyguard(aodSession, lockScreenSession,
+                true /* enableAod */);
+    }
+
+    private void testTurnScreenOnActivity_withSecureKeyguard(AodSession aodSession,
+            LockScreenSession lockScreenSession, boolean enableAod) {
+        if (enableAod) {
+            assumeTrue(aodSession.isAodAvailable());
+        }
+        aodSession.setAodEnabled(enableAod);
+        lockScreenSession.sleepDevice();
+        mWmState.computeState();
+        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+
+        final CommandSession.ActivitySessionClient activityClient =
+                createManagedActivityClientSession();
+        final CommandSession.ActivitySession activity = activityClient.startActivity(
+                getLaunchActivityBuilder().setUseInstrumentation().setIntentExtra(extra -> {
+                    extra.putBoolean(Components.TurnScreenOnActivity.EXTRA_SHOW_WHEN_LOCKED, false);
+                }).setTargetActivity(TURN_SCREEN_ON_ACTIVITY));
+        mWmState.waitForKeyguardShowingAndNotOccluded();
+        mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, false);
+        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertFalse(isDisplayOn(DEFAULT_DISPLAY));
+        activity.finish();
     }
 
     @Test

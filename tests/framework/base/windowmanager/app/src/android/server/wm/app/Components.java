@@ -330,6 +330,7 @@ public class Components extends ComponentsBase {
     public static class TurnScreenOnActivity {
         // Turn on screen by window flags or APIs.
         public static final String EXTRA_USE_WINDOW_FLAGS = "useWindowFlags";
+        public static final String EXTRA_SHOW_WHEN_LOCKED = "useShowWhenLocked";
         public static final String EXTRA_SLEEP_MS_IN_ON_CREATE = "sleepMsInOnCreate";
     }
 
