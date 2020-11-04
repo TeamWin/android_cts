@@ -21,6 +21,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import android.content.ContentResolver;
 import android.net.Uri;
 import android.provider.Settings.SettingNotFoundException;
+import android.server.wm.NestedShellPermission;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -142,7 +143,7 @@ public class SettingsSession<T> implements AutoCloseable {
     }
 
     private static <T> void put(final Uri uri, final SettingsSetter<T> setter, T value) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        NestedShellPermission.run(() -> {
             setter.set(getContentResolver(), uri.getLastPathSegment(), value);
         });
     }

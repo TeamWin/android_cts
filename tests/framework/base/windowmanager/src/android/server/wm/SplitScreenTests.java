@@ -191,7 +191,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
         int displayWindowingMode = mWmState.getDisplay(
                 mWmState.getDisplayByActivity(TEST_ACTIVITY)).getWindowingMode();
         separateTestJournal();
-        SystemUtil.runWithShellPermissionIdentity(() -> mTaskOrganizer.dismissedSplitScreen());
+        mTaskOrganizer.dismissedSplitScreen();
         if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
             // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
             final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
@@ -514,7 +514,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
 
         // Lock the task and ensure that we can't enter split screen
         try {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermission(() -> {
                 mAtm.startSystemLockTaskMode(task.mTaskId);
             });
             waitForOrFail("Task in lock mode", () -> {
@@ -524,7 +524,7 @@ public class SplitScreenTests extends ActivityManagerTestBase {
             assertFalse(setActivityTaskWindowingMode(TEST_ACTIVITY,
                     WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
         } finally {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermission(() -> {
                 mAtm.stopSystemLockTaskMode();
             });
         }
