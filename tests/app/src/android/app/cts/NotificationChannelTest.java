@@ -66,6 +66,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertNull(channel.getParentChannelId());
         assertFalse(channel.isImportantConversation());
         assertFalse(channel.isDemoted());
+        assertFalse(channel.isConversation());
     }
 
     public void testWriteToParcel() {
@@ -222,6 +223,7 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals("parent", channel.getParentChannelId());
         assertEquals("conversation", channel.getConversationId());
         assertFalse(channel.isImportantConversation());
+        assertTrue(channel.isConversation());
 
         channel.setImportantConversation(true);
         assertTrue(channel.isImportantConversation());
