@@ -14,19 +14,32 @@
  * limitations under the License.
  */
 
-package android.server.biometrics.fingerprint;
+package android.server.biometrics;
 
 import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
 
-import com.android.server.biometrics.fingerprint.nano.FingerprintServiceStateProto;
-import com.android.server.biometrics.fingerprint.nano.SensorStateProto;
-import com.android.server.biometrics.fingerprint.nano.UserStateProto;
+import com.android.server.biometrics.nano.SensorServiceStateProto;
+import com.android.server.biometrics.nano.SensorStateProto;
+import com.android.server.biometrics.nano.UserStateProto;
 
-public class FingerprintServiceState {
+import java.util.List;
 
-    @NonNull final SparseArray<SensorState> sensorStates;
+/**
+ * The overall state for a list of sensors. This could be either:
+ *
+ * 1) A list of sensors from a single instance of a <Biometric>Service such as
+ * {@link com.android.server.biometrics.sensors.fingerprint.FingerprintService} or
+ * {@link com.android.server.biometrics.sensors.face.FaceService}, or
+ *
+ * 2) A list of sensors from multiple instances of <Biometric>Services.
+ *
+ * Note that a single service may provide multiple sensors.
+ */
+public class SensorStates {
+
+    @NonNull public final SparseArray<SensorState> sensorStates;
 
     public static class SensorState {
         private final boolean mIsBusy;
@@ -37,17 +50,17 @@ public class FingerprintServiceState {
             this.mUserStates = userStates;
         }
 
-        boolean isBusy() {
+        public boolean isBusy() {
             return mIsBusy;
         }
 
-        @NonNull SparseArray<UserState> getUserStates() {
+        @NonNull public SparseArray<UserState> getUserStates() {
             return mUserStates;
         }
     }
 
     public static class UserState {
-        final int numEnrolled;
+        public final int numEnrolled;
 
         public UserState(int numEnrolled) {
             this.numEnrolled = numEnrolled;
@@ -55,7 +68,7 @@ public class FingerprintServiceState {
     }
 
     @NonNull
-    public static FingerprintServiceState parseFrom(@NonNull FingerprintServiceStateProto proto) {
+    public static SensorStates parseFrom(@NonNull SensorServiceStateProto proto) {
         final SparseArray<SensorState> sensorStates = new SparseArray<>();
 
         for (SensorStateProto sensorStateProto : proto.sensorStates) {
@@ -68,7 +81,29 @@ public class FingerprintServiceState {
             sensorStates.put(sensorStateProto.sensorId, sensorState);
         }
 
-        return new FingerprintServiceState(sensorStates);
+        return new SensorStates(sensorStates);
+    }
+
+    /**
+     * Combines multiple {@link SensorStates} into a single instance.
+     */
+    @NonNull
+    public static SensorStates merge(@NonNull List<SensorStates> sensorServiceStates) {
+        final SparseArray<SensorState> sensorStates = new SparseArray<>();
+
+        for (SensorStates sensorServiceState : sensorServiceStates) {
+            for (int i = 0; i < sensorServiceState.sensorStates.size(); i++) {
+                final int sensorId = sensorServiceState.sensorStates.keyAt(i);
+                final SensorState sensorState = sensorServiceState.sensorStates.valueAt(i);
+                if (sensorStates.contains(sensorId)) {
+                    throw new IllegalStateException("Duplicate sensorId found: " + sensorId);
+                }
+
+                sensorStates.put(sensorId, sensorState);
+            }
+        }
+
+        return new SensorStates(sensorStates);
     }
 
     public boolean areAllSensorsIdle() {
@@ -80,7 +115,7 @@ public class FingerprintServiceState {
         return true;
     }
 
-    private FingerprintServiceState(@NonNull SparseArray<SensorState> sensorStates) {
+    private SensorStates(@NonNull SparseArray<SensorState> sensorStates) {
         this.sensorStates = sensorStates;
     }
 

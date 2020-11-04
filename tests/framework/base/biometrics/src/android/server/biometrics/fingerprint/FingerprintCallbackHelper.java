@@ -34,7 +34,7 @@ import java.util.ArrayList;
  * authentication.
  */
 @SuppressWarnings("deprecation")
-public class AuthenticationCallbackHelper extends FingerprintManager.AuthenticationCallback {
+public class FingerprintCallbackHelper extends FingerprintManager.AuthenticationCallback {
 
     public static final String KEY = "key_auth_callback";
 
@@ -107,7 +107,7 @@ public class AuthenticationCallbackHelper extends FingerprintManager.Authenticat
         updateJournal();
     }
 
-    public AuthenticationCallbackHelper(@NonNull Activity activity) {
+    public FingerprintCallbackHelper(@NonNull Activity activity) {
         mActivity = activity;
         mState = new State();
 
