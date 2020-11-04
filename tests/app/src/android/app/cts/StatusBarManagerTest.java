@@ -19,10 +19,12 @@ package android.app.cts;
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.StatusBarManager;
 import android.app.StatusBarManager.DisableInfo;
 import android.content.Context;
+import android.content.pm.PackageManager;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -40,6 +42,10 @@ public class StatusBarManagerTest {
     private StatusBarManager mStatusBarManager;
     private Context mContext;
 
+    private boolean isWatch() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
+
     /**
      * Setup
      * @throws Exception
@@ -47,6 +53,7 @@ public class StatusBarManagerTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
+        assumeFalse("Status bar service not supported", isWatch());
         mStatusBarManager = (StatusBarManager) mContext.getSystemService(
                 Context.STATUS_BAR_SERVICE);
         getInstrumentation().getUiAutomation()
@@ -55,7 +62,10 @@ public class StatusBarManagerTest {
 
     @After
     public void tearDown() {
-        mStatusBarManager.setDisabledForSetup(false);
+
+        if (mStatusBarManager != null) {
+            mStatusBarManager.setDisabledForSetup(false);
+        }
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 

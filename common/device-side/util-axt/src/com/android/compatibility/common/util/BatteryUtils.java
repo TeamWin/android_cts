@@ -51,8 +51,10 @@ public class BatteryUtils {
     }
 
     /** Make the target device think it's off charger. */
-    public static void runDumpsysBatteryUnplug() {
+    public static void runDumpsysBatteryUnplug() throws Exception {
         SystemUtil.runShellCommandForNoOutput("cmd battery unplug");
+
+        waitForPlugStatus(false);
 
         Log.d(TAG, "Battery UNPLUGGED");
     }
@@ -72,10 +74,23 @@ public class BatteryUtils {
     public static void runDumpsysBatterySetPluggedIn(boolean pluggedIn) throws Exception {
         SystemUtil.runShellCommandForNoOutput(("cmd battery set ac " + (pluggedIn ? "1" : "0")));
 
+        waitForPlugStatus(pluggedIn);
+
         Log.d(TAG, "Battery AC set to " + pluggedIn);
     }
 
-    /** Reset the effect of all the previous {@code runDumpsysBattery*} call  */
+    private static void waitForPlugStatus(boolean pluggedIn) throws Exception {
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        waitUntil("Device still " + (pluggedIn ? " not plugged" : " plugged"),
+                () -> {
+                    Intent batteryStatus =
+                            InstrumentationRegistry.getContext().registerReceiver(null, ifilter);
+                    int chargePlug = batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
+                    return pluggedIn == (chargePlug != 0);
+                });
+    }
+
+    /** Reset the effect of all the previous {@code runDumpsysBattery*} call */
     public static void runDumpsysBatteryReset() {
         SystemUtil.runShellCommandForNoOutput(("cmd battery reset"));
 

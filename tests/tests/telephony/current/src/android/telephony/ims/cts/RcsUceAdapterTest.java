@@ -38,6 +38,7 @@ import android.telephony.SubscriptionManager;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsRcsManager;
+import android.telephony.ims.RcsContactUceCapability;
 import android.telephony.ims.RcsUceAdapter;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -250,7 +251,15 @@ public class RcsUceAdapterTest {
         // requestCapabilities
         try {
             uceAdapter.requestCapabilities(Runnable::run, numbers,
-                    new RcsUceAdapter.CapabilitiesCallback() {});
+                    new RcsUceAdapter.CapabilitiesCallback() {
+                        @Override
+                        public void onCapabilitiesReceived(
+                                List<RcsContactUceCapability> capabilities) {}
+                        @Override
+                        public void onComplete() {}
+                        @Override
+                        public void onError(int errorCode) {}
+                    });
             fail("requestCapabilities should require READ_PRIVILEGED_PHONE_STATE.");
         } catch (SecurityException e) {
             //expected
