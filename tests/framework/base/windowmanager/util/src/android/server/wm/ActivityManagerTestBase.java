@@ -1199,6 +1199,11 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
+    protected AodSession createManagedAodSession() {
+        return mObjectTracker.manage(new AodSession());
+    }
+
+    /** @see ObjectTracker#manage(AutoCloseable) */
     protected <T extends Activity> TestActivitySession<T> createManagedTestActivitySession() {
         return new TestActivitySession<T>();
     }
@@ -1474,6 +1479,25 @@ public abstract class ActivityManagerTestBase {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    protected class AodSession extends SettingsSession<Integer> {
+        private AmbientDisplayConfiguration mConfig;
+
+        AodSession() {
+            super(Settings.Secure.getUriFor(Settings.Secure.DOZE_ALWAYS_ON),
+                    Settings.Secure::getInt,
+                    Settings.Secure::putInt);
+            mConfig = new AmbientDisplayConfiguration(mContext);
+        }
+
+        boolean isAodAvailable() {
+            return mConfig.alwaysOnAvailable();
+        }
+
+        void setAodEnabled(boolean enabled) {
+            set(enabled ? 1 : 0);
         }
     }
 
