@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Test relies on other server to connect to.")
 public class CarAppFocusManagerTest extends CarApiTestBase {
     private static final String TAG = CarAppFocusManagerTest.class.getSimpleName();
 
@@ -185,7 +186,6 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         mManager.removeFocusListener(listener2, APP_FOCUS_TYPE_NAVIGATION);
     }
 
-    @AppModeFull(reason = "Test relies on other server to connect to.")
     @Test
     public void testFocusChange() throws Exception {
         DefaultServiceConnectionListener connectionListener =
@@ -299,7 +299,6 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
     }
 
-    @AppModeFull(reason = "Test relies on other server to connect to.")
     @Test
     public void testFilter() throws Exception {
         DefaultServiceConnectionListener connectionListener =
