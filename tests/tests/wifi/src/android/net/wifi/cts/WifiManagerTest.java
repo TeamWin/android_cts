@@ -3061,6 +3061,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Tests {@link WifiManager#isWpa3ApValidationSupported()} does not crash.
+     */
+    public void testIsWpa3ApValidationSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isWpa3ApValidationSupported();
+    }
+
+    /**
      * Tests {@link WifiManager#isP2pSupported()} returns true
      * if this device supports it, otherwise, ensure no crash.
      */
