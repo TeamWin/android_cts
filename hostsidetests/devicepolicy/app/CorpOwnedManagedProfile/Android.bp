@@ -43,6 +43,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
+        "mts",
     ],
 }
 
@@ -72,6 +73,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
+        "mts",
     ],
     aaptflags: [
         "--rename-manifest-package",

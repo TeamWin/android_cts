@@ -36,6 +36,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
+        "mts",
     ],
     manifest: "api23/AndroidManifest.xml",
 }
@@ -65,6 +66,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
+        "mts",
     ],
     manifest: "api25/AndroidManifest.xml",
 }
@@ -94,6 +96,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
+        "mts",
     ],
     manifest: "latest/AndroidManifest.xml",
 }

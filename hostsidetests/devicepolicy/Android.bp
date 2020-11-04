@@ -31,6 +31,7 @@ java_test_host {
         "cts",
         "general-tests",
         "vts10",
+        "mts",
     ],
     java_resource_dirs: ["res"],
     data: [":current-api-xml"],
