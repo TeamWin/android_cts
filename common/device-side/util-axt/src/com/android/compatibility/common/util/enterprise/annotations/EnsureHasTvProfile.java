@@ -16,6 +16,8 @@
 
 package com.android.compatibility.common.util.enterprise.annotations;
 
+import static com.android.compatibility.common.util.enterprise.DeviceState.UserType.CURRENT_USER;
+
 import com.android.compatibility.common.util.enterprise.DeviceState;
 
 import java.lang.annotation.ElementType;
@@ -24,15 +26,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run within a work profile.
+ * Mark that a test method should run on a user which has a Tv profile.
  *
- * <p>Your test configuration should be such that this test is only run where a work profile is
- * created and the test is being run within that user.
- *
- * <p>Optionally, you can guarantee that these methods do not run outside of a work
- * profile by using {@link DeviceState}.
+ * <p>Your test configuration may be configured so that this test is only run on a user which has
+ * a Tv profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters
+ * the correct state for the method.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireRunOnWorkProfile {
+public @interface EnsureHasTvProfile {
+    /** Which user type the tv profile should be attached to. */
+    DeviceState.UserType forUser() default CURRENT_USER;
+
+    /** Whether the test app should be installed in the tv profile. */
+    boolean installTestApp() default true;
 }

@@ -24,15 +24,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run within a work profile.
+ * Mark that a test method should run within a Tv profile.
  *
- * <p>Your test configuration should be such that this test is only run where a work profile is
+ * <p>Your test configuration should be such that this test is only run where a Tv profile is
  * created and the test is being run within that user.
  *
- * <p>Optionally, you can guarantee that these methods do not run outside of a work
+ * <p>Optionally, you can guarantee that these methods do not run outside of a Tv
  * profile by using {@link DeviceState}.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireRunOnWorkProfile {
+public @interface RequireRunOnTvProfile {
 }
