@@ -47,6 +47,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -734,6 +735,11 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     /** Checks if the device supports multi-display. */
     protected boolean supportsMultiDisplay() {
         return hasDeviceFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
+    }
+
+    /** Checks if the device supports wallpaper for multi-display. */
+    protected boolean supportsLiveWallpaper() {
+        return hasDeviceFeature(PackageManager.FEATURE_LIVE_WALLPAPER);
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
