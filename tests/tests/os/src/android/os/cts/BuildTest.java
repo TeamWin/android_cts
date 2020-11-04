@@ -258,6 +258,8 @@ public class BuildTest extends TestCase {
 
         assertTrue(SKU_PATTERN.matcher(Build.SKU).matches());
 
+        assertTrue(SKU_PATTERN.matcher(Build.ODM_SKU).matches());
+
         assertTrue(TAGS_PATTERN.matcher(Build.TAGS).matches());
 
         // No format requirements stated in CDD for Build.TIME
