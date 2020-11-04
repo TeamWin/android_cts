@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
         final Intent intent = getIntent();
         final String targetPackageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
         final RemoteCallback remoteCallback = intent.getParcelableExtra("callback");
-        final IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_STARTABLE);
+        final IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_PACKAGE_FULLY_LOADED);
         filter.addDataScheme("package");
         filter.addDataSchemeSpecificPart(targetPackageName, PatternMatcher.PATTERN_LITERAL);
