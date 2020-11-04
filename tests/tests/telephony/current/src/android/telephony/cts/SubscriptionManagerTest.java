@@ -243,7 +243,7 @@ public class SubscriptionManagerTest {
         assertEquals(Arrays.asList(), mSm.getSubscriptionPlans(mSubId));
 
         // Push simple plan and get it back
-        final SubscriptionPlan plan = buildValidSubscriptionPlan();
+        final SubscriptionPlan plan = buildValidSubscriptionPlan(System.currentTimeMillis());
         mSm.setSubscriptionPlans(mSubId, Arrays.asList(plan));
         assertEquals(Arrays.asList(plan), mSm.getSubscriptionPlans(mSubId));
 
@@ -282,7 +282,8 @@ public class SubscriptionManagerTest {
         }
 
         // Defining plans means we get to override
-        mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
+        mSm.setSubscriptionPlans(mSubId,
+                Arrays.asList(buildValidSubscriptionPlan(System.currentTimeMillis())));
 
         // Cellular is uncongested by default
         assertTrue(cm.getNetworkCapabilities(net).hasCapability(NET_CAPABILITY_NOT_CONGESTED));
@@ -344,7 +345,8 @@ public class SubscriptionManagerTest {
 
         // Make ourselves the owner and define some plans
         setSubPlanOwner(mSubId, mPackageName);
-        mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
+        mSm.setSubscriptionPlans(mSubId,
+                Arrays.asList(buildValidSubscriptionPlan(System.currentTimeMillis())));
 
         // Cellular is metered by default
         assertFalse(cm.getNetworkCapabilities(net).hasCapability(
@@ -380,7 +382,8 @@ public class SubscriptionManagerTest {
 
         // Make ourselves the owner and define some plans
         setSubPlanOwner(mSubId, mPackageName);
-        mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
+        mSm.setSubscriptionPlans(mSubId,
+                Arrays.asList(buildValidSubscriptionPlan(System.currentTimeMillis())));
 
         // Cellular is metered by default
         assertFalse(cm.getNetworkCapabilities(net).hasCapability(
@@ -408,7 +411,8 @@ public class SubscriptionManagerTest {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
                 return !caps.hasCapability(NET_CAPABILITY_TEMPORARILY_NOT_METERED);
             });
-            mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
+            mSm.setSubscriptionPlans(mSubId,
+                    Arrays.asList(buildValidSubscriptionPlan(System.currentTimeMillis())));
             assertTrue(latch.await(10, TimeUnit.SECONDS));
         }
     }
@@ -463,7 +467,7 @@ public class SubscriptionManagerTest {
 
         // Error when adding 2 plans with the same network type
         List<SubscriptionPlan> plans = new ArrayList<>();
-        plans.add(buildValidSubscriptionPlan());
+        plans.add(buildValidSubscriptionPlan(System.currentTimeMillis()));
         plans.add(SubscriptionPlan.Builder
                 .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
                         Period.ofMonths(1))
@@ -499,16 +503,17 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSubscriptionPlanResetNetworkTypes() {
+        long time = System.currentTimeMillis();
         SubscriptionPlan plan = SubscriptionPlan.Builder
                 .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
                         Period.ofMonths(1))
                 .setTitle("CTS")
                 .setNetworkTypes(new int[] {TelephonyManager.NETWORK_TYPE_LTE})
                 .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
-                .setDataUsage(500_000_000, System.currentTimeMillis())
+                .setDataUsage(500_000_000, time)
                 .resetNetworkTypes()
                 .build();
-        assertEquals(plan, buildValidSubscriptionPlan());
+        assertEquals(plan, buildValidSubscriptionPlan(time));
     }
 
     @Test
@@ -900,13 +905,13 @@ public class SubscriptionManagerTest {
         return latch;
     }
 
-    private static SubscriptionPlan buildValidSubscriptionPlan() {
+    private static SubscriptionPlan buildValidSubscriptionPlan(long dataUsageTime) {
         return SubscriptionPlan.Builder
                 .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
                         Period.ofMonths(1))
                 .setTitle("CTS")
                 .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
-                .setDataUsage(500_000_000, System.currentTimeMillis())
+                .setDataUsage(500_000_000, dataUsageTime)
                 .build();
     }
 
