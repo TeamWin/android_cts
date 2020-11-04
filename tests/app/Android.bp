@@ -45,6 +45,9 @@ android_test {
     instrumentation_for: "CtsAppTestStubs",
     sdk_version: "test_current",
     min_sdk_version: "14",
+    // Disable coverage since it pushes us over the dex limit and we don't
+    // actually need to measure the tests themselves.
+    jacoco: { exclude_filter: ["**"] }
 }
 
 android_test {
