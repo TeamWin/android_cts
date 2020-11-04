@@ -383,7 +383,7 @@ public class WifiRttTest extends TestBase {
      * Verify ranging request with aware peer Mac address and peer handle.
      */
     public void testAwareRttWithMacAddress() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext())) {
+        if (!(shouldTestWifiRtt(getContext()) && shouldTestWifiAware(getContext()))) {
             return;
         }
         RangingRequest request = new RangingRequest.Builder()
@@ -402,7 +402,7 @@ public class WifiRttTest extends TestBase {
      * Verify ranging request with aware peer handle.
      */
     public void testAwareRttWithPeerHandle() throws InterruptedException {
-        if (!shouldTestWifiRtt(getContext())) {
+        if (!(shouldTestWifiRtt(getContext()) && shouldTestWifiAware(getContext()))) {
             return;
         }
         PeerHandle peerHandle = mock(PeerHandle.class);
