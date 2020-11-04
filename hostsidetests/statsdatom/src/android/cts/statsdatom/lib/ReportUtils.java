@@ -46,6 +46,15 @@ public final class ReportUtils {
     public static List<EventMetricData> getEventMetricDataList(ITestDevice device)
             throws Exception {
         ConfigMetricsReportList reportList = getReportList(device);
+        return getEventMetricDataList(reportList);
+    }
+
+    /**
+     * Extracts and sorts the EventMetricData from the given ConfigMetricsReportList (which must
+     * contain a single report).
+     */
+    public static List<EventMetricData> getEventMetricDataList(ConfigMetricsReportList reportList)
+            throws Exception {
         assertThat(reportList.getReportsCount()).isEqualTo(1);
         ConfigMetricsReport report = reportList.getReports(0);
 
@@ -55,7 +64,7 @@ public final class ReportUtils {
         }
         data.sort(Comparator.comparing(EventMetricData::getElapsedTimestampNanos));
 
-        CLog.d("Got the following EventMetricDataList:\n");
+        CLog.d("Get EventMetricDataList as following:\n");
         for (EventMetricData d : data) {
             CLog.d("Atom at " + d.getElapsedTimestampNanos() + ":\n" + d.getAtom().toString());
         }
