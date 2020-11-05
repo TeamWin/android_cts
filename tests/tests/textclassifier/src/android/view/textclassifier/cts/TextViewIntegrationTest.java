@@ -30,6 +30,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.hamcrest.CoreMatchers.is;
 
 import android.app.PendingIntent;
@@ -124,6 +125,10 @@ public class TextViewIntegrationTest {
             clickIndex.set(
                     (span.getTextLink().getStart() + span.getTextLink().getEnd()) / 2);
         });
+        // To wait for the rendering of the activity to be completed, so that the upcoming click
+        // action will work.
+        Thread.sleep(2000);
+        onView(allOf(withId(R.id.textview), withText(TEXT))).check(matches(isDisplayed()));
         // Click on the span.
         Log.d(LOG_TAG, "clickIndex = " + clickIndex.get());
         onView(withId(R.id.textview)).perform(TextViewActions.tapOnTextAtIndex(clickIndex.get()));
