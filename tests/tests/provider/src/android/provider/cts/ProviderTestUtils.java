@@ -73,6 +73,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -94,8 +95,16 @@ public class ProviderTestUtils {
     public static Iterable<String> getSharedVolumeNames() {
         // We test both new and legacy volume names
         final HashSet<String> testVolumes = new HashSet<>();
-        testVolumes.addAll(
-                MediaStore.getExternalVolumeNames(InstrumentationRegistry.getTargetContext()));
+        final Set<String> volumeNames = MediaStore.getExternalVolumeNames(
+                InstrumentationRegistry.getTargetContext());
+        // Run tests only on VISIBLE volumes which are FUSE mounted and indexed by MediaProvider
+        for (String vol : volumeNames) {
+            final File mountedPath = getVolumePath(vol);
+            if (mountedPath == null || mountedPath.getAbsolutePath() == null) continue;
+            if (mountedPath.getAbsolutePath().startsWith("/storage/")) {
+                testVolumes.add(vol);
+            }
+        }
         testVolumes.add(MediaStore.VOLUME_EXTERNAL);
         return testVolumes;
     }
