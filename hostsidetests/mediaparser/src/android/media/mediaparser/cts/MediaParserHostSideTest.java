@@ -41,11 +41,13 @@ import com.google.common.io.Files;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /** Test for checking that the MediaParser CTS tests produce the expected media metrics. */
+// TODO(b/172494357): Re-enable tests once we can check for the mainline train version.
 public class MediaParserHostSideTest extends DeviceTestCase implements IBuildReceiver {
 
     private static final String MEDIAPARSER_TEST_APK = "CtsMediaParserTestCasesApp.apk";
@@ -55,6 +57,8 @@ public class MediaParserHostSideTest extends DeviceTestCase implements IBuildRec
     private static final String TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner";
 
     private static final long CONFIG_ID = "cts_config".hashCode();
+    private static final String MEDIAPARSER_METRICS_SEPARATOR = "\\|";
+    private static final double MEDIAPARSER_METRICS_DITHER_VALUE = .02f;
 
     private IBuildInfo mCtsBuildInfo;
 
@@ -82,7 +86,6 @@ public class MediaParserHostSideTest extends DeviceTestCase implements IBuildRec
 
     // Tests.
 
-    // TODO(b/172494357): Re-enable test once we can check for the mainline train version.
     public void ignored_testCreationByNameMetrics() throws Exception {
         runDeviceTest("testCreationByName");
         String[] expectedParserNames = {
@@ -101,11 +104,114 @@ public class MediaParserHostSideTest extends DeviceTestCase implements IBuildRec
             "android.media.mediaparser.Ac4Parser",
             "android.media.mediaparser.FlacParser",
         };
+        // All of the above are created by name.
+        int[] expectedCreatedByName =
+                Arrays.stream(expectedParserNames).mapToInt(unusedArgument -> 1).toArray();
+        runDeviceTest("testCreationByName");
+        List<MediametricsMediaParserReported> mediaParserReportedEvents =
+                getMediaParserReportedEvents();
         String[] observedParserNames =
-                getMediaParserReportedEvents().stream()
+                mediaParserReportedEvents.stream()
                         .map(MediametricsMediaParserReported::getParserName)
                         .toArray(String[]::new);
+        int[] observedCreatedByName =
+                mediaParserReportedEvents.stream()
+                        .mapToInt(MediametricsMediaParserReported::getCreatedByName)
+                        .toArray();
         assertThat(observedParserNames).isEqualTo(expectedParserNames);
+        assertThat(observedCreatedByName).isEqualTo(expectedCreatedByName);
+    }
+
+    public void ignored_testParserPool() throws Exception {
+        runDeviceTest("testMp4");
+        String[] expectedParserNamesInPool = {
+            "android.media.mediaparser.MatroskaParser",
+            "android.media.mediaparser.FragmentedMp4Parser",
+            "android.media.mediaparser.Mp4Parser",
+            "android.media.mediaparser.Mp3Parser",
+            "android.media.mediaparser.AdtsParser",
+            "android.media.mediaparser.Ac3Parser",
+            "android.media.mediaparser.TsParser",
+            "android.media.mediaparser.FlvParser",
+            "android.media.mediaparser.OggParser",
+            "android.media.mediaparser.PsParser",
+            "android.media.mediaparser.WavParser",
+            "android.media.mediaparser.AmrParser",
+            "android.media.mediaparser.Ac4Parser",
+            "android.media.mediaparser.FlacParser",
+        };
+        String parserPool = getSingleMediaParserReportedEvent().getParserPool();
+        List<String> parserNamesInParserPool =
+                Arrays.asList(parserPool.split(MEDIAPARSER_METRICS_SEPARATOR));
+        // We do not assert the order in the pool in order to allow test robustness against future
+        // mainline changes.
+        assertThat(parserNamesInParserPool).containsExactlyElementsIn(expectedParserNamesInPool);
+    }
+
+    public void ignored_testLastException() throws Exception {
+        runDeviceTest("testOggInvalidHeaderSniff");
+        List<MediametricsMediaParserReported> mediaParserReportedEvents =
+                getMediaParserReportedEvents();
+        assertThat(mediaParserReportedEvents).hasSize(2);
+        for (MediametricsMediaParserReported event : mediaParserReportedEvents) {
+            assertThat(event.getLastException())
+                .isEqualTo("android.media.MediaParser$UnrecognizedInputFormatException");
+        }
+    }
+
+    public void ignored_testResourceByteCount() throws Exception {
+        long actualInputSize = 101597;
+        long minimumExpectedResourceByteCount =
+                (long) (actualInputSize * (1 - MEDIAPARSER_METRICS_DITHER_VALUE));
+        long maximumExpectedResourceByteCount =
+                (long) (actualInputSize * (1 + MEDIAPARSER_METRICS_DITHER_VALUE));
+        runDeviceTest("testMp4");
+        long reportedByteCount = getSingleMediaParserReportedEvent().getResourceByteCount();
+        assertThat(reportedByteCount).isAtLeast(minimumExpectedResourceByteCount);
+        assertThat(reportedByteCount).isAtMost(maximumExpectedResourceByteCount);
+    }
+
+    public void ignored_testDurationMillis() throws Exception {
+        long actualDurationMillis = 1024;
+        long minimumExpectedResourceByteCount =
+                (long) (actualDurationMillis * (1 - MEDIAPARSER_METRICS_DITHER_VALUE));
+        long maximumExpectedResourceByteCount =
+                (long) (actualDurationMillis * (1 + MEDIAPARSER_METRICS_DITHER_VALUE));
+        runDeviceTest("testMp4");
+        long reportedDurationMillis = getSingleMediaParserReportedEvent().getDurationMillis();
+        assertThat(reportedDurationMillis).isAtLeast(minimumExpectedResourceByteCount);
+        assertThat(reportedDurationMillis).isAtMost(maximumExpectedResourceByteCount);
+    }
+
+    public void ignored_testTrackMimeTypes() throws Exception {
+        String[] expectedTrackMimeTypes = new String[] {"video/avc", "audio/mp4a-latm"};
+        runDeviceTest("testMp4");
+        String trackMimeTypesField = getSingleMediaParserReportedEvent().getTrackMimeTypes();
+        List<String> actualTrackMimeTypes =
+                Arrays.asList(trackMimeTypesField.split(MEDIAPARSER_METRICS_SEPARATOR));
+        assertThat(actualTrackMimeTypes).containsExactlyElementsIn(expectedTrackMimeTypes);
+    }
+
+    public void ignored_testTrackCodecs() throws Exception {
+        String[] expectedCodecs = new String[] {"", "mp4a.40.2"};
+        runDeviceTest("testMp4");
+        String trackMimeTypesField = getSingleMediaParserReportedEvent().getTrackCodecs();
+        List<String> actualTrackMimeTypes =
+                Arrays.asList(trackMimeTypesField.split(MEDIAPARSER_METRICS_SEPARATOR));
+        assertThat(actualTrackMimeTypes).containsExactlyElementsIn(expectedCodecs);
+    }
+
+    public void ignored_testAlteredParameters() throws Exception {
+        runDeviceTest("testTsWithH264DtsAudio");
+        assertThat(getSingleMediaParserReportedEvent().getAlteredParameters())
+                .isEqualTo("android.media.mediaparser.ts.enableHdmvDtsAudioStreams");
+    }
+
+    public void ignored_testVideoSize() throws Exception {
+        runDeviceTest("testMp4");
+        MediametricsMediaParserReported reportedEvent = getSingleMediaParserReportedEvent();
+        assertThat(reportedEvent.getVideoWidth()).isEqualTo(1080);
+        assertThat(reportedEvent.getVideoHeight()).isEqualTo(720);
     }
 
     // Internal methods.
@@ -143,7 +249,19 @@ public class MediaParserHostSideTest extends DeviceTestCase implements IBuildRec
     }
 
     /**
-     * Returns all MediaParser reported metrics sorted by timestamp.
+     * Asserts that there is only one MediaParser reported metric event, and returns it.
+     *
+     * <p>Note: Calls {@link #getAndClearReportList()} to obtain the statsd report.
+     */
+    private MediametricsMediaParserReported getSingleMediaParserReportedEvent() throws Exception {
+        List<MediametricsMediaParserReported> mediaParserReportedEvents =
+                getMediaParserReportedEvents();
+        assertThat(mediaParserReportedEvents).hasSize(1);
+        return mediaParserReportedEvents.get(0);
+    }
+
+    /**
+     * Returns all MediaParser reported metric events sorted by timestamp.
      *
      * <p>Note: Calls {@link #getAndClearReportList()} to obtain the statsd report.
      */
