@@ -1112,15 +1112,11 @@ public class FontTest {
         Font aFont = new Font.Builder(assets, "fonts/others/samplefont.ttf").build();
         // Copied font must be equals to original one.
         Font bFont = new Font.Builder(aFont).build();
-        assertTrue(aFont.isSameSource(bFont));
-        assertTrue(bFont.isSameSource(aFont));
         assertEquals(aFont, bFont);
         assertEquals(bFont, aFont);
 
         // Same source font must be equal.
         Font cFont = new Font.Builder(assets, "fonts/others/samplefont.ttf").build();
-        assertTrue(aFont.isSameSource(cFont));
-        assertTrue(cFont.isSameSource(aFont));
         assertEquals(aFont, cFont);
         assertEquals(cFont, aFont);
 
@@ -1133,15 +1129,37 @@ public class FontTest {
         // Different parameter should be unequal but sameSource returns true.
         Font fFont = new Font.Builder(aFont.getBuffer().duplicate())
                 .setFontVariationSettings("'wght' 400").build();
-        assertTrue(aFont.isSameSource(fFont));
-        assertTrue(fFont.isSameSource(aFont));
         assertNotEquals(aFont, fFont);
         assertNotEquals(fFont, aFont);
 
         // Different source must be not equals.
         Font gFont = new Font.Builder(assets, "fonts/others/samplefont2.ttf").build();
-        assertFalse(aFont.isSameSource(gFont));
         assertNotEquals(aFont, gFont);
+    }
+
+    @Test
+    public void fontIdentifier() throws IOException {
+        AssetManager assets = InstrumentationRegistry.getTargetContext().getAssets();
+
+        Font aFont = new Font.Builder(assets, "fonts/others/samplefont.ttf").build();
+        // Copied font must be equals to original one.
+        Font bFont = new Font.Builder(aFont).build();
+        assertEquals(aFont.getSourceIdentifier(), bFont.getSourceIdentifier());
+
+        // Created font from duplicated buffers must be equal.
+        Font cFont = new Font.Builder(aFont.getBuffer().duplicate()).build();
+        assertEquals(aFont.getSourceIdentifier(), cFont.getSourceIdentifier());
+
+        // Different parameter should be unequal but sameSource returns true.
+        Font dFont = new Font.Builder(aFont.getBuffer().duplicate())
+                .setFontVariationSettings("'wght' 400")
+                .setWeight(123)
+                .build();
+        assertEquals(aFont.getSourceIdentifier(), dFont.getSourceIdentifier());
+
+        // Different source must be not equals.
+        Font gFont = new Font.Builder(assets, "fonts/others/samplefont2.ttf").build();
+        assertNotEquals(aFont.getSourceIdentifier(), gFont.getSourceIdentifier());
     }
 
     @Test
