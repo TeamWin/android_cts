@@ -757,6 +757,31 @@ public class ExifInterfaceTest extends AndroidTestCase {
         imageFile.delete();
     }
 
+    public void testIsSupportedMimeType() throws Exception {
+        try {
+            ExifInterface.isSupportedMimeType(null);
+            fail();
+        } catch (NullPointerException e) {
+            // expected
+        }
+        assertTrue(ExifInterface.isSupportedMimeType("image/jpeg"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-adobe-dng"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-canon-cr2"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-nikon-nef"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-nikon-nrw"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-sony-arw"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-panasonic-rw2"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-olympus-orf"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-pentax-pef"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-samsung-srw"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/x-fuji-raf"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/heic"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/heif"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/png"));
+        assertTrue(ExifInterface.isSupportedMimeType("image/webp"));
+        assertFalse(ExifInterface.isSupportedMimeType("image/gif"));
+    }
+
     private static File clone(File original) throws IOException {
         final File cloned =
                 File.createTempFile("cts_", +System.nanoTime() + "_" + original.getName());
