@@ -221,6 +221,29 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    public void testGetCurrentLocation_Timeout() throws Exception {
+        Location loc = createLocation(TEST_PROVIDER, mRandom);
+
+        try (GetCurrentLocationCapture capture = new GetCurrentLocationCapture()) {
+            mManager.getCurrentLocation(
+                    TEST_PROVIDER,
+                    new LocationRequest.Builder(0).setDurationMillis(500).build(),
+                    capture.getCancellationSignal(),
+                    Executors.newSingleThreadExecutor(),
+                    capture);
+            assertThat(capture.getLocation(1000)).isNull();
+        }
+
+        try {
+            mManager.getCurrentLocation((String) null, null, Executors.newSingleThreadExecutor(),
+                    (location) -> {});
+            fail("Should throw IllegalArgumentException if provider is null!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
+
+    @Test
     public void testGetCurrentLocation_FreshOldLocation() throws Exception {
         Location loc = createLocation(TEST_PROVIDER, mRandom);
 
