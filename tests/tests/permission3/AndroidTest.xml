@@ -33,8 +33,6 @@
     </target_preparer>
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="CtsPermissionEscalationAppNonRuntime.apk->/data/local/tmp/cts/permission3/CtsPermissionEscalationAppNonRuntime.apk" />
-        <option name="push" value="CtsPermissionEscalationAppRuntime.apk->/data/local/tmp/cts/permission3/CtsPermissionEscalationAppRuntime.apk" />
         <option name="push" value="CtsPermissionPolicyApp25.apk->/data/local/tmp/cts/permission3/CtsPermissionPolicyApp25.apk" />
         <option name="push" value="CtsUsePermissionApp22.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp22.apk" />
         <option name="push" value="CtsUsePermissionApp22CalendarOnly.apk->/data/local/tmp/cts/permission3/CtsUsePermissionApp22CalendarOnly.apk" />
