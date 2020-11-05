@@ -1671,33 +1671,34 @@ public class UidAtomTests extends DeviceAtomTestCase {
         final String encoded = "ChpzY3JlZW5fYXV0b19icmlnaHRuZXNzX2FkagoKZm9udF9zY2FsZQ";
         final String font_scale = "font_scale";
         SettingSnapshot snapshot = null;
+        final float originalFontScale = Float.parseFloat(
+                getDevice().executeShellCommand("settings get system font_scale"));
 
         // Set whitelist through device config.
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         getDevice().executeShellCommand(
                 "device_config put settings_stats SystemFeature__float_whitelist " + encoded);
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Set font_scale value
         getDevice().executeShellCommand("settings put system font_scale 1.5");
 
         // Get SettingSnapshot as a simple gauge metric.
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config, Atom.SETTING_SNAPSHOT_FIELD_NUMBER, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.SETTING_SNAPSHOT_FIELD_NUMBER);
 
         // Start test app and trigger a pull while it is running.
-        try (AutoCloseable a = withActivity("StatsdCtsForegroundActivity", "action",
+        try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG, "StatsdCtsForegroundActivity", "action",
                 "action.show_notification")) {
-            Thread.sleep(WAIT_TIME_SHORT);
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
             // Trigger a pull and wait for new pull before killing the process.
-            setAppBreadcrumbPredicate();
-            Thread.sleep(WAIT_TIME_LONG);
+            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
         // Test the size of atoms. It should contain at least "font_scale" and
         // "screen_auto_brightness_adj" two setting values.
-        List<Atom> atoms = getGaugeMetricDataList();
+        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
         assertThat(atoms.size()).isAtLeast(2);
         for (Atom atom : atoms) {
             SettingSnapshot settingSnapshot = atom.getSettingSnapshot();
@@ -1707,37 +1708,42 @@ public class UidAtomTests extends DeviceAtomTestCase {
             }
         }
 
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Test the data of atom.
         assertNotNull(snapshot);
         // Get font_scale value and test value type.
-        final float fontScale = Float.parseFloat(
+        final float newFontScale = Float.parseFloat(
                 getDevice().executeShellCommand("settings get system font_scale"));
         assertThat(snapshot.getType()).isEqualTo(
                 SettingSnapshot.SettingsValueType.ASSIGNED_FLOAT_TYPE);
         assertThat(snapshot.getBoolValue()).isEqualTo(false);
         assertThat(snapshot.getIntValue()).isEqualTo(0);
-        assertThat(snapshot.getFloatValue()).isEqualTo(fontScale);
+        assertThat(snapshot.getFloatValue()).isEqualTo(newFontScale);
         assertThat(snapshot.getStrValue()).isEqualTo("");
         assertThat(snapshot.getUserId()).isEqualTo(0);
+
+        // Restore the font value.
+        getDevice().executeShellCommand("settings put system font_scale " + originalFontScale);
     }
 
     public void testIntegrityCheckAtomReportedDuringInstall() throws Exception {
-        createAndUploadConfig(AtomsProto.Atom.INTEGRITY_CHECK_RESULT_REPORTED_FIELD_NUMBER);
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.INTEGRITY_CHECK_RESULT_REPORTED_FIELD_NUMBER);
 
-        getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
-        installTestApp();
+        DeviceUtils.uninstallStatsdTestApp(getDevice());
+        DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
 
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
         assertThat(data.size()).isEqualTo(1);
         assertThat(data.get(0).getAtom().hasIntegrityCheckResultReported()).isTrue();
         IntegrityCheckResultReported result = data.get(0)
                 .getAtom().getIntegrityCheckResultReported();
-        assertThat(result.getPackageName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
+        assertThat(result.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         // we do not assert on certificates since it seem to differ by device.
         assertThat(result.getInstallerPackageName()).isEqualTo("adb");
-        assertThat(result.getVersionCode()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE_VERSION);
+        long testPackageVersion = 10;
+        assertThat(result.getVersionCode()).isEqualTo(testPackageVersion);
         assertThat(result.getResponse()).isEqualTo(ALLOWED);
         assertThat(result.getCausedByAppCertRule()).isFalse();
         assertThat(result.getCausedByInstallerRule()).isFalse();
@@ -1841,35 +1847,40 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 */
     public void testPushedBlobStoreStats() throws Exception {
-        StatsdConfig.Builder conf = createConfigBuilder();
-        addAtomEvent(conf, Atom.BLOB_COMMITTED_FIELD_NUMBER, false);
-        addAtomEvent(conf, Atom.BLOB_LEASED_FIELD_NUMBER, false);
-        addAtomEvent(conf, Atom.BLOB_OPENED_FIELD_NUMBER, false);
-        uploadConfig(conf);
+        StatsdConfig.Builder conf = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(conf,
+                Atom.BLOB_COMMITTED_FIELD_NUMBER, /*useUidAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(conf,
+                Atom.BLOB_LEASED_FIELD_NUMBER, /*useUidAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(conf,
+                Atom.BLOB_OPENED_FIELD_NUMBER, /*useUidAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), conf);
 
-        Thread.sleep(WAIT_TIME_SHORT);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBlobStore");
 
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testBlobStore");
-
-        List<EventMetricData> data = getEventMetricDataList();
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data).hasSize(3);
 
         BlobCommitted blobCommitted = data.get(0).getAtom().getBlobCommitted();
         final long blobId = blobCommitted.getBlobId();
         final long blobSize = blobCommitted.getSize();
-        assertThat(blobCommitted.getUid()).isEqualTo(getUid());
+        assertThat(blobCommitted.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(blobId).isNotEqualTo(0);
         assertThat(blobSize).isNotEqualTo(0);
         assertThat(blobCommitted.getResult()).isEqualTo(BlobCommitted.Result.SUCCESS);
 
         BlobLeased blobLeased = data.get(1).getAtom().getBlobLeased();
-        assertThat(blobLeased.getUid()).isEqualTo(getUid());
+        assertThat(blobLeased.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(blobLeased.getBlobId()).isEqualTo(blobId);
         assertThat(blobLeased.getSize()).isEqualTo(blobSize);
         assertThat(blobLeased.getResult()).isEqualTo(BlobLeased.Result.SUCCESS);
 
         BlobOpened blobOpened = data.get(2).getAtom().getBlobOpened();
-        assertThat(blobOpened.getUid()).isEqualTo(getUid());
+        assertThat(blobOpened.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
         assertThat(blobOpened.getBlobId()).isEqualTo(blobId);
         assertThat(blobOpened.getSize()).isEqualTo(blobSize);
         assertThat(blobOpened.getResult()).isEqualTo(BlobOpened.Result.SUCCESS);
@@ -1882,18 +1893,15 @@ public class UidAtomTests extends DeviceAtomTestCase {
     private static final long BLOB_LEASE_EXPIRY_DURATION_MS = 60 * 60 * 1000;
 
     public void testPulledBlobStoreStats() throws Exception {
-        StatsdConfig.Builder config = createConfigBuilder();
-        addGaugeAtomWithDimensions(config,
-                Atom.BLOB_INFO_FIELD_NUMBER,
-                null);
-        uploadConfig(config);
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                Atom.BLOB_INFO_FIELD_NUMBER);
 
         final long testStartTimeMs = System.currentTimeMillis();
-        Thread.sleep(WAIT_TIME_SHORT);
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testBlobStore");
-        Thread.sleep(WAIT_TIME_LONG);
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBlobStore");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Add commit callback time to test end time to account for async execution
         final long testEndTimeMs =
@@ -1901,10 +1909,11 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         // Find the BlobInfo for the blob created in the test run
         AtomsProto.BlobInfo blobInfo = null;
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             if (atom.hasBlobInfo()) {
                 final AtomsProto.BlobInfo temp = atom.getBlobInfo();
-                if (temp.getCommitters().getCommitter(0).getUid() == getUid()) {
+                if (temp.getCommitters().getCommitter(0).getUid()
+                        == DeviceUtils.getStatsdTestAppUid(getDevice())) {
                     blobInfo = temp;
                     break;
                 }
@@ -1932,7 +1941,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 1);
 
         assertThat(blobInfo.getLeasees().getLeaseeCount()).isGreaterThan(0);
-        assertThat(blobInfo.getLeasees().getLeasee(0).getUid()).isEqualTo(getUid());
+        assertThat(blobInfo.getLeasees().getLeasee(0).getUid()).isEqualTo(
+                DeviceUtils.getStatsdTestAppUid(getDevice()));
 
         // Check that lease expiry time is reasonable
         final long leaseExpiryMs = blobInfo.getLeasees().getLeasee(
