@@ -2825,7 +2825,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_networking" />
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi.direct" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".managedprovisioning.RecentsRedactionActivity"
@@ -2855,7 +2855,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_networking" />
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
         <activity android:name=".wifiaware.TestListActivity"
                   android:label="@string/aware_test"
@@ -2868,7 +2868,7 @@
             <meta-data android:name="test_category" android:value="@string/test_category_networking" />
             <meta-data android:name="test_required_features" android:value="android.hardware.wifi.aware" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".notifications.NotificationListenerVerifierActivity"
@@ -3173,315 +3173,315 @@
                   android:label="@string/wifi_test_network_request_specific"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestPatternNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_pattern"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestUnavailableNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_unavailable"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkRequestInvalidCredentialNetworkSpecifierTestActivity"
                   android:label="@string/wifi_test_network_request_invalid_credential"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidBssidTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid_bssid"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionSsidPostConnectTestActivity"
                   android:label="@string/wifi_test_network_suggestion_ssid_post_connect"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionConnectionFailureTestActivity"
                   android:label="@string/wifi_test_network_suggestion_connection_failure"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifi.NetworkSuggestionModificationInPlaceTestActivity"
                   android:label="@string/wifi_test_network_suggestion_modification_in_place"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.GoNegRequesterTestListActivity"
                 android:label="@string/p2p_go_neg_requester"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.GoNegRequesterTestActivity"
                 android:label="@string/p2p_go_neg_requester"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.GoNegResponderTestActivity"
                 android:label="@string/p2p_go_neg_responder"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.P2pClientTestListActivity"
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.P2pClientTestActivity"
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.GoTestActivity"
                 android:label="@string/p2p_accept_client"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigTestListActivity"
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfig2gBandTestListActivity"
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigFixedFrequencyTestListActivity"
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigTestActivity"
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfig2gBandTestActivity"
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.P2pClientWithConfigFixedFrequencyTestActivity"
                 android:label="@string/p2p_join_go"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.GoWithConfigTestActivity"
                 android:label="@string/p2p_accept_client"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.GoWithConfig2gBandTestActivity"
                 android:label="@string/p2p_accept_client"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.GoWithConfigFixedFrequencyTestActivity"
                 android:label="@string/p2p_accept_client"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.ServiceRequesterTestListActivity"
                 android:label="@string/p2p_service_discovery_requester"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.ServiceRequesterTestActivity"
                 android:label="@string/p2p_service_discovery_requester"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".p2p.ServiceResponderTestActivity"
                 android:label="@string/p2p_service_discovery_responder"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenUnsolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_open_unsolicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenPassiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_open_passive_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseUnsolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_passphrase_unsolicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphrasePassiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_passphrase_passive_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkUnsolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_pmk_unsolicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkPassiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_pmk_passive_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenSolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_open_solicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOpenActiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_open_active_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseSolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_passphrase_solicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPassphraseActiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_passphrase_active_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkSolicitedPublishTestActivity"
                   android:label="@string/aware_data_path_pmk_solicited_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathPmkActiveSubscribeTestActivity"
                   android:label="@string/aware_data_path_pmk_active_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOobOpenResponderTestActivity"
                   android:label="@string/aware_data_path_oob_open_responder"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOobOpenInitiatorTestActivity"
                   android:label="@string/aware_data_path_oob_open_initiator"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOobPassphraseResponderTestActivity"
                   android:label="@string/aware_data_path_oob_passphrase_responder"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DataPathOobPassphraseInitiatorTestActivity"
                   android:label="@string/aware_data_path_oob_passphrase_initiator"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DiscoveryRangingPublishTestActivity"
                   android:label="@string/aware_discovery_ranging_publish"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".wifiaware.DiscoveryRangingSubscribeTestActivity"
                   android:label="@string/aware_discovery_ranging_subscribe"
                   android:configChanges="keyboardHidden|orientation|screenSize" >
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity-alias android:name=".CtsVerifierActivity" android:label="@string/app_name"

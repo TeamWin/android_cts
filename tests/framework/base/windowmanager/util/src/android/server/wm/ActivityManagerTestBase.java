@@ -314,6 +314,10 @@ public abstract class ActivityManagerTestBase {
 
     protected BroadcastActionTrigger mBroadcastActionTrigger = new BroadcastActionTrigger();
 
+    /** Runs a runnable with shell permissions. These can be nested. */
+    protected void runWithShellPermission(Runnable runnable) {
+        NestedShellPermission.run(runnable);
+    }
     /**
      * Returns true if the activity is shown before timeout.
      */
@@ -421,7 +425,7 @@ public abstract class ActivityManagerTestBase {
          */
         void launchTestActivityOnDisplaySync(@Nullable String className, Intent intent,
                 int displayId) {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermission(() -> {
                 mTestActivity = launchActivityOnDisplay(className, intent, displayId);
                 // Check activity is launched and resumed.
                 final ComponentName testActivityName = mTestActivity.getComponentName();
@@ -439,7 +443,7 @@ public abstract class ActivityManagerTestBase {
             final Intent intent = new Intent(mContext, activityClass)
                     .addFlags(FLAG_ACTIVITY_NEW_TASK);
             final String className = intent.getComponent().getClassName();
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            runWithShellPermission(() -> {
                 mTestActivity = launchActivityOnDisplay(className, intent, displayId);
                 assertNotNull(mTestActivity);
             });
@@ -521,7 +525,7 @@ public abstract class ActivityManagerTestBase {
         launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
 
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        runWithShellPermission(() -> {
             // TaskOrganizer ctor requires MANAGE_ACTIVITY_TASKS permission
             mTaskOrganizer = new TestTaskOrganizer();
             // Clear launch params for all test packages to make sure each test is run in a clean
@@ -535,7 +539,7 @@ public abstract class ActivityManagerTestBase {
         mObjectTracker.tearDown(mPostAssertionRule::addError);
 
         if (mTaskOrganizer != null) {
-            SystemUtil.runWithShellPermissionIdentity(mTaskOrganizer::unregisterOrganizerIfNeeded);
+            mTaskOrganizer.unregisterOrganizerIfNeeded();
         }
         // Synchronous execution of removeRootTasksWithActivityTypes() ensures that all
         // activities but home are cleaned up from the root task at the end of each test. Am force
@@ -558,7 +562,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void moveTopActivityToPinnedRootTask(int rootTaskId) {
-        SystemUtil.runWithShellPermissionIdentity(
+        runWithShellPermission(
                 () -> mAtm.moveTopActivityToPinnedRootTask(rootTaskId, new Rect(0, 0, 500, 500))
         );
     }
@@ -652,15 +656,12 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void removeRootTasksWithActivityTypes(int... activityTypes) {
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.removeRootTasksWithActivityTypes(activityTypes));
+        runWithShellPermission(() -> mAtm.removeRootTasksWithActivityTypes(activityTypes));
         waitForIdle();
     }
 
     protected void removeRootTasksInWindowingModes(int... windowingModes) {
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.removeRootTasksInWindowingModes(windowingModes)
-        );
+        runWithShellPermission(() -> mAtm.removeRootTasksInWindowingModes(windowingModes));
         waitForIdle();
     }
 
@@ -784,7 +785,7 @@ public abstract class ActivityManagerTestBase {
      * {@code false}.
      */
     protected void launchActivityInSplitScreenWithRecents(ComponentName activityName) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        runWithShellPermission(() -> {
             launchActivity(activityName);
             final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
             if (mUseTaskOrganizer) {
@@ -819,7 +820,7 @@ public abstract class ActivityManagerTestBase {
      */
     public void moveTaskToPrimarySplitScreen(int taskId, boolean showSideActivity) {
         final boolean isHomeRecentsComponent = mWmState.isHomeRecentsComponent();
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        runWithShellPermission(() -> {
             if (mUseTaskOrganizer) {
                 mTaskOrganizer.putTaskInSplitPrimary(taskId);
             } else {
@@ -890,7 +891,7 @@ public abstract class ActivityManagerTestBase {
         mWmState.computeState(activityName);
         final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
         boolean[] result = new boolean[1];
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        runWithShellPermission(() -> {
             result[0] = mAtm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
         });
         if (result[0]) {
@@ -921,8 +922,7 @@ public abstract class ActivityManagerTestBase {
                     .execute();
         } else {
             final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-            SystemUtil.runWithShellPermissionIdentity(
-                    () -> mAtm.moveTaskToRootTask(taskId, rootTaskId, true));
+            runWithShellPermission(() -> mAtm.moveTaskToRootTask(taskId, rootTaskId, true));
         }
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setStackId(rootTaskId)
@@ -933,21 +933,23 @@ public abstract class ActivityManagerTestBase {
             ComponentName activityName, int left, int top, int right, int bottom) {
         mWmState.computeState(activityName);
         final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mAtm.resizeTask(taskId, new Rect(left, top, right, bottom)));
+        runWithShellPermission(() -> mAtm.resizeTask(taskId, new Rect(left, top, right, bottom)));
     }
 
     protected void resizePrimarySplitScreen(
             int rootTaskWidth, int rootTaskHeight, int taskWidth, int taskHeight) {
-        SystemUtil.runWithShellPermissionIdentity(() ->
+        runWithShellPermission(() ->
                 mAtm.resizePrimarySplitScreen(new Rect(0, 0, rootTaskWidth, rootTaskHeight),
                         new Rect(0, 0, taskWidth, taskHeight)));
     }
 
-    protected void pressAppSwitchButtonAndWaitForRecents() {
+    protected boolean pressAppSwitchButtonAndWaitForRecents() {
         pressAppSwitchButton();
-        mWmState.waitForRecentsActivityVisible();
-        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        final boolean isRecentsVisible = mWmState.waitForRecentsActivityVisible();
+        if (isRecentsVisible) {
+            mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        }
+        return isRecentsVisible;
     }
 
     protected boolean supportsVrMode() {
@@ -1199,6 +1201,11 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
+    protected AodSession createManagedAodSession() {
+        return mObjectTracker.manage(new AodSession());
+    }
+
+    /** @see ObjectTracker#manage(AutoCloseable) */
     protected <T extends Activity> TestActivitySession<T> createManagedTestActivitySession() {
         return new TestActivitySession<T>();
     }
@@ -1281,7 +1288,7 @@ public abstract class ActivityManagerTestBase {
             mPackageManager = mContext.getPackageManager();
             mOrigHome = getDefaultHomeComponent();
 
-            SystemUtil.runWithShellPermissionIdentity(
+            runWithShellPermission(
                     () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
                             COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP));
             setDefaultHome(mSessionHome);
@@ -1289,7 +1296,7 @@ public abstract class ActivityManagerTestBase {
 
         @Override
         public void close() {
-            SystemUtil.runWithShellPermissionIdentity(
+            runWithShellPermission(
                     () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
                             COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP));
             if (mOrigHome != null) {
@@ -1369,6 +1376,10 @@ public abstract class ActivityManagerTestBase {
                 mWmState.waitForAodShowing();
             } else {
                 Condition.waitFor("display to turn off", () -> !isDisplayOn(DEFAULT_DISPLAY));
+            }
+            if(!isLockDisabled()) {
+                mWmState.waitFor(state -> state.getKeyguardControllerState().keyguardShowing,
+                        "Keyguard showing");
             }
             return this;
         }
@@ -1474,6 +1485,25 @@ public abstract class ActivityManagerTestBase {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    protected class AodSession extends SettingsSession<Integer> {
+        private AmbientDisplayConfiguration mConfig;
+
+        AodSession() {
+            super(Settings.Secure.getUriFor(Settings.Secure.DOZE_ALWAYS_ON),
+                    Settings.Secure::getInt,
+                    Settings.Secure::putInt);
+            mConfig = new AmbientDisplayConfiguration(mContext);
+        }
+
+        boolean isAodAvailable() {
+            return mConfig.alwaysOnAvailable();
+        }
+
+        void setAodEnabled(boolean enabled) {
+            set(enabled ? 1 : 0);
         }
     }
 
@@ -2052,7 +2082,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void stopTestPackage(final String packageName) {
-        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(packageName));
+        runWithShellPermission(() -> mAm.forceStopPackage(packageName));
     }
 
     protected LaunchActivityBuilder getLaunchActivityBuilder() {
@@ -2246,7 +2276,7 @@ public abstract class ActivityManagerTestBase {
             switch (mLauncherType) {
                 case INSTRUMENTATION:
                     if (mWithShellPermission) {
-                        SystemUtil.runWithShellPermissionIdentity(this::launchUsingInstrumentation);
+                        NestedShellPermission.run(this::launchUsingInstrumentation);
                     } else {
                         launchUsingInstrumentation();
                     }

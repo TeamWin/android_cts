@@ -1105,9 +1105,10 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // Some devices do not support recents or implement it differently (instead of using a
         // separate stack id or as an activity), for those cases the visibility asserts will be
         // ignored
-        pressAppSwitchButtonAndWaitForRecents();
-        mWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
-        mWmState.assertVisibility(TEST_ACTIVITY, false);
+        if (pressAppSwitchButtonAndWaitForRecents()) {
+            mWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
+            mWmState.assertVisibility(TEST_ACTIVITY, false);
+        }
     }
 
     @Test
@@ -1268,7 +1269,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     private void assertNumberOfActions(ComponentName componentName, int numberOfActions) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        runWithShellPermission(() -> {
             final ActivityTask task = mWmState.getTaskByActivity(componentName);
             final TaskInfo info = mTaskOrganizer.getTaskInfo(task.getTaskId());
             final PictureInPictureParams params = info.getPictureInPictureParams();

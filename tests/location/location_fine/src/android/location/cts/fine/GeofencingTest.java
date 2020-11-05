@@ -17,7 +17,6 @@
 package android.location.cts.fine;
 
 import static android.location.LocationManager.FUSED_PROVIDER;
-import static android.location.LocationManager.PROVIDERS_CHANGED_ACTION;
 
 import static com.android.compatibility.common.util.LocationUtils.createLocation;
 
@@ -25,15 +24,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
 
-import android.content.BroadcastReceiver;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.location.Criteria;
 import android.location.LocationManager;
 import android.location.cts.common.ProximityPendingIntentCapture;
-import android.os.Build.VERSION;
-import android.os.Build.VERSION_CODES;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -48,9 +44,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Objects;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class GeofencingTest {
@@ -138,6 +131,20 @@ public class GeofencingTest {
             fail("Should throw IllegalArgumentException if pending intent is null!");
         } catch (IllegalArgumentException e) {
             // expected
+        }
+
+        PendingIntent immutablePI = PendingIntent.getBroadcast(mContext, 0,
+                new Intent("IMMUTABLE_TEST_ACTION")
+                        .setPackage(mContext.getPackageName())
+                        .addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        try {
+            mManager.addProximityAlert(0, 0, 1000, -1, immutablePI);
+            fail("Should throw IllegalArgumentException if pending intent is immutable!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        } finally {
+            immutablePI.cancel();
         }
 
         try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {

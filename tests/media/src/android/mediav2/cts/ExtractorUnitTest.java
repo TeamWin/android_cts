@@ -681,23 +681,12 @@ public class ExtractorUnitTest {
         public void testIfInvalidDataSourceIsRejectedBySetDataSource() throws IOException {
             MediaExtractor extractor = new MediaExtractor();
             TestMediaDataSource dataSource =
-                    TestMediaDataSource.fromString(mInpPrefix + mInpMedia, true, false);
+                    TestMediaDataSource.fromString(mInpPrefix + mInpMedia, false, true);
             try {
-                try {
-                    extractor.setDataSource(dataSource);
-                    fail("setDataSource succeeds with malformed media data source");
-                } catch (Exception e) {
-                    // expected
-                }
-                assertTrue(dataSource.isClosed());
-                dataSource = TestMediaDataSource.fromString(mInpPrefix + mInpMedia, false, true);
-
-                try {
-                    extractor.setDataSource(dataSource);
-                    fail("setDataSource succeeds with malformed media data source");
-                } catch (Exception e) {
-                    // expected
-                }
+                extractor.setDataSource(dataSource);
+                fail("setDataSource succeeds with malformed media data source");
+            } catch (Exception e) {
+                // expected
             } finally {
                 assertTrue(dataSource.isClosed());
                 extractor.release();
