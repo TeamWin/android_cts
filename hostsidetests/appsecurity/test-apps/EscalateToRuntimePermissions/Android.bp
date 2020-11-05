@@ -14,7 +14,22 @@
 // limitations under the License.
 //
 
-android_test_helper_app {
-    name: "CtsPermissionEscalationAppRuntime",
-    certificate: ":cts-testkey2",
+android_test {
+    name: "CtsEscalateToRuntimePermissions",
+    defaults: ["cts_support_defaults"],
+    static_libs: ["androidx.test.rules"],
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+        "mts",
+    ],
+    optimize: {
+        enabled: false,
+    },
+    dex_preopt: {
+        enabled: false,
+    },
 }
