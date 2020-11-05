@@ -67,8 +67,6 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TAG = "Statsd.HostAtomTests";
 
-    private static final boolean OPTIONAL_TESTS_ENABLED = false;
-
     private static final String DUMPSYS_STATS_CMD = "dumpsys stats";
 
     // Either file must exist to read kernel wake lock stats.
@@ -550,24 +548,6 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
                 .isEqualTo(atom.getVersionIncremental());
         assertThat(DeviceUtils.getProperty(getDevice(), "ro.build.type")).isEqualTo(atom.getType());
         assertThat(DeviceUtils.getProperty(getDevice(), "ro.build.tags")).isEqualTo(atom.getTags());
-    }
-
-    public void testOnDevicePowerMeasurement() throws Exception {
-        if (!OPTIONAL_TESTS_ENABLED) return;
-
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.ON_DEVICE_POWER_MEASUREMENT_FIELD_NUMBER);
-
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
-        List<Atom> dataList = ReportUtils.getGaugeMetricAtoms(getDevice());
-
-        for (Atom atom : dataList) {
-            assertThat(atom.getOnDevicePowerMeasurement().getMeasurementTimestampMillis())
-                    .isAtLeast(0L);
-            assertThat(atom.getOnDevicePowerMeasurement().getEnergyMicrowattSecs()).isAtLeast(0L);
-        }
     }
 
     // Explicitly tests if the adb command to log a breadcrumb is working.

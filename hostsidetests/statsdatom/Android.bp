@@ -19,6 +19,7 @@ java_test_host {
         "src/**/binderstats/*.java",
         "src/**/bluetooth/*.java",
         "src/**/cpu/*.java",
+        "src/**/devicepower/*.java",
         "src/**/gnss/*.java",
         "src/**/statsd/*.java",
         "src/**/telephony/*.java",
