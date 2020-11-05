@@ -1671,8 +1671,15 @@ public class UidAtomTests extends DeviceAtomTestCase {
         final String encoded = "ChpzY3JlZW5fYXV0b19icmlnaHRuZXNzX2FkagoKZm9udF9zY2FsZQ";
         final String font_scale = "font_scale";
         SettingSnapshot snapshot = null;
-        final float originalFontScale = Float.parseFloat(
-                getDevice().executeShellCommand("settings get system font_scale"));
+
+        float originalFontScale;
+        try {
+            originalFontScale = Float.parseFloat(
+                    getDevice().executeShellCommand("settings get system font_scale"));
+        } catch (NumberFormatException e) {
+            // The font_scale has not yet been set. 1.0 is the expected default value.
+            originalFontScale = 1;
+        }
 
         // Set whitelist through device config.
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
