@@ -86,8 +86,10 @@ import com.android.os.AtomsProto.WifiMulticastLockStateChanged;
 import com.android.os.AtomsProto.WifiScanStateChanged;
 import com.android.os.StatsLog.EventMetricData;
 import com.android.server.notification.SmallHash;
+import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.IBuildReceiver;
 
 import com.google.common.collect.Range;
 import com.google.protobuf.Descriptors;
@@ -104,12 +106,8 @@ import java.util.stream.Collectors;
 
 /**
  * Statsd atom tests that are done via app, for atoms that report a uid.
- *
- * TODO: Once all tests have migrated to use the new helper test library, this class should not
- * extend DeviceAtomTestCase. Instead, this class should extend DeviceTestCase and implement
- * IBuildReceiver. At the same time, the setBuild function should be overridden.
  */
-public class UidAtomTests extends DeviceAtomTestCase {
+public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TAG = "Statsd.UidAtomTests";
 
@@ -146,6 +144,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
             "android.software.incremental_delivery";
     private static final String FEATURE_WIFI = "android.hardware.wifi";
 
+    private IBuildInfo mCtsBuild;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -162,6 +162,11 @@ public class UidAtomTests extends DeviceAtomTestCase {
         ReportUtils.clearReports(getDevice());
         DeviceUtils.uninstallStatsdTestApp(getDevice());
         super.tearDown();
+    }
+
+    @Override
+    public void setBuild(IBuildInfo buildInfo) {
+        mCtsBuild = buildInfo;
     }
 
     /**
@@ -977,7 +982,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 atom, /*useAttributionChain=*/ true);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiScan");
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isIn(Range.closed(2, 4));
@@ -1056,7 +1061,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         }
 
         // Assert about ProcessMemoryState for the test app.
-        List<Atom> atoms = getGaugeMetricDataList();
+        List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
         int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
         boolean found = false;
         for (Atom atom : atoms) {
@@ -1348,7 +1353,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         long lastUid = -1;
         int fullIndex = 0;
 
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             DangerousPermissionStateSampled permissionState =
                     atom.getDangerousPermissionStateSampled();
 
@@ -1537,7 +1542,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<PackageNotificationPreferences> allPreferences = new ArrayList<>();
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             if (atom.hasPackageNotificationPreferences()) {
                 allPreferences.add(atom.getPackageNotificationPreferences());
             }
@@ -1571,7 +1576,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<PackageNotificationChannelPreferences> allChannelPreferences = new ArrayList<>();
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             if (atom.hasPackageNotificationChannelPreferences()) {
                 allChannelPreferences.add(atom.getPackageNotificationChannelPreferences());
             }
@@ -1609,7 +1614,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<PackageNotificationChannelGroupPreferences> allGroupPreferences = new ArrayList<>();
-        for (Atom atom : getGaugeMetricDataList()) {
+        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
             if (atom.hasPackageNotificationChannelGroupPreferences()) {
                 allGroupPreferences.add(atom.getPackageNotificationChannelGroupPreferences());
             }
@@ -1782,7 +1787,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             return false;
         });
     }
-*/
+
     private void assertSubscriptionInfo(AtomsProto.DataUsageBytesTransfer data) {
         assertThat(data.getSimMcc()).matches("^\\d{3}$");
         assertThat(data.getSimMnc()).matches("^\\d{2,3}$");
@@ -1801,7 +1806,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             final boolean ratTypeGreaterThanUnknown =
                     (data.getRatType() > NetworkTypeEnum.NETWORK_TYPE_UNKNOWN_VALUE);
 
-            if ((data.getState() == 1 /*NetworkStats.SET_FOREGROUND*/)
+            if ((data.getState() == 1) // NetworkStats.SET_FOREGROUND
                     && ((enable && ratTypeEqualsToUnknown)
                     || (!enable && ratTypeGreaterThanUnknown))) {
                 assertDataUsageAtomDataExpected(data.getRxBytes(), data.getTxBytes(),
@@ -1814,7 +1819,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
             return false;
         });
     }
-/*
+
     public void testDataUsageBytesTransfer() throws Throwable {
         final boolean oldSubtypeCombined = getNetworkStatsCombinedSubTypeEnabled();
 
@@ -1958,40 +1963,40 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(txp).isGreaterThan(0L);
     }
 
-    private void doTestMobileBytesTransferThat(int atomTag, ThrowingPredicate p)
-            throws Throwable {
-        if (!hasFeature(FEATURE_TELEPHONY, true)) return;
-
-        // Get MobileBytesTransfer as a simple gauge metric.
-        final StatsdConfig.Builder config = getPulledConfig();
-        addGaugeAtomWithDimensions(config, atomTag, null);
-        uploadConfig(config);
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        // Generate some traffic on mobile network.
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testGenerateMobileTraffic");
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        // Force polling NetworkStatsService to get most updated network stats from lower layer.
-        runActivity("StatsdCtsForegroundActivity", "action", "action.poll_network_stats");
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        // Pull a report
-        setAppBreadcrumbPredicate();
-        Thread.sleep(WAIT_TIME_SHORT);
-
-        final List<Atom> atoms = getGaugeMetricDataList(/*checkTimestampTruncated=*/true);
-        assertThat(atoms.size()).isAtLeast(1);
-
-        boolean foundAppStats = false;
-        for (final Atom atom : atoms) {
-            if (p.accept(atom)) {
-                foundAppStats = true;
-            }
-        }
-        assertWithMessage("uid " + getUid() + " is not found in " + atoms.size() + " atoms")
-                .that(foundAppStats).isTrue();
-    }
+//    private void doTestMobileBytesTransferThat(int atomTag, ThrowingPredicate p)
+//            throws Throwable {
+//        if (!hasFeature(FEATURE_TELEPHONY, true)) return;
+//
+//        // Get MobileBytesTransfer as a simple gauge metric.
+//        final StatsdConfig.Builder config = getPulledConfig();
+//        addGaugeAtomWithDimensions(config, atomTag, null);
+//        uploadConfig(config);
+//        Thread.sleep(WAIT_TIME_SHORT);
+//
+//        // Generate some traffic on mobile network.
+//        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testGenerateMobileTraffic");
+//        Thread.sleep(WAIT_TIME_SHORT);
+//
+//        // Force polling NetworkStatsService to get most updated network stats from lower layer.
+//        runActivity("StatsdCtsForegroundActivity", "action", "action.poll_network_stats");
+//        Thread.sleep(WAIT_TIME_SHORT);
+//
+//        // Pull a report
+//        setAppBreadcrumbPredicate();
+//        Thread.sleep(WAIT_TIME_SHORT);
+//
+//        final List<Atom> atoms = getGaugeMetricDataList(/*checkTimestampTruncated=*/true);
+//        assertThat(atoms.size()).isAtLeast(1);
+//
+//        boolean foundAppStats = false;
+//        for (final Atom atom : atoms) {
+//            if (p.accept(atom)) {
+//                foundAppStats = true;
+//            }
+//        }
+//        assertWithMessage("uid " + getUid() + " is not found in " + atoms.size() + " atoms")
+//                .that(foundAppStats).isTrue();
+//    }
 
     @FunctionalInterface
     private interface ThrowingPredicate<S, T extends Throwable> {
@@ -2124,7 +2129,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
     private String pushApkToRemote(String apkName, String remoteDirPath)
             throws Exception {
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         final File apk = buildHelper.getTestFile(apkName);
         final String remoteApkPath = remoteDirPath + "/" + apk.getName();
         assertTrue(getDevice().pushFile(apk, remoteApkPath));
@@ -2133,7 +2138,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
     }
 
     private long getTestFileSize(String fileName) throws Exception {
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         final File file = buildHelper.getTestFile(fileName);
         return file.length();
     }
