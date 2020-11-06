@@ -410,6 +410,19 @@ def edge_mode(props, mode):
             "android.edge.availableEdgeModes") and mode \
             in props["android.edge.availableEdgeModes"];
 
+def tonemap_mode(props, mode):
+    """Returns whether a device supports the tonemap mode.
+
+    Args:
+        props: Camera properties object.
+        mode: Integer, indicating the tonemap mode to check for availability.
+
+    Return:
+        Boolean.
+    """
+    return props.has_key(
+            "android.tonemap.availableToneMapModes") and mode \
+            in props["android.tonemap.availableToneMapModes"];
 
 def lens_calibrated(props):
     """Returns whether lens position is calibrated or not.
