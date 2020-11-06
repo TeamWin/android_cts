@@ -16,7 +16,20 @@
 
 package android.view.cts;
 
+import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
+
 import static org.junit.Assert.assertTrue;
+
+import androidx.test.filters.RequiresDevice;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
 
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
@@ -35,17 +48,6 @@ import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
-
-import androidx.test.filters.RequiresDevice;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -77,6 +79,7 @@ public class ASurfaceControlTest {
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
+        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
     /**

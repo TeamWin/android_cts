@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -76,6 +77,7 @@ public class SurfaceControlTest {
 
         mActivity = mActivityRule.getActivity();
         mActivity.dismissPermissionDialog();
+        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
     /**
