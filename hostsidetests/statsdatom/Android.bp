@@ -28,6 +28,7 @@ java_test_host {
         "src/**/jobscheduler/*.java",
         "src/**/integrity/*.java",
         "src/**/memory/*.java",
+        "src/**/net/*.java",
         "src/**/notification/*.java",
         "src/**/permissionstate/*.java",
         "src/**/settingsstats/*.java",
