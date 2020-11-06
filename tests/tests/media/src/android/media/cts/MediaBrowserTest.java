@@ -86,6 +86,40 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         }.run();
     }
 
+    public void testThrowingISEWhileNotConnected() {
+        resetCallbacks();
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+        assertEquals(false, mMediaBrowser.isConnected());
+
+        try {
+            mMediaBrowser.getExtras();
+            fail();
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        try {
+            mMediaBrowser.getRoot();
+            fail();
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        try {
+            mMediaBrowser.getServiceComponent();
+            fail();
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        try {
+            mMediaBrowser.getSessionToken();
+            fail();
+        } catch (IllegalStateException e) {
+            // Expected
+        }
+    }
+
     public void testConnectTwice() {
         resetCallbacks();
         createMediaBrowser(TEST_BROWSER_SERVICE);
@@ -171,17 +205,6 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertEquals(0, mConnectionCallback.mConnectedCount);
         assertEquals(0, mConnectionCallback.mConnectionFailedCount);
         assertEquals(0, mConnectionCallback.mConnectionSuspendedCount);
-    }
-
-    public void testGetServiceComponentBeforeConnection() {
-        resetCallbacks();
-        createMediaBrowser(TEST_BROWSER_SERVICE);
-        try {
-            ComponentName serviceComponent = mMediaBrowser.getServiceComponent();
-            fail();
-        } catch (IllegalStateException e) {
-            // expected
-        }
     }
 
     public void testSubscribe() {
@@ -446,6 +469,53 @@ public class MediaBrowserTest extends InstrumentationTestCase {
 
         assertEquals(StubMediaBrowserService.MEDIA_ID_CHILDREN[0],
                 mItemCallback.mLastMediaItem.getMediaId());
+    }
+
+    public void testGetItemThrowsIAE() {
+        resetCallbacks();
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+
+        try {
+            // Calling getItem() with empty mediaId will throw IAE.
+            mMediaBrowser.getItem("",  mItemCallback);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            // Calling getItem() with null mediaId will throw IAE.
+            mMediaBrowser.getItem(null,  mItemCallback);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            // Calling getItem() with null itemCallback will throw IAE.
+            mMediaBrowser.getItem("media_id",  null);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+    }
+
+    public void testGetItemWhileNotConnected() {
+        resetCallbacks();
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+
+        final String mediaId = "test_media_id";
+        mMediaBrowser.getItem(mediaId, mItemCallback);
+
+        // Calling getItem while not connected will invoke ItemCallback.onError().
+        new PollingCheck(TIME_OUT_MS) {
+            @Override
+            protected boolean check() {
+                return mItemCallback.mLastErrorId != null;
+            }
+        }.run();
+
+        assertEquals(mItemCallback.mLastErrorId, mediaId);
     }
 
     public void testGetItemFailure() {
