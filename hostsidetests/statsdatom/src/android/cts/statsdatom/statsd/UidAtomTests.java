@@ -649,36 +649,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(entered).hasSize(1);
     }
 
-    public void testScheduledJobState() throws Exception {
-        String expectedName = "com.android.server.cts.device.statsdatom/.StatsdJobService";
-        final int atomTag = Atom.SCHEDULED_JOB_STATE_CHANGED_FIELD_NUMBER;
-        Set<Integer> jobSchedule = new HashSet<>(
-                Arrays.asList(ScheduledJobStateChanged.State.SCHEDULED_VALUE));
-        Set<Integer> jobOn = new HashSet<>(
-                Arrays.asList(ScheduledJobStateChanged.State.STARTED_VALUE));
-        Set<Integer> jobOff = new HashSet<>(
-                Arrays.asList(ScheduledJobStateChanged.State.FINISHED_VALUE));
-
-        // Add state sets to the list in order.
-        List<Set<Integer>> stateSet = Arrays.asList(jobSchedule, jobOn, jobOff);
-
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useUidAttributionChain=*/true);
-        allowImmediateSyncs();
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testScheduledJob");
-
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-
-        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
-                atom -> atom.getScheduledJobStateChanged().getState().getNumber());
-
-        for (EventMetricData e : data) {
-            assertThat(e.getAtom().getScheduledJobStateChanged().getJobName())
-                    .isEqualTo(expectedName);
-        }
-    }
-
     //Note: this test does not have uid, but must run on the device
     public void testScreenBrightness() throws Exception {
         int initialBrightness = getScreenBrightness();
@@ -727,7 +697,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 atomTag, /*useUidAttributionChain=*/true);
-        allowImmediateSyncs();
+        DeviceUtils.allowImmediateSyncs(getDevice());
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSyncState");
 
         // Sorted list of events in order in which they occurred.
@@ -2063,12 +2033,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         final File file = buildHelper.getTestFile(fileName);
         return file.length();
-    }
-
-    /** Make the test app standby-active so it can run syncs and jobs immediately. */
-    private void allowImmediateSyncs() throws Exception {
-        getDevice().executeShellCommand("am set-standby-bucket "
-                + DeviceUtils.STATSD_ATOM_TEST_PKG + " active");
     }
 
     private int getScreenBrightness() throws Exception {
