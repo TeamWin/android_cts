@@ -30,16 +30,16 @@ import java.lang.annotation.Target;
  *
  * <p>Use of this annotation implies {@code RequireFeatures("android.software.managed_users")}.
  *
- * <p>Your test configuration may be configured so that this test is only runs on a user which has
+ * <p>Your test configuration may be configured so that this test is only run on a user which has
  * a work profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters
  * the correct state for the method.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnsureHasWorkProfile {
-    /** Which user type should the work profile be attached to. */
+    /** Which user type the work profile should be attached to. */
     DeviceState.UserType forUser() default CURRENT_USER;
 
-    /** Should the test app be installed in the work profile. */
+    /** Whether the test app should be installed in the work profile. */
     boolean installTestApp() default true;
 }

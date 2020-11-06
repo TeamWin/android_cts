@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * Mark that a test method should run on a device which has a secondary user that is not the
  * current user.
  *
- * <p>Your test configuration may be configured so that this test is only runs on a device which
+ * <p>Your test configuration may be configured so that this test is only run on a device which
  * has a secondary user that is not the current user. Otherwise, you can use {@link DeviceState}
  * to ensure that the device enters the correct state for the method. If there is not already a
  * secondary user on the device, and the device does not support creating additional users, then
@@ -36,6 +36,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EnsureHasSecondaryUser {
-    /** Should the test app be installed in the secondary user. */
+    /** Whether the test app should be installed in the secondary user. */
     boolean installTestApp() default true;
 }
