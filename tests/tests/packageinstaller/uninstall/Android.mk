@@ -28,6 +28,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := ub-uiautomator \
     platform-test-annotations \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_JAVA_RESOURCE_DIRS := res
 
 LOCAL_SDK_VERSION := current
 
