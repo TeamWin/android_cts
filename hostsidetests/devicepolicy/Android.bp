@@ -30,6 +30,7 @@ java_test_host {
         "arcts",
         "cts",
         "general-tests",
+        "mts",
     ],
     java_resource_dirs: ["res"],
     data: [":current-api-xml"],
