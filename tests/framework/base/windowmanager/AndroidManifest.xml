@@ -324,8 +324,11 @@
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density"/>
         <activity android:name="android.server.wm.WindowFocusTests$LosingFocusActivity"/>
         <activity android:name="android.server.wm.WindowFocusTests$AutoEngagePointerCaptureActivity" />
-        <activity android:name="android.server.wm.WindowMetricsTests$MetricsActivity"
-             android:exported="true"/>
+        <activity android:name="android.server.wm.WindowMetricsActivityTests$MetricsActivity"
+             android:exported="true"
+             android:resizeableActivity="true"
+             android:supportsPictureInPicture="true"
+             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.app.Activity"/>
         <activity android:name="android.server.wm.WindowInsetsLayoutTests$TestActivity"/>
         <activity android:name="android.server.wm.WindowInsetsControllerTests$TestActivity"/>
