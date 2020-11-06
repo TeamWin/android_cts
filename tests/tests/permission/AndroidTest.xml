@@ -60,8 +60,9 @@
         <option name="push" value="CtsVictimPermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsVictimPermissionDefinerApp.apk" />
         <option name="push" value="CtsRuntimePermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsRuntimePermissionDefinerApp.apk" />
         <option name="push" value="CtsRuntimePermissionUserApp.apk->/data/local/tmp/cts/permissions/CtsRuntimePermissionUserApp.apk" />
-        <option name="push" value="CtsInstalltimePermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsInstalltimePermissionDefinerApp.apk" />
-        <option name="push" value="CtsInstalltimePermissionUserApp.apk->/data/local/tmp/cts/permissions/CtsInstalltimePermissionUserApp.apk" />
+        <option name="push" value="CtsInstallPermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsInstallPermissionDefinerApp.apk" />
+        <option name="push" value="CtsInstallPermissionUserApp.apk->/data/local/tmp/cts/permissions/CtsInstallPermissionUserApp.apk" />
+        <option name="push" value="CtsInstallPermissionEscalatorApp.apk->/data/local/tmp/cts/permissions/CtsInstallPermissionEscalatorApp.apk" />
         <option name="push" value="CtsAppThatRequestsOneTimePermission.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsOneTimePermission.apk" />
         <option name="push" value="AppThatDefinesUndefinedPermissionGroupElement.apk->/data/local/tmp/cts/permissions/AppThatDefinesUndefinedPermissionGroupElement.apk" />
     </target_preparer>
