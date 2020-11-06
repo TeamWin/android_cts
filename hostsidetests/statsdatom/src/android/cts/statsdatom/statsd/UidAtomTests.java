@@ -1675,28 +1675,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         getDevice().executeShellCommand("settings put system font_scale " + originalFontScale);
     }
 
-    public void testIntegrityCheckAtomReportedDuringInstall() throws Exception {
-        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.INTEGRITY_CHECK_RESULT_REPORTED_FIELD_NUMBER);
-
-        DeviceUtils.uninstallStatsdTestApp(getDevice());
-        DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-
-        assertThat(data.size()).isEqualTo(1);
-        assertThat(data.get(0).getAtom().hasIntegrityCheckResultReported()).isTrue();
-        IntegrityCheckResultReported result = data.get(0)
-                .getAtom().getIntegrityCheckResultReported();
-        assertThat(result.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
-        // we do not assert on certificates since it seem to differ by device.
-        assertThat(result.getInstallerPackageName()).isEqualTo("adb");
-        long testPackageVersion = 10;
-        assertThat(result.getVersionCode()).isEqualTo(testPackageVersion);
-        assertThat(result.getResponse()).isEqualTo(ALLOWED);
-        assertThat(result.getCausedByAppCertRule()).isFalse();
-        assertThat(result.getCausedByInstallerRule()).isFalse();
-    }
 /*
     public void testMobileBytesTransfer() throws Throwable {
         final int appUid = getUid();

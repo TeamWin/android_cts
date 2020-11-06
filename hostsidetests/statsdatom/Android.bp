@@ -20,6 +20,7 @@ java_test_host {
         "src/**/bluetooth/*.java",
         "src/**/cpu/*.java",
         "src/**/gnss/*.java",
+        "src/**/integrity/*.java",
         "src/**/statsd/*.java",
         "src/**/telephony/*.java",
     ],
