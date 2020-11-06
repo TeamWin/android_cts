@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Test relies on other server to connect to.")
 public class CarTest {
     @ClassRule
     public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
@@ -63,7 +64,6 @@ public class CarTest {
         }
     }
 
-    @AppModeFull(reason = "Test relies on other server to connect to.")
     @Test
     public void testConnection() throws Exception {
         mServiceConnectionListener = new DefaultServiceConnectionListener();
