@@ -25,6 +25,7 @@ import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
 import android.os.Process;
 import android.os.UserHandle;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Display;
@@ -39,6 +40,7 @@ import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Instant apps cannot get car related permissions.")
 public class CarOccupantZoneManagerTest extends CarApiTestBase {
 
     private OccupantZoneInfo mDriverZoneInfo;
