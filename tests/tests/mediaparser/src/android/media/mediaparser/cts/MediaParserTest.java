@@ -550,7 +550,7 @@ public class MediaParserTest {
     }
 
     @Test
-    public void testMp4AndrdoidSlowMotion() throws IOException {
+    public void testMp4AndroidSlowMotion() throws IOException {
         testAssetExtraction("mp4/sample_android_slow_motion.mp4");
     }
 
