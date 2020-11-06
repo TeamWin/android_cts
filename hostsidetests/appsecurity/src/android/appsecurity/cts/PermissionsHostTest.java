@@ -379,6 +379,17 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testCannotEscalateNonRuntimePermissionsToRuntime");
     }
 
+    public void testNoPermissionEscalationAfterReboot() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                APK_DECLARE_NON_RUNTIME_PERMISSIONS), false, false));
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
+                APK_ESCLATE_TO_RUNTIME_PERMISSIONS), true, false));
+        getDevice().reboot();
+        runDeviceTests(ESCALATE_PERMISSION_PKG,
+                "com.android.cts.escalatepermission.PermissionEscalationTest",
+                "testRuntimePermissionsAreNotGranted");
+    }
+
     public void testNoProtectionFlagsAddedToNonSignatureProtectionPermissions25() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
                 APK_PERMISSION_POLICY_25), false, false));
