@@ -2224,6 +2224,17 @@ public class ScopedStorageTest {
             // We can see "/storage/emulated" exists, but not read/write to it, since it's
             // outside the scope of external storage.
             assertAccess(new File("/storage/emulated"), true, false, false);
+
+            // Verify we can enter "/storage/emulated/<userId>" and read
+            int userId = getContext().getUserId();
+            assertAccess(new File("/storage/emulated/" + userId), true, true, false);
+
+            // Verify we can't get another userId
+            int otherUserId = userId + 1;
+            assertAccess(new File("/storage/emulated/" + otherUserId), false, false, false);
+
+            // Or an obviously invalid userId (b/172629984)
+            assertAccess(new File("/storage/emulated/100000000000"), false, false, false);
         } finally {
             uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
             executeShellCommand("rmdir " + topLevelDir.getAbsolutePath());
