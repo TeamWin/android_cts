@@ -25,6 +25,7 @@ java_test_host {
         "src/**/gnss/*.java",
         "src/**/jobscheduler/*.java",
         "src/**/integrity/*.java",
+        "src/**/memory/*.java",
         "src/**/notification/*.java",
         "src/**/statsd/*.java",
         "src/**/telephony/*.java",
