@@ -127,6 +127,10 @@ public class NotificationTest extends AndroidTestCase {
         assertNotNull(Notification.CATEGORY_STATUS);
         assertNotNull(Notification.CATEGORY_SYSTEM);
         assertNotNull(Notification.CATEGORY_TRANSPORT);
+        assertNotNull(Notification.CATEGORY_WORKOUT);
+        assertNotNull(Notification.CATEGORY_LOCATION_SHARING);
+        assertNotNull(Notification.CATEGORY_STOPWATCH);
+        assertNotNull(Notification.CATEGORY_MISSED_CALL);
     }
 
     public void testWriteToParcel() {
