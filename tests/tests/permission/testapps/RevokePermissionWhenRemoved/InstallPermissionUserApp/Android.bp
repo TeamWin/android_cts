@@ -14,7 +14,7 @@
 //
 
 android_test_helper_app {
-    name: "CtsInstalltimePermissionDefinerApp",
+    name: "CtsInstallPermissionUserApp",
     defaults: ["cts_defaults"],
     sdk_version: "current",
     // Tag this module as a cts test artifact
@@ -22,5 +22,5 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
-    certificate: ":cts-testkey1",
+    certificate: ":cts-testkey2",
 }
