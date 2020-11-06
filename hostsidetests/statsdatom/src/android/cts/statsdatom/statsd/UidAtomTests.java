@@ -532,69 +532,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         }
     }
 
-    public void testGnssStats() throws Exception {
-        // Get GnssMetrics as a simple gauge metric.
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.GNSS_STATS_FIELD_NUMBER);
-
-        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LOCATION_GPS)) return;
-        // Whitelist this app against background location request throttling
-        String origWhitelist = getDevice().executeShellCommand(
-                "settings get global location_background_throttle_package_whitelist").trim();
-        getDevice().executeShellCommand(String.format(
-                "settings put global location_background_throttle_package_whitelist %s",
-                DeviceUtils.STATSD_ATOM_TEST_PKG));
-
-        try {
-            DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testGpsStatus");
-
-            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-            // Trigger a pull and wait for new pull before killing the process.
-            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-            Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
-            // Assert about GnssMetrics for the test app.
-            List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
-
-            boolean found = false;
-            for (Atom atom : atoms) {
-                AtomsProto.GnssStats state = atom.getGnssStats();
-                found = true;
-                if ((state.getSvStatusReports() > 0 || state.getL5SvStatusReports() > 0)
-                        && state.getLocationReports() == 0) {
-                    // Device is detected to be indoors and not able to acquire location.
-                    // flaky test device
-                    break;
-                }
-                assertThat(state.getLocationReports()).isGreaterThan((long) 0);
-                assertThat(state.getLocationFailureReports()).isAtLeast((long) 0);
-                assertThat(state.getTimeToFirstFixReports()).isGreaterThan((long) 0);
-                assertThat(state.getTimeToFirstFixMillis()).isGreaterThan((long) 0);
-                assertThat(state.getPositionAccuracyReports()).isGreaterThan((long) 0);
-                assertThat(state.getPositionAccuracyMeters()).isGreaterThan((long) 0);
-                assertThat(state.getTopFourAverageCn0Reports()).isGreaterThan((long) 0);
-                assertThat(state.getTopFourAverageCn0DbMhz()).isGreaterThan((long) 0);
-                assertThat(state.getL5TopFourAverageCn0Reports()).isAtLeast((long) 0);
-                assertThat(state.getL5TopFourAverageCn0DbMhz()).isAtLeast((long) 0);
-                assertThat(state.getSvStatusReports()).isAtLeast((long) 0);
-                assertThat(state.getSvStatusReportsUsedInFix()).isAtLeast((long) 0);
-                assertThat(state.getL5SvStatusReports()).isAtLeast((long) 0);
-                assertThat(state.getL5SvStatusReportsUsedInFix()).isAtLeast((long) 0);
-            }
-            assertWithMessage(String.format("Did not find a matching atom"))
-                    .that(found).isTrue();
-        } finally {
-            if ("null".equals(origWhitelist) || "".equals(origWhitelist)) {
-                getDevice().executeShellCommand(
-                        "settings delete global location_background_throttle_package_whitelist");
-            } else {
-                getDevice().executeShellCommand(String.format(
-                        "settings put global location_background_throttle_package_whitelist %s",
-                        origWhitelist));
-            }
-        }
-    }
-
     public void testMediaCodecActivity() throws Exception {
         if (DeviceUtils.hasFeature(getDevice(), DeviceUtils.FEATURE_WATCH)) return;
         final int atomTag = Atom.MEDIA_CODEC_STATE_CHANGED_FIELD_NUMBER;
