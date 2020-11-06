@@ -33,25 +33,56 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class RemovePermissionTest {
-    private static final String APP_PKG_NAME = "android.permission.cts.revokepermissionwhenremoved";
-    private static final String USER_PKG_NAME =
-            "android.permission.cts.revokepermissionwhenremoved.userapp";
+    private static final String APP_PKG_NAME_BASE =
+            "android.permission.cts.revokepermissionwhenremoved";
+    private static final String ADVERSARIAL_PERMISSION_DEFINER_PKG_NAME =
+            APP_PKG_NAME_BASE + ".AdversarialPermissionDefinerApp";
+    private static final String VICTIM_PERMISSION_DEFINER_PKG_NAME =
+            APP_PKG_NAME_BASE + ".VictimPermissionDefinerApp";
+    private static final String ADVERSARIAL_PERMISSION_USER_PKG_NAME =
+            APP_PKG_NAME_BASE + ".userapp";
+    private static final String RUNTIME_PERMISSION_USER_PKG_NAME =
+            APP_PKG_NAME_BASE + ".runtimepermissionuserapp";
+    private static final String RUNTIME_PERMISSION_DEFINER_PKG_NAME =
+            APP_PKG_NAME_BASE + ".runtimepermissiondefinerapp";
+    private static final String INSTALL_PERMISSION_USER_PKG_NAME =
+            APP_PKG_NAME_BASE + ".installpermissionuserapp";
+    private static final String INSTALL_PERMISSION_DEFINER_PKG_NAME =
+            APP_PKG_NAME_BASE + ".installpermissiondefinerapp";
+    private static final String INSTALL_PERMISSION_ESCALATOR_PKG_NAME =
+            APP_PKG_NAME_BASE + ".installpermissionescalatorapp";
+
     private static final String TEST_PERMISSION =
             "android.permission.cts.revokepermissionwhenremoved.TestPermission";
-    private static final String RUNTIME_PERMISSION_USER_PKG_NAME =
-            "android.permission.cts.revokepermissionwhenremoved.runtimepermissionuserapp";
-    private static final String RUNTIME_PERMISSION_DEFINER_PKG_NAME =
-            "android.permission.cts.revokepermissionwhenremoved.runtimepermissiondefinerapp";
     private static final String TEST_RUNTIME_PERMISSION =
-            "android.permission.cts.revokepermissionwhenremoved.TestRuntimePermission";
+            APP_PKG_NAME_BASE + ".TestRuntimePermission";
+    private static final String TEST_INSTALL_PERMISSION =
+            APP_PKG_NAME_BASE + ".TestInstallPermission";
+
+    private static final String ADVERSARIAL_PERMISSION_DEFINER_APK_NAME =
+            "CtsAdversarialPermissionDefinerApp";
+    private static final String ADVERSARIAL_PERMISSION_USER_APK_NAME =
+            "CtsAdversarialPermissionUserApp";
+    private static final String VICTIM_PERMISSION_DEFINER_APK_NAME =
+            "CtsVictimPermissionDefinerApp";
+    private static final String RUNTIME_PERMISSION_DEFINER_APK_NAME =
+            "CtsRuntimePermissionDefinerApp";
+    private static final String RUNTIME_PERMISSION_USER_APK_NAME =
+            "CtsRuntimePermissionUserApp";
+    private static final String INSTALL_PERMISSION_DEFINER_APK_NAME =
+            "CtsInstallPermissionDefinerApp";
+    private static final String INSTALL_PERMISSION_USER_APK_NAME =
+            "CtsInstallPermissionUserApp";
+    private static final String INSTALL_PERMISSION_ESCALATOR_APK_NAME =
+            "CtsInstallPermissionEscalatorApp";
 
     private Context mContext;
     private Instrumentation mInstrumentation;
-    private Object mMySync = new Object();
 
     @Before
     public void setContextAndInstrumentation() {
@@ -62,6 +93,19 @@ public class RemovePermissionTest {
     @Before
     public void wakeUpScreen() {
         SystemUtil.runShellCommand("input keyevent KEYCODE_WAKEUP");
+    }
+
+    @After
+    public void cleanUpTestApps() throws Exception {
+        uninstallApp(ADVERSARIAL_PERMISSION_DEFINER_PKG_NAME, true);
+        uninstallApp(ADVERSARIAL_PERMISSION_USER_PKG_NAME, true);
+        uninstallApp(VICTIM_PERMISSION_DEFINER_PKG_NAME, true);
+        uninstallApp(RUNTIME_PERMISSION_DEFINER_PKG_NAME, true);
+        uninstallApp(RUNTIME_PERMISSION_USER_PKG_NAME, true);
+        uninstallApp(INSTALL_PERMISSION_USER_PKG_NAME, true);
+        uninstallApp(INSTALL_PERMISSION_DEFINER_PKG_NAME, true);
+        uninstallApp(INSTALL_PERMISSION_ESCALATOR_PKG_NAME, true);
+        Thread.sleep(5000);
     }
 
     private boolean permissionGranted(String pkgName, String permName)
@@ -82,19 +126,20 @@ public class RemovePermissionTest {
     private void installApp(String apk) throws InterruptedException {
         String installResult = SystemUtil.runShellCommand(
                 "pm install -r -d data/local/tmp/cts/permissions/" + apk + ".apk");
-        synchronized (mMySync) {
-            mMySync.wait(10000);
-        }
         assertEquals("Success", installResult.trim());
+        Thread.sleep(5000);
     }
 
     private void uninstallApp(String pkg) throws InterruptedException {
-        String uninstallResult = SystemUtil.runShellCommand(
-                "pm uninstall " + pkg);
-        synchronized (mMySync) {
-            mMySync.wait(10000);
+        uninstallApp(pkg, false);
+    }
+
+    private void uninstallApp(String pkg, boolean cleanUp) throws InterruptedException {
+        String uninstallResult = SystemUtil.runShellCommand("pm uninstall " + pkg);
+        if (!cleanUp) {
+            assertEquals("Success", uninstallResult.trim());
+            Thread.sleep(5000);
         }
-        assertEquals("Success", uninstallResult.trim());
     }
 
     private void grantPermission(String pkg, String permission) {
@@ -104,35 +149,56 @@ public class RemovePermissionTest {
 
     @SecurityTest
     @Test
-    public void permissionShouldBeRevokedIfRemoved() throws Throwable {
-        installApp("CtsAdversarialPermissionDefinerApp");
-        installApp("CtsAdversarialPermissionUserApp");
+    public void runtimePermissionShouldBeRevokedIfRemoved() throws Throwable {
+        installApp(ADVERSARIAL_PERMISSION_DEFINER_APK_NAME);
+        installApp(ADVERSARIAL_PERMISSION_USER_APK_NAME);
 
-        grantPermission(USER_PKG_NAME, TEST_PERMISSION);
-        assertTrue(permissionGranted(USER_PKG_NAME, TEST_PERMISSION));
+        grantPermission(ADVERSARIAL_PERMISSION_USER_PKG_NAME, TEST_PERMISSION);
+        assertTrue(permissionGranted(ADVERSARIAL_PERMISSION_USER_PKG_NAME, TEST_PERMISSION));
 
         // Uninstall app which defines a permission with the same name as in victim app.
         // Install the victim app.
-        uninstallApp(APP_PKG_NAME + ".AdversarialPermissionDefinerApp");
-        installApp("CtsVictimPermissionDefinerApp");
-        assertFalse(permissionGranted(USER_PKG_NAME, TEST_PERMISSION));
-        uninstallApp(APP_PKG_NAME + ".userapp");
-        uninstallApp(APP_PKG_NAME + ".VictimPermissionDefinerApp");
+        uninstallApp(ADVERSARIAL_PERMISSION_DEFINER_PKG_NAME);
+        installApp(VICTIM_PERMISSION_DEFINER_APK_NAME);
+        assertFalse(permissionGranted(ADVERSARIAL_PERMISSION_USER_PKG_NAME, TEST_PERMISSION));
     }
 
     @Test
-    public void permissionShouldRemainGrantedAfterAppUpdate() throws Throwable {
-        installApp("CtsRuntimePermissionDefinerApp");
-        installApp("CtsRuntimePermissionUserApp");
+    public void runtimePermissionShouldRemainGrantedAfterAppUpdate() throws Throwable {
+        installApp(RUNTIME_PERMISSION_DEFINER_APK_NAME);
+        installApp(RUNTIME_PERMISSION_USER_APK_NAME);
 
         grantPermission(RUNTIME_PERMISSION_USER_PKG_NAME, TEST_RUNTIME_PERMISSION);
         assertTrue(permissionGranted(RUNTIME_PERMISSION_USER_PKG_NAME, TEST_RUNTIME_PERMISSION));
 
         // Install app which defines a permission. This is similar to update the app
         // operation
-        installApp("CtsRuntimePermissionDefinerApp");
+        installApp(RUNTIME_PERMISSION_DEFINER_APK_NAME);
         assertTrue(permissionGranted(RUNTIME_PERMISSION_USER_PKG_NAME, TEST_RUNTIME_PERMISSION));
-        uninstallApp(RUNTIME_PERMISSION_USER_PKG_NAME);
-        uninstallApp(RUNTIME_PERMISSION_DEFINER_PKG_NAME);
+    }
+
+    @SecurityTest
+    @Test
+    public void installPermissionShouldBeRevokedIfRemoved() throws Throwable {
+        installApp(INSTALL_PERMISSION_DEFINER_APK_NAME);
+        installApp(INSTALL_PERMISSION_USER_APK_NAME);
+        assertTrue(permissionGranted(INSTALL_PERMISSION_USER_PKG_NAME, TEST_INSTALL_PERMISSION));
+
+        // Uninstall the app which defines the install permission, and install another app
+        // redefining it as a runtime permission.
+        uninstallApp(INSTALL_PERMISSION_DEFINER_PKG_NAME);
+        installApp(INSTALL_PERMISSION_ESCALATOR_APK_NAME);
+        assertFalse(permissionGranted(INSTALL_PERMISSION_USER_PKG_NAME, TEST_INSTALL_PERMISSION));
+    }
+
+    @Test
+    public void installPermissionShouldRemainGrantedAfterAppUpdate() throws Throwable {
+        installApp(INSTALL_PERMISSION_DEFINER_APK_NAME);
+        installApp(INSTALL_PERMISSION_USER_APK_NAME);
+        assertTrue(permissionGranted(INSTALL_PERMISSION_USER_PKG_NAME, TEST_INSTALL_PERMISSION));
+
+        // Install the app which defines the install permission again, similar to updating the app.
+        installApp(INSTALL_PERMISSION_DEFINER_APK_NAME);
+        assertTrue(permissionGranted(INSTALL_PERMISSION_USER_PKG_NAME, TEST_INSTALL_PERMISSION));
     }
 }
