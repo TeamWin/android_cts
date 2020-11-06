@@ -17,6 +17,7 @@ java_test_host {
     defaults: ["cts_defaults"],
     srcs: [
         "src/**/alarm/*.java",
+        "src/**/appstart/*.java",
         "src/**/batterycycle/*.java",
         "src/**/binderstats/*.java",
         "src/**/bluetooth/*.java",
