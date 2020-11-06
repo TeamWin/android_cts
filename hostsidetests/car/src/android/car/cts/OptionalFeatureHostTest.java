@@ -45,6 +45,7 @@ public class OptionalFeatureHostTest extends CarHostJUnit4TestCase {
             "cabin",
             "car_bluetooth",
             "car_bugreport",
+            "car_device_policy_service",
             "car_media",
             "car_navigation_service",
             "car_occupant_zone_service",
