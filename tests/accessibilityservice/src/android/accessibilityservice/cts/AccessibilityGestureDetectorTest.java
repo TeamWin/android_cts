@@ -413,6 +413,8 @@ public class AccessibilityGestureDetectorTest {
     @Test
     @AppModeFull
     public void testVerifyGestureTouchEventOnVirtualDisplay() throws Exception {
+        assumeTrue(sInstrumentation.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         if (!mHasTouchScreen || !mScreenBigEnough) {
             return;
         }
@@ -483,6 +485,8 @@ public class AccessibilityGestureDetectorTest {
     @Test
     @AppModeFull
     public void testDispatchGesture_privateDisplay_gestureCancelled() throws Exception{
+        assumeTrue(sInstrumentation.getContext().getPackageManager()
+            .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         if (!mHasTouchScreen || !mScreenBigEnough) {
             return;
         }

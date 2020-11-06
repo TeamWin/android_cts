@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.telecom.VideoProfile;
@@ -28,6 +29,8 @@ import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsCallProfile;
 import android.telephony.ims.ImsStreamMediaProfile;
+import android.telephony.ims.RtpHeaderExtensionType;
+import android.util.ArraySet;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -36,9 +39,14 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @RunWith(AndroidJUnit4.class)
 public class ImsCallProfileTest {
+    private static final RtpHeaderExtensionType EXTENSION_TYPE_1 = new RtpHeaderExtensionType(1,
+            Uri.parse("http://developer.android.com/092020/test1"));
+    private static final RtpHeaderExtensionType EXTENSION_TYPE_2 = new RtpHeaderExtensionType(2,
+            Uri.parse("http://developer.android.com/092020/test2"));
 
     @Test
     public void testParcelUnparcel() {
@@ -337,5 +345,34 @@ public class ImsCallProfileTest {
         assertEquals("unparceled data for EXTRA_CALL_NETWORK_TYPE is not valid!",
                 data.getCallExtraInt(ImsCallProfile.EXTRA_CALL_NETWORK_TYPE),
                 unparceledData.getCallExtraInt(ImsCallProfile.EXTRA_CALL_NETWORK_TYPE));
+    }
+
+    /**
+     * Verifies basic RTP header extension type parcelling in the {@link ImsCallProfile} class.
+     */
+    @Test
+    public void testParcelUnparcelRtpHeaderExtensionTypes() {
+        ImsCallProfile data = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
+                ImsCallProfile.CALL_TYPE_VOICE_N_VIDEO, new Bundle(),
+                new ImsStreamMediaProfile(1, 1, 1, 1, 1));
+        Set<RtpHeaderExtensionType> offered = new ArraySet<>();
+        offered.add(EXTENSION_TYPE_1);
+        offered.add(EXTENSION_TYPE_2);
+        Set<RtpHeaderExtensionType> accepted = new ArraySet<>();
+        offered.add(EXTENSION_TYPE_1);
+        data.setOfferedRtpHeaderExtensionTypes(offered);
+        assertEquals(offered, data.getOfferedRtpHeaderExtensionTypes());
+        data.setAcceptedRtpHeaderExtensionTypes(accepted);
+        assertEquals(accepted, data.getAcceptedRtpHeaderExtensionTypes());
+
+        Parcel dataParceled = Parcel.obtain();
+        data.writeToParcel(dataParceled, 0);
+        dataParceled.setDataPosition(0);
+        ImsCallProfile unparceledData =
+                ImsCallProfile.CREATOR.createFromParcel(dataParceled);
+        dataParceled.recycle();
+
+        assertEquals(offered, unparceledData.getOfferedRtpHeaderExtensionTypes());
+        assertEquals(accepted, unparceledData.getAcceptedRtpHeaderExtensionTypes());
     }
 }

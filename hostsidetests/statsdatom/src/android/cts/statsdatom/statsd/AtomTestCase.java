@@ -113,7 +113,6 @@ public class AtomTestCase extends BaseTestCase {
     public static final String FEATURE_CAMERA = "android.hardware.camera";
     public static final String FEATURE_CAMERA_FLASH = "android.hardware.camera.flash";
     public static final String FEATURE_CAMERA_FRONT = "android.hardware.camera.front";
-    public static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
     public static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
     public static final String FEATURE_PC = "android.hardware.type.pc";
     public static final String FEATURE_PICTURE_IN_PICTURE = "android.software.picture_in_picture";
@@ -477,25 +476,6 @@ public class AtomTestCase extends BaseTestCase {
         }
     }
 
-    /** Gets reports from the statsd data incident section from the stats dumpsys. */
-    protected List<ConfigMetricsReportList> getReportsFromStatsDataDumpProto() throws Exception {
-        try {
-            StatsDataDumpProto statsProto = getDump(StatsDataDumpProto.parser(),
-                    String.join(" ", DUMPSYS_STATS_CMD, "--proto"));
-            // statsProto holds repeated bytes, which we must parse into ConfigMetricsReportLists.
-            List<ConfigMetricsReportList> reports
-                    = new ArrayList<>(statsProto.getConfigMetricsReportListCount());
-            for (ByteString reportListBytes : statsProto.getConfigMetricsReportListList()) {
-                reports.add(ConfigMetricsReportList.parseFrom(reportListBytes));
-            }
-            LogUtil.CLog.d("Got dumpsys stats output:\n " + reports.toString());
-            return reports;
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-            LogUtil.CLog.e("Failed to dumpsys stats proto");
-            throw (e);
-        }
-    }
-
     protected List<ProcessStatsProto> getProcStatsProto() throws Exception {
         try {
 
@@ -854,14 +834,6 @@ public class AtomTestCase extends BaseTestCase {
         getDevice().executeShellCommand("cmd battery set ac 1");
     }
 
-    protected void plugInUsb() throws Exception {
-        getDevice().executeShellCommand("cmd battery set usb 1");
-    }
-
-    protected void plugInWireless() throws Exception {
-        getDevice().executeShellCommand("cmd battery set wireless 1");
-    }
-
     protected void enableLooperStats() throws Exception {
         getDevice().executeShellCommand("cmd looper_stats enable");
     }
@@ -915,44 +887,6 @@ public class AtomTestCase extends BaseTestCase {
                 "cmd stats log-app-breadcrumb %d %d", label, state));
     }
 
-    protected void setBatteryLevel(int level) throws Exception {
-        getDevice().executeShellCommand("cmd battery set level " + level);
-    }
-
-    // Gets whether "Always on Display" setting is enabled.
-    // In rare cases, this is different from whether the device can enter SCREEN_STATE_DOZE.
-    protected String getAodState() throws Exception {
-        return getDevice().executeShellCommand("settings get secure doze_always_on");
-    }
-
-    protected void setAodState(String state) throws Exception {
-        getDevice().executeShellCommand("settings put secure doze_always_on " + state);
-    }
-
-    protected void enterDozeModeLight() throws Exception {
-        getDevice().executeShellCommand("dumpsys deviceidle force-idle light");
-    }
-
-    protected void enterDozeModeDeep() throws Exception {
-        getDevice().executeShellCommand("dumpsys deviceidle force-idle deep");
-    }
-
-    protected void leaveDozeMode() throws Exception {
-        getDevice().executeShellCommand("dumpsys deviceidle unforce");
-        getDevice().executeShellCommand("dumpsys deviceidle disable");
-        getDevice().executeShellCommand("dumpsys deviceidle enable");
-    }
-
-    protected void turnBatterySaverOn() throws Exception {
-        unplugDevice();
-        getDevice().executeShellCommand("settings put global low_power 1");
-    }
-
-    protected void turnBatterySaverOff() throws Exception {
-        getDevice().executeShellCommand("settings put global low_power 0");
-        getDevice().executeShellCommand("cmd battery reset");
-    }
-
     protected void rebootDevice() throws Exception {
         getDevice().rebootUntilOnline();
     }
@@ -1000,120 +934,6 @@ public class AtomTestCase extends BaseTestCase {
                     + featureName);
         }
         return hasIt == requiredAnswer;
-    }
-
-    /**
-     * Determines if the device has |file|.
-     */
-    protected boolean doesFileExist(String file) throws Exception {
-        return getDevice().doesFileExist(file);
-    }
-
-    protected void turnOnAirplaneMode() throws Exception {
-        getDevice().executeShellCommand("cmd connectivity airplane-mode enable");
-    }
-
-    protected void turnOffAirplaneMode() throws Exception {
-        getDevice().executeShellCommand("cmd connectivity airplane-mode disable");
-    }
-
-    /**
-     * Returns a list of fields and values for {@code className} from {@link TelephonyDebugService}
-     * output.
-     *
-     * <p>Telephony dumpsys output does not support proto at the moment. This method provides
-     * limited support for parsing its output. Specifically, it does not support arrays or
-     * multi-line values.
-     */
-    private List<Map<String, String>> getTelephonyDumpEntries(String className) throws Exception {
-        // Matches any line with indentation, except for lines with only spaces
-        Pattern indentPattern = Pattern.compile("^(\\s*)[^ ].*$");
-        // Matches pattern for class, e.g. "    Phone:"
-        Pattern classNamePattern = Pattern.compile("^(\\s*)" + Pattern.quote(className) + ":.*$");
-        // Matches pattern for key-value pairs, e.g. "     mPhoneId=1"
-        Pattern keyValuePattern = Pattern.compile("^(\\s*)([a-zA-Z]+[a-zA-Z0-9_]*)\\=(.+)$");
-        String response =
-                getDevice().executeShellCommand("dumpsys activity service TelephonyDebugService");
-        Queue<String> responseLines = new LinkedList<>(Arrays.asList(response.split("[\\r\\n]+")));
-
-        List<Map<String, String>> results = new ArrayList<>();
-        while (responseLines.peek() != null) {
-            Matcher matcher = classNamePattern.matcher(responseLines.poll());
-            if (matcher.matches()) {
-                final int classIndentLevel = matcher.group(1).length();
-                final Map<String, String> instanceEntries = new HashMap<>();
-                while (responseLines.peek() != null) {
-                    // Skip blank lines
-                    matcher = indentPattern.matcher(responseLines.peek());
-                    if (responseLines.peek().length() == 0 || !matcher.matches()) {
-                        responseLines.poll();
-                        continue;
-                    }
-                    // Finish (without consuming the line) if already parsed past this instance
-                    final int indentLevel = matcher.group(1).length();
-                    if (indentLevel <= classIndentLevel) {
-                        break;
-                    }
-                    // Parse key-value pair if it belongs to the instance directly
-                    matcher = keyValuePattern.matcher(responseLines.poll());
-                    if (indentLevel == classIndentLevel + 1 && matcher.matches()) {
-                        instanceEntries.put(matcher.group(2), matcher.group(3));
-                    }
-                }
-                results.add(instanceEntries);
-            }
-        }
-        return results;
-    }
-
-    protected int getActiveSimSlotCount() throws Exception {
-        List<Map<String, String>> slots = getTelephonyDumpEntries("UiccSlot");
-        long count = slots.stream().filter(slot -> "true".equals(slot.get("mActive"))).count();
-        return Math.toIntExact(count);
-    }
-
-    /**
-     * Returns the upper bound of active SIM profile count.
-     *
-     * <p>The value is an upper bound as eSIMs without profiles are also counted in.
-     */
-    protected int getActiveSimCountUpperBound() throws Exception {
-        List<Map<String, String>> slots = getTelephonyDumpEntries("UiccSlot");
-        long count = slots.stream().filter(slot ->
-                "true".equals(slot.get("mActive"))
-                && "CARDSTATE_PRESENT".equals(slot.get("mCardState"))).count();
-        return Math.toIntExact(count);
-    }
-
-    /**
-     * Returns the upper bound of active eSIM profile count.
-     *
-     * <p>The value is an upper bound as eSIMs without profiles are also counted in.
-     */
-    protected int getActiveEsimCountUpperBound() throws Exception {
-        List<Map<String, String>> slots = getTelephonyDumpEntries("UiccSlot");
-        long count = slots.stream().filter(slot ->
-                "true".equals(slot.get("mActive"))
-                && "CARDSTATE_PRESENT".equals(slot.get("mCardState"))
-                && "true".equals(slot.get("mIsEuicc"))).count();
-        return Math.toIntExact(count);
-    }
-
-    protected boolean hasGsmPhone() throws Exception {
-        // Not using log entries or ServiceState in the dump since they may or may not be present,
-        // which can make the test flaky
-        return getTelephonyDumpEntries("Phone").stream()
-                .anyMatch(phone ->
-                        String.format("%d", PHONE_TYPE_GSM).equals(phone.get("getPhoneType()")));
-    }
-
-    protected boolean hasCdmaPhone() throws Exception {
-        // Not using log entries or ServiceState in the dump due to the same reason as hasGsmPhone()
-        return getTelephonyDumpEntries("Phone").stream()
-                .anyMatch(phone ->
-                        String.format("%d", PHONE_TYPE_CDMA).equals(phone.get("getPhoneType()"))
-                        || String.format("%d", PHONE_TYPE_CDMA_LTE)
-                                .equals(phone.get("getPhoneType()")));
     }
 
     // Checks that a timestamp has been truncated to be a multiple of 5 min
