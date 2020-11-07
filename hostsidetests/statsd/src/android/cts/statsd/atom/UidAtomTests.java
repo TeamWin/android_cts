@@ -2003,7 +2003,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 null);
         uploadConfig(config);
 
-        final long testStartTimeMs = System.currentTimeMillis();
+        final long testStartTimeMs = getDeviceTimeMs();
         Thread.sleep(WAIT_TIME_SHORT);
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".AtomTests", "testBlobStore");
         Thread.sleep(WAIT_TIME_LONG);
@@ -2012,7 +2012,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         // Add commit callback time to test end time to account for async execution
         final long testEndTimeMs =
-                System.currentTimeMillis() + BLOB_COMMIT_CALLBACK_TIMEOUT_SEC * 1000;
+                getDeviceTimeMs() + BLOB_COMMIT_CALLBACK_TIMEOUT_SEC * 1000;
 
         // Find the BlobInfo for the blob created in the test run
         AtomsProto.BlobInfo blobInfo = null;
@@ -2200,5 +2200,10 @@ public class UidAtomTests extends DeviceAtomTestCase {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         final File file = buildHelper.getTestFile(fileName);
         return file.length();
+    }
+
+    private long getDeviceTimeMs() throws Exception {
+        String timeMs = getDevice().executeShellCommand("date +%s%3N");
+        return Long.parseLong(timeMs.trim());
     }
 }
