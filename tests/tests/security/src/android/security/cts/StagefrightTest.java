@@ -1353,7 +1353,11 @@ public class StagefrightTest extends InstrumentationTestCase {
                     codec.release();
                 }
             }
-            ex.unselectTrack(t);
+            try {
+                ex.unselectTrack(t);
+            } catch (IllegalArgumentException e) {
+                // since we're just cleaning up, we don't care if it fails
+            }
         }
         ex.release();
         String cve = rname.replace("_", "-").toUpperCase();
