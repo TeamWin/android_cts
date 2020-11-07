@@ -74,6 +74,18 @@ public class CtsCarModeInCallServiceControl extends Service {
             UiModeManager uiModeManager = getSystemService(UiModeManager.class);
             uiModeManager.disableCarMode(0);
         }
+
+        @Override
+        public boolean requestAutomotiveProjection() {
+            UiModeManager uiModeManager = getSystemService(UiModeManager.class);
+            return uiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE);
+        }
+
+        @Override
+        public void releaseAutomotiveProjection() {
+            UiModeManager uiModeManager = getSystemService(UiModeManager.class);
+            uiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE);
+        }
     };
 
     @Override
