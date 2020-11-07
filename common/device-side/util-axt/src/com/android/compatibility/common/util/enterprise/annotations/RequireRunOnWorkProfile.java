@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * Mark that a test method should run within a work profile.
  *
  * <p>Your test configuration should be such that this test is only run where a work profile is
- * created and the tests is being run within that user.
+ * created and the test is being run within that user.
  *
  * <p>Optionally, you can guarantee that these methods do not run outside of a work
  * profile by using {@link DeviceState}.

@@ -67,8 +67,6 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TAG = "Statsd.HostAtomTests";
 
-    private static final boolean OPTIONAL_TESTS_ENABLED = false;
-
     private static final String DUMPSYS_STATS_CMD = "dumpsys stats";
 
     // Either file must exist to read kernel wake lock stats.
@@ -79,34 +77,6 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
     private static final String FEATURE_WATCH = "android.hardware.type.watch";
     private static final String FEATURE_WIFI = "android.hardware.wifi";
     private static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
-    private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
-
-    // Telephony phone types
-    private static final int PHONE_TYPE_GSM = 1;
-    private static final int PHONE_TYPE_CDMA = 2;
-    private static final int PHONE_TYPE_CDMA_LTE = 6;
-
-    // Bitmask of radio access technologies that all GSM phones should at least partially support
-    protected static final long NETWORK_TYPE_BITMASK_GSM_ALL =
-            (1 << (NetworkTypeEnum.NETWORK_TYPE_GSM_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_GPRS_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_EDGE_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_UMTS_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_HSDPA_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_HSUPA_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_HSPA_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_HSPAP_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_TD_SCDMA_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_LTE_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_LTE_CA_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_NR_VALUE - 1));
-    // Bitmask of radio access technologies that all CDMA phones should at least partially support
-    protected static final long NETWORK_TYPE_BITMASK_CDMA_ALL =
-            (1 << (NetworkTypeEnum.NETWORK_TYPE_CDMA_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_1XRTT_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_EVDO_0_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_EVDO_A_VALUE - 1))
-            | (1 << (NetworkTypeEnum.NETWORK_TYPE_EHRPD_VALUE - 1));
 
     private IBuildInfo mCtsBuild;
 
@@ -580,24 +550,6 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(DeviceUtils.getProperty(getDevice(), "ro.build.tags")).isEqualTo(atom.getTags());
     }
 
-    public void testOnDevicePowerMeasurement() throws Exception {
-        if (!OPTIONAL_TESTS_ENABLED) return;
-
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.ON_DEVICE_POWER_MEASUREMENT_FIELD_NUMBER);
-
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
-        List<Atom> dataList = ReportUtils.getGaugeMetricAtoms(getDevice());
-
-        for (Atom atom : dataList) {
-            assertThat(atom.getOnDevicePowerMeasurement().getMeasurementTimestampMillis())
-                    .isAtLeast(0L);
-            assertThat(atom.getOnDevicePowerMeasurement().getEnergyMicrowattSecs()).isAtLeast(0L);
-        }
-    }
-
     // Explicitly tests if the adb command to log a breadcrumb is working.
     public void testBreadcrumbAdb() throws Exception {
         final int atomTag = Atom.APP_BREADCRUMB_REPORTED_FIELD_NUMBER;
@@ -683,58 +635,6 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(foundDisconnectEvent).isTrue();
     }
 
-    public void testSimSlotState() throws Exception {
-        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELEPHONY)) {
-            return;
-        }
-
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.SIM_SLOT_STATE_FIELD_NUMBER);
-
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
-        List<Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
-        assertThat(data).isNotEmpty();
-        SimSlotState atom = data.get(0).getSimSlotState();
-        // NOTE: it is possible for devices with telephony support to have no SIM at all
-        assertThat(atom.getActiveSlotCount()).isEqualTo(getActiveSimSlotCount());
-        assertThat(atom.getSimCount()).isAtMost(getActiveSimCountUpperBound());
-        assertThat(atom.getEsimCount()).isAtMost(getActiveEsimCountUpperBound());
-        // Above assertions do no necessarily enforce the following, since some are upper bounds
-        assertThat(atom.getActiveSlotCount()).isAtLeast(atom.getSimCount());
-        assertThat(atom.getSimCount()).isAtLeast(atom.getEsimCount());
-        assertThat(atom.getEsimCount()).isAtLeast(0);
-        // For GSM phones, at least one slot should be active even if there is no card
-        if (hasGsmPhone()) {
-            assertThat(atom.getActiveSlotCount()).isAtLeast(1);
-        }
-    }
-
-    public void testSupportedRadioAccessFamily() throws Exception {
-        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELEPHONY)) {
-            return;
-        }
-
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.SUPPORTED_RADIO_ACCESS_FAMILY_FIELD_NUMBER);
-
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
-        List<Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
-        assertThat(data).isNotEmpty();
-        SupportedRadioAccessFamily atom = data.get(0).getSupportedRadioAccessFamily();
-        if (hasGsmPhone()) {
-            assertThat(atom.getNetworkTypeBitmask() & NETWORK_TYPE_BITMASK_GSM_ALL)
-                    .isNotEqualTo(0L);
-        }
-        if (hasCdmaPhone()) {
-            assertThat(atom.getNetworkTypeBitmask() & NETWORK_TYPE_BITMASK_CDMA_ALL)
-                    .isNotEqualTo(0L);
-        }
-    }
-
     // Gets whether "Always on Display" setting is enabled.
     // In rare cases, this is different from whether the device can enter SCREEN_STATE_DOZE.
     private String getAodState() throws Exception {
@@ -794,105 +694,6 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private void turnOffAirplaneMode() throws Exception {
         getDevice().executeShellCommand("cmd connectivity airplane-mode disable");
-    }
-
-    private boolean hasGsmPhone() throws Exception {
-        // Not using log entries or ServiceState in the dump since they may or may not be present,
-        // which can make the test flaky
-        return getTelephonyDumpEntries("Phone").stream()
-                .anyMatch(phone ->
-                        String.format("%d", PHONE_TYPE_GSM).equals(phone.get("getPhoneType()")));
-    }
-
-    private boolean hasCdmaPhone() throws Exception {
-        // Not using log entries or ServiceState in the dump due to the same reason as hasGsmPhone()
-        return getTelephonyDumpEntries("Phone").stream()
-                .anyMatch(phone ->
-                        String.format("%d", PHONE_TYPE_CDMA).equals(phone.get("getPhoneType()"))
-                                || String.format("%d", PHONE_TYPE_CDMA_LTE)
-                                .equals(phone.get("getPhoneType()")));
-    }
-
-    private int getActiveSimSlotCount() throws Exception {
-        List<Map<String, String>> slots = getTelephonyDumpEntries("UiccSlot");
-        long count = slots.stream().filter(slot -> "true".equals(slot.get("mActive"))).count();
-        return Math.toIntExact(count);
-    }
-
-    /**
-     * Returns the upper bound of active SIM profile count.
-     *
-     * <p>The value is an upper bound as eSIMs without profiles are also counted in.
-     */
-    private int getActiveSimCountUpperBound() throws Exception {
-        List<Map<String, String>> slots = getTelephonyDumpEntries("UiccSlot");
-        long count = slots.stream().filter(slot ->
-                "true".equals(slot.get("mActive"))
-                        && "CARDSTATE_PRESENT".equals(slot.get("mCardState"))).count();
-        return Math.toIntExact(count);
-    }
-
-    /**
-     * Returns the upper bound of active eSIM profile count.
-     *
-     * <p>The value is an upper bound as eSIMs without profiles are also counted in.
-     */
-    private int getActiveEsimCountUpperBound() throws Exception {
-        List<Map<String, String>> slots = getTelephonyDumpEntries("UiccSlot");
-        long count = slots.stream().filter(slot ->
-                "true".equals(slot.get("mActive"))
-                        && "CARDSTATE_PRESENT".equals(slot.get("mCardState"))
-                        && "true".equals(slot.get("mIsEuicc"))).count();
-        return Math.toIntExact(count);
-    }
-
-    /**
-     * Returns a list of fields and values for {@code className} from {@link TelephonyDebugService}
-     * output.
-     *
-     * <p>Telephony dumpsys output does not support proto at the moment. This method provides
-     * limited support for parsing its output. Specifically, it does not support arrays or
-     * multi-line values.
-     */
-    private List<Map<String, String>> getTelephonyDumpEntries(String className) throws Exception {
-        // Matches any line with indentation, except for lines with only spaces
-        Pattern indentPattern = Pattern.compile("^(\\s*)[^ ].*$");
-        // Matches pattern for class, e.g. "    Phone:"
-        Pattern classNamePattern = Pattern.compile("^(\\s*)" + Pattern.quote(className) + ":.*$");
-        // Matches pattern for key-value pairs, e.g. "     mPhoneId=1"
-        Pattern keyValuePattern = Pattern.compile("^(\\s*)([a-zA-Z]+[a-zA-Z0-9_]*)\\=(.+)$");
-        String response =
-                getDevice().executeShellCommand("dumpsys activity service TelephonyDebugService");
-        Queue<String> responseLines = new LinkedList<>(Arrays.asList(response.split("[\\r\\n]+")));
-
-        List<Map<String, String>> results = new ArrayList<>();
-        while (responseLines.peek() != null) {
-            Matcher matcher = classNamePattern.matcher(responseLines.poll());
-            if (matcher.matches()) {
-                final int classIndentLevel = matcher.group(1).length();
-                final Map<String, String> instanceEntries = new HashMap<>();
-                while (responseLines.peek() != null) {
-                    // Skip blank lines
-                    matcher = indentPattern.matcher(responseLines.peek());
-                    if (responseLines.peek().length() == 0 || !matcher.matches()) {
-                        responseLines.poll();
-                        continue;
-                    }
-                    // Finish (without consuming the line) if already parsed past this instance
-                    final int indentLevel = matcher.group(1).length();
-                    if (indentLevel <= classIndentLevel) {
-                        break;
-                    }
-                    // Parse key-value pair if it belongs to the instance directly
-                    matcher = keyValuePattern.matcher(responseLines.poll());
-                    if (indentLevel == classIndentLevel + 1 && matcher.matches()) {
-                        instanceEntries.put(matcher.group(2), matcher.group(3));
-                    }
-                }
-                results.add(instanceEntries);
-            }
-        }
-        return results;
     }
 
     /** Gets reports from the statsd data incident section from the stats dumpsys. */

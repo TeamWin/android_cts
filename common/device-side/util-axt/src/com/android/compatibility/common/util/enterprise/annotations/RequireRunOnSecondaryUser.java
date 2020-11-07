@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * Mark that a test method should run on a secondary user.
  *
  * <p>Your test configuration should be such that this test is only run where a secondary user is
- * created and the tests is being run on that user.
+ * created and the test is being run on that user.
  *
  * <p>Optionally, you can guarantee that these methods do not run outside of a secondary user by
  * using {@link DeviceState}.

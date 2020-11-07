@@ -45,9 +45,15 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
+import android.annotation.NonNull;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.cts.MockActivity;
+import android.content.cts.MockContentProvider;
+import android.content.cts.MockReceiver;
+import android.content.cts.MockService;
 import android.content.cts.R;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
@@ -62,6 +68,10 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.pm.Signature;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
+import android.content.res.XmlResourceParser;
+import android.os.Bundle;
 import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
@@ -76,7 +86,10 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -96,6 +109,7 @@ import java.util.stream.Collectors;
 public class PackageManagerTest {
     private static final String TAG = "PackageManagerTest";
 
+    private Context mContext;
     private PackageManager mPackageManager;
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String CONTENT_PKG_NAME = "android.content.cts";
@@ -127,7 +141,8 @@ public class PackageManagerTest {
 
     @Before
     public void setup() throws Exception {
-        mPackageManager = InstrumentationRegistry.getContext().getPackageManager();
+        mContext = InstrumentationRegistry.getContext();
+        mPackageManager = mContext.getPackageManager();
     }
 
     @Test
@@ -283,8 +298,8 @@ public class PackageManagerTest {
         assertEquals(RECEIVER_NAME, mPackageManager.getReceiverInfo(receiverName, 0).name);
 
         // Test getPackageArchiveInfo
-        final String apkRoute = InstrumentationRegistry.getContext().getPackageCodePath();
-        final String apkName = InstrumentationRegistry.getContext().getPackageName();
+        final String apkRoute = mContext.getPackageCodePath();
+        final String apkName = mContext.getPackageName();
         assertEquals(apkName, mPackageManager.getPackageArchiveInfo(apkRoute, 0).packageName);
 
         // Test getPackagesForUid, getNameForUid
@@ -597,8 +612,8 @@ public class PackageManagerTest {
 
     @Test
     public void testGetPackageArchiveInfo() throws Exception {
-        final String apkPath = InstrumentationRegistry.getContext().getPackageCodePath();
-        final String apkName = InstrumentationRegistry.getContext().getPackageName();
+        final String apkPath = mContext.getPackageCodePath();
+        final String apkName = mContext.getPackageName();
 
         final int flags = PackageManager.GET_SIGNATURES;
 
@@ -641,7 +656,7 @@ public class PackageManagerTest {
 
     @Test
     public void testGetPackageUid() throws NameNotFoundException {
-        int userId = InstrumentationRegistry.getContext().getUserId();
+        int userId = mContext.getUserId();
         int expectedUid = UserHandle.getUid(userId, 1000);
 
         assertEquals(expectedUid, mPackageManager.getPackageUid("android", 0));
@@ -1042,6 +1057,85 @@ public class PackageManagerTest {
                 packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
                 Collectors.toList());
         assertWithMessage("Shim apex wasn't supposed to be found").that(shimApex).isEmpty();
+    }
+
+    @Test
+    public void testGetInfo_checkMetaData_InApplication() throws Exception {
+        final ApplicationInfo ai = mPackageManager.getApplicationInfo(PACKAGE_NAME, GET_META_DATA);
+        checkMetaData(new PackageItemInfo(ai));
+    }
+
+    @Test
+    public void testGetInfo_checkMetaData_InActivity() throws Exception {
+        final ComponentName componentName = new ComponentName(mContext, MockActivity.class);
+        final ActivityInfo ai = mPackageManager.getActivityInfo(componentName, GET_META_DATA);
+        checkMetaData(new PackageItemInfo(ai));
+    }
+
+    @Test
+    public void testGetInfo_checkMetaData_InService() throws Exception {
+        final ComponentName componentName = new ComponentName(mContext, MockService.class);
+        final ServiceInfo info = mPackageManager.getServiceInfo(componentName, GET_META_DATA);
+        checkMetaData(new PackageItemInfo(info));
+    }
+
+    @Test
+    public void testGetInfo_checkMetaData_InBroadcastReceiver() throws Exception {
+        final ComponentName componentName = new ComponentName(mContext, MockReceiver.class);
+        final ActivityInfo info = mPackageManager.getReceiverInfo(componentName, GET_META_DATA);
+        checkMetaData(new PackageItemInfo(info));
+    }
+
+    @Test
+    public void testGetInfo_checkMetaData_InContentProvider() throws Exception {
+        final ComponentName componentName = new ComponentName(mContext, MockContentProvider.class);
+        final ProviderInfo info = mPackageManager.getProviderInfo(componentName, GET_META_DATA);
+        checkMetaData(new PackageItemInfo(info));
+    }
+
+    private void checkMetaData(@NonNull PackageItemInfo ci)
+            throws IOException, XmlPullParserException, NameNotFoundException {
+        final Bundle metaData = ci.metaData;
+        final Resources res = mPackageManager.getResourcesForApplication(ci.packageName);
+        assertWithMessage("No meta-data found").that(metaData).isNotNull();
+
+        assertThat(metaData.getString("android.content.cts.string")).isEqualTo("foo");
+        assertThat(metaData.getBoolean("android.content.cts.boolean")).isTrue();
+        assertThat(metaData.getInt("android.content.cts.integer")).isEqualTo(100);
+        assertThat(metaData.getInt("android.content.cts.color")).isEqualTo(0xff000000);
+        assertThat(metaData.getFloat("android.content.cts.float")).isEqualTo(100.1f);
+        assertThat(metaData.getInt("android.content.cts.reference")).isEqualTo(R.xml.metadata);
+
+        XmlResourceParser xml = null;
+        TypedArray a = null;
+        try {
+            xml = ci.loadXmlMetaData(mPackageManager, "android.content.cts.reference");
+            assertThat(xml).isNotNull();
+
+            int type;
+            while ((type = xml.next()) != XmlPullParser.START_TAG
+                    && type != XmlPullParser.END_DOCUMENT) {
+                // Seek parser to start tag.
+            }
+            assertThat(type).isEqualTo(XmlPullParser.START_TAG);
+            assertThat(xml.getName()).isEqualTo("thedata");
+
+            assertThat(xml.getAttributeValue(null, "rawText")).isEqualTo("some raw text");
+            assertThat(xml.getAttributeIntValue(null, "rawColor", 0)).isEqualTo(0xffffff00);
+            assertThat(xml.getAttributeValue(null, "rawColor")).isEqualTo("#ffffff00");
+
+            a = res.obtainAttributes(xml, new int[] {android.R.attr.text, android.R.attr.color});
+            assertThat(a.getString(0)).isEqualTo("metadata text");
+            assertThat(a.getColor(1, 0)).isEqualTo(0xffff0000);
+            assertThat(a.getString(1)).isEqualTo("#ffff0000");
+        } finally {
+            if (a != null) {
+                a.recycle();
+            }
+            if (xml != null) {
+                xml.close();
+            }
+        }
     }
 
     @Test

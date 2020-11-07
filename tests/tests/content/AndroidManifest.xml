@@ -226,6 +226,21 @@
          android:name="android.content.cts.MockApplication"
          android:supportsRtl="true"
          android:appCategory="productivity">
+
+        <!-- Application level metadata -->
+        <meta-data android:name="android.content.cts.string"
+                   android:value="foo"/>
+        <meta-data android:name="android.content.cts.boolean"
+                   android:value="true"/>
+        <meta-data android:name="android.content.cts.integer"
+                   android:value="100"/>
+        <meta-data android:name="android.content.cts.float"
+                   android:value="100.1"/>
+        <meta-data android:name="android.content.cts.color"
+                   android:value="#ff000000"/>
+        <meta-data android:name="android.content.cts.reference"
+                   android:resource="@xml/metadata"/>
+
         <activity android:name="android.content.cts.MockActivity"
              android:exported="true">
             <meta-data android:name="android.app.alias"
@@ -234,6 +249,20 @@
                  android:resource="@xml/intentfilter"/>
             <meta-data android:name="android.app.intent"
                  android:resource="@xml/intent"/>
+
+            <!-- Activity level metadata -->
+            <meta-data android:name="android.content.cts.string"
+                       android:value="foo"/>
+            <meta-data android:name="android.content.cts.boolean"
+                       android:value="true"/>
+            <meta-data android:name="android.content.cts.integer"
+                       android:value="100"/>
+            <meta-data android:name="android.content.cts.float"
+                       android:value="100.1"/>
+            <meta-data android:name="android.content.cts.color"
+                       android:value="#ff000000"/>
+            <meta-data android:name="android.content.cts.reference"
+                       android:resource="@xml/metadata"/>
             <intent-filter>
                 <action android:name="android.content.cts.action.TEST_ACTION"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -276,6 +305,21 @@
         <receiver android:name="android.content.cts.MockReceiver"
              android:permission="android.content.cts.SIGNATURE_PERMISSION"
              android:exported="true">
+
+            <!-- Receiver level metadata -->
+            <meta-data android:name="android.content.cts.string"
+                       android:value="foo"/>
+            <meta-data android:name="android.content.cts.boolean"
+                       android:value="true"/>
+            <meta-data android:name="android.content.cts.integer"
+                       android:value="100"/>
+            <meta-data android:name="android.content.cts.float"
+                       android:value="100.1"/>
+            <meta-data android:name="android.content.cts.color"
+                       android:value="#ff000000"/>
+            <meta-data android:name="android.content.cts.reference"
+                       android:resource="@xml/metadata"/>
+
             <intent-filter android:priority="1">
                 <action android:name="android.content.cts.BroadcastReceiverTest.BROADCAST_MOCKTEST"/>
                 <action android:name="android.content.cts.BroadcastReceiverTest.BROADCAST_TESTABORT"/>
@@ -360,7 +404,21 @@
         <!-- Used for PackageManager test, don't delete this MockContentProvider provider -->
         <provider android:name="android.content.cts.MockContentProvider"
              android:authorities="ctstest"
-             android:multiprocess="false"/>
+             android:multiprocess="false">
+            <!-- Provider level metadata -->
+            <meta-data android:name="android.content.cts.string"
+                       android:value="foo"/>
+            <meta-data android:name="android.content.cts.boolean"
+                       android:value="true"/>
+            <meta-data android:name="android.content.cts.integer"
+                       android:value="100"/>
+            <meta-data android:name="android.content.cts.float"
+                       android:value="100.1"/>
+            <meta-data android:name="android.content.cts.color"
+                       android:value="#ff000000"/>
+            <meta-data android:name="android.content.cts.reference"
+                       android:resource="@xml/metadata"/>
+        </provider>
         <provider android:name="android.content.cts.MockSRSProvider"
              android:authorities="android.content.cts.MockSRSProvider"
              android:exported="false"
@@ -389,7 +447,21 @@
              android:process=":mockbuggyprovider"
              android:multiprocess="false"/>
 
-        <service android:name="android.content.cts.MockService"/>
+        <service android:name="android.content.cts.MockService">
+            <!-- Service level metadata -->
+            <meta-data android:name="android.content.cts.string"
+                       android:value="foo"/>
+            <meta-data android:name="android.content.cts.boolean"
+                       android:value="true"/>
+            <meta-data android:name="android.content.cts.integer"
+                       android:value="100"/>
+            <meta-data android:name="android.content.cts.float"
+                       android:value="100.1"/>
+            <meta-data android:name="android.content.cts.color"
+                       android:value="#ff000000"/>
+            <meta-data android:name="android.content.cts.reference"
+                       android:resource="@xml/metadata"/>
+        </service>
 
         <service android:name="android.content.cts.MockSyncAdapterService"
              android:exported="true">

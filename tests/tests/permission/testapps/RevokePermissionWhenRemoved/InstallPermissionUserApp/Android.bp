@@ -20,8 +20,8 @@ android_test_helper_app {
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "vts10",
         "general-tests",
+        "mts",
     ],
     certificate: ":cts-testkey2",
 }
