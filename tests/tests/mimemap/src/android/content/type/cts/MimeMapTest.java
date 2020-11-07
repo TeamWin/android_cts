@@ -165,6 +165,10 @@ public class MimeMapTest {
         assertMimeTypeFromExtension("image/jp2", "jpg2");
     }
 
+    @Test public void bug141654151_image() {
+        assertBidirectional("image/avif", "avif");
+    }
+
     @Test public void bug120135571_audio() {
         assertMimeTypeFromExtension("audio/mpeg", "m4r");
     }
