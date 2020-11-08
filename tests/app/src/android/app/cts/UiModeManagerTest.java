@@ -280,6 +280,104 @@ public class UiModeManagerTest extends AndroidTestCase {
         fail("Expected SecurityException");
     }
 
+    /**
+     * Verifies that an app holding the TOGGLE_AUTOMOTIVE_PROJECTION permission can request/release
+     * automotive projection.
+     */
+    public void testToggleAutomotiveProjection() {
+        // Adopt shell permission so the required permission
+        // (android.permission.ENTER_CAR_MODE_PRIORITIZED) is granted.
+        UiAutomation ui = getInstrumentation().getUiAutomation();
+        ui.adoptShellPermissionIdentity();
+
+        try {
+            // If we didn't hold it in the first place, we didn't release it, so expect false.
+            assertFalse(mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
+            assertTrue(mUiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
+            // Multiple calls are OK.
+            assertTrue(mUiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
+            assertTrue(mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
+            // Once it's released, further calls return false since it was already released.
+            assertFalse(mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
+        } finally {
+            ui.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Attempts to request automotive projection without TOGGLE_AUTOMOTIVE_PROJECTION permission.
+     */
+    public void testRequestAutomotiveProjectionDenied() {
+        try {
+            mUiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE);
+        } catch (SecurityException se) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected SecurityException");
+    }
+
+    /**
+     * Attempts to request automotive projection without TOGGLE_AUTOMOTIVE_PROJECTION permission.
+     */
+    public void testReleaseAutomotiveProjectionDenied() {
+        try {
+            mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE);
+        } catch (SecurityException se) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected SecurityException");
+    }
+
+    /**
+     * Attempts to request more than one projection type at once.
+     */
+    public void testRequestAllProjectionTypes() {
+        try {
+            mUiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_ALL);
+        } catch (IllegalArgumentException iae) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected IllegalArgumentException");
+    }
+
+    /**
+     * Attempts to release more than one projection type.
+     */
+    public void testReleaseAllProjectionTypes() {
+        try {
+            mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_ALL);
+        } catch (IllegalArgumentException iae) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected IllegalArgumentException");
+    }
+
+    /** Attempts to request no projection types. */
+    public void testRequestNoProjectionTypes() {
+        try {
+            mUiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_NONE);
+        } catch (IllegalArgumentException iae) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected IllegalArgumentException");
+    }
+
+    /** Attempts to release no projection types. */
+    public void testReleaseNoProjectionTypes() {
+        try {
+            mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_NONE);
+        } catch (IllegalArgumentException iae) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected IllegalArgumentException");
+    }
+
     private boolean isAutomotive() {
         return getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_AUTOMOTIVE);

@@ -18,6 +18,7 @@ package android.os.cts.batterysaving;
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import static junit.framework.Assert.fail;
@@ -26,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.app.UiModeManager;
 import android.content.res.Configuration;
 import android.os.PowerManager;
@@ -83,7 +85,7 @@ public class BatterySaverTest extends BatterySavingTestBase {
 
     @Test
     public void testSetBatterySaver_powerManager() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
+        runWithShellPermissionIdentity(() -> {
             PowerManager manager = BatteryUtils.getPowerManager();
             assertFalse(manager.isPowerSaveMode());
 
@@ -98,9 +100,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
         });
     }
 
-    /** Tests that Battery Saver exemptions activate when car mode is active. */
+    /** Tests that Battery Saver exemptions activate when automotive projection is active. */
     @Test
-    public void testCarModeExceptions() throws Exception {
+    public void testAutomotiveProjectionExceptions() throws Exception {
         final String nightModeText = runShellCommand("cmd uimode night");
         final String[] nightModeSplit = nightModeText.split(":");
         if (nightModeSplit.length != 2) {
@@ -109,7 +111,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
         final String initialNightMode = nightModeSplit[1].trim();
         runShellCommand("cmd uimode night no");
         UiModeManager uiModeManager = getContext().getSystemService(UiModeManager.class);
-        uiModeManager.disableCarMode(0);
+        runWithShellPermissionIdentity(() ->
+                        uiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
+                Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION);
 
         final PowerManager powerManager = BatteryUtils.getPowerManager();
 
@@ -131,7 +135,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
                             (getContext().getResources().getConfiguration().uiMode
                                     & Configuration.UI_MODE_NIGHT_MASK));
 
-            uiModeManager.enableCarMode(0);
+            assertTrue(runWithShellPermissionIdentity(
+                    () -> uiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
+                    Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION));
 
             // Wait for UI change first before checking location mode since we can then be
             // confident that the broadcast has been processed.
@@ -144,7 +150,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
                     locationPowerSaveMode == PowerManager.LOCATION_MODE_FOREGROUND_ONLY
                             || locationPowerSaveMode == PowerManager.LOCATION_MODE_NO_CHANGE);
 
-            uiModeManager.disableCarMode(0);
+            assertTrue(runWithShellPermissionIdentity(
+                    () -> uiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
+                    Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION));
 
             // Wait for UI change first before checking location mode since we can then be
             // confident that the broadcast has been processed.
@@ -155,7 +163,10 @@ public class BatterySaverTest extends BatterySavingTestBase {
             assertEquals(PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF,
                 powerManager.getLocationPowerSaveMode());
         } finally {
-            uiModeManager.disableCarMode(0);
+            runWithShellPermissionIdentity(
+                    () -> uiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
+                    Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION);
+
             runShellCommand("cmd uimode night " + initialNightMode);
             SettingsUtils.delete(SettingsUtils.NAMESPACE_GLOBAL, "battery_saver_constants");
         }

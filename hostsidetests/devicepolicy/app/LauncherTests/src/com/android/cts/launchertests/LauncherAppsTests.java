@@ -126,7 +126,6 @@ public class LauncherAppsTests extends AndroidTestCase {
             if (activity.getComponentName().getPackageName().equals(
                     SIMPLE_APP_PACKAGE)) {
                 foundSimpleApp = true;
-                assertTrue(activity.isStartable());
                 assertEquals(1.0f, activity.getLoadingProgress());
             }
             assertTrue(activity.getUser().equals(mUser));

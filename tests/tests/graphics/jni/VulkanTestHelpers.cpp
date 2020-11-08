@@ -132,6 +132,7 @@ bool VkInit::init() {
       deviceExt.push_back(VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
   }
   deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
+  deviceExt.push_back(VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
   deviceExt.push_back(VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
 
   std::vector<VkExtensionProperties> supportedDeviceExtensions;
@@ -1107,7 +1108,7 @@ bool VkImageRenderer::renderImageAndReadback(VkImage image, VkSampler sampler,
       mCmdBuffer, image, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, VK_ACCESS_SHADER_READ_BIT,
       VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      VK_QUEUE_FAMILY_EXTERNAL_KHR, mInit->queueFamilyIndex());
+      VK_QUEUE_FAMILY_FOREIGN_EXT, mInit->queueFamilyIndex());
 
   // Transition the destination texture for use as a framebuffer.
   addImageTransitionBarrier(
