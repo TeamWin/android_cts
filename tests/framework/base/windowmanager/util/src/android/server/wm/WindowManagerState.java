@@ -39,6 +39,7 @@ import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 import android.content.res.Configuration;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
@@ -835,6 +836,14 @@ public class WindowManagerState {
 
     boolean pendingActivityContain(ComponentName activityName) {
         return mPendingActivities.contains(getActivityName(activityName));
+    }
+
+    // Get the logical display size of the default display.
+    public static Point getLogicalDisplaySize() {
+        WindowManagerState mWmState = new WindowManagerState();
+        mWmState.computeState();
+        Rect size = mWmState.getDisplay(DEFAULT_DISPLAY).getDisplayRect();
+        return new Point(size.width(), size.height());
     }
 
     String getDefaultDisplayLastTransition() {

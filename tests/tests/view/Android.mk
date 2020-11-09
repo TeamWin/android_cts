@@ -38,7 +38,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     platform-test-annotations \
     ub-uiautomator \
     truth-prebuilt \
-    CtsSurfaceValidatorLib
+    CtsSurfaceValidatorLib \
+    cts-wm-util
 
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsview_jni libnativehelper_compat_libc++

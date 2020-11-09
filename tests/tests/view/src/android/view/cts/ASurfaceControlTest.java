@@ -18,6 +18,8 @@ package android.view.cts;
 
 import static org.junit.Assert.assertTrue;
 
+import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
+
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
@@ -77,6 +79,7 @@ public class ASurfaceControlTest {
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
+        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
     /**
