@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-public class FileObserverTestLegacyPath extends AndroidTestCase {
+public class FileObserverLegacyPathTest extends AndroidTestCase {
     ConditionVariable mCond;
     Context mContext;
     File mTestDir;
