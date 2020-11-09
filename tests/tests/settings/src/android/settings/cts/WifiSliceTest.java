@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.settings.cts;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.provider.Settings.Secure;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeFalse;
 
 import android.app.slice.Slice;
 import android.app.slice.SliceManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -30,6 +32,7 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Process;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.slice.SliceConvert;
@@ -38,6 +41,7 @@ import androidx.slice.core.SliceAction;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,6 +60,7 @@ public class WifiSliceTest {
   private static final String ACTION_VOICE_ASSIST = "android.intent.action.VOICE_ASSIST";
   private static final String CATEGORY_DEFAULT = "android.intent.category.DEFAULT";
   private static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
+  private static final String ASSISTANT = "assistant";
 
   private final Context mContext = InstrumentationRegistry.getContext();
   private final SliceManager mSliceManager = mContext.getSystemService(SliceManager.class);
@@ -63,12 +68,22 @@ public class WifiSliceTest {
           mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS);
 
   private Slice mWifiSlice;
+  private String mAssistant;
 
   @Before
   public void setUp() throws Exception {
     assumeFalse("Skipping test: Auto does not support provider android.settings.slices", isCar());
     assumeFalse("Skipping test: TV does not support provider android.settings.slices", isTv());
     mWifiSlice = mSliceManager.bindSlice(WIFI_SLICE_URI, Collections.emptySet());
+    mAssistant = Secure.getString(mContext.getContentResolver(), ASSISTANT);
+  }
+
+  @After
+  public void tearDown() {
+    final String assistant = Secure.getString(mContext.getContentResolver(), ASSISTANT);
+    if (!TextUtils.equals(mAssistant, assistant)) {
+      Secure.putString(mContext.getContentResolver(), ASSISTANT, mAssistant);
+    }
   }
 
   @Test
@@ -105,18 +120,21 @@ public class WifiSliceTest {
     final List<ResolveInfo> infos = pm.queryIntentActivities(requestDefaultAssistant, 0);
 
     if (!infos.isEmpty()) {
-      final int testPid = Process.myPid();
-      boolean permissionGranted = false;
-      for (ResolveInfo info : infos) {
-        final int testUid = pm.getPackageUid(info.activityInfo.packageName, 0);
-
-        if (mSliceManager.checkSlicePermission(WIFI_SLICE_URI, testPid, testUid)
-                == PERMISSION_GRANTED) {
-          permissionGranted = true;
-          break;
-        }
+      final String packageName;
+      if (!TextUtils.isEmpty(mAssistant)) {
+        packageName = ComponentName.unflattenFromString(mAssistant).getPackageName();
+        Log.i(TAG, "Default assistant: " + packageName);
+      } else {
+        packageName = infos.get(0).activityInfo.packageName;
+        Log.i(TAG, "Set assistant: " + packageName);
+        Secure.putString(mContext.getContentResolver(), ASSISTANT,
+                new ComponentName(packageName, infos.get(0).activityInfo.name).flattenToString());
       }
-      assertThat(permissionGranted).isTrue();
+      final int testPid = Process.myPid();
+      final int testUid = pm.getPackageUid(packageName, 0);
+
+      assertThat(mSliceManager.checkSlicePermission(WIFI_SLICE_URI, testPid, testUid))
+              .isEqualTo(PERMISSION_GRANTED);
     }
   }
 
