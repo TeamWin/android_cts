@@ -51,7 +51,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.ThrowingSupplier
-import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.math.roundToInt
@@ -90,8 +89,7 @@ class BasicPipTests : PipTestBase() {
         Point(dipToPx(it.width, displayMetrics), dipToPx(it.height, displayMetrics))
     }
 
-    @After
-    fun tearDown() {
+    override fun onTearDown() {
         stopPackage(PIP_ACTIVITY.packageName)
     }
 
