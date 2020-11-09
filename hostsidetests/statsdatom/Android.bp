@@ -16,6 +16,7 @@ java_test_host {
     name: "CtsStatsdAtomHostTestCases",
     defaults: ["cts_defaults"],
     srcs: [
+        "src/**/batterycycle/*.java",
         "src/**/binderstats/*.java",
         "src/**/bluetooth/*.java",
         "src/**/cpu/*.java",
