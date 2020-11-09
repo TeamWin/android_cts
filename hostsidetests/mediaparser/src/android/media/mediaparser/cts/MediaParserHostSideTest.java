@@ -148,8 +148,13 @@ public class MediaParserHostSideTest extends DeviceTestCase implements IBuildRec
 
     public void testLastException() throws Exception {
         runDeviceTest("testOggInvalidHeaderSniff");
-        assertThat(getSingleMediaParserReportedEvent().getLastException())
+        List<MediametricsMediaParserReported> mediaParserReportedEvents =
+                getMediaParserReportedEvents();
+        assertThat(mediaParserReportedEvents).hasSize(2);
+        for (MediametricsMediaParserReported event : mediaParserReportedEvents) {
+            assertThat(event.getLastException())
                 .isEqualTo("android.media.MediaParser$UnrecognizedInputFormatException");
+        }
     }
 
     public void testResourceByteCount() throws Exception {
