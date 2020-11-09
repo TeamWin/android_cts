@@ -18,6 +18,8 @@ package android.server.wm;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -59,6 +61,7 @@ public class SurfaceViewSurfaceValidatorTest {
     public void setup() {
         mActivity = mActivityRule.getActivity();
         mActivity.dismissPermissionDialog();
+        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
     /**
