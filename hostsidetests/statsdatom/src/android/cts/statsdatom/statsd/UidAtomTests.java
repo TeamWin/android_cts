@@ -113,8 +113,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TEST_PACKAGE_NAME = "com.android.server.cts.device.statsd";
 
-    private static final boolean DAVEY_ENABLED = false;
-
     private static final int NUM_APP_OPS = AttributedAppOps.getDefaultInstance().getOp().
             getDescriptorForType().getValues().size() - 1;
 
@@ -374,25 +372,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertWithMessage(String.format("Non-positive power value for uid %d", uid))
                 .that(uidPower).isGreaterThan(0L);
         DeviceUtils.resetBatteryStatus(getDevice());
-    }
-
-    public void testDavey() throws Exception {
-        if (!DAVEY_ENABLED) return;
-        long MAX_DURATION = 2000;
-        long MIN_DURATION = 750;
-        final int atomTag = Atom.DAVEY_OCCURRED_FIELD_NUMBER;
-
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useUidAttributionChain=*/false);
-
-        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                "DaveyActivity", /*actionKey=*/null, /*actionValue=*/null);
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data).hasSize(1);
-        long duration = data.get(0).getAtom().getDaveyOccurred().getJankDurationMillis();
-        assertWithMessage("Incorrect jank duration")
-                .that(duration).isIn(Range.closed(MIN_DURATION, MAX_DURATION));
     }
 
     public void testFlashlightState() throws Exception {
