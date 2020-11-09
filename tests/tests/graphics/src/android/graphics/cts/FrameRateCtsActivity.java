@@ -18,6 +18,7 @@ package android.graphics.cts;
 
 import static android.system.OsConstants.EINVAL;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -36,8 +37,13 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 
+import com.google.common.primitives.Floats;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * An Activity to help with frame rate testing.
@@ -62,7 +68,7 @@ public class FrameRateCtsActivity extends Activity {
     private Object mLock = new Object();
     private Surface mSurface = null;
     private float mDeviceFrameRate;
-    private ArrayList<Float> mFrameRateChangedEvents = new ArrayList<Float>();
+    private ModeChangedEvents mModeChangedEvents = new ModeChangedEvents();
 
     private enum ActivityState { RUNNING, PAUSED, DESTROYED }
 
@@ -99,13 +105,14 @@ public class FrameRateCtsActivity extends Activity {
                 return;
             }
             synchronized (mLock) {
-                float frameRate = mDisplayManager.getDisplay(displayId).getMode().getRefreshRate();
+                Display.Mode mode = mDisplayManager.getDisplay(displayId).getMode();
+                mModeChangedEvents.add(mode);
+                float frameRate =  mode.getRefreshRate();
                 if (frameRate != mDeviceFrameRate) {
                     Log.i(TAG,
                             String.format("Frame rate changed: %.2f --> %.2f", mDeviceFrameRate,
                                     frameRate));
                     mDeviceFrameRate = frameRate;
-                    mFrameRateChangedEvents.add(frameRate);
                     mLock.notify();
                 }
             }
@@ -115,17 +122,38 @@ public class FrameRateCtsActivity extends Activity {
         public void onDisplayRemoved(int displayId) {}
     };
 
+    // Wrapper around ArrayList for which the only allowed mutable operation is add().
+    // We use this to store all mode change events during a test. When we need to iterate over
+    // all mode changes during a certain operation, we use the number of events in the beginning
+    // and in the end. It's important to never clear or modify the elements in this list hence the
+    // wrapper.
+    private static class ModeChangedEvents {
+        private List<Display.Mode> mEvents = new ArrayList<>();
+
+        public void add(Display.Mode mode) {
+            mEvents.add(mode);
+        }
+
+        public Display.Mode get(int i) {
+            return mEvents.get(i);
+        }
+
+        public int size() {
+            return mEvents.size();
+        }
+    }
+
     private static class PreconditionViolatedException extends RuntimeException {
         PreconditionViolatedException() {}
     }
 
     private static class FrameRateTimeoutException extends RuntimeException {
-        FrameRateTimeoutException(float appRequestedFrameRate, float deviceFrameRate) {
-            this.appRequestedFrameRate = appRequestedFrameRate;
+        FrameRateTimeoutException(float expectedFrameRate, float deviceFrameRate) {
+            this.expectedFrameRate = expectedFrameRate;
             this.deviceFrameRate = deviceFrameRate;
         }
 
-        public float appRequestedFrameRate;
+        public float expectedFrameRate;
         public float deviceFrameRate;
     }
 
@@ -188,38 +216,38 @@ public class FrameRateCtsActivity extends Activity {
             postBuffer();
         }
 
-        public int setFrameRate(float frameRate, int compatibility) {
+        public int setFrameRate(float frameRate, int compatibility, boolean shouldBeSeamless) {
             Log.i(TAG,
                     String.format("Setting frame rate for %s: fps=%.2f compatibility=%s", mName,
                             frameRate, frameRateCompatibilityToString(compatibility)));
 
             int rc = 0;
-            final boolean requireSeamless = false;
             if (mApi == Api.SURFACE) {
-                mSurface.setFrameRate(frameRate, compatibility, requireSeamless);
+                mSurface.setFrameRate(frameRate, compatibility, shouldBeSeamless);
             } else if (mApi == Api.ANATIVE_WINDOW) {
-                rc = nativeWindowSetFrameRate(mSurface, frameRate, compatibility, requireSeamless);
+                rc = nativeWindowSetFrameRate(mSurface, frameRate, compatibility, shouldBeSeamless);
             } else if (mApi == Api.SURFACE_CONTROL) {
                 SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
                 try {
                     transaction
-                        .setFrameRate(mSurfaceControl, frameRate, compatibility, requireSeamless)
+                        .setFrameRate(mSurfaceControl, frameRate, compatibility, shouldBeSeamless)
                         .apply();
                 } finally {
                     transaction.close();
                 }
             } else if (mApi == Api.NATIVE_SURFACE_CONTROL) {
                 nativeSurfaceControlSetFrameRate(mNativeSurfaceControl, frameRate, compatibility,
-                        requireSeamless);
+                        shouldBeSeamless);
             }
             return rc;
         }
 
-        public void setInvalidFrameRate(float frameRate, int compatibility) {
+        public void setInvalidFrameRate(float frameRate, int compatibility,
+                boolean shouldBeSeamless) {
             if (mApi == Api.SURFACE) {
                 boolean caughtIllegalArgException = false;
                 try {
-                    setFrameRate(frameRate, compatibility);
+                    setFrameRate(frameRate, compatibility, shouldBeSeamless);
                 } catch (IllegalArgumentException exc) {
                     caughtIllegalArgException = true;
                 }
@@ -227,7 +255,7 @@ public class FrameRateCtsActivity extends Activity {
                                 + " Surface.setFrameRate()",
                         caughtIllegalArgException);
             } else {
-                int rc = setFrameRate(frameRate, compatibility);
+                int rc = setFrameRate(frameRate, compatibility, shouldBeSeamless);
                 if (mApi == Api.ANATIVE_WINDOW) {
                     assertTrue("Expected -EINVAL return value from invalid call to"
                                     + " ANativeWindow_setFrameRate()",
@@ -317,8 +345,10 @@ public class FrameRateCtsActivity extends Activity {
         super.onCreate(savedInstanceState);
         synchronized (mLock) {
             mDisplayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
-            mDeviceFrameRate =
-                    mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY).getMode().getRefreshRate();
+            Display.Mode mode = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY).getMode();
+            mDeviceFrameRate = mode.getRefreshRate();
+            // Insert the initial mode so we have the full display mode history.
+            mModeChangedEvents.add(mode);
             mDisplayManager.registerDisplayListener(mDisplayListener, mHandler);
             mSurfaceView = new SurfaceView(this);
             mSurfaceView.setWillNotDraw(false);
@@ -358,19 +388,31 @@ public class FrameRateCtsActivity extends Activity {
         }
     }
 
-    private ArrayList<Float> getFrameRatesToTest() {
-        Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+    private boolean isAlternative(Display.Mode mode, Display.Mode other) {
+        if (!hasSameResolution(mode, other)) {
+            return false;
+        }
+
+        for (float alternativeFps : mode.getAlternativeRefreshRates()) {
+            if (Math.abs(alternativeFps - other.getRefreshRate()) <= FRAME_RATE_TOLERANCE) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Returns the refresh rates with the same resolution as "mode".
+    private ArrayList<Float> getRefreshRates(Display.Mode mode, Display display) {
         Display.Mode[] modes = display.getSupportedModes();
-        Display.Mode currentMode = display.getMode();
-        ArrayList<Float> frameRates = new ArrayList<Float>();
-        for (Display.Mode mode : modes) {
-            if (mode.getPhysicalWidth() == currentMode.getPhysicalWidth()
-                    && mode.getPhysicalHeight() == currentMode.getPhysicalHeight()) {
-                frameRates.add(mode.getRefreshRate());
+        ArrayList<Float> frameRates = new ArrayList<>();
+        for (Display.Mode supportedMode : modes) {
+            if (hasSameResolution(supportedMode, mode)) {
+                frameRates.add(supportedMode.getRefreshRate());
             }
         }
         Collections.sort(frameRates);
-        ArrayList<Float> uniqueFrameRates = new ArrayList<Float>();
+        ArrayList<Float> uniqueFrameRates = new ArrayList<>();
         for (float frameRate : frameRates) {
             if (uniqueFrameRates.isEmpty()
                     || frameRate - uniqueFrameRates.get(uniqueFrameRates.size() - 1)
@@ -379,6 +421,22 @@ public class FrameRateCtsActivity extends Activity {
             }
         }
         return uniqueFrameRates;
+    }
+
+    private List<Float> getSeamedRefreshRates(Display.Mode mode, Display display) {
+        List<Float> seamedRefreshRates = new ArrayList<>();
+        Display.Mode[] modes = display.getSupportedModes();
+        for (Display.Mode otherMode : modes) {
+            if (hasSameResolution(mode, otherMode) && !isAlternative(mode, otherMode)) {
+                seamedRefreshRates.add(otherMode.getRefreshRate());
+            }
+        }
+        return seamedRefreshRates;
+    }
+
+    private boolean hasSameResolution(Display.Mode mode1, Display.Mode mode2) {
+        return mode1.getPhysicalHeight() == mode2.getPhysicalHeight()
+                && mode1.getPhysicalWidth() == mode2.getPhysicalWidth();
     }
 
     private boolean isFrameRateMultiple(float higherFrameRate, float lowerFrameRate) {
@@ -392,8 +450,8 @@ public class FrameRateCtsActivity extends Activity {
     // Returns two device-supported frame rates that aren't multiples of each other, or null if no
     // such incompatible frame rates are available. This is useful for testing behavior where we
     // have layers with conflicting frame rates.
-    private float[] getIncompatibleFrameRates() {
-        ArrayList<Float> frameRates = getFrameRatesToTest();
+    private float[] getIncompatibleFrameRates(Display display) {
+        ArrayList<Float> frameRates = getRefreshRates(display.getMode(), display);
         for (int i = 0; i < frameRates.size(); i++) {
             for (int j = i + 1; j < frameRates.size(); j++) {
                 if (!isFrameRateMultiple(Math.max(frameRates.get(i), frameRates.get(j)),
@@ -428,6 +486,8 @@ public class FrameRateCtsActivity extends Activity {
                     mActivityState != ActivityState.DESTROYED);
             nowNanos = System.nanoTime();
         }
+        // Make sure any previous mode changes are completed.
+        waitForStableFrameRate();
     }
 
     // Returns true if we encounter a precondition violation, false otherwise.
@@ -458,7 +518,7 @@ public class FrameRateCtsActivity extends Activity {
     // Returns true if we reached waitUntilNanos, false if some other event occurred.
     private boolean waitForEvents(long waitUntilNanos, ArrayList<TestSurface> surfaces)
             throws InterruptedException {
-        mFrameRateChangedEvents.clear();
+        int numModeChangedEvents = mModeChangedEvents.size();
         long nowNanos = System.nanoTime();
         while (nowNanos < waitUntilNanos) {
             long surfacePostTime = Long.MAX_VALUE;
@@ -476,7 +536,7 @@ public class FrameRateCtsActivity extends Activity {
             }
             nowNanos = System.nanoTime();
             verifyPreconditions();
-            if (!mFrameRateChangedEvents.isEmpty()) {
+            if (mModeChangedEvents.size() > numModeChangedEvents) {
                 return false;
             }
             if (nowNanos >= surfacePostTime) {
@@ -488,36 +548,65 @@ public class FrameRateCtsActivity extends Activity {
         return true;
     }
 
-    private void verifyCompatibleAndStableFrameRate(float appRequestedFrameRate,
+    private void waitForStableFrameRate() throws InterruptedException {
+        verifyCompatibleAndStableFrameRate(0, new ArrayList<>());
+    }
+
+    // Set expectedFrameRate to 0.0 to verify only stable frame rate.
+    private void verifyCompatibleAndStableFrameRate(float expectedFrameRate,
             ArrayList<TestSurface> surfaces) throws InterruptedException {
         Log.i(TAG, "Verifying compatible and stable frame rate");
         long nowNanos = System.nanoTime();
         long gracePeriodEndTimeNanos =
                 nowNanos + FRAME_RATE_SWITCH_GRACE_PERIOD_SECONDS * 1_000_000_000L;
         while (true) {
-            // Wait until we switch to a compatible frame rate.
-            while (!isFrameRateMultiple(mDeviceFrameRate, appRequestedFrameRate)
-                    && !waitForEvents(gracePeriodEndTimeNanos, surfaces)) {
-                // Empty
-            }
-            nowNanos = System.nanoTime();
-            if (nowNanos >= gracePeriodEndTimeNanos) {
-                throw new FrameRateTimeoutException(appRequestedFrameRate, mDeviceFrameRate);
+            if (expectedFrameRate > FRAME_RATE_TOLERANCE) { // expectedFrameRate > 0
+                // Wait until we switch to a compatible frame rate.
+                while (!isFrameRateMultiple(mDeviceFrameRate, expectedFrameRate)
+                        && !waitForEvents(gracePeriodEndTimeNanos, surfaces)) {
+                    // Empty
+                }
+                nowNanos = System.nanoTime();
+                if (nowNanos >= gracePeriodEndTimeNanos) {
+                    throw new FrameRateTimeoutException(expectedFrameRate, mDeviceFrameRate);
+                }
             }
 
             // We've switched to a compatible frame rate. Now wait for a while to see if we stay at
             // that frame rate.
             long endTimeNanos = nowNanos + STABLE_FRAME_RATE_WAIT_SECONDS * 1_000_000_000L;
             while (endTimeNanos > nowNanos) {
+                int numModeChangedEvents = mModeChangedEvents.size();
                 if (waitForEvents(endTimeNanos, surfaces)) {
                     Log.i(TAG, String.format("Stable frame rate %.2f verified", mDeviceFrameRate));
                     return;
                 }
                 nowNanos = System.nanoTime();
-                if (!mFrameRateChangedEvents.isEmpty()) {
+                if (mModeChangedEvents.size() > numModeChangedEvents) {
                     break;
                 }
             }
+        }
+    }
+
+    private void verifyModeSwitchesDontChangeResolution(int fromId, int toId) {
+        assertTrue(fromId <= toId);
+        for (int eventId = fromId; eventId < toId; eventId++) {
+            Display.Mode fromMode = mModeChangedEvents.get(eventId - 1);
+            Display.Mode toMode = mModeChangedEvents.get(eventId);
+            assertTrue("Resolution change was not expected, but there was such from "
+                    + fromMode + " to " + toMode + ".", hasSameResolution(fromMode, toMode));
+        }
+    }
+
+    private void verifyModeSwitchesAreSeamless(int fromId, int toId) {
+        assertTrue(fromId <= toId);
+        for (int eventId = fromId; eventId < toId; eventId++) {
+            Display.Mode fromMode = mModeChangedEvents.get(eventId - 1);
+            Display.Mode toMode = mModeChangedEvents.get(eventId);
+            assertTrue("Non-seamless mode switch was not expected, but there was a "
+                            + "non-seamless switch from from " + fromMode + " to " + toMode + ".",
+                    isAlternative(fromMode, toMode));
         }
     }
 
@@ -548,6 +637,11 @@ public class FrameRateCtsActivity extends Activity {
                         } catch (PreconditionViolatedException exc) {
                             // The logic below will retry if we're below max attempts.
                         } catch (FrameRateTimeoutException exc) {
+                            StringWriter stringWriter = new StringWriter();
+                            PrintWriter printWriter = new PrintWriter(stringWriter);
+                            exc.printStackTrace(printWriter);
+                            String stackTrace = stringWriter.toString();
+
                             // Sometimes we get a test timeout failure before we get the
                             // notification that the activity was paused, and it was the pause that
                             // caused the timeout failure. Wait for a bit to see if we get notified
@@ -556,8 +650,9 @@ public class FrameRateCtsActivity extends Activity {
                             assertTrue(
                                     String.format(
                                             "Timed out waiting for a stable and compatible frame"
-                                                    + " rate. requested=%.2f received=%.2f.",
-                                            exc.appRequestedFrameRate, exc.deviceFrameRate),
+                                                    + " rate. expected=%.2f received=%.2f."
+                                                    + " Stack trace: " + stackTrace,
+                                            exc.expectedFrameRate, exc.deviceFrameRate),
                                     waitForPreconditionViolation());
                         }
 
@@ -569,8 +664,8 @@ public class FrameRateCtsActivity extends Activity {
                                             mActivityState == ActivityState.RUNNING));
                             attempts++;
                             assertTrue(String.format(
-                                               "Exceeded %d precondition wait attempts. Giving up.",
-                                               PRECONDITION_WAIT_MAX_ATTEMPTS),
+                                    "Exceeded %d precondition wait attempts. Giving up.",
+                                    PRECONDITION_WAIT_MAX_ATTEMPTS),
                                     attempts < PRECONDITION_WAIT_MAX_ATTEMPTS);
                         }
                     }
@@ -587,8 +682,18 @@ public class FrameRateCtsActivity extends Activity {
         }
     }
 
-    private void testExactFrameRateMatch(Api api) throws InterruptedException {
-        ArrayList<Float> frameRatesToTest = getFrameRatesToTest();
+    public void testExactFrameRateMatch(boolean shouldBeSeamless) throws InterruptedException {
+        String type = shouldBeSeamless ? "seamless" : "non-seamless";
+        runTestsWithPreconditions(api -> testExactFrameRateMatch(api, shouldBeSeamless),
+                type + " exact frame rate match");
+    }
+
+    private void testExactFrameRateMatch(Api api, boolean shouldBeSeamless)
+            throws InterruptedException {
+        Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+        Display.Mode currentMode = display.getMode();
+        float initialRefreshRate = currentMode.getRefreshRate();
+
         TestSurface surface = null;
         try {
             surface = new TestSurface(api, mSurfaceView.getSurfaceControl(), mSurface,
@@ -596,24 +701,72 @@ public class FrameRateCtsActivity extends Activity {
                     /*visible=*/true, Color.RED);
             ArrayList<TestSurface> surfaces = new ArrayList<>();
             surfaces.add(surface);
-            for (float frameRate : frameRatesToTest) {
-                surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
-                verifyCompatibleAndStableFrameRate(frameRate, surfaces);
+
+            if (shouldBeSeamless) {
+                // Seamless rates should be seamlessly achieved with no resolution changes.
+                List<Float> seamlessRefreshRates =
+                        Floats.asList(currentMode.getAlternativeRefreshRates());
+                for (float frameRate : seamlessRefreshRates) {
+                    int initialNumEvents = mModeChangedEvents.size();
+                    surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                            /*shouldBeSeamless*/ true);
+                    verifyCompatibleAndStableFrameRate(frameRate, surfaces);
+                    verifyModeSwitchesAreSeamless(initialNumEvents, mModeChangedEvents.size());
+                    verifyModeSwitchesDontChangeResolution(initialNumEvents,
+                            mModeChangedEvents.size());
+                }
+                // Reset to default
+                surface.setFrameRate(0.f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                        /*shouldBeSeamless*/ true);
+                // Wait for potential mode switches
+                verifyCompatibleAndStableFrameRate(initialRefreshRate, surfaces);
+                currentMode = display.getMode();
+
+                // Seamed rates should never generate a seamed switch.
+                List<Float> seamedRefreshRates = getSeamedRefreshRates(currentMode, display);
+                for (float frameRate : seamedRefreshRates) {
+                    int initialNumEvents = mModeChangedEvents.size();
+                    surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                            /*shouldBeSeamless*/ true);
+                    // Mode switch can occur, since we could potentially switch to a multiple
+                    // that happens to be seamless.
+                    verifyModeSwitchesAreSeamless(initialNumEvents, mModeChangedEvents.size());
+                }
+            } else {
+                // All rates should be seamfully achieved with no resolution changes.
+                List<Float> allRefreshRates = getRefreshRates(currentMode, display);
+                for (float frameRate : allRefreshRates) {
+                    int initialNumEvents = mModeChangedEvents.size();
+                    surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                            /*shouldBeSeamless*/ false);
+                    verifyCompatibleAndStableFrameRate(frameRate, surfaces);
+                    verifyModeSwitchesDontChangeResolution(initialNumEvents,
+                            mModeChangedEvents.size());
+                }
             }
-            surface.setFrameRate(0.f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
         } finally {
             if (surface != null) {
+                surface.setFrameRate(0.f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                        /*shouldBeSeamless*/ false);
                 surface.release();
             }
         }
     }
 
-    public void testExactFrameRateMatch() throws InterruptedException {
-        runTestsWithPreconditions(api -> testExactFrameRateMatch(api), "exact frame rate match");
+    private String modeSwitchesToString(int fromId, int toId) {
+        assertTrue(fromId <= toId);
+        String string = "";
+        for (int eventId = fromId; eventId < toId; eventId++) {
+            Display.Mode fromMode = mModeChangedEvents.get(eventId - 1);
+            Display.Mode toMode = mModeChangedEvents.get(eventId);
+            string += fromMode + " -> " + toMode + "; ";
+        }
+        return string;
     }
 
-    private void testFixedSource(Api api) throws InterruptedException {
-        float[] incompatibleFrameRates = getIncompatibleFrameRates();
+    private void testFixedSource(Api api, boolean shouldBeSeamless) throws InterruptedException {
+        Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+        float[] incompatibleFrameRates = getIncompatibleFrameRates(display);
         if (incompatibleFrameRates == null) {
             Log.i(TAG, "No incompatible frame rates to use for testing fixed_source behavior");
             return;
@@ -626,6 +779,7 @@ public class FrameRateCtsActivity extends Activity {
                         frameRateA, frameRateB));
         TestSurface surfaceA = null;
         TestSurface surfaceB = null;
+
         try {
             int width = mSurfaceView.getHolder().getSurfaceFrame().width();
             int height = mSurfaceView.getHolder().getSurfaceFrame().height() / 2;
@@ -637,16 +791,35 @@ public class FrameRateCtsActivity extends Activity {
             surfaceB = new TestSurface(api, mSurfaceView.getSurfaceControl(), mSurface, "surfaceB",
                     destFrameB, /*visible=*/false, Color.GREEN);
 
-            surfaceA.setFrameRate(frameRateA, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
-            surfaceB.setFrameRate(frameRateB, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE);
+            int initialNumEvents = mModeChangedEvents.size();
+            surfaceA.setFrameRate(frameRateA, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                    shouldBeSeamless);
+            surfaceB.setFrameRate(frameRateB, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
+                    shouldBeSeamless);
 
             ArrayList<TestSurface> surfaces = new ArrayList<>();
             surfaces.add(surfaceA);
             surfaces.add(surfaceB);
 
-            verifyCompatibleAndStableFrameRate(frameRateA, surfaces);
+            if (shouldBeSeamless) {
+                verifyModeSwitchesAreSeamless(initialNumEvents, mModeChangedEvents.size());
+            } else {
+                verifyCompatibleAndStableFrameRate(frameRateA, surfaces);
+            }
+
+            verifyModeSwitchesDontChangeResolution(initialNumEvents,
+                    mModeChangedEvents.size());
+            initialNumEvents = mModeChangedEvents.size();
+
             surfaceB.setVisibility(true);
-            verifyCompatibleAndStableFrameRate(frameRateB, surfaces);
+
+            if (shouldBeSeamless) {
+                verifyModeSwitchesAreSeamless(initialNumEvents, mModeChangedEvents.size());
+            } else {
+                verifyCompatibleAndStableFrameRate(frameRateB, surfaces);
+            }
+            verifyModeSwitchesDontChangeResolution(initialNumEvents,
+                    mModeChangedEvents.size());
         } finally {
             if (surfaceA != null) {
                 surfaceA.release();
@@ -657,22 +830,33 @@ public class FrameRateCtsActivity extends Activity {
         }
     }
 
-    public void testFixedSource() throws InterruptedException {
-        runTestsWithPreconditions(api -> testFixedSource(api), "fixed source behavior");
+    public void testFixedSource(boolean shouldBeSeamless) throws InterruptedException {
+        String type = shouldBeSeamless ? "seamless" : "non-seamless";
+        runTestsWithPreconditions(api -> testFixedSource(api, shouldBeSeamless),
+                type + " fixed source behavior");
     }
 
-    private void testInvalidParams(Api api) throws InterruptedException {
+    private void testInvalidParams(Api api) {
         TestSurface surface = null;
+        final boolean shouldBeSeamless = false;
         try {
             surface = new TestSurface(api, mSurfaceView.getSurfaceControl(), mSurface,
                     "testSurface", mSurfaceView.getHolder().getSurfaceFrame(),
                     /*visible=*/true, Color.RED);
-            surface.setInvalidFrameRate(-100.f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
-            surface.setInvalidFrameRate(
-                    Float.POSITIVE_INFINITY, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
-            surface.setInvalidFrameRate(Float.NaN, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
-            surface.setInvalidFrameRate(0.f, -10);
-            surface.setInvalidFrameRate(0.f, 50);
+            int initialNumEvents = mModeChangedEvents.size();
+            surface.setInvalidFrameRate(-100.f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                    shouldBeSeamless);
+            assertEquals(initialNumEvents, mModeChangedEvents.size());
+            surface.setInvalidFrameRate(Float.POSITIVE_INFINITY,
+                    Surface.FRAME_RATE_COMPATIBILITY_DEFAULT, shouldBeSeamless);
+            assertEquals(initialNumEvents, mModeChangedEvents.size());
+            surface.setInvalidFrameRate(Float.NaN, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                    shouldBeSeamless);
+            assertEquals(initialNumEvents, mModeChangedEvents.size());
+            surface.setInvalidFrameRate(0.f, -10, shouldBeSeamless);
+            assertEquals(initialNumEvents, mModeChangedEvents.size());
+            surface.setInvalidFrameRate(0.f, 50, shouldBeSeamless);
+            assertEquals(initialNumEvents, mModeChangedEvents.size());
         } finally {
             if (surface != null) {
                 surface.release();
