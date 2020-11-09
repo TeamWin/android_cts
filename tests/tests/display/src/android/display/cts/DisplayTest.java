@@ -425,6 +425,99 @@ public class DisplayTest {
     }
 
     /**
+     * Tests that getSupportedModes works as expected.
+     */
+    @Test
+    public void testGetSupportedModesOnDefaultDisplay() {
+        Display.Mode[] supportedModes = mDefaultDisplay.getSupportedModes();
+        // We need to check that the graph defined by getAlternativeRefreshRates() is symmetric and
+        // transitive.
+        // For that reason we run a primitive Union-Find algorithm. In the end of the algorithm
+        // groups[i] == groups[j] iff supportedModes[i] and supportedModes[j] are in the same
+        // connected component. The complexity is O(N^2*M) where N is the number of modes and M is
+        // the max number of alternative refresh rates). This is okay as we expect a relatively
+        // small number of supported modes.
+        int[] groups = new int[supportedModes.length];
+        for (int i = 0; i < groups.length; i++) {
+            groups[i] = i;
+        }
+
+        for (int i = 0; i < supportedModes.length; i++) {
+            Display.Mode supportedMode = supportedModes[i];
+            for (float alternativeRate : supportedMode.getAlternativeRefreshRates()) {
+                assertTrue(alternativeRate != supportedMode.getRefreshRate());
+
+                // The alternative exists.
+                int matchingModeIdx = -1;
+                for (int j = 0; j < supportedModes.length; j++) {
+                    boolean matches = displayModeMatches(supportedModes[j],
+                            supportedMode.getPhysicalWidth(),
+                            supportedMode.getPhysicalHeight(),
+                            alternativeRate);
+                    if (matches) {
+                        matchingModeIdx = j;
+                        break;
+                    }
+                }
+                String message = "Could not find alternative display mode with refresh rate "
+                        + alternativeRate + " for " + supportedMode +  ". All supported"
+                        + " modes are " + Arrays.toString(supportedModes);
+                assertNotEquals(message, -1, matchingModeIdx);
+
+                // Merge the groups of i and matchingModeIdx
+                for (int k = 0; k < groups.length; k++) {
+                    if (groups[k] == groups[matchingModeIdx]) {
+                        groups[k] = groups[i];
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < supportedModes.length; i++) {
+            for (int j = 0; j < supportedModes.length; j++) {
+                if (i != j && groups[i] == groups[j]) {
+                    float fpsI = supportedModes[i].getRefreshRate();
+                    boolean iIsAlternativeToJ = false;
+                    for (float alternatives : supportedModes[j].getAlternativeRefreshRates()) {
+                        if (alternatives == fpsI) {
+                            iIsAlternativeToJ = true;
+                            break;
+                        }
+                    }
+                    String message = "Expected " + supportedModes[i] + " to be listed as "
+                            + "alternative refresh rate of " + supportedModes[j] + ". All supported"
+                            + " modes are " + Arrays.toString(supportedModes);
+                    assertTrue(message, iIsAlternativeToJ);
+                }
+            }
+        }
+    }
+
+    private boolean displayModeMatches(Display.Mode mode, int width, int height,
+            float refreshRate) {
+        return mode.getPhysicalWidth() == width &&
+                mode.getPhysicalHeight() == height &&
+                Float.floatToIntBits(mode.getRefreshRate()) == Float.floatToIntBits(refreshRate);
+    }
+
+    /**
+     * Tests that getMode() returns a mode which is in getSupportedModes().
+     */
+    @Test
+    public void testActiveModeIsSupportedModesOnDefaultDisplay() {
+        Display.Mode[] supportedModes = mDefaultDisplay.getSupportedModes();
+        Display.Mode activeMode = mDefaultDisplay.getMode();
+        boolean activeModeIsSupported = false;
+        for (Display.Mode mode : supportedModes) {
+            if (mode.equals(activeMode)) {
+                activeModeIsSupported = true;
+                break;
+            }
+        }
+        assertTrue(activeModeIsSupported);
+    }
+
+    /**
      * Test that refresh rate switch app requests are correctly executed on a secondary display.
      */
     @Test
