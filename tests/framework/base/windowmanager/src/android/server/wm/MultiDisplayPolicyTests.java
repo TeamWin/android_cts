@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
@@ -821,7 +822,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(SDK_27_LAUNCHING_ACTIVITY).setNewTask(true)
-                .setDisplayId(DEFAULT_DISPLAY).execute();
+                .setDisplayId(DEFAULT_DISPLAY).setWindowingMode(WINDOWING_MODE_FULLSCREEN)
+                .execute();
         waitAndAssertTopResumedActivity(SDK_27_LAUNCHING_ACTIVITY, DEFAULT_DISPLAY,
                 "Activity launched on default display must be resumed and focused");
 
@@ -831,7 +833,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
 
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(SDK_27_SEPARATE_PROCESS_ACTIVITY).setNewTask(true)
-                .setDisplayId(DEFAULT_DISPLAY).execute();
+                .setDisplayId(DEFAULT_DISPLAY).setWindowingMode(WINDOWING_MODE_FULLSCREEN)
+                .execute();
         waitAndAssertTopResumedActivity(SDK_27_SEPARATE_PROCESS_ACTIVITY, DEFAULT_DISPLAY,
                 "Activity launched on default display must be resumed and focused");
         assertTrue("Activity that was on secondary display must be resumed",
