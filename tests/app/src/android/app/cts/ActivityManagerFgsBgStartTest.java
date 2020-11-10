@@ -51,6 +51,8 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
 
     private static final String KEY_DEFAULT_FGS_STARTS_RESTRICTION_ENABLED =
             "default_fgs_starts_restriction_enabled";
+    private static final String KEY_DEFAULT_FGS_STARTS_TEMP_ALLOWLIST_ENABLED =
+            "default_fgs_starts_temp_allowlist_enabled";
 
     private static final int WAITFOR_MSEC = 10000;
 
@@ -474,6 +476,168 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         }
     }
 
+    // Test a FGS can start from a process that is at BOUND_TOP state.
+    public void testFgsStartFromBoundTopState() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP2, 0);
+        ApplicationInfo app3Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP3, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
+                WAITFOR_MSEC);
+        WatchUidRunner uid3Watcher = new WatchUidRunner(mInstrumentation, app3Info.uid,
+                WAITFOR_MSEC);
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, PACKAGE_NAME_APP2);
+            Bundle bundle = new Bundle();
+
+            // Put Package1 in TOP state.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
+
+            // Package1 bound to service in package2, package2 get BOUND_TOP state.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_BIND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_BOUND_TOP);
+
+            // Package2 can start FGS in package3.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP3, 0, bundle);
+            uid3Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+
+            // Stop activity.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+            // unbind service.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_UNBIND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP3, 0, null);
+            uid3Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            uid2Watcher.finish();
+            uid3Watcher.finish();
+            enableFgsRestriction(false, true, PACKAGE_NAME_APP2);
+        }
+    }
+
+    // Test a FGS can start from a process that is at FOREGROUND_SERVICE state.
+    public void testFgsStartFromFgsState() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP2, 0);
+        ApplicationInfo app3Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP3, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
+                WAITFOR_MSEC);
+        WatchUidRunner uid3Watcher = new WatchUidRunner(mInstrumentation, app3Info.uid,
+                WAITFOR_MSEC);
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, PACKAGE_NAME_APP2);
+            Bundle bundle = new Bundle();
+
+            // Put Package1 in TOP state.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
+
+            // Package1 can start FGS in package2, package2 gets FOREGROUND_SERVICE state.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+
+            // Package2 can start FGS in package3.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP3, 0, bundle);
+            uid3Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+
+            // Stop activity in package1.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+            // Stop FGS in package2.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+            // Stop FGS in package3.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP3, PACKAGE_NAME_APP3, 0, null);
+            uid3Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            uid2Watcher.finish();
+            uid3Watcher.finish();
+            enableFgsRestriction(false, true, PACKAGE_NAME_APP2);
+        }
+    }
+
+    // Test a FGS can start from BG if the app is in the temp allow list.
+    public void testFgsStartTempAllowList() throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        try {
+            Bundle bundle = new Bundle();
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, PACKAGE_NAME_APP1);
+            // Start FGS in BG state.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+            // Package1 does not enter FGS state
+            try {
+                uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+                fail("Service should not enter foreground service state");
+            } catch (Exception e) {
+            }
+
+            // Put Package1 in tempAllowList.
+            enableTempAllowList(true);
+            CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                    "dumpsys deviceidle tempwhitelist -d 15000 " + PACKAGE_NAME_APP1);
+            // Now it can start FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            enableFgsRestriction(false, true, PACKAGE_NAME_APP1);
+            enableTempAllowList(false);
+        }
+    }
+
     public void testFgsStartFromBGWithBind() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -566,5 +730,19 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
                     "am compat " + (enable ? "enable" : "disable")
                             + " FGS_BG_START_RESTRICTION_CHANGE_ID " + packageName);
         }
+    }
+
+    /**
+     * Turn on FGS BG-launch temp allowlist.
+     * @param enable true to allow temp allowlist, falst to disallow.
+     * @throws Exception
+     */
+    private void enableTempAllowList(boolean enable)
+            throws Exception {
+        runWithShellPermissionIdentity(() -> {
+            DeviceConfig.setProperty("activity_manager",
+                    KEY_DEFAULT_FGS_STARTS_TEMP_ALLOWLIST_ENABLED,
+                    Boolean.toString(enable), false);
+        });
     }
 }
