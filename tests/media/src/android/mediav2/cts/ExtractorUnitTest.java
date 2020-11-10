@@ -963,5 +963,17 @@ public class ExtractorUnitTest {
             assertTrue(nativeTestIfNullLocationIsRejectedBySetDataSource());
         }
         private native boolean nativeTestIfNullLocationIsRejectedBySetDataSource();
+
+        @Test
+        public void testVideoSampleFileOffsetByGetSampleFormat() {
+            assertTrue(nativeTestVideoSampleFileOffsetByGetSampleFormat(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestVideoSampleFileOffsetByGetSampleFormat(String srcPath);
+
+        @Test
+        public void testAudioSampleFileOffsetByGetSampleFormat() {
+            assertTrue(nativeTestAudioSampleFileOffsetByGetSampleFormat(mInpPrefix + mInpMedia));
+        }
+        private native boolean nativeTestAudioSampleFileOffsetByGetSampleFormat(String srcPath);
     }
 }
