@@ -385,6 +385,30 @@ public class AudioRecordTest {
                 AudioFormat.ENCODING_PCM_16BIT);
     }
 
+    // Audit buffers can run out of space with high numbers of channels,
+    // so keep the sample rate low.
+    @Test
+    public void testAudioRecordAuditChannelIndex3() throws Exception {
+        doTest("audit_channel_index_3", true /*localRecord*/, true /*customHandler*/,
+                2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
+                true /*useByteBuffer*/, false /*blocking*/,
+                true /*auditRecording*/, true /*isChannelIndex*/, 16000 /*TEST_SR*/,
+                (1 << 0) | (1 << 1) | (1 << 2)  /* 3 channels */,
+                AudioFormat.ENCODING_PCM_24BIT_PACKED);
+    }
+
+    // Audit buffers can run out of space with high numbers of channels,
+    // so keep the sample rate low.
+    @Test
+    public void testAudioRecordAuditChannelIndex1() throws Exception {
+        doTest("audit_channel_index_1", true /*localRecord*/, true /*customHandler*/,
+                2 /*periodsPerSecond*/, 0 /*markerPeriodsPerSecond*/,
+                true /*useByteBuffer*/, false /*blocking*/,
+                true /*auditRecording*/, true /*isChannelIndex*/, 24000 /*TEST_SR*/,
+                (1 << 0)  /* 1 channels */,
+                AudioFormat.ENCODING_PCM_32BIT);
+    }
+
     // Test AudioRecord.Builder to verify the observed configuration of an AudioRecord built with
     // an empty Builder matches the documentation / expected values
     @Test
