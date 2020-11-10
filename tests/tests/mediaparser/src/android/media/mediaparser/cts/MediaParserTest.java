@@ -673,42 +673,44 @@ public class MediaParserTest {
             mediaParser.setParameter(entry.getKey(), entry.getValue());
         }
 
-        mediaParser.advance(inputReader);
-        if (expectedParserName != null) {
-            assertThat(expectedParserName).isEqualTo(mediaParser.getParserName());
-            // We are only checking that the extractor is the right one.
-            mediaParser.release();
-            return;
-        }
+        try {
+            mediaParser.advance(inputReader);
+            if (expectedParserName != null) {
+                assertThat(expectedParserName).isEqualTo(mediaParser.getParserName());
+                // We are only checking that the extractor is the right one.
+                return;
+            }
 
-        while (mediaParser.advance(inputReader)) {
-            // Do nothing.
-        }
+            while (mediaParser.advance(inputReader)) {
+                // Do nothing.
+            }
 
-        // If the SeekMap is seekable, test seeking in the stream.
-        MediaParser.SeekMap seekMap = outputConsumer.getSeekMap();
-        assertThat(seekMap).isNotNull();
-        if (seekMap.isSeekable()) {
-            long durationUs = seekMap.getDurationMicros();
-            for (int j = 0; j < 4; j++) {
-                outputConsumer.clearTrackOutputs();
-                long timeUs =
-                        durationUs == MediaParser.SeekMap.UNKNOWN_DURATION
-                                ? 0
-                                : (durationUs * j) / 3;
-                MediaParser.SeekPoint seekPoint = seekMap.getSeekPoints(timeUs).first;
-                inputReader.reset();
-                inputReader.setPosition((int) seekPoint.position);
-                mediaParser.seek(seekPoint);
-                while (mediaParser.advance(inputReader)) {
-                    // Do nothing.
-                }
-                if (durationUs == MediaParser.SeekMap.UNKNOWN_DURATION) {
-                    break;
+            // If the SeekMap is seekable, test seeking in the stream.
+            MediaParser.SeekMap seekMap = outputConsumer.getSeekMap();
+            assertThat(seekMap).isNotNull();
+            if (seekMap.isSeekable()) {
+                long durationUs = seekMap.getDurationMicros();
+                for (int j = 0; j < 4; j++) {
+                    outputConsumer.clearTrackOutputs();
+                    long timeUs =
+                            durationUs == MediaParser.SeekMap.UNKNOWN_DURATION
+                                    ? 0
+                                    : (durationUs * j) / 3;
+                    MediaParser.SeekPoint seekPoint = seekMap.getSeekPoints(timeUs).first;
+                    inputReader.reset();
+                    inputReader.setPosition((int) seekPoint.position);
+                    mediaParser.seek(seekPoint);
+                    while (mediaParser.advance(inputReader)) {
+                        // Do nothing.
+                    }
+                    if (durationUs == MediaParser.SeekMap.UNKNOWN_DURATION) {
+                        break;
+                    }
                 }
             }
+        } finally {
+            mediaParser.release();
         }
-        mediaParser.release();
     }
 
     private static MockMediaParserInputReader getInputReader(String assetPath) throws IOException {
