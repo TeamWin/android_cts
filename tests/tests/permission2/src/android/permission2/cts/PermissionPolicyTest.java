@@ -407,6 +407,9 @@ public class PermissionPolicyTest {
                 case "recents": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_RECENTS;
                 } break;
+                case "role": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_ROLE;
+                } break;
             }
         }
         return protectionLevel;
