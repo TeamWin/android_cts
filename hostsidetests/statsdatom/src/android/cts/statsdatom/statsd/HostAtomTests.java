@@ -112,8 +112,8 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         DeviceUtils.turnScreenOn(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         DeviceUtils.turnScreenOff(getDevice());
-        // Ensure that the screen off atom is pushed before the config is uploaded
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+        // Ensure that the screen on/off atoms are pushed before the config is uploaded.
+        Thread.sleep(5_000);
 
         final int atomTag = Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER;
 
@@ -443,26 +443,6 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getBatteryLevel().hasBatteryLevel()).isTrue();
         if (DeviceUtils.hasBattery(getDevice())) {
             assertThat(atom.getBatteryLevel().getBatteryLevel()).isIn(Range.openClosed(0, 100));
-        }
-    }
-
-    // This test is for the pulled battery charge count atom.
-    public void testBatteryCycleCount() throws Exception {
-        if (DeviceUtils.hasFeature(getDevice(), FEATURE_WATCH)) return;
-
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.BATTERY_CYCLE_COUNT_FIELD_NUMBER);
-
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-
-        List<Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
-
-        assertThat(data).isNotEmpty();
-        Atom atom = data.get(0);
-        assertThat(atom.getBatteryCycleCount().hasCycleCount()).isTrue();
-        if (DeviceUtils.hasBattery(getDevice())) {
-            assertThat(atom.getBatteryCycleCount().getCycleCount()).isAtLeast(0);
         }
     }
 
