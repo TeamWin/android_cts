@@ -494,6 +494,19 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/143464314
+     * Vulnerability Behaviour: SIGSEGV in self / EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2020-10")
+    @Test
+    public void testPocCVE_2020_0213() throws Exception {
+        String inputFiles[] = {"cve_2020_0213.hevc", "cve_2020_0213_info.txt"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0213",
+            AdbUtils.TMP_PATH + inputFiles[0] + " " + AdbUtils.TMP_PATH + inputFiles[1],
+            inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/166268541
      * Vulnerability Behaviour: SIGSEGV in media.swcodec
      */
