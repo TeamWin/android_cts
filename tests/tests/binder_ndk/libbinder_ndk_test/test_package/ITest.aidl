@@ -34,6 +34,8 @@ interface ITest {
     const int kZero = 0;
     const int kOne = 1;
     const int kOnes = 0xffffffff;
+    const byte kByteOne = 1;
+    const long kLongOnes = 0xffffffffffffffff;
     const String kEmpty = "";
     const String kFoo = "foo";
 
