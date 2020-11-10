@@ -206,6 +206,8 @@ TEST_P(NdkBinderTest_Aidl, Constants) {
   ASSERT_EQ(0, ITest::kZero);
   ASSERT_EQ(1, ITest::kOne);
   ASSERT_EQ(0xffffffff, ITest::kOnes);
+  ASSERT_EQ(1, ITest::kByteOne);
+  ASSERT_EQ(0xffffffffffffffff, ITest::kLongOnes);
   ASSERT_EQ(std::string(""), ITest::kEmpty);
   ASSERT_EQ(std::string("foo"), ITest::kFoo);
 }
