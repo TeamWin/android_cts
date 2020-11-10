@@ -16,10 +16,11 @@
 
 package com.android.cts.input;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.util.ArrayMap;
+import android.util.SparseArray;
 import android.view.InputDevice;
 import android.view.InputEvent;
 import android.view.KeyEvent;
@@ -186,6 +187,30 @@ public class InputJsonParser {
         }
     }
 
+    private List<Long> getLongList(JSONArray array) {
+        List<Long> data = new ArrayList<Long>();
+        for (int i = 0; i < array.length(); i++) {
+            try {
+                data.add(array.getLong(i));
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not read array index " + i);
+            }
+        }
+        return data;
+    }
+
+    private List<Integer> getIntList(JSONArray array) {
+        List<Integer> data = new ArrayList<Integer>();
+        for (int i = 0; i < array.length(); i++) {
+            try {
+                data.add(array.getInt(i));
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not read array index " + i);
+            }
+        }
+        return data;
+    }
+
     private InputEvent parseInputEvent(int testCaseNumber, int source, JSONObject entry) {
         try {
             InputEvent event;
@@ -252,7 +277,7 @@ public class InputJsonParser {
 
                 JSONArray durationsArray = testcaseEntry.getJSONArray("durations");
                 JSONArray amplitudesArray = testcaseEntry.getJSONArray("amplitudes");
-                assertTrue(durationsArray.length() == amplitudesArray.length());
+                assertEquals(durationsArray.length(), amplitudesArray.length());
                 testData.durations = new ArrayList<Long>();
                 testData.amplitudes = new ArrayList<Integer>();
                 for (int i = 0; i < durationsArray.length(); i++) {
@@ -287,15 +312,42 @@ public class InputJsonParser {
             UinputVibratorTestData testData = new UinputVibratorTestData();
             try {
                 JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
-
                 JSONArray durationsArray = testcaseEntry.getJSONArray("durations");
                 JSONArray amplitudesArray = testcaseEntry.getJSONArray("amplitudes");
-                assertTrue(durationsArray.length() == amplitudesArray.length());
-                testData.durations = new ArrayList<Long>();
-                testData.amplitudes = new ArrayList<Integer>();
-                for (int i = 0; i < durationsArray.length(); i++) {
-                    testData.durations.add(durationsArray.getLong(i));
-                    testData.amplitudes.add(amplitudesArray.getInt(i));
+                assertEquals("Duration array length not equal to amplitude array length",
+                        durationsArray.length(), amplitudesArray.length());
+                testData.durations = getLongList(durationsArray);
+                testData.amplitudes = getIntList(amplitudesArray);
+                tests.add(testData);
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not process entry " + testCaseNumber);
+            }
+        }
+        return tests;
+    }
+
+    /**
+     * Read json resource, and return a {@code List} of UinputVibratorManagerTestData, which
+     * contains the vibrator Ids and FF effect of durations and amplitudes.
+     */
+    public List<UinputVibratorManagerTestData> getUinputVibratorManagerTestData(int resourceId) {
+        JSONArray json = getJsonArrayFromResource(resourceId);
+        List<UinputVibratorManagerTestData> tests = new ArrayList<UinputVibratorManagerTestData>();
+        for (int testCaseNumber = 0; testCaseNumber < json.length(); testCaseNumber++) {
+            UinputVibratorManagerTestData testData = new UinputVibratorManagerTestData();
+            try {
+                JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
+                JSONArray durationsArray = testcaseEntry.getJSONArray("durations");
+                testData.durations = getLongList(durationsArray);
+                testData.amplitudes = new SparseArray<>();
+                JSONObject amplitudesObj = testcaseEntry.getJSONObject("amplitudes");
+                for (int i = 0; i < amplitudesObj.names().length(); i++) {
+                    String vibratorId = amplitudesObj.names().getString(i);
+                    JSONArray amplitudesArray = amplitudesObj.getJSONArray(vibratorId);
+                    testData.amplitudes.append(Integer.valueOf(vibratorId),
+                            getIntList(amplitudesArray));
+                    assertEquals("Duration array length not equal to amplitude array length",
+                            durationsArray.length(), amplitudesArray.length());
                 }
                 tests.add(testData);
             } catch (JSONException e) {

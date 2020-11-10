@@ -185,4 +185,67 @@ public class InputHidTestCase extends InputTestCase {
         }
     }
 
+    public void testInputVibratorManagerEvents(int resourceId) {
+        final List<HidVibratorTestData> tests = mParser.getHidVibratorTestData(resourceId);
+
+        for (HidVibratorTestData test : tests) {
+            assertEquals(test.durations.size(), test.amplitudes.size());
+            assertTrue(test.durations.size() > 0);
+
+            final long timeoutMills;
+            final long totalVibrations = test.durations.size();
+            final VibrationEffect effect;
+            if (test.durations.size() == 1) {
+                long duration = test.durations.get(0);
+                int amplitude = test.amplitudes.get(0);
+                effect = VibrationEffect.createOneShot(duration, amplitude);
+                // Set timeout to be 2 times of the effect duration.
+                timeoutMills = duration * 2;
+            } else {
+                long[] durations = test.durations.stream().mapToLong(Long::longValue).toArray();
+                int[] amplitudes = test.amplitudes.stream().mapToInt(Integer::intValue).toArray();
+                effect = VibrationEffect.createWaveform(
+                    durations, amplitudes, -1);
+                // Set timeout to be 2 times of the effect total duration.
+                timeoutMills = Arrays.stream(durations).sum() * 2;
+            }
+
+            final Vibrator vibrator = getVibrator();
+            assertNotNull(vibrator);
+            // Start vibration
+            vibrator.vibrate(effect);
+            final long startTime = SystemClock.elapsedRealtime();
+            List<HidResultData> results = new ArrayList<>();
+            int vibrationCount = 0;
+            // Check the vibration ffLeft and ffRight amplitude to be expected.
+            while (vibrationCount < totalVibrations
+                    && SystemClock.elapsedRealtime() - startTime < timeoutMills) {
+                SystemClock.sleep(1000);
+                try {
+                    results = mHidDevice.getResults(mDeviceId, UHID_EVENT_TYPE_UHID_OUTPUT);
+                    if (results.size() < totalVibrations) {
+                        continue;
+                    }
+                    vibrationCount = 0;
+                    for (int i = 0; i < results.size(); i++) {
+                        HidResultData result = results.get(i);
+                        if (result.deviceId == mDeviceId && verifyReportData(test, result)) {
+                            int ffLeft = result.reportData[test.leftFfIndex] & 0xFF;
+                            int ffRight = result.reportData[test.rightFfIndex] & 0xFF;
+                            Log.v(TAG, "eventId=" + result.eventId + " reportType="
+                                    + result.reportType + " left=" + ffLeft + " right=" + ffRight);
+                            // Check the amplitudes of FF effect are expected.
+                            if (ffLeft == test.amplitudes.get(vibrationCount)
+                                    && ffRight == test.amplitudes.get(vibrationCount)) {
+                                vibrationCount++;
+                            }
+                        }
+                    }
+                } catch (IOException ex) {
+                    throw new RuntimeException("Could not get JSON results from HidDevice");
+                }
+            }
+            assertEquals(vibrationCount, totalVibrations);
+        }
+    }
 }
