@@ -603,12 +603,13 @@ public class TunerTest {
         e.getDataLength();
         int mpuSequenceNumber = e.getMpuSequenceNumber();
         long pts = e.getPts();
-        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
-            assertNotEquals(mpuSequenceNumber, Tuner.INVALID_MMTP_RECORD_EVENT_MPT_SEQUENCE_NUM);
-            assertNotEquals(pts, Tuner.INVALID_TIMESTAMP);
-        } else {
+        int firstMbInSlice = e.getFirstMbInSlice();
+        int tsIndexMask = e.getTsIndexMask();
+        if (!TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
             assertEquals(mpuSequenceNumber, Tuner.INVALID_MMTP_RECORD_EVENT_MPT_SEQUENCE_NUM);
             assertEquals(pts, Tuner.INVALID_TIMESTAMP);
+            assertEquals(firstMbInSlice, Tuner.INVALID_FIRST_MACROBLOCK_IN_SLICE);
+            assertEquals(tsIndexMask, 0);
         }
     }
 
@@ -645,10 +646,10 @@ public class TunerTest {
         e.getScIndexMask();
         e.getDataLength();
         long pts = e.getPts();
-        if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
-            assertNotEquals(pts, Tuner.INVALID_TIMESTAMP);
-        } else {
+        int firstMbInSlice = e.getFirstMbInSlice();
+        if (!TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
             assertEquals(pts, Tuner.INVALID_TIMESTAMP);
+            assertEquals(firstMbInSlice, Tuner.INVALID_FIRST_MACROBLOCK_IN_SLICE);
         }
     }
 
