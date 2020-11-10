@@ -1,0 +1,3 @@
+# Bug component: 27091
+include platform/packages/apps/Settings:OWNERS
+tmfang@google.com
