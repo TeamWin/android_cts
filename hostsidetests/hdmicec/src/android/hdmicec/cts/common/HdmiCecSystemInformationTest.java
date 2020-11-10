@@ -92,8 +92,12 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
 
     /**
      * Test HF4-2-12
-     * Tests that the device sends a {@code <CEC Version>} with correct version argument in response
-     * to a {@code <Get CEC Version>}
+     * Tests that the device sends a {@code <CEC Version>} with correct version argument in
+     * response
+     * to a {@code <Get CEC Version>}.
+     *
+     * Also verifies that the CEC version reported in {@code <Report Features>} matches the CEC
+     * version reported in {@code <CEC Version>}.
      */
     @Test
     public void cect_hf4_2_12_GiveCecVersion() throws Exception {
@@ -101,9 +105,14 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
         setCecVersion(cecVersion);
 
         hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, CecOperand.GET_CEC_VERSION);
-        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.RECORDER_1,
+        String reportCecVersion = hdmiCecClient.checkExpectedOutput(LogicalAddress.RECORDER_1,
                 CecOperand.CEC_VERSION);
-        assertThat(CecMessage.getParams(message)).isEqualTo(cecVersion);
+        assertThat(CecMessage.getParams(reportCecVersion)).isEqualTo(cecVersion);
+
+        hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, CecOperand.GIVE_FEATURES);
+        String reportFeatures = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
+                CecOperand.REPORT_FEATURES);
+        assertThat(CecMessage.getParams(reportFeatures, 2)).isEqualTo(cecVersion);
     }
 
     private void setCecVersion(int cecVersion) throws Exception {
