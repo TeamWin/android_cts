@@ -523,7 +523,7 @@ def main():
             id_combo_string += ItsSession.CAMERA_ID_TOKENIZER + id_combo.sub_id
             scenes = [scene for scene in scenes if HIDDEN_PHYSICAL_CAMERA_TESTS[scene]]
         # Loop capturing images until user confirm test scene is correct
-        camera_id_arg = "camera=" + id_combo.id
+        camera_id_arg = "camera=" + id_combo_string
         print "Preparing to run ITS on camera", id_combo_string, "for scenes ", scenes
 
         os.mkdir(os.path.join(topdir, id_combo_string))
