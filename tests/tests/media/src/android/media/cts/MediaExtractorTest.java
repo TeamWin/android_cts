@@ -133,9 +133,7 @@ public class MediaExtractorTest extends AndroidTestCase {
         }
     }
 
-    public void SKIP_testExtractorFailsIfMediaDataSourceReturnsAnError() throws Exception {
-        // duplicate of CtsMediaV2TestCases:ExtractorUnitTest$TestApi
-        // #testIfInvalidDataSourceIsRejectedBySetDataSource
+    public void testExtractorFailsIfMediaDataSourceReturnsAnError() throws Exception {
         TestMediaDataSource dataSource = getDataSourceFor("testvideo.3gp");
         dataSource.returnFromReadAt(-2);
         try {
