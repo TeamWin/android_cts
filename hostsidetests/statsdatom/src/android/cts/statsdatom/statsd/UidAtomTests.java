@@ -229,6 +229,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
         assertThat(atom.getForegroundState().getNumber())
                 .isEqualTo(AppCrashOccurred.ForegroundState.FOREGROUND_VALUE);
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        // TODO(b/172866626): add tests for incremental packages that crashed during loading
+        assertFalse(atom.getIsPackageLoading());
     }
 
     public void testAppStartOccurred() throws Exception {
@@ -1443,6 +1445,8 @@ public class UidAtomTests extends DeviceAtomTestCase {
                 .isEqualTo(ANROccurred.ForegroundState.FOREGROUND_VALUE);
         assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        // TODO(b/172866626): add tests for incremental packages that ANR'd during loading
+        assertFalse(atom.getIsPackageLoading());
     }
 
     public void testWriteRawTestAtom() throws Exception {
