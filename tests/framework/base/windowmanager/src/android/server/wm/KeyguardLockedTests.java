@@ -37,6 +37,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
@@ -46,6 +47,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -296,6 +298,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardPipActivity() throws Exception {
+        assumeFalse("Skip test: Keyguard cannot be dismissed in Automotive",
+                FeatureUtil.isAutomotive());
         assumeTrue(supportsPip());
 
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
