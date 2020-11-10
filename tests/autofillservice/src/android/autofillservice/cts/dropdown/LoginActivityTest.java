@@ -362,8 +362,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
                 .setPresentation(createPresentation("THE DUDE"))
                 .build());
 
-        mActivity.forceAutofillOnUsername();
-        mUiBot.waitForIdleSync();
+        mUiBot.waitForWindowChange(() -> mActivity.forceAutofillOnUsername());
 
         final FillRequest secondRequest = sReplier.getNextFillRequest();
         assertHasFlags(secondRequest.flags, FLAG_MANUAL_REQUEST);
