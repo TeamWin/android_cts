@@ -38,7 +38,7 @@ java_library {
     static_libs: [
         "androidx.test.core",
         "androidx.test.runner",
-        "android-support-test",
+        "androidx.test.rules",
         "compatibility-device-util-axt",
     ],
     sdk_version: "test_current",
