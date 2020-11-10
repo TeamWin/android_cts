@@ -84,6 +84,8 @@ interface ITest {
   const int kZero = 0;
   const int kOne = 1;
   const int kOnes = -1;
+  const byte kByteOne = 1;
+  const long kLongOnes = -1;
   const String kEmpty = "";
   const String kFoo = "foo";
 }
