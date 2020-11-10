@@ -179,7 +179,9 @@ public class CapturedActivity extends Activity {
             unbindService(mConnection);
             mProjectionServiceBound = false;
         }
-        mSettingsSession.close();
+        if(mSettingsSession != null) {
+            mSettingsSession.close();
+        }
     }
 
     @Override
