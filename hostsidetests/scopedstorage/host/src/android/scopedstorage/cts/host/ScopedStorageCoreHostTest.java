@@ -20,9 +20,9 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.tradefed.device.contentprovider.ContentProviderHandler;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
-import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +36,8 @@ import org.junit.runner.RunWith;
 @AppModeFull
 public class ScopedStorageCoreHostTest extends BaseHostJUnit4Test {
     private boolean mIsExternalStorageSetup = false;
+
+    private ContentProviderHandler mContentProviderHandler;
 
     /**
      * Runs the given phase of ScopedStorageTest by calling into the device.
@@ -60,6 +62,11 @@ public class ScopedStorageCoreHostTest extends BaseHostJUnit4Test {
 
     @Before
     public void setup() throws Exception {
+        // Set up content provider. This would install android.tradefed.contentprovider
+        // which is used to create and delete files/Dir on device side test.
+        mContentProviderHandler = new ContentProviderHandler(getDevice());
+        mContentProviderHandler.setUp();
+
         setupExternalStorage();
         executeShellCommand("mkdir /sdcard/Android/data/com.android.shell -m 2770");
         executeShellCommand("mkdir /sdcard/Android/data/com.android.shell/files -m 2770");
@@ -73,6 +80,7 @@ public class ScopedStorageCoreHostTest extends BaseHostJUnit4Test {
 
     @After
     public void tearDown() throws Exception {
+        mContentProviderHandler.tearDown();
         executeShellCommand("rm -r /sdcard/Android/data/com.android.shell");
     }
 
