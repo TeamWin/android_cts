@@ -104,12 +104,6 @@ object PipMenu {
     const val ACTION_CLOSE = "PipNotification.close"
 }
 
-object TVNotificationExtender {
-    const val EXTRA_TV_EXTENDER = "android.tv.EXTENSIONS"
-    const val EXTRA_CONTENT_INTENT = "content_intent"
-    const val EXTRA_DELETE_INTENT = "delete_intent"
-}
-
 object ResourceNames {
     const val SYSTEM_UI_CTS_PACKAGE = "android.systemui.cts"
     const val SYSTEM_UI_PACKAGE = "com.android.systemui"
@@ -121,11 +115,4 @@ object ResourceNames {
     const val ID_PIP_MENU_FULLSCREEN_BUTTON = "$SYSTEM_UI_PACKAGE:id/full_button"
     const val ID_PIP_MENU_PLAY_PAUSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/play_pause_button"
     const val ID_PIP_MENU_CUSTOM_BUTTON = "$SYSTEM_UI_PACKAGE:id/button"
-}
-
-object ShellCommands {
-    /** Execute this with the component identifier to grant notification access. */
-    const val CMD_TEMPLATE_NOTIFICATION_ALLOW_LISTENER = "cmd notification allow_listener %s"
-    /** Execute this with the component identifier to remove notification access. */
-    const val CMD_TEMPLATE_NOTIFICATION_DISALLOW_LISTENER = "cmd notification disallow_listener %s"
 }
