@@ -43,3 +43,9 @@ android_test {
 
     data: [":CtsProviderGalleryTestApp"],
 }
+
+filegroup {
+    name: "CtsProviderTestUtils",
+    srcs: ["src/android/provider/cts/ProviderTestUtils.java",
+           "src/android/provider/cts/media/MediaStoreUtils.java"],
+}
