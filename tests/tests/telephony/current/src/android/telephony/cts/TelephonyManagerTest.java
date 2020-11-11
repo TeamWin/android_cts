@@ -1249,6 +1249,11 @@ public class TelephonyManagerTest {
             return;
         }
 
+        // mc and meid should either be null or supported. empty string is not expected even if
+        // the device does not support mc/meid.
+        assertNotEquals("", mc);
+        assertNotEquals("", meid);
+
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
                 assertEquals(meid.substring(0, 8), mc);
