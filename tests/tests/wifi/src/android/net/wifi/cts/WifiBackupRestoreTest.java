@@ -414,6 +414,8 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
                 .that(actual.getIpConfiguration()).isEqualTo(expected.getIpConfiguration());
         assertWithMessage("Network: " + actual.toString())
                 .that(actual.meteredOverride).isEqualTo(expected.meteredOverride);
+        assertWithMessage("Network: " + actual.toString())
+                .that(actual.getProfileKey()).isEqualTo(expected.getProfileKey());
     }
 
     private void testRestoreFromBackupData(
