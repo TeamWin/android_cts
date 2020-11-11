@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-android_test {
-    name: "CtsPackageUninstallTestCases",
+android_test_helper_app {
+    name: "CtsSelfUninstallingTestApp",
     defaults: ["cts_defaults"],
-    static_libs: [
-        "ub-uiautomator",
-        "androidx.test.rules",
-        "compatibility-device-util-axt",
-        "platform-test-annotations",
-        "cts-wm-util",
-    ],
-    resource_dirs: ["res"],
+
+    sdk_version: "current",
+
     srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
-    // Tag this module as a cts test artifact
+
+    static_libs: [
+        "androidx.core_core",
+    ],
+
+    // tag this module as a cts test artifact
     test_suites: [
+        "arcts",
         "cts",
+        "vts10",
         "general-tests",
     ],
 }
