@@ -38,6 +38,7 @@ import java.util.concurrent.Executor;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
+@VirtualDeviceNotSupported
 public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
     private static final String TEST_SSID = "\"testSsid\"";
     private static final String TEST_PASSPHRASE = "\"testPassword\"";
