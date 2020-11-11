@@ -23,6 +23,7 @@ java_test_host {
         "src/**/devicepower/*.java",
         "src/**/gnss/*.java",
         "src/**/integrity/*.java",
+        "src/**/notification/*.java",
         "src/**/statsd/*.java",
         "src/**/telephony/*.java",
     ],
