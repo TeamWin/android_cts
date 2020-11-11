@@ -751,25 +751,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         }
     }
 
-    public void testWakeupAlarm() throws Exception {
-        // For automotive, all wakeup alarm becomes normal alarm. So this
-        // test does not work.
-        if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
-        final int atomTag = Atom.WAKEUP_ALARM_OCCURRED_FIELD_NUMBER;
-
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useUidAttributionChain=*/true);
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWakeupAlarm");
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isAtLeast(1);
-        for (int i = 0; i < data.size(); i++) {
-            WakeupAlarmOccurred wao = data.get(i).getAtom().getWakeupAlarmOccurred();
-            assertThat(wao.getTag()).isEqualTo("*walarm*:android.cts.statsdatom.testWakeupAlarm");
-            assertThat(wao.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
-        }
-    }
-
     public void testWifiLockHighPerf() throws Exception {
         if (!DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
         if (DeviceUtils.hasFeature(getDevice(), FEATURE_PC)) return;
