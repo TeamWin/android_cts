@@ -44,11 +44,11 @@ import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_NUMERATOR
 import android.systemui.tv.cts.PipMenu
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_FULLSCREEN_BUTTON
-import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_PLAY_PAUSE_BUTTON
 import android.util.Size
 import android.view.Gravity
 import android.view.KeyEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.ThrowingSupplier
 import org.junit.After
@@ -263,7 +263,8 @@ class BasicPipTests : PipTestBase() {
         assertPipMenuOpen()
 
         // the media control button has to be present in the pip menu
-        locateByResourceName(ID_PIP_MENU_PLAY_PAUSE_BUTTON)
+        uiDevice.wait(Until.findObject(menuMediaButtonSelector), defaultTimeout)
+                ?: error("Could not find media action buttons")
     }
 
     /** Open an app's pip menu then press back and ensure the app is back in pip. */
