@@ -80,6 +80,12 @@ public class BatteryUtils {
     }
 
     private static void waitForPlugStatus(boolean pluggedIn) throws Exception {
+        if (InstrumentationRegistry.getContext().getPackageManager().isInstantApp()) {
+            // Instant apps are not allowed to query ACTION_BATTERY_CHANGED. Add short sleep as
+            // best-effort wait for status.
+            Thread.sleep(2000);
+            return;
+        }
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         waitUntil("Device still " + (pluggedIn ? " not plugged" : " plugged"),
                 () -> {
