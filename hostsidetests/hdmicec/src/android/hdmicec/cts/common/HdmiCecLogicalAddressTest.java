@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package android.hdmicec.cts.playback;
+package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RequiredPropertyRule;
-import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -41,29 +38,24 @@ public final class HdmiCecLogicalAddressTest extends BaseHdmiCecCtsTest {
 
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
 
-    public HdmiCecLogicalAddressTest() {
-        super(PLAYBACK_DEVICE);
-    }
-
     @Rule
     public RuleChain ruleChain =
         RuleChain
             .outerRule(CecRules.requiresCec(this))
             .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, PLAYBACK_DEVICE))
             .around(hdmiCecClient);
 
     /**
-     * Test 10.2.3-1
-     * Tests that the device broadcasts a <REPORT_PHYSICAL_ADDRESS> after a reboot and that the
-     * device has taken the logical address "4".
+     * Test 10.2.1-1, 10.2.3-1, 10.2.5-1
+     * <p>Tests that the device broadcasts a {@code <REPORT_PHYSICAL_ADDRESS>} after a reboot and
+     * that the device has taken the correct logical address.
      */
     @Test
-    public void cect_10_2_3_1_RebootLogicalAddress() throws Exception {
+    public void cect_RebootLogicalAddress() throws Exception {
         ITestDevice device = getDevice();
-        device.executeShellCommand("reboot");
-        device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+        device.reboot();
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
-        assertThat(CecMessage.getSource(message)).isEqualTo(PLAYBACK_DEVICE);
+        int deviceType = CecMessage.getParams(message, 4, 6);
+        assertThat(CecMessage.getSource(message).getDeviceType()).isEqualTo(deviceType);
     }
 }
