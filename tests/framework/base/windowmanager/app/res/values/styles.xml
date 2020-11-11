@@ -25,6 +25,7 @@
         <item name="android:windowShowWallpaper">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowSwipeToDismiss">false</item>
     </style>
     <style name="TranslucentTheme">
         <item name="android:windowIsTranslucent">true</item>
@@ -39,12 +40,19 @@
     </style>
     <style name="OpaqueTheme">
         <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowSwipeToDismiss">false</item>
         <item name="android:windowIsFloating">false</item>
     </style>
     <style name="NoPreview">
         <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowSwipeToDismiss">false</item>
     </style>
     <style name="SplashscreenTheme" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowSplashscreenContent">@drawable/red</item>
+        <item name="android:windowSwipeToDismiss">false</item>
+    </style>
+
+    <style name="Theme_NoSwipeDismiss">
+        <item name="android:windowSwipeToDismiss">false</item>
     </style>
 </resources>
