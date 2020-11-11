@@ -603,7 +603,7 @@ public class TunerTest {
         e.getDataLength();
         int mpuSequenceNumber = e.getMpuSequenceNumber();
         long pts = e.getPts();
-        int firstMbInSlice = e.getFirstMbInSlice();
+        int firstMbInSlice = e.getFirstMacroblockInSlice();
         int tsIndexMask = e.getTsIndexMask();
         if (!TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
             assertEquals(mpuSequenceNumber, Tuner.INVALID_MMTP_RECORD_EVENT_MPT_SEQUENCE_NUM);
@@ -646,7 +646,7 @@ public class TunerTest {
         e.getScIndexMask();
         e.getDataLength();
         long pts = e.getPts();
-        int firstMbInSlice = e.getFirstMbInSlice();
+        int firstMbInSlice = e.getFirstMacroblockInSlice();
         if (!TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
             assertEquals(pts, Tuner.INVALID_TIMESTAMP);
             assertEquals(firstMbInSlice, Tuner.INVALID_FIRST_MACROBLOCK_IN_SLICE);
