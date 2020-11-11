@@ -163,6 +163,10 @@ public class CarrierConfigManagerTest {
             assertEquals("KEY_SUPPORT_ADHOC_CONFERENCE_CALLS_BOOL doesn't match static default.",
                     config.getBoolean(CarrierConfigManager.KEY_SUPPORT_ADHOC_CONFERENCE_CALLS_BOOL),
                     false);
+
+            assertEquals("KEY_CARRIER_USSD_METHOD_INT doesn't match static default.",
+                    config.getInt(CarrierConfigManager.KEY_CARRIER_USSD_METHOD_INT),
+                            CarrierConfigManager.USSD_OVER_CS_PREFERRED);
         }
 
         // These key should return default values if not customized.
