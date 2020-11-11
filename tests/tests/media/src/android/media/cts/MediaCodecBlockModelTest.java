@@ -55,9 +55,8 @@ import java.util.Set;;
 import java.util.UUID;;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 /**
  * MediaCodec tests with CONFIGURE_FLAG_USE_BLOCK_MODEL.
@@ -179,13 +178,17 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
     public void testFormatChange() throws InterruptedException {
         if (!MediaUtils.check(mIsAtLeastR, "test needs Android 11")) return;
         List<FormatChangeEvent> events = new ArrayList<>();
-        runThread(() -> runDecodeShortVideo(
+        Result result = runThread(() -> runDecodeShortVideo(
                 getMediaExtractorForMimeType(INPUT_RESOURCE, "video/"),
                 LAST_BUFFER_TIMESTAMP_US,
                 true /* obtainBlockForEachBuffer */,
                 MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, 320, 240),
                 events,
                 null /* sessionId */));
+        if (result == Result.SKIP) {
+            MediaUtils.skipTest("skipped");
+            return;
+        }
         int width = 320;
         int height = 240;
         for (FormatChangeEvent event : events) {
@@ -200,11 +203,17 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         assertEquals("Height should have been updated", 360, height);
     }
 
-    private void runThread(BooleanSupplier supplier) throws InterruptedException {
-        final AtomicBoolean completed = new AtomicBoolean(false);
+    private enum Result {
+        SUCCESS,
+        FAIL,
+        SKIP,
+    }
+
+    private Result runThread(Supplier<Result> supplier) throws InterruptedException {
+        final AtomicReference<Result> result = new AtomicReference<>(Result.FAIL);
         Thread thread = new Thread(new Runnable() {
             public void run() {
-                completed.set(supplier.getAsBoolean());
+                result.set(supplier.get());
             }
         });
         final AtomicReference<Throwable> throwable = new AtomicReference<>();
@@ -217,7 +226,8 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         if (t != null) {
             throw new AssertionError("There was an error while running the thread", t);
         }
-        assertTrue("timed out decoding to end-of-stream", completed.get());
+        assertTrue("timed out decoding to end-of-stream", result.get() != Result.FAIL);
+        return result.get();
     }
 
     private static class LinearInputBlock {
@@ -452,7 +462,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         final int index;
     }
 
-    private boolean runDecodeShortVideo(
+    private Result runDecodeShortVideo(
             String inputResource,
             long lastBufferTimestampUs,
             boolean obtainBlockForEachBuffer) {
@@ -495,7 +505,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         return byteArray;
     }
 
-    private boolean runDecodeShortEncryptedVideo(boolean obtainBlockForEachBuffer) {
+    private Result runDecodeShortEncryptedVideo(boolean obtainBlockForEachBuffer) {
         MediaExtractor extractor = new MediaExtractor();
 
         try (final MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID)) {
@@ -517,7 +527,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             MediaDrmClearkeyTest.retrieveKeys(
                     drm, "cenc", sessionId, DRM_INIT_DATA, MediaDrm.KEY_TYPE_STREAMING,
                     new byte[][] { CLEAR_KEY_CENC });
-            boolean result = runDecodeShortVideo(
+            Result result = runDecodeShortVideo(
                     extractor, ENCRYPTED_CONTENT_LAST_BUFFER_TIMESTAMP_US,
                     obtainBlockForEachBuffer, null /* format */, null /* events */, sessionId);
             drm.closeSession(sessionId);
@@ -545,7 +555,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
     }
 
-    private boolean runDecodeShortVideo(
+    private Result runDecodeShortVideo(
             MediaExtractor mediaExtractor,
             Long lastBufferTimestampUs,
             boolean obtainBlockForEachBuffer,
@@ -573,7 +583,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             String[] codecs = MediaUtils.getDecoderNames(true /* isGoog */, mediaFormat);
             if (codecs.length == 0) {
                 Log.i(TAG, "No decoder found for format= " + mediaFormat);
-                return true;
+                return Result.SKIP;
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
@@ -582,7 +592,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 crypto.setMediaDrmSession(sessionId);
             }
             List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
-            boolean result = runComponentWithLinearInput(
+            Result result = runComponentWithLinearInput(
                     mediaCodec,
                     crypto,
                     mediaFormat,
@@ -596,7 +606,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                             .setContentEncrypted(sessionId != null)
                             .build(),
                     new SurfaceOutputSlotListener(outputSurface, timestampList, events));
-            if (result) {
+            if (result == Result.SUCCESS) {
                 assertTrue("Timestamp should match between input / output: " + timestampList,
                         timestampList.isEmpty());
             }
@@ -622,7 +632,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
     }
 
-    private boolean runDecodeShortAudio(
+    private Result runDecodeShortAudio(
             String inputResource,
             long lastBufferTimestampUs,
             boolean obtainBlockForEachBuffer) {
@@ -636,12 +646,12 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             String[] codecs = MediaUtils.getDecoderNames(true /* isGoog */, mediaFormat);
             if (codecs.length == 0) {
                 Log.i(TAG, "No decoder found for format= " + mediaFormat);
-                return true;
+                return Result.SKIP;
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
             List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
-            boolean result = runComponentWithLinearInput(
+            Result result = runComponentWithLinearInput(
                     mediaCodec,
                     null,  // crypto
                     mediaFormat,
@@ -654,7 +664,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                             .setTimestampQueue(timestampList)
                             .build(),
                     new DummyOutputSlotListener(false /* graphic */, timestampList));
-            if (result) {
+            if (result == Result.SUCCESS) {
                 assertTrue("Timestamp should match between input / output: " + timestampList,
                         timestampList.isEmpty());
             }
@@ -674,7 +684,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
     }
 
-    private boolean runEncodeShortAudio() {
+    private Result runEncodeShortAudio() {
         MediaExtractor mediaExtractor = null;
         MediaCodec mediaCodec = null;
         try {
@@ -688,12 +698,12 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             String[] codecs = MediaUtils.getEncoderNames(true /* isGoog */, mediaFormat);
             if (codecs.length == 0) {
                 Log.i(TAG, "No encoder found for format= " + mediaFormat);
-                return true;
+                return Result.SKIP;
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
             List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
-            boolean result = runComponentWithLinearInput(
+            Result result = runComponentWithLinearInput(
                     mediaCodec,
                     null,  // crypto
                     mediaFormat,
@@ -705,7 +715,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                             .setTimestampQueue(timestampList)
                             .build(),
                     new DummyOutputSlotListener(false /* graphic */, timestampList));
-            if (result) {
+            if (result == Result.SUCCESS) {
                 assertTrue("Timestamp should match between input / output: " + timestampList,
                         timestampList.isEmpty());
             }
@@ -725,7 +735,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
     }
 
-    private boolean runEncodeShortVideo() {
+    private Result runEncodeShortVideo() {
         final int kWidth = 176;
         final int kHeight = 144;
         final int kFrameRate = 15;
@@ -744,7 +754,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             String[] codecs = MediaUtils.getEncoderNames(true /* isGoog */, mediaFormat);
             if (codecs.length == 0) {
                 Log.i(TAG, "No encoder found for format= " + mediaFormat);
-                return true;
+                return Result.SKIP;
             }
             mediaCodec = MediaCodec.createByCodecName(codecs[0]);
 
@@ -757,7 +767,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                         kWidth, kHeight, HardwareBuffer.YCBCR_420_888, 1 /* layer */, usage)) {
                 Log.i(TAG, "HardwareBuffer doesn't support " + kWidth + "x" + kHeight
                         + "; YCBCR_420_888; usage(" + Long.toHexString(usage) + ")");
-                return true;
+                return Result.SKIP;
             }
 
             List<Long> timestampList = Collections.synchronizedList(new ArrayList<>());
@@ -797,7 +807,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 try {
                     event = queue.take();
                 } catch (InterruptedException e) {
-                    return false;
+                    return Result.FAIL;
                 }
 
                 if (event.input) {
@@ -865,7 +875,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
                 assertTrue("Timestamp should match between input / output: " + timestampList,
                         timestampList.isEmpty());
             }
-            return eos;
+            return eos ? Result.SUCCESS : Result.FAIL;
         } catch (IOException e) {
             throw new RuntimeException("error reading input resource", e);
         } catch (Exception e) {
@@ -883,7 +893,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
     }
 
-    private boolean runComponentWithLinearInput(
+    private Result runComponentWithLinearInput(
             MediaCodec mediaCodec,
             MediaCrypto crypto,
             MediaFormat mediaFormat,
@@ -941,7 +951,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
             try {
                 event = queue.take();
             } catch (InterruptedException e) {
-                return false;
+                return Result.FAIL;
             }
 
             if (event.input) {
@@ -952,7 +962,7 @@ public class MediaCodecBlockModelTest extends AndroidTestCase {
         }
 
         input.block.recycle();
-        return eos;
+        return eos ? Result.SUCCESS : Result.FAIL;
     }
 
     private MediaExtractor getMediaExtractorForMimeType(final String resource,
