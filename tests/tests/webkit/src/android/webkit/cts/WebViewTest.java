@@ -83,6 +83,8 @@ import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 import android.webkit.cts.WebViewSyncLoader.WaitForProgressClient;
 import android.widget.LinearLayout;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.util.concurrent.SettableFuture;
@@ -809,6 +811,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertEquals("false", mOnUiThread.evaluateJavascriptSync("'custom_property' in interface"));
     }
 
+    @FlakyTest(bugId = 171702662)
     public void testJavascriptInterfaceForClientPopup() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;

@@ -105,7 +105,7 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
 
     private void launchSettingsPage(Context ctx, String pageName) throws Exception {
         Intent intent = new Intent(pageName);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         ctx.startActivity(intent);
         Thread.sleep(TIMEOUT * 2);
     }

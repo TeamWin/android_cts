@@ -415,14 +415,6 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
-    public void testControlsSameSession() {
-        MediaController controller1 = new MediaController(mContext, mSession.getSessionToken());
-        MediaController controller2 = new MediaController(mContext, mSession.getSessionToken());
-
-        assertFalse(controller1.controlsSameSession(null));
-        assertTrue(controller1.controlsSameSession(controller2));
-    }
-
     private class MediaSessionCallback extends MediaSession.Callback {
         private long mSeekPosition;
         private long mQueueItemId;

@@ -32,6 +32,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -822,6 +824,7 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         assertEquals(callCount + 1, webViewClient.getClientCertRequestCount());
     }
 
+    @FlakyTest(bugId = 172332767)
     public void testIgnoreClientCertRequest() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;

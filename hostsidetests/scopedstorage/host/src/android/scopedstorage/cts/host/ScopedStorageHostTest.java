@@ -361,6 +361,16 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
         runDeviceTest("testScanUpdatesMetadataForRenamedHiddenFile");
     }
 
+    @Test
+    public void testClearPackageData() throws Exception {
+        grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
+        try {
+            runDeviceTest("testClearPackageData");
+        } finally {
+            revokePermissions("android.permission.READ_EXTERNAL_STORAGE");
+        }
+    }
+
     private void grantPermissions(String... perms) throws Exception {
         for (String perm : perms) {
             executeShellCommand("pm grant android.scopedstorage.cts " + perm);

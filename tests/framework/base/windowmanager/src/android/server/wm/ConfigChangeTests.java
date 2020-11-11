@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.StateLogger.logE;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -206,7 +207,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
 
     private void testRotation(ComponentName activityName, int rotationStep, int numRelaunch,
             int numConfigChange) {
-        launchActivity(activityName);
+        launchActivity(activityName, WINDOWING_MODE_FULLSCREEN);
         mWmState.computeState(activityName);
 
         final int initialRotation = 4 - rotationStep;

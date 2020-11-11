@@ -1823,7 +1823,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 Atom.BLOB_INFO_FIELD_NUMBER);
 
-        final long testStartTimeMs = System.currentTimeMillis();
+        final long testStartTimeMs = getDeviceTimeMs();
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBlobStore");
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
@@ -1832,7 +1832,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         // Add commit callback time to test end time to account for async execution
         final long testEndTimeMs =
-                System.currentTimeMillis() + BLOB_COMMIT_CALLBACK_TIMEOUT_SEC * 1000;
+                getDeviceTimeMs() + BLOB_COMMIT_CALLBACK_TIMEOUT_SEC * 1000;
 
         // Find the BlobInfo for the blob created in the test run
         AtomsProto.BlobInfo blobInfo = null;
@@ -2090,4 +2090,8 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         getDevice().executeShellCommand("settings put system screen_brightness " + brightness);
     }
 
+    private long getDeviceTimeMs() throws Exception {
+        String timeMs = getDevice().executeShellCommand("date +%s%3N");
+        return Long.parseLong(timeMs.trim());
+    }
 }
