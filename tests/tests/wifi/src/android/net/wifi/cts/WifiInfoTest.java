@@ -30,6 +30,8 @@ import android.net.wifi.WifiManager.WifiLock;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
+import androidx.core.os.BuildCompat;
+
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -227,6 +229,11 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
         assertThat(info1.getBSSID()).isEqualTo(TEST_BSSID);
         assertThat(info1.getRssi()).isEqualTo(TEST_RSSI);
         assertThat(info1.getNetworkId()).isEqualTo(TEST_NETWORK_ID);
+        if (BuildCompat.isAtLeastS()) {
+            assertFalse(info1.isOemPaid());
+            assertFalse(info1.isOemPrivate());
+            assertFalse(info1.isCarrierMerged());
+        }
 
         WifiInfo info2 = builder
                 .setNetworkId(TEST_NETWORK_ID2)

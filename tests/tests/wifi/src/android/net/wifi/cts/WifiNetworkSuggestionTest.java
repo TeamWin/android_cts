@@ -878,4 +878,74 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
         assertNull(suggestion.getEnterpriseConfig());
         assertEquals(passpointConfig, suggestion.getPasspointConfig());
     }
+
+    /**
+     * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
+     */
+    public void testBuilderWithCarrierMergedNetwork() throws Exception {
+        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
+            return;
+        }
+        WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
+        enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
+        enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
+        enterpriseConfig.setClientKeyEntryWithCertificateChain(CLIENT_SUITE_B_ECC_KEY,
+                new X509Certificate[] {CLIENT_SUITE_B_ECDSA_CERT});
+        enterpriseConfig.setAltSubjectMatch("domain.com");
+        WifiNetworkSuggestion suggestion =
+                createBuilderWithCommonParams()
+                        .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
+                        .setCarrierMerged(true)
+                        .build();
+        validateCommonParams(suggestion);
+        assertTrue(suggestion.isCarrierMerged());
+    }
+
+    /**
+     * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class with non enterprise
+     * network will fail.
+     */
+    public void testBuilderWithCarrierMergedNetworkWithNonEnterpriseNetwork() throws Exception {
+        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
+            return;
+        }
+
+        try {
+            createBuilderWithCommonParams()
+                    .setWpa2Passphrase(TEST_PASSPHRASE)
+                    .setCarrierMerged(true)
+                    .build();
+        } catch (IllegalStateException e) {
+            return;
+        }
+        fail("Did not receive expected IllegalStateException when tried to build a carrier merged "
+                + "network suggestion with non enterprise config");
+    }
+
+    /**
+     * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class with unmetered network
+     * will fail.
+     */
+    public void testBuilderWithCarrierMergedNetworkWithUnmeteredNetwork() throws Exception {
+        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
+            return;
+        }
+        WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
+        enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
+        enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
+        enterpriseConfig.setClientKeyEntryWithCertificateChain(CLIENT_SUITE_B_ECC_KEY,
+                new X509Certificate[] {CLIENT_SUITE_B_ECDSA_CERT});
+        enterpriseConfig.setAltSubjectMatch("domain.com");
+        try {
+            createBuilderWithCommonParams()
+                    .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
+                    .setCarrierMerged(true)
+                    .setIsMetered(false)
+                    .build();
+        } catch (IllegalStateException e) {
+            return;
+        }
+        fail("Did not receive expected IllegalStateException when tried to build a carrier merged "
+                + "network suggestion with unmetered config");
+    }
 }
