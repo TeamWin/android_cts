@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package android.hdmicec.cts.playback;
+package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RequiredPropertyRule;
-import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -39,31 +37,25 @@ import org.junit.Test;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecVendorCommandsTest extends BaseHdmiCecCtsTest {
 
-    private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
     private static final int INCORRECT_VENDOR_ID = 0x0;
-
-    public HdmiCecVendorCommandsTest() {
-        super(LogicalAddress.PLAYBACK_1);
-    }
 
     @Rule
     public RuleChain ruleChain =
         RuleChain
             .outerRule(CecRules.requiresCec(this))
             .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
             .around(hdmiCecClient);
 
     /**
      * Test 11.2.9-1
-     * Tests that the device responds to a <GIVE_DEVICE_VENDOR_ID> from various source devices
-     * with a <DEVICE_VENDOR_ID>.
+     * <p>Tests that the device responds to a {@code <GIVE_DEVICE_VENDOR_ID>} from various source
+     * devices with a {@code <DEVICE_VENDOR_ID>}.
      */
     @Test
     public void cect_11_2_9_1_GiveDeviceVendorId() throws Exception {
         for (LogicalAddress logicalAddress : LogicalAddress.values()) {
             // Skip the logical address of this device
-            if (logicalAddress == PLAYBACK_DEVICE) {
+            if (logicalAddress == mDutLogicalAddress) {
                 continue;
             }
             hdmiCecClient.sendCecMessage(logicalAddress, CecOperand.GIVE_DEVICE_VENDOR_ID);
@@ -74,14 +66,13 @@ public final class HdmiCecVendorCommandsTest extends BaseHdmiCecCtsTest {
 
     /**
      * Test 11.2.9-2
-     * Tests that the device broadcasts a <DEVICE_VENDOR_ID> message after successful
+     * <p>Tests that the device broadcasts a {@code <DEVICE_VENDOR_ID>} message after successful
      * initialisation and address allocation.
      */
     @Test
     public void cect_11_2_9_2_DeviceVendorIdOnInit() throws Exception {
         ITestDevice device = getDevice();
-        device.executeShellCommand("reboot");
-        device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+        device.reboot();
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.DEVICE_VENDOR_ID);
         assertThat(CecMessage.getParams(message)).isNotEqualTo(INCORRECT_VENDOR_ID);
     }
