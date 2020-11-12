@@ -35,9 +35,24 @@ import android.os.Bundle;
 import android.provider.DeviceConfig;
 import android.test.InstrumentationTestCase;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
 import com.android.compatibility.common.util.SystemUtil;
 
-public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class ActivityManagerFgsBgStartTest {
     private static final String TAG = ActivityManagerFgsBgStartTest.class.getName();
 
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
@@ -63,10 +78,9 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
     private Context mContext;
     private Instrumentation mInstrumentation;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mInstrumentation = getInstrumentation();
+    @Before
+    public void setUp() throws Exception {
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getContext();
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP1);
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP2);
@@ -74,9 +88,9 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         cleanupResiduals();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
+
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP1);
         CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAME_APP2);
         cleanupResiduals();
@@ -101,6 +115,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
      * Package1 is in TOP state, it gets location capability.
      * @throws Exception
      */
+    @Test
     public void testFgsLocationStartFromBG() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -175,6 +190,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
      * Package1 is in TOP state, it can start FGSL in package2, FGSL gets location capability.
      * @throws Exception
      */
+    @Test
     public void testFgsLocationStartFromBGTwoProcesses() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -253,6 +269,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
      * FGSL gets location capability.
      * @throws Exception
      */
+    @Test
     public void testFgsLocationPendingIntent() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -360,7 +377,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         }
     }
 
-
+    @Test
     public void testFgsLocationStartFromBGWithBind() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -403,6 +420,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
      * Test FGS background startForeground() restriction, use DeviceConfig to turn on restriction.
      * @throws Exception
      */
+    @Test
     public void testFgsStartFromBG1() throws Exception {
         testFgsStartFromBG(true);
     }
@@ -412,6 +430,8 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
      * restriction.
      * @throws Exception
      */
+    @Ignore("b/171327850")
+    @Test
     public void testFgsStartFromBG2() throws Exception {
         testFgsStartFromBG(false);
     }
@@ -477,6 +497,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
     }
 
     // Test a FGS can start from a process that is at BOUND_TOP state.
+    @Test
     public void testFgsStartFromBoundTopState() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -537,6 +558,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
     }
 
     // Test a FGS can start from a process that is at FOREGROUND_SERVICE state.
+    @Test
     public void testFgsStartFromFgsState() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -597,6 +619,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
     }
 
     // Test a FGS can start from BG if the app is in the temp allow list.
+    @Test
     public void testFgsStartTempAllowList() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -638,6 +661,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testFgsStartFromBGWithBind() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
@@ -671,6 +695,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testFgsStartFromBGWithBindWithRestriction() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
