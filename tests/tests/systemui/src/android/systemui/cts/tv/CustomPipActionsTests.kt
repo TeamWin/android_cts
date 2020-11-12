@@ -36,7 +36,6 @@ import android.systemui.tv.cts.PipMenu
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CUSTOM_BUTTON
 import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_FULLSCREEN_BUTTON
-import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_PLAY_PAUSE_BUTTON
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiObject2
@@ -162,14 +161,14 @@ class CustomPipActionsTests : PipTestBase() {
     /** Find the pip media controls or throw. */
     private fun assertMediaControlsPresent() {
         assertTrue("Media buttons must be shown!") {
-            uiDevice.wait(Until.hasObject(By.res(ID_PIP_MENU_PLAY_PAUSE_BUTTON)), defaultTimeout)
+            uiDevice.wait(Until.hasObject(menuMediaButtonSelector), defaultTimeout)
         }
     }
 
     /** Throw if pip media controls are present. */
     private fun assertMediaControlsGone() {
         assertTrue("No media buttons must be shown!") {
-            uiDevice.wait(Until.gone(By.res(ID_PIP_MENU_PLAY_PAUSE_BUTTON)), defaultTimeout)
+            uiDevice.wait(Until.gone(menuMediaButtonSelector), defaultTimeout)
         }
     }
 

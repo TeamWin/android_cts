@@ -837,6 +837,122 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    public void testRequestFlush() throws Exception {
+        try (LocationListenerCapture capture1 = new LocationListenerCapture(mContext);
+             LocationListenerCapture capture2 = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
+                    Executors.newSingleThreadExecutor(), capture1);
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
+                    Executors.newSingleThreadExecutor(), capture2);
+
+            mManager.requestFlush(TEST_PROVIDER, capture1, 1);
+            mManager.requestFlush(TEST_PROVIDER, capture2, 1);
+            assertThat(capture1.getNextFlush(TIMEOUT_MS)).isEqualTo(1);
+            assertThat(capture2.getNextFlush(TIMEOUT_MS)).isEqualTo(1);
+            assertThat(capture1.getNextFlush(FAILURE_TIMEOUT_MS)).isNull();
+            assertThat(capture2.getNextFlush(FAILURE_TIMEOUT_MS)).isNull();
+        }
+
+        try {
+            mManager.requestFlush(TEST_PROVIDER, (LocationListener) null, 0);
+            fail("Should throw IllegalArgumentException if listener is null!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+            mManager.requestFlush(TEST_PROVIDER, capture, 0);
+            fail("Should throw IllegalArgumentException if listener is not registered!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, Executors.newSingleThreadExecutor(), capture);
+            mManager.requestFlush(GPS_PROVIDER, capture, 0);
+            fail("Should throw IllegalArgumentException if listener is not registered!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, Executors.newSingleThreadExecutor(), capture);
+            mManager.requestFlush(null, capture, 0);
+            fail("Should throw IllegalArgumentException if provider is null!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testRequestFlush_PendingIntent() throws Exception {
+        try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, capture.getPendingIntent());
+
+            mManager.requestFlush(TEST_PROVIDER, capture.getPendingIntent(), 1);
+            assertThat(capture.getNextFlush(TIMEOUT_MS)).isEqualTo(1);
+        }
+
+        try {
+            mManager.requestFlush(TEST_PROVIDER, (PendingIntent) null, 0);
+            fail("Should throw IllegalArgumentException if pending intent is null!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
+            mManager.requestFlush(TEST_PROVIDER, capture.getPendingIntent(), 0);
+            fail("Should throw IllegalArgumentException if pending intent is not registered!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, capture.getPendingIntent());
+            mManager.requestFlush(GPS_PROVIDER, capture.getPendingIntent(), 0);
+            fail("Should throw IllegalArgumentException if pending intent is not registered!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+
+        try (LocationPendingIntentCapture capture = new LocationPendingIntentCapture(mContext)) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0, capture.getPendingIntent());
+            mManager.requestFlush(null, capture.getPendingIntent(), 0);
+            fail("Should throw IllegalArgumentException if provider is null!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testRequestFlush_Ordering() throws Exception {
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
+                    Executors.newSingleThreadExecutor(), capture);
+
+            for (int i = 0; i < 100; i++) {
+                mManager.requestFlush(TEST_PROVIDER, capture, i);
+            }
+            for (int i = 0; i < 100; i++) {
+                assertThat(capture.getNextFlush(TIMEOUT_MS)).isEqualTo(i);
+            }
+        }
+    }
+
+    @Test
+    public void testRequestFlush_Gnss() throws Exception {
+        assumeTrue(mManager.getAllProviders().contains(GPS_PROVIDER));
+
+        try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
+            mManager.requestLocationUpdates(GPS_PROVIDER, 0, 0,
+                    Executors.newSingleThreadExecutor(), capture);
+
+            mManager.requestFlush(GPS_PROVIDER, capture, 1);
+            assertThat(capture.getNextFlush(TIMEOUT_MS)).isEqualTo(1);
+        }
+    }
+
+    @Test
     public void testListenProviderEnable_Listener() throws Exception {
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,

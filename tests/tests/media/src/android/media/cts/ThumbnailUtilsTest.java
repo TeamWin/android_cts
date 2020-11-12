@@ -168,6 +168,15 @@ public class ThumbnailUtilsTest {
     }
 
     @Test
+    public void testCreateImageThumbnailAvif() throws Exception {
+        final File file = stageFile("sample.avif", new File(mDir, "cts.avif"));
+
+        for (Size size : TEST_SIZES) {
+            assertSaneThumbnail(size, ThumbnailUtils.createImageThumbnail(file, size, null));
+        }
+    }
+
+    @Test
     public void testCreateVideoThumbnail() throws Exception {
         final File file = stageFile(
                 "bbb_s1_720x480_mp4_h264_mp3_2mbps_30fps_aac_lc_5ch_320kbps_48000hz.mp4",

@@ -37,7 +37,7 @@ def main():
         elif s[:4] == 'fov=' and len(s) > 4:
             camera_fov = float(s[4:])
         elif s[:7] == "camera=" and len(s) > 7:
-            camera_id = s[7:]
+            camera_id = str(s[7:])
 
     cmd = ('adb -s %s shell am force-stop com.google.android.apps.docs' %
            screen_id)

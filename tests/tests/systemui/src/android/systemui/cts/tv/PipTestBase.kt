@@ -27,11 +27,13 @@ import android.server.wm.WindowManagerState.STATE_PAUSED
 import android.systemui.tv.cts.Components
 import android.systemui.tv.cts.Components.activityName
 import android.systemui.tv.cts.ResourceNames.STRING_PIP_MENU_BOUNDS
+import android.systemui.tv.cts.ResourceNames.STRING_PIP_PAUSE
 import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE
 import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.WindowManager
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
@@ -60,6 +62,10 @@ abstract class PipTestBase : TvTestBase() {
         Rect.unflattenFromString(getString(menuBoundsId))
             ?: error("Could not find the pip_menu_bounds resource!")
     }
+
+    protected val menuMediaButtonSelector: BySelector = By.desc(systemuiResources.run {
+        getString(getIdentifier(STRING_PIP_PAUSE, "string", SYSTEM_UI_PACKAGE))
+    })
 
     @Before
     override fun setUp() {

@@ -367,6 +367,12 @@ public final class DeviceUtils {
         }
     }
 
+    /** Make the test app standby-active so it can run syncs and jobs immediately. */
+    public static void allowImmediateSyncs(ITestDevice device) throws Exception {
+        device.executeShellCommand("am set-standby-bucket "
+                + DeviceUtils.STATSD_ATOM_TEST_PKG + " active");
+    }
+
     /**
      * Runs a (background) service to perform the given action.
      * @param actionValue the action code constants indicating the desired action to perform.

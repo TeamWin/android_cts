@@ -113,8 +113,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TEST_PACKAGE_NAME = "com.android.server.cts.device.statsd";
 
-    private static final boolean DAVEY_ENABLED = false;
-
     private static final int NUM_APP_OPS = AttributedAppOps.getDefaultInstance().getOp().
             getDescriptorForType().getValues().size() - 1;
 
@@ -234,6 +232,8 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getForegroundState().getNumber())
                 .isEqualTo(AppCrashOccurred.ForegroundState.FOREGROUND_VALUE);
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        // TODO(b/172866626): add tests for incremental packages that crashed during loading
+        assertFalse(atom.getIsPackageLoading());
     }
 
     public void testAppStartOccurred() throws Exception {
@@ -374,25 +374,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertWithMessage(String.format("Non-positive power value for uid %d", uid))
                 .that(uidPower).isGreaterThan(0L);
         DeviceUtils.resetBatteryStatus(getDevice());
-    }
-
-    public void testDavey() throws Exception {
-        if (!DAVEY_ENABLED) return;
-        long MAX_DURATION = 2000;
-        long MIN_DURATION = 750;
-        final int atomTag = Atom.DAVEY_OCCURRED_FIELD_NUMBER;
-
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useUidAttributionChain=*/false);
-
-        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                "DaveyActivity", /*actionKey=*/null, /*actionValue=*/null);
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data).hasSize(1);
-        long duration = data.get(0).getAtom().getDaveyOccurred().getJankDurationMillis();
-        assertWithMessage("Incorrect jank duration")
-                .that(duration).isIn(Range.closed(MIN_DURATION, MAX_DURATION));
     }
 
     public void testFlashlightState() throws Exception {
@@ -649,36 +630,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(entered).hasSize(1);
     }
 
-    public void testScheduledJobState() throws Exception {
-        String expectedName = "com.android.server.cts.device.statsdatom/.StatsdJobService";
-        final int atomTag = Atom.SCHEDULED_JOB_STATE_CHANGED_FIELD_NUMBER;
-        Set<Integer> jobSchedule = new HashSet<>(
-                Arrays.asList(ScheduledJobStateChanged.State.SCHEDULED_VALUE));
-        Set<Integer> jobOn = new HashSet<>(
-                Arrays.asList(ScheduledJobStateChanged.State.STARTED_VALUE));
-        Set<Integer> jobOff = new HashSet<>(
-                Arrays.asList(ScheduledJobStateChanged.State.FINISHED_VALUE));
-
-        // Add state sets to the list in order.
-        List<Set<Integer>> stateSet = Arrays.asList(jobSchedule, jobOn, jobOff);
-
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useUidAttributionChain=*/true);
-        allowImmediateSyncs();
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testScheduledJob");
-
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-
-        AtomTestUtils.assertStatesOccurred(stateSet, data, 0,
-                atom -> atom.getScheduledJobStateChanged().getState().getNumber());
-
-        for (EventMetricData e : data) {
-            assertThat(e.getAtom().getScheduledJobStateChanged().getJobName())
-                    .isEqualTo(expectedName);
-        }
-    }
-
     //Note: this test does not have uid, but must run on the device
     public void testScreenBrightness() throws Exception {
         int initialBrightness = getScreenBrightness();
@@ -727,7 +678,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 atomTag, /*useUidAttributionChain=*/true);
-        allowImmediateSyncs();
+        DeviceUtils.allowImmediateSyncs(getDevice());
         DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSyncState");
 
         // Sorted list of events in order in which they occurred.
@@ -797,25 +748,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
             WakeLockLevelEnum type = event.getAtom().getWakelockStateChanged().getType();
             assertThat(tag).isEqualTo(EXPECTED_TAG);
             assertThat(type).isEqualTo(EXPECTED_LEVEL);
-        }
-    }
-
-    public void testWakeupAlarm() throws Exception {
-        // For automotive, all wakeup alarm becomes normal alarm. So this
-        // test does not work.
-        if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
-        final int atomTag = Atom.WAKEUP_ALARM_OCCURRED_FIELD_NUMBER;
-
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag, /*useUidAttributionChain=*/true);
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWakeupAlarm");
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isAtLeast(1);
-        for (int i = 0; i < data.size(); i++) {
-            WakeupAlarmOccurred wao = data.get(i).getAtom().getWakeupAlarmOccurred();
-            assertThat(wao.getTag()).isEqualTo("*walarm*:android.cts.statsdatom.testWakeupAlarm");
-            assertThat(wao.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         }
     }
 
@@ -1385,6 +1317,8 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
                 .isEqualTo(ANROccurred.ForegroundState.FOREGROUND_VALUE);
         assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        // TODO(b/172866626): add tests for incremental packages that ANR'd during loading
+        assertFalse(atom.getIsPackageLoading());
     }
 
     public void testWriteRawTestAtom() throws Exception {
@@ -1466,115 +1400,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getBooleanField()).isTrue();
         assertThat(atom.getState().getNumber()).isEqualTo(TestAtomReported.State.OFF_VALUE);
         assertThat(atom.getBytesField().getExperimentIdList()).isEmpty();
-    }
-
-    public void testNotificationPackagePreferenceExtraction() throws Exception {
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.PACKAGE_NOTIFICATION_PREFERENCES_FIELD_NUMBER);
-
-        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                "StatsdCtsForegroundActivity", "action", "action.show_notification");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        List<PackageNotificationPreferences> allPreferences = new ArrayList<>();
-        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
-            if (atom.hasPackageNotificationPreferences()) {
-                allPreferences.add(atom.getPackageNotificationPreferences());
-            }
-        }
-        assertThat(allPreferences.size()).isGreaterThan(0);
-
-        boolean foundTestPackagePreferences = false;
-        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
-        for (PackageNotificationPreferences pref : allPreferences) {
-            assertThat(pref.getUid()).isGreaterThan(0);
-            assertTrue(pref.hasImportance());
-            assertTrue(pref.hasVisibility());
-            assertTrue(pref.hasUserLockedFields());
-            if (pref.getUid() == uid) {
-                assertThat(pref.getImportance()).isEqualTo(-1000);  //UNSPECIFIED_IMPORTANCE
-                assertThat(pref.getVisibility()).isEqualTo(-1000);  //UNSPECIFIED_VISIBILITY
-                foundTestPackagePreferences = true;
-            }
-        }
-        assertTrue(foundTestPackagePreferences);
-    }
-
-    public void testNotificationChannelPreferencesExtraction() throws Exception {
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.PACKAGE_NOTIFICATION_CHANNEL_PREFERENCES_FIELD_NUMBER);
-
-        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                "StatsdCtsForegroundActivity", "action", "action.show_notification");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        List<PackageNotificationChannelPreferences> allChannelPreferences = new ArrayList<>();
-        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
-            if (atom.hasPackageNotificationChannelPreferences()) {
-                allChannelPreferences.add(atom.getPackageNotificationChannelPreferences());
-            }
-        }
-        assertThat(allChannelPreferences.size()).isGreaterThan(0);
-
-        boolean foundTestPackagePreferences = false;
-        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
-        for (PackageNotificationChannelPreferences pref : allChannelPreferences) {
-            assertThat(pref.getUid()).isGreaterThan(0);
-            assertTrue(pref.hasChannelId());
-            assertTrue(pref.hasChannelName());
-            assertTrue(pref.hasDescription());
-            assertTrue(pref.hasImportance());
-            assertTrue(pref.hasUserLockedFields());
-            assertTrue(pref.hasIsDeleted());
-            if (uid == pref.getUid() && pref.getChannelId().equals("StatsdCtsChannel")) {
-                assertThat(pref.getChannelName()).isEqualTo("Statsd Cts");
-                assertThat(pref.getDescription()).isEqualTo("Statsd Cts Channel");
-                assertThat(pref.getImportance()).isEqualTo(3);  // IMPORTANCE_DEFAULT
-                foundTestPackagePreferences = true;
-            }
-        }
-        assertTrue(foundTestPackagePreferences);
-    }
-
-    public void testNotificationChannelGroupPreferencesExtraction() throws Exception {
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.PACKAGE_NOTIFICATION_CHANNEL_GROUP_PREFERENCES_FIELD_NUMBER);
-
-        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                "StatsdCtsForegroundActivity", "action", "action.create_channel_group");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        List<PackageNotificationChannelGroupPreferences> allGroupPreferences = new ArrayList<>();
-        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
-            if (atom.hasPackageNotificationChannelGroupPreferences()) {
-                allGroupPreferences.add(atom.getPackageNotificationChannelGroupPreferences());
-            }
-        }
-        assertThat(allGroupPreferences.size()).isGreaterThan(0);
-
-        boolean foundTestPackagePreferences = false;
-        int uid = DeviceUtils.getStatsdTestAppUid(getDevice());
-        for (PackageNotificationChannelGroupPreferences pref : allGroupPreferences) {
-            assertThat(pref.getUid()).isGreaterThan(0);
-            assertTrue(pref.hasGroupId());
-            assertTrue(pref.hasGroupName());
-            assertTrue(pref.hasDescription());
-            assertTrue(pref.hasIsBlocked());
-            assertTrue(pref.hasUserLockedFields());
-            if (uid == pref.getUid() && pref.getGroupId().equals("StatsdCtsGroup")) {
-                assertThat(pref.getGroupName()).isEqualTo("Statsd Cts Group");
-                assertThat(pref.getDescription()).isEqualTo("StatsdCtsGroup Description");
-                assertThat(pref.getIsBlocked()).isFalse();
-                foundTestPackagePreferences = true;
-            }
-        }
-        assertTrue(foundTestPackagePreferences);
     }
 
     public void testNotificationReported() throws Exception {
@@ -2063,12 +1888,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         final File file = buildHelper.getTestFile(fileName);
         return file.length();
-    }
-
-    /** Make the test app standby-active so it can run syncs and jobs immediately. */
-    private void allowImmediateSyncs() throws Exception {
-        getDevice().executeShellCommand("am set-standby-bucket "
-                + DeviceUtils.STATSD_ATOM_TEST_PKG + " active");
     }
 
     private int getScreenBrightness() throws Exception {

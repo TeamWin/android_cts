@@ -1056,8 +1056,13 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testGetImageAtIndex() throws Exception {
-        testGetImage("heifwriter_input.heic", 1920, 1080, 0 /*rotation*/,
+        testGetImage("heifwriter_input.heic", 1920, 1080, "image/heif", 0 /*rotation*/,
                 4 /*imageCount*/, 3 /*primary*/, true /*useGrid*/, true /*checkColor*/);
+    }
+
+    public void testGetImageAtIndexAvif() throws Exception {
+        testGetImage("sample.avif", 1920, 1080, "image/avif", 0 /*rotation*/,
+                1 /*imageCount*/, 0 /*primary*/, false /*useGrid*/, true /*checkColor*/);
     }
 
     /**
@@ -1083,7 +1088,7 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     private void testGetImage(
-            final String res, int width, int height, int rotation,
+            final String res, int width, int height, String mimeType, int rotation,
             int imageCount, int primary, boolean useGrid, boolean checkColor)
                     throws Exception {
         Stopwatch timer = new Stopwatch();
@@ -1113,6 +1118,8 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
             assertEquals("Wrong primary index", primary,
                     Integer.parseInt(mRetriever.extractMetadata(
                             MediaMetadataRetriever.METADATA_KEY_IMAGE_PRIMARY)));
+            assertEquals("Wrong mime type", mimeType,
+                    mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE));
 
             if (checkColor) {
                 Bitmap bitmap = null;
