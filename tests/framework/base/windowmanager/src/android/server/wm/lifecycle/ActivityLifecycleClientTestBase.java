@@ -567,12 +567,26 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
     /** Test activity that can call {@link Activity#recreate()} if requested in a new intent. */
     public static class SingleTopActivity extends CallbackTrackingActivity {
-
+        static final String EXTRA_LAUNCH_ACTIVITY = "extra_launch_activity";
+        static final String EXTRA_NEW_TASK = "extra_new_task";
         @Override
         protected void onNewIntent(Intent intent) {
             super.onNewIntent(intent);
             if (intent != null && intent.getBooleanExtra(EXTRA_RECREATE, false)) {
                 recreate();
+            }
+        }
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            if (getIntent().getBooleanExtra(EXTRA_LAUNCH_ACTIVITY, false)) {
+                final Intent intent = new Intent(this, SingleTopActivity.class);
+                if (getIntent().getBooleanExtra(EXTRA_NEW_TASK, false)) {
+                    intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+                }
+                startActivityForResult(intent, 1 /* requestCode */);
             }
         }
     }
