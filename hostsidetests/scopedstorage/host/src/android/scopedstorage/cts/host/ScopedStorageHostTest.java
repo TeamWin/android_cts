@@ -521,14 +521,18 @@ public class ScopedStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private void grantPermissions(String... perms) throws Exception {
+        int currentUserId = getCurrentUserId();
         for (String perm : perms) {
-            executeShellCommand("pm grant android.scopedstorage.cts " + perm);
+            executeShellCommand("pm grant --user %d android.scopedstorage.cts %s",
+                    currentUserId, perm);
         }
     }
 
     private void revokePermissions(String... perms) throws Exception {
+        int currentUserId = getCurrentUserId();
         for (String perm : perms) {
-            executeShellCommand("pm revoke android.scopedstorage.cts " + perm);
+            executeShellCommand("pm revoke --user %d android.scopedstorage.cts %s",
+                    currentUserId, perm);
         }
     }
 
