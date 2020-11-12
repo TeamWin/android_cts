@@ -578,15 +578,8 @@ public class WindowInsetsBehaviorTests {
     }
 
     private List<Rect> splitBoundsAccordingToExclusionLimit(Rect rect) {
-        final int exclusionHeightLimit = (int) (getPropertyOfMaxExclusionHeight() * mPixelsPerDp
-                + 0.5f);
-
+        final int exclusionHeightLimit = (int) (EXCLUSION_LIMIT_DP * mPixelsPerDp + 0.5f);
         final List<Rect> bounds = new ArrayList<>();
-        if (rect.height() < exclusionHeightLimit) {
-            bounds.add(rect);
-            return bounds;
-        }
-
         int nextTop = rect.top;
         while (nextTop < rect.bottom) {
             final int top = nextTop;
@@ -603,9 +596,13 @@ public class WindowInsetsBehaviorTests {
         return bounds;
     }
 
+    /**
+     * TODO (b/173680137): renaming the test method name
+     * @throws Throwable when setting the property goes wrong.
+     */
     @Test
     public void mandatorySystemGesture_excludeViewRects_withoutAnyCancel()
-            throws InterruptedException {
+            throws Throwable {
         assumeTrue(hasSystemGestureFeature());
 
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
@@ -613,13 +610,14 @@ public class WindowInsetsBehaviorTests {
                 mContentViewWindowInsets.getMandatorySystemGestureInsets(),
                 mContentViewWindowInsets));
 
-        final List<Rect> swipeBounds = splitBoundsAccordingToExclusionLimit(mSwipeBound);
-        int swipeCount = 0;
-        for (Rect swipeBound : swipeBounds) {
-            setAndWaitForSystemGestureExclusionRectsListenerTrigger(swipeBound);
-            swipeCount += swipeInViewBoundary(swipeBound);
-        }
-
+        final int[] swipeCount = {0};
+        doInExclusionLimitSession(() -> {
+            final List<Rect> swipeBounds = splitBoundsAccordingToExclusionLimit(mSwipeBound);
+            for (Rect swipeBound : swipeBounds) {
+                setAndWaitForSystemGestureExclusionRectsListenerTrigger(swipeBound);
+                swipeCount[0] += swipeInViewBoundary(swipeBound);
+            }
+        });
         mainThreadRun(() -> {
             mActionDownPoints = mActivity.getActionDownPoints();
             mActionUpPoints = mActivity.getActionUpPoints();
@@ -628,8 +626,8 @@ public class WindowInsetsBehaviorTests {
         mScreenshotTestRule.capture();
 
         assertEquals(0, mActionCancelPoints.size());
-        assertEquals(swipeCount, mActionUpPoints.size());
-        assertEquals(swipeCount, mActionDownPoints.size());
+        assertEquals(swipeCount[0], mActionUpPoints.size());
+        assertEquals(swipeCount[0], mActionDownPoints.size());
     }
 
     @Test
@@ -640,12 +638,7 @@ public class WindowInsetsBehaviorTests {
         mainThreadRun(() -> mContentViewWindowInsets = mActivity.getDecorViewWindowInsets());
         mainThreadRun(() -> mSwipeBound = mActivity.getOperationArea(
                 mContentViewWindowInsets.getSystemGestureInsets(), mContentViewWindowInsets));
-
-        final List<Rect> swipeBounds = splitBoundsAccordingToExclusionLimit(mSwipeBound);
-        int swipeCount = 0;
-        for (Rect swipeBound : swipeBounds) {
-            swipeCount += swipeInViewBoundary(swipeBound);
-        }
+        final int swipeCount = swipeInViewBoundary(mSwipeBound);
 
         mainThreadRun(() -> {
             mActionDownPoints = mActivity.getActionDownPoints();
@@ -859,7 +852,14 @@ public class WindowInsetsBehaviorTests {
         assertTrue("Exclusion must be applied.", exclusionApplied.await(3, SECONDS));
     }
 
-    private static int getPropertyOfMaxExclusionHeight() {
+    /**
+     * Run the given task while the system gesture exclusion limit has been changed to
+     * {@link #EXCLUSION_LIMIT_DP}, and then restore the value while the task is finished.
+     *
+     * @param task the task to be run.
+     * @throws Throwable when something goes unexpectedly.
+     */
+    private static void doInExclusionLimitSession(ThrowingRunnable task) throws Throwable {
         final int[] originalLimitDp = new int[1];
         SystemUtil.runWithShellPermissionIdentity(() -> {
             originalLimitDp[0] = DeviceConfig.getInt(NAMESPACE_ANDROID,
@@ -870,18 +870,6 @@ public class WindowInsetsBehaviorTests {
                     Integer.toString(EXCLUSION_LIMIT_DP), false /* makeDefault */);
         });
 
-        return originalLimitDp[0];
-    }
-
-    /**
-     * Run the given task while the system gesture exclusion limit has been changed to
-     * {@link #EXCLUSION_LIMIT_DP}, and then restore the value while the task is finished.
-     *
-     * @param task the task to be run.
-     * @throws Throwable when something goes unexpectedly.
-     */
-    private static void doInExclusionLimitSession(ThrowingRunnable task) throws Throwable {
-        int originalLimitDp = getPropertyOfMaxExclusionHeight();
         try {
             task.run();
         } finally {
@@ -889,7 +877,7 @@ public class WindowInsetsBehaviorTests {
             SystemUtil.runWithShellPermissionIdentity(() -> DeviceConfig.setProperty(
                     NAMESPACE_ANDROID,
                     KEY_SYSTEM_GESTURE_EXCLUSION_LIMIT_DP,
-                    (originalLimitDp != -1) ? Integer.toString(originalLimitDp) : null,
+                    (originalLimitDp[0] != -1) ? Integer.toString(originalLimitDp[0]) : null,
                     false /* makeDefault */));
         }
     }
