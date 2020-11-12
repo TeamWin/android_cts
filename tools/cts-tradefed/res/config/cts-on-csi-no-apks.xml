@@ -150,6 +150,7 @@
     <option name="compatibility:exclude-filter" value="CtsSettingsHostTestCases" />
     <option name="compatibility:exclude-filter" value="CtsRoleTestCases android.app.role.cts.RoleControllerManagerTest#settingsIsNotVisibleForHomeRole" />
     <option name="compatibility:exclude-filter" value="CtsRoleTestCases android.app.role.cts.RoleManagerTest#openDefaultAppListThenIsNotDefaultAppInList" />
+    <option name="compatibility:exclude-filter" value="CtsSystemIntentTestCases android.systemintents.cts.TestSystemIntents#testSystemIntents" />
 
     <!-- No SettingsIntelligence -->
     <option name="compatibility:exclude-filter" value="CtsContentTestCases android.content.cts.AvailableIntentsTest#testSettingsSearchIntent" />
