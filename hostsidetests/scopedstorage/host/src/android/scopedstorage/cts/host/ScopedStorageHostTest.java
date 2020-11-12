@@ -207,6 +207,11 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    public void testSystemGalleryCanRenameImagesAndVideos() throws Exception {
+        runDeviceTest("testSystemGalleryCanRenameImagesAndVideos");
+    }
+
+    @Test
     public void testCanWriteToDCIMCameraWithNomedia() throws Exception {
         runDeviceTest("testCanWriteToDCIMCameraWithNomedia");
     }
