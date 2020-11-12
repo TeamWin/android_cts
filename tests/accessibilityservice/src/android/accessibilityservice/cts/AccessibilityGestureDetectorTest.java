@@ -379,7 +379,6 @@ public class AccessibilityGestureDetectorTest {
         // Use AccessibilityService.dispatchGesture() instead of Instrumentation.sendPointerSync()
         // because accessibility services read gesture events upstream from the point where
         // sendPointerSync() injects events.
-        mService.clearGestures();
         mService.runOnServiceSync(() ->
         mService.dispatchGesture(gesture, mGestureDispatchCallback, null));
         verify(mGestureDispatchCallback, timeout(GESTURE_DISPATCH_TIMEOUT_MS).atLeastOnce())
