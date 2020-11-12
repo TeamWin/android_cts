@@ -17,6 +17,10 @@ package android.app.cts;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
+import android.Manifest;
 import android.app.UiAutomation;
 import android.app.UiModeManager;
 import android.content.Context;
@@ -25,11 +29,14 @@ import android.content.res.Configuration;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.test.AndroidTestCase;
+import android.util.ArraySet;
 import android.util.Log;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.UserUtils;
+
+import com.google.common.util.concurrent.MoreExecutors;
 
 import junit.framework.Assert;
 
@@ -37,6 +44,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalTime;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UiModeManagerTest extends AndroidTestCase {
     private static final String TAG = "UiModeManagerTest";
@@ -247,20 +256,14 @@ public class UiModeManagerTest extends AndroidTestCase {
         if (mUiModeManager.isUiModeLocked()) {
             return;
         }
-        // Adopt shell permission so the required permission
-        // (android.permission.ENTER_CAR_MODE_PRIORITIZED) is granted.
-        UiAutomation ui = getInstrumentation().getUiAutomation();
-        ui.adoptShellPermissionIdentity();
 
-        try {
-            mUiModeManager.enableCarMode(100, 0);
-            assertEquals(Configuration.UI_MODE_TYPE_CAR, mUiModeManager.getCurrentModeType());
+        runWithShellPermissionIdentity(() -> mUiModeManager.enableCarMode(100, 0),
+                Manifest.permission.ENTER_CAR_MODE_PRIORITIZED);
+        assertEquals(Configuration.UI_MODE_TYPE_CAR, mUiModeManager.getCurrentModeType());
 
-            mUiModeManager.disableCarMode(0);
-            assertEquals(Configuration.UI_MODE_TYPE_NORMAL, mUiModeManager.getCurrentModeType());
-        } finally {
-            ui.dropShellPermissionIdentity();
-        }
+        runWithShellPermissionIdentity(() -> mUiModeManager.disableCarMode(0),
+                Manifest.permission.ENTER_CAR_MODE_PRIORITIZED);
+        assertEquals(Configuration.UI_MODE_TYPE_NORMAL, mUiModeManager.getCurrentModeType());
     }
 
     /**
@@ -284,24 +287,112 @@ public class UiModeManagerTest extends AndroidTestCase {
      * Verifies that an app holding the TOGGLE_AUTOMOTIVE_PROJECTION permission can request/release
      * automotive projection.
      */
-    public void testToggleAutomotiveProjection() {
-        // Adopt shell permission so the required permission
-        // (android.permission.ENTER_CAR_MODE_PRIORITIZED) is granted.
-        UiAutomation ui = getInstrumentation().getUiAutomation();
-        ui.adoptShellPermissionIdentity();
+    public void testToggleAutomotiveProjection() throws Exception {
+        // If we didn't hold it in the first place, we didn't release it, so expect false.
+        assertFalse(releaseAutomotiveProjection());
+        assertTrue(requestAutomotiveProjection());
+        // Multiple calls are OK.
+        assertTrue(requestAutomotiveProjection());
+        assertTrue(releaseAutomotiveProjection());
+        // Once it's released, further calls return false since it was already released.
+        assertFalse(releaseAutomotiveProjection());
+    }
 
-        try {
-            // If we didn't hold it in the first place, we didn't release it, so expect false.
-            assertFalse(mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
-            assertTrue(mUiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
-            // Multiple calls are OK.
-            assertTrue(mUiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
-            assertTrue(mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
-            // Once it's released, further calls return false since it was already released.
-            assertFalse(mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE));
-        } finally {
-            ui.dropShellPermissionIdentity();
-        }
+    /**
+     * Verifies that the system can correctly read the projection state.
+     */
+    public void testReadProjectionState() throws Exception {
+        assertEquals(UiModeManager.PROJECTION_TYPE_NONE, getActiveProjectionTypes());
+        assertTrue(getProjectingPackages(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE).isEmpty());
+        assertTrue(getProjectingPackages(UiModeManager.PROJECTION_TYPE_ALL).isEmpty());
+        requestAutomotiveProjection();
+        assertEquals(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE, getActiveProjectionTypes());
+        assertTrue(getProjectingPackages(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE)
+                .contains(getContext().getPackageName()));
+        assertTrue(getProjectingPackages(UiModeManager.PROJECTION_TYPE_ALL)
+                .contains(getContext().getPackageName()));
+        releaseAutomotiveProjection();
+        assertEquals(UiModeManager.PROJECTION_TYPE_NONE, getActiveProjectionTypes());
+        assertTrue(getProjectingPackages(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE).isEmpty());
+        assertTrue(getProjectingPackages(UiModeManager.PROJECTION_TYPE_ALL).isEmpty());
+    }
+
+    /** Verifies that the system receives callbacks about the projection state at expected times. */
+    public void testReadProjectionState_listener() throws Exception {
+        // Use AtomicInteger so it can be effectively final.
+        AtomicInteger activeProjectionTypes = new AtomicInteger();
+        Set<String> projectingPackages = new ArraySet<>();
+        AtomicInteger callbackInvocations = new AtomicInteger();
+        UiModeManager.OnProjectionStateChangeListener listener = (t, pkgs) -> {
+            activeProjectionTypes.set(t);
+            projectingPackages.clear();
+            projectingPackages.addAll(pkgs);
+            callbackInvocations.incrementAndGet();
+        };
+
+        requestAutomotiveProjection();
+        runWithShellPermissionIdentity(() -> mUiModeManager.addOnProjectionStateChangeListener(
+                UiModeManager.PROJECTION_TYPE_ALL, MoreExecutors.directExecutor(), listener),
+                Manifest.permission.READ_PROJECTION_STATE);
+        // Should have called back immediately.
+        assertEquals(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE, activeProjectionTypes.get());
+        assertEquals(1, projectingPackages.size());
+        assertTrue(projectingPackages.contains(getContext().getPackageName()));
+        assertEquals(1, callbackInvocations.get());
+
+        // Callback should not be invoked again.
+        requestAutomotiveProjection();
+        assertEquals(1, callbackInvocations.get());
+
+        releaseAutomotiveProjection();
+        assertEquals(UiModeManager.PROJECTION_TYPE_NONE, activeProjectionTypes.get());
+        assertEquals(0, projectingPackages.size());
+        assertEquals(2, callbackInvocations.get());
+
+        // Again, no callback for noop call.
+        releaseAutomotiveProjection();
+        assertEquals(2, callbackInvocations.get());
+
+        // Test the case that isn't at time of registration.
+        requestAutomotiveProjection();
+        assertEquals(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE, activeProjectionTypes.get());
+        assertEquals(1, projectingPackages.size());
+        assertTrue(projectingPackages.contains(getContext().getPackageName()));
+        assertEquals(3, callbackInvocations.get());
+
+        // Unregister and shouldn't receive further callbacks.
+        runWithShellPermissionIdentity(() -> mUiModeManager.removeOnProjectionStateChangeListener(
+                listener), Manifest.permission.READ_PROJECTION_STATE);
+
+        releaseAutomotiveProjection();
+        assertEquals(3, callbackInvocations.get());
+        requestAutomotiveProjection();
+        assertEquals(3, callbackInvocations.get());
+        releaseAutomotiveProjection(); // Just to clean up.
+        assertEquals(3, callbackInvocations.get());
+    }
+
+    private boolean requestAutomotiveProjection() throws Exception {
+        return callWithShellPermissionIdentity(
+                () -> mUiModeManager.requestProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
+                Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION);
+    }
+
+    private boolean releaseAutomotiveProjection() throws Exception {
+        return callWithShellPermissionIdentity(
+                () -> mUiModeManager.releaseProjection(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE),
+                Manifest.permission.TOGGLE_AUTOMOTIVE_PROJECTION);
+    }
+
+    private int getActiveProjectionTypes() throws Exception {
+        return callWithShellPermissionIdentity(mUiModeManager::getActiveProjectionTypes,
+                Manifest.permission.READ_PROJECTION_STATE);
+    }
+
+    private Set<String> getProjectingPackages(int projectionType) throws Exception {
+        return callWithShellPermissionIdentity(
+                () -> mUiModeManager.getProjectingPackages(projectionType),
+                Manifest.permission.READ_PROJECTION_STATE);
     }
 
     /**
@@ -376,6 +467,61 @@ public class UiModeManagerTest extends AndroidTestCase {
             return;
         }
         fail("Expected IllegalArgumentException");
+    }
+
+    /** Attempts to call getActiveProjectionTypes without READ_PROJECTION_STATE permission. */
+    public void testReadProjectionState_getActiveProjectionTypesDenied() {
+        try {
+            mUiModeManager.getActiveProjectionTypes();
+        } catch (SecurityException se) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected SecurityException");
+    }
+
+    /** Attempts to call getProjectingPackages without READ_PROJECTION_STATE permission. */
+    public void testReadProjectionState_getProjectingPackagesDenied() {
+        try {
+            mUiModeManager.getProjectingPackages(UiModeManager.PROJECTION_TYPE_ALL);
+        } catch (SecurityException se) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected SecurityException");
+    }
+
+    /**
+     * Attempts to call addOnProjectionStateChangeListener without
+     * READ_PROJECTION_STATE permission.
+     */
+    public void testReadProjectionState_addOnProjectionStateChangeListenerDenied() {
+        try {
+            mUiModeManager.addOnProjectionStateChangeListener(UiModeManager.PROJECTION_TYPE_ALL,
+                    getContext().getMainExecutor(), (t, pkgs) -> { });
+        } catch (SecurityException se) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected SecurityException");
+    }
+
+    /**
+     * Attempts to call removeOnProjectionStateChangeListener without
+     * READ_PROJECTION_STATE permission.
+     */
+    public void testReadProjectionState_removeOnProjectionStateChangeListenerDenied() {
+        UiModeManager.OnProjectionStateChangeListener listener = (t, pkgs) -> { };
+        runWithShellPermissionIdentity(() -> mUiModeManager.addOnProjectionStateChangeListener(
+                UiModeManager.PROJECTION_TYPE_ALL, getContext().getMainExecutor(), listener),
+                Manifest.permission.READ_PROJECTION_STATE);
+        try {
+            mUiModeManager.removeOnProjectionStateChangeListener(listener);
+        } catch (SecurityException se) {
+            // Expect exception.
+            return;
+        }
+        fail("Expected SecurityException");
     }
 
     private boolean isAutomotive() {
