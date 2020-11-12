@@ -15,8 +15,12 @@
  */
 package android.jobscheduler.cts;
 
+import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
+
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
+import android.app.job.JobParameters;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
@@ -29,7 +33,6 @@ import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.os.UserHandle;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
@@ -73,6 +76,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     private boolean mInitialWiFiState;
     /** Track whether restrict background policy was enabled in case we turn it off. */
     private boolean mInitialRestrictBackground;
+    /** Track whether airplane mode was enabled in case we toggle it. */
+    private boolean mInitialAirplaneMode;
 
     private JobInfo.Builder mBuilder;
 
@@ -98,6 +103,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 .runShellCommand(getInstrumentation(), RESTRICT_BACKGROUND_GET_CMD)
                 .contains("enabled");
         setDataSaverEnabled(false);
+        mInitialAirplaneMode = isAirplaneModeOn();
+        setAirplaneMode(false);
     }
 
     @Override
@@ -109,6 +116,9 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         // Restore initial restrict background data usage policy
         setDataSaverEnabled(mInitialRestrictBackground);
+
+        // Restore initial airplane mode status
+        setAirplaneMode(mInitialAirplaneMode);
 
         // Ensure that we leave WiFi in its previous state.
         if (mHasWifi && mWifiManager.isWifiEnabled() != mInitialWiFiState) {
@@ -322,6 +332,55 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 "Job with metered connectivity constraint was not stopped when Data Saver was "
                         + "turned on.",
                 kTestEnvironment.awaitStopped());
+    }
+
+    public void testJobParametersNetwork() throws Exception {
+        setAirplaneMode(false);
+
+        // Everything good.
+        final NetworkRequest nr = new NetworkRequest.Builder()
+                .addCapability(NET_CAPABILITY_INTERNET)
+                .addCapability(NET_CAPABILITY_VALIDATED)
+                .build();
+        JobInfo ji = mBuilder.setRequiredNetwork(nr).build();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(ji);
+        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+        assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+
+        JobParameters params = kTestEnvironment.getLastJobParameters();
+        assertNotNull(params.getNetwork());
+        final NetworkCapabilities capabilities =
+                getContext().getSystemService(ConnectivityManager.class)
+                        .getNetworkCapabilities(params.getNetwork());
+        assertTrue(nr.canBeSatisfiedBy(capabilities));
+
+        // Deadline passed with no network satisfied.
+        setAirplaneMode(true);
+        ji = mBuilder
+                .setRequiredNetwork(nr)
+                .setOverrideDeadline(0)
+                .build();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(ji);
+        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+        assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+
+        params = kTestEnvironment.getLastJobParameters();
+        assertNull(params.getNetwork());
+
+        // No network requested
+        setAirplaneMode(false);
+        ji = mBuilder.setRequiredNetwork(null).build();
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(ji);
+        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+        assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+
+        params = kTestEnvironment.getLastJobParameters();
+        assertNull(params.getNetwork());
     }
 
     // --------------------------------------------------------------------------------------------
@@ -539,6 +598,25 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     private void setDataSaverEnabled(boolean enabled) throws Exception {
         SystemUtil.runShellCommand(getInstrumentation(),
                 enabled ? RESTRICT_BACKGROUND_ON_CMD : RESTRICT_BACKGROUND_OFF_CMD);
+    }
+
+    private boolean isAirplaneModeOn() throws Exception {
+        final String output = SystemUtil.runShellCommand(getInstrumentation(),
+                "cmd connectivity airplane-mode").trim();
+        return "enabled" .equals(output);
+    }
+
+    private void setAirplaneMode(boolean on) throws Exception {
+        if (isAirplaneModeOn() == on) {
+            return;
+        }
+        SystemUtil.runShellCommand(getInstrumentation(),
+                "cmd connectivity airplane-mode " + (on ? "enable" : "disable"));
+        // Wait some time for the network changes to propagate. Can't use
+        // waitUntil(isAirplaneModeOn() == on) because the response quickly gives the new
+        // airplane mode status even though the network changes haven't propagated all the way to
+        // JobScheduler.
+        Thread.sleep(2000);
     }
 
     private static class NetworkTracker extends ConnectivityManager.NetworkCallback {
