@@ -39,6 +39,7 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.os.UserManager;
 import android.provider.MediaStore;
+import android.provider.cts.ProviderTestUtils;
 import android.providerui.cts.GetResultActivity.Result;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -90,7 +91,7 @@ public class MediaStoreUiTest {
 
     @Parameters
     public static Iterable<? extends Object> data() {
-        return MediaStore.getExternalVolumeNames(InstrumentationRegistry.getTargetContext());
+        return ProviderTestUtils.getSharedVolumeNames();
     }
 
     @Before
