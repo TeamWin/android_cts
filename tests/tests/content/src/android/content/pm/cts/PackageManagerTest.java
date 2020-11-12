@@ -57,6 +57,7 @@ import android.content.cts.MockService;
 import android.content.cts.R;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.ComponentInfo;
 import android.content.pm.InstrumentationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageItemInfo;
@@ -1081,12 +1082,110 @@ public class PackageManagerTest {
         assertWithMessage("Shim apex wasn't supposed to be found").that(shimApex).isEmpty();
     }
 
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with all components in this
+     * package will only be filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
+    @Test
+    public void testGetInfo_noMetaData_InPackage() throws Exception {
+        final PackageInfo info = mPackageManager.getPackageInfo(PACKAGE_NAME,
+                GET_ACTIVITIES | GET_SERVICES | GET_RECEIVERS | GET_PROVIDERS);
+
+        assertThat(info.applicationInfo.metaData).isNull();
+        Arrays.stream(info.activities).forEach(i -> assertThat(i.metaData).isNull());
+        Arrays.stream(info.services).forEach(i -> assertThat(i.metaData).isNull());
+        Arrays.stream(info.receivers).forEach(i -> assertThat(i.metaData).isNull());
+        Arrays.stream(info.providers).forEach(i -> assertThat(i.metaData).isNull());
+    }
+
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this application will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
+    @Test
+    public void testGetInfo_noMetaData_InApplication() throws Exception {
+        final ApplicationInfo ai = mPackageManager.getApplicationInfo(PACKAGE_NAME, /* flags */ 0);
+        assertThat(ai.metaData).isNull();
+    }
+
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this activity will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
+    @Test
+    public void testGetInfo_noMetaData_InActivity() throws Exception {
+        final ComponentName componentName = new ComponentName(mContext, MockActivity.class);
+        final ActivityInfo info = mPackageManager.getActivityInfo(componentName, /* flags */ 0);
+        assertThat(info.metaData).isNull();
+    }
+
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this service will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
+    @Test
+    public void testGetInfo_noMetaData_InService() throws Exception {
+        final ComponentName componentName = new ComponentName(mContext, MockService.class);
+        final ServiceInfo info = mPackageManager.getServiceInfo(componentName, /* flags */ 0);
+        assertThat(info.metaData).isNull();
+    }
+
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this receiver will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
+    @Test
+    public void testGetInfo_noMetaData_InBroadcastReceiver() throws Exception {
+        final ComponentName componentName = new ComponentName(mContext, MockReceiver.class);
+        final ActivityInfo info = mPackageManager.getReceiverInfo(componentName, /* flags */ 0);
+        assertThat(info.metaData).isNull();
+    }
+
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this provider will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
+    @Test
+    public void testGetInfo_noMetaData_InContentProvider() throws Exception {
+        final ComponentName componentName = new ComponentName(mContext, MockContentProvider.class);
+        final ProviderInfo info = mPackageManager.getProviderInfo(componentName, /* flags */ 0);
+        assertThat(info.metaData).isNull();
+    }
+
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with all components in this
+     * package will not be filled in if the {@link PackageManager#GET_META_DATA} flag is not set.
+     */
+    @Test
+    public void testGetInfo_checkMetaData_InPackage() throws Exception {
+        final PackageInfo info = mPackageManager.getPackageInfo(PACKAGE_NAME,
+                GET_META_DATA | GET_ACTIVITIES | GET_SERVICES | GET_RECEIVERS | GET_PROVIDERS);
+
+        checkMetaData(new PackageItemInfo(info.applicationInfo));
+        checkMetaData(new PackageItemInfo(
+                findPackageItemOrFail(info.activities, "android.content.cts.MockActivity")));
+        checkMetaData(new PackageItemInfo(
+                findPackageItemOrFail(info.services, "android.content.cts.MockService")));
+        checkMetaData(new PackageItemInfo(
+                findPackageItemOrFail(info.receivers, "android.content.cts.MockReceiver")));
+        checkMetaData(new PackageItemInfo(
+                findPackageItemOrFail(info.providers, "android.content.cts.MockContentProvider")));
+    }
+
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this application will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
     @Test
     public void testGetInfo_checkMetaData_InApplication() throws Exception {
         final ApplicationInfo ai = mPackageManager.getApplicationInfo(PACKAGE_NAME, GET_META_DATA);
         checkMetaData(new PackageItemInfo(ai));
     }
 
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this activity will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
     @Test
     public void testGetInfo_checkMetaData_InActivity() throws Exception {
         final ComponentName componentName = new ComponentName(mContext, MockActivity.class);
@@ -1094,6 +1193,10 @@ public class PackageManagerTest {
         checkMetaData(new PackageItemInfo(ai));
     }
 
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this service will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
     @Test
     public void testGetInfo_checkMetaData_InService() throws Exception {
         final ComponentName componentName = new ComponentName(mContext, MockService.class);
@@ -1101,6 +1204,10 @@ public class PackageManagerTest {
         checkMetaData(new PackageItemInfo(info));
     }
 
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this receiver will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
     @Test
     public void testGetInfo_checkMetaData_InBroadcastReceiver() throws Exception {
         final ComponentName componentName = new ComponentName(mContext, MockReceiver.class);
@@ -1108,6 +1215,10 @@ public class PackageManagerTest {
         checkMetaData(new PackageItemInfo(info));
     }
 
+    /**
+     * Test that {@link ComponentInfo#metaData} data associated with this provider will only be
+     * filled in if the {@link PackageManager#GET_META_DATA} flag is set.
+     */
     @Test
     public void testGetInfo_checkMetaData_InContentProvider() throws Exception {
         final ComponentName componentName = new ComponentName(mContext, MockContentProvider.class);
