@@ -355,13 +355,8 @@ public class ImsCallProfileTest {
         ImsCallProfile data = new ImsCallProfile(ImsCallProfile.SERVICE_TYPE_NORMAL,
                 ImsCallProfile.CALL_TYPE_VOICE_N_VIDEO, new Bundle(),
                 new ImsStreamMediaProfile(1, 1, 1, 1, 1));
-        Set<RtpHeaderExtensionType> offered = new ArraySet<>();
-        offered.add(EXTENSION_TYPE_1);
-        offered.add(EXTENSION_TYPE_2);
         Set<RtpHeaderExtensionType> accepted = new ArraySet<>();
-        offered.add(EXTENSION_TYPE_1);
-        data.setOfferedRtpHeaderExtensionTypes(offered);
-        assertEquals(offered, data.getOfferedRtpHeaderExtensionTypes());
+        accepted.add(EXTENSION_TYPE_1);
         data.setAcceptedRtpHeaderExtensionTypes(accepted);
         assertEquals(accepted, data.getAcceptedRtpHeaderExtensionTypes());
 
@@ -372,7 +367,6 @@ public class ImsCallProfileTest {
                 ImsCallProfile.CREATOR.createFromParcel(dataParceled);
         dataParceled.recycle();
 
-        assertEquals(offered, unparceledData.getOfferedRtpHeaderExtensionTypes());
         assertEquals(accepted, unparceledData.getAcceptedRtpHeaderExtensionTypes());
     }
 }
