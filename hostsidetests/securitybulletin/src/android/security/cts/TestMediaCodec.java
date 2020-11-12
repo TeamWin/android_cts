@@ -365,6 +365,20 @@ public class TestMediaCodec extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/74078669
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @Test
+    @SecurityTest(minPatchLevel = "2018-10")
+    public void testPocCVE_2018_9497() throws Exception {
+        String inputFiles[] = {"cve_2018_9497.m2v"};
+        runMpeg2DecodeTest(inputFiles,
+                "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --save_output 0"
+                + " --num_frames -1 --loopback 0 --display 0 --save_chksum 0",
+                getDevice());
+    }
+
+    /**
      * b/74016277
      * Vulnerability Behaviour: SIGSEGV in self
      **/
