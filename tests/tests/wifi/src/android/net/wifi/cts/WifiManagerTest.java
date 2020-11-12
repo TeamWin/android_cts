@@ -69,11 +69,11 @@ import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
-import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -3089,6 +3089,24 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             mWifiManager.isP2pSupported();
         }
 
+    }
+
+    /**
+     * Tests {@link WifiManager#getNetworkSuggestionUserApprovalStatus()}. New app just make
+     * suggestion should return pending status.
+     */
+    public void testGetNetworkSuggestionUserApprovalStatus() throws Exception {
+        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
+            return;
+        }
+        WifiNetworkSuggestion suggestion = new WifiNetworkSuggestion.Builder()
+                .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE).build();
+
+        assertEquals(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
+                mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)));
+        // New app should be pending approval.
+        assertEquals(WifiManager.STATUS_SUGGESTION_APPROVAL_PENDING,
+                mWifiManager.getNetworkSuggestionUserApprovalStatus());
     }
 
     // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion?
