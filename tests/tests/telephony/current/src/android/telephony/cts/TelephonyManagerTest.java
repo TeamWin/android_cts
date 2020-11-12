@@ -55,6 +55,7 @@ import android.telephony.AvailableNetworkInfo;
 import android.telephony.CallAttributes;
 import android.telephony.CallForwardingInfo;
 import android.telephony.CallQuality;
+import android.telephony.CarrierBandwidth;
 import android.telephony.CarrierConfigManager;
 import android.telephony.CellLocation;
 import android.telephony.ModemActivityInfo;
@@ -3165,6 +3166,23 @@ public class TelephonyManagerTest {
         assertTrue(result.getResult() == PinResult.PIN_RESULT_TYPE_INCORRECT
                 || result.getResult() == PinResult.PIN_RESULT_TYPE_FAILURE);
         assertTrue(result.getAttemptsRemaining() >= 0);
+    }
+
+    @Test
+    public void testGetCarrierBandwidth() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        CarrierBandwidth bandwidth =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                        (tm) -> tm.getCarrierBandwidth());
+        if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
+            assertTrue(bandwidth != null);
+            assertTrue(bandwidth.getPrimaryDownlinkCapacityKbps()
+                            != CarrierBandwidth.INVALID);
+            assertTrue(bandwidth.getPrimaryUplinkCapacityKbps()
+                            != CarrierBandwidth.INVALID);
+        }
     }
 
     /**
