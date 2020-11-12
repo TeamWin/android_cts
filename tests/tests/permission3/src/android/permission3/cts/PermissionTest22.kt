@@ -27,14 +27,14 @@ class PermissionTest22 : BaseUsePermissionTest() {
 
     @Before
     fun installApp22AndApprovePermissionReview() {
+        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
+
         installPackage(APP_APK_PATH_22)
         approvePermissionReview()
     }
 
     @Test
     fun testCompatDefault() {
-        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
-
         // Legacy permission model appears granted
         assertAppHasPermission(android.Manifest.permission.READ_CALENDAR, true)
         assertAppHasPermission(android.Manifest.permission.WRITE_CALENDAR, true)
@@ -43,8 +43,6 @@ class PermissionTest22 : BaseUsePermissionTest() {
 
     @Test
     fun testCompatRevoked() {
-        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
-
         // Revoke the permission
         revokeAppPermissions(android.Manifest.permission.WRITE_CALENDAR, isLegacyApp = true)
 
@@ -57,8 +55,6 @@ class PermissionTest22 : BaseUsePermissionTest() {
 
     @Test
     fun testNoRuntimePrompt() {
-        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
-
         // Request the permission and do nothing
         // Expect the permission is not granted
         requestAppPermissionsAndAssertResult(
