@@ -379,6 +379,18 @@ public class TestMediaCodec extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/120644655
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     **/
+    @SecurityTest(minPatchLevel = "2019-04")
+    public void testPocCVE_2019_2028() throws Exception {
+        String inputFiles[] = {"cve_2019_2028.m2v"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2028",
+                "-i " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1", inputFiles,
+                AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/74078669
      * Vulnerability Behaviour: SIGSEGV in self
      */
