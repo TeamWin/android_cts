@@ -246,6 +246,8 @@ public class TelephonyManagerTest {
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
         getContext().registerReceiver(mReceiver, filter);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
     }
 
     @After
@@ -1398,6 +1400,8 @@ public class TelephonyManagerTest {
                 mLock.wait(60000);
             }
         }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
         assertThat(mTelephonyManager.getServiceState().getState()).isEqualTo(
                 ServiceState.STATE_IN_SERVICE);
     }
