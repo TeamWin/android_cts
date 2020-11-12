@@ -17,8 +17,6 @@
 package android.provider.cts.media;
 
 import static android.provider.cts.ProviderTestUtils.assertColorMostlyEquals;
-import static android.provider.cts.ProviderTestUtils.assertExists;
-import static android.provider.cts.ProviderTestUtils.assertNotExists;
 import static android.provider.cts.ProviderTestUtils.extractAverageColor;
 import static android.provider.cts.media.MediaStoreTest.TAG;
 
@@ -51,6 +49,9 @@ import android.provider.cts.ProviderTestUtils;
 import android.provider.cts.R;
 import android.provider.cts.media.MediaStoreUtils.PendingParams;
 import android.provider.cts.media.MediaStoreUtils.PendingSession;
+import android.system.ErrnoException;
+import android.system.Os;
+import android.system.OsConstants;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
@@ -69,6 +70,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
@@ -211,7 +213,7 @@ public class MediaStore_Images_ThumbnailsTest {
         c.close();
 
         ProviderTestUtils.waitForIdle();
-        assertExists("image file does not exist", imagePath);
+        assertFileExists(imagePath);
         assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
         assertNotNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
@@ -222,7 +224,7 @@ public class MediaStore_Images_ThumbnailsTest {
         mRowsAdded.remove(stringUri);
 
         ProviderTestUtils.waitForIdle();
-        assertNotExists("image file should no longer exist", imagePath);
+        assertFileNotExists(imagePath);
         assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MINI_KIND, null));
         assertNull(Thumbnails.getThumbnail(resolver, imageId, Thumbnails.MICRO_KIND, null));
 
@@ -234,10 +236,10 @@ public class MediaStore_Images_ThumbnailsTest {
         imageId = c.getLong(c.getColumnIndex(Media._ID));
         imagePath = c.getString(c.getColumnIndex(Media.DATA));
         c.close();
-        assertExists("image file does not exist", imagePath);
+        assertFileExists(imagePath);
         Uri fileuri = MediaStore.Files.getContentUri("external", imageId);
         mContentResolver.delete(fileuri, null, null);
-        assertNotExists("image file should no longer exist", imagePath);
+        assertFileNotExists(imagePath);
     }
 
     @Test
@@ -503,4 +505,26 @@ public class MediaStore_Images_ThumbnailsTest {
         bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
     }
 
+    private static void assertFileExists(String path) throws Exception {
+        try {
+            Os.access(path, OsConstants.F_OK);
+        } catch (ErrnoException e) {
+            if (e.errno == OsConstants.ENOENT) {
+                fail("File " + path + " doesn't exist.");
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    private static void assertFileNotExists(String path) throws Exception {
+        try {
+            Os.access(path, OsConstants.F_OK);
+            fail("File " + path + " exists.");
+        } catch (ErrnoException e) {
+            if (e.errno != OsConstants.ENOENT) {
+                throw e;
+            }
+        }
+    }
 }
