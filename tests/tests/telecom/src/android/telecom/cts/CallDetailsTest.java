@@ -70,6 +70,8 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     public static final String TEST_EXTRA_KEY = "android.test.extra.TEST";
     public static final String TEST_EXTRA_KEY2 = "android.test.extra.TEST2";
     public static final String TEST_EXTRA_KEY3 = "android.test.extra.TEST3";
+    public static final float TEST_EXTRA_BITRATE = 23.85f ;
+    public static final float TEST_EXTRA_BANDWIDTH = 7.0f ;
     public static final String TEST_INVALID_EXTRA_KEY = "blah";
     public static final int TEST_EXTRA_VALUE = 10;
     public static final String TEST_EVENT = "com.test.event.TEST";
@@ -479,6 +481,8 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         exampleExtras.putString(Connection.EXTRA_LAST_FORWARDED_NUMBER, TEST_FORWARDED_NUMBER);
         exampleExtras.putInt(TEST_EXTRA_KEY, TEST_EXTRA_VALUE);
         exampleExtras.putInt(Connection.EXTRA_AUDIO_CODEC, Connection.AUDIO_CODEC_AMR);
+        exampleExtras.putFloat(Connection.EXTRA_AUDIO_CODEC_BITRATE_KBPS, TEST_EXTRA_BITRATE);
+        exampleExtras.putFloat(Connection.EXTRA_AUDIO_CODEC_BANDWIDTH_KHZ, TEST_EXTRA_BANDWIDTH);
         mConnection.setExtras(exampleExtras);
 
         // Make sure we got back a bundle with the call subject key set.
@@ -492,6 +496,10 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertEquals(TEST_EXTRA_VALUE, callExtras.getInt(TEST_EXTRA_KEY));
         assertEquals(Connection.AUDIO_CODEC_AMR,
                 callExtras.getInt(Connection.EXTRA_AUDIO_CODEC));
+        assertEquals(TEST_EXTRA_BITRATE,
+                callExtras.getFloat(Connection.EXTRA_AUDIO_CODEC_BITRATE_KBPS), 0.01);
+        assertEquals(TEST_EXTRA_BANDWIDTH,
+                callExtras.getFloat(Connection.EXTRA_AUDIO_CODEC_BANDWIDTH_KHZ), 0.01);
     }
 
     /**
