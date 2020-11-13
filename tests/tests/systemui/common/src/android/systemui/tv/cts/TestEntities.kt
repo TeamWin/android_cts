@@ -109,7 +109,6 @@ object ResourceNames {
     const val SYSTEM_UI_PACKAGE = "com.android.systemui"
     const val WM_SHELL_PACKAGE = "com.android.wm.shell"
 
-    const val STRING_PIP_MENU_BOUNDS = "pip_menu_bounds"
     const val STRING_PIP_PAUSE = "pip_pause"
 
     const val ID_PIP_MENU_CLOSE_BUTTON = "$SYSTEM_UI_PACKAGE:id/close_button"
