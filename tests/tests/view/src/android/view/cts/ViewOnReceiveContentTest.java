@@ -16,7 +16,7 @@
 
 package android.view.cts;
 
-import static android.view.OnReceiveContentCallback.Payload.SOURCE_CLIPBOARD;
+import static android.view.OnReceiveContentListener.Payload.SOURCE_CLIPBOARD;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -30,8 +30,8 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
 import android.net.Uri;
-import android.view.OnReceiveContentCallback;
-import android.view.OnReceiveContentCallback.Payload;
+import android.view.OnReceiveContentListener;
+import android.view.OnReceiveContentListener.Payload;
 import android.view.View;
 
 import androidx.test.InstrumentationRegistry;
@@ -47,7 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for {@link View#onReceiveContent}.
+ * Tests for {@link View#onReceiveContent} and related code.
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -59,7 +59,7 @@ public class ViewOnReceiveContentTest {
     private Instrumentation mInstrumentation;
     private Context mContext;
     private ViewTestCtsActivity mActivity;
-    private OnReceiveContentCallback<View> mReceiver;
+    private OnReceiveContentListener mReceiver;
 
     @Before
     public void before() {
@@ -67,8 +67,7 @@ public class ViewOnReceiveContentTest {
         mContext = mInstrumentation.getTargetContext();
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
-        //noinspection unchecked
-        mReceiver = mock(OnReceiveContentCallback.class);
+        mReceiver = mock(OnReceiveContentListener.class);
     }
 
     @Test
@@ -80,24 +79,34 @@ public class ViewOnReceiveContentTest {
 
         // Setting MIME types with a non-null callback works
         String[] mimeTypes = new String[] {"image/*", "video/mp4"};
-        view.setOnReceiveContentCallback(mimeTypes, mReceiver);
+        view.setOnReceiveContentListener(mimeTypes, mReceiver);
         assertThat(view.getOnReceiveContentMimeTypes()).isEqualTo(mimeTypes);
 
         // Setting null MIME types and null callback works
-        view.setOnReceiveContentCallback(null, null);
+        view.setOnReceiveContentListener(null, null);
+        assertThat(view.getOnReceiveContentMimeTypes()).isNull();
+
+        // Setting empty MIME types and null callback works
+        view.setOnReceiveContentListener(new String[0], null);
         assertThat(view.getOnReceiveContentMimeTypes()).isNull();
 
         // Setting MIME types with a null callback works
-        view.setOnReceiveContentCallback(mimeTypes, null);
+        view.setOnReceiveContentListener(mimeTypes, null);
         assertThat(view.getOnReceiveContentMimeTypes()).isEqualTo(mimeTypes);
 
         // Setting null or empty MIME types with a non-null callback is not allowed
         try {
-            view.setOnReceiveContentCallback(null, mReceiver);
+            view.setOnReceiveContentListener(null, mReceiver);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException expected) { }
         try {
-            view.setOnReceiveContentCallback(new String[0], mReceiver);
+            view.setOnReceiveContentListener(new String[0], mReceiver);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) { }
+
+        // Passing "*/*" as a MIME type is not allowed
+        try {
+            view.setOnReceiveContentListener(new String[] {"image/gif", "*/*"}, mReceiver);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException expected) { }
     }
@@ -109,18 +118,21 @@ public class ViewOnReceiveContentTest {
         Payload samplePayloadGif = sampleUriPayload("image/gif");
         Payload samplePayloadPdf = sampleUriPayload("application/pdf");
 
-        // Calling onReceiveContent() returns false if there's no receiver (default)
-        assertThat(view.onReceiveContent(samplePayloadGif)).isFalse();
+        // Calling onReceiveContent() returns the payload if there's no receiver (default)
+        assertThat(view.onReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
 
-        // Calling onReceiveContent() calls the configured receiver if the MIME type is supported
-        view.setOnReceiveContentCallback(mimeTypes, mReceiver);
-        when(mReceiver.onReceiveContent(any(), any())).thenReturn(true);
-        assertThat(view.onReceiveContent(samplePayloadGif)).isTrue();
-        assertThat(view.onReceiveContent(samplePayloadPdf)).isFalse();
+        // Calling onReceiveContent() calls the configured receiver
+        view.setOnReceiveContentListener(mimeTypes, mReceiver);
+        when(mReceiver.onReceiveContent(any(), any())).thenReturn(null);
+        assertThat(view.onReceiveContent(samplePayloadGif)).isNull();
+
+        // Calling onReceiveContent() calls the configured receiver even if the MIME type of the
+        // content is not in the set of supported MIME types
+        assertThat(view.onReceiveContent(samplePayloadPdf)).isNull();
 
         // Clearing the receiver restores default behavior
-        view.setOnReceiveContentCallback(null, null);
-        assertThat(view.onReceiveContent(samplePayloadGif)).isFalse();
+        view.setOnReceiveContentListener(null, null);
+        assertThat(view.onReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
     }
 
     private static Payload sampleUriPayload(String ... mimeTypes) {

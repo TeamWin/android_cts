@@ -16,12 +16,12 @@
 
 package android.widget.cts;
 
-import static android.view.OnReceiveContentCallback.Payload.FLAG_CONVERT_TO_PLAIN_TEXT;
-import static android.view.OnReceiveContentCallback.Payload.SOURCE_AUTOFILL;
-import static android.view.OnReceiveContentCallback.Payload.SOURCE_CLIPBOARD;
-import static android.view.OnReceiveContentCallback.Payload.SOURCE_DRAG_AND_DROP;
-import static android.view.OnReceiveContentCallback.Payload.SOURCE_INPUT_METHOD;
-import static android.view.OnReceiveContentCallback.Payload.SOURCE_PROCESS_TEXT;
+import static android.view.OnReceiveContentListener.Payload.FLAG_CONVERT_TO_PLAIN_TEXT;
+import static android.view.OnReceiveContentListener.Payload.SOURCE_AUTOFILL;
+import static android.view.OnReceiveContentListener.Payload.SOURCE_CLIPBOARD;
+import static android.view.OnReceiveContentListener.Payload.SOURCE_DRAG_AND_DROP;
+import static android.view.OnReceiveContentListener.Payload.SOURCE_INPUT_METHOD;
+import static android.view.OnReceiveContentListener.Payload.SOURCE_PROCESS_TEXT;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -53,7 +53,7 @@ import android.text.method.QwertyKeyListener;
 import android.text.method.TextKeyListener.Capitalize;
 import android.text.style.UnderlineSpan;
 import android.view.DragEvent;
-import android.view.OnReceiveContentCallback;
+import android.view.OnReceiveContentListener;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.autofill.AutofillValue;
@@ -62,7 +62,7 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
-import android.widget.TextViewOnReceiveContentCallback;
+import android.widget.TextViewOnReceiveContentListener;
 
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.MediumTest;
@@ -95,9 +95,9 @@ public class TextViewOnReceiveContentTest {
 
     private Activity mActivity;
     private TextView mTextView;
-    private OnReceiveContentCallback<TextView> mDefaultReceiver;
+    private OnReceiveContentListener mDefaultReceiver;
     private MockReceiverWrapper mMockReceiverWrapper;
-    private OnReceiveContentCallback<TextView> mMockReceiver;
+    private OnReceiveContentListener mMockReceiver;
     private ClipboardManager mClipboardManager;
 
     @Before
@@ -105,7 +105,7 @@ public class TextViewOnReceiveContentTest {
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
         mTextView = mActivity.findViewById(R.id.textview_text);
-        mDefaultReceiver = new TextViewOnReceiveContentCallback();
+        mDefaultReceiver = new TextViewOnReceiveContentListener();
 
         mMockReceiverWrapper = new MockReceiverWrapper();
         mMockReceiver = mMockReceiverWrapper.mMock;
@@ -156,7 +156,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/plain", "image/png", "video/mp4"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Call onCreateInputConnection() and assert that contentMimeTypes is set from the receiver.
         EditorInfo editorInfo = new EditorInfo();
@@ -174,7 +174,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/plain", "image/png", "video/mp4"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Call onCreateInputConnection() and assert that contentMimeTypes is set from the receiver.
         EditorInfo editorInfo = new EditorInfo();
@@ -197,7 +197,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl that supports text and images.
         String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Assert that the autofill type returned is still AUTOFILL_TYPE_TEXT.
         assertThat(mTextView.getAutofillType()).isEqualTo(View.AUTOFILL_TYPE_TEXT);
@@ -212,7 +212,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl that supports text and images.
         String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Assert that the autofill type returned is still AUTOFILL_TYPE_TEXT.
         assertThat(mTextView.getAutofillType()).isEqualTo(View.AUTOFILL_TYPE_TEXT);
@@ -411,7 +411,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/plain"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Trigger the "Paste" action and assert that the custom receiver was executed.
         triggerContextMenuAction(android.R.id.paste);
@@ -434,12 +434,14 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/plain", "video/avi"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
-        // Trigger the "Paste" action and assert that the custom receiver was not executed.
+        // Trigger the "Paste" action and assert that the custom receiver was executed.
         triggerContextMenuAction(android.R.id.paste);
+        verify(mMockReceiver, times(1)).onReceiveContent(
+                eq(mTextView), richContentDataEq(clip, SOURCE_CLIPBOARD, 0));
         verifyNoMoreInteractions(mMockReceiver);
-        assertTextAndCursorPosition("xyz", 2);
+        assertTextAndCursorPosition("xz", 1);
     }
 
     @UiThreadTest
@@ -472,7 +474,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/plain"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Trigger the "Paste as plain text" action and assert that the custom receiver was
         // executed.
@@ -502,7 +504,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Trigger the IME's commitContent() call and assert that the custom receiver was executed.
         triggerImeCommitContent("image/png");
@@ -520,12 +522,13 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
-        // Trigger the IME's commitContent() call and assert that the custom receiver was not
-        // executed.
+        // Trigger the IME's commitContent() call and assert that the custom receiver was executed.
         triggerImeCommitContent("video/mp4");
         ClipData clip = ClipData.newRawUri("expected", SAMPLE_CONTENT_URI);
+        verify(mMockReceiver, times(1)).onReceiveContent(
+                eq(mTextView), richContentDataEq(clip, SOURCE_INPUT_METHOD, 0));
         verifyNoMoreInteractions(mMockReceiver);
         assertTextAndCursorPosition("xz", 1);
     }
@@ -538,7 +541,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Trigger the IME's commitContent() call and assert that the custom receiver was executed.
         triggerImeCommitContent("image/png");
@@ -556,7 +559,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Trigger the IME's commitContent() call with a linkUri and assert receiver extras.
         Uri sampleLinkUri = Uri.parse("http://example.com");
@@ -574,7 +577,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Trigger the IME's commitContent() call with opts and assert receiver extras.
         String sampleOptValue = "sampleOptValue";
@@ -592,7 +595,7 @@ public class TextViewOnReceiveContentTest {
 
         // Setup: Configure the receiver to a mock impl.
         String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Trigger the IME's commitContent() call with a linkUri & opts and assert receiver extras.
         Uri sampleLinkUri = Uri.parse("http://example.com");
@@ -620,7 +623,7 @@ public class TextViewOnReceiveContentTest {
     public void testDragAndDrop_customReceiver() throws Exception {
         initTextViewForEditing("xz", 2);
         String[] receiverMimeTypes = new String[] {"text/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Trigger drop event and assert that the custom receiver was executed.
         ClipData clip = ClipData.newPlainText("test", "y");
@@ -637,15 +640,17 @@ public class TextViewOnReceiveContentTest {
     public void testDragAndDrop_customReceiver_unsupportedMimeType() throws Exception {
         initTextViewForEditing("xz", 2);
         String[] receiverMimeTypes = new String[] {"text/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
-        // Trigger drop event and assert that the custom receiver was not executed.
+        // Trigger drop event and assert that the custom receiver was executed.
         ClipData clip = new ClipData("test", new String[]{"video/mp4"},
                 new ClipData.Item("y", null, SAMPLE_CONTENT_URI));
         triggerDropEvent(clip);
+        verify(mMockReceiver, times(1)).onReceiveContent(
+                eq(mTextView), richContentDataEq(clip, SOURCE_DRAG_AND_DROP, 0));
         verifyNoMoreInteractions(mMockReceiver);
         // Note: The cursor is moved to the location of the drop before calling the receiver.
-        assertTextAndCursorPosition("yxz", 1);
+        assertTextAndCursorPosition("xz", 0);
     }
 
     @UiThreadTest
@@ -664,7 +669,7 @@ public class TextViewOnReceiveContentTest {
     public void testAutofill_customReceiver() throws Exception {
         initTextViewForEditing("xz", 1);
         String[] receiverMimeTypes = new String[] {"text/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         // Trigger autofill and assert that the custom receiver was executed.
         ClipData clip = ClipData.newPlainText("test", "y");
@@ -680,18 +685,16 @@ public class TextViewOnReceiveContentTest {
     public void testAutofill_customReceiver_unsupportedMimeType() throws Exception {
         initTextViewForEditing("xz", 1);
         String[] receiverMimeTypes = new String[] {"text/*"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
-        // Trigger autofill and assert that the custom receiver was not executed.
-        // Note: We expect 2 calls to getSupportedMimeTypes(). The first call is to check whether
-        // the custom callback supports the MIME type of the clip. Since it doesn't, the default
-        // callback is executed; this calls setText() which triggers onCreateInputConnection()
-        // which reads the supported MIME types of the custom callback.
+        // Trigger autofill and assert that the custom receiver was executed.
         ClipData clip = new ClipData("test", new String[]{"video/mp4"},
                 new ClipData.Item("y", null, SAMPLE_CONTENT_URI));
         triggerAutofill(clip);
+        verify(mMockReceiver, times(1)).onReceiveContent(
+                eq(mTextView), richContentDataEq(clip, SOURCE_AUTOFILL, 0));
         verifyNoMoreInteractions(mMockReceiver);
-        assertTextAndCursorPosition("y", 1);
+        assertTextAndCursorPosition("xz", 1);
     }
 
     @UiThreadTest
@@ -731,7 +734,7 @@ public class TextViewOnReceiveContentTest {
         assertTextAndSelection(originalText, 0, originalText.length());
 
         String[] receiverMimeTypes = new String[] {"text/plain"};
-        mTextView.setOnReceiveContentCallback(receiverMimeTypes, mMockReceiverWrapper);
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiverWrapper);
 
         String newText = "Replacement text";
         triggerProcessTextOnActivityResult(newText);
@@ -769,10 +772,10 @@ public class TextViewOnReceiveContentTest {
                 .that(actual).isEqualTo(expected);
     }
 
-    private void onReceive(final OnReceiveContentCallback<TextView> receiver,
+    private void onReceive(final OnReceiveContentListener receiver,
             final ClipData clip, final int source, final int flags) {
-        OnReceiveContentCallback.Payload payload =
-                new OnReceiveContentCallback.Payload.Builder(clip, source)
+        OnReceiveContentListener.Payload payload =
+                new OnReceiveContentListener.Payload.Builder(clip, source)
                 .setFlags(flags)
                 .build();
         receiver.onReceiveContent(mTextView, payload);
@@ -794,17 +797,16 @@ public class TextViewOnReceiveContentTest {
     // to the public methods, the OnReceiveContentCallback interface has some hidden default
     // methods; we don't want to mock or assert calls to these helper functions (they are an
     // implementation detail).
-    private static class MockReceiverWrapper implements OnReceiveContentCallback<TextView> {
-        private final OnReceiveContentCallback<TextView> mMock;
+    private static class MockReceiverWrapper implements OnReceiveContentListener {
+        private final OnReceiveContentListener mMock;
 
-        @SuppressWarnings("unchecked")
         MockReceiverWrapper() {
-            this.mMock = Mockito.mock(OnReceiveContentCallback.class);
-            when(mMock.onReceiveContent(any(), any())).thenReturn(true);
+            this.mMock = Mockito.mock(OnReceiveContentListener.class);
+            when(mMock.onReceiveContent(any(), any())).thenReturn(null);
         }
 
         @Override
-        public boolean onReceiveContent(TextView view, OnReceiveContentCallback.Payload payload) {
+        public @Nullable Payload onReceiveContent(View view, Payload payload) {
             return mMock.onReceiveContent(view, payload);
         }
     }
@@ -853,11 +855,13 @@ public class TextViewOnReceiveContentTest {
     }
 
     private static DragEvent createDragEvent(int action, float x, float y, ClipData clip) {
-        // DragEvent doesn't expose any API for instantiation, so we have to build it from a Parcel.
+        // TODO(b/171717040): Expose a test API to instantiate a DragEvent
         Parcel dest = Parcel.obtain();
         dest.writeInt(action);
         dest.writeFloat(x);
         dest.writeFloat(y);
+        dest.writeFloat(0f); // offsetX
+        dest.writeFloat(0f); // offsetY
         dest.writeInt(0); // Result
         dest.writeInt(1); // ClipData
         clip.writeToParcel(dest, 0);
@@ -874,18 +878,18 @@ public class TextViewOnReceiveContentTest {
         mTextView.onActivityResult(TextView.PROCESS_TEXT_REQUEST_CODE, Activity.RESULT_OK, data);
     }
 
-    private static OnReceiveContentCallback.Payload richContentDataEq(@NonNull ClipData clip,
+    private static OnReceiveContentListener.Payload richContentDataEq(@NonNull ClipData clip,
             int source, int flags) {
         return argThat(new RichContentDataArgumentMatcher(clip, source, flags, null, null));
     }
 
-    private static OnReceiveContentCallback.Payload richContentDataEq(@NonNull ClipData clip,
+    private static OnReceiveContentListener.Payload richContentDataEq(@NonNull ClipData clip,
             int source, int flags, Uri linkUri, String extra) {
         return argThat(new RichContentDataArgumentMatcher(clip, source, flags, linkUri, extra));
     }
 
     private static class RichContentDataArgumentMatcher implements
-            ArgumentMatcher<OnReceiveContentCallback.Payload> {
+            ArgumentMatcher<OnReceiveContentListener.Payload> {
         public static final String EXTRA_KEY = "testExtra";
 
         @NonNull private final ClipData mClip;
@@ -904,7 +908,7 @@ public class TextViewOnReceiveContentTest {
         }
 
         @Override
-        public boolean matches(OnReceiveContentCallback.Payload actual) {
+        public boolean matches(OnReceiveContentListener.Payload actual) {
             ClipData.Item expectedItem = mClip.getItemAt(0);
             ClipData.Item actualItem = actual.getClip().getItemAt(0);
             return Objects.equals(expectedItem.getText(), actualItem.getText())
