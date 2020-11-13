@@ -19,6 +19,9 @@
      package="android.systemui.cts">
 
     <application>
+        <activity android:name=".TestNotificationActivity"
+                  android:exported="true"/>
+
         <service android:name=".TestTileService"
              android:icon="@android:drawable/ic_delete"
              android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"

@@ -786,36 +786,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getState().getNumber()).isEqualTo(TestAtomReported.State.OFF_VALUE);
         assertThat(atom.getBytesField().getExperimentIdList()).isEmpty();
     }
-
-    public void testNotificationReported() throws Exception {
-        StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        FieldValueMatcher.Builder fvm = ConfigUtils.createFvm(
-                NotificationReported.PACKAGE_NAME_FIELD_NUMBER).setEqString(
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetric(config, Atom.NOTIFICATION_REPORTED_FIELD_NUMBER,
-                Collections.singletonList(fvm));
-        ConfigUtils.uploadConfig(getDevice(), config);
-
-        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                "StatsdCtsForegroundActivity", "action", "action.show_notification");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data).hasSize(1);
-        assertThat(data.get(0).getAtom().hasNotificationReported()).isTrue();
-        AtomsProto.NotificationReported n = data.get(0).getAtom().getNotificationReported();
-        assertThat(n.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
-        assertThat(n.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
-        assertThat(n.getNotificationIdHash()).isEqualTo(1);  // smallHash(0x7f080001)
-        assertThat(n.getChannelIdHash()).isEqualTo(SmallHash.hash("StatsdCtsChannel"));
-        assertThat(n.getGroupIdHash()).isEqualTo(0);
-        assertFalse(n.getIsGroupSummary());
-        assertThat(n.getCategory()).isEmpty();
-        assertThat(n.getStyle()).isEqualTo(0);
-        assertThat(n.getNumPeople()).isEqualTo(0);
-    }
 /*
     public void testMobileBytesTransfer() throws Throwable {
         final int appUid = getUid();
