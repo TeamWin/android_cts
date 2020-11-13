@@ -346,14 +346,15 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 new ComponentName(getActivity(), StubTunerTvInputService.class)).build();
         TvInputInfo updatedInfo = new TvInputInfo.Builder(getActivity(),
                 new ComponentName(getActivity(), StubTunerTvInputService.class))
-                        .setTunerCount(10).setCanRecord(true).build();
+                        .setTunerCount(10).setCanRecord(true).setCanPauseRecording(false).build();
 
         mManager.updateTvInputInfo(updatedInfo);
         new PollingCheck(TIME_OUT_MS) {
             @Override
             protected boolean check() {
                 TvInputInfo info = mCallback.getLastUpdatedTvInputInfo();
-                return info !=  null && info.getTunerCount() == 10 && info.canRecord();
+                return info !=  null && info.getTunerCount() == 10 && info.canRecord()
+                        && !info.canPauseRecording();
             }
         }.run();
 
@@ -362,7 +363,8 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
             @Override
             protected boolean check() {
                 TvInputInfo info = mCallback.getLastUpdatedTvInputInfo();
-                return info !=  null && info.getTunerCount() == 1 && !info.canRecord();
+                return info !=  null && info.getTunerCount() == 1 && !info.canRecord()
+                        && info.canPauseRecording();
             }
         }.run();
 
