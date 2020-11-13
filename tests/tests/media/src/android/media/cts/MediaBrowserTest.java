@@ -243,6 +243,43 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertEquals(0, mSubscriptionCallback.mChildrenLoadedCount);
     }
 
+    public void testSubscribeWithIllegalArguments() {
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+
+        try {
+            final String nullMediaId = null;
+            mMediaBrowser.subscribe(nullMediaId, mSubscriptionCallback);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            final String emptyMediaId = "";
+            mMediaBrowser.subscribe(emptyMediaId, mSubscriptionCallback);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            final MediaBrowser.SubscriptionCallback nullCallback = null;
+            mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, nullCallback);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            final Bundle nullOptions = null;
+            mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, nullOptions,
+                    mSubscriptionCallback);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+    }
+
     public void testSubscribeWithOptions() {
         createMediaBrowser(TEST_BROWSER_SERVICE);
         connectMediaBrowserService();
@@ -348,6 +385,34 @@ public class MediaBrowserTest extends InstrumentationTestCase {
         assertEquals(0, mSubscriptionCallback.mChildrenLoadedCount);
         assertEquals(0, mSubscriptionCallback.mChildrenLoadedWithOptionCount);
         assertNull(mSubscriptionCallback.mLastParentId);
+    }
+
+    public void testUnsubscribeWithIllegalArguments() {
+        createMediaBrowser(TEST_BROWSER_SERVICE);
+
+        try {
+            final String nullMediaId = null;
+            mMediaBrowser.unsubscribe(nullMediaId);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            final String emptyMediaId = "";
+            mMediaBrowser.unsubscribe(emptyMediaId);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
+        try {
+            final MediaBrowser.SubscriptionCallback nullCallback = null;
+            mMediaBrowser.unsubscribe(StubMediaBrowserService.MEDIA_ID_ROOT, nullCallback);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
     }
 
     public void testUnsubscribeForMultipleSubscriptions() {
