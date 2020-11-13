@@ -1146,10 +1146,15 @@ public class WindowManagerState {
                 }
             }
             // Add root tasks controlled by an organizer
-            for (int i = rootOrganizedTasks.size() -1; i >= 0; --i) {
-                final ActivityTask task = rootOrganizedTasks.get(i);
-                for (int j = task.mChildren.size() - 1; j >= 0; j--) {
-                    mRootTasks.add((ActivityTask) task.mChildren.get(j));
+            while (rootOrganizedTasks.size() > 0) {
+                final ActivityTask task = rootOrganizedTasks.remove(0);
+                for (int i = task.mChildren.size() - 1; i >= 0; i--) {
+                    final ActivityTask child = (ActivityTask) task.mChildren.get(i);
+                    if (!child.mCreatedByOrganizer) {
+                        mRootTasks.add(child);
+                    } else {
+                        rootOrganizedTasks.add(child);
+                    }
                 }
             }
         }
