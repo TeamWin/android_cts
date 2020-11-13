@@ -42,6 +42,7 @@ import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterConfiguration;
 import android.media.tv.tuner.filter.FilterEvent;
 import android.media.tv.tuner.filter.Filter;
+import android.media.tv.tuner.filter.IpCidChangeEvent;
 import android.media.tv.tuner.filter.IpFilterConfiguration;
 import android.media.tv.tuner.filter.IpPayloadEvent;
 import android.media.tv.tuner.filter.MediaEvent;
@@ -350,7 +351,8 @@ public class TunerTest {
                 .setSettings(settings)
                 .build();
         f.configure(config);
-        f.configureScramblingStatusEvent(Filter.SCRAMBLING_STATUS_SCRAMBLED);
+        f.configureMonitorEvent(
+                Filter.MONITOR_EVENT_SCRAMBLING_STATUS | Filter.MONITOR_EVENT_IP_CID_CHANGE);
         f.start();
         f.flush();
         f.read(new byte[3], 0, 3);
@@ -551,6 +553,8 @@ public class TunerTest {
                         testTsRecordEvent(filter, (TsRecordEvent) e);
                     } else if (e instanceof ScramblingStatusEvent) {
                         testScramblingStatusEvent(filter, (ScramblingStatusEvent) e);
+                    } else if (e instanceof IpCidChangeEvent) {
+                        testIpCidChangeEvent(filter, (IpCidChangeEvent) e);
                     } else if (e instanceof RestartEvent) {
                         testRestartEvent(filter, (RestartEvent) e);
                     }
@@ -662,6 +666,10 @@ public class TunerTest {
 
     private void testScramblingStatusEvent(Filter filter, ScramblingStatusEvent e) {
         e.getScramblingStatus();
+    }
+
+    private void testIpCidChangeEvent(Filter filter, IpCidChangeEvent e) {
+        e.getIpCid();
     }
 
     private void testRestartEvent(Filter filter, RestartEvent e) {
