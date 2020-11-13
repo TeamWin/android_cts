@@ -16,8 +16,6 @@
 
 package android.app.cts;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
 import android.app.AlarmManager;
 import android.app.AlarmManager.AlarmClockInfo;
 import android.app.PendingIntent;
@@ -33,6 +31,7 @@ import android.util.Log;
 
 import androidx.test.filters.LargeTest;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 
 public class AlarmManagerTest extends AndroidTestCase {
@@ -189,7 +188,7 @@ public class AlarmManagerTest extends AndroidTestCase {
         for (int i = 0; i < NUM_TRIALS; i++) {
             final long now = System.currentTimeMillis();
             final long windowStart = now + TEST_ALARM_FUTURITY;
-            final long exactStart = windowStart + TEST_WINDOW_LENGTH - 1;
+            final long exactStart = windowStart + TEST_WINDOW_LENGTH / 2;
 
             mMockAlarmReceiver.setAlarmedFalse();
             mMockAlarmReceiver2.setAlarmedFalse();
