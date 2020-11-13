@@ -2096,15 +2096,15 @@ public class ScopedStorageTest {
             assertAccess(doesntExistPdf, false, false, false);
 
             // We can check only exists for another app's files on root.
-            // Use shell to create root file because TEST_APP_A is in
+            // Use content provider to create root file because TEST_APP_A is in
             // scoped storage.
-            executeShellCommand("touch " + shellPdfAtRoot.getAbsolutePath());
+            createFileUsingTradefedContentProvider(shellPdfAtRoot);
             MediaStore.scanFile(getContentResolver(), shellPdfAtRoot);
             assertFileAccess_existsOnly(shellPdfAtRoot);
         } finally {
             deleteFileAsNoThrow(TEST_APP_A, otherAppPdf.getAbsolutePath());
             deleteFileAsNoThrow(TEST_APP_A, otherAppImage.getAbsolutePath());
-            executeShellCommand("rm " + shellPdfAtRoot.getAbsolutePath());
+            deleteFileUsingTradefedContentProvider(shellPdfAtRoot);
             MediaStore.scanFile(getContentResolver(), shellPdfAtRoot);
             myAppPdf.delete();
             uninstallApp(TEST_APP_A);
@@ -2234,7 +2234,7 @@ public class ScopedStorageTest {
         try {
             installApp(TEST_APP_A);
             assertCreateFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
-            executeShellCommand("touch " + otherTopLevelFile);
+            createFileUsingTradefedContentProvider(otherTopLevelFile);
             MediaStore.scanFile(getContentResolver(), otherTopLevelFile);
 
             // We can list other apps' files
@@ -2247,7 +2247,7 @@ public class ScopedStorageTest {
             // We can also list all top level directories
             assertDirectoryContains(getExternalStorageDir(), getDefaultTopLevelDirs());
         } finally {
-            executeShellCommand("rm " + otherTopLevelFile);
+            deleteFileUsingTradefedContentProvider(otherTopLevelFile);
             MediaStore.scanFile(getContentResolver(), otherTopLevelFile);
             deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
             uninstallApp(TEST_APP_A);
@@ -2490,6 +2490,8 @@ public class ScopedStorageTest {
     @Test
     public void testWallpaperApisNoPermission() throws Exception {
         WallpaperManager wallpaperManager = WallpaperManager.getInstance(getContext());
+        assumeTrue("Test skipped as wallpaper is not supported.",
+                wallpaperManager.isWallpaperSupported());
         assertThrows(SecurityException.class, () -> wallpaperManager.getFastDrawable());
         assertThrows(SecurityException.class, () -> wallpaperManager.peekFastDrawable());
         assertThrows(SecurityException.class,
@@ -2739,7 +2741,7 @@ public class ScopedStorageTest {
     @Test
     public void testRenameFromShell() throws Exception {
         // This test is for shell and shell always runs as USER_SYSTEM
-        if (getCurrentUser() != USER_SYSTEM) return;
+        assumeTrue("Test is applicable only for System User.", getCurrentUser() == USER_SYSTEM);
         final File imageFile = new File(getPicturesDir(), IMAGE_FILE_NAME);
         final File dir = new File(getMoviesDir(), TEST_DIRECTORY_NAME);
         final File renamedDir = new File(getMusicDir(), TEST_DIRECTORY_NAME);
