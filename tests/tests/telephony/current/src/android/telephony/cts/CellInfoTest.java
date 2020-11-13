@@ -57,6 +57,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
+import androidx.test.InstrumentationRegistry;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -216,6 +218,9 @@ public class CellInfoTest {
     }
 
     private boolean isCamped() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
+
         ServiceState ss = mTm.getServiceState();
         if (ss == null) return false;
         return (ss.getState() == ServiceState.STATE_IN_SERVICE
