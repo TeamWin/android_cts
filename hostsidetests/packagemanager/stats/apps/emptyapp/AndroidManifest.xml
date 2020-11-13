@@ -16,7 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.cts.device.statsdatom.emptyapp">
+          package="com.android.cts.packagemanager.stats.emptyapp">
     <application android:hasCode="false" android:label="Empty Test App" />
 </manifest>
 
