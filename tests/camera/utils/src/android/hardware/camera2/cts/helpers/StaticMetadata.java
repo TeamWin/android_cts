@@ -357,13 +357,16 @@ public class StaticMetadata {
                     minExposure, SENSOR_INFO_EXPOSURE_TIME_RANGE_MIN_AT_MOST));
             minExposure = SENSOR_INFO_EXPOSURE_TIME_RANGE_MIN_AT_MOST;
         }
-        if (maxExposure < SENSOR_INFO_EXPOSURE_TIME_RANGE_MAX_AT_LEAST) {
-            failKeyCheck(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE,
-                    String.format(
-                    "Max value %d is too small, set to minimal legal value %d",
-                    maxExposure, SENSOR_INFO_EXPOSURE_TIME_RANGE_MAX_AT_LEAST));
-            maxExposure = SENSOR_INFO_EXPOSURE_TIME_RANGE_MAX_AT_LEAST;
+        if (isHardwareLevelAtLeastFull()) {
+            if (maxExposure < SENSOR_INFO_EXPOSURE_TIME_RANGE_MAX_AT_LEAST) {
+                failKeyCheck(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE,
+                        String.format(
+                        "Max value %d is too small, set to minimal legal value %d",
+                        maxExposure, SENSOR_INFO_EXPOSURE_TIME_RANGE_MAX_AT_LEAST));
+                maxExposure = SENSOR_INFO_EXPOSURE_TIME_RANGE_MAX_AT_LEAST;
+            }
         }
+
 
         return Math.max(minExposure, Math.min(maxExposure, exposure));
     }
@@ -897,8 +900,8 @@ public class StaticMetadata {
      * @return Sensitivity value in legal range.
      */
     public int getSensitivityClampToRange(int sensitivity) {
-        int minSensitivity = getSensitivityMinimumOrDefault(Integer.MAX_VALUE);
-        int maxSensitivity = getSensitivityMaximumOrDefault(Integer.MIN_VALUE);
+        int minSensitivity = getSensitivityMinimumOrDefault();
+        int maxSensitivity = getSensitivityMaximumOrDefault();
         if (minSensitivity > SENSOR_INFO_SENSITIVITY_RANGE_MIN_AT_MOST) {
             failKeyCheck(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE,
                     String.format(
@@ -998,11 +1001,13 @@ public class StaticMetadata {
      * @return The value reported by the camera device or the defaultValue otherwise.
      */
     public int getSensitivityMinimumOrDefault(int defaultValue) {
-        Range<Integer> range = getValueFromKeyNonNull(
+        Range<Integer> range = mCharacteristics.get(
                 CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE);
         if (range == null) {
-            failKeyCheck(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE,
-                    "had no valid minimum value; using default of " + defaultValue);
+            if (isHardwareLevelAtLeastFull()) {
+                failKeyCheck(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE,
+                        "had no valid minimum value; using default of " + defaultValue);
+            }
             return defaultValue;
         }
         return range.getLower();
@@ -1031,11 +1036,13 @@ public class StaticMetadata {
      * @return The value reported by the camera device or the defaultValue otherwise.
      */
     public int getSensitivityMaximumOrDefault(int defaultValue) {
-        Range<Integer> range = getValueFromKeyNonNull(
+        Range<Integer> range = mCharacteristics.get(
                 CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE);
         if (range == null) {
-            failKeyCheck(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE,
-                    "had no valid maximum value; using default of " + defaultValue);
+            if (isHardwareLevelAtLeastFull()) {
+                failKeyCheck(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE,
+                        "had no valid maximum value; using default of " + defaultValue);
+            }
             return defaultValue;
         }
         return range.getUpper();
