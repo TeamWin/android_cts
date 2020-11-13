@@ -39,6 +39,9 @@
         <activity android:name="android.input.cts.IncompleteMotionActivity"
                   android:label="IncompleteMotion activity">
         </activity>
+        <activity android:name="android.input.cts.CaptureEventActivity"
+                  android:label="Capture events">
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

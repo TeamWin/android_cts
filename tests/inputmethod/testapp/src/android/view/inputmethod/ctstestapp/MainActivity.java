@@ -53,15 +53,7 @@ public final class MainActivity extends Activity {
     private AlertDialog mDialog;
     private final Handler mHandler = new Handler(Looper.myLooper());
 
-    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getBooleanExtra(EXTRA_DISMISS_DIALOG, false)) {
-                mDialog.dismiss();
-                mHandler.postDelayed(() -> finish(), 100);
-            }
-        }
-    };
+    private BroadcastReceiver mBroadcastReceiver;
 
     @Nullable
     private String getStringIntentExtra(String key) {
@@ -89,7 +81,6 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        registerReceiver(mBroadcastReceiver, new IntentFilter(ACTION_TRIGGER));
 
         final LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -126,8 +117,26 @@ public final class MainActivity extends Activity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStart() {
+        super.onStart();
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getBooleanExtra(EXTRA_DISMISS_DIALOG, false)) {
+                    if (mDialog != null) {
+                        mDialog.dismiss();
+                        mDialog = null;
+                    }
+                    mHandler.postDelayed(() -> finish(), 100);
+                }
+            }
+        };
+        registerReceiver(mBroadcastReceiver, new IntentFilter(ACTION_TRIGGER));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
         if (mBroadcastReceiver != null) {
             unregisterReceiver(mBroadcastReceiver);
             mBroadcastReceiver = null;

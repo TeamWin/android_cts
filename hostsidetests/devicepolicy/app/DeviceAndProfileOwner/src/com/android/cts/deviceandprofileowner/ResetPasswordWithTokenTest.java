@@ -15,6 +15,10 @@
  */
 package com.android.cts.deviceandprofileowner;
 
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_LOW;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_ALPHABETIC;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_ALPHANUMERIC;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_COMPLEX;
@@ -55,6 +59,7 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         resetComplexPasswordRestrictions();
         mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
                 PASSWORD_QUALITY_UNSPECIFIED);
+        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_NONE);
         super.tearDown();
     }
 
@@ -407,6 +412,91 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         assertPasswordFails("123", caseDescription); // too short
     }
 
+    public void testPasswordComplexity_settingComplexityClearsQuality() {
+        if (!mShouldRun) {
+            return;
+        }
+
+        mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_COMPLEX);
+        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_MEDIUM);
+        assertEquals(PASSWORD_QUALITY_UNSPECIFIED,
+                mDevicePolicyManager.getPasswordQuality(ADMIN_RECEIVER_COMPONENT));
+        assertEquals(PASSWORD_COMPLEXITY_MEDIUM,
+                mDevicePolicyManager.getRequiredPasswordComplexity());
+    }
+
+    public void testPasswordComplexity_settingQualityResetsComplexity() {
+        if (!mShouldRun) {
+            return;
+        }
+
+        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_MEDIUM);
+        mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT, PASSWORD_QUALITY_COMPLEX);
+        assertEquals(PASSWORD_QUALITY_COMPLEX,
+                mDevicePolicyManager.getPasswordQuality(ADMIN_RECEIVER_COMPONENT));
+        assertEquals(PASSWORD_COMPLEXITY_NONE,
+                mDevicePolicyManager.getRequiredPasswordComplexity());
+    }
+
+    public void testPasswordComplexity_Low() {
+        if (!mShouldRun) {
+            return;
+        }
+
+        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_LOW);
+        assertEquals(PASSWORD_COMPLEXITY_LOW,
+                mDevicePolicyManager.getRequiredPasswordComplexity());
+
+        String caseDescription = "low quality password";
+        assertPasswordSucceeds("abcd", caseDescription);
+        assertPasswordFails("123", caseDescription);
+        assertEquals(PASSWORD_COMPLEXITY_LOW, mDevicePolicyManager.getPasswordComplexity());
+        assertPasswordSucceeds("1a2b3c4d", caseDescription);
+        assertEquals(PASSWORD_COMPLEXITY_HIGH, mDevicePolicyManager.getPasswordComplexity());
+        assertPasswordSucceeds("162534", caseDescription); // 6 digits.
+        assertEquals(PASSWORD_COMPLEXITY_MEDIUM, mDevicePolicyManager.getPasswordComplexity());
+    }
+
+    public void testPasswordComplexity_Medium() {
+        if (!mShouldRun) {
+            return;
+        }
+
+        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_MEDIUM);
+        assertEquals(PASSWORD_QUALITY_UNSPECIFIED,
+                mDevicePolicyManager.getPasswordQuality(ADMIN_RECEIVER_COMPONENT));
+        assertEquals(PASSWORD_COMPLEXITY_MEDIUM,
+                mDevicePolicyManager.getRequiredPasswordComplexity());
+
+        String caseDescription = "medium quality password";
+        assertPasswordSucceeds("axtd", caseDescription);
+        assertPasswordSucceeds("1axc", caseDescription);
+        assertPasswordSucceeds("1363", caseDescription);
+        assertPasswordFails("4444", caseDescription);
+        assertEquals(PASSWORD_COMPLEXITY_MEDIUM, mDevicePolicyManager.getPasswordComplexity());
+        assertPasswordSucceeds("1axc352ae63", caseDescription);
+        assertEquals(PASSWORD_COMPLEXITY_HIGH, mDevicePolicyManager.getPasswordComplexity());
+        assertPasswordFails("1234", caseDescription); // repeating pattern
+        assertEquals(PASSWORD_COMPLEXITY_HIGH, mDevicePolicyManager.getPasswordComplexity());
+    }
+
+    public void testPasswordComplexity_High() {
+        if (!mShouldRun) {
+            return;
+        }
+
+        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_HIGH);
+        assertEquals(PASSWORD_COMPLEXITY_HIGH,
+                mDevicePolicyManager.getRequiredPasswordComplexity());
+
+        String caseDescription = "high quality password";
+        assertPasswordFails("abcd", caseDescription);
+        assertPasswordFails("123", caseDescription);
+        assertPasswordSucceeds("1a2b3c4d5e", caseDescription);
+        assertEquals(PASSWORD_COMPLEXITY_HIGH, mDevicePolicyManager.getPasswordComplexity());
+        assertPasswordFails("162534", caseDescription); // Only 6 digits.
+    }
+
     public void testPasswordQuality_complexSymbols() {
         if (!mShouldRun) {
             return;
@@ -507,6 +597,7 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         // First remove device lock
         mDevicePolicyManager.setPasswordQuality(ADMIN_RECEIVER_COMPONENT,
                 DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED);
+        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_NONE);
         assertTrue(mDevicePolicyManager.resetPasswordWithToken(ADMIN_RECEIVER_COMPONENT, null,
                 TOKEN0, 0));
 
