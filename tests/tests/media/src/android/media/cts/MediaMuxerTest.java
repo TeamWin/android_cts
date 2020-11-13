@@ -24,10 +24,13 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaMuxer;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import android.media.cts.R;
 
@@ -52,6 +55,8 @@ public class MediaMuxerTest extends AndroidTestCase {
     private static final float TOLERANCE = 0.0002f;
     private static final long OFFSET_TIME_US = 29 * 60 * 1000000L; // 29 minutes
     private Resources mResources;
+    // running on 10, we can't reference the 11 symbols, so >10 vs >=11
+    private boolean mAndroid11 = Build.VERSION.SDK_INT > Build.VERSION_CODES.Q;
 
     @Override
     public void setContext(Context context) {
@@ -77,6 +82,8 @@ public class MediaMuxerTest extends AndroidTestCase {
     }
 
     public void testDualAudioTrack() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         int source = R.raw.audio_aac_mono_70kbs_44100hz_aac_mono_70kbs_44100hz;
         String outputFile = File.createTempFile("MediaMuxerTest_testDualAudio", ".mp4")
                 .getAbsolutePath();
@@ -84,6 +91,8 @@ public class MediaMuxerTest extends AndroidTestCase {
     }
 
     public void testDualVideoAndAudioTrack() throws Exception {
+        if (!MediaUtils.check(mAndroid11, "test needs Android 11")) return;
+
         int source = R.raw.video_h264_30fps_video_h264_30fps_aac_44100hz_aac_44100hz;
         String outputFile = File.createTempFile("MediaMuxerTest_testDualVideoAudio", ".mp4")
                 .getAbsolutePath();
