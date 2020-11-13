@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -53,6 +54,7 @@ public final class RecognitionServiceMicIndicatorTest {
     // Th notification privacy indicator
     private final String PRIVACY_CHIP_PACLAGE_NAME = "com.android.systemui";
     private final String PRIVACY_CHIP_ID = "privacy_chip";
+    private final String TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator";
     // The cts app label
     private final String APP_LABEL = "CtsVoiceRecognitionTestCases";
     // A simple test voice recognition service implementation
@@ -157,6 +159,30 @@ public final class RecognitionServiceMicIndicatorTest {
         // Start SpeechRecognition
         mActivity.startListening();
 
+        final PackageManager pm = mContext.getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            assertTvIndicatorsShown(trustVoiceService);
+        } else {
+            assertPrivacyChipAndIndicatorsPresent(trustVoiceService);
+        }
+    }
+
+    private void assertTvIndicatorsShown(boolean trustVoiceService) {
+        Log.v(TAG, "assertTvIndicatorsShown");
+        final WindowManagerStateHelper wmState = new WindowManagerStateHelper();
+        wmState.waitFor(
+                state -> {
+                    if (trustVoiceService) {
+                        return state.containsWindow(TV_MIC_INDICATOR_WINDOW_TITLE)
+                                && state.isWindowVisible(TV_MIC_INDICATOR_WINDOW_TITLE);
+                    } else {
+                        return !state.containsWindow(TV_MIC_INDICATOR_WINDOW_TITLE);
+                    }
+                },
+                "Waiting for the mic indicator window to come up");
+    }
+
+    private void assertPrivacyChipAndIndicatorsPresent(boolean trustVoiceService) {
         // Open notification and verify the privacy indicator is shown
         mUiDevice.openNotification();
         SystemClock.sleep(UI_WAIT_TIMEOUT);
