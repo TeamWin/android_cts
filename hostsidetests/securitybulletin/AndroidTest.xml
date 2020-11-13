@@ -340,8 +340,8 @@
         <option name="push" value="CVE-2017-1314932->/data/local/tmp/CVE-2017-13149" />
 
         <!-- Please add 64-bit binary tests below to avoid merge conflict -->
+        <option name="push" value="CVE-2018-935164->/data/local/tmp/CVE-2018-9351" />
         <option name="push" value="CVE-2017-1320364->/data/local/tmp/CVE-2017-13203" />
-
 
         <option name="append-bitness" value="false" />
     </target_preparer>
