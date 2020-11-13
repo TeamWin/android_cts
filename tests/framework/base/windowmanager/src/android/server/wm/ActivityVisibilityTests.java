@@ -139,7 +139,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
      */
     @Test
     public void testHomeVisibleOnActivityTaskPinned() throws Exception {
-        if (!supportsPip()) {
+        if (!supportsPip() || !hasHomeScreen()) {
             return;
         }
 
