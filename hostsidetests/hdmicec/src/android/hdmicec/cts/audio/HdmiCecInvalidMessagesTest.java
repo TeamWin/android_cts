@@ -83,8 +83,9 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
     }
 
     private boolean isLanguageEditable() throws Exception {
-        String val = getDevice().executeShellCommand("getprop ro.hdmi.set_menu_language");
-        return val.trim().equals("true") ? true : false;
+        String val = getDevice().executeShellCommand(
+                "getprop ro.hdmi.cec.source.set_menu_language.enabled");
+        return val.trim().equals("true");
     }
 
     private static String extractLanguage(String locale) {
