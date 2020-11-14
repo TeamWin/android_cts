@@ -64,6 +64,7 @@ import com.android.compatibility.common.util.TestUtils;
 
 import junit.framework.Assert;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -89,6 +90,7 @@ public class ToastTest {
             "android.widget.cts.app.TRANSLUCENT_ACTIVITY_FINISH";
     private static final ComponentName COMPONENT_TRANSLUCENT_ACTIVITY =
             ComponentName.unflattenFromString("android.widget.cts.app/.TranslucentActivity");
+    private static final double TOAST_DURATION_ERROR_TOLERANCE_FRACTION = 0.25;
 
     private Toast mToast;
     private Context mContext;
@@ -107,6 +109,11 @@ public class ToastTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         mLayoutListener = () -> mLayoutDone = true;
+    }
+
+    @After
+    public void teardown() {
+        waitForToastToExpire();
     }
 
     @UiThreadTest
@@ -181,6 +188,28 @@ public class ToastTest {
         );
     }
 
+    private void waitForToastToExpire() {
+        if (mToast == null) {
+            return;
+        }
+        // text toast case
+        if (mToastShown != null && mToastHidden != null) {
+            boolean toastShown = mToastShown.block(/* return immediately */ 1);
+            boolean toastHidden = mToastHidden.block(/* return immediately */ 1);
+
+            if (toastShown && !toastHidden) {
+                assertTrue(mToastHidden.block(TIME_OUT));
+            }
+            return;
+        }
+
+        // custom toast case
+        View view = mToast.getView();
+        if (view != null && view.getParent() != null) {
+            PollingCheck.waitFor(TIME_OUT, () -> view.getParent() == null);
+        }
+    }
+
     @Test
     public void testShow_whenCustomToast() throws Throwable {
         makeCustomToast();
@@ -205,6 +234,60 @@ public class ToastTest {
         mActivityRule.runOnUiThread(mToast::show);
 
         assertShowAndHide(mToast);
+    }
+
+    @Test
+    public void testHideTextToastAfterExpirationOfFirstShowCall_despiteRepeatedShowCalls()
+            throws Throwable {
+        // Measure the length of a long toast.
+        makeToast();
+        long start1 = SystemClock.uptimeMillis();
+        mActivityRule.runOnUiThread(mToast::show);
+        assertEquals(Toast.LENGTH_LONG, mToast.getDuration());
+        assertShowAndHide(mToast);
+        long longDurationMs = SystemClock.uptimeMillis() - start1;
+
+        // Call show in the middle of the toast duration.
+        makeToast();
+        long start2 = SystemClock.uptimeMillis();
+        mActivityRule.runOnUiThread(mToast::show);
+        assertEquals(Toast.LENGTH_LONG, mToast.getDuration());
+        SystemClock.sleep(longDurationMs / 2);
+        mActivityRule.runOnUiThread(mToast::show);
+        assertShowAndHide(mToast);
+        long repeatCallDurationMs = SystemClock.uptimeMillis() - start2;
+
+        // Assert duration was roughly the same despite a repeat call.
+        assertThat((double) repeatCallDurationMs)
+                .isWithin(longDurationMs * TOAST_DURATION_ERROR_TOLERANCE_FRACTION)
+                .of(longDurationMs);
+    }
+
+    @Test
+    public void testHideCustomToastAfterExpirationOfFirstShowCall_despiteRepeatedShowCalls()
+            throws Throwable {
+        // Measure the length of a long toast.
+        makeCustomToast();
+        long start1 = SystemClock.uptimeMillis();
+        mActivityRule.runOnUiThread(mToast::show);
+        assertEquals(Toast.LENGTH_LONG, mToast.getDuration());
+        assertShowAndHideCustomToast(mToast.getView());
+        long longDurationMs = SystemClock.uptimeMillis() - start1;
+
+        // Call show in the middle of the toast duration.
+        makeCustomToast();
+        long start2 = SystemClock.uptimeMillis();
+        mActivityRule.runOnUiThread(mToast::show);
+        assertEquals(Toast.LENGTH_LONG, mToast.getDuration());
+        SystemClock.sleep(longDurationMs / 2);
+        mActivityRule.runOnUiThread(mToast::show);
+        assertShowAndHideCustomToast(mToast.getView());
+        long repeatCallDurationMs = SystemClock.uptimeMillis() - start2;
+
+        // Assert duration was roughly the same despite a repeat call.
+        assertThat((double) repeatCallDurationMs)
+                .isWithin(longDurationMs * TOAST_DURATION_ERROR_TOLERANCE_FRACTION)
+                .of(longDurationMs);
     }
 
     @UiThreadTest

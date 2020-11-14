@@ -16,6 +16,7 @@
 
 package android.location.cts.coarse;
 
+import static android.location.LocationManager.FUSED_PROVIDER;
 import static android.location.LocationManager.GPS_PROVIDER;
 import static android.location.LocationManager.NETWORK_PROVIDER;
 import static android.location.LocationManager.PASSIVE_PROVIDER;
@@ -122,8 +123,11 @@ public class LocationManagerCoarseTest {
 
     @After
     public void tearDown() throws Exception {
-        for (String provider : mManager.getAllProviders()) {
-            mManager.removeTestProvider(provider);
+        if (mManager != null) {
+            for (String provider : mManager.getAllProviders()) {
+                mManager.removeTestProvider(provider);
+            }
+            mManager.removeTestProvider(FUSED_PROVIDER);
         }
 
         LocationUtils.registerMockLocationProvider(InstrumentationRegistry.getInstrumentation(),

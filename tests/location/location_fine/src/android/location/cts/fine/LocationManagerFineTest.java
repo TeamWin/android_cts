@@ -140,6 +140,7 @@ public class LocationManagerFineTest {
             for (String provider : mManager.getAllProviders()) {
                 mManager.removeTestProvider(provider);
             }
+            mManager.removeTestProvider(FUSED_PROVIDER);
         }
 
         LocationUtils.registerMockLocationProvider(getInstrumentation(),

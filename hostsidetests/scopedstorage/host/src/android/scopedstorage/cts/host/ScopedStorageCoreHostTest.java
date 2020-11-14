@@ -22,7 +22,6 @@ import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.device.contentprovider.ContentProviderHandler;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
@@ -34,7 +33,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
-public class ScopedStorageCoreHostTest extends BaseHostJUnit4Test {
+public class ScopedStorageCoreHostTest extends BaseHostTestCase {
     private boolean mIsExternalStorageSetup = false;
 
     private ContentProviderHandler mContentProviderHandler;
@@ -47,10 +46,6 @@ public class ScopedStorageCoreHostTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTests("android.scopedstorage.cts",
                 "android.scopedstorage.cts.ScopedStorageTest", phase));
 
-    }
-
-    String executeShellCommand(String cmd) throws Exception {
-        return getDevice().executeShellCommand(cmd);
     }
 
     private void setupExternalStorage() throws Exception {
@@ -246,26 +241,30 @@ public class ScopedStorageCoreHostTest extends BaseHostJUnit4Test {
     }
 
     private void grantPermissions(String... perms) throws Exception {
+        int currentUserId = getCurrentUserId();
         for (String perm : perms) {
-            executeShellCommand("pm grant android.scopedstorage.cts " + perm);
+            executeShellCommand("pm grant --user %d android.scopedstorage.cts %s",
+                    currentUserId, perm);
         }
     }
 
     private void revokePermissions(String... perms) throws Exception {
+        int currentUserId = getCurrentUserId();
         for (String perm : perms) {
-            executeShellCommand("pm revoke android.scopedstorage.cts " + perm);
+            executeShellCommand("pm revoke --user %d android.scopedstorage.cts %s",
+                    currentUserId, perm);
         }
     }
 
     private void allowAppOps(String... ops) throws Exception {
         for (String op : ops) {
-            executeShellCommand("cmd appops set --uid android.scopedstorage.cts " + op + " allow");
+            executeShellCommand("cmd appops set --uid android.scopedstorage.cts %s allow", op);
         }
     }
 
     private void denyAppOps(String... ops) throws Exception {
         for (String op : ops) {
-            executeShellCommand("cmd appops set --uid android.scopedstorage.cts " + op + " deny");
+            executeShellCommand("cmd appops set --uid android.scopedstorage.cts %s deny", op);
         }
     }
 }

@@ -2226,7 +2226,7 @@ public class ScopedStorageTest {
             assertDirectoryAccess(new File(getExternalStorageDir(), "Android"), true, false);
             assertDirectoryAccess(new File(getExternalStorageDir(), "doesnt/exist"), false, false);
 
-            executeShellCommand("mkdir " + topLevelDir.getAbsolutePath());
+            createDirUsingTradefedContentProvider(topLevelDir);
             assertDirectoryAccess(topLevelDir, true, false);
 
             // We can see "/storage/emulated" exists, but not read/write to it, since it's
@@ -2245,7 +2245,7 @@ public class ScopedStorageTest {
             assertAccess(new File("/storage/emulated/100000000000"), false, false, false);
         } finally {
             uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
-            executeShellCommand("rmdir " + topLevelDir.getAbsolutePath());
+            deleteDirUsingTradefedContentProvider(topLevelDir);
         }
     }
 
