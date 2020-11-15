@@ -66,6 +66,6 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
     }
 
     public void testNetworkInterface() throws Exception {
-        checkNetworkInterface_returnsAnonymizedHardwareAddresses();
+        checkNetworkInterface_returnsHardwareAddresses();
     }
 }
