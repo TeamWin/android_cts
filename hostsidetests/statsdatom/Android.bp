@@ -53,8 +53,6 @@ java_test_host {
 
     data: [
         ":CtsStatsdAtomApp",
-        ":CtsStatsdAtomEmptyApp",
-        ":CtsStatsdAtomEmptySplitApp",
         ":CtsStatsdApp", //TODO(b/163546661): Remove once migration to new lib is complete.
     ]
 }

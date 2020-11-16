@@ -119,8 +119,6 @@ public class AtomTestCase extends BaseTestCase {
     public static final String FEATURE_TELEPHONY = "android.hardware.telephony";
     public static final String FEATURE_WATCH = "android.hardware.type.watch";
     public static final String FEATURE_WIFI = "android.hardware.wifi";
-    public static final String FEATURE_INCREMENTAL_DELIVERY =
-            "android.software.incremental_delivery";
 
     // Telephony phone types
     public static final int PHONE_TYPE_GSM = 1;

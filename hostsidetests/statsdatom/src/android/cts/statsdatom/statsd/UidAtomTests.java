@@ -116,12 +116,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
     private static final int NUM_APP_OPS = AttributedAppOps.getDefaultInstance().getOp().
             getDescriptorForType().getValues().size() - 1;
 
-    private static final String TEST_INSTALL_APK = "CtsStatsdAtomEmptyApp.apk";
-    private static final String TEST_INSTALL_APK_BASE = "CtsStatsdAtomEmptySplitApp.apk";
-    private static final String TEST_INSTALL_APK_SPLIT = "CtsStatsdAtomEmptySplitApp_pl.apk";
-    private static final String TEST_INSTALL_PACKAGE =
-            "com.android.cts.device.statsdatom.emptyapp";
-    private static final String TEST_REMOTE_DIR = "/data/local/tmp/statsdatom";
     private static final String ACTION_SHOW_APPLICATION_OVERLAY = "action.show_application_overlay";
     private static final String ACTION_LONG_SLEEP_WHILE_TOP = "action.long_sleep_top";
 
@@ -138,8 +132,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
     private static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
     private static final String FEATURE_PC = "android.hardware.type.pc";
     private static final String FEATURE_PICTURE_IN_PICTURE = "android.software.picture_in_picture";
-    private static final String FEATURE_INCREMENTAL_DELIVERY =
-            "android.software.incremental_delivery";
     private static final String FEATURE_WIFI = "android.hardware.wifi";
 
     private IBuildInfo mCtsBuild;
@@ -1524,37 +1516,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         boolean accept(S s) throws T;
     }
 
-    public void testPackageInstallerV2MetricsReported() throws Throwable {
-        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_INCREMENTAL_DELIVERY)) return;
-        final AtomsProto.PackageInstallerV2Reported report = installPackageUsingV2AndGetReport(
-                new String[]{TEST_INSTALL_APK});
-        assertTrue(report.getIsIncremental());
-        // tests are ran using SHELL_UID and installation will be treated as adb install
-        assertEquals("", report.getPackageName());
-        assertEquals(1, report.getReturnCode());
-        assertTrue(report.getDurationMillis() > 0);
-        assertEquals(getTestFileSize(TEST_INSTALL_APK), report.getApksSizeBytes());
-
-        getDevice().uninstallPackage(TEST_INSTALL_PACKAGE);
-    }
-
-    public void testPackageInstallerV2MetricsReportedForSplits() throws Throwable {
-        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_INCREMENTAL_DELIVERY)) return;
-
-        final AtomsProto.PackageInstallerV2Reported report = installPackageUsingV2AndGetReport(
-                new String[]{TEST_INSTALL_APK_BASE, TEST_INSTALL_APK_SPLIT});
-        assertTrue(report.getIsIncremental());
-        // tests are ran using SHELL_UID and installation will be treated as adb install
-        assertEquals("", report.getPackageName());
-        assertEquals(1, report.getReturnCode());
-        assertTrue(report.getDurationMillis() > 0);
-        assertEquals(
-                getTestFileSize(TEST_INSTALL_APK_BASE) + getTestFileSize(TEST_INSTALL_APK_SPLIT),
-                report.getApksSizeBytes());
-
-        getDevice().uninstallPackage(TEST_INSTALL_PACKAGE);
-    }
-
     public void testAppForegroundBackground() throws Exception {
         Set<Integer> onStates = new HashSet<>(Arrays.asList(
                 AppUsageEventOccurred.EventType.MOVE_TO_FOREGROUND_VALUE));
@@ -1607,52 +1568,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertStatesOccurred(stateSet, data, 0, appUsageStateFunction);
     }
 */
-
-    private AtomsProto.PackageInstallerV2Reported installPackageUsingV2AndGetReport(
-            String[] apkNames) throws Exception {
-        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.PACKAGE_INSTALLER_V2_REPORTED_FIELD_NUMBER);
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-        installPackageUsingIncremental(apkNames, TEST_REMOTE_DIR);
-        assertTrue(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE));
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        List<AtomsProto.PackageInstallerV2Reported> reports = new ArrayList<>();
-        for (EventMetricData data : ReportUtils.getEventMetricDataList(getDevice())) {
-            if (data.getAtom().hasPackageInstallerV2Reported()) {
-                reports.add(data.getAtom().getPackageInstallerV2Reported());
-            }
-        }
-        assertEquals(1, reports.size());
-        return reports.get(0);
-    }
-
-    private void installPackageUsingIncremental(String[] apkNames, String remoteDirPath)
-            throws Exception {
-        getDevice().executeShellCommand("mkdir " + remoteDirPath);
-        String[] remoteApkPaths = new String[apkNames.length];
-        for (int i = 0; i < remoteApkPaths.length; i++) {
-            remoteApkPaths[i] = pushApkToRemote(apkNames[i], remoteDirPath);
-        }
-        getDevice().executeShellCommand(
-                "pm install-incremental -t -g " + String.join(" ", remoteApkPaths));
-    }
-
-    private String pushApkToRemote(String apkName, String remoteDirPath)
-            throws Exception {
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
-        final File apk = buildHelper.getTestFile(apkName);
-        final String remoteApkPath = remoteDirPath + "/" + apk.getName();
-        assertTrue(getDevice().pushFile(apk, remoteApkPath));
-        assertNotNull(apk);
-        return remoteApkPath;
-    }
-
-    private long getTestFileSize(String fileName) throws Exception {
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
-        final File file = buildHelper.getTestFile(fileName);
-        return file.length();
-    }
 
     private int getScreenBrightness() throws Exception {
         return Integer.parseInt(
