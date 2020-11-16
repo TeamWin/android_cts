@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeFalse;
 
 import android.app.StatusBarManager;
 import android.app.StatusBarManager.DisableInfo;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
@@ -38,9 +39,11 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class StatusBarManagerTest {
+    private static final String PERMISSION_STATUS_BAR = "android.permission.STATUS_BAR";
 
     private StatusBarManager mStatusBarManager;
     private Context mContext;
+    private UiAutomation mUiAutomation;
 
     private boolean isWatch() {
         return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
@@ -56,17 +59,19 @@ public class StatusBarManagerTest {
         assumeFalse("Status bar service not supported", isWatch());
         mStatusBarManager = (StatusBarManager) mContext.getSystemService(
                 Context.STATUS_BAR_SERVICE);
-        getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.STATUS_BAR");
+        mUiAutomation = getInstrumentation().getUiAutomation();
+        mUiAutomation.adoptShellPermissionIdentity(PERMISSION_STATUS_BAR);
     }
 
     @After
     public void tearDown() {
 
         if (mStatusBarManager != null) {
+            // Adopt again since tests could've dropped it
+            mUiAutomation.adoptShellPermissionIdentity(PERMISSION_STATUS_BAR);
             mStatusBarManager.setDisabledForSetup(false);
         }
-        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
 
@@ -121,5 +126,22 @@ public class StatusBarManagerTest {
 
         DisableInfo info = mStatusBarManager.getDisableInfo();
         assertTrue("Invalid disableFlags", info.areAllComponentsEnabled());
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testCollapsePanels_withoutStatusBarPermission_throws() throws Exception {
+        // We've adopted shell identity for STATUS_BAR in setUp(), so drop it now
+        mUiAutomation.dropShellPermissionIdentity();
+
+        mStatusBarManager.collapsePanels();
+    }
+
+    @Test
+    public void testCollapsePanels_withStatusBarPermission_doesNotThrow() throws Exception {
+        // We've adopted shell identity for STATUS_BAR in setUp()
+
+        mStatusBarManager.collapsePanels();
+
+        // Nothing thrown, passed
     }
 }
