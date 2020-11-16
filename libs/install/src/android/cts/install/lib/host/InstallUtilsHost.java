@@ -22,20 +22,35 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.android.ddmlib.Log;
+import com.android.tradefed.build.BuildInfoKey;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
+import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.IRunUtil;
+import com.android.tradefed.util.RunUtil;
+import com.android.tradefed.util.SystemUtil;
 
+import com.google.common.base.Stopwatch;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utilities to facilitate installation in tests on host side.
  */
 public class InstallUtilsHost {
     private static final String TAG = InstallUtilsHost.class.getSimpleName();
+    private static final String APEX_INFO_EXTRACT_REGEX =
+            ".*package:\\sname='(\\S+)\\'\\sversionCode='(\\d+)'\\s.*";
 
+    private final IRunUtil mRunUtil = new RunUtil();
     private final BaseHostJUnit4Test mTest;
 
     public InstallUtilsHost(BaseHostJUnit4Test test) {
@@ -99,4 +114,119 @@ public class InstallUtilsHost {
         return mTest.getDevice().getActiveApexes().stream().filter(
                 apex -> apex.name.equals(SHIM_APEX_PACKAGE_NAME)).findAny();
     }
+
+    /**
+     * Retrieve package name and version code from test apex file.
+     *
+     * @param apex input apex file to retrieve the info from
+     */
+    public ITestDevice.ApexInfo getApexInfo(File apex) {
+        String aaptOutput = runCmd(String.format("aapt dump badging %s", apex.getAbsolutePath()));
+        String[] lines = aaptOutput.split("\n");
+        Pattern p = Pattern.compile(APEX_INFO_EXTRACT_REGEX);
+        for (String l : lines) {
+            Matcher m = p.matcher(l);
+            if (m.matches()) {
+                return new ITestDevice.ApexInfo(m.group(1), Long.parseLong(m.group(2)));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Installs packages using staged install flow and waits for pre-reboot verification to complete
+     */
+    public String installStagedPackage(File pkg) throws Exception {
+        return mTest.getDevice().installPackage(pkg, false, "--staged");
+    }
+
+    /**
+     * Install multiple package at the same time
+     */
+    public void installApexes(String... filenames) throws Exception {
+        String[] args = new String[filenames.length + 1];
+        args[0] = "install-multi-package";
+        for (int i = 0; i < filenames.length; i++) {
+            args[i + 1] = getTestFile(filenames[i]).getAbsolutePath();
+        }
+        String stdout = mTest.getDevice().executeAdbCommand(args);
+        assertThat(stdout).isNotNull();
+    }
+
+    /**
+     * Waits for given {@code timeout} for {@code filePath} to be deleted.
+     */
+    public void waitForFileDeleted(String filePath, Duration timeout) throws Exception {
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        while (true) {
+            if (!mTest.getDevice().doesFileExist(filePath)) {
+                return;
+            }
+            if (stopwatch.elapsed().compareTo(timeout) > 0) {
+                break;
+            }
+            Thread.sleep(500);
+        }
+        throw new AssertionError("Timed out waiting for " + filePath + " to be deleted");
+    }
+
+    /**
+     * Get the test file.
+     *
+     * @param testFileName name of the file
+     */
+    public File getTestFile(String testFileName) throws IOException {
+        File testFile = null;
+
+        String testcasesPath = System.getenv(
+                SystemUtil.EnvVariable.ANDROID_HOST_OUT_TESTCASES.toString());
+        if (testcasesPath != null) {
+            testFile = searchTestFile(new File(testcasesPath), testFileName);
+        }
+        if (testFile != null) {
+            return testFile;
+        }
+
+        File hostLinkedDir = mTest.getBuild().getFile(
+                BuildInfoKey.BuildInfoFileKey.HOST_LINKED_DIR);
+        if (hostLinkedDir != null) {
+            testFile = searchTestFile(hostLinkedDir, testFileName);
+        }
+        if (testFile != null) {
+            return testFile;
+        }
+
+        // Find the file in the buildinfo.
+        File buildInfoFile = mTest.getBuild().getFile(testFileName);
+        if (buildInfoFile != null) {
+            return buildInfoFile;
+        }
+
+        throw new IOException("Cannot find " + testFileName);
+    }
+
+    /**
+     * Searches the file with the given name under the given directory, returns null if not found.
+     */
+    private File searchTestFile(File baseSearchFile, String testFileName) {
+        if (baseSearchFile != null && baseSearchFile.isDirectory()) {
+            File testFile = FileUtil.findFile(baseSearchFile, testFileName);
+            if (testFile != null && testFile.isFile()) {
+                return testFile;
+            }
+        }
+        return null;
+    }
+
+    private String runCmd(String cmd) {
+        Log.d("About to run command: %s", cmd);
+        CommandResult result = mRunUtil.runTimedCmd(1000 * 60 * 5, cmd.split("\\s+"));
+        assertThat(result).isNotNull();
+        assertWithMessage(String.format("Command %s failed", cmd)).that(result.getStatus())
+                .isEqualTo(CommandStatus.SUCCESS);
+        Log.d("output:\n%s", result.getStdout());
+        return result.getStdout();
+    }
+
+
 }
