@@ -2344,7 +2344,7 @@
     <string name="caboot_install_cert">Install credential</string>
     <string name="caboot_remove_screen_lock">Remove screen lock</string>
     <string name="caboot_reboot_desc">Please reboot the device and return to this test.</string>
-    <string name="caboot_after_boot">AFTER REBOOTING: Check that there is a notification that the network may be monitored. Opening that notification should show a dialog box giving more information, with a button to check trusted credentials. This should open up the same view of trusted credentials that you get via the "Check credentials" button.</string>
+    <string name="caboot_after_boot">AFTER REBOOTING: Check that there is a notification saying a certificate authority is installed. Opening that notification should show a dialog box giving more information, with a button to check trusted credentials. This should open up the same view of trusted credentials that you get via the "Check credentials" button.</string>
 
     <!-- Strings for KeyChain -->
     <string name="keychain_test">KeyChain Storage Test</string>
