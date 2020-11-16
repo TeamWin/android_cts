@@ -25,6 +25,9 @@ import android.util.Log;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -77,6 +80,34 @@ public class UsbManagerApiTest {
             Assert.fail("Expecting SecurityException on setCurrentFunctions.");
         } catch (SecurityException secEx) {
             Log.d(TAG, "Expected SecurityException on setCurrentFunctions");
+        }
+    }
+
+    /**
+     * Verify NO SecurityException.
+     */
+    @Test
+    public void test_UsbApiForUsbGadgetHal() throws Exception {
+        // Adopt MANAGE_USB permission.
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        // Should pass with permission.
+        int version = mUsbManagerSys.getGadgetHalVersion();
+        int usbBandwidth = mUsbManagerSys.getUsbBandwidth();
+        if (version > UsbManager.GADGET_HAL_V1_1) {
+            Assert.assertTrue(usbBandwidth > UsbManager.USB_DATA_TRANSFER_RATE_UNKNOWN);
+        } else {
+            Assert.assertEquals(usbBandwidth, UsbManager.USB_DATA_TRANSFER_RATE_UNKNOWN);
+        }
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
+
+        try {
+            mUsbManagerSys.getGadgetHalVersion();
+            Assert.fail("Expecting SecurityException on getGadgetHalVersion.");
+        } catch (SecurityException secEx) {
+            Log.d(TAG, "Expected SecurityException on getGadgetHalVersion.");
         }
     }
 }
