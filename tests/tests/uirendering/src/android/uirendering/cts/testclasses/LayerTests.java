@@ -574,7 +574,7 @@ public class LayerTests extends ActivityTestBase {
                                 Color.WHITE,
                                 0xffc5c5ff, // white blended with blue
                                 0xffdbdbff  // white blended with blue
-                        }, 50));
+                        }, 52));
     }
 
     @LargeTest
@@ -618,7 +618,7 @@ public class LayerTests extends ActivityTestBase {
                                 Color.BLUE,
                                 0xffc5c5ff, // white blended with blue
                                 0xffdbdbff  // white blended with blue
-                        }, 50));
+                        }, 52));
     }
 
     @LargeTest
