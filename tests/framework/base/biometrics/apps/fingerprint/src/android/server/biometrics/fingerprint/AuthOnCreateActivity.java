@@ -35,6 +35,6 @@ public class AuthOnCreateActivity extends Activity {
         super.onCreate(bundle);
         final FingerprintManager fpm = getSystemService(FingerprintManager.class);
         fpm.authenticate(null /* crypto */, new CancellationSignal(), 0 /* flags */,
-                new AuthenticationCallbackHelper(this), null /* handler */);
+                new FingerprintCallbackHelper(this), null /* handler */);
     }
 }

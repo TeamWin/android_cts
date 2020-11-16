@@ -51,6 +51,7 @@ java_test_helper_library {
     ],
 
     srcs: [
-        "src/android/server/biometrics/fingerprint/AuthenticationCallbackHelper.java",
+        "src/android/server/biometrics/BiometricCallbackHelper.java",
+        "src/android/server/biometrics/fingerprint/FingerprintCallbackHelper.java",
     ],
 }
