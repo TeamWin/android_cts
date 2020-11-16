@@ -47,6 +47,7 @@ import android.media.tv.tuner.filter.IpPayloadEvent;
 import android.media.tv.tuner.filter.MediaEvent;
 import android.media.tv.tuner.filter.MmtpRecordEvent;
 import android.media.tv.tuner.filter.PesEvent;
+import android.media.tv.tuner.filter.RestartEvent;
 import android.media.tv.tuner.filter.ScramblingStatusEvent;
 import android.media.tv.tuner.filter.SectionEvent;
 import android.media.tv.tuner.filter.SectionSettingsWithTableInfo;
@@ -550,6 +551,8 @@ public class TunerTest {
                         testTsRecordEvent(filter, (TsRecordEvent) e);
                     } else if (e instanceof ScramblingStatusEvent) {
                         testScramblingStatusEvent(filter, (ScramblingStatusEvent) e);
+                    } else if (e instanceof RestartEvent) {
+                        testRestartEvent(filter, (RestartEvent) e);
                     }
                 }
             }
@@ -659,6 +662,10 @@ public class TunerTest {
 
     private void testScramblingStatusEvent(Filter filter, ScramblingStatusEvent e) {
         e.getScramblingStatus();
+    }
+
+    private void testRestartEvent(Filter filter, RestartEvent e) {
+        e.getStartId();
     }
 
     private OnRecordStatusChangedListener getRecordListener() {
