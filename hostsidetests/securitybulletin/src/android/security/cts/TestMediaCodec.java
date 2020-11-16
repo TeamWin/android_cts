@@ -93,6 +93,7 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2018-01")
     public void testPocCVE_2017_13177() throws Exception {
+        pocPusher.only32();
         String inputFiles[] = {"cve_2017_13177.hevc"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13177",
                 "-i " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1", inputFiles,
@@ -132,6 +133,7 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2017-04")
     public void testPocCVE_2017_13149() throws Exception {
+        pocPusher.only32();
         String inputFiles[] = {"cve_2017_13149.hevc"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13149",
                 AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
@@ -143,6 +145,7 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2018-01")
     public void testPocCVE_2017_13190() throws Exception {
+        pocPusher.only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13190", null, null, AdbUtils.TMP_PATH,
                 getDevice());
     }
@@ -214,6 +217,7 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2017-07")
     public void testPocCVE_2017_0677() throws Exception {
+        pocPusher.only32();
         String inputFiles[] = {"cve_2017_0677.h264"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0677",
                 "-i " + AdbUtils.TMP_PATH + inputFiles[0] + " -o /dev/null", inputFiles,
@@ -305,6 +309,7 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2017-11")
     public void testPocCVE_2017_0833() throws Exception {
+        pocPusher.only32();
         String inputFiles[] = {"cve_2017_0833.h264"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0833",
                 "-i " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1 --num_cores 2",
@@ -335,6 +340,7 @@ public class TestMediaCodec extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2017-12")
     public void testPocCVE_2017_13150() throws Exception {
         getOomCatcher().setHighMemoryTest();
+        pocPusher.only32();
         String inputFiles[] = {"cve_2017_13150.m2v"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13150",
                 AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
@@ -396,6 +402,7 @@ public class TestMediaCodec extends SecurityTestCase {
      **/
     @SecurityTest(minPatchLevel = "2019-04")
     public void testPocCVE_2019_2028() throws Exception {
+        pocPusher.only32();
         String inputFiles[] = {"cve_2019_2028.m2v"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2028",
                 "-i " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1", inputFiles,
@@ -476,6 +483,7 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2017-11")
     public void testPocCVE_2017_0832() throws Exception {
+        pocPusher.only32();
         String inputFiles[] = {"cve_2017_0832.m2v"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0832",
                 "-i " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1 --num_cores 2",
@@ -492,6 +500,7 @@ public class TestMediaCodec extends SecurityTestCase {
      */
     public static void runHevcDecodeTest(String inputFiles[], String arguments, ITestDevice device)
             throws Exception {
+        getPocPusher(device).only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable(HEVCDEC_BINARY, arguments, inputFiles,
                 AdbUtils.TMP_PATH, device);
     }
@@ -506,6 +515,7 @@ public class TestMediaCodec extends SecurityTestCase {
      */
     public static void runMpeg2DecodeTest(String inputFiles[], String arguments, ITestDevice device)
             throws Exception {
+        getPocPusher(device).only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable(MPEG2DEC_BINARY, arguments, inputFiles,
                 AdbUtils.TMP_PATH, device);
     }
@@ -520,6 +530,7 @@ public class TestMediaCodec extends SecurityTestCase {
      */
     public static void runAvcDecodeTest(String inputFiles[], String arguments, ITestDevice device)
             throws Exception {
+        getPocPusher(device).only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable(AVCDEC_BINARY, arguments, inputFiles,
                 AdbUtils.TMP_PATH, device);
     }
@@ -547,6 +558,7 @@ public class TestMediaCodec extends SecurityTestCase {
      */
     public static void runHevcDecodeMemOverflowTest(String inputFiles[], String arguments,
             ITestDevice device) throws Exception {
+        getPocPusher(device).only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable(HEVCDEC_MEMOVERFLOW_BINARY, arguments,
                 inputFiles, AdbUtils.TMP_PATH, device);
     }
@@ -561,6 +573,7 @@ public class TestMediaCodec extends SecurityTestCase {
      */
     public static void runHevcDecodeMemUnderflowTest(String inputFiles[], String arguments,
             ITestDevice device) throws Exception {
+        getPocPusher(device).only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable(HEVCDEC_MEMUNDERFLOW_BINARY, arguments,
                 inputFiles, AdbUtils.TMP_PATH, device);
     }
@@ -588,6 +601,7 @@ public class TestMediaCodec extends SecurityTestCase {
      */
     public static void runMpeg2DecodeMemOverflowTest(String inputFiles[], String arguments,
             ITestDevice device) throws Exception {
+        getPocPusher(device).only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable(MPEG2DEC_MEMOVERFLOW_BINARY, arguments,
                 inputFiles, AdbUtils.TMP_PATH, device);
     }
@@ -602,6 +616,7 @@ public class TestMediaCodec extends SecurityTestCase {
      */
     public static void runMpeg2DecodeMemUnderflowTest(String inputFiles[], String arguments,
             ITestDevice device) throws Exception {
+        getPocPusher(device).only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable(MPEG2DEC_MEMUNDERFLOW_BINARY, arguments,
                 inputFiles, AdbUtils.TMP_PATH, device);
     }
@@ -629,6 +644,7 @@ public class TestMediaCodec extends SecurityTestCase {
      */
     public static void runAvcDecodeMemOverflowTest(String inputFiles[], String arguments,
             ITestDevice device) throws Exception {
+        getPocPusher(device).only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable(AVCDEC_MEMOVERFLOW_BINARY, arguments,
                 inputFiles, AdbUtils.TMP_PATH, device);
     }
@@ -643,6 +659,7 @@ public class TestMediaCodec extends SecurityTestCase {
      */
     public static void runAvcDecodeMemUnderflowTest(String inputFiles[], String arguments,
             ITestDevice device) throws Exception {
+        getPocPusher(device).only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable(AVCDEC_MEMUNDERFLOW_BINARY, arguments,
                 inputFiles, AdbUtils.TMP_PATH, device);
     }
