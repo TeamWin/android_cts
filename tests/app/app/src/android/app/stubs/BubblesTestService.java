@@ -16,8 +16,6 @@
 
 package android.app.stubs;
 
-import static android.app.Notification.CATEGORY_CALL;
-
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Person;
@@ -68,6 +66,7 @@ public class BubblesTestService extends Service {
         Notification.Builder nb = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("foofoo")
                 .setContentIntent(pendingIntent)
+                .setShowForegroundImmediately(true)
                 .setSmallIcon(android.R.drawable.sym_def_app_icon)
                 .setStyle(new Notification.MessagingStyle(person)
                         .setConversationTitle("Bubble Chat")
