@@ -37,6 +37,7 @@ import android.widget.Toast;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+import java.util.Arrays;
 public class PermissionLockdownTestActivity extends PassFailButtons.Activity
         implements RadioGroup.OnCheckedChangeListener {
     private static final String PERMISSION_APP_PACKAGE = "com.android.cts.permissionapp";
@@ -55,8 +56,10 @@ public class PermissionLockdownTestActivity extends PassFailButtons.Activity
     static final String ACTION_MANAGED_PROFILE_CHECK_PERMISSION_LOCKDOWN
             = MANAGED_PROVISIONING_ACTION_PREFIX + "MANAGED_PROFILE_CHECK_PERMISSION_LOCKDOWN";
 
-    // Permission grant states will be set on this permission.
-    private static final String CONTACTS_PERMISSION = android.Manifest.permission.READ_CONTACTS;
+   // Permission grant states will be set on these permissions.
+    private static final String[] CONTACTS_PERMISSIONS = new String[] {
+            android.Manifest.permission.READ_CONTACTS, android.Manifest.permission.WRITE_CONTACTS
+    };
 
     private boolean mDeviceOwnerTest;
     private DevicePolicyManager mDevicePolicyManager;
@@ -102,11 +105,23 @@ public class PermissionLockdownTestActivity extends PassFailButtons.Activity
         packageNameTextView.setText(packageManager.getApplicationLabel(applicationInfo));
 
         TextView permissionNameTextView = (TextView) findViewById(R.id.permission_name);
-        permissionNameTextView.setText(CONTACTS_PERMISSION);
+        permissionNameTextView.setText(Arrays.toString(CONTACTS_PERMISSIONS));
 
         // Get the current permission grant state for initializing the RadioGroup.
-        int currentPermissionState = mDevicePolicyManager.getPermissionGrantState(mAdmin,
-                    PERMISSION_APP_PACKAGE, CONTACTS_PERMISSION);
+        int readPermissionState = mDevicePolicyManager.getPermissionGrantState(mAdmin,
+                    PERMISSION_APP_PACKAGE, CONTACTS_PERMISSIONS[0]);
+        int writePermissionState = mDevicePolicyManager.getPermissionGrantState(mAdmin,
+                PERMISSION_APP_PACKAGE, CONTACTS_PERMISSIONS[1]);
+        int currentPermissionState;
+        if (readPermissionState == DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED ||
+        writePermissionState == DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED) {
+            currentPermissionState = DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED;
+        } else if (readPermissionState == DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED ||
+                    writePermissionState == DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED) {
+            currentPermissionState = DevicePolicyManager.PERMISSION_GRANT_STATE_DENIED;
+        } else {
+            currentPermissionState = readPermissionState;
+        }
         RadioGroup permissionRadioGroup = (RadioGroup) findViewById(R.id.permission_group);
         switch (currentPermissionState) {
             case DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED: {
@@ -174,7 +189,9 @@ public class PermissionLockdownTestActivity extends PassFailButtons.Activity
             } break;
         }
         mDevicePolicyManager.setPermissionGrantState(mAdmin, PERMISSION_APP_PACKAGE,
-                CONTACTS_PERMISSION, permissionGrantState);
+                CONTACTS_PERMISSIONS[0], permissionGrantState);
+        mDevicePolicyManager.setPermissionGrantState(mAdmin, PERMISSION_APP_PACKAGE,
+                CONTACTS_PERMISSIONS[1], permissionGrantState);
     }
 
     private boolean isProfileOrDeviceOwner() {
