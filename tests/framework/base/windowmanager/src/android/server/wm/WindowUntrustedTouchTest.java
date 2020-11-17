@@ -35,7 +35,9 @@ import static junit.framework.Assert.fail;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -45,15 +47,20 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.hardware.input.InputManager;
 import android.os.Bundle;
+import android.os.ConditionVariable;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.wm.cts.R;
 import android.server.wm.overlay.Components;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -62,6 +69,7 @@ import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.widget.Toast;
 
+import androidx.annotation.AnimRes;
 import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
 
@@ -129,21 +137,21 @@ public class WindowUntrustedTouchTest {
     private Context mContext;
     private ContentResolver mContentResolver;
     private TouchHelper mTouchHelper;
+    private Handler mMainHandler;
     private InputManager mInputManager;
     private WindowManager mWindowManager;
     private ActivityManager mActivityManager;
     private TestActivity mActivity;
     private View mContainer;
+    private Toast mToast;
     private float mPreviousTouchOpacity;
     private int mPreviousMode;
     private int mPreviousSawAppOp;
     private final Set<String> mSawWindowsAdded = new ArraySet<>();
     private final AtomicInteger mTouchesReceived = new AtomicInteger(0);
 
-
     /** Can only be accessed from the main thread */
     private final Set<View> mSawViewsAdded = new ArraySet<>();
-    private Toast mToast;
 
     @Rule
     public TestName testNameRule = new TestName();
@@ -160,6 +168,7 @@ public class WindowUntrustedTouchTest {
         mContext = mInstrumentation.getContext();
         mContentResolver = mContext.getContentResolver();
         mTouchHelper = new TouchHelper(mInstrumentation, mWmState);
+        mMainHandler = new Handler(Looper.getMainLooper());
         mInputManager = mContext.getSystemService(InputManager.class);
         mWindowManager = mContext.getSystemService(WindowManager.class);
         mActivityManager = mContext.getSystemService(ActivityManager.class);
@@ -175,6 +184,7 @@ public class WindowUntrustedTouchTest {
 
     @After
     public void tearDown() throws Throwable {
+        mWmState.waitForAppTransitionIdleOnDisplay(Display.DEFAULT_DISPLAY);
         mTouchesReceived.set(0);
         for (FutureConnection connection : mConnections.values()) {
             mContext.unbindService(connection);
@@ -565,6 +575,67 @@ public class WindowUntrustedTouchTest {
         assertTouchNotReceived();
     }
 
+    /** Activity transitions */
+
+    @Test
+    public void testWhenEnterAnimationAboveThresholdAndNewActivityNotTouchable_blocksTouch() {
+        addAnimatedActivityOverlay(APP_A, /* touchable */ false, R.anim.alpha_0_9, R.anim.alpha_1);
+        mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY);
+
+        mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
+
+        assertAnimationRunning();
+        assertTouchNotReceived();
+    }
+
+    @Test
+    public void testWhenEnterAnimationBelowThresholdAndNewActivityNotTouchable_allowsTouch() {
+        addAnimatedActivityOverlay(APP_A, /* touchable */ false, R.anim.alpha_0_7, R.anim.alpha_1);
+        mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY);
+
+        mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
+
+        assertAnimationRunning();
+        assertTouchReceived();
+    }
+
+    @Test
+    public void testWhenEnterAnimationBelowThresholdAndNewActivityTouchable_blocksTouch() {
+        addAnimatedActivityOverlay(APP_A, /* touchable */ true, R.anim.alpha_0_7, R.anim.alpha_1);
+        mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY);
+
+        mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
+
+        assertAnimationRunning();
+        assertTouchNotReceived();
+    }
+
+    @Test
+    public void testWhenExitAnimationBelowThreshold_allowsTouch() {
+        // Translucent activities don't honor custom exit animations
+        addOpaqueActivity(APP_A);
+        sendFinishToActivity(APP_A, Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_7);
+        assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
+
+        mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
+
+        assertAnimationRunning();
+        assertTouchReceived();
+    }
+
+    @Test
+    public void testWhenExitAnimationAboveThreshold_blocksTouch() {
+        // Translucent activities don't honor custom exit animations
+        addOpaqueActivity(APP_A);
+        sendFinishToActivity(APP_A, Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_9);
+        assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
+
+        mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
+
+        assertAnimationRunning();
+        assertTouchNotReceived();
+    }
+
     /** Toast windows */
 
     @Test
@@ -669,6 +740,11 @@ public class WindowUntrustedTouchTest {
         assertThat(mTouchesReceived.get()).isEqualTo(0);
     }
 
+    private void assertAnimationRunning() {
+        assertThat(mWmState.getDisplay(Display.DEFAULT_DISPLAY).getAppTransitionState()).isEqualTo(
+                WindowManagerStateHelper.APP_STATE_RUNNING);
+    }
+
     private void addToastOverlay(String packageName, boolean custom) throws Exception {
         // Making sure there are no toasts currently since we can only check for the presence of
         // *any* toast afterwards and we don't want to be in a situation where this method returned
@@ -741,19 +817,58 @@ public class WindowUntrustedTouchTest {
         }
     }
 
+    private void addOpaqueActivity(String packageName) {
+        addActivity(repackage(packageName, Components.OpaqueActivity.COMPONENT), /* extras */ null,
+                /* options */ null);
+    }
+
+    private void sendFinishToActivity(String packageName, int exitAnimation) {
+        Intent intent = new Intent(Components.ActivityReceiver.ACTION_FINISH);
+        intent.setPackage(packageName);
+        intent.putExtra(Components.ActivityReceiver.EXTRA_ANIMATION, exitAnimation);
+        mContext.sendBroadcast(intent);
+    }
+
     private void addActivityOverlay(String packageName, float opacity) {
-        ComponentName activityComponent = (packageName.equals(APP_SELF))
+        addActivityOverlay(packageName, opacity, /* touchable */ false, /* options */ null);
+    }
+
+    private void addAnimatedActivityOverlay(String packageName, boolean touchable,
+            @AnimRes int enterAnim, @AnimRes int exitAnim) {
+        ConditionVariable animationsStarted = new ConditionVariable(false);
+        ActivityOptions options = ActivityOptions.makeCustomAnimation(mContext, enterAnim, exitAnim,
+                mMainHandler, animationsStarted::open, /* finishedListener */ null);
+        // We're testing the opacity coming from the animation here, not the one declared in the
+        // activity, so we set its opacity to 1
+        addActivityOverlay(packageName, /* opacity */ 1, touchable, options.toBundle());
+        animationsStarted.block();
+    }
+
+    private void addActivityOverlay(String packageName, float opacity, boolean touchable,
+            @Nullable Bundle options) {
+        ComponentName component = (packageName.equals(APP_SELF))
                 ? new ComponentName(mContext, OverlayActivity.class)
                 : repackage(packageName, Components.OverlayActivity.COMPONENT);
+        Bundle extras = new Bundle();
+        extras.putFloat(Components.OverlayActivity.EXTRA_OPACITY, opacity);
+        extras.putBoolean(Components.OverlayActivity.EXTRA_TOUCHABLE, touchable);
+        addActivity(component, extras, options);
+    }
+
+    private void addActivity(ComponentName component, @Nullable Bundle extras,
+            @Nullable Bundle options) {
         Intent intent = new Intent();
-        intent.setComponent(activityComponent);
-        intent.putExtra(Components.OverlayActivity.EXTRA_OPACITY, opacity);
-        mActivity.startActivity(intent);
+        intent.setComponent(component);
+        if (extras != null) {
+            intent.putExtras(extras);
+        }
+        mActivity.startActivity(intent, options);
+        String packageName = component.getPackageName();
         String message = "Activity from app " + packageName + " did not appear on time";
-        String activity = ComponentNameUtils.getActivityName(activityComponent);
+        String activity = ComponentNameUtils.getActivityName(component);
         if (!mWmState.waitFor("activity window " + activity,
                 state -> activity.equals(state.getFocusedActivity())
-                        && state.hasActivityState(activityComponent, STATE_RESUMED))) {
+                        && state.hasActivityState(component, STATE_RESUMED))) {
             fail(message);
         }
     }
@@ -910,9 +1025,12 @@ public class WindowUntrustedTouchTest {
             view.setBackgroundColor(OVERLAY_COLOR);
             setContentView(view);
             Window window = getWindow();
-            window.getAttributes().alpha = getIntent().getFloatExtra(
+            Intent intent = getIntent();
+            window.getAttributes().alpha = intent.getFloatExtra(
                     Components.OverlayActivity.EXTRA_OPACITY, 1f);
-            window.addFlags(LayoutParams.FLAG_NOT_TOUCHABLE);
+            if (!intent.getBooleanExtra(Components.OverlayActivity.EXTRA_TOUCHABLE, false)) {
+                window.addFlags(LayoutParams.FLAG_NOT_TOUCHABLE);
+            }
             window.addFlags(LayoutParams.FLAG_NOT_FOCUSABLE);
         }
     }

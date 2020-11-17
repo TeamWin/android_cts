@@ -115,6 +115,7 @@ public class WindowManagerState {
     public static final String TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE =
             "TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE";
     public static final String APP_STATE_IDLE = "APP_STATE_IDLE";
+    public static final String APP_STATE_RUNNING = "APP_STATE_RUNNING";
 
     private static final String DUMPSYS_WINDOW = "dumpsys window -a --proto";
     private static final String STARTING_WINDOW_PREFIX = "Starting ";
