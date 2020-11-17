@@ -31,6 +31,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.HandlerThread;
 import android.os.SystemClock;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -116,6 +117,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that an application can create a private virtual display and show
      * its own windows on it.
      */
+    @SecurityTest
     public void testPrivateVirtualDisplay() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, mSurface, 0);
@@ -139,6 +141,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that an application can create a private presentation virtual display and show
      * its own windows on it.
      */
+    @SecurityTest
     public void testPrivatePresentationVirtualDisplay() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, mSurface,
@@ -163,6 +166,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that an application can create a private virtual display and show
      * its own windows on it where the surface is attached or detached dynamically.
      */
+    @SecurityTest
     public void testPrivateVirtualDisplayWithDynamicSurface() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, null, 0);
