@@ -302,6 +302,7 @@ public class TextClassifierTest {
             assertTrue(confidenceScore >= 0);
             assertTrue(confidenceScore <= 1);
         }
+        assertThat(selection.getTextClassification()).isNull();
     }
 
     private static void assertValidResult(TextClassification classification) {
