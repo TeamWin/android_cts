@@ -753,6 +753,28 @@ public class ChecksumsTest {
         assertNull(checksums[0].getInstallerCertificate());
     }
 
+    @Test
+    public void testInstallerChecksumsDuplicate() throws Exception {
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            final PackageInstaller installer = getPackageInstaller();
+            final SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+
+            final int sessionId = installer.createSession(params);
+            Session session = installer.openSession(sessionId);
+            writeFileToSession(session, "file", TEST_FIXED_APK);
+            session.addChecksums("file", Arrays.asList(TEST_FIXED_APK_DIGESTS));
+            try {
+                session.addChecksums("file", Arrays.asList(TEST_FIXED_APK_DIGESTS));
+                Assert.fail("addChecksums should throw exception.");
+            } catch (IllegalStateException e) {
+                // expected
+            }
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
+
     private List<Certificate> convertSignaturesToCertificates(Signature[] signatures) {
         try {
             final CertificateFactory cf = CertificateFactory.getInstance("X.509");
