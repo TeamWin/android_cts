@@ -163,6 +163,16 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
         }
     }
 
+    public void testNotifyChildrenChangedWithNullOptionsThrowsIAE() {
+        try {
+            mMediaBrowserService.notifyChildrenChanged(
+                    StubMediaBrowserService.MEDIA_ID_ROOT, /*options=*/ null);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+    }
+
     public void testNotifyChildrenChangedWithPagination() throws Exception {
         synchronized (mWaitLock) {
             final int pageSize = 5;
@@ -180,6 +190,28 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
             mMediaBrowserService.notifyChildrenChanged(StubMediaBrowserService.MEDIA_ID_ROOT);
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mOnChildrenLoadedWithOptions);
+
+            // Notify that the items overlapping with the given options are changed.
+            mOnChildrenLoadedWithOptions = false;
+            final int newPageSize = 3;
+            final int overlappingNewPage = pageSize * page / newPageSize;
+            Bundle overlappingOptions = new Bundle();
+            overlappingOptions.putInt(MediaBrowser.EXTRA_PAGE_SIZE, newPageSize);
+            overlappingOptions.putInt(MediaBrowser.EXTRA_PAGE, overlappingNewPage);
+            mMediaBrowserService.notifyChildrenChanged(
+                    StubMediaBrowserService.MEDIA_ID_ROOT, overlappingOptions);
+            mWaitLock.wait(TIME_OUT_MS);
+            assertTrue(mOnChildrenLoadedWithOptions);
+
+            // Notify that the items non-overlapping with the given options are changed.
+            mOnChildrenLoadedWithOptions = false;
+            Bundle nonOverlappingOptions = new Bundle();
+            nonOverlappingOptions.putInt(MediaBrowser.EXTRA_PAGE_SIZE, pageSize);
+            nonOverlappingOptions.putInt(MediaBrowser.EXTRA_PAGE, page + 1);
+            mMediaBrowserService.notifyChildrenChanged(
+                    StubMediaBrowserService.MEDIA_ID_ROOT, nonOverlappingOptions);
+            mWaitLock.wait(WAIT_TIME_FOR_NO_RESPONSE_MS);
+            assertFalse(mOnChildrenLoadedWithOptions);
         }
     }
 
