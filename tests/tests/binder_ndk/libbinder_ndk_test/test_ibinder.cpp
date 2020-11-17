@@ -242,6 +242,24 @@ TEST_F(NdkBinderTest_AIBinder, UnknownFlagsRejected) {
   AIBinder_decStrong(binder);
 }
 
+TEST_F(NdkBinderTest_AIBinder, UnassociatedBinderRejected) {
+  AIBinder* binder1 = SampleData::newBinder(nullptr, ExpectLifetimeTransactions(0));
+
+  AParcel* in;
+  EXPECT_EQ(STATUS_OK, AIBinder_prepareTransaction(binder1, &in));
+
+  AIBinder* binder2 = SampleData::newBinder(nullptr, ExpectLifetimeTransactions(0));
+
+  AParcel* out;
+  // transaction on different binder object from prepare fails
+  EXPECT_EQ(STATUS_BAD_VALUE, AIBinder_transact(binder2, kCode, &in, &out, 0));
+
+  AParcel_delete(out);
+
+  AIBinder_decStrong(binder2);
+  AIBinder_decStrong(binder1);
+}
+
 void* EmptyOnCreate(void* args) { return args; }
 void EmptyOnDestroy(void* /*userData*/) {}
 binder_status_t EmptyOnTransact(AIBinder* /*binder*/,
