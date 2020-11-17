@@ -160,8 +160,11 @@ public class AdbUtils {
      * @param arguments input arguments for the poc
      * @param receiver the type of receiver to run against
      */
-    public static void runPoc(String pocName, ITestDevice device, int timeout,
+    public static int runPoc(String pocName, ITestDevice device, int timeout,
             String arguments, IShellOutputReceiver receiver) throws Exception {
+        String remoteFile = String.format("%s%s", TMP_PATH, pocName);
+        SecurityTestCase.getPocPusher(device).pushFile(pocName, remoteFile);
+
         assertPocExecutable(pocName, device);
         if (receiver == null) {
             receiver = new NullOutputReceiver();
@@ -183,8 +186,9 @@ public class AdbUtils {
 
         MetricsReportLog reportLog = SecurityTestCase.buildMetricsReportLog(device);
         reportLog.addValue("poc_name", pocName, ResultType.NEUTRAL, ResultUnit.NONE);
+        int exitStatus = -1;
         try {
-            int exitStatus = Integer.parseInt(exitStatusString);
+            exitStatus = Integer.parseInt(exitStatusString);
             reportLog.addValue("exit_status", exitStatus, ResultType.NEUTRAL, ResultUnit.NONE);
         } catch (NumberFormatException e) {
             // Getting the exit status is a bonus. We can continue without it.
@@ -193,6 +197,7 @@ public class AdbUtils {
         reportLog.submit();
 
         runCommandLine("rm " + exitStatusFilepath, device);
+        return exitStatus;
     }
 
     /**
@@ -406,26 +411,7 @@ public class AdbUtils {
      */
     public static int runPocGetExitStatus(String pocName, String arguments, ITestDevice device,
             int timeout) throws Exception {
-        assertPocExecutable(pocName, device);
-        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        String cmd = TMP_PATH + pocName + " " + arguments + " > /dev/null 2>&1; echo $?";
-        long time = System.currentTimeMillis();
-        device.executeShellCommand(cmd, receiver, timeout, TimeUnit.SECONDS, 0);
-        time = System.currentTimeMillis() - time;
-        String exitStatusString = receiver.getOutput().trim();
-
-        try {
-            int exitStatus = Integer.parseInt(exitStatusString);
-            MetricsReportLog reportLog = SecurityTestCase.buildMetricsReportLog(device);
-            reportLog.addValue("poc_name", pocName, ResultType.NEUTRAL, ResultUnit.NONE);
-            reportLog.addValue("exit_status", exitStatus, ResultType.NEUTRAL, ResultUnit.NONE);
-            reportLog.submit();
-            return exitStatus;
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(String.format(
-                    "Could not get the exit status (%s) for '%s' (%d ms).",
-                    exitStatusString, cmd, time));
-        }
+        return runPoc(pocName, device, timeout, arguments, null);
     }
 
     /**
