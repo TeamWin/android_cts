@@ -422,7 +422,7 @@ public class WindowFocusTests extends WindowManagerTestBase {
                 mKeyEventList.add(event);
                 mLockKeyEvent.notify();
             }
-            return super.dispatchKeyEvent(event);
+            return true;
         }
 
         int getKeyEventCount() {
