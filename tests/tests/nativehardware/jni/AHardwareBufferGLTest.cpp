@@ -1511,6 +1511,11 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
                     format = GL_RGBA;
                     type = GL_UNSIGNED_BYTE;
                     break;
+                case GL_RGB565:
+                    internal_format = GL_RGB;
+                    format = GL_RGB;
+                    type = GL_UNSIGNED_SHORT_5_6_5;
+                    break;
                 case GL_SRGB8_ALPHA8:
                     // Available through GL_EXT_sRGB.
                     internal_format = GL_SRGB_ALPHA_EXT;
