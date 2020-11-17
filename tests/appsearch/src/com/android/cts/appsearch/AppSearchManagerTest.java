@@ -257,7 +257,7 @@ public class AppSearchManagerTest {
         AppSearchResult<List<SearchResult>> result = mAppSearch.query(
                 queryExpression,
                 new SearchSpec.Builder()
-                        .addSchema(schemaTypes)
+                        .addSchemaType(schemaTypes)
                         .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                         .build());
         checkIsSuccess(result);
