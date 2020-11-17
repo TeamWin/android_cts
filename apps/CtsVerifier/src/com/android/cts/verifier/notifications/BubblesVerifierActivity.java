@@ -569,9 +569,9 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
                 .setActions(replyAction)
                 .setStyle(new Notification.MessagingStyle(person)
                         .setConversationTitle("Bubble Chat")
-                        .addMessage("Hello?",
+                        .addMessage(title,
                                 SystemClock.currentThreadTimeMillis() - 300000, person)
-                        .addMessage("Is it me you're looking for?",
+                        .addMessage(content,
                                 SystemClock.currentThreadTimeMillis(), person)
                 );
     }
