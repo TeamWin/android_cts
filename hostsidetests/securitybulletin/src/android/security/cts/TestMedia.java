@@ -365,6 +365,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2017-11")
     @Test
     public void testPocCVE_2017_0840() throws Exception {
+        pocPusher.only32();
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0840", null, getDevice(),
                 processPatternStrings);
@@ -377,6 +378,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2018-02")
     @Test
     public void testPocCVE_2017_13241() throws Exception {
+        pocPusher.only32();
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13241", null, getDevice(),
                 processPatternStrings);
@@ -508,7 +510,7 @@ public class TestMedia extends SecurityTestCase {
      */
     @SecurityTest(minPatchLevel = "2019-09")
     @Test
-        public void testPocCVE_2019_9362() throws Exception {
+    public void testPocCVE_2019_9362() throws Exception {
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
         String binaryName = "CVE-2019-9362";
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
@@ -558,6 +560,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2019-09")
     @Test
     public void testPocCVE_2019_9347() throws Exception {
+        pocPusher.only32();
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-9347", null, getDevice(),
                 processPatternStrings);
