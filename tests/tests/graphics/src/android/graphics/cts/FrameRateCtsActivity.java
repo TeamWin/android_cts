@@ -193,19 +193,23 @@ public class FrameRateCtsActivity extends Activity {
                             frameRate, frameRateCompatibilityToString(compatibility)));
 
             int rc = 0;
+            final boolean requireSeamless = false;
             if (mApi == Api.SURFACE) {
-                mSurface.setFrameRate(frameRate, compatibility);
+                mSurface.setFrameRate(frameRate, compatibility, requireSeamless);
             } else if (mApi == Api.ANATIVE_WINDOW) {
-                rc = nativeWindowSetFrameRate(mSurface, frameRate, compatibility);
+                rc = nativeWindowSetFrameRate(mSurface, frameRate, compatibility, requireSeamless);
             } else if (mApi == Api.SURFACE_CONTROL) {
                 SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
                 try {
-                    transaction.setFrameRate(mSurfaceControl, frameRate, compatibility).apply();
+                    transaction
+                        .setFrameRate(mSurfaceControl, frameRate, compatibility, requireSeamless)
+                        .apply();
                 } finally {
                     transaction.close();
                 }
             } else if (mApi == Api.NATIVE_SURFACE_CONTROL) {
-                nativeSurfaceControlSetFrameRate(mNativeSurfaceControl, frameRate, compatibility);
+                nativeSurfaceControlSetFrameRate(mNativeSurfaceControl, frameRate, compatibility,
+                        requireSeamless);
             }
             return rc;
         }
@@ -678,12 +682,12 @@ public class FrameRateCtsActivity extends Activity {
     }
 
     private static native int nativeWindowSetFrameRate(
-            Surface surface, float frameRate, int compatibility);
+            Surface surface, float frameRate, int compatibility, boolean shouldBeSeamless);
     private static native long nativeSurfaceControlCreate(
             Surface parentSurface, String name, int left, int top, int right, int bottom);
     private static native void nativeSurfaceControlDestroy(long surfaceControl);
     private static native void nativeSurfaceControlSetFrameRate(
-            long surfaceControl, float frameRate, int compatibility);
+            long surfaceControl, float frameRate, int compatibility, boolean shouldBeSeamless);
     private static native void nativeSurfaceControlSetVisibility(
             long surfaceControl, boolean visible);
     private static native boolean nativeSurfaceControlPostBuffer(long surfaceControl, int color);
