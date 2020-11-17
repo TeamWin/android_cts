@@ -61,10 +61,12 @@ public class SecurityTestCase extends CompatibilityHostTestBase {
     private HostsideOomCatcher oomCatcher = new HostsideOomCatcher(this);
 
     @Rule public TestName testName = new TestName();
+    @Rule public PocPusher pocPusher = new PocPusher();
 
     private static Map<ITestDevice, IBuildInfo> sBuildInfo = new HashMap<>();
     private static Map<ITestDevice, IAbi> sAbi = new HashMap<>();
     private static Map<ITestDevice, String> sTestName = new HashMap<>();
+    private static Map<ITestDevice, PocPusher> sPocPusher = new HashMap<>();
 
     /**
      * Waits for device to be online, marks the most recent boottime of the device
@@ -81,6 +83,9 @@ public class SecurityTestCase extends CompatibilityHostTestBase {
         sBuildInfo.put(getDevice(), mBuild);
         sAbi.put(getDevice(), mAbi);
         sTestName.put(getDevice(), testName.getMethodName());
+
+        pocPusher.setDevice(getDevice()).setBuild(mBuild).setAbi(mAbi);
+        sPocPusher.put(getDevice(), pocPusher);
     }
 
     /**
@@ -133,6 +138,10 @@ public class SecurityTestCase extends CompatibilityHostTestBase {
 
     public static String getTestName(ITestDevice device) {
         return sTestName.get(device);
+    }
+
+    public static PocPusher getPocPusher(ITestDevice device) {
+        return sPocPusher.get(device);
     }
 
     // TODO convert existing assertMatches*() to RegexUtils.assertMatches*()
