@@ -83,7 +83,7 @@ import org.mockito.Mockito;
 import java.util.Objects;
 
 /**
- * Tests for {@link TextView#onReceiveContent} and related code.
+ * Tests for {@link TextView#performReceiveContent} and related code.
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -122,7 +122,7 @@ public class TextViewOnReceiveContentTest {
     }
 
     // ============================================================================================
-    // Tests to verify TextView APIs/accessors/defaults related to OnReceiveContentCallback.
+    // Tests to verify TextView APIs/accessors/defaults related to OnReceiveContentListener.
     // ============================================================================================
 
     @UiThreadTest
@@ -220,7 +220,7 @@ public class TextViewOnReceiveContentTest {
     }
 
     // ============================================================================================
-    // Tests to verify the behavior of TextViewOnReceiveContentCallback.
+    // Tests to verify the behavior of TextViewOnReceiveContentListener.
     // ============================================================================================
 
     @UiThreadTest
@@ -374,7 +374,7 @@ public class TextViewOnReceiveContentTest {
     }
 
     // ============================================================================================
-    // Tests to verify that the OnReceiveContentCallback is invoked for all the appropriate user
+    // Tests to verify that the OnReceiveContentListener is invoked for all the appropriate user
     // interactions:
     // * Paste from clipboard ("Paste" and "Paste as plain text" actions)
     // * Content insertion from IME
@@ -794,7 +794,7 @@ public class TextViewOnReceiveContentTest {
     }
 
     // This wrapper is used so that we only mock and verify the public callback methods. In addition
-    // to the public methods, the OnReceiveContentCallback interface has some hidden default
+    // to the public methods, the OnReceiveContentListener interface has some hidden default
     // methods; we don't want to mock or assert calls to these helper functions (they are an
     // implementation detail).
     private static class MockReceiverWrapper implements OnReceiveContentListener {
