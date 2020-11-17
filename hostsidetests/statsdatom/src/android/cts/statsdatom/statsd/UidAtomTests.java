@@ -228,27 +228,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertFalse(atom.getIsPackageLoading());
     }
 
-    public void testAppStartOccurred() throws Exception {
-        final int atomTag = Atom.APP_START_OCCURRED_FIELD_NUMBER;
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag,  /*uidInAttributionChain=*/false);
-
-        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                "StatsdCtsForegroundActivity", "action", "action.sleep_top", 3_500);
-
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-
-        assertThat(data).hasSize(1);
-        AppStartOccurred atom = data.get(0).getAtom().getAppStartOccurred();
-        assertThat(atom.getPkgName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
-        assertThat(atom.getActivityName())
-                .isEqualTo("com.android.server.cts.device.statsdatom.StatsdCtsForegroundActivity");
-        assertThat(atom.getIsInstantApp()).isFalse();
-        assertThat(atom.getActivityStartMillis()).isGreaterThan(0L);
-        assertThat(atom.getTransitionDelayMillis()).isGreaterThan(0);
-    }
-
     public void testAudioState() throws Exception {
         if (!DeviceUtils.hasFeature(getDevice(), FEATURE_AUDIO_OUTPUT)) return;
 
