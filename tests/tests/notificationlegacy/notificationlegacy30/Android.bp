@@ -13,22 +13,26 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsVoiceRecognitionTestCases",
+    name: "CtsLegacyNotification30TestCases",
     defaults: ["cts_defaults"],
+    static_libs: [
+        "androidx.test.rules",
+        "ctstestrunner-axt",
+        "androidx.test.rules",
+        "junit",
+    ],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
+        "mts"
     ],
-    libs: ["android.test.base"],
-    static_libs: [
-        "ctstestrunner-axt",
-        "compatibility-device-util-axt",
-        "androidx.test.ext.junit",
-        "truth-prebuilt",
-        "cts-wm-util",
-    ],
-    srcs: ["src/**/*.java"],
-    resource_dirs: ["res"],
     sdk_version: "test_current",
+    target_sdk_version: "30",
+    min_sdk_version: "30",
 }

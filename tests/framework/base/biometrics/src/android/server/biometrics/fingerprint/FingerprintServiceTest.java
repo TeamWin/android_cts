@@ -16,9 +16,9 @@
 
 package android.server.biometrics.fingerprint;
 
+import static android.server.biometrics.SensorStates.SensorState;
+import static android.server.biometrics.SensorStates.UserState;
 import static android.server.biometrics.fingerprint.Components.AUTH_ON_CREATE_ACTIVITY;
-import static android.server.biometrics.fingerprint.FingerprintServiceState.SensorState;
-import static android.server.biometrics.fingerprint.FingerprintServiceState.UserState;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -34,19 +34,18 @@ import android.hardware.biometrics.SensorProperties;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.biometrics.BiometricTestBase;
+import android.server.biometrics.SensorStates;
 import android.server.biometrics.Utils;
-import android.server.wm.ActivityManagerTestBase;
-import android.server.wm.Condition;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.UiDeviceUtils;
 import android.server.wm.WindowManagerState;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.android.server.biometrics.fingerprint.nano.FingerprintServiceStateProto;
+import com.android.server.biometrics.nano.SensorServiceStateProto;
 
 import org.junit.After;
 import org.junit.Before;
@@ -54,77 +53,38 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BooleanSupplier;
 
 @SuppressWarnings("deprecation")
 @Presubmit
-public class FingerprintServiceTest extends ActivityManagerTestBase {
+public class FingerprintServiceTest extends BiometricTestBase {
     private static final String TAG = "FingerprintServiceTest";
 
     private static final String DUMPSYS_FINGERPRINT = "dumpsys fingerprint --proto --state";
 
-    private static FingerprintServiceState getCurrentState() throws Exception {
+    protected SensorStates getCurrentState() throws Exception {
         final byte[] dump = Utils.executeShellCommand(DUMPSYS_FINGERPRINT);
-        FingerprintServiceStateProto proto = FingerprintServiceStateProto.parseFrom(dump);
-        return FingerprintServiceState.parseFrom(proto);
-    }
-
-    private static void waitFor(@NonNull String message, @NonNull BooleanSupplier condition) {
-        Condition.waitFor(new Condition<>(message, condition)
-                .setRetryIntervalMs(500)
-                .setRetryLimit(20));
+        SensorServiceStateProto proto = SensorServiceStateProto.parseFrom(dump);
+        return SensorStates.parseFrom(proto);
     }
 
     @Nullable
-    private static AuthenticationCallbackHelper.State getCallbackState(
-            @NonNull TestJournal journal) {
+    private static FingerprintCallbackHelper.State getCallbackState(@NonNull TestJournal journal) {
         waitFor("Waiting for authentication callback",
-                () -> journal.extras.containsKey(AuthenticationCallbackHelper.KEY));
+                () -> journal.extras.containsKey(FingerprintCallbackHelper.KEY));
 
-        final Bundle bundle = journal.extras.getBundle(AuthenticationCallbackHelper.KEY);
+        final Bundle bundle = journal.extras.getBundle(FingerprintCallbackHelper.KEY);
         if (bundle == null) {
             return null;
         }
 
-        final AuthenticationCallbackHelper.State state =
-                AuthenticationCallbackHelper.State.fromBundle(bundle);
+        final FingerprintCallbackHelper.State state =
+                FingerprintCallbackHelper.State.fromBundle(bundle);
 
         // Clear the extras since we want to wait for the journal to sync any new info the next
         // time it's read
         journal.extras.clear();
 
         return state;
-    }
-
-    private static void waitForIdleService() throws Exception {
-        for (int i = 0; i < 10; i++) {
-            final FingerprintServiceState serviceState = getCurrentState();
-            if (!serviceState.areAllSensorsIdle()) {
-                Log.d(TAG, "Not idle yet..");
-                Thread.sleep(300);
-            } else {
-                return;
-            }
-        }
-        Log.d(TAG, "Timed out waiting for idle");
-    }
-
-    /**
-     * This method should only be used when we know that at least one sensor must be busy, such
-     * as when authenticate() is invoked.
-     *
-     * @return The first sensor that's non-idle.
-     * @throws IllegalStateException if no sensors are busy.
-     */
-    public static int getFirstNonIdleSensor() throws Exception {
-        final FingerprintServiceState state = getCurrentState();
-        for (int i = 0; i < state.sensorStates.size(); i++) {
-            if (state.sensorStates.valueAt(i).isBusy()) {
-                return state.sensorStates.keyAt(i);
-            }
-        }
-
-        throw new IllegalStateException("All sensors idle");
     }
 
     @NonNull private Instrumentation mInstrumentation;
@@ -150,8 +110,7 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
 
     @After
     public void cleanup() throws Exception {
-        if (mFingerprintManager == null || mSensorProperties == null
-                || mSensorProperties.isEmpty()) {
+        if (mFingerprintManager == null || mSensorProperties.isEmpty()) {
             // The tests were skipped anyway, nothing to clean up. Maybe we can use JUnit test
             // annotations in the future.
             return;
@@ -159,11 +118,11 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
 
 
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
+        waitForIdleService(getCurrentState());
 
-        final FingerprintServiceState serviceState = getCurrentState();
-        for (int i = 0; i < serviceState.sensorStates.size(); i++) {
-            final SensorState sensorState = serviceState.sensorStates.valueAt(i);
+        final SensorStates sensorStates = getCurrentState();
+        for (int i = 0; i < sensorStates.sensorStates.size(); i++) {
+            final SensorState sensorState = sensorStates.sensorStates.valueAt(i);
             for (int j = 0; j < sensorState.getUserStates().size(); j++) {
                 final UserState userState = sensorState.getUserStates().valueAt(j);
                 assertEquals(0, userState.numEnrolled);
@@ -188,16 +147,16 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
 
         session.startEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
+        waitForIdleService(getCurrentState());
 
         session.finishEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
+        waitForIdleService(getCurrentState());
 
-        final FingerprintServiceState serviceState = getCurrentState();
+        final SensorStates sensorStates = getCurrentState();
 
         // The (sensorId, userId) has one finger enrolled.
-        assertEquals(1, serviceState.sensorStates
+        assertEquals(1, sensorStates.sensorStates
                 .get(sensorId).getUserStates().get(userId).numEnrolled);
     }
 
@@ -219,11 +178,11 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
 
             session.startEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService();
+            waitForIdleService(getCurrentState());
 
             session.finishEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService();
+            waitForIdleService(getCurrentState());
         }
 
         final TestJournal journal = TestJournalContainer.get(AUTH_ON_CREATE_ACTIVITY);
@@ -237,7 +196,7 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
         assertFalse(getCurrentState().areAllSensorsIdle());
 
         // Nothing happened yet
-        AuthenticationCallbackHelper.State callbackState = getCallbackState(journal);
+        FingerprintCallbackHelper.State callbackState = getCallbackState(journal);
         assertNotNull(callbackState);
         assertEquals(0, callbackState.mNumAuthRejected);
         assertEquals(0, callbackState.mNumAuthAccepted);
@@ -278,11 +237,11 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
 
             session.startEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService();
+            waitForIdleService(getCurrentState());
 
             session.finishEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService();
+            waitForIdleService(getCurrentState());
         }
 
         final TestJournal journal = TestJournalContainer.get(AUTH_ON_CREATE_ACTIVITY);
@@ -291,7 +250,7 @@ public class FingerprintServiceTest extends ActivityManagerTestBase {
         launchActivity(AUTH_ON_CREATE_ACTIVITY);
         mWmState.waitForActivityState(AUTH_ON_CREATE_ACTIVITY, WindowManagerState.STATE_RESUMED);
         mInstrumentation.waitForIdleSync();
-        AuthenticationCallbackHelper.State callbackState = getCallbackState(journal);
+        FingerprintCallbackHelper.State callbackState = getCallbackState(journal);
         assertNotNull(callbackState);
 
         // Fingerprint rejected

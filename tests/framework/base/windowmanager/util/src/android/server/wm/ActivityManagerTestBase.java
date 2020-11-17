@@ -213,7 +213,7 @@ public abstract class ActivityManagerTestBase {
     protected static final String MSG_NO_MOCK_IME =
             "MockIme cannot be used for devices that do not support installable IMEs";
 
-    private static final String LOCK_CREDENTIAL = "1234";
+    protected static final String LOCK_CREDENTIAL = "1234";
 
     private static final int UI_MODE_TYPE_MASK = 0x0f;
     private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;

@@ -13,22 +13,23 @@
 // limitations under the License.
 
 android_test {
-    name: "CtsVoiceRecognitionTestCases",
-    defaults: ["cts_defaults"],
-    // Tag this module as a cts test artifact
+    name: "CtsBiometricServiceTestApp",
+    defaults: ["cts_support_defaults"],
+
+    static_libs: [
+        "cts-biometric-util",
+        "cts-wm-app-base",
+    ],
+
+    srcs: [
+        "src/**/*.java",
+    ],
+
+    sdk_version: "test_current",
+
     test_suites: [
         "cts",
+        "vts10",
         "general-tests",
     ],
-    libs: ["android.test.base"],
-    static_libs: [
-        "ctstestrunner-axt",
-        "compatibility-device-util-axt",
-        "androidx.test.ext.junit",
-        "truth-prebuilt",
-        "cts-wm-util",
-    ],
-    srcs: ["src/**/*.java"],
-    resource_dirs: ["res"],
-    sdk_version: "test_current",
 }

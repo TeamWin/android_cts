@@ -48,6 +48,8 @@ public class TestApp {
             "TestAppASplitV1.apk", "TestAppASplitV1_anydpi.apk");
     public static final TestApp ASplit2 = new TestApp("ASplitV2", A, 2, /*isApex*/false,
             "TestAppASplitV2.apk", "TestAppASplitV2_anydpi.apk");
+    public static final TestApp AIncompleteSplit = new TestApp("AIncompleteSplit", A, 1,
+            /*isApex*/false, "TestAppASplitV1_anydpi.apk");
 
     public static final TestApp B1 = new TestApp("Bv1", B, 1, /*isApex*/false,
             "TestAppBv1.apk");

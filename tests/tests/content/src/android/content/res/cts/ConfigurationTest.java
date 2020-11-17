@@ -48,7 +48,7 @@ public class ConfigurationTest extends AndroidTestCase {
         mConfig.keyboardHidden = Configuration.KEYBOARDHIDDEN_NO;
         mConfig.navigation = Configuration.NAVIGATION_NONAV;
         mConfig.orientation = Configuration.ORIENTATION_PORTRAIT;
-        mConfig.forceBoldText = Configuration.FORCE_BOLD_TEXT_YES;
+        mConfig.fontWeightAdjustment = 300;
     }
 
     public void testConstructor() {
@@ -61,11 +61,11 @@ public class ConfigurationTest extends AndroidTestCase {
         final Configuration cfg2 = new Configuration();
         assertEquals(0, cfg1.compareTo(cfg2));
 
-        cfg1.forceBoldText = 1;
-        cfg2.forceBoldText = 2;
+        cfg1.fontWeightAdjustment = 1;
+        cfg2.fontWeightAdjustment = 2;
         assertEquals(-1, cfg1.compareTo(cfg2));
-        cfg1.forceBoldText = 2;
-        cfg2.forceBoldText = 1;
+        cfg1.fontWeightAdjustment = 2;
+        cfg2.fontWeightAdjustment = 1;
         assertEquals(1, cfg1.compareTo(cfg2));
 
         cfg1.colorMode = 2;
@@ -320,7 +320,7 @@ public class ConfigurationTest extends AndroidTestCase {
                 | ActivityInfo.CONFIG_UI_MODE
                 | ActivityInfo.CONFIG_FONT_SCALE
                 | ActivityInfo.CONFIG_COLOR_MODE, mConfigDefault, config);
-        config.forceBoldText = 2;
+        config.fontWeightAdjustment = 300;
         doConfigCompare(ActivityInfo.CONFIG_MCC
                 | ActivityInfo.CONFIG_MNC
                 | ActivityInfo.CONFIG_LOCALE
@@ -334,7 +334,7 @@ public class ConfigurationTest extends AndroidTestCase {
                 | ActivityInfo.CONFIG_UI_MODE
                 | ActivityInfo.CONFIG_FONT_SCALE
                 | ActivityInfo.CONFIG_COLOR_MODE
-                | ActivityInfo.CONFIG_FORCE_BOLD_TEXT, mConfigDefault, config);
+                | ActivityInfo.CONFIG_FONT_WEIGHT_ADJUSTMENT, mConfigDefault, config);
     }
 
     public void testEquals() {
@@ -386,7 +386,7 @@ public class ConfigurationTest extends AndroidTestCase {
                 config.smallestScreenWidthDp);
         assertEquals(Configuration.DENSITY_DPI_UNDEFINED, config.densityDpi);
         assertEquals(Configuration.COLOR_MODE_UNDEFINED, config.colorMode);
-        assertEquals(Configuration.FORCE_BOLD_TEXT_UNDEFINED, config.forceBoldText);
+        assertEquals(Configuration.FONT_WEIGHT_ADJUSTMENT_UNDEFINED, config.fontWeightAdjustment);
     }
 
     public void testUnset() {
@@ -414,7 +414,7 @@ public class ConfigurationTest extends AndroidTestCase {
                 config.smallestScreenWidthDp);
         assertEquals(Configuration.DENSITY_DPI_UNDEFINED, config.densityDpi);
         assertEquals(Configuration.COLOR_MODE_UNDEFINED, config.colorMode);
-        assertEquals(Configuration.FORCE_BOLD_TEXT_UNDEFINED, config.forceBoldText);
+        assertEquals(Configuration.FONT_WEIGHT_ADJUSTMENT_UNDEFINED, config.fontWeightAdjustment);
     }
 
     public void testToString() {
