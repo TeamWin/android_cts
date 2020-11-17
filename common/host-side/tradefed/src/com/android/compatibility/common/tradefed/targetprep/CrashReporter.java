@@ -165,7 +165,7 @@ public class CrashReporter implements ITargetCleaner {
         }
 
         @Override
-        public void processNewLines(String[] lines) {
+        public synchronized void processNewLines(String[] lines) {
             this.notifyAll(); // alert the main thread that we are active.
             if (!isCancelled()) {
                 for (String line : lines) {
