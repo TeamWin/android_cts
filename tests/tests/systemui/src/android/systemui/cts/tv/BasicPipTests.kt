@@ -18,7 +18,6 @@ package android.systemui.cts.tv
 
 import android.Manifest.permission.READ_DREAM_STATE
 import android.Manifest.permission.WRITE_DREAM_STATE
-import android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN
 import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
 import android.content.ComponentName
 import android.graphics.Point
@@ -42,13 +41,9 @@ import android.systemui.tv.cts.PipActivity.Ratios.MAX_ASPECT_RATIO_NUMERATOR
 import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_DENOMINATOR
 import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_NUMERATOR
 import android.systemui.tv.cts.PipMenu
-import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_CLOSE_BUTTON
-import android.systemui.tv.cts.ResourceNames.ID_PIP_MENU_FULLSCREEN_BUTTON
 import android.util.Size
 import android.view.Gravity
-import android.view.KeyEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.ThrowingSupplier
 import org.junit.After
@@ -167,7 +162,7 @@ class BasicPipTests : PipTestBase() {
 
     /** Ensure the pip window keeps its aspect ratio after the pip menu is dismissed. */
     @Test
-    fun pipMenu_restoresAspectRatio_onExit() {
+    fun openPip_customAspectRatio_restoresAspectRatio_afterMenu() {
         // start pip with maximum aspect ratio
         launchPipWithAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR)
         assertPipWindowPosition(PIP_ACTIVITY, maxPipAspectRatio)
@@ -184,107 +179,6 @@ class BasicPipTests : PipTestBase() {
         assertPipWindowPosition(PIP_ACTIVITY, maxPipAspectRatio)
     }
 
-    /** Open an app in pip mode and ensure its pip menu can be opened. */
-    @Test
-    fun pipMenu_open() {
-        launchPipThenEnterMenu()
-        assertPipMenuOpen()
-    }
-
-    /** Ensure the [android.view.KeyEvent.KEYCODE_WINDOW] correctly opens the pip menu. */
-    @Test
-    fun pipMenu_open_onWindowButtonPress() {
-        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        waitForEnterPip(PIP_ACTIVITY)
-        // enter pip menu
-        uiDevice.pressKeyCode(KeyEvent.KEYCODE_WINDOW)
-        assertPipMenuOpen()
-    }
-
-    /** Ensure the pip menu opens in the expected location. */
-    @Test
-    fun pipMenu_correctLocation() {
-        launchPipThenEnterMenu()
-
-        waitForWMState("The PiP menu must be in the right place!") {
-            val pipTask = it.getTaskByActivity(PIP_ACTIVITY, WINDOWING_MODE_PINNED)
-            pipTask.bounds == menuModePipBounds
-        }
-    }
-
-    /** Open an app's pip menu then press its close button and ensure the app is closed. */
-    @Test
-    fun pipMenu_openThenClose() {
-        launchPipThenEnterMenu()
-
-        val closeButton = locateByResourceName(ID_PIP_MENU_CLOSE_BUTTON)
-        closeButton.click()
-
-        waitForWMState("The PiP app and its menu must be closed!") { state ->
-            !state.containsActivity(PIP_MENU_ACTIVITY) &&
-                !state.isActivityVisible(PIP_ACTIVITY)
-        }
-    }
-
-    /** Open an app's pip menu then press its fullscreen button and ensure the app is fullscreen. */
-    @Test
-    fun pipMenu_openThenFullscreen() {
-        launchPipThenEnterMenu()
-
-        val fullscreenButton = locateByResourceName(ID_PIP_MENU_FULLSCREEN_BUTTON)
-        fullscreenButton.click()
-        waitForFullscreen(PIP_ACTIVITY)
-
-        wmState.waitAndAssertActivityRemoved(PIP_MENU_ACTIVITY)
-        wmState.assertFocusedActivity("The PiP app must be focused!", PIP_ACTIVITY)
-        assertTrue("The PiP app must be in fullscreen mode!") {
-            wmState.containsActivityInWindowingMode(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN)
-        }
-    }
-
-    /** Ensure the pip menu contains a media control button when there is playback. */
-    @Test
-    fun pipMenu_containsMediaButton() {
-        // launch a pip app, activate its media session, and start media playback
-        launchActivity(
-            activity = PIP_ACTIVITY,
-            action = PipActivity.ACTION_MEDIA_PLAY,
-            boolExtras = mapOf(
-                PipActivity.EXTRA_ENTER_PIP to true,
-                PipActivity.EXTRA_MEDIA_SESSION_ACTIVE to true
-            ),
-            stringExtras = mapOf(PipActivity.EXTRA_MEDIA_SESSION_TITLE to "Playback")
-        )
-        waitForEnterPip(PIP_ACTIVITY)
-
-        // enter pip menu
-        sendBroadcast(PipMenu.ACTION_MENU)
-        waitForFullscreen(PIP_MENU_ACTIVITY)
-        assertPipMenuOpen()
-
-        // the media control button has to be present in the pip menu
-        uiDevice.wait(Until.findObject(menuMediaButtonSelector), defaultTimeout)
-                ?: error("Could not find media action buttons")
-    }
-
-    /** Open an app's pip menu then press back and ensure the app is back in pip. */
-    @Test
-    fun pipMenu_openThenBack() {
-        launchPipThenEnterMenu()
-        uiDevice.pressBack()
-
-        assertActivityInPip(PIP_ACTIVITY)
-    }
-
-    /** Open an app's pip menu then press home and ensure the app is back in pip. */
-    @Test
-    fun pipMenu_openThenHome() {
-        launchPipThenEnterMenu()
-        uiDevice.pressHome()
-
-        assertActivityInPip(PIP_ACTIVITY)
-    }
-
     /**  Open an app in pip mode and set the given aspect ratio for its pip window. */
     private fun launchPipWithAspectRatio(numerator: Int, denominator: Int) {
         launchActivity(
@@ -295,24 +189,6 @@ class BasicPipTests : PipTestBase() {
                 EXTRA_ASPECT_RATIO_DENOMINATOR to denominator
             )
         )
-    }
-
-    /** Assert that the given activity is in pip mode and the pip menu is gone. */
-    private fun assertActivityInPip(activity: ComponentName) {
-        wmState.waitAndAssertActivityRemoved(PIP_MENU_ACTIVITY)
-        wmState.assertNotFocusedActivity("The PiP app must not be focused!", activity)
-        assertTrue("The PiP app must be back in pip mode after dismissing the pip menu!") {
-            wmState.containsActivityInWindowingMode(activity, WINDOWING_MODE_PINNED)
-        }
-    }
-
-    /** Launches an app into pip mode then opens the pip menu. */
-    private fun launchPipThenEnterMenu() {
-        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        waitForEnterPip(PIP_ACTIVITY)
-        // enter pip menu
-        sendBroadcast(PipMenu.ACTION_MENU)
-        waitForFullscreen(PIP_MENU_ACTIVITY)
     }
 
     /** Ensure the pip window has the correct dimensions and position for a given [aspectRatio]. */
