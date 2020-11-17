@@ -172,7 +172,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
                     TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, expectedWindowingMode);
         }
 
-        if (isAssistantOnTop()) {
+        if (isAssistantOnTopOfDream()) {
             // If the assistant is configured to be always-on-top, then the new task should have
             // been started behind it and the assistant stack should still be on top.
             mWmState.assertFocusedActivity(
@@ -203,7 +203,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
         // If the Assistant is configured to be always-on-top, then the assistant activity
         // started in setUp() will not allow any other activities to start. Therefore we should
         // remove it before launching a fullscreen activity.
-        if (isAssistantOnTop()) {
+        if (isAssistantOnTopOfDream()) {
             removeRootTasksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
         }
 
@@ -315,7 +315,6 @@ public class AssistantStackTests extends ActivityManagerTestBase {
         }
     }
 
-    @FlakyTest(bugId = 169976309)
     @Test
     public void testLaunchIntoSameTask() throws Exception {
         try (final AssistantSession assistantSession = new AssistantSession()) {
@@ -340,7 +339,12 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             launchActivityOnDisplay(ANIMATION_TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN, mAssistantDisplayId);
             // Wait for animation finished.
             mWmState.waitForActivityState(ANIMATION_TEST_ACTIVITY, STATE_RESUMED);
-            mWmState.assertVisibility(ASSISTANT_ACTIVITY, isAssistantOnTop());
+
+            if (isAssistantOnTopOfDream()) {
+                mWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
+            } else {
+                mWmState.waitAndAssertVisibilityGone(ASSISTANT_ACTIVITY);
+            }
 
             // Launch the assistant again and ensure that it goes into the same task
             launchActivityOnDisplayNoWait(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION,
