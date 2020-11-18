@@ -26,6 +26,7 @@ import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
 import static android.scopedstorage.cts.lib.TestUtils.assertCantRenameFile;
 import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
+import static android.scopedstorage.cts.lib.TestUtils.canOpenFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.createImageEntryAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
@@ -40,7 +41,6 @@ import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
 import static android.scopedstorage.cts.lib.TestUtils.getPicturesDir;
 import static android.scopedstorage.cts.lib.TestUtils.installApp;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
-import static android.scopedstorage.cts.lib.TestUtils.openFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
@@ -711,8 +711,8 @@ public class LegacyStorageTest {
 
             // We have transferred ownership away from TEST_APP_A so reads / writes
             // should no longer work.
-            assertThat(openFileAs(TEST_APP_A, fullPath, false /* for write */)).isFalse();
-            assertThat(openFileAs(TEST_APP_A, fullPath, false /* for read */)).isFalse();
+            assertThat(canOpenFileAs(TEST_APP_A, fullPath, false /* for write */)).isFalse();
+            assertThat(canOpenFileAs(TEST_APP_A, fullPath, false /* for read */)).isFalse();
         } finally {
             deleteFileAsNoThrow(TEST_APP_A, fullPath.getAbsolutePath());
             uninstallAppNoThrow(TEST_APP_A);
