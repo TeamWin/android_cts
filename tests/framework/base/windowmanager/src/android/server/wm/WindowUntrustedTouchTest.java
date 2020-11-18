@@ -571,7 +571,7 @@ public class WindowUntrustedTouchTest {
     public void testWhenSelfTextToastWindow_allowsTouch() throws Throwable {
         addToastOverlay(APP_SELF, /* custom */ false);
         Rect toast = mWmState.waitForResult("toast bounds",
-                state -> state.findFirstWindowWithType(LayoutParams.TYPE_TOAST).getContentFrame());
+                state -> state.findFirstWindowWithType(LayoutParams.TYPE_TOAST).getFrame());
 
         mTouchHelper.tapOnCenter(toast, mActivity.getDisplayId());
 
@@ -582,7 +582,7 @@ public class WindowUntrustedTouchTest {
     public void testWhenTextToastWindow_allowsTouch() throws Throwable {
         addToastOverlay(APP_A, /* custom */ false);
         Rect toast = mWmState.waitForResult("toast bounds",
-                state -> state.findFirstWindowWithType(LayoutParams.TYPE_TOAST).getContentFrame());
+                state -> state.findFirstWindowWithType(LayoutParams.TYPE_TOAST).getFrame());
 
         mTouchHelper.tapOnCenter(toast, mActivity.getDisplayId());
 

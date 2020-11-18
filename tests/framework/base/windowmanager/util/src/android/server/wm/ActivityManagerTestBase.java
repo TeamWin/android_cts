@@ -150,6 +150,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -231,6 +232,7 @@ public abstract class ActivityManagerTestBase {
     protected final ActivityManager mAm = mContext.getSystemService(ActivityManager.class);
     protected final ActivityTaskManager mAtm = mContext.getSystemService(ActivityTaskManager.class);
     protected final DisplayManager mDm = mContext.getSystemService(DisplayManager.class);
+    protected final WindowManager mWm = mContext.getSystemService(WindowManager.class);
 
     /** The tracker to manage objects (especially {@link AutoCloseable}) in a test method. */
     protected final ObjectTracker mObjectTracker = new ObjectTracker();
