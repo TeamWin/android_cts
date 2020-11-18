@@ -296,6 +296,10 @@ public class CipherTest extends AndroidTestCase {
             mLockCredential.close();
             tearDown();
         }
+
+        public boolean supportsLockAndUnlock() {
+            return supportsInsecureLock();
+        }
     }
 
     @Presubmit
@@ -496,19 +500,14 @@ public class CipherTest extends AndroidTestCase {
         }
     }
 
-    private boolean isLeanbackOnly() {
-        PackageManager pm = getContext().getPackageManager();
-        return (pm != null && pm.hasSystemFeature("android.software.leanback_only"));
-    }
-
     @Presubmit
     public void testKeyguardLockAndUnlock()
             throws Exception {
-        if (isLeanbackOnly()) {
-            return;
-        }
-
         try (DeviceLockSession dl = new DeviceLockSession()) {
+            if (!dl.supportsLockAndUnlock()) {
+                return;
+            }
+
             KeyguardManager keyguardManager = (KeyguardManager)getContext()
                     .getSystemService(Context.KEYGUARD_SERVICE);
 
@@ -525,11 +524,11 @@ public class CipherTest extends AndroidTestCase {
         final boolean isUnlockedDeviceRequired = true;
         final boolean isUserAuthRequired = false;
 
-        if (isLeanbackOnly()) {
-            return;
-        }
-
         try (DeviceLockSession dl = new DeviceLockSession()) {
+            if (!dl.supportsLockAndUnlock()) {
+                return;
+            }
+
             KeyguardManager keyguardManager = (KeyguardManager)getContext()
                 .getSystemService(Context.KEYGUARD_SERVICE);
 
@@ -1017,11 +1016,11 @@ public class CipherTest extends AndroidTestCase {
         final boolean isUnlockedDeviceRequired = false;
         final boolean isUserAuthRequired = true;
 
-        if (isLeanbackOnly()) {
-            return;
-        }
-
         try (DeviceLockSession dl = new DeviceLockSession()) {
+            if (!dl.supportsLockAndUnlock()) {
+                return;
+            }
+
             KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(Context.KEYGUARD_SERVICE);
 
             dl.performDeviceLock();
@@ -1044,8 +1043,10 @@ public class CipherTest extends AndroidTestCase {
         final boolean isUserAuthRequired = true;
         final boolean isUnlockedDeviceRequired = false;
 
-        if (isLeanbackOnly()) {
-            return;
+        try (DeviceLockSession dl = new DeviceLockSession()) {
+            if (!dl.supportsLockAndUnlock()) {
+                return;
+            }
         }
 
         KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(Context.KEYGUARD_SERVICE);
