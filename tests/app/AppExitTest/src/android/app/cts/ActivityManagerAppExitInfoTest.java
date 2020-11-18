@@ -101,7 +101,7 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
     private static final int EXIT_CODE = 123;
     private static final int CRASH_SIGNAL = OsConstants.SIGSEGV;
 
-    private static final int WAITFOR_MSEC = 5000;
+    private static final int WAITFOR_MSEC = 10000;
     private static final int WAITFOR_SETTLE_DOWN = 2000;
 
     private static final int CMD_PID = 1;
