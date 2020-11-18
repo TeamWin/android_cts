@@ -1,0 +1,85 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hdmicec.cts.tv;
+
+import android.hdmicec.cts.BaseHdmiCecCtsTest;
+import android.hdmicec.cts.CecMessage;
+import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.LogicalAddress;
+
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.runner.RunWith;
+
+/** HDMI CEC Routing control tests (Section 11.1.2) */
+@RunWith(DeviceJUnit4ClassRunner.class)
+public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
+
+    @Rule
+    public RuleChain ruleChain =
+            RuleChain.outerRule(CecRules.requiresCec(this))
+                    .around(CecRules.requiresLeanback(this))
+                    .around(CecRules.requiresDeviceType(this, LogicalAddress.TV))
+                    .around(hdmiCecClient);
+
+    public HdmiCecRoutingControlTest() {
+        super(LogicalAddress.TV);
+    }
+
+    @Before
+    public void checkForInitialActiveSourceMessage() throws Exception {
+        try {
+            /*
+             * Check for the broadcasted <ACTIVE_SOURCE> message from Recorder_1, which was sent as
+             * a response to <SET_STREAM_PATH> message from the TV.
+             */
+            String message =
+                    hdmiCecClient.checkExpectedMessageFromClient(
+                            LogicalAddress.RECORDER_1, CecOperand.ACTIVE_SOURCE);
+        } catch (Exception e) {
+            /*
+             * In case the TV does not send <Set Stream Path> to CEC adapter, or the client does
+             * not make recorder active source, broadcast an <Active Source> message from the
+             * adapter.
+             */
+            hdmiCecClient.broadcastActiveSource(
+                    hdmiCecClient.getSelfDevice(), hdmiCecClient.getPhysicalAddress());
+        }
+    }
+
+    /**
+     * Test 11.1.2-4
+     *
+     * <p>Tests that the device accepts {@code <Inactive Source>} message.
+     */
+    @Test
+    public void cect_11_1_2_4_DutAcceptsInactiveSourceMessage() throws Exception {
+        hdmiCecClient.sendCecMessage(
+                hdmiCecClient.getSelfDevice(),
+                LogicalAddress.TV,
+                CecOperand.INACTIVE_SOURCE,
+                CecMessage.formatParams(hdmiCecClient.getPhysicalAddress()));
+        hdmiCecClient.checkOutputDoesNotContainMessage(
+                hdmiCecClient.getSelfDevice(),
+                CecOperand.FEATURE_ABORT,
+                CecMessage.formatParams(CecOperand.INACTIVE_SOURCE.toString()));
+    }
+}
