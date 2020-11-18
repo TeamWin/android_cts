@@ -1139,7 +1139,7 @@ public abstract class ActivityManagerTestBase {
         return sSupportsInsecureLockScreen;
     }
 
-    protected boolean isAssistantOnTop() {
+    protected boolean isAssistantOnTopOfDream() {
         if (sIsAssistantOnTop == null) {
             sIsAssistantOnTop = mContext.getResources().getBoolean(
                     android.R.bool.config_assistantOnTopOfDream);

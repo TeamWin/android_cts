@@ -42,6 +42,7 @@ public class LocalForegroundService extends LocalService {
     public static final int COMMAND_STOP_FOREGROUND_DETACH_NOTIFICATION = 4;
     public static final int COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION_USING_FLAGS = 5;
     public static final int COMMAND_START_NO_FOREGROUND = 6;
+    public static final int COMMAND_START_FOREGROUND_DEFER_NOTIFICATION = 7;
 
     private int mNotificationId = 0;
 
@@ -65,21 +66,25 @@ public class LocalForegroundService extends LocalService {
                 NotificationManager.IMPORTANCE_DEFAULT));
 
         Context context = getApplicationContext();
-        int command = intent.getIntExtra(EXTRA_COMMAND, -1);
+        final int command = intent.getIntExtra(EXTRA_COMMAND, -1);
 
         Log.d(TAG, "service start cmd " + command + ", intent " + intent);
 
         switch (command) {
             case COMMAND_START_FOREGROUND:
+            case COMMAND_START_FOREGROUND_DEFER_NOTIFICATION: {
                 mNotificationId ++;
+                final boolean showNow = (command == COMMAND_START_FOREGROUND);
                 Log.d(TAG, "Starting foreground using notification " + mNotificationId);
                 Notification notification =
                         new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                                 .setContentTitle(getNotificationTitle(mNotificationId))
                                 .setSmallIcon(R.drawable.black)
+                                .setShowForegroundImmediately(showNow)
                                 .build();
                 startForeground(mNotificationId, notification);
                 break;
+            }
             case COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION:
                 Log.d(TAG, "Stopping foreground removing notification");
                 stopForeground(true);

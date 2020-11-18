@@ -16,7 +16,15 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.cts.device.statsdatom.emptyapp">
-    <application android:hasCode="false" android:label="Empty Test App" />
+          package="com.android.cts.statsdsecurityapp">
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <application android:label="StatsdSecurityApp">
+        <service android:name=".DummyCallscreeningService"
+                 android:permission="android.permission.BIND_SCREENING_SERVICE"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService"/>
+            </intent-filter>
+        </service>
+    </application>
 </manifest>
-

@@ -54,6 +54,7 @@ public class FrameRateCtsActivity extends Activity {
     private static final int PRECONDITION_WAIT_MAX_ATTEMPTS = 5;
     private static final long PRECONDITION_WAIT_TIMEOUT_SECONDS = 20;
     private static final long PRECONDITION_VIOLATION_WAIT_TIMEOUT_SECONDS = 3;
+    private static final float FRAME_RATE_TOLERANCE = 0.01f;
 
     private DisplayManager mDisplayManager;
     private SurfaceView mSurfaceView;
@@ -101,7 +102,7 @@ public class FrameRateCtsActivity extends Activity {
                 float frameRate = mDisplayManager.getDisplay(displayId).getMode().getRefreshRate();
                 if (frameRate != mDeviceFrameRate) {
                     Log.i(TAG,
-                            String.format("Frame rate changed: %.0f --> %.0f", mDeviceFrameRate,
+                            String.format("Frame rate changed: %.2f --> %.2f", mDeviceFrameRate,
                                     frameRate));
                     mDeviceFrameRate = frameRate;
                     mFrameRateChangedEvents.add(frameRate);
@@ -189,23 +190,27 @@ public class FrameRateCtsActivity extends Activity {
 
         public int setFrameRate(float frameRate, int compatibility) {
             Log.i(TAG,
-                    String.format("Setting frame rate for %s: fps=%.0f compatibility=%s", mName,
+                    String.format("Setting frame rate for %s: fps=%.2f compatibility=%s", mName,
                             frameRate, frameRateCompatibilityToString(compatibility)));
 
             int rc = 0;
+            final boolean requireSeamless = false;
             if (mApi == Api.SURFACE) {
-                mSurface.setFrameRate(frameRate, compatibility);
+                mSurface.setFrameRate(frameRate, compatibility, requireSeamless);
             } else if (mApi == Api.ANATIVE_WINDOW) {
-                rc = nativeWindowSetFrameRate(mSurface, frameRate, compatibility);
+                rc = nativeWindowSetFrameRate(mSurface, frameRate, compatibility, requireSeamless);
             } else if (mApi == Api.SURFACE_CONTROL) {
                 SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
                 try {
-                    transaction.setFrameRate(mSurfaceControl, frameRate, compatibility).apply();
+                    transaction
+                        .setFrameRate(mSurfaceControl, frameRate, compatibility, requireSeamless)
+                        .apply();
                 } finally {
                     transaction.close();
                 }
             } else if (mApi == Api.NATIVE_SURFACE_CONTROL) {
-                nativeSurfaceControlSetFrameRate(mNativeSurfaceControl, frameRate, compatibility);
+                nativeSurfaceControlSetFrameRate(mNativeSurfaceControl, frameRate, compatibility,
+                        requireSeamless);
             }
             return rc;
         }
@@ -368,7 +373,8 @@ public class FrameRateCtsActivity extends Activity {
         ArrayList<Float> uniqueFrameRates = new ArrayList<Float>();
         for (float frameRate : frameRates) {
             if (uniqueFrameRates.isEmpty()
-                    || frameRate - uniqueFrameRates.get(uniqueFrameRates.size() - 1) >= 1.0f) {
+                    || frameRate - uniqueFrameRates.get(uniqueFrameRates.size() - 1)
+                            >= FRAME_RATE_TOLERANCE) {
                 uniqueFrameRates.add(frameRate);
             }
         }
@@ -379,7 +385,8 @@ public class FrameRateCtsActivity extends Activity {
         float multiple = higherFrameRate / lowerFrameRate;
         int roundedMultiple = Math.round(multiple);
         return roundedMultiple > 0
-                && Math.abs(roundedMultiple * lowerFrameRate - higherFrameRate) <= 0.1f;
+                && Math.abs(roundedMultiple * lowerFrameRate - higherFrameRate)
+                    <= FRAME_RATE_TOLERANCE;
     }
 
     // Returns two device-supported frame rates that aren't multiples of each other, or null if no
@@ -503,7 +510,7 @@ public class FrameRateCtsActivity extends Activity {
             long endTimeNanos = nowNanos + STABLE_FRAME_RATE_WAIT_SECONDS * 1_000_000_000L;
             while (endTimeNanos > nowNanos) {
                 if (waitForEvents(endTimeNanos, surfaces)) {
-                    Log.i(TAG, String.format("Stable frame rate %.0f verified", mDeviceFrameRate));
+                    Log.i(TAG, String.format("Stable frame rate %.2f verified", mDeviceFrameRate));
                     return;
                 }
                 nowNanos = System.nanoTime();
@@ -549,7 +556,7 @@ public class FrameRateCtsActivity extends Activity {
                             assertTrue(
                                     String.format(
                                             "Timed out waiting for a stable and compatible frame"
-                                                    + " rate. requested=%.0f received=%.0f.",
+                                                    + " rate. requested=%.2f received=%.2f.",
                                             exc.appRequestedFrameRate, exc.deviceFrameRate),
                                     waitForPreconditionViolation());
                         }
@@ -615,7 +622,7 @@ public class FrameRateCtsActivity extends Activity {
         float frameRateA = incompatibleFrameRates[0];
         float frameRateB = incompatibleFrameRates[1];
         Log.i(TAG,
-                String.format("Testing with incompatible frame rates: surfaceA=%.0f surfaceB=%.0f",
+                String.format("Testing with incompatible frame rates: surfaceA=%.2f surfaceB=%.2f",
                         frameRateA, frameRateB));
         TestSurface surfaceA = null;
         TestSurface surfaceB = null;
@@ -678,12 +685,12 @@ public class FrameRateCtsActivity extends Activity {
     }
 
     private static native int nativeWindowSetFrameRate(
-            Surface surface, float frameRate, int compatibility);
+            Surface surface, float frameRate, int compatibility, boolean shouldBeSeamless);
     private static native long nativeSurfaceControlCreate(
             Surface parentSurface, String name, int left, int top, int right, int bottom);
     private static native void nativeSurfaceControlDestroy(long surfaceControl);
     private static native void nativeSurfaceControlSetFrameRate(
-            long surfaceControl, float frameRate, int compatibility);
+            long surfaceControl, float frameRate, int compatibility, boolean shouldBeSeamless);
     private static native void nativeSurfaceControlSetVisibility(
             long surfaceControl, boolean visible);
     private static native boolean nativeSurfaceControlPostBuffer(long surfaceControl, int color);

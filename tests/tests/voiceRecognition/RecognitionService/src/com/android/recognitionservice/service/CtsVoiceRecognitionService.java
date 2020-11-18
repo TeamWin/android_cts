@@ -36,6 +36,7 @@ public class CtsVoiceRecognitionService extends RecognitionService {
     private final String TAG = "CtsVoiceRecognitionService";
 
     private MediaRecorder mMediaRecorder;
+    private File mOutputFile;
 
     @Override
     protected void onCancel(Callback listener) {
@@ -83,9 +84,11 @@ public class CtsVoiceRecognitionService extends RecognitionService {
 
     private void mediaRecorderReady() {
         mMediaRecorder = new MediaRecorder();
+        mOutputFile = new File(getExternalCacheDir(), "test.3gp");
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         mMediaRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
+        mMediaRecorder.setOutputFile(mOutputFile);
     }
 
     private void stopRecord() {
@@ -93,6 +96,9 @@ public class CtsVoiceRecognitionService extends RecognitionService {
             mMediaRecorder.stop();
             mMediaRecorder.release();
             mMediaRecorder = null;
+        }
+        if (mOutputFile != null && mOutputFile.exists()) {
+            mOutputFile.delete();
         }
     }
 }

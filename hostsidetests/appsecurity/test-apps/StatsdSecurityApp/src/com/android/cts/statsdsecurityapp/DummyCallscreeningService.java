@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.server.cts.device.statsdatom;
+package com.android.cts.statsdsecurityapp;
 
 import android.annotation.NonNull;
 import android.telecom.Call;

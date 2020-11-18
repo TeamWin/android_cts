@@ -21,12 +21,10 @@ import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
 import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.content.res.Resources
-import android.graphics.Rect
 import android.server.wm.WindowManagerState
 import android.server.wm.WindowManagerState.STATE_PAUSED
 import android.systemui.tv.cts.Components
 import android.systemui.tv.cts.Components.activityName
-import android.systemui.tv.cts.ResourceNames.STRING_PIP_MENU_BOUNDS
 import android.systemui.tv.cts.ResourceNames.STRING_PIP_PAUSE
 import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE
 import android.util.DisplayMetrics
@@ -55,13 +53,6 @@ abstract class PipTestBase : TvTestBase() {
 
     /** Default timeout in milliseconds to use for wait and find operations. */
     protected open val defaultTimeout: Long = 2_000
-
-    /** Bounds when the pip menu is open */
-    protected val menuModePipBounds: Rect = systemuiResources.run {
-        val menuBoundsId = getIdentifier(STRING_PIP_MENU_BOUNDS, "string", SYSTEM_UI_PACKAGE)
-        Rect.unflattenFromString(getString(menuBoundsId))
-            ?: error("Could not find the pip_menu_bounds resource!")
-    }
 
     protected val menuMediaButtonSelector: BySelector = By.desc(systemuiResources.run {
         getString(getIdentifier(STRING_PIP_PAUSE, "string", SYSTEM_UI_PACKAGE))
