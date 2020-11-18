@@ -3217,7 +3217,7 @@ public class TelephonyManagerTest {
                 mTelephonyManager, (tm) -> tm.setIccLockEnabled(!isEnabled, pin));
         assertTrue(result.getResult() == PinResult.PIN_RESULT_TYPE_INCORRECT
                 || result.getResult() == PinResult.PIN_RESULT_TYPE_FAILURE);
-        assertTrue(result.getAttemptsRemaining() >= 0);
+        assertTrue(result.getAttemptsRemaining() >= -1);
         assertEquals(isEnabled, ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, TelephonyManager::isIccLockEnabled));
 
@@ -3225,19 +3225,19 @@ public class TelephonyManagerTest {
                 mTelephonyManager, (tm) -> tm.changeIccLockPin(pin, newPin));
         assertTrue(result.getResult() == PinResult.PIN_RESULT_TYPE_INCORRECT
                 || result.getResult() == PinResult.PIN_RESULT_TYPE_FAILURE);
-        assertTrue(result.getAttemptsRemaining() >= 0);
+        assertTrue(result.getAttemptsRemaining() >= -1);
 
         result = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.supplyIccLockPin(pin));
         assertTrue(result.getResult() == PinResult.PIN_RESULT_TYPE_INCORRECT
                 || result.getResult() == PinResult.PIN_RESULT_TYPE_FAILURE);
-        assertTrue(result.getAttemptsRemaining() >= 0);
+        assertTrue(result.getAttemptsRemaining() >= -1);
 
         result = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.supplyIccLockPuk(puk, pin));
         assertTrue(result.getResult() == PinResult.PIN_RESULT_TYPE_INCORRECT
                 || result.getResult() == PinResult.PIN_RESULT_TYPE_FAILURE);
-        assertTrue(result.getAttemptsRemaining() >= 0);
+        assertTrue(result.getAttemptsRemaining() >= -1);
     }
 
     @Test
