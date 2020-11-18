@@ -37,6 +37,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
+import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricTestSession;
@@ -86,7 +87,7 @@ public class BiometricServiceTest extends BiometricTestBase {
     @NonNull private Instrumentation mInstrumentation;
     @Nullable private BiometricManager mBiometricManager;
     @NonNull private List<SensorProperties> mSensorProperties;
-    @NonNull private PowerManager.WakeLock mWakeLock;
+    @Nullable private PowerManager.WakeLock mWakeLock;
     @NonNull private UiDevice mDevice;
 
     /**
@@ -171,6 +172,9 @@ public class BiometricServiceTest extends BiometricTestBase {
         mDevice = UiDevice.getInstance(mInstrumentation);
         mSensorProperties = mBiometricManager.getSensorProperties();
 
+        assumeTrue(mInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SECURE_LOCK_SCREEN));
+
         // Keep the screen on for the duration of each test, since BiometricPrompt goes away
         // when screen turns off.
         final PowerManager pm = mInstrumentation.getContext().getSystemService(PowerManager.class);
@@ -193,7 +197,9 @@ public class BiometricServiceTest extends BiometricTestBase {
             }
         }
 
-        mWakeLock.release();
+        if (mWakeLock != null) {
+            mWakeLock.release();
+        }
         mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
     }
 
