@@ -40,8 +40,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.assertNotNull
@@ -65,14 +63,12 @@ class CustomPipActionsTests : PipTestBase() {
     private val maxPipActions: Int =
         ActivityTaskManager.getMaxNumPictureInPictureActions(context)
 
-    @Before
-    override fun setUp() {
-        super.setUp()
+    override fun onSetUp() {
+        super.onSetUp()
         UiDeviceUtils.pressHomeButton()
     }
 
-    @After
-    fun tearDown() {
+    override fun onTearDown() {
         stopPackage(PIP_ACTIVITY.packageName)
     }
 

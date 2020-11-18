@@ -30,13 +30,13 @@ import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE
 import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.WindowManager
+import androidx.annotation.CallSuper
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import org.junit.Assume.assumeTrue
-import org.junit.Before
 import kotlin.test.assertEquals
 
 abstract class PipTestBase : TvTestBase() {
@@ -58,9 +58,8 @@ abstract class PipTestBase : TvTestBase() {
         getString(getIdentifier(STRING_PIP_PAUSE, "string", SYSTEM_UI_PACKAGE))
     })
 
-    @Before
-    override fun setUp() {
-        super.setUp()
+    @CallSuper
+    override fun onSetUp() {
         assumeTrue(supportsPip())
     }
 

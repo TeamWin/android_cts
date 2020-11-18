@@ -20,8 +20,6 @@ import android.content.ComponentName
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.annotation.Group2
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -48,14 +46,11 @@ class MicIndicatorTest : TvTestBase() {
         private const val MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator"
     }
 
-    @Before
-    override fun setUp() {
-        super.setUp()
+    override fun onSetUp() {
         assertIndicatorWindowGone()
     }
 
-    @After
-    fun tearDown() {
+    override fun onTearDown() {
         stopPackage(AUDIO_RECORD_API_SERVICE.packageName)
         stopPackage(MEDIA_RECORDER_API_SERVICE.packageName)
     }

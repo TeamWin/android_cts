@@ -18,22 +18,31 @@ package android.systemui.cts.tv
 
 import android.Manifest.permission.FORCE_STOP_PACKAGES
 import android.app.ActivityManager
+import android.app.IActivityManager
+import android.app.IProcessObserver
 import android.app.Instrumentation
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.pm.PackageManager.FEATURE_LEANBACK
+import android.content.pm.PackageManager.FEATURE_LEANBACK_ONLY
+import android.os.SystemClock
 import android.server.wm.UiDeviceUtils
 import android.server.wm.WindowManagerStateHelper
+import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
-import org.junit.Assume
+import org.junit.After
+import org.junit.Assert.assertFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import java.io.IOException
 
 abstract class TvTestBase {
     companion object {
         private const val TAG = "TvTestBase"
+        private const val AFTER_TEST_PROCESS_CHECK_DELAY = 1_000L // 1 sec
     }
 
     protected val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -44,17 +53,38 @@ abstract class TvTestBase {
             context.getSystemService(ActivityManager::class.java)
                     ?: error("Could not get a ActivityManager")
     protected val wmState: WindowManagerStateHelper = WindowManagerStateHelper()
+    private val isTelevision: Boolean
+        get() = packageManager.run {
+            hasSystemFeature(FEATURE_LEANBACK) || hasSystemFeature(FEATURE_LEANBACK_ONLY)
+        }
+    private val systemUiProcessObserver = SystemUiProcessObserver()
 
     @Before
-    open fun setUp() {
-        Assume.assumeTrue(isTelevision())
+    fun setUp() {
+        assumeTrue(isTelevision)
+
+        systemUiProcessObserver.start()
+
         UiDeviceUtils.pressWakeupButton()
         UiDeviceUtils.pressUnlockButton()
+
+        onSetUp()
     }
 
-    private fun isTelevision(): Boolean =
-            packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
-                    packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)
+    @After
+    fun tearDown() {
+        if (!isTelevision) return
+
+        onTearDown()
+
+        SystemClock.sleep(AFTER_TEST_PROCESS_CHECK_DELAY)
+        systemUiProcessObserver.stop()
+        assertFalse("SystemUI has died during test execution", systemUiProcessObserver.hasDied)
+    }
+
+    abstract fun onSetUp()
+
+    abstract fun onTearDown()
 
     protected fun launchActivity(
         activity: ComponentName? = null,
@@ -140,6 +170,33 @@ abstract class TvTestBase {
         } catch (e: IOException) {
             Log.e(TAG, "Error running shell command: $cmd")
             throw e
+        }
+    }
+
+    inner class SystemUiProcessObserver : IProcessObserver.Stub() {
+        private val activityManager: IActivityManager = ActivityManager.getService()
+        private val uiAutomation = instrumentation.uiAutomation
+        private val systemUiUid = packageManager.getPackageUid(SYSTEM_UI_PACKAGE, 0)
+        var hasDied: Boolean = false
+
+        fun start() {
+            hasDied = false
+            uiAutomation.adoptShellPermissionIdentity(
+                    android.Manifest.permission.SET_ACTIVITY_WATCHER)
+            activityManager.registerProcessObserver(this)
+        }
+
+        fun stop() {
+            activityManager.unregisterProcessObserver(this)
+            uiAutomation.dropShellPermissionIdentity()
+        }
+
+        override fun onForegroundActivitiesChanged(pid: Int, uid: Int, foreground: Boolean) {}
+
+        override fun onForegroundServicesChanged(pid: Int, uid: Int, serviceTypes: Int) {}
+
+        override fun onProcessDied(pid: Int, uid: Int) {
+            if (uid == systemUiUid) hasDied = true
         }
     }
 }
