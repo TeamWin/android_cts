@@ -84,9 +84,10 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
         int cecVersion = HdmiCecConstants.CEC_VERSION_1_4;
         setCecVersion(cecVersion);
 
-        hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, CecOperand.GET_CEC_VERSION);
-        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.RECORDER_1,
-                CecOperand.CEC_VERSION);
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
+        String message =
+                hdmiCecClient.checkExpectedOutput(
+                        hdmiCecClient.getSelfDevice(), CecOperand.CEC_VERSION);
         assertThat(CecMessage.getParams(message)).isEqualTo(cecVersion);
     }
 
