@@ -2974,6 +2974,17 @@ public class TelephonyManagerTest {
         assertTrue(isDataConnectionAvailable);
     }
 
+    @Test
+    public void testGetCdmaEnhancedRoamingIndicatorDisplayNumber() {
+        int index = mTelephonyManager.getCdmaEnhancedRoamingIndicatorDisplayNumber();
+        int phoneType = mTelephonyManager.getPhoneType();
+        if (phoneType == TelephonyManager.PHONE_TYPE_CDMA) {
+            assertTrue(index >= 0 && index <= 255);
+        } else {
+            assertEquals(-1, index);
+        }
+    }
+
     private void disableNrDualConnectivity() {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 mTelephonyManager,
