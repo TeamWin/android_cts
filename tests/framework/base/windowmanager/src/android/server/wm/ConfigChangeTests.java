@@ -236,7 +236,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
     }
 
     /** Helper class to save, set, and restore font_scale preferences. */
-    private static class FontScaleSession extends SettingsSession<Float> {
+    static class FontScaleSession extends SettingsSession<Float> {
         FontScaleSession() {
             super(Settings.System.getUriFor(Settings.System.FONT_SCALE),
                     Settings.System::getFloat,
