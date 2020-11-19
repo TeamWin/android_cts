@@ -28,11 +28,15 @@ import static android.server.wm.app.Components.TestLiveWallpaperKeys.ENGINE_DISP
 import static android.server.wm.BarTestUtils.assumeHasBars;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowManager.DISPLAY_IME_POLICY_FALLBACK_DISPLAY;
+import static android.view.WindowManager.DISPLAY_IME_POLICY_HIDE;
+import static android.view.WindowManager.DISPLAY_IME_POLICY_LOCAL;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -382,7 +386,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // Create a virtual display and launch an activity on it.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setShowSystemDecorations(true)
-                .setRequestShowIme(true)
+                .setDisplayImePolicy(DISPLAY_IME_POLICY_LOCAL)
                 .setSimulateDisplay(true)
                 .createDisplay();
         imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
@@ -473,7 +477,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setShowSystemDecorations(true)
                 .setSimulateDisplay(true)
-                .setRequestShowIme(true)
+                .setDisplayImePolicy(DISPLAY_IME_POLICY_LOCAL)
                 .createDisplay();
         imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                 DEFAULT_DISPLAY);
@@ -533,9 +537,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 .setPublicDisplay(true)
                 .createDisplay();
         SystemUtil.runWithShellPermissionIdentity(
-                () -> assertFalse("Display should not support showing IME window",
+                () -> assertTrue("Display should not support showing IME window",
                         mTargetContext.getSystemService(WindowManager.class)
-                                .shouldShowIme(newDisplay.mId)));
+                                .getDisplayImePolicy(newDisplay.mId)
+                                == DISPLAY_IME_POLICY_FALLBACK_DISPLAY));
 
         // Launch Ime test activity in virtual display.
         imeTestActivitySession.launchTestActivityOnDisplay(ImeTestActivity.class,
@@ -543,9 +548,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Expect onStartInput / showSoftInput would be executed when user tapping on the
         // non-system created display intentionally.
-        final Rect drawRect = new Rect();
-        imeTestActivitySession.getActivity().mEditText.getDrawingRect(drawRect);
-        tapOnDisplaySync(drawRect.left, drawRect.top, newDisplay.mId);
+        final int[] location = new int[2];
+        imeTestActivitySession.getActivity().mEditText.getLocationOnScreen(location);
+        tapOnDisplaySync(location[0], location[1], newDisplay.mId);
 
         // Verify the activity to show soft input on the default display.
         final ImeEventStream stream = mockImeSession.openEventStream();
@@ -572,6 +577,48 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         assertFalse(expectCommand(stream, callCursorUpdates, TIMEOUT).getReturnBooleanValue());
     }
 
+    /**
+     * Test that the IME can be hidden with the {@link WindowManager#DISPLAY_IME_POLICY_HIDE} flag.
+     */
+    @Test
+    public void testDisplayPolicyImeHideImeOperation() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
+        final MockImeSession mockImeSession = createManagedMockImeSession(this);
+        final TestActivitySession<ImeTestActivity> imeTestActivitySession =
+                createManagedTestActivitySession();
+
+        // Create a virtual display and launch an activity on virtual display.
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
+                .setShowSystemDecorations(true)
+                .setDisplayImePolicy(DISPLAY_IME_POLICY_HIDE)
+                .setSimulateDisplay(true)
+                .createDisplay();
+
+        // Launch Ime test activity in virtual display.
+        imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
+                newDisplay.mId);
+
+        // Verify the activity is launched to the secondary display.
+        final ComponentName imeTestActivityName =
+                imeTestActivitySession.getActivity().getComponentName();
+        assertThat(mWmState.hasActivityInDisplay(newDisplay.mId, imeTestActivityName)).isTrue();
+
+        // Expect onStartInput to not execute when user taps on the display with the HIDE policy.
+        final int[] location = new int[2];
+        imeTestActivitySession.getActivity().mEditText.getLocationOnScreen(location);
+        tapOnDisplaySync(location[0], location[1], newDisplay.mId);
+
+        // Verify tapping secondary display to request focus on EditText does not show soft input.
+        final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
+        final ImeEventStream stream = mockImeSession.openEventStream();
+        imeTestActivitySession.runOnMainSyncAndWait(
+                imeTestActivitySession.getActivity()::showSoftInput);
+        notExpectEvent(stream, editorMatcher("onStartInput",
+                imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
+                NOT_EXPECT_TIMEOUT);
+    }
+
     @Test
     public void testImeWindowCanShownWhenActivityMovedToDisplay() throws Exception {
         assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
@@ -586,7 +633,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // Create a virtual display and launch an activity on virtual display.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
                 .setShowSystemDecorations(true)
-                .setRequestShowIme(true)
+                .setDisplayImePolicy(DISPLAY_IME_POLICY_LOCAL)
                 .setSimulateDisplay(true)
                 .createDisplay();
 
