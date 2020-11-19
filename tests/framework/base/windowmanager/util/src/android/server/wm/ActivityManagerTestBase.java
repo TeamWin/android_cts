@@ -26,6 +26,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
@@ -851,13 +852,12 @@ public abstract class ActivityManagerTestBase {
     /**
      * Moves the device into split-screen with the specified task into the primary stack.
      * @param taskId             The id of the task to move into the primary stack.
-     * @param showSideActivity   Whether to show the Recents activity (or a placeholder activity in
-     *                           place of the Recents activity if home is the recents component).
+     * @param showSideActivity   Whether to show the home activity or a placeholder activity in
+     *                           secondary split-screen.
      *                           If {@code true} it will also wait for activity in the primary
      *                           split-screen stack to be resumed.
      */
     public void moveTaskToPrimarySplitScreen(int taskId, boolean showSideActivity) {
-        final boolean isHomeRecentsComponent = mWmState.isHomeRecentsComponent();
         runWithShellPermission(() -> {
             if (mUseTaskOrganizer) {
                 mTaskOrganizer.putTaskInSplitPrimary(taskId);
@@ -865,30 +865,27 @@ public abstract class ActivityManagerTestBase {
                 mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
                         SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true /* onTop */,
                         false /* animate */, null /* initialBounds */,
-                        showSideActivity && !isHomeRecentsComponent);
+                        false /* showRecents */);
             }
 
-            mWmState.waitForRecentsActivityVisible();
+            // Wait for split screen ready
+            mWmState.waitForWithAmState(state -> {
+                final WindowManagerState.ActivityTask task =
+                        state.getStandardStackByWindowingMode(
+                                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
+                return task != null && task.getResumedActivity() != null;
+            }, "home activity in the secondary split-screen task must be resumed");
 
             if (showSideActivity) {
-                if (isHomeRecentsComponent) {
-                    // Launch Placeholder Side Activity
-                    final ComponentName sideActivityName =
-                            new ComponentName(mContext, SideActivity.class);
-                    mContext.startActivity(new Intent().setComponent(sideActivityName)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                    mWmState.waitForActivityState(sideActivityName, STATE_RESUMED);
-                }
+                // Launch Placeholder Side Activity
+                final ComponentName sideActivityName =
+                        new ComponentName(mContext, SideActivity.class);
+                mContext.startActivity(new Intent().setComponent(sideActivityName)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                mWmState.waitForActivityState(sideActivityName, STATE_RESUMED);
 
-                // There are two cases when showSideActivity == true:
-                // Case 1: it's 3rd-party launcher and it should show recents, so the primary split
-                // screen won't enter minimized dock, but the activity on primary split screen
-                // should be relaunched.
-                // Case 2: It's not 3rd-party launcher but we launched side activity on secondary
-                // split screen, the activity on primary split screen should enter then leave
-                // minimized dock.
-                // In both cases, we shall wait for the state of the activity on primary split
-                // screen to resumed, so the LifecycleLog won't affect the following tests.
+                // Wait for the state of the activity on primary split screen to resumed, so the
+                // LifecycleLog won't affect the following tests.
                 mWmState.waitForWithAmState(state -> {
                     final WindowManagerState.ActivityTask stack =
                             state.getStandardStackByWindowingMode(
