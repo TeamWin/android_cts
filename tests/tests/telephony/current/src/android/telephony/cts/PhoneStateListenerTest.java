@@ -1279,41 +1279,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnCallForwardingIndicatorChangedCalled);
     }
 
-    private CellLocationChangedListener mCellLocationChangedListener;
-
-    private class CellLocationChangedListener extends PhoneStateListener
-            implements PhoneStateListener.CellLocationChangedListener {
-        @Override
-        public void onCellLocationChanged(CellLocation location) {
-            synchronized (mLock) {
-                mOnCellLocationChangedCalled = true;
-                mLock.notify();
-            }
-        }
-    }
-
-    @Test
-    public void testOnCellLocationChangedByRegisterPhoneStateListener() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        assertFalse(mOnCellLocationChangedCalled);
-
-        TelephonyManagerTest.grantLocationPermissions();
-        mHandler.post(() -> {
-            mCellLocationChangedListener = new CellLocationChangedListener();
-            registerPhoneStateListener(mCellLocationChangedListener);
-        });
-        synchronized (mLock) {
-            if (!mOnCellLocationChangedCalled){
-                mLock.wait(WAIT_TIME);
-            }
-        }
-
-        assertTrue(mOnCellLocationChangedCalled);
-    }
-
     @Test
     public void testOnCellLocationChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
@@ -1344,40 +1309,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnCellLocationChangedCalled);
     }
 
-    private CallStateChangedListener mCallStateChangedListener;
-
-    private class CallStateChangedListener extends PhoneStateListener
-            implements PhoneStateListener.CallStateChangedListener {
-        @Override
-        public void onCallStateChanged(int state, String incomingNumber) {
-            synchronized (mLock) {
-                mOnCallStateChangedCalled = true;
-                mLock.notify();
-            }
-        }
-    }
-
-    @Test
-    public void testOnCallStateChangedByRegisterPhoneStateListener() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        assertFalse(mOnCallStateChangedCalled);
-
-        mHandler.post(() -> {
-            mCallStateChangedListener = new CallStateChangedListener();
-            registerPhoneStateListener(mCallStateChangedListener);
-        });
-        synchronized (mLock) {
-            if (!mOnCallStateChangedCalled){
-                mLock.wait(WAIT_TIME);
-            }
-        }
-
-        assertTrue(mOnCallStateChangedCalled);
-    }
-
     @Test
     public void testOnCallStateChanged() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
@@ -1405,58 +1336,6 @@ public class PhoneStateListenerTest {
         }
 
         assertTrue(mOnCallStateChangedCalled);
-    }
-
-
-    private DataConnectionStateChangedListener mDataConnectionStateChangedListener;
-
-    private class DataConnectionStateChangedListener extends PhoneStateListener
-            implements PhoneStateListener.DataConnectionStateChangedListener {
-        @Override
-        public void onDataConnectionStateChanged(int state) {
-            synchronized (mLock) {
-                mOnDataConnectionStateChangedCalled = true;
-                if (mOnDataConnectionStateChangedCalled
-                        && mOnDataConnectionStateChangedWithNetworkTypeCalled) {
-                    mLock.notify();
-                }
-            }
-        }
-        @Override
-        public void onDataConnectionStateChanged(int state, int networkType) {
-            synchronized (mLock) {
-                mOnDataConnectionStateChangedWithNetworkTypeCalled = true;
-                if (mOnDataConnectionStateChangedCalled
-                        && mOnDataConnectionStateChangedWithNetworkTypeCalled) {
-                    mLock.notify();
-                }
-            }
-        }
-    }
-
-    @Test
-    public void testOnDataConnectionStateChangedByRegisterPhoneStateListener() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        assertFalse(mOnDataConnectionStateChangedCalled);
-        assertFalse(mOnDataConnectionStateChangedWithNetworkTypeCalled);
-
-        mHandler.post(() -> {
-            mDataConnectionStateChangedListener = new DataConnectionStateChangedListener();
-            registerPhoneStateListener(mDataConnectionStateChangedListener);
-
-        });
-        synchronized (mLock) {
-            if (!mOnDataConnectionStateChangedCalled ||
-                    !mOnDataConnectionStateChangedWithNetworkTypeCalled) {
-                mLock.wait(WAIT_TIME);
-            }
-        }
-
-        assertTrue(mOnDataConnectionStateChangedCalled);
-        assertTrue(mOnDataConnectionStateChangedWithNetworkTypeCalled);
     }
 
     @Test
@@ -1505,42 +1384,6 @@ public class PhoneStateListenerTest {
         assertTrue(mOnDataConnectionStateChangedWithNetworkTypeCalled);
     }
 
-
-    private DataActivityListener mDataActivityListener;
-
-    private class DataActivityListener extends PhoneStateListener
-            implements PhoneStateListener.DataActivityListener {
-        @Override
-        public void onDataActivity(int direction) {
-            synchronized (mLock) {
-                mOnDataActivityCalled = true;
-                mLock.notify();
-            }
-        }
-    }
-
-    @Test
-    public void testOnDataActivityByRegisterPhoneStateListener() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        assertFalse(mOnDataActivityCalled);
-
-        mHandler.post(() -> {
-            mDataActivityListener =  new DataActivityListener();
-            registerPhoneStateListener(mDataActivityListener);
-
-        });
-        synchronized (mLock) {
-            if (!mOnDataActivityCalled){
-                mLock.wait(WAIT_TIME);
-            }
-        }
-
-        assertTrue(mOnDataActivityCalled);
-    }
-
     @Test
     public void testOnDataActivity() throws Throwable {
         if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
@@ -1568,41 +1411,6 @@ public class PhoneStateListenerTest {
         }
 
         assertTrue(mOnDataActivityCalled);
-    }
-
-    private CellInfoChangedListener mCellInfoChangedListener;
-
-    private class CellInfoChangedListener extends PhoneStateListener
-            implements PhoneStateListener.CellInfoChangedListener {
-        @Override
-        public void onCellInfoChanged(List<CellInfo> cellInfo) {
-            synchronized (mLock) {
-                mOnCellInfoChangedCalled = true;
-                mLock.notify();
-            }
-        }
-    }
-
-    @Test
-    public void testOnCellInfoChangedByRegisterPhoneStateListener() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        assertFalse(mOnDataActivityCalled);
-
-        TelephonyManagerTest.grantLocationPermissions();
-        mHandler.post(() -> {
-            mCellInfoChangedListener = new CellInfoChangedListener();
-            registerPhoneStateListener(mCellInfoChangedListener);
-        });
-        synchronized (mLock) {
-            if (!mOnCellInfoChangedCalled) {
-                mLock.wait(WAIT_TIME);
-            }
-        }
-
-        assertTrue(mOnCellInfoChangedCalled);
     }
 
     @Test
@@ -1633,41 +1441,6 @@ public class PhoneStateListenerTest {
         }
 
         assertTrue(mOnCellInfoChangedCalled);
-    }
-
-
-    private UserMobileDataStateChangedListener mUserMobileDataStateChangedListener;
-
-    private class UserMobileDataStateChangedListener extends PhoneStateListener
-            implements PhoneStateListener.UserMobileDataStateChangedListener {
-        @Override
-        public void onUserMobileDataStateChanged(boolean state) {
-            synchronized (mLock) {
-                mOnUserMobileDataStateChanged = true;
-                mLock.notify();
-            }
-        }
-    }
-
-    @Test
-    public void testOnUserMobileDataStateChangedByRegisterPhoneStateListener() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        assertFalse(mOnUserMobileDataStateChanged);
-
-        mHandler.post(() -> {
-            mUserMobileDataStateChangedListener = new UserMobileDataStateChangedListener();
-            registerPhoneStateListener(mUserMobileDataStateChangedListener);
-        });
-        synchronized (mLock) {
-            if (!mOnUserMobileDataStateChanged) {
-                mLock.wait(WAIT_TIME);
-            }
-        }
-
-        assertTrue(mOnUserMobileDataStateChanged);
     }
 
     @Test
