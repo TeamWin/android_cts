@@ -22,8 +22,8 @@ import android.server.wm.component.ComponentsBase;
 public class Components extends ComponentsBase {
     public static final ComponentName CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY =
             component("Class2BiometricOrCredentialActivity");
-    public static final ComponentName CLASS_3_BIOMETRIC_ACTIVITY =
-            component("Class3BiometricActivity");
+    public static final ComponentName CLASS_2_BIOMETRIC_ACTIVITY =
+            component("Class2BiometricActivity");
 
     private static ComponentName component(String className) {
         return component(Components.class, className);

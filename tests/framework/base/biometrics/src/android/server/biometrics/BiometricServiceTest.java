@@ -18,7 +18,7 @@ package android.server.biometrics;
 
 import static android.os.PowerManager.FULL_WAKE_LOCK;
 import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY;
-import static android.server.biometrics.Components.CLASS_3_BIOMETRIC_ACTIVITY;
+import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_ACTIVITY;
 import static android.server.biometrics.SensorStates.SensorState;
 import static android.server.biometrics.SensorStates.UserState;
 
@@ -63,9 +63,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Presubmit
 public class BiometricServiceTest extends BiometricTestBase {
@@ -262,11 +260,11 @@ public class BiometricServiceTest extends BiometricTestBase {
             @NonNull BiometricTestSession session, int sensorId) throws Exception {
         final int userId = 0;
         enrollForSensor(session, sensorId);
-        final TestJournal journal = TestJournalContainer.get(CLASS_3_BIOMETRIC_ACTIVITY);
+        final TestJournal journal = TestJournalContainer.get(CLASS_2_BIOMETRIC_ACTIVITY);
 
         // Launch test activity
-        launchActivity(CLASS_3_BIOMETRIC_ACTIVITY);
-        mWmState.waitForActivityState(CLASS_3_BIOMETRIC_ACTIVITY, WindowManagerState.STATE_RESUMED);
+        launchActivity(CLASS_2_BIOMETRIC_ACTIVITY);
+        mWmState.waitForActivityState(CLASS_2_BIOMETRIC_ACTIVITY, WindowManagerState.STATE_RESUMED);
         mInstrumentation.waitForIdleSync();
 
         // The sensor being tested should not be idle
@@ -321,11 +319,11 @@ public class BiometricServiceTest extends BiometricTestBase {
         enrollForSensor(session, sensorId);
 
         final TestJournal journal =
-                TestJournalContainer.get(CLASS_3_BIOMETRIC_ACTIVITY);
+                TestJournalContainer.get(CLASS_2_BIOMETRIC_ACTIVITY);
 
         // Launch test activity
-        launchActivity(CLASS_3_BIOMETRIC_ACTIVITY);
-        mWmState.waitForActivityState(CLASS_3_BIOMETRIC_ACTIVITY, WindowManagerState.STATE_RESUMED);
+        launchActivity(CLASS_2_BIOMETRIC_ACTIVITY);
+        mWmState.waitForActivityState(CLASS_2_BIOMETRIC_ACTIVITY, WindowManagerState.STATE_RESUMED);
         mInstrumentation.waitForIdleSync();
         BiometricCallbackHelper.State callbackState = getCallbackState(journal);
         assertNotNull(callbackState);
@@ -377,11 +375,11 @@ public class BiometricServiceTest extends BiometricTestBase {
     private void testBiometricOnly_negativeButtonInvoked_forSensor(
             @NonNull BiometricTestSession session, int sensorId) throws Exception {
         enrollForSensor(session, sensorId);
-        final TestJournal journal = TestJournalContainer.get(CLASS_3_BIOMETRIC_ACTIVITY);
+        final TestJournal journal = TestJournalContainer.get(CLASS_2_BIOMETRIC_ACTIVITY);
 
         // Launch test activity
-        launchActivity(CLASS_3_BIOMETRIC_ACTIVITY);
-        mWmState.waitForActivityState(CLASS_3_BIOMETRIC_ACTIVITY, WindowManagerState.STATE_RESUMED);
+        launchActivity(CLASS_2_BIOMETRIC_ACTIVITY);
+        mWmState.waitForActivityState(CLASS_2_BIOMETRIC_ACTIVITY, WindowManagerState.STATE_RESUMED);
         mInstrumentation.waitForIdleSync();
         BiometricCallbackHelper.State callbackState = getCallbackState(journal);
         assertNotNull(callbackState);

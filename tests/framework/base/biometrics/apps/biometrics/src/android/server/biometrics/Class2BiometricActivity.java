@@ -32,7 +32,7 @@ import java.util.concurrent.Executor;
 /**
  * Test app that invokes authentication in onCreate
  */
-public class Class3BiometricActivity extends Activity {
+public class Class2BiometricActivity extends Activity {
     private static final String TAG = "Class3OnlyBiometricActivity";
 
     @Override
