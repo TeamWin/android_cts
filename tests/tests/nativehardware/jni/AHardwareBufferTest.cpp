@@ -155,11 +155,12 @@ TEST(AHardwareBufferTest, AllocateFailsWithNullInput) {
 
     memset(&desc, 0, sizeof(AHardwareBuffer_Desc));
 
-    int res = AHardwareBuffer_allocate(&desc, NULL);
+    int res = AHardwareBuffer_allocate(&desc, (AHardwareBuffer * * _Nonnull)NULL);
     EXPECT_EQ(BAD_VALUE, res);
-    res = AHardwareBuffer_allocate(NULL, &buffer);
+    res = AHardwareBuffer_allocate((AHardwareBuffer_Desc* _Nonnull)NULL, &buffer);
     EXPECT_EQ(BAD_VALUE, res);
-    res = AHardwareBuffer_allocate(NULL, NULL);
+    res = AHardwareBuffer_allocate((AHardwareBuffer_Desc* _Nonnull)NULL,
+                                   (AHardwareBuffer * * _Nonnull)NULL);
     EXPECT_EQ(BAD_VALUE, res);
 }
 
@@ -243,12 +244,12 @@ TEST(AHardwareBufferTest, DescribeSucceeds) {
     // Description of a null buffer should be all zeros.
     AHardwareBuffer_Desc scratch_desc;
     memset(&scratch_desc, 0, sizeof(AHardwareBuffer_Desc));
-    AHardwareBuffer_describe(NULL, &scratch_desc);
+    AHardwareBuffer_describe((AHardwareBuffer* _Nonnull)NULL, &scratch_desc);
     EXPECT_EQ(0U, scratch_desc.width);
     EXPECT_EQ(0U, scratch_desc.height);
 
     // This shouldn't crash.
-    AHardwareBuffer_describe(buffer, NULL);
+    AHardwareBuffer_describe(buffer, (AHardwareBuffer_Desc* _Nonnull)NULL);
 
     // Description of created buffer should match requsted description.
     EXPECT_EQ(desc, GetDescription(buffer));
@@ -281,7 +282,7 @@ TEST(AHardwareBufferTest, SendAndRecvSucceeds) {
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
 
     // Test that an invalid buffer fails.
-    int err = AHardwareBuffer_sendHandleToUnixSocket(NULL, 0);
+    int err = AHardwareBuffer_sendHandleToUnixSocket((AHardwareBuffer* _Nonnull)NULL, 0);
     EXPECT_EQ(BAD_VALUE, err);
     err = 0;
     err = AHardwareBuffer_sendHandleToUnixSocket(buffer, 0);
@@ -300,7 +301,7 @@ TEST(AHardwareBufferTest, SendAndRecvSucceeds) {
     EXPECT_EQ(0, pthread_create(&thread, NULL, clientFunction, &data));
 
     // Receive the buffer.
-    err = AHardwareBuffer_recvHandleFromUnixSocket(fds[0], NULL);
+    err = AHardwareBuffer_recvHandleFromUnixSocket(fds[0], (AHardwareBuffer * * _Nonnull)NULL);
     EXPECT_EQ(BAD_VALUE, err);
 
     AHardwareBuffer* received = NULL;
@@ -332,7 +333,9 @@ TEST(AHardwareBufferTest, LockAndGetInfoAndUnlockSucceed) {
     int32_t bytesPerStride = std::numeric_limits<int32_t>::min();
 
     // Test that an invalid buffer fails.
-    int err = AHardwareBuffer_lockAndGetInfo(NULL, 0, -1, NULL, NULL, &bytesPerPixel, &bytesPerStride);
+    int err =
+            AHardwareBuffer_lockAndGetInfo((AHardwareBuffer* _Nonnull)NULL, 0, -1, NULL,
+                                           (void** _Nonnull)NULL, &bytesPerPixel, &bytesPerStride);
     EXPECT_EQ(BAD_VALUE, err);
 
     err = AHardwareBuffer_allocate(&desc, &buffer);
@@ -371,7 +374,8 @@ TEST(AHardwareBufferTest, LockAndUnlockSucceed) {
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
 
     // Test that an invalid buffer fails.
-    int err = AHardwareBuffer_lock(NULL, 0, -1, NULL, NULL);
+    int err = AHardwareBuffer_lock((AHardwareBuffer* _Nonnull)NULL, 0, -1, NULL,
+                                   (void** _Nonnull)NULL);
     EXPECT_EQ(BAD_VALUE, err);
     err = 0;
 
@@ -400,7 +404,8 @@ TEST(AHardwareBufferTest, PlanarLockAndUnlockYuvSucceed) {
     desc.format = AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420;
 
     // Test that an invalid buffer fails.
-    int err = AHardwareBuffer_lock(NULL, 0, -1, NULL, NULL);
+    int err = AHardwareBuffer_lock((AHardwareBuffer* _Nonnull)NULL, 0, -1, NULL,
+                                   (void** _Nonnull)NULL);
     EXPECT_EQ(BAD_VALUE, err);
     err = 0;
 
@@ -448,7 +453,8 @@ TEST(AHardwareBufferTest, PlanarLockAndUnlockRgbaSucceed) {
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
 
     // Test that an invalid buffer fails.
-    int err = AHardwareBuffer_lock(NULL, 0, -1, NULL, NULL);
+    int err = AHardwareBuffer_lock((AHardwareBuffer* _Nonnull)NULL, 0, -1, NULL,
+                                   (void** _Nonnull)NULL);
     EXPECT_EQ(BAD_VALUE, err);
     err = 0;
 

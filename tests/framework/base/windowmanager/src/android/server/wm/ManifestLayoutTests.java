@@ -26,6 +26,8 @@ import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TOP_LEFT_LAYOUT_ACTIVITY;
 import static android.server.wm.app.Components.TOP_RIGHT_LAYOUT_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowInsets.Type.captionBar;
+import static android.view.WindowInsets.Type.systemBars;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -36,6 +38,7 @@ import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.WindowManagerState.WindowState;
 import android.view.DisplayCutout;
+import android.view.WindowMetrics;
 
 import org.junit.Test;
 
@@ -144,7 +147,10 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
         getDisplayAndWindowState(activityName, true);
 
         final Rect containingRect = mWindowState.getContainingFrame();
-        final Rect stableBounds = mDisplay.getStableBounds();
+        final WindowMetrics windowMetrics = mWm.getMaximumWindowMetrics();
+        final Rect stableBounds = new Rect(windowMetrics.getBounds());
+        stableBounds.inset(windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(
+                systemBars() & ~captionBar()));
         final int expectedWidthPx, expectedHeightPx;
         // Evaluate the expected window size in px. If we're using fraction dimensions,
         // calculate the size based on the app rect size. Otherwise, convert the expected

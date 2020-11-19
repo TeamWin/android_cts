@@ -47,7 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for {@link View#onReceiveContent} and related code.
+ * Tests for {@link View#performReceiveContent} and related code.
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -112,26 +112,41 @@ public class ViewOnReceiveContentTest {
     }
 
     @Test
-    public void testOnReceiveContent() {
+    public void testPerformReceiveContent() {
         View view = new View(mActivity);
         String[] mimeTypes = new String[] {"image/*", "video/mp4"};
         Payload samplePayloadGif = sampleUriPayload("image/gif");
         Payload samplePayloadPdf = sampleUriPayload("application/pdf");
 
-        // Calling onReceiveContent() returns the payload if there's no receiver (default)
-        assertThat(view.onReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
+        // Calling performReceiveContent() returns the payload if there's no listener (default)
+        assertThat(view.performReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
 
-        // Calling onReceiveContent() calls the configured receiver
+        // Calling performReceiveContent() calls the configured listener
         view.setOnReceiveContentListener(mimeTypes, mReceiver);
         when(mReceiver.onReceiveContent(any(), any())).thenReturn(null);
-        assertThat(view.onReceiveContent(samplePayloadGif)).isNull();
+        assertThat(view.performReceiveContent(samplePayloadGif)).isNull();
 
-        // Calling onReceiveContent() calls the configured receiver even if the MIME type of the
-        // content is not in the set of supported MIME types
-        assertThat(view.onReceiveContent(samplePayloadPdf)).isNull();
+        // Calling performReceiveContent() calls the configured listener even if the MIME type of
+        // the content is not in the set of supported MIME types
+        assertThat(view.performReceiveContent(samplePayloadPdf)).isNull();
 
-        // Clearing the receiver restores default behavior
+        // Clearing the listener restores default behavior
         view.setOnReceiveContentListener(null, null);
+        assertThat(view.performReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
+    }
+
+    @Test
+    public void testOnReceiveContent() {
+        View view = new View(mActivity);
+        String[] mimeTypes = new String[] {"image/*", "video/mp4"};
+        Payload samplePayloadGif = sampleUriPayload("image/gif");
+
+        // Calling onReceiveContent() returns the payload if there's no listener
+        assertThat(view.performReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
+
+        // Calling onReceiveContent() returns the payload even if there is a listener
+        view.setOnReceiveContentListener(mimeTypes, mReceiver);
+        when(mReceiver.onReceiveContent(any(), any())).thenReturn(null);
         assertThat(view.onReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
     }
 

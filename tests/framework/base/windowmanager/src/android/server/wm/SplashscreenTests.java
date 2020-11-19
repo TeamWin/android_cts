@@ -19,6 +19,8 @@ package android.server.wm;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowInsets.Type.captionBar;
+import static android.view.WindowInsets.Type.systemBars;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
@@ -26,8 +28,11 @@ import static org.junit.Assert.fail;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
+import android.view.WindowInsets;
+import android.view.WindowMetrics;
 
 import org.junit.After;
 import org.junit.Before;
@@ -59,18 +64,17 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         // Activity may not be launched yet even if app transition is in idle state.
         mWmState.waitForActivityState(SPLASHSCREEN_ACTIVITY, STATE_RESUMED);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-        mWmState.getStableBounds();
         final Bitmap image = takeScreenshot();
-        int windowingMode = mWmState.getFocusedStackWindowingMode();
-        Rect appBounds = new Rect();
-        appBounds.set(windowingMode == WINDOWING_MODE_FULLSCREEN ?
-                mWmState.getStableBounds() :
-                mWmState.findFirstWindowWithType(
-                        WindowManagerState.WindowState.WINDOW_TYPE_STARTING).getContentInsets());
-        // Use ratios to flexibly accomodate circular or not quite rectangular displays
+        final WindowMetrics windowMetrics = mWm.getMaximumWindowMetrics();
+        final Rect stableBounds = new Rect(windowMetrics.getBounds());
+        stableBounds.inset(windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(
+                systemBars() & ~captionBar()));
+        final Rect appBounds = new Rect(mWmState.findFirstWindowWithType(
+                WindowManagerState.WindowState.WINDOW_TYPE_STARTING).getBounds());
+        appBounds.intersect(stableBounds);
+        // Use ratios to flexibly accommodate circular or not quite rectangular displays
         // Note: Color.BLACK is the pixel color outside of the display region
-        assertColors(image, appBounds,
-            Color.RED, 0.50f, Color.BLACK, 0.02f);
+        assertColors(image, appBounds, Color.RED, 0.50f, Color.BLACK, 0.02f);
     }
 
     private void assertColors(Bitmap img, Rect bounds, int primaryColor,
