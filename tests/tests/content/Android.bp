@@ -42,6 +42,7 @@ android_test {
         "testng",
         "androidx.legacy_legacy-support-v4",
         "androidx.test.core",
+        "cts-install-lib",
     ],
     // Use multi-dex as the compatibility-common-util-devicesidelib dependency
     // on compatibility-device-util-axt pushes us beyond 64k methods.
@@ -75,6 +76,10 @@ android_test {
         "data/CtsPkgInstallTinyAppV2V3V4-Sha512withEC.apk.idsig",
         "data/CtsPkgInstallTinyAppV2V3V4-Verity.apk",
         "data/CtsPkgInstallTinyAppV2V3V4-Verity.apk.idsig",
+    ],
+    java_resources: [
+        ":PackagePropertyTestApp1",
+        ":PackagePropertyTestApp2",
     ],
     platform_apis: true,
     // Tag this module as a cts test artifact
