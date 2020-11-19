@@ -514,4 +514,31 @@ TEST(AHardwareBufferTest, ProtectedContentAndCpuReadIncompatible) {
     EXPECT_NE(NO_ERROR, err);
 }
 
+TEST(AHardwareBufferTest, GetIdSucceed) {
+    AHardwareBuffer* buffer1 = nullptr;
+    uint64_t id1 = 0;
+    const AHardwareBuffer_Desc desc = {
+            .width = 4,
+            .height = 4,
+            .layers = 1,
+            .format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM,
+            .usage = AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
+    };
+    int err = AHardwareBuffer_allocate(&desc, &buffer1);
+    EXPECT_EQ(NO_ERROR, err);
+    EXPECT_NE(nullptr, buffer1);
+    EXPECT_EQ(0, AHardwareBuffer_getId(buffer1, &id1));
+    EXPECT_NE(id1, 0ULL);
+
+    AHardwareBuffer* buffer2 = nullptr;
+    uint64_t id2 = 0;
+    err = AHardwareBuffer_allocate(&desc, &buffer2);
+    EXPECT_EQ(NO_ERROR, err);
+    EXPECT_NE(nullptr, buffer2);
+    EXPECT_EQ(0, AHardwareBuffer_getId(buffer2, &id2));
+    EXPECT_NE(id2, 0ULL);
+
+    EXPECT_NE(id1, id2);
+}
+
 } // namespace android
