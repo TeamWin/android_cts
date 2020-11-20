@@ -830,7 +830,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Move activity back to docked stack.
         separateTestJournal();
-        setActivityTaskWindowingMode(activityName, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        moveTaskToPrimarySplitScreen(mWmState.getTaskByActivity(activityName).mTaskId);
         final SizeInfo finalDockedSizes = getActivityDisplaySize(activityName);
 
         // After activity configuration was changed twice it must report same size as original one.
