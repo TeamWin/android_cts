@@ -37,6 +37,7 @@ import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
 import static android.scopedstorage.cts.lib.TestUtils.assertThrows;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
+import static android.scopedstorage.cts.lib.TestUtils.canOpenFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.canReadAndWriteAs;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAs;
@@ -76,7 +77,6 @@ import static android.scopedstorage.cts.lib.TestUtils.grantPermission;
 import static android.scopedstorage.cts.lib.TestUtils.installApp;
 import static android.scopedstorage.cts.lib.TestUtils.installAppWithStoragePermissions;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
-import static android.scopedstorage.cts.lib.TestUtils.openFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForManageExternalStorageAllowed;
@@ -362,8 +362,8 @@ public class ScopedStorageTest {
             installAppWithStoragePermissions(TEST_APP_A);
 
             // TEST_APP_A should not be able to read/write to other app's external files directory.
-            assertThat(openFileAs(TEST_APP_A, videoFile.getPath(), false /* forWrite */)).isFalse();
-            assertThat(openFileAs(TEST_APP_A, videoFile.getPath(), true /* forWrite */)).isFalse();
+            assertThat(canOpenFileAs(TEST_APP_A, videoFile, false /* forWrite */)).isFalse();
+            assertThat(canOpenFileAs(TEST_APP_A, videoFile, true /* forWrite */)).isFalse();
             // TEST_APP_A should not be able to delete files in other app's external files
             // directory.
             assertThat(deleteFileAs(TEST_APP_A, videoFile.getPath())).isFalse();
@@ -811,19 +811,20 @@ public class ScopedStorageTest {
                     OutputStream out = new FileOutputStream(jpgFile)) {
                 // Dump the image we have to external storage
                 FileUtils.copy(in, out);
-            }
 
-            HashMap<String, String> exif = getExifMetadata(jpgFile);
-            assertExifMetadataMatch(exif, originalExif);
+                HashMap<String, String> exif = getExifMetadata(jpgFile);
+                assertExifMetadataMatch(exif, originalExif);
 
-            installAppWithStoragePermissions(TEST_APP_A);
-            HashMap<String, String> exifFromTestApp =
-                    readExifMetadataFromTestApp(TEST_APP_A, jpgFile.getPath());
-            // Other apps shouldn't have access to the same metadata without explicit permission
-            assertExifMetadataMismatch(exifFromTestApp, originalExif);
+                installAppWithStoragePermissions(TEST_APP_A);
+                HashMap<String, String> exifFromTestApp =
+                        readExifMetadataFromTestApp(TEST_APP_A, jpgFile.getPath());
+                // Other apps shouldn't have access to the same metadata without explicit permission
+                assertExifMetadataMismatch(exifFromTestApp, originalExif);
 
-            // TODO(b/146346138): Test that if we give TEST_APP_A write URI permission,
-            //  it would be able to access the metadata.
+                // TODO(b/146346138): Test that if we give TEST_APP_A write URI permission,
+                //  it would be able to access the metadata.
+            } // Intentionally keep the original streams open during the test so bytes are more
+            // likely to be in the VFS cache from both file opens
         } finally {
             jpgFile.delete();
             uninstallAppNoThrow(TEST_APP_A);
@@ -1199,17 +1200,17 @@ public class ScopedStorageTest {
             grantPermission(TEST_APP_C_LEGACY.getPackageName(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE); // Grants write access for legacy
             // Legacy app can read and write media files contributed by others
-            assertThat(openFileAs(TEST_APP_C_LEGACY, file.getPath(), /* forWrite */ false)).isTrue();
-            assertThat(openFileAs(TEST_APP_C_LEGACY, file.getPath(), /* forWrite */ true)).isTrue();
+            assertThat(canOpenFileAs(TEST_APP_C_LEGACY, file, /* forWrite */ false)).isTrue();
+            assertThat(canOpenFileAs(TEST_APP_C_LEGACY, file, /* forWrite */ true)).isTrue();
 
             // Update to non-legacy
             installAppWithStoragePermissions(TEST_APP_C);
             grantPermission(TEST_APP_C_LEGACY.getPackageName(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE); // No effect for non-legacy
             // Non-legacy app can read media files contributed by others
-            assertThat(openFileAs(TEST_APP_C, file.getPath(), /* forWrite */ false)).isTrue();
+            assertThat(canOpenFileAs(TEST_APP_C, file, /* forWrite */ false)).isTrue();
             // But cannot write
-            assertThat(openFileAs(TEST_APP_C, file.getPath(), /* forWrite */ true)).isFalse();
+            assertThat(canOpenFileAs(TEST_APP_C, file, /* forWrite */ true)).isFalse();
         } finally {
             file.delete();
             uninstallAppNoThrow(TEST_APP_C);
@@ -1225,12 +1226,12 @@ public class ScopedStorageTest {
 
             // Install
             installAppWithStoragePermissions(TEST_APP_C);
-            assertThat(openFileAs(TEST_APP_C, file.getPath(), /* forWrite */ false)).isTrue();
+            assertThat(canOpenFileAs(TEST_APP_C, file, /* forWrite */ false)).isTrue();
 
             // Re-install
             uninstallAppNoThrow(TEST_APP_C);
             installApp(TEST_APP_C);
-            assertThat(openFileAs(TEST_APP_C, file.getPath(), /* forWrite */ false)).isFalse();
+            assertThat(canOpenFileAs(TEST_APP_C, file, /* forWrite */ false)).isFalse();
         } finally {
             file.delete();
             uninstallAppNoThrow(TEST_APP_C);
@@ -1261,7 +1262,7 @@ public class ScopedStorageTest {
         } else {
             denyAppOpsToUid(uid, opstr);
         }
-        assertThat(openFileAs(app, file.getPath(), forWrite)).isFalse();
+        assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
 
         // Grant
         if (permission != null) {
@@ -1269,7 +1270,7 @@ public class ScopedStorageTest {
         } else {
             allowAppOpsToUid(uid, opstr);
         }
-        assertThat(openFileAs(app, file.getPath(), forWrite)).isTrue();
+        assertThat(canOpenFileAs(app, file, forWrite)).isTrue();
 
         // Deny
         if (permission != null) {
@@ -1277,7 +1278,7 @@ public class ScopedStorageTest {
         } else {
             denyAppOpsToUid(uid, opstr);
         }
-        assertThat(openFileAs(app, file.getPath(), forWrite)).isFalse();
+        assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
     }
 
     @Test
@@ -3020,16 +3021,16 @@ public class ScopedStorageTest {
 
         // App with READ_EXTERNAL_STORAGE can't open other app's pending or trashed file for read or
         // write
-        assertFalse(openFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
-        assertFalse(openFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
+        assertFalse(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
+        assertFalse(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
 
         final int testAppUid =
                 getContext().getPackageManager().getPackageUid(testApp.getPackageName(), 0);
         try {
             allowAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
             // File Manager can open any pending or trashed file for read or write
-            assertTrue(openFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
-            assertTrue(openFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
+            assertTrue(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
+            assertTrue(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
         } finally {
             denyAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
         }
@@ -3039,14 +3040,14 @@ public class ScopedStorageTest {
             if (isImageOrVideo) {
                 // System Gallery can open any pending or trashed image/video file for read or write
                 assertTrue(isMediaTypeImageOrVideo(pendingOrTrashedFile));
-                assertTrue(openFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
-                assertTrue(openFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
+                assertTrue(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
+                assertTrue(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
             } else {
                 // System Gallery can't open other app's pending or trashed non-media file for read
                 // or write
                 assertFalse(isMediaTypeImageOrVideo(pendingOrTrashedFile));
-                assertFalse(openFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
-                assertFalse(openFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
+                assertFalse(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
+                assertFalse(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
             }
         } finally {
             denyAppOpsToUid(testAppUid, SYSTEM_GALERY_APPOPS);
