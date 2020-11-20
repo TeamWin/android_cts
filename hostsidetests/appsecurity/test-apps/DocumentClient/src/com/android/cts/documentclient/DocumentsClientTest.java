@@ -476,17 +476,25 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         // Look around, we should be able to see both DocumentsProviders and
-        // other GET_CONTENT sources. If the DocumentsProvider and GetContent
-        // root has the same package, they will be combined as one root item.
+        // other GET_CONTENT sources.
         mDevice.waitForIdle();
         assertTrue("CtsLocal root", findRoot("CtsLocal").exists());
         assertTrue("CtsCreate root", findRoot("CtsCreate").exists());
-        assertFalse("CtsGetContent root", findRoot("CtsGetContent").exists());
 
+        // Find and click GetContent item.
+        UiObject getContentRoot = findRoot("CtsGetContent");
         mDevice.waitForIdle();
-        // Both CtsLocal and CtsLocal have action icon and have the same action.
-        findActionIcon("CtsCreate");
-        findActionIcon("CtsLocal").click();
+        if (getContentRoot.exists()) {
+            // Case 1: GetContent is presented as an independent root item.
+            findRoot("CtsGetContent").click();
+        } else {
+            // Case 2: GetContent is presented as an action icon next to the DocumentsProvider root
+            // from the same package.
+            // In this case, both CtsLocal and CtsLocal have action icon and have the same action.
+            findActionIcon("CtsCreate");
+            findActionIcon("CtsLocal").click();
+        }
+
         Result result = mActivity.getResult();
         assertEquals("ReSuLt", result.data.getAction());
     }
