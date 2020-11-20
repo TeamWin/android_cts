@@ -374,7 +374,9 @@ public class TelephonyManagerPermissionTest {
     static final int PRECISE_PHONE_STATE_PERMISSION_MASK =
                 PhoneStateListener.LISTEN_PRECISE_DATA_CONNECTION_STATE
                         | PhoneStateListener.LISTEN_CALL_DISCONNECT_CAUSES
-                        | PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES;
+                        | PhoneStateListener.LISTEN_IMS_CALL_DISCONNECT_CAUSES
+                        | PhoneStateListener.LISTEN_REGISTRATION_FAILURE
+                        | PhoneStateListener.LISTEN_BARRING_INFO;
 
     static final int PHONE_PERMISSIONS_MASK =
             PHONE_STATE_PERMISSION_MASK | PRECISE_PHONE_STATE_PERMISSION_MASK;
