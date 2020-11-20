@@ -51,6 +51,7 @@ public class DataCallResponseTest {
     private static final int MTU_V4 = 1440;
     private static final int MTU_V6 = 1400;
     private static final int HANDOVER_FAILURE_MODE = HANDOVER_FAILURE_MODE_DO_FALLBACK;
+    private static final int PDU_SESSION_ID = 5;
 
     @Test
     public void testConstructorAndGetters() {
@@ -68,6 +69,7 @@ public class DataCallResponseTest {
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
                 .build();
 
         assertThat(response.getCause()).isEqualTo(CAUSE);
@@ -83,6 +85,7 @@ public class DataCallResponseTest {
         assertThat(response.getMtuV4()).isEqualTo(MTU_V4);
         assertThat(response.getMtuV6()).isEqualTo(MTU_V6);
         assertThat(response.getHandoverFailureMode()).isEqualTo(HANDOVER_FAILURE_MODE_DO_FALLBACK);
+        assertThat(response.getPduSessionId()).isEqualTo(PDU_SESSION_ID);
     }
 
     @Test
@@ -101,6 +104,7 @@ public class DataCallResponseTest {
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
                 .build();
 
         DataCallResponse equalsResponse = new DataCallResponse.Builder()
@@ -117,6 +121,7 @@ public class DataCallResponseTest {
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
                 .build();
 
         assertThat(response).isEqualTo(equalsResponse);
@@ -138,6 +143,7 @@ public class DataCallResponseTest {
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
                 .build();
 
         DataCallResponse notEqualsResponse = new DataCallResponse.Builder()
@@ -154,6 +160,7 @@ public class DataCallResponseTest {
                 .setMtuV4(1441)
                 .setMtuV6(1440)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE_LEGACY)
+                .setPduSessionId(PDU_SESSION_ID)
                 .build();
 
         assertThat(response).isNotEqualTo(notEqualsResponse);
@@ -177,6 +184,7 @@ public class DataCallResponseTest {
                 .setMtuV4(MTU_V4)
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
+                .setPduSessionId(PDU_SESSION_ID)
                 .build();
 
         Parcel stateParcel = Parcel.obtain();
