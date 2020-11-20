@@ -23,11 +23,13 @@ import android.app.SearchManager;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.AlarmClock;
@@ -420,7 +422,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testPowerUsageSummarySettings() {
-        if (isHandheld()) {
+        if (isBatteryPresent()) {
             assertCanBeHandled(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
         }
     }
@@ -478,5 +480,11 @@ public class AvailableIntentsTest extends AndroidTestCase {
                 && !pm.hasSystemFeature(pm.FEATURE_WATCH)
                 && !pm.hasSystemFeature(pm.FEATURE_TELEVISION)
                 && !pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
+    }
+
+    private boolean isBatteryPresent() {
+        final Intent batteryInfo = mContext.registerReceiver(null,
+                                    new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        return batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
     }
 }
