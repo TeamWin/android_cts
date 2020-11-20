@@ -78,7 +78,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         commands.add("2");
         if (startAsTv) {
             commands.add("-t");
-            commands.add("-x");
+            commands.add("x");
             selfDevice = LogicalAddress.TV;
         }
         commands.addAll(Arrays.asList(clientParams));
