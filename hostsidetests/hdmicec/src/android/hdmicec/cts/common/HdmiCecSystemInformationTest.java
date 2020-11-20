@@ -18,18 +18,12 @@ package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeTrue;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecClientMessage;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecConstants;
-import android.hdmicec.cts.LogicalAddress;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
@@ -87,9 +81,10 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_11_2_6_6_GiveCecVersion() throws Exception {
-        hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, CecOperand.GET_CEC_VERSION);
-        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.RECORDER_1,
-                CecOperand.CEC_VERSION);
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
+        String message =
+                hdmiCecClient.checkExpectedOutput(
+                        hdmiCecClient.getSelfDevice(), CecOperand.CEC_VERSION);
         assertThat(CecMessage.getParams(message)).isEqualTo(CEC_VERSION_NUMBER);
     }
 }

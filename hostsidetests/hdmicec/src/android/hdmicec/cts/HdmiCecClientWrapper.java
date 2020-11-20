@@ -17,7 +17,6 @@
 package android.hdmicec.cts;
 
 import com.android.tradefed.log.LogUtil.CLog;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.RunUtil;
 
 import org.junit.rules.ExternalResource;
@@ -46,6 +45,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     private BufferedReader mInputConsole;
     private boolean mCecClientInitialised = false;
 
+    private LogicalAddress selfDevice = LogicalAddress.RECORDER_1;
     private LogicalAddress targetDevice = LogicalAddress.UNKNOWN;
     private String clientParams[];
 
@@ -64,7 +64,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /** Initialise the client */
-    void init() throws Exception {
+    void init(boolean startAsTv) throws Exception {
         if (targetDevice == LogicalAddress.UNKNOWN) {
             throw new IllegalStateException("Missing logical address of the target device.");
         }
@@ -76,6 +76,11 @@ public final class HdmiCecClientWrapper extends ExternalResource {
          * address 2.0.0.0 */
         commands.add("-p");
         commands.add("2");
+        if (startAsTv) {
+            commands.add("-t");
+            commands.add("-x");
+            selfDevice = LogicalAddress.TV;
+        }
         commands.addAll(Arrays.asList(clientParams));
 
         mCecClient = RunUtil.getDefault().runCmdInBackground(commands);
@@ -355,6 +360,11 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             endTime = System.currentTimeMillis();
         }
      }
+
+    /** Returns the device type that the cec-client has started as. */
+    public LogicalAddress getSelfDevice() {
+        return selfDevice;
+    }
 
     /**
      * Kills the cec-client process that was created in init().
