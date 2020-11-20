@@ -18,38 +18,26 @@ package android.systemui.cts.tv
 
 import android.Manifest.permission.READ_DREAM_STATE
 import android.Manifest.permission.WRITE_DREAM_STATE
-import android.app.WindowConfiguration.WINDOWING_MODE_PINNED
-import android.content.ComponentName
-import android.graphics.Point
-import android.graphics.Rect
+import android.app.WindowConfiguration
+import android.content.pm.PackageManager
 import android.os.ServiceManager
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.Condition
-import android.server.wm.UiDeviceUtils
+import android.server.wm.WindowManagerState
 import android.server.wm.annotation.Group2
 import android.service.dreams.DreamService
 import android.service.dreams.IDreamManager
 import android.systemui.tv.cts.Components.PIP_ACTIVITY
-import android.systemui.tv.cts.Components.PIP_MENU_ACTIVITY
 import android.systemui.tv.cts.Components.windowName
 import android.systemui.tv.cts.PipActivity
 import android.systemui.tv.cts.PipActivity.ACTION_ENTER_PIP
-import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_DENOMINATOR
-import android.systemui.tv.cts.PipActivity.EXTRA_ASPECT_RATIO_NUMERATOR
-import android.systemui.tv.cts.PipActivity.Ratios.MAX_ASPECT_RATIO_DENOMINATOR
-import android.systemui.tv.cts.PipActivity.Ratios.MAX_ASPECT_RATIO_NUMERATOR
-import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_DENOMINATOR
-import android.systemui.tv.cts.PipActivity.Ratios.MIN_ASPECT_RATIO_NUMERATOR
-import android.systemui.tv.cts.PipMenu
-import android.util.Size
-import android.view.Gravity
+import androidx.annotation.CallSuper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.ThrowingSupplier
+import org.junit.Assume
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.math.roundToInt
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -61,27 +49,13 @@ import kotlin.test.assertTrue
 @Postsubmit
 @Group2
 @RunWith(AndroidJUnit4::class)
-class BasicPipTests : PipTestBase() {
+class BasicPipTests : TvTestBase() {
+    private val isPipSupported: Boolean
+        get() = packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
 
-    private val pipGravity: Int = resources.getInteger(
-        com.android.internal.R.integer.config_defaultPictureInPictureGravity)
-    private val displaySize = windowManager.maximumWindowMetrics.bounds
-
-    private val defaultPipAspectRatio: Float = resources.getFloat(
-        com.android.internal.R.dimen.config_pictureInPictureDefaultAspectRatio)
-    private val minPipAspectRatio: Float = resources.getFloat(
-        com.android.internal.R.dimen.config_pictureInPictureMinAspectRatio)
-    private val maxPipAspectRatio: Float = resources.getFloat(
-        com.android.internal.R.dimen.config_pictureInPictureMaxAspectRatio)
-
-    /** The size of the smaller side of the pip window. */
-    private val defaultPipSize: Float = resources.getDimension(
-        com.android.internal.R.dimen.default_minimal_size_pip_resizable_task)
-    private val screenEdgeInsetString = resources.getString(
-        com.android.internal.R.string.config_defaultPictureInPictureScreenEdgeInsets)
-    private val screenEdgeInsets: Point = Size.parseSize(screenEdgeInsetString).let {
-        val displayMetrics = resources.displayMetrics
-        Point(dipToPx(it.width, displayMetrics), dipToPx(it.height, displayMetrics))
+    @CallSuper
+    override fun onSetUp() {
+        Assume.assumeTrue(isPipSupported)
     }
 
     override fun onTearDown() {
@@ -92,9 +66,9 @@ class BasicPipTests : PipTestBase() {
     @Test
     fun openPip_launchedNotFocused() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        waitForEnterPip(PIP_ACTIVITY)
+        waitForEnterPip()
 
-        assertLaunchedNotFocused(PIP_ACTIVITY)
+        assertLaunchedNotFocused()
     }
 
     /** Ensure an app can be launched into pip mode from the screensaver state. */
@@ -111,9 +85,9 @@ class BasicPipTests : PipTestBase() {
             action = ACTION_ENTER_PIP,
             boolExtras = mapOf(PipActivity.EXTRA_TURN_ON_SCREEN to true)
         )
-        waitForEnterPip(PIP_ACTIVITY)
+        waitForEnterPip()
 
-        assertLaunchedNotFocused(PIP_ACTIVITY)
+        assertLaunchedNotFocused()
         assertTrue("Device must be awake") {
             runWithDreamManager { dreamManager ->
                 !dreamManager.isDreaming
@@ -125,7 +99,7 @@ class BasicPipTests : PipTestBase() {
     @Test
     fun pipApp_remainsOpen_afterScreensaver() {
         launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        waitForEnterPip(PIP_ACTIVITY)
+        waitForEnterPip()
 
         runWithDreamManager { dreamManager ->
             dreamManager.dream()
@@ -134,95 +108,13 @@ class BasicPipTests : PipTestBase() {
             dreamManager.waitForAwake()
         }
 
-        assertLaunchedNotFocused(PIP_ACTIVITY)
+        assertLaunchedNotFocused()
     }
 
-    /** Open an app in pip mode and ensure it is located at the expected default position. */
-    @Test
-    fun openPip_position_defaultAspectRatio() {
-        launchActivity(PIP_ACTIVITY, ACTION_ENTER_PIP)
-        assertPipWindowPosition(PIP_ACTIVITY, defaultPipAspectRatio)
-    }
-
-    /** Open an app in pip mode with minimal aspect ratio and ensure its position is correct. */
-    @Test
-    fun openPip_position_minAspectRatio() {
-        launchPipWithAspectRatio(MIN_ASPECT_RATIO_NUMERATOR, MIN_ASPECT_RATIO_DENOMINATOR)
-        assertPipWindowPosition(PIP_ACTIVITY, minPipAspectRatio)
-    }
-
-    /** Open an app in pip mode with maximal aspect ratio and ensure its position is correct. */
-    @Test
-    fun openPip_position_maxAspectRatio() {
-        launchPipWithAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR)
-        assertPipWindowPosition(PIP_ACTIVITY, maxPipAspectRatio)
-    }
-
-    /** Ensure the pip window keeps its aspect ratio after the pip menu is dismissed. */
-    @Test
-    fun openPip_customAspectRatio_restoresAspectRatio_afterMenu() {
-        // start pip with maximum aspect ratio
-        launchPipWithAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR)
-        assertPipWindowPosition(PIP_ACTIVITY, maxPipAspectRatio)
-
-        // open pip menu
-        sendBroadcast(PipMenu.ACTION_MENU)
-        waitForFullscreen(PIP_MENU_ACTIVITY)
-
-        // back out of the menu
-        UiDeviceUtils.pressBackButton()
-        wmState.waitAndAssertActivityRemoved(PIP_MENU_ACTIVITY)
-
-        // now ensure the window kept its initial maximum aspect ratio
-        assertPipWindowPosition(PIP_ACTIVITY, maxPipAspectRatio)
-    }
-
-    /**  Open an app in pip mode and set the given aspect ratio for its pip window. */
-    private fun launchPipWithAspectRatio(numerator: Int, denominator: Int) {
-        launchActivity(
-            PIP_ACTIVITY,
-            ACTION_ENTER_PIP,
-            intExtras = mapOf(
-                EXTRA_ASPECT_RATIO_NUMERATOR to numerator,
-                EXTRA_ASPECT_RATIO_DENOMINATOR to denominator
-            )
-        )
-    }
-
-    /** Ensure the pip window has the correct dimensions and position for a given [aspectRatio]. */
-    private fun assertPipWindowPosition(activity: ComponentName, aspectRatio: Float) {
-        waitForEnterPip(PIP_ACTIVITY)
-
-        val pipTask = wmState.getTaskByActivity(activity, WINDOWING_MODE_PINNED)
-        assertEquals(
-            expected = expectedPipBounds(aspectRatio),
-            actual = pipTask.bounds,
-            message = "The PiP window must be at the expected location!"
-        )
-    }
-
-    /** Calculates the pip window bounds given the [aspectRatio]. */
-    private fun expectedPipBounds(aspectRatio: Float): Rect = Rect().apply {
-        // defaultPipSize is always the size of the smaller side
-        val (width, height) =
-            if (aspectRatio <= 1.0f) {
-                // portrait orientation, the width is smaller
-                defaultPipSize to defaultPipSize / aspectRatio
-            } else {
-                // landscape, the height is smaller
-                defaultPipSize * aspectRatio to defaultPipSize
-            }
-
-        Gravity.apply(pipGravity, width.roundToInt(), height.roundToInt(),
-            displaySize, screenEdgeInsets.x, screenEdgeInsets.y, this)
-    }
-
-    private fun assertLaunchedNotFocused(activity: ComponentName) {
-        wmState.assertActivityDisplayed(activity)
-        wmState.assertNotFocusedWindow(
-            "PiP Window must not be focused!",
-            activity.windowName()
-        )
+    private fun assertLaunchedNotFocused() {
+        wmState.assertActivityDisplayed(PIP_ACTIVITY)
+        wmState.assertNotFocusedWindow("PiP Window must not be focused!",
+            PIP_ACTIVITY.windowName())
     }
 
     /** Run the given actions on a dream manager, acquiring appropriate permissions.  */
@@ -249,5 +141,23 @@ class BasicPipTests : PipTestBase() {
         Condition.waitFor(message) {
             !isDreaming
         } || error(message)
+    }
+
+    /** Waits until the pip animation has finished and the app is fully in pip mode. */
+    private fun waitForEnterPip() {
+        wmState.waitForWithAmState("checking task windowing mode") { state: WindowManagerState ->
+            state.getTaskByActivity(PIP_ACTIVITY)?.let { task ->
+                task.windowingMode == WindowConfiguration.WINDOWING_MODE_PINNED
+            } ?: false
+        } || error("Task ${PIP_ACTIVITY.flattenToShortString()} is not found or not pinned!")
+
+        wmState.waitForWithAmState("checking activity windowing mode") {
+            state: WindowManagerState ->
+            state.getTaskByActivity(PIP_ACTIVITY)?.getActivity(PIP_ACTIVITY)?.let { activity ->
+                activity.windowingMode == WindowConfiguration.WINDOWING_MODE_PINNED &&
+                    activity.state == WindowManagerState.STATE_PAUSED
+            } ?: false
+        } || error("Activity ${PIP_ACTIVITY.flattenToShortString()} is not found," +
+            " not pinned or not paused!")
     }
 }
