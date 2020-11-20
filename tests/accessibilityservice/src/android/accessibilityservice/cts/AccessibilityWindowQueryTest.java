@@ -71,6 +71,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.Gravity;
@@ -143,6 +144,7 @@ public class AccessibilityWindowQueryTest {
         sUiAutomation = sInstrumentation.getUiAutomation();
         AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         sUiAutomation.setServiceInfo(info);
     }
 
@@ -163,14 +165,14 @@ public class AccessibilityWindowQueryTest {
         // First, make the root view of the activity an accessibility node. This allows us to
         // later exclude views that are part of the activity's DecorView.
         sInstrumentation.runOnMainSync(() -> mActivity.findViewById(R.id.added_content)
-                    .setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES));
+                .setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES));
 
         // Start looking from the added content instead of from the root accessibility node so
         // that nodes that we don't expect (i.e. window control buttons) are not included in the
         // list of accessibility nodes returned by findAccessibilityNodeInfosByText.
         final AccessibilityNodeInfo addedContent = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByViewId(CONTENT_VIEW_RES_NAME)
-                        .get(0);
+                .get(0);
 
         // find a view by text
         List<AccessibilityNodeInfo> buttons = addedContent.findAccessibilityNodeInfosByText("b");
@@ -224,107 +226,92 @@ public class AccessibilityWindowQueryTest {
     @MediumTest
     @Test
     public void testTraverseAllWindows() throws Exception {
-        setAccessInteractiveWindowsFlag();
-        try {
-            List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
-            Rect boundsInScreen = new Rect();
+        List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
+        Rect boundsInScreen = new Rect();
 
-            final int windowCount = windows.size();
-            for (int i = 0; i < windowCount; i++) {
-                AccessibilityWindowInfo window = windows.get(i);
+        final int windowCount = windows.size();
+        for (int i = 0; i < windowCount; i++) {
+            AccessibilityWindowInfo window = windows.get(i);
 
-                window.getBoundsInScreen(boundsInScreen);
-                assertFalse(boundsInScreen.isEmpty()); // Varies on screen size, emptiness check.
-                assertNull(window.getParent());
-                assertSame(0, window.getChildCount());
-                assertNull(window.getParent());
-                assertNotNull(window.getRoot());
+            window.getBoundsInScreen(boundsInScreen);
+            assertFalse(boundsInScreen.isEmpty()); // Varies on screen size, emptiness check.
+            assertNull(window.getParent());
+            assertSame(0, window.getChildCount());
+            assertNull(window.getParent());
+            assertNotNull(window.getRoot());
 
-                if (window.getType() == AccessibilityWindowInfo.TYPE_APPLICATION) {
-                    assertTrue(window.isFocused());
-                    assertTrue(window.isActive());
-                    verifyNodesInAppWindow(window.getRoot());
-                } else if (window.getType() == AccessibilityWindowInfo.TYPE_SYSTEM) {
-                    assertFalse(window.isFocused());
-                    assertFalse(window.isActive());
-                }
+            if (window.getType() == AccessibilityWindowInfo.TYPE_APPLICATION) {
+                assertTrue(window.isFocused());
+                assertTrue(window.isActive());
+                verifyNodesInAppWindow(window.getRoot());
+            } else if (window.getType() == AccessibilityWindowInfo.TYPE_SYSTEM) {
+                assertFalse(window.isFocused());
+                assertFalse(window.isActive());
             }
-        } finally {
-            clearAccessInteractiveWindowsFlag();
         }
     }
 
     @MediumTest
     @Test
     public void testTraverseWindowFromEvent() throws Exception {
-        setAccessInteractiveWindowsFlag();
-        try {
-            // Find a button to click on.
-            final AccessibilityNodeInfo button1 = sUiAutomation.getRootInActiveWindow()
-                    .findAccessibilityNodeInfosByViewId(
-                            "android.accessibilityservice.cts:id/button1").get(0);
+        // Find a button to click on.
+        final AccessibilityNodeInfo button1 = sUiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/button1").get(0);
 
-            // Click the button.
-            AccessibilityEvent event =
-                    sUiAutomation.executeAndWaitForEvent(
-                            () -> button1.performAction(ACTION_CLICK),
-                            filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
-                            DEFAULT_TIMEOUT_MS);
+        // Click the button.
+        AccessibilityEvent event =
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> button1.performAction(ACTION_CLICK),
+                        filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
+                        DEFAULT_TIMEOUT_MS);
 
-            // Get the source window.
-            AccessibilityWindowInfo window = event.getSource().getWindow();
+        // Get the source window.
+        AccessibilityWindowInfo window = event.getSource().getWindow();
 
-            // Verify the application window.
-            Rect boundsInScreen = new Rect();
-            window.getBoundsInScreen(boundsInScreen);
-            assertFalse(boundsInScreen.isEmpty()); // Varies on screen size, so just emptiness check
-            assertSame(window.getType(), AccessibilityWindowInfo.TYPE_APPLICATION);
-            assertTrue(window.isFocused());
-            assertTrue(window.isActive());
-            assertNull(window.getParent());
-            assertSame(0, window.getChildCount());
-            assertNotNull(window.getRoot());
+        // Verify the application window.
+        Rect boundsInScreen = new Rect();
+        window.getBoundsInScreen(boundsInScreen);
+        assertFalse(boundsInScreen.isEmpty()); // Varies on screen size, so just emptiness check
+        assertSame(window.getType(), AccessibilityWindowInfo.TYPE_APPLICATION);
+        assertTrue(window.isFocused());
+        assertTrue(window.isActive());
+        assertNull(window.getParent());
+        assertSame(0, window.getChildCount());
+        assertNotNull(window.getRoot());
 
-            // Verify the window content.
-            verifyNodesInAppWindow(window.getRoot());
-        } finally {
-            clearAccessInteractiveWindowsFlag();
-        }
+        // Verify the window content.
+        verifyNodesInAppWindow(window.getRoot());
     }
 
     @MediumTest
     @Test
     public void testInteractWithAppWindow() throws Exception {
-        setAccessInteractiveWindowsFlag();
-        try {
-            // Find a button to click on.
-            final AccessibilityNodeInfo button1 = sUiAutomation.getRootInActiveWindow()
-                    .findAccessibilityNodeInfosByViewId(
-                            "android.accessibilityservice.cts:id/button1").get(0);
+        // Find a button to click on.
+        final AccessibilityNodeInfo button1 = sUiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/button1").get(0);
 
-            // Click the button.
-            AccessibilityEvent event =
-                    sUiAutomation.executeAndWaitForEvent(
-                            () -> button1.performAction(ACTION_CLICK),
-                            filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
-                            DEFAULT_TIMEOUT_MS);
+        // Click the button.
+        AccessibilityEvent event =
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> button1.performAction(ACTION_CLICK),
+                        filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
+                        DEFAULT_TIMEOUT_MS);
 
-            // Get the source window.
-            AccessibilityWindowInfo window = event.getSource().getWindow();
+        // Get the source window.
+        AccessibilityWindowInfo window = event.getSource().getWindow();
 
-            // Find a another button from the event's window.
-            final AccessibilityNodeInfo button2 = window.getRoot()
-                    .findAccessibilityNodeInfosByViewId(
-                            "android.accessibilityservice.cts:id/button2").get(0);
+        // Find a another button from the event's window.
+        final AccessibilityNodeInfo button2 = window.getRoot()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/button2").get(0);
 
-            // Click the second button.
-            sUiAutomation.executeAndWaitForEvent(
-                    () -> button2.performAction(ACTION_CLICK),
-                    filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
-                    DEFAULT_TIMEOUT_MS);
-        } finally {
-            clearAccessInteractiveWindowsFlag();
-        }
+        // Click the second button.
+        sUiAutomation.executeAndWaitForEvent(
+                () -> button2.performAction(ACTION_CLICK),
+                filterForEventTypeWithAction(TYPE_VIEW_CLICKED, ACTION_CLICK),
+                DEFAULT_TIMEOUT_MS);
     }
 
     @MediumTest
@@ -362,7 +349,6 @@ public class AccessibilityWindowQueryTest {
             }
         } finally {
             ensureAccessibilityFocusCleared();
-            clearAccessInteractiveWindowsFlag();
         }
     }
 
@@ -730,25 +716,30 @@ public class AccessibilityWindowQueryTest {
         final View view = new View(sInstrumentation.getContext());
         final String windowTitle = "Input Method Dialog";
 
-        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
-                () -> {
-                    WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                            WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG);
-                    params.accessibilityTitle = windowTitle;
-
-                    SystemUtil.runWithShellPermissionIdentity(
-                            () -> wm.addView(view, params),
-                            "android.permission.INTERNAL_SYSTEM_WINDOW");
-                }),
-                filterWindowsChangeTypesAndWindowTitle(sUiAutomation,
-                        WINDOWS_CHANGE_ADDED, windowTitle), DEFAULT_TIMEOUT_MS);
-
         try {
+            sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(
+                    () -> {
+                        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                                WindowManager.LayoutParams.TYPE_INPUT_METHOD_DIALOG);
+                        params.accessibilityTitle = windowTitle;
+
+                        SystemUtil.runWithShellPermissionIdentity(
+                                () -> wm.addView(view, params),
+                                "android.permission.INTERNAL_SYSTEM_WINDOW");
+                    }),
+                    filterWindowsChangeTypesAndWindowTitle(sUiAutomation,
+                            WINDOWS_CHANGE_ADDED, windowTitle), DEFAULT_TIMEOUT_MS);
+
+
             final List<AccessibilityWindowInfo> windows = sUiAutomation.getWindows();
             assertTrue(windows.stream().anyMatch(window -> window.getType()
                     == AccessibilityWindowInfo.TYPE_APPLICATION));
         } finally {
-            wm.removeView(view);
+            try {
+                wm.removeView(view);
+            } catch (IllegalStateException e) {
+                Log.e(LOG_TAG, "remove view fail:" + e.toString());
+            }
         }
     }
 
@@ -820,7 +811,7 @@ public class AccessibilityWindowQueryTest {
 
         final AccessibilityWindowInfo finalFocusTarget = focusTarget;
         sUiAutomation.executeAndWaitForEvent(() -> assertTrue(finalFocusTarget.getRoot()
-                .performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)),
+                        .performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)),
                 filterWindowsChangTypesAndWindowId(finalFocusTarget.getId(),
                         WINDOWS_CHANGE_ACCESSIBILITY_FOCUSED),
                 DEFAULT_TIMEOUT_MS);
@@ -836,11 +827,10 @@ public class AccessibilityWindowQueryTest {
     }
 
     private View[] addTwoAppPanelWindows(Activity activity) throws TimeoutException {
-        setAccessInteractiveWindowsFlag();
         sUiAutomation
                 .waitForIdle(TIMEOUT_WINDOW_STATE_IDLE, DEFAULT_TIMEOUT_MS);
 
-        return new View[] {
+        return new View[]{
                 addWindow(R.string.button1, params -> {
                     params.gravity = Gravity.TOP;
                     params.y = getStatusBarHeight(activity);
@@ -874,18 +864,6 @@ public class AccessibilityWindowQueryTest {
             });
         }, filterWindowsChangedWithChangeTypes(WINDOWS_CHANGE_ADDED), DEFAULT_TIMEOUT_MS);
         return result.get();
-    }
-
-    private void setAccessInteractiveWindowsFlag () {
-        AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
-        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
-        sUiAutomation.setServiceInfo(info);
-    }
-
-    private void clearAccessInteractiveWindowsFlag () {
-        AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
-        info.flags &= ~AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
-        sUiAutomation.setServiceInfo(info);
     }
 
     private void ensureAccessibilityFocusCleared() {

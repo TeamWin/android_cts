@@ -1380,8 +1380,11 @@ public class StagefrightTest {
     }
 
     @Test
-    @SecurityTest(minPatchLevel = "Unknown")
+    @SecurityTest(minPatchLevel = "2021-01")
     public void testStagefright_bug170240631() throws Exception {
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA));
         doStagefrightTest(R.raw.bug170240631_ts);
     }
 

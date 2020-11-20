@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-package android.content.cts;
-
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
-import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
-import static android.view.Display.DEFAULT_DISPLAY;
-import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+package android.content.wm.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -28,23 +23,14 @@ import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.content.Intent;
+import android.content.cts.ContextTestBase;
 import android.content.res.Configuration;
-import android.graphics.PixelFormat;
-import android.hardware.display.DisplayManager;
-import android.hardware.display.VirtualDisplay;
-import android.media.ImageReader;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
 import android.view.Display;
 
-import androidx.test.core.app.ApplicationProvider;
 import androidx.test.filters.SmallTest;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.rule.ServiceTestRule;
 
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.TimeoutException;
@@ -69,25 +55,19 @@ import java.util.concurrent.TimeoutException;
  * </ul>
  *
  * <p>Build/Install/Run:
- *     atest CtsContentTestCases:ContextAccessTest
+ *     atest CtsContentTestCases:ContextGetDisplayTest
  */
 @Presubmit
 @SmallTest
-public class ContextAccessTest {
-    private Context mContext = ApplicationProvider.getApplicationContext();
-
-    @Rule
-    public final ActivityTestRule<MockActivity> mActivityRule =
-            new ActivityTestRule<>(MockActivity.class);
-
+public class ContextGetDisplayTest extends ContextTestBase {
     @Test(expected = UnsupportedOperationException.class)
     public void testGetDisplayFromApplication() {
-        mContext.getDisplay();
+        mApplicationContext.getDisplay();
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testGetDisplayFromService() throws TimeoutException {
-        getTestService().getDisplay();
+        createTestService().getDisplay();
     }
 
     @Test
@@ -99,9 +79,8 @@ public class ContextAccessTest {
 
     @Test
     public void testGetDisplayFromDisplayContext() {
-        final Display display = mContext.getSystemService(DisplayManager.class)
-                .getDisplay(DEFAULT_DISPLAY);
-        Context displayContext = mContext.createDisplayContext(display);
+        final Display display = getDefaultDisplay();
+        Context displayContext = mApplicationContext.createDisplayContext(display);
 
         assertEquals(display, displayContext.getDisplay());
     }
@@ -118,65 +97,36 @@ public class ContextAccessTest {
 
     private void verifyGetDisplayFromDisplayContextDerivedContext(
             boolean onSecondaryDisplay) {
-        final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
         final Display display;
         if (onSecondaryDisplay) {
-            display = getSecondaryDisplay(displayManager);
+            display = getSecondaryDisplay();
         } else {
-            display = displayManager.getDisplay(DEFAULT_DISPLAY);
+            display = getDefaultDisplay();
         }
-        final Context context = mContext.createDisplayContext(display)
+        final Context context = mApplicationContext.createDisplayContext(display)
                 .createConfigurationContext(new Configuration());
         assertEquals(display, context.getDisplay());
     }
 
-    private static Display getSecondaryDisplay(DisplayManager displayManager) {
-        final int width = 800;
-        final int height = 480;
-        final int density = 160;
-        ImageReader reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888,
-                2 /* maxImages */);
-        VirtualDisplay virtualDisplay = displayManager.createVirtualDisplay(
-                ContextTest.class.getName(), width, height, density, reader.getSurface(),
-                VIRTUAL_DISPLAY_FLAG_PUBLIC | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
-        return virtualDisplay.getDisplay();
-    }
-
     @Test
     public void testGetDisplayFromWindowContext() {
-        final Display display = mContext.getSystemService(DisplayManager.class)
-                .getDisplay(DEFAULT_DISPLAY);
-        Context windowContext =  mContext.createDisplayContext(display)
-                .createWindowContext(TYPE_APPLICATION_OVERLAY, null /*  options */);
+        final Display display = getDefaultDisplay();
+        Context windowContext =  createWindowContext();
         assertEquals(display, windowContext.getDisplay());
     }
 
     @Test
     public void testGetDisplayFromVisualWrapper() throws Throwable {
-        final Display d = new ContextWrapper(getTestActivity()).getDisplay();
+        final Activity activity = getTestActivity();
+        final Display d = new ContextWrapper(activity).getDisplay();
 
-        assertNotNull("Display must be accessible from visual components", d);
+        assertEquals("Displays between context wrapper and base UI context must match.",
+                activity.getDisplay(), d);
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testGetDisplayFromNonVisualWrapper() {
-        ContextWrapper wrapper = new ContextWrapper(mContext);
+        ContextWrapper wrapper = new ContextWrapper(mApplicationContext);
         wrapper.getDisplay();
-    }
-
-    private Activity getTestActivity() throws Throwable {
-        MockActivity[] activity = new MockActivity[1];
-        mActivityRule.runOnUiThread(() -> {
-            activity[0] = mActivityRule.getActivity();
-        });
-        return activity[0];
-    }
-
-    private Service getTestService() throws TimeoutException {
-        final Intent intent = new Intent(mContext.getApplicationContext(), MockService.class);
-        final ServiceTestRule serviceRule = new ServiceTestRule();
-        IBinder serviceToken;
-        serviceToken = serviceRule.bindService(intent);
-        return ((MockService.MockBinder) serviceToken).getService();
     }
 }

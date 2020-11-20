@@ -57,6 +57,7 @@ import com.android.compatibility.common.util.TestUtils.BooleanSupplierWithThrow;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.Description;
@@ -203,6 +204,7 @@ public class CtsSyncManagerTest {
     }
 
     @Test
+    @Ignore("Can be enabled only after b/173053792 is fixed")
     public void testSoftErrorRetriesActiveApp() throws Exception {
         removeAllAccounts();
 

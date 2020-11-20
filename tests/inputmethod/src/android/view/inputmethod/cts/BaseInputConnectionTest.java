@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.expectThrows;
 
 import android.content.ClipDescription;
 import android.net.Uri;
@@ -604,7 +605,7 @@ public class BaseInputConnectionTest {
         assertEquals("hello", connection.getTextBeforeCursor(10, 0).toString());
         assertEquals("hello", connection.getTextBeforeCursor(
                 100, BaseInputConnection.GET_TEXT_WITH_STYLES).toString());
-        assertNull(connection.getTextBeforeCursor(-1, 0));
+        expectThrows(IllegalArgumentException.class, ()-> connection.getTextBeforeCursor(-1, 0));
 
         // getTextAfterCursor
         assertEquals("", connection.getTextAfterCursor(0, 0).toString());
@@ -613,6 +614,6 @@ public class BaseInputConnectionTest {
         assertEquals("", connection.getTextAfterCursor(100, 0).toString());
         assertEquals("", connection.getTextAfterCursor(
                 100, BaseInputConnection.GET_TEXT_WITH_STYLES).toString());
-        assertNull(connection.getTextAfterCursor(-10, 0));
+        expectThrows(IllegalArgumentException.class, ()-> connection.getTextAfterCursor(-1, 0));
     }
 }

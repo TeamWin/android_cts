@@ -22,6 +22,7 @@ import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecClientMessage;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.CecVersionHelper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
@@ -82,11 +83,12 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_11_2_6_6_GiveCecVersion() throws Exception {
         int cecVersion = HdmiCecConstants.CEC_VERSION_1_4;
-        setCecVersion(cecVersion);
+        CecVersionHelper.setCecVersion(getDevice(), cecVersion);
 
-        hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, CecOperand.GET_CEC_VERSION);
-        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.RECORDER_1,
-                CecOperand.CEC_VERSION);
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
+        String message =
+                hdmiCecClient.checkExpectedOutput(
+                        hdmiCecClient.getSelfDevice(), CecOperand.CEC_VERSION);
         assertThat(CecMessage.getParams(message)).isEqualTo(cecVersion);
     }
 
@@ -102,7 +104,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_hf4_2_12_GiveCecVersion() throws Exception {
         int cecVersion = HdmiCecConstants.CEC_VERSION_2_0;
-        setCecVersion(cecVersion);
+        CecVersionHelper.setCecVersion(getDevice(), cecVersion);
 
         hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, CecOperand.GET_CEC_VERSION);
         String reportCecVersion = hdmiCecClient.checkExpectedOutput(LogicalAddress.RECORDER_1,
@@ -113,11 +115,5 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
         String reportFeatures = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
                 CecOperand.REPORT_FEATURES);
         assertThat(CecMessage.getParams(reportFeatures, 2)).isEqualTo(cecVersion);
-    }
-
-    private void setCecVersion(int cecVersion) throws Exception {
-        getDevice().executeShellCommand("settings put global hdmi_cec_version " + cecVersion);
-
-        TimeUnit.SECONDS.sleep(HdmiCecConstants.TIMEOUT_CEC_REINIT_SECONDS);
     }
 }
