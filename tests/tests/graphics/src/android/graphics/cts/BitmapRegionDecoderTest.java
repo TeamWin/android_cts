@@ -32,6 +32,7 @@ import android.graphics.BitmapRegionDecoder;
 import android.graphics.Canvas;
 import android.graphics.ColorSpace;
 import android.graphics.Rect;
+import android.media.MediaFormat;
 import android.os.ParcelFileDescriptor;
 
 import androidx.test.InstrumentationRegistry;
@@ -40,6 +41,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BitmapUtils;
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -641,6 +643,10 @@ public class BitmapRegionDecoderTest {
 
     @Test
     public void testHeif() throws IOException {
+        if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            // HEIF support is optional when HEVC decoder is not supported.
+            return;
+        }
         InputStream is = obtainInputStream(R.raw.heifwriter_input);
         BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is, false);
         Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE), null);
