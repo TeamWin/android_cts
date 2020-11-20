@@ -2088,7 +2088,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
 
             // delay for streams to get into correct mute states
-            Thread.sleep(50);
+            Thread.sleep(300);
             assertTrue("Music (media) stream should be muted",
                     mAudioManager.isStreamMute(AudioManager.STREAM_MUSIC));
             assertTrue("System stream should be muted",
