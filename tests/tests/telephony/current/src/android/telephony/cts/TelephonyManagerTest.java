@@ -1079,6 +1079,14 @@ public class TelephonyManagerTest {
         // succeeds, so just make sure nothing crashes.
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 tp -> tp.setSystemSelectionChannels(Collections.emptyList()));
+
+        // getSystemSelectionChannels was added in IRadio 1.6, so ensure it returns
+        // the value that was set by setSystemSelectionChannels.
+        if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
+            assertEquals(Collections.emptyList(),
+                    ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    TelephonyManager::getSystemSelectionChannels));
+        }
     }
 
     @Test
