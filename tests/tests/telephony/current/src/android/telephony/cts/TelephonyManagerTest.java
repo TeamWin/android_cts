@@ -3030,6 +3030,58 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testCdmaRoamingMode() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // Save state
+        int cdmaRoamingMode = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                TelephonyManager::getCdmaRoamingMode);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setCdmaRoamingMode(TelephonyManager.CDMA_ROAMING_MODE_HOME));
+        assertEquals(TelephonyManager.CDMA_ROAMING_MODE_HOME,
+                (int) ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                        TelephonyManager::getCdmaRoamingMode));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setCdmaRoamingMode(TelephonyManager.CDMA_ROAMING_MODE_AFFILIATED));
+        assertEquals(TelephonyManager.CDMA_ROAMING_MODE_AFFILIATED,
+                (int) ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                        TelephonyManager::getCdmaRoamingMode));
+
+        // Reset state
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setCdmaRoamingMode(cdmaRoamingMode));
+    }
+
+    @Test
+    public void testCdmaSubscriptionMode() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // Save state
+        int cdmaSubscriptionMode = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, TelephonyManager::getCdmaSubscriptionMode);
+
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setCdmaSubscriptionMode(TelephonyManager.CDMA_SUBSCRIPTION_NV));
+        assertEquals(TelephonyManager.CDMA_SUBSCRIPTION_NV,
+                (int) ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                        TelephonyManager::getCdmaSubscriptionMode));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setCdmaSubscriptionMode(TelephonyManager.CDMA_SUBSCRIPTION_RUIM_SIM));
+        assertEquals(TelephonyManager.CDMA_SUBSCRIPTION_RUIM_SIM,
+                (int) ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                        TelephonyManager::getCdmaSubscriptionMode));
+
+        // Reset state
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.setCdmaRoamingMode(cdmaSubscriptionMode));
+    }
+
+    @Test
     public void testGetCarrierBandwidth() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
