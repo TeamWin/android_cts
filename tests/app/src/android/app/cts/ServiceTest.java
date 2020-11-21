@@ -1108,6 +1108,56 @@ public class ServiceTest extends ActivityTestsBase {
         assertNoNotification(2);
     }
 
+    public void testForegroundService_notificationChannelDeletion() throws Exception {
+        NotificationManager noMan = mContext.getSystemService(NotificationManager.class);
+
+        // Start service as foreground - it should show notification #1
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(COMMAND_START_FOREGROUND);
+        waitForResultOrThrow(DELAY, "service to start first time");
+        assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+
+        try {
+            final String channel = LocalForegroundService.NOTIFICATION_CHANNEL_ID;
+            noMan.deleteNotificationChannel(channel);
+            fail("Deleting FGS notification channel did not throw");
+        } catch (SecurityException se) {
+            // Expected outcome, i.e. success case
+        } catch (Exception e) {
+            fail("Deleting FGS notification threw unexpected failure " + e);
+        }
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
+
+    }
+
+    public void testForegroundService_deferredNotificationChannelDeletion() throws Exception {
+        NotificationManager noMan = mContext.getSystemService(NotificationManager.class);
+
+        // Start service as foreground - it should show notification #1
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
+        waitForResultOrThrow(DELAY, "service to start first time");
+        assertNoNotification(1);
+
+        try {
+            final String channel = LocalForegroundService.NOTIFICATION_CHANNEL_ID;
+            noMan.deleteNotificationChannel(channel);
+            fail("Deleting FGS deferred notification channel did not throw");
+        } catch (SecurityException se) {
+            // Expected outcome
+        } catch (Exception e) {
+            fail("Deleting deferred FGS notification threw unexpected failure " + e);
+        }
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
+
+    }
+
     public void testForegroundService_deferredNotification() throws Exception {
         mExpectedServiceState = STATE_START_1;
         startForegroundService(COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
