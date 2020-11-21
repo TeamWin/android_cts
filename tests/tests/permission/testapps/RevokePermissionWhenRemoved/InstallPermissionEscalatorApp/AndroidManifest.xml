@@ -17,7 +17,7 @@
 
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission.cts.revokepermissionwhenremoved.installpermissionescalatorrapp">
+    package="android.permission.cts.revokepermissionwhenremoved.installpermissionescalatorapp">
 
     <permission
         android:name="android.permission.cts.revokepermissionwhenremoved.TestInstallPermission"
