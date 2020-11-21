@@ -33,7 +33,7 @@ public class LocalForegroundService extends LocalService {
 
     private static final String TAG = "LocalForegroundService";
     protected static final String EXTRA_COMMAND = "LocalForegroundService.command";
-    private static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
+    public static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
 
     public static final int COMMAND_START_FOREGROUND = 1;
     public static final int COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION = 2;
