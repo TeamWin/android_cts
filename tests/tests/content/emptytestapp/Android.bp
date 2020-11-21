@@ -34,6 +34,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    aaptflags: ["--warn-manifest-validation"]
 }
 
 android_test_helper_app {
@@ -46,6 +47,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    aaptflags: ["--warn-manifest-validation"]
 }
 
 android_test_helper_app {

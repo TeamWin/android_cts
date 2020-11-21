@@ -62,7 +62,6 @@ import com.google.common.io.ByteStreams;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -83,11 +82,16 @@ public class TestUtils {
 
     public static final String QUERY_TYPE = "android.scopedstorage.cts.queryType";
     public static final String INTENT_EXTRA_PATH = "android.scopedstorage.cts.path";
+    public static final String INTENT_EXTRA_CALLING_PKG = "android.scopedstorage.cts.calling_pkg";
     public static final String INTENT_EXCEPTION = "android.scopedstorage.cts.exception";
     public static final String CREATE_FILE_QUERY = "android.scopedstorage.cts.createfile";
     public static final String CREATE_IMAGE_ENTRY_QUERY =
             "android.scopedstorage.cts.createimageentry";
     public static final String DELETE_FILE_QUERY = "android.scopedstorage.cts.deletefile";
+    public static final String CAN_OPEN_FILE_FOR_READ_QUERY =
+            "android.scopedstorage.cts.can_openfile_read";
+    public static final String CAN_OPEN_FILE_FOR_WRITE_QUERY =
+            "android.scopedstorage.cts.can_openfile_write";
     public static final String OPEN_FILE_FOR_READ_QUERY =
             "android.scopedstorage.cts.openfile_read";
     public static final String OPEN_FILE_FOR_WRITE_QUERY =
@@ -269,9 +273,10 @@ public class TestUtils {
      *
      * <p>This method drops shell permission identity.
      */
-    public static boolean openFileAs(TestApp testApp, File file, boolean forWrite)
+    public static boolean canOpenFileAs(TestApp testApp, File file, boolean forWrite)
             throws Exception {
-        return openFileAs(testApp, file.getAbsolutePath(), forWrite);
+        String actionName = forWrite ? CAN_OPEN_FILE_FOR_WRITE_QUERY : CAN_OPEN_FILE_FOR_READ_QUERY;
+        return getResultFromTestApp(testApp, file.getPath(), actionName);
     }
 
     /**
@@ -279,10 +284,11 @@ public class TestUtils {
      *
      * <p>This method drops shell permission identity.
      */
-    public static boolean openFileAs(TestApp testApp, String path, boolean forWrite)
+    public static ParcelFileDescriptor openFileAs(TestApp testApp, File file, boolean forWrite)
             throws Exception {
-        return getResultFromTestApp(
-                testApp, path, forWrite ? OPEN_FILE_FOR_WRITE_QUERY : OPEN_FILE_FOR_READ_QUERY);
+        String actionName = forWrite ? OPEN_FILE_FOR_WRITE_QUERY : OPEN_FILE_FOR_READ_QUERY;
+        String mode = forWrite ? "rw" : "r";
+        return getPfdFromTestApp(testApp, file, actionName, mode);
     }
 
     /**
@@ -568,6 +574,29 @@ public class TestUtils {
     }
 
     /**
+     * Opens the given file via file path
+     */
+    @NonNull
+    public static ParcelFileDescriptor openWithFilePath(File file, boolean forWrite)
+            throws IOException {
+        return ParcelFileDescriptor.open(file,
+                forWrite
+                ? ParcelFileDescriptor.MODE_READ_WRITE : ParcelFileDescriptor.MODE_READ_ONLY);
+    }
+
+    /**
+     * Returns whether we can open the file.
+     */
+    public static boolean canOpen(File file, boolean forWrite) {
+        try {
+            openWithFilePath(file, forWrite);
+            return true;
+        } catch (IOException expected) {
+            return false;
+        }
+    }
+
+    /**
      * Asserts the given operation throws an exception of type {@code T}.
      */
     public static <T extends Exception> void assertThrows(Class<T> clazz, Operation<Exception> r)
@@ -678,25 +707,6 @@ public class TestUtils {
         for (File file : oldFilesList != null ? oldFilesList : new File[0]) {
             assertThat(file.exists()).isTrue();
             assertThat(getFileRowIdFromDatabase(file)).isNotEqualTo(-1);
-        }
-    }
-
-    /**
-     * Returns whether we can open the file.
-     */
-    public static boolean canOpen(File file, boolean forWrite) {
-        if (forWrite) {
-            try (FileOutputStream fis = new FileOutputStream(file)) {
-                return true;
-            } catch (IOException expected) {
-                return false;
-            }
-        } else {
-            try (FileInputStream fis = new FileInputStream(file)) {
-                return true;
-            } catch (IOException expected) {
-                return false;
-            }
         }
     }
 
@@ -940,6 +950,7 @@ public class TestUtils {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(QUERY_TYPE, actionName);
         intent.putExtra(INTENT_EXTRA_PATH, dirPath);
+        intent.putExtra(INTENT_EXTRA_CALLING_PKG, getContext().getPackageName());
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
         getContext().startActivity(intent);
         if (!latch.await(POLLING_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
@@ -957,28 +968,8 @@ public class TestUtils {
      */
     private static HashMap<String, String> getMetadataFromTestApp(
             TestApp testApp, String dirPath, String actionName) throws Exception {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final HashMap<String, String> appOutputList = new HashMap<>();
-        final Exception[] exception = new Exception[1];
-        exception[0] = null;
-        final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.hasExtra(INTENT_EXCEPTION)) {
-                    exception[0] = (Exception) (intent.getExtras().get(INTENT_EXCEPTION));
-                } else if (intent.hasExtra(actionName)) {
-                    HashMap<String, String> res =
-                            (HashMap<String, String>) intent.getExtras().get(actionName);
-                    appOutputList.putAll(res);
-                }
-                latch.countDown();
-            }
-        };
-        sendIntentToTestApp(testApp, dirPath, actionName, broadcastReceiver, latch);
-        if (exception[0] != null) {
-            throw exception[0];
-        }
-        return appOutputList;
+        Bundle bundle = getFromTestApp(testApp, dirPath, actionName);
+        return (HashMap<String, String>) bundle.get(actionName);
     }
 
     /**
@@ -986,27 +977,8 @@ public class TestUtils {
      */
     private static ArrayList<String> getContentsFromTestApp(
             TestApp testApp, String dirPath, String actionName) throws Exception {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ArrayList<String> appOutputList = new ArrayList<String>();
-        final Exception[] exception = new Exception[1];
-        exception[0] = null;
-        final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.hasExtra(INTENT_EXCEPTION)) {
-                    exception[0] = (Exception) (intent.getSerializableExtra(INTENT_EXCEPTION));
-                } else if (intent.hasExtra(actionName)) {
-                    appOutputList.addAll(intent.getStringArrayListExtra(actionName));
-                }
-                latch.countDown();
-            }
-        };
-
-        sendIntentToTestApp(testApp, dirPath, actionName, broadcastReceiver, latch);
-        if (exception[0] != null) {
-            throw exception[0];
-        }
-        return appOutputList;
+        Bundle bundle = getFromTestApp(testApp, dirPath, actionName);
+        return bundle.getStringArrayList(actionName);
     }
 
     /**
@@ -1014,8 +986,23 @@ public class TestUtils {
      */
     private static boolean getResultFromTestApp(TestApp testApp, String dirPath, String actionName)
             throws Exception {
+        Bundle bundle = getFromTestApp(testApp, dirPath, actionName);
+        return bundle.getBoolean(actionName, false);
+    }
+
+    private static ParcelFileDescriptor getPfdFromTestApp(TestApp testApp, File dirPath,
+            String actionName, String mode) throws Exception {
+        Bundle bundle = getFromTestApp(testApp, dirPath.getPath(), actionName);
+        return getContentResolver().openFileDescriptor(bundle.getParcelable(actionName), mode);
+    }
+
+    /**
+     * <p>This method drops shell permission identity.
+     */
+    private static Bundle getFromTestApp(TestApp testApp, String dirPath, String actionName)
+            throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
-        final boolean[] appOutput = new boolean[1];
+        final Bundle[] bundle = new Bundle[1];
         final Exception[] exception = new Exception[1];
         exception[0] = null;
         BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -1023,8 +1010,8 @@ public class TestUtils {
             public void onReceive(Context context, Intent intent) {
                 if (intent.hasExtra(INTENT_EXCEPTION)) {
                     exception[0] = (Exception) (intent.getSerializableExtra(INTENT_EXCEPTION));
-                } else if (intent.hasExtra(actionName)) {
-                    appOutput[0] = intent.getBooleanExtra(actionName, false);
+                } else {
+                    bundle[0] = intent.getExtras();
                 }
                 latch.countDown();
             }
@@ -1034,7 +1021,7 @@ public class TestUtils {
         if (exception[0] != null) {
             throw exception[0];
         }
-        return appOutput[0];
+        return bundle[0];
     }
 
     /**

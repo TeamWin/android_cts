@@ -16,6 +16,8 @@
 
 package com.android.cts.install.lib;
 
+import static android.app.PendingIntent.FLAG_MUTABLE;
+
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -63,7 +65,8 @@ public class LocalIntentSender extends BroadcastReceiver {
         Context context = InstrumentationRegistry.getContext();
         Intent intent = new Intent(context, LocalIntentSender.class);
         intent.putExtra(EXTRA_REQUEST_ID, mRequestId);
-        PendingIntent pending = PendingIntent.getBroadcast(context, mRequestId, intent, 0);
+        PendingIntent pending =
+                PendingIntent.getBroadcast(context, mRequestId, intent, FLAG_MUTABLE);
         return pending.getIntentSender();
     }
 

@@ -154,6 +154,11 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.focus.inTouchMode = msg.body.focus.inTouchMode;
             break;
         }
+        case InputMessage::Type::CAPTURE: {
+            outMsg->body.capture.eventId = msg.body.capture.eventId;
+            outMsg->body.capture.pointerCaptureEnabled = msg.body.capture.pointerCaptureEnabled;
+            break;
+        }
     }
 }
 
@@ -216,10 +221,8 @@ int main() {
     }
 
     InputMessage::Type types[] = {
-        InputMessage::Type::KEY,
-        InputMessage::Type::MOTION,
-        InputMessage::Type::FINISHED,
-        InputMessage::Type::FOCUS,
+            InputMessage::Type::KEY,   InputMessage::Type::MOTION,  InputMessage::Type::FINISHED,
+            InputMessage::Type::FOCUS, InputMessage::Type::CAPTURE,
     };
     for (InputMessage::Type type : types) {
         bool success = checkMessage(*server, *client, type);

@@ -15,8 +15,6 @@
  */
 package android.cts.statsdatom.statsd;
 
-import static com.android.os.AtomsProto.IntegrityCheckResultReported.Response.ALLOWED;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -28,59 +26,37 @@ import android.cts.statsdatom.lib.ReportUtils;
 import android.net.wifi.WifiModeEnum;
 import android.os.WakeLockLevelEnum;
 import android.server.ErrorSource;
-import android.telephony.NetworkTypeEnum;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.compatibility.common.util.PropertyUtil;
 import com.android.internal.os.StatsdConfigProto.FieldValueMatcher;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.os.AtomsProto;
 import com.android.os.AtomsProto.ANROccurred;
 import com.android.os.AtomsProto.AppBreadcrumbReported;
 import com.android.os.AtomsProto.AppCrashOccurred;
-import com.android.os.AtomsProto.AppOps;
 import com.android.os.AtomsProto.AppStartOccurred;
 import com.android.os.AtomsProto.AppUsageEventOccurred;
 import com.android.os.AtomsProto.Atom;
-import com.android.os.AtomsProto.AttributedAppOps;
 import com.android.os.AtomsProto.AttributionNode;
 import com.android.os.AtomsProto.AudioStateChanged;
-import com.android.os.AtomsProto.BinderCalls;
-import com.android.os.AtomsProto.BleScanResultReceived;
-import com.android.os.AtomsProto.BleScanStateChanged;
 import com.android.os.AtomsProto.BlobCommitted;
 import com.android.os.AtomsProto.BlobLeased;
 import com.android.os.AtomsProto.BlobOpened;
 import com.android.os.AtomsProto.CameraStateChanged;
-import com.android.os.AtomsProto.DangerousPermissionState;
-import com.android.os.AtomsProto.DangerousPermissionStateSampled;
 import com.android.os.AtomsProto.DeviceCalculatedPowerBlameUid;
 import com.android.os.AtomsProto.FlashlightStateChanged;
 import com.android.os.AtomsProto.ForegroundServiceAppOpSessionEnded;
 import com.android.os.AtomsProto.ForegroundServiceStateChanged;
 import com.android.os.AtomsProto.GpsScanStateChanged;
-import com.android.os.AtomsProto.IntegrityCheckResultReported;
-import com.android.os.AtomsProto.IonHeapSize;
 import com.android.os.AtomsProto.LmkKillOccurred;
-import com.android.os.AtomsProto.LooperStats;
 import com.android.os.AtomsProto.MediaCodecStateChanged;
 import com.android.os.AtomsProto.NotificationReported;
 import com.android.os.AtomsProto.OverlayStateChanged;
-import com.android.os.AtomsProto.PackageNotificationChannelGroupPreferences;
-import com.android.os.AtomsProto.PackageNotificationChannelPreferences;
-import com.android.os.AtomsProto.PackageNotificationPreferences;
-import com.android.os.AtomsProto.PictureInPictureStateChanged;
-import com.android.os.AtomsProto.ProcessMemoryHighWaterMark;
-import com.android.os.AtomsProto.ProcessMemorySnapshot;
-import com.android.os.AtomsProto.ProcessMemoryState;
-import com.android.os.AtomsProto.ScheduledJobStateChanged;
 import com.android.os.AtomsProto.SettingSnapshot;
 import com.android.os.AtomsProto.SyncStateChanged;
 import com.android.os.AtomsProto.TestAtomReported;
 import com.android.os.AtomsProto.UiEventReported;
 import com.android.os.AtomsProto.VibratorStateChanged;
 import com.android.os.AtomsProto.WakelockStateChanged;
-import com.android.os.AtomsProto.WakeupAlarmOccurred;
 import com.android.os.AtomsProto.WifiLockStateChanged;
 import com.android.os.AtomsProto.WifiMulticastLockStateChanged;
 import com.android.os.AtomsProto.WifiScanStateChanged;
@@ -92,10 +68,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
 import com.google.common.collect.Range;
-import com.google.protobuf.Descriptors;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -113,18 +86,9 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TEST_PACKAGE_NAME = "com.android.server.cts.device.statsd";
 
-    private static final int NUM_APP_OPS = AttributedAppOps.getDefaultInstance().getOp().
-            getDescriptorForType().getValues().size() - 1;
-
     private static final String ACTION_SHOW_APPLICATION_OVERLAY = "action.show_application_overlay";
-    private static final String ACTION_LONG_SLEEP_WHILE_TOP = "action.long_sleep_top";
-
-    private static final int WAIT_TIME_FOR_CONFIG_UPDATE_MS = 200;
-    private static final int EXTRA_WAIT_TIME_MS = 5_000; // as buffer when app starting/stopping.
-    private static final int STATSD_REPORT_WAIT_TIME_MS = 500; // make sure statsd finishes log.
 
     private static final String FEATURE_AUDIO_OUTPUT = "android.hardware.audio.output";
-    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final String FEATURE_CAMERA = "android.hardware.camera";
     private static final String FEATURE_CAMERA_FLASH = "android.hardware.camera.flash";
     private static final String FEATURE_CAMERA_FRONT = "android.hardware.camera.front";
@@ -832,117 +796,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         WifiScanStateChanged a1 = data.get(1).getAtom().getWifiScanStateChanged();
         assertThat(a0.getState().getNumber()).isEqualTo(stateOn);
         assertThat(a1.getState().getNumber()).isEqualTo(stateOff);
-    }
-
-    public void testDangerousPermissionStateSampled() throws Exception {
-        // get full atom for reference
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER);
-
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        List<DangerousPermissionState> fullDangerousPermissionState = new ArrayList<>();
-        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
-            fullDangerousPermissionState.add(atom.getDangerousPermissionState());
-        }
-
-        ConfigUtils.removeConfig(getDevice());
-        ReportUtils.clearReports(getDevice()); // Clears data.
-        List<Atom> gaugeMetricDataList = null;
-
-        // retries in case sampling returns full list or empty list - which should be extremely rare
-        for (int attempt = 0; attempt < 10; attempt++) {
-            // Set up what to collect
-            ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                    Atom.DANGEROUS_PERMISSION_STATE_SAMPLED_FIELD_NUMBER);
-
-            // Pull a report
-            AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-            gaugeMetricDataList = ReportUtils.getGaugeMetricAtoms(getDevice());
-            if (gaugeMetricDataList.size() > 0
-                    && gaugeMetricDataList.size() < fullDangerousPermissionState.size()) {
-                break;
-            }
-            ConfigUtils.removeConfig(getDevice());
-            ReportUtils.clearReports(getDevice()); // Clears data.
-        }
-        assertThat(gaugeMetricDataList.size()).isGreaterThan(0);
-        assertThat(gaugeMetricDataList.size()).isLessThan(fullDangerousPermissionState.size());
-
-        long lastUid = -1;
-        int fullIndex = 0;
-
-        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
-            DangerousPermissionStateSampled permissionState =
-                    atom.getDangerousPermissionStateSampled();
-
-            DangerousPermissionState referenceState = fullDangerousPermissionState.get(fullIndex);
-
-            if (referenceState.getUid() != permissionState.getUid()) {
-                // atoms are sampled on uid basis if uid is present, all related permissions must
-                // be logged.
-                assertThat(permissionState.getUid()).isNotEqualTo(lastUid);
-                continue;
-            }
-
-            lastUid = permissionState.getUid();
-
-            assertThat(permissionState.getPermissionFlags()).isEqualTo(
-                    referenceState.getPermissionFlags());
-            assertThat(permissionState.getIsGranted()).isEqualTo(referenceState.getIsGranted());
-            assertThat(permissionState.getPermissionName()).isEqualTo(
-                    referenceState.getPermissionName());
-
-            fullIndex++;
-        }
-    }
-
-    public void testAppOps() throws Exception {
-        // Set up what to collect
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.APP_OPS_FIELD_NUMBER);
-
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testAppOps");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        // Pull a report
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        ArrayList<Integer> expectedOps = new ArrayList<>();
-        for (int i = 0; i < NUM_APP_OPS; i++) {
-            expectedOps.add(i);
-        }
-
-        for (Descriptors.EnumValueDescriptor valueDescriptor :
-                AttributedAppOps.getDefaultInstance().getOp().getDescriptorForType().getValues()) {
-            if (valueDescriptor.getOptions().hasDeprecated()) {
-                // Deprecated app op, remove from list of expected ones.
-                expectedOps.remove(expectedOps.indexOf(valueDescriptor.getNumber()));
-            }
-        }
-        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
-
-            AppOps appOps = atom.getAppOps();
-            if (appOps.getPackageName().equals(DeviceUtils.STATSD_ATOM_TEST_PKG)) {
-                if (appOps.getOpId().getNumber() == -1) {
-                    continue;
-                }
-                long totalNoted = appOps.getTrustedForegroundGrantedCount()
-                        + appOps.getTrustedBackgroundGrantedCount()
-                        + appOps.getTrustedForegroundRejectedCount()
-                        + appOps.getTrustedBackgroundRejectedCount();
-                assertWithMessage("Operation in APP_OPS_ENUM_MAP: " + appOps.getOpId().getNumber())
-                        .that(totalNoted - 1).isEqualTo(appOps.getOpId().getNumber());
-                assertWithMessage("Unexpected Op reported").that(expectedOps).contains(
-                        appOps.getOpId().getNumber());
-                expectedOps.remove(expectedOps.indexOf(appOps.getOpId().getNumber()));
-            }
-        }
-        assertWithMessage("Logging app op ids are missing in report.").that(expectedOps).isEmpty();
     }
 
     public void testANROccurred() throws Exception {
