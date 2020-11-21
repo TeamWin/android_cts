@@ -3196,10 +3196,19 @@ public class TelephonyManagerTest {
         if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
             assertTrue(bandwidth != null);
             assertTrue(bandwidth.getPrimaryDownlinkCapacityKbps()
-                            != CarrierBandwidth.INVALID);
+                    != CarrierBandwidth.INVALID);
             assertTrue(bandwidth.getPrimaryUplinkCapacityKbps()
-                            != CarrierBandwidth.INVALID);
+                    != CarrierBandwidth.INVALID);
         }
+    }
+
+    @Test
+    public void testIsRadioInterfaceCapabilitySupported() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
+
+        assertFalse(mTelephonyManager.isRadioInterfaceCapabilitySupported("empty"));
+        assertFalse(mTelephonyManager.isRadioInterfaceCapabilitySupported(null));
+        assertFalse(mTelephonyManager.isRadioInterfaceCapabilitySupported(""));
     }
 
     /**
