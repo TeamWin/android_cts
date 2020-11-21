@@ -23,7 +23,7 @@
     <application>
         <activity android:name="android.server.biometrics.Class2BiometricOrCredentialActivity"
             android:exported="true"/>
-        <activity android:name="android.server.biometrics.Class3BiometricActivity"
+        <activity android:name="android.server.biometrics.Class2BiometricActivity"
             android:exported="true"/>
     </application>
 
