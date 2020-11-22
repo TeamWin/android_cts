@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package android.server.biometrics;
+package com.android.cts.packagepropertyapp;
 
-import android.content.ComponentName;
-import android.server.wm.component.ComponentsBase;
+import android.app.Activity;
+import android.os.Bundle;
 
-public class Components extends ComponentsBase {
-    public static final ComponentName CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY =
-            component("Class2BiometricOrCredentialActivity");
-    public static final ComponentName CLASS_2_BIOMETRIC_ACTIVITY =
-            component("Class2BiometricActivity");
-
-    private static ComponentName component(String className) {
-        return component(Components.class, className);
+public class TestActivity extends Activity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        finish();
     }
 }
