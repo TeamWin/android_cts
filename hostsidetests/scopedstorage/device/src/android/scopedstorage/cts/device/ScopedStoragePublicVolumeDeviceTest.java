@@ -22,28 +22,33 @@ import android.scopedstorage.cts.lib.TestUtils;
 
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Device-side test suite to verify scoped storage business logic.
+ * Test suite to run ScopedStorageDeviceTest on a public volume.
  */
 @RunWith(AndroidJUnit4.class)
-public class ScopedStorageDeviceTest {
+public class ScopedStoragePublicVolumeDeviceTest extends ScopedStorageDeviceTest {
 
     @BeforeClass
-    public static void deletePublicVolumes() throws Exception {
-        TestUtils.resetDefaultExternalStorageVolume();
+    public static void setupPublicVolume() throws Exception {
+        TestUtils.createNewPublicVolume();
+        final String volumeName = TestUtils.getPublicVolumeName();
+        assertThat(volumeName).isNotNull();
+        TestUtils.setExternalStorageVolume(volumeName);
     }
 
-    /**
-     * No-op test.
-     */
     @Test
-    public void noopTest() {
-        // TODO(159593019): Move tests that don't require host side support from
-        // ScopedStorageTest here.
-        assertThat(5).isAtLeast(4);
+    public void verifySetup() {
+        assertThat(TestUtils.getExternalFilesDir().getAbsolutePath().indexOf("emulated"))
+                .isEqualTo(-1);
+    }
+
+    @AfterClass
+    public static void deletePublicVolumes() throws Exception {
+        TestUtils.resetDefaultExternalStorageVolume();
     }
 }
