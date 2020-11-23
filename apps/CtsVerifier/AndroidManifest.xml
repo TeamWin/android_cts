@@ -1818,11 +1818,11 @@
         </activity>
         -->
 
-        <activity android:name=".location.LocationListenerActivity"
+        <activity android:name=".managedprovisioning.LocationListenerActivity"
                 android:label="@string/location_listener_activity"
                 android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
-                <action android:name="com.android.cts.verifier.location.SET_LOCATION_AND_CHECK" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.SET_LOCATION_AND_CHECK" />
                 <category android:name="android.intent.category.DEFAULT"></category>
                 </intent-filter>
             <meta-data android:name="display_mode"

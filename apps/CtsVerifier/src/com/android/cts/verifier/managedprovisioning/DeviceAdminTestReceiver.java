@@ -32,11 +32,11 @@ import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.android.cts.verifier.R;
-import com.android.cts.verifier.location.LocationListenerActivity;
 
 import java.util.Collections;
 import java.util.function.Consumer;
