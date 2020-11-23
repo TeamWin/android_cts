@@ -96,3 +96,15 @@ java_test_host {
     test_suites: ["general-tests", "mts"],
     test_config: "PublicVolumeTest.xml",
 }
+
+android_test {
+    name: "ScopedStorageDeviceOnlyTest",
+    manifest: "device/AndroidManifest.xml",
+    test_config: "device/AndroidTest.xml",
+    srcs: ["device/**/*.java"],
+    static_libs: ["truth-prebuilt", "cts-scopedstorage-lib"],
+    compile_multilib: "both",
+    test_suites: ["device-tests", "mts", "cts"],
+    sdk_version: "test_current",
+    libs: ["android.test.base", "android.test.mock", "android.test.runner",],
+}
