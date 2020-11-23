@@ -26,6 +26,8 @@ import static android.media.cts.MediaSessionTestService.TEST_SERIES_OF_SET_QUEUE
 import static android.media.cts.MediaSessionTestService.TEST_SET_QUEUE_WITH_LARGE_NUMBER_OF_ITEMS;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
+import android.annotation.NonNull;
+import android.annotation.Nullable;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -48,6 +50,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
+import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
@@ -55,6 +58,7 @@ import android.view.KeyEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -117,6 +121,24 @@ public class MediaSessionTest extends AndroidTestCase {
         verifyNewSession(controller);
     }
 
+    public void testSessionTokenEquals() {
+        MediaSession anotherSession = null;
+        try {
+            anotherSession = new MediaSession(getContext(), TEST_SESSION_TAG);
+            MediaSession.Token sessionToken = mSession.getSessionToken();
+            MediaSession.Token anotherSessionToken = anotherSession.getSessionToken();
+
+            assertTrue(sessionToken.equals(sessionToken));
+            assertFalse(sessionToken.equals(null));
+            assertFalse(sessionToken.equals(mSession));
+            assertFalse(sessionToken.equals(anotherSessionToken));
+        } finally {
+            if (anotherSession != null) {
+                anotherSession.release();
+            }
+        }
+    }
+
     /**
      * Tests MediaSession.Token created in the constructor of MediaSession.
      */
@@ -130,9 +152,17 @@ public class MediaSessionTest extends AndroidTestCase {
         Parcel p = Parcel.obtain();
         sessionToken.writeToParcel(p, 0);
         p.setDataPosition(0);
-        MediaSession.Token token = MediaSession.Token.CREATOR.createFromParcel(p);
-        assertEquals(token, sessionToken);
+        MediaSession.Token tokenFromParcel = MediaSession.Token.CREATOR.createFromParcel(p);
+        assertEquals(tokenFromParcel, sessionToken);
         p.recycle();
+
+        final int arraySize = 5;
+        MediaSession.Token[] tokenArray = MediaSession.Token.CREATOR.newArray(arraySize);
+        assertNotNull(tokenArray);
+        assertEquals(arraySize, tokenArray.length);
+        for (MediaSession.Token tokenElement : tokenArray) {
+            assertNull(tokenElement);
+        }
     }
 
     /**
@@ -661,22 +691,20 @@ public class MediaSessionTest extends AndroidTestCase {
                 .setMediaId("media-id")
                 .setTitle("title");
 
+        try {
+            new QueueItem(/*description=*/null, TEST_QUEUE_ID);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+        try {
+            new QueueItem(descriptionBuilder.build(), QueueItem.UNKNOWN_ID);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
+
         QueueItem item = new QueueItem(descriptionBuilder.build(), TEST_QUEUE_ID);
-        assertEquals(TEST_QUEUE_ID, item.getQueueId());
-        assertEquals("media-id", item.getDescription().getMediaId());
-        assertEquals("title", item.getDescription().getTitle());
-        assertEquals(0, item.describeContents());
-
-        QueueItem sameItem = new QueueItem(descriptionBuilder.build(), TEST_QUEUE_ID);
-        assertTrue(item.equals(sameItem));
-
-        QueueItem differentQueueId = new QueueItem(
-            descriptionBuilder.build(), TEST_QUEUE_ID + 1);
-        assertFalse(item.equals(differentQueueId));
-
-        QueueItem differentDescription = new QueueItem(
-            descriptionBuilder.setTitle("title2").build(), TEST_QUEUE_ID);
-        assertFalse(item.equals(differentDescription));
 
         Parcel p = Parcel.obtain();
         item.writeToParcel(p, 0);
@@ -684,6 +712,40 @@ public class MediaSessionTest extends AndroidTestCase {
         QueueItem other = QueueItem.CREATOR.createFromParcel(p);
         assertEquals(item.toString(), other.toString());
         p.recycle();
+
+        final int arraySize = 5;
+        QueueItem[] queueItemArray = QueueItem.CREATOR.newArray(arraySize);
+        assertNotNull(queueItemArray);
+        assertEquals(arraySize, queueItemArray.length);
+        for (QueueItem elem : queueItemArray) {
+            assertNull(elem);
+        }
+    }
+
+    public void testQueueItemEquals() {
+        MediaDescription.Builder descriptionBuilder = new MediaDescription.Builder()
+                .setMediaId("media-id")
+                .setTitle("title");
+
+        QueueItem item = new QueueItem(descriptionBuilder.build(), TEST_QUEUE_ID);
+        assertEquals(TEST_QUEUE_ID, item.getQueueId());
+        assertEquals("media-id", item.getDescription().getMediaId());
+        assertEquals("title", item.getDescription().getTitle());
+        assertEquals(0, item.describeContents());
+
+        assertFalse(item.equals(null));
+        assertFalse(item.equals(descriptionBuilder.build()));
+
+        QueueItem sameItem = new QueueItem(descriptionBuilder.build(), TEST_QUEUE_ID);
+        assertTrue(item.equals(sameItem));
+
+        QueueItem differentQueueId = new QueueItem(
+                descriptionBuilder.build(), TEST_QUEUE_ID + 1);
+        assertFalse(item.equals(differentQueueId));
+
+        QueueItem differentDescription = new QueueItem(
+                descriptionBuilder.setTitle("title2").build(), TEST_QUEUE_ID);
+        assertFalse(item.equals(differentDescription));
     }
 
     public void testSessionInfoWithFrameworkParcelable() {
