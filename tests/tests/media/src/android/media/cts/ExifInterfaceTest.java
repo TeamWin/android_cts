@@ -301,6 +301,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
             assertNull(exifInterface.getThumbnailRange());
             assertNull(exifInterface.getThumbnail());
             assertNull(exifInterface.getThumbnailBitmap());
+            assertFalse(exifInterface.isThumbnailCompressed());
         }
 
         // Checks GPS information.
@@ -612,6 +613,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         assertNotNull(thumbnailBitmap);
         assertEquals(expectedValue.thumbnailWidth, thumbnailBitmap.getWidth());
         assertEquals(expectedValue.thumbnailHeight, thumbnailBitmap.getHeight());
+        assertEquals(expectedValue.isThumbnailCompressed, exifInterface.isThumbnailCompressed());
     }
 
     @Override
