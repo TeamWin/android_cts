@@ -201,6 +201,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * be clear if an application creates an virtual display without the
      * flag {@link DisplayManager#VIRTUAL_DISPLAY_FLAG_TRUSTED}.
      */
+    @SecurityTest
     public void testUntrustedSysDecorVirtualDisplay() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, mSurface,
@@ -227,6 +228,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that throws {@link SecurityException} when an application creates a trusted virtual
      * display without holding the permission {@code ADD_TRUSTED_DISPLAY}.
      */
+    @SecurityTest
     public void testTrustedVirtualDisplay() throws Exception {
         try {
             VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
