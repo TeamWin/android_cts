@@ -5424,11 +5424,11 @@
     <permission android:name="android.permission.CONTROL_DEVICE_STATE"
                 android:protectionLevel="signature" />
 
-    <!-- Must be required by an {@link android.service.screenshot.ScreenshotHasherService}
+    <!-- Must be required by an {@link android.service.displayhash.DisplayHasherService}
          to ensure that only the system can bind to it.
          @hide This is not a third-party API (intended for OEMs and system apps).
     -->
-    <permission android:name="android.permission.BIND_SCREENSHOT_HASHER_SERVICE"
+    <permission android:name="android.permission.BIND_DISPLAY_HASHER_SERVICE"
         android:protectionLevel="signature" />
 
     <!-- @hide @TestApi Allows an application to enable/disable toast rate limiting.
