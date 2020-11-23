@@ -18,6 +18,7 @@ package android.server.biometrics;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import android.content.ComponentName;
 import android.os.ParcelFileDescriptor;
 
 import java.io.ByteArrayOutputStream;
@@ -49,5 +50,10 @@ public class Utils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static void forceStopActivity(ComponentName componentName) {
+        executeShellCommand("am force-stop " + componentName.getPackageName()
+                + " " + componentName.getShortClassName().replaceAll("\\.", ""));
     }
 }
