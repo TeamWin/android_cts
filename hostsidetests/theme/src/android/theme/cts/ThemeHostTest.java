@@ -304,7 +304,7 @@ public class ThemeHostTest extends DeviceTestCase {
     private boolean checkHardwareTypeSkipTest() {
         try {
          if( mDevice.hasFeature("feature:android.hardware.type.watch")
-                 || mDevice.hasFeature("featute:android.hardware.type.television")
+                 || mDevice.hasFeature("feature:android.hardware.type.television")
                  || mDevice.hasFeature("feature:android.hardware.type.automotive")) {
              return true;
          }
