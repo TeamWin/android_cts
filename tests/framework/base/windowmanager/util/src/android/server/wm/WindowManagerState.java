@@ -374,14 +374,23 @@ public class WindowManagerState {
         for (int i = 0; i < display.mRootTasks.size(); i++) {
             ActivityTask task = display.mRootTasks.get(i);
             mRootTasks.add(task);
-            if (task.mResumedActivity != null) {
-                mResumedActivitiesInStacks.add(task.mResumedActivity);
-            }
+            addResumedActivity(task);
         }
 
         if (display.mDefaultPinnedStackBounds != null) {
             mDefaultPinnedStackBounds = display.mDefaultPinnedStackBounds;
             mPinnedStackMovementBounds = display.mPinnedStackMovementBounds;
+        }
+    }
+
+    private void addResumedActivity(ActivityTask task) {
+        final int numChildTasks = task.mTasks.size();
+        if (numChildTasks > 0) {
+            for (int i = numChildTasks - 1; i >=0; i--) {
+                addResumedActivity(task.mTasks.get(i));
+            }
+        } else if (task.mResumedActivity != null) {
+            mResumedActivitiesInStacks.add(task.mResumedActivity);
         }
     }
 
@@ -1266,6 +1275,10 @@ public class WindowManagerState {
         }
         boolean isRootTask() {
             return mTaskId == mRootTaskId;
+        }
+
+        boolean isLeafTask() {
+            return mTasks.size() == 0;
         }
 
         public int getRootTaskId() {

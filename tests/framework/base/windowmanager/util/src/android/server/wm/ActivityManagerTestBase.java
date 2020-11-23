@@ -1064,7 +1064,9 @@ public abstract class ActivityManagerTestBase {
                 mWmState.getRootTask(frontRootTaskId);
         assertEquals(
                 "Resumed activity of front root task of the target display must match. " + message,
-                activityClassName, frontRootTaskOnDisplay.mResumedActivity);
+                activityClassName,
+                frontRootTaskOnDisplay.isLeafTask() ? frontRootTaskOnDisplay.mResumedActivity
+                        : frontRootTaskOnDisplay.getTopTask().mResumedActivity);
         mWmState.assertFocusedStack("Top activity's rootTask must also be on top", frontRootTaskId);
         mWmState.assertVisibility(activityName, true /* visible */);
     }
