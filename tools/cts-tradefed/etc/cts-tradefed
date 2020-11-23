@@ -93,35 +93,11 @@ if [ -z ${CTS_ROOT} ]; then
 fi;
 
 JAR_DIR=${CTS_ROOT}/android-cts/tools
-JARS="tradefed
-  tradefed-test-framework
-  loganalysis
-  compatibility-host-util
-  compatibility-host-util-tests
-  cts-tradefed
-  cts-tradefed-tests
-  compatibility-common-util-tests
-  compatibility-tradefed-tests"
 
-for JAR in $JARS; do
-    checkFile ${JAR_DIR}/${JAR}.jar
-    JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
+for JAR in ${JAR_DIR}/*.jar; do
+    JAR_PATH=${JAR_PATH}:${JAR}
 done
 JAR_PATH=${JAR_PATH:1} # Strip off leading ':'
-
-OPTIONAL_JARS="
-  google-tradefed
-  google-tradefed-tests
-  google-tf-prod-tests"
-
-STANDALONE_JAR_DIR=${ANDROID_HOST_OUT}/framework
-for JAR in $OPTIONAL_JARS; do
-    if [ -f "${JAR_DIR}/${JAR}.jar" ]; then
-        JAR_PATH=${JAR_PATH}:${JAR_DIR}/${JAR}.jar
-    elif [ -f "${STANDALONE_JAR_DIR}/${JAR}.jar" ]; then
-        JAR_PATH=${JAR_PATH}:${STANDALONE_JAR_DIR}/${JAR}.jar
-    fi;
-done
 
 # load any shared libraries for host-side executables
 LIB_DIR=${CTS_ROOT}/android-cts/lib
