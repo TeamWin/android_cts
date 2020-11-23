@@ -940,27 +940,31 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     public void testSettingsStatsReported() throws Exception {
         // Base64 encoded proto com.android.service.nano.StringListParamProto,
-        // which contains two strings "font_scale" and "screen_auto_brightness_adj".
-        final String encoded = "ChpzY3JlZW5fYXV0b19icmlnaHRuZXNzX2FkagoKZm9udF9zY2FsZQ";
-        final String font_scale = "font_scale";
-        SettingSnapshot snapshot = null;
+        // which contains five strings 'low_power_trigger_level', 'preferred_network_mode1',
+        // 'preferred_network_mode1_int', 'wfc_ims_mode','zen_mode'
+        final String encoded =
+                "Chdsb3dfcG93ZXJfdHJpZ2dlcl9sZXZlbAoQd2ZjX2ltc19tb2RlID0gMgoXcHJlZmVycmVkX25ldHdvcmtfbW9kZTEKG3ByZWZlcnJlZF9uZXR3b3JrX21vZGUxX2ludAoIemVuX21vZGU";
+        final String network_mode1 = "preferred_network_mode1";
 
-        float originalFontScale;
+        int originalNetworkMode;
         try {
-            originalFontScale = Float.parseFloat(
-                    getDevice().executeShellCommand("settings get system font_scale"));
+            originalNetworkMode = Integer.parseInt(
+                    getDevice().executeShellCommand("settings get global " + network_mode1));
         } catch (NumberFormatException e) {
-            // The font_scale has not yet been set. 1.0 is the expected default value.
-            originalFontScale = 1;
+            // The default value, zen mode is not enabled
+            originalNetworkMode = 0;
         }
-
+        // Clear settings_stats device config.
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        getDevice().executeShellCommand(
+                "device_config reset untrusted_clear settings_stats");
         // Set whitelist through device config.
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         getDevice().executeShellCommand(
-                "device_config put settings_stats SystemFeature__float_whitelist " + encoded);
+                "device_config put settings_stats GlobalFeature__integer_whitelist " + encoded);
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-        // Set font_scale value
-        getDevice().executeShellCommand("settings put system font_scale 1.5");
+        // Set network_mode1 value
+        getDevice().executeShellCommand("settings put global " + network_mode1 + " 15");
 
         // Get SettingSnapshot as a simple gauge metric.
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
@@ -976,13 +980,13 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
             Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
         }
 
-        // Test the size of atoms. It should contain at least "font_scale" and
-        // "screen_auto_brightness_adj" two setting values.
+        // Test the size of atoms. It should contain 5 atoms.
         List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
-        assertThat(atoms.size()).isAtLeast(2);
+        assertThat(atoms.size()).isEqualTo(5);
+        SettingSnapshot snapshot = null;
         for (Atom atom : atoms) {
             SettingSnapshot settingSnapshot = atom.getSettingSnapshot();
-            if (font_scale.equals(settingSnapshot.getName())) {
+            if (network_mode1.equals(settingSnapshot.getName())) {
                 snapshot = settingSnapshot;
                 break;
             }
@@ -991,19 +995,20 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         // Test the data of atom.
         assertNotNull(snapshot);
-        // Get font_scale value and test value type.
-        final float newFontScale = Float.parseFloat(
-                getDevice().executeShellCommand("settings get system font_scale"));
+        // Get setting value and test value type.
+        final int newNetworkMode = Integer.parseInt(
+                getDevice().executeShellCommand("settings get global " + network_mode1).trim());
         assertThat(snapshot.getType()).isEqualTo(
-                SettingSnapshot.SettingsValueType.ASSIGNED_FLOAT_TYPE);
+                SettingSnapshot.SettingsValueType.ASSIGNED_INT_TYPE);
         assertThat(snapshot.getBoolValue()).isEqualTo(false);
-        assertThat(snapshot.getIntValue()).isEqualTo(0);
-        assertThat(snapshot.getFloatValue()).isEqualTo(newFontScale);
+        assertThat(snapshot.getIntValue()).isEqualTo(newNetworkMode);
+        assertThat(snapshot.getFloatValue()).isEqualTo(0f);
         assertThat(snapshot.getStrValue()).isEqualTo("");
         assertThat(snapshot.getUserId()).isEqualTo(0);
 
-        // Restore the font value.
-        getDevice().executeShellCommand("settings put system font_scale " + originalFontScale);
+        // Restore the setting value.
+        getDevice().executeShellCommand(
+                "settings put global " + network_mode1 + " " + originalNetworkMode);
     }
 
 /*
