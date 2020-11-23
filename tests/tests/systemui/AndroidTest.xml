@@ -28,6 +28,7 @@
         <option name="test-file-name" value="AudioRecorderTestApp_AudioRecord.apk" />
         <option name="test-file-name" value="AudioRecorderTestApp_MediaRecorder.apk" />
         <option name="test-file-name" value="CtsMockInputMethod.apk" />
+        <option name="test-file-name" value="CtsVpnFirewallApp.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
