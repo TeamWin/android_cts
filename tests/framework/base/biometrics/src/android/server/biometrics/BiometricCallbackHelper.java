@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Bundle;
 import android.server.wm.TestJournalProvider;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 
 public class BiometricCallbackHelper extends BiometricPrompt.AuthenticationCallback {
 
+    private static final String TAG = "BiometricCallbackHelper";
     public static final String KEY = "key_auth_callback";
 
     public static class State {
@@ -92,29 +94,34 @@ public class BiometricCallbackHelper extends BiometricPrompt.AuthenticationCallb
 
     @Override
     public void onAuthenticationError(int errorCode, CharSequence errString) {
+        Log.d(TAG, "onAuthenticationError: " + errorCode + ", " + errString);
         mState.mErrorsReceived.add(errorCode);
         updateJournal();
     }
 
     @Override
     public void onAuthenticationHelp(int helpCode, CharSequence helpString) {
+        Log.d(TAG, "onAuthenticationHelp: " + helpCode + ", " + helpString);
         mState.mAcquiredReceived.add(helpCode);
         updateJournal();
     }
 
     @Override
     public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+        Log.d(TAG, "onAuthenticationSucceeded");
         mState.mNumAuthAccepted++;
         updateJournal();
     }
 
     @Override
     public void onAuthenticationFailed() {
+        Log.d(TAG, "onAuthenticationFailed");
         mState.mNumAuthRejected++;
         updateJournal();
     }
 
     void onNegativeButtonPressed() {
+        Log.d(TAG, "onNegativeButtonPressed");
         mState.mNegativeButtonPressed = true;
         updateJournal();
     }
