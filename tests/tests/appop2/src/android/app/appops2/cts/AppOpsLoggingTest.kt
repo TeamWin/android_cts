@@ -43,7 +43,7 @@ import org.junit.Test
 import java.io.File
 import java.util.concurrent.Executor
 
-private const val TEST_ATTRIBUTION_TAG = "testAttribution";
+private const val TEST_ATTRIBUTION_TAG = "testAttribution"
 
 @AppModeFull(reason = "Test relies on other app to connect to. Instant apps can't see other apps")
 class AppOpsLoggingTest {
@@ -121,7 +121,7 @@ class AppOpsLoggingTest {
 
             // Commit session (should trigger installAction receiver)
             session.commit(PendingIntent.getBroadcast(context, 0, Intent(installAction),
-                    PendingIntent.FLAG_UPDATE_CURRENT).intentSender)
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE).intentSender)
 
             eventually {
                 assertThat(asyncNoted[0].op).isEqualTo(
