@@ -27,6 +27,7 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.HostTest" >
         <option name="class" value="android.scopedstorage.cts.host.LegacyStorageHostTest" />
+        <option name="class" value="android.scopedstorage.cts.host.PreserveLegacyStorageHostTest" />
         <option name="class" value="android.scopedstorage.cts.host.ScopedStorageHostTest" />
         <option name="class" value="android.scopedstorage.cts.host.ScopedStorageInstantAppHostTest" />
     </test>
