@@ -103,10 +103,11 @@ public class PackageSignatureTest extends AndroidTestCase {
         wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_resolv));
         wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_runtime_debug));
         wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_runtime_release));
-        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_tzdata2));
-        // The following keys are no longer in use by modules, but it won't negatively affect tests
-        // to include their signatures here too.
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_tzdata3));
+        // The following keys are not not used by modules on the latest Android release, but it
+        // won't negatively affect tests to include their signatures here too.
         wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_tzdata));
+        wellKnownSignatures.add(getSignature(R.raw.sig_com_google_android_tzdata2));
         return wellKnownSignatures;
     }
 
