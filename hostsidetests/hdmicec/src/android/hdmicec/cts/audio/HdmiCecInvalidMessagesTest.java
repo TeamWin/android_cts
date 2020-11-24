@@ -102,64 +102,6 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
     }
 
     /**
-     * Test 12-1
-     * Tests that the device ignores every broadcast only message that is received as
-     * directly addressed.
-     */
-    @Test
-    public void cect_12_1_BroadcastReceivedAsDirectlyAddressed() throws Exception {
-        /* <Set Menu Language> */
-        assumeTrue(isLanguageEditable());
-        final String locale = getSystemLocale();
-        final String originalLanguage = extractLanguage(locale);
-        final String language = originalLanguage.equals("spa") ? "eng" : "spa";
-        try {
-            hdmiCecClient.sendCecMessage(
-                    LogicalAddress.TV,
-                    AUDIO_DEVICE,
-                    CecOperand.SET_MENU_LANGUAGE,
-                    CecMessage.convertStringToHexParams(language));
-            assertThat(originalLanguage).isEqualTo(extractLanguage(getSystemLocale()));
-        } finally {
-            // If the language was incorrectly changed during the test, restore it.
-            setSystemLocale(locale);
-        }
-    }
-
-    /**
-     * Test 12-2
-     * Tests that the device ignores directly addressed message <GET_CEC_VERSION> if received as
-     * a broadcast message
-     */
-    @Test
-    public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_getCecVersion() throws Exception {
-        hdmiCecClient.sendCecMessage(
-                LogicalAddress.TV,
-                LogicalAddress.BROADCAST,
-                CecOperand.GET_CEC_VERSION);
-        hdmiCecClient.checkOutputDoesNotContainMessage(
-                LogicalAddress.TV,
-                CecOperand.CEC_VERSION);
-    }
-
-    /**
-     * Test 12-2
-     * Tests that the device ignores directly addressed message <GIVE_PHYSICAL_ADDRESS> if received
-     * as a broadcast message
-     */
-    @Test
-    public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_givePhysicalAddress()
-        throws Exception {
-        hdmiCecClient.sendCecMessage(
-                LogicalAddress.TV,
-                LogicalAddress.BROADCAST,
-                CecOperand.GIVE_PHYSICAL_ADDRESS);
-        hdmiCecClient.checkOutputDoesNotContainMessage(
-                LogicalAddress.BROADCAST,
-                CecOperand.REPORT_PHYSICAL_ADDRESS);
-    }
-
-    /**
      * Test 12-2
      * Tests that the device ignores directly addressed message <GIVE_AUDIO_STATUS> if received as
      * a broadcast message
@@ -173,55 +115,6 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
         hdmiCecClient.checkOutputDoesNotContainMessage(
                 LogicalAddress.TV,
                 CecOperand.REPORT_AUDIO_STATUS);
-    }
-
-    /**
-     * Test 12-2
-     * Tests that the device ignores directly addressed message <GIVE_POWER_STATUS> if received as
-     * a broadcast message
-     */
-    @Test
-    public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_givePowerStatus() throws Exception {
-        hdmiCecClient.sendCecMessage(
-                LogicalAddress.TV,
-                LogicalAddress.BROADCAST,
-                CecOperand.GIVE_POWER_STATUS);
-        hdmiCecClient.checkOutputDoesNotContainMessage(
-                LogicalAddress.TV,
-                CecOperand.REPORT_POWER_STATUS);
-    }
-
-    /**
-     * Test 12-2
-     * Tests that the device ignores directly addressed message <GIVE_DEVICE_VENDOR_ID> if received
-     * as a broadcast message
-     */
-    @Test
-    public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_giveDeviceVendorId()
-        throws Exception {
-        hdmiCecClient.sendCecMessage(
-                LogicalAddress.TV,
-                LogicalAddress.BROADCAST,
-                CecOperand.GIVE_DEVICE_VENDOR_ID);
-        hdmiCecClient.checkOutputDoesNotContainMessage(
-                LogicalAddress.BROADCAST,
-                CecOperand.DEVICE_VENDOR_ID);
-    }
-
-    /**
-     * Test 12-2
-     * Tests that the device ignores directly addressed message <GIVE_OSD_NAME> if received as
-     * a broadcast message
-     */
-    @Test
-    public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_giveOsdName() throws Exception {
-        hdmiCecClient.sendCecMessage(
-                LogicalAddress.TV,
-                LogicalAddress.BROADCAST,
-                CecOperand.GIVE_OSD_NAME);
-        hdmiCecClient.checkOutputDoesNotContainMessage(
-                LogicalAddress.TV,
-                CecOperand.SET_OSD_NAME);
     }
 
     /**
@@ -309,28 +202,5 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
         hdmiCecClient.checkOutputDoesNotContainMessage(
                 LogicalAddress.BROADCAST,
                 CecOperand.TERMINATE_ARC);
-    }
-
-    /**
-     * Test 12-2
-     * Tests that the device ignores directly addressed message <USER_CONTROL_PRESSED> if received
-     * as a broadcast message
-     */
-    @Test
-    public void cect_12_2_DirectlyAddressedReceivedAsBroadcast_userControlPressed()
-        throws Exception {
-        ITestDevice device = getDevice();
-        // Clear activity
-        device.executeShellCommand(CLEAR_COMMAND);
-        // Clear logcat.
-        device.executeAdbCommand("logcat", "-c");
-        // Start the APK and wait for it to complete.
-        device.executeShellCommand(START_COMMAND);
-        hdmiCecClient.sendUserControlPressAndRelease(
-                LogicalAddress.TV,
-                LogicalAddress.BROADCAST,
-                HdmiCecConstants.CEC_CONTROL_UP,
-                false);
-        LogHelper.assertLogDoesNotContain(getDevice(), CLASS, "Short press KEYCODE_DPAD_UP");
     }
 }
