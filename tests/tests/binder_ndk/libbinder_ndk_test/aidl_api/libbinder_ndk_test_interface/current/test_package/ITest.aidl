@@ -81,6 +81,7 @@ interface ITest {
   void RepeatExtendableParcelable(in test_package.ExtendableParcelable input, out test_package.ExtendableParcelable output);
   test_package.SimpleUnion RepeatSimpleUnion(in test_package.SimpleUnion u);
   IBinder getICompatTest();
+  void RepeatExtendableParcelableWithoutExtension(in test_package.ExtendableParcelable input, out test_package.ExtendableParcelable output);
   const int kZero = 0;
   const int kOne = 1;
   const int kOnes = -1;
