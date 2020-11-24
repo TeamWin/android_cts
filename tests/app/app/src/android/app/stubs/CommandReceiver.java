@@ -175,7 +175,11 @@ public class CommandReceiver extends BroadcastReceiver {
         fgsIntent.setComponent(new ComponentName(targetPackage, FG_SERVICE_NAME));
         int command = LocalForegroundService.COMMAND_START_FOREGROUND;
         fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
-        context.startForegroundService(fgsIntent);
+        try {
+            context.startForegroundService(fgsIntent);
+        } catch (IllegalStateException e) {
+            Log.d(TAG, "startForegroundService gets an IllegalStateException", e);
+        }
     }
 
     private void doStartForegroundServiceWithType(Context context, Intent commandIntent) {
@@ -185,7 +189,11 @@ public class CommandReceiver extends BroadcastReceiver {
         fgsIntent.setComponent(new ComponentName(targetPackage, FG_LOCATION_SERVICE_NAME));
         int command = LocalForegroundServiceLocation.COMMAND_START_FOREGROUND_WITH_TYPE;
         fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
-        context.startForegroundService(fgsIntent);
+        try {
+            context.startForegroundService(fgsIntent);
+        } catch (IllegalStateException e) {
+            Log.d(TAG, "startForegroundService gets an IllegalStateException", e);
+        }
     }
 
     private void doStopForegroundService(Context context, Intent commandIntent,
