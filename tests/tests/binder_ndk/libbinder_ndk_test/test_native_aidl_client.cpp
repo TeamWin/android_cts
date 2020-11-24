@@ -939,7 +939,7 @@ TEST_P(NdkBinderTest_Aidl, ParcelableHolderTest) {
   MyExt myext1;
   myext1.a = 42;
   myext1.b = "mystr";
-  ep.ext.setParcelable(&myext1);
+  ep.ext.setParcelable(myext1);
   std::unique_ptr<MyExt> myext2 = ep.ext.getParcelable<MyExt>();
   EXPECT_TRUE(myext2);
   EXPECT_EQ(42, myext2->a);
@@ -962,7 +962,7 @@ TEST_P(NdkBinderTest_Aidl, ParcelableHolderCommunicationTest) {
   MyExt myext1;
   myext1.a = 42;
   myext1.b = "mystr";
-  ep.ext.setParcelable(&myext1);
+  ep.ext.setParcelable(myext1);
 
   ExtendableParcelable ep2;
   EXPECT_OK(iface->RepeatExtendableParcelable(ep, &ep2));

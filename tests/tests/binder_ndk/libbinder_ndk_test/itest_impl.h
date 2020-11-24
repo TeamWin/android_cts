@@ -459,7 +459,7 @@ class MyTest : public ::aidl::test_package::BnTest,
     MyExt ext2;
     ext2.a = ext->a;
     ext2.b = ext->b;
-    out_output->ext.setParcelable(&ext2);
+    out_output->ext.setParcelable(ext2);
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 
