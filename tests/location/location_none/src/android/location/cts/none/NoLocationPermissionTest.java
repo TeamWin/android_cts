@@ -19,13 +19,12 @@ package android.location.cts.none;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.location.Criteria;
 import android.location.LocationManager;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
+import android.location.cts.common.ProximityPendingIntentCapture;
 import android.os.Looper;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -43,7 +42,7 @@ public class NoLocationPermissionTest {
     private LocationManager mLocationManager;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         mContext = ApplicationProvider.getApplicationContext();
         mLocationManager = mContext.getSystemService(LocationManager.class);
 
@@ -80,15 +79,11 @@ public class NoLocationPermissionTest {
 
     @Test
     public void testAddProximityAlert() {
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext,
-                0, new Intent("action"), PendingIntent.FLAG_ONE_SHOT);
-        try {
-            mLocationManager.addProximityAlert(0, 0, 100, -1, pendingIntent);
+        try (ProximityPendingIntentCapture capture = new ProximityPendingIntentCapture(mContext)) {
+            mLocationManager.addProximityAlert(0, 0, 100, -1, capture.getPendingIntent());
             fail("Should throw SecurityException");
         } catch (SecurityException e) {
             // expected
-        } finally {
-            pendingIntent.cancel();
         }
     }
 
