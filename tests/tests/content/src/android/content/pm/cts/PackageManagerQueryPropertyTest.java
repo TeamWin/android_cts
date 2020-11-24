@@ -48,12 +48,16 @@ public class PackageManagerQueryPropertyTest {
     private static PackageManager sPackageManager;
     private static final String PROPERTY_APP1_PACKAGE_NAME = "com.android.cts.packagepropertyapp1";
     private static final String PROPERTY_APP2_PACKAGE_NAME = "com.android.cts.packagepropertyapp2";
+    private static final String PROPERTY_APP3_PACKAGE_NAME = "com.android.cts.packagepropertyapp3";
     private static final TestApp PROPERTY_APP1 =
             new TestApp("PackagePropertyTestApp1", PROPERTY_APP1_PACKAGE_NAME, 30,
                     false, "PackagePropertyTestApp1.apk");
     private static final TestApp PROPERTY_APP2 =
             new TestApp("PackagePropertyTestApp2", PROPERTY_APP2_PACKAGE_NAME, 30,
                     false, "PackagePropertyTestApp2.apk");
+    private static final TestApp PROPERTY_APP3 =
+            new TestApp("PackagePropertyTestApp3", PROPERTY_APP3_PACKAGE_NAME, 30,
+                    false, "PackagePropertyTestApp3.apk");
     private static void adoptShellPermissions() {
         InstrumentationRegistry
                 .getInstrumentation()
@@ -82,16 +86,18 @@ public class PackageManagerQueryPropertyTest {
         adoptShellPermissions();
         Uninstall.packages(PROPERTY_APP1_PACKAGE_NAME);
         Uninstall.packages(PROPERTY_APP2_PACKAGE_NAME);
+        Uninstall.packages(PROPERTY_APP3_PACKAGE_NAME);
         Install.single(PROPERTY_APP1).commit();
         Install.single(PROPERTY_APP2).commit();
         dropShellPermissions();
     }
 
     @After
-    public void teardownClass() throws Exception {
+    public void teardown() throws Exception {
         adoptShellPermissions();
         Uninstall.packages(PROPERTY_APP1_PACKAGE_NAME);
         Uninstall.packages(PROPERTY_APP2_PACKAGE_NAME);
+        Uninstall.packages(PROPERTY_APP3_PACKAGE_NAME);
         dropShellPermissions();
     }
 
