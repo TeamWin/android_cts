@@ -19,6 +19,7 @@ package android.media.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.testng.Assert.assertThrows;
@@ -1027,6 +1028,17 @@ public class AudioRecordTest {
 
         AudioRecordingConfiguration config = mAudioRecord.getActiveRecordingConfiguration();
         checkRecordingConfig(config);
+
+        mAudioRecord.release();
+        // test no exception is thrown when querying immediately after release()
+        // which is not a synchronous operation
+        config = mAudioRecord.getActiveRecordingConfiguration();
+        try {
+            Thread.sleep(TEST_TIMING_TOLERANCE_MS);
+        } catch (InterruptedException e) {
+        }
+        assertNull("Recording configuration not null after release",
+                mAudioRecord.getActiveRecordingConfiguration());
     }
 
     private static void checkRecordingConfig(AudioRecordingConfiguration config) {
