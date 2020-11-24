@@ -87,6 +87,16 @@ public final class AudioManagerHelper {
                         + percentVolume);
     }
 
+    public static int getDutAudioVolume(ITestDevice device) throws Exception {
+        // Clear activity
+        device.executeShellCommand(CLEAR_COMMAND);
+        // Clear logcat.
+        device.executeAdbCommand("logcat", "-c");
+        // Start the APK and wait for it to complete.
+        device.executeShellCommand(START_COMMAND + "android.hdmicec.app.REPORT_VOLUME");
+        return LogHelper.parseDutVolume(device, CLASS);
+    }
+
     public static String getRequestSadFormatsParams(ITestDevice device, boolean sendValidFormats)
             throws Exception {
         // Clear activity
