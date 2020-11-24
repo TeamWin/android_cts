@@ -31,7 +31,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.media.Rating;
-import android.text.TextUtils;
+import android.os.Parcel;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -81,6 +81,14 @@ public class RatingTest {
     }
 
     @Test
+    public void testHeartRatingWithIllegalRatingValueGetters() {
+        Rating ratingWithHeart = Rating.newHeartRating(/*hasHeart=*/ true);
+        assertFalse(ratingWithHeart.isThumbUp());
+        assertTrue(ratingWithHeart.getStarRating() < 0f);
+        assertTrue(ratingWithHeart.getPercentRating() < 0f);
+    }
+
+    @Test
     public void testThumbRating() {
         Rating ratingThumbUp = Rating.newThumbRating(/*thumbIsUp=*/ true);
         assertEquals(RATING_THUMB_UP_DOWN, ratingThumbUp.getRatingStyle());
@@ -91,6 +99,14 @@ public class RatingTest {
         assertEquals(RATING_THUMB_UP_DOWN, ratingThumbDown.getRatingStyle());
         assertFalse(ratingThumbDown.isThumbUp());
         assertTrue(ratingThumbDown.isRated());
+    }
+
+    @Test
+    public void testThumbRatingWithIllegalRatingValueGetters() {
+        Rating ratingThumbUp = Rating.newThumbRating(/*thumbIsUp=*/ true);
+        assertFalse(ratingThumbUp.hasHeart());
+        assertTrue(ratingThumbUp.getStarRating() < 0f);
+        assertTrue(ratingThumbUp.getPercentRating() < 0f);
     }
 
     @Test
@@ -135,6 +151,14 @@ public class RatingTest {
     }
 
     @Test
+    public void testStarRatingWithIllegalRatingValueGetters() {
+        Rating starRating = Rating.newStarRating(RATING_3_STARS, /*starValue=*/ 2.5f);
+        assertFalse(starRating.hasHeart());
+        assertFalse(starRating.isThumbUp());
+        assertTrue(starRating.getPercentRating() < 0f);
+    }
+
+    @Test
     public void testNewPercentageRatingWithInvalidPercentValuesReturnsNull() {
         final float[] invalidPercentValues = new float[] {-1.0f, 100.1f, 200f, 1000f,
                 Float.MAX_VALUE, Float.NaN};
@@ -156,8 +180,45 @@ public class RatingTest {
     }
 
     @Test
+    public void testPercentageWithIllegalRatingValueGetters() {
+        Rating percentageRating = Rating.newPercentageRating(72.5f);
+        assertFalse(percentageRating.hasHeart());
+        assertFalse(percentageRating.isThumbUp());
+        assertTrue(percentageRating.getStarRating() < 0f);
+    }
+
+    @Test
     public void testToStringDoesNotCrash() {
         Rating rating = Rating.newHeartRating(/*hasHeart=*/ true);
         rating.toString(); // This should not crash.
+    }
+
+    @Test
+    public void testParcelization() {
+        Parcel p = Parcel.obtain();
+        try {
+            Rating rating = Rating.newStarRating(RATING_4_STARS, 3.5f);
+            p.writeParcelable(rating, /*flags=*/ 0);
+            p.setDataPosition(0);
+
+            Rating ratingFromParcel = p.readParcelable(null);
+            assertNotNull(ratingFromParcel);
+            // TODO: Compare two rating using equals() when it is implemented.
+            assertEquals(rating.getRatingStyle(), ratingFromParcel.getRatingStyle());
+            assertEquals(rating.getStarRating(), ratingFromParcel.getStarRating(), 0f);
+        } finally {
+            p.recycle();
+        }
+    }
+
+    @Test
+    public void testCreatorNewArray() {
+        final int arrayLength = 5;
+        Rating[] ratingArrayInitializedWithNulls = Rating.CREATOR.newArray(arrayLength);
+        assertNotNull(ratingArrayInitializedWithNulls);
+        assertEquals(arrayLength, ratingArrayInitializedWithNulls.length);
+        for (Rating rating : ratingArrayInitializedWithNulls) {
+            assertNull(rating);
+        }
     }
 }
