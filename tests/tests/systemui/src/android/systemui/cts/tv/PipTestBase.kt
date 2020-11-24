@@ -33,14 +33,12 @@ import android.view.WindowManager
 import androidx.annotation.CallSuper
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
-import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import org.junit.Assume.assumeTrue
 import kotlin.test.assertEquals
 
 abstract class PipTestBase : TvTestBase() {
-    protected val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
     protected val resources: Resources = context.resources
     protected val windowManager: WindowManager =
         context.getSystemService(WindowManager::class.java)

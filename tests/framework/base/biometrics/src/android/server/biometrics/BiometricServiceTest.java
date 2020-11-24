@@ -37,6 +37,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
+import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
@@ -89,6 +90,14 @@ public class BiometricServiceTest extends BiometricTestBase {
     @NonNull private UiDevice mDevice;
 
     /**
+     * Expose this functionality to our package, since ActivityManagerTestBase's is `protected`.
+     * @param componentName
+     */
+    void launchActivity(@NonNull ComponentName componentName) {
+        super.launchActivity(componentName);
+    }
+
+    /**
      * Retrieves the current states of all biometric sensor services (e.g. FingerprintService,
      * FaceService, etc).
      *
@@ -115,7 +124,7 @@ public class BiometricServiceTest extends BiometricTestBase {
     }
 
     private void waitForState(@BiometricServiceState.AuthSessionState int state) throws Exception {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             BiometricServiceState serviceState = getCurrentState();
             if (serviceState.mState != state) {
                 Log.d(TAG, "Not in state " + state + " yet, current: " + serviceState.mState);
@@ -129,7 +138,7 @@ public class BiometricServiceTest extends BiometricTestBase {
 
     private void waitForStateNotEqual(@BiometricServiceState.AuthSessionState int state)
             throws Exception {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             BiometricServiceState serviceState = getCurrentState();
             if (serviceState.mState == state) {
                 Log.d(TAG, "Not out of state yet, current: " + serviceState.mState);
@@ -211,8 +220,8 @@ public class BiometricServiceTest extends BiometricTestBase {
     @Test
     public void testEnroll() throws Exception {
         for (SensorProperties prop : mSensorProperties) {
-            try (BiometricTestSession session
-                         = mBiometricManager.createTestSession(prop.getSensorId())){
+            try (BiometricTestSession session =
+                         mBiometricManager.createTestSession(prop.getSensorId())){
                 enrollForSensor(session, prop.getSensorId());
             }
         }
@@ -248,23 +257,27 @@ public class BiometricServiceTest extends BiometricTestBase {
     @Test
     public void testBiometricOnly_authenticateFromForegroundActivity() throws Exception {
         for (SensorProperties prop : mSensorProperties) {
-            try (BiometricTestSession session
-                         = mBiometricManager.createTestSession(prop.getSensorId())) {
+            try (BiometricTestSession session =
+                         mBiometricManager.createTestSession(prop.getSensorId());
+                ActivitySession activitySession =
+                        new ActivitySession(this, CLASS_2_BIOMETRIC_ACTIVITY)) {
                 testBiometricOnly_authenticateFromForegroundActivity_forSensor(
-                        session, prop.getSensorId());
+                        session, prop.getSensorId(), activitySession);
             }
         }
     }
 
     private void testBiometricOnly_authenticateFromForegroundActivity_forSensor(
-            @NonNull BiometricTestSession session, int sensorId) throws Exception {
+            @NonNull BiometricTestSession session, int sensorId,
+            @NonNull ActivitySession activitySession) throws Exception {
         final int userId = 0;
         enrollForSensor(session, sensorId);
-        final TestJournal journal = TestJournalContainer.get(CLASS_2_BIOMETRIC_ACTIVITY);
+        final TestJournal journal = TestJournalContainer.get(activitySession.getComponentName());
 
         // Launch test activity
-        launchActivity(CLASS_2_BIOMETRIC_ACTIVITY);
-        mWmState.waitForActivityState(CLASS_2_BIOMETRIC_ACTIVITY, WindowManagerState.STATE_RESUMED);
+        activitySession.start();
+        mWmState.waitForActivityState(activitySession.getComponentName(),
+                WindowManagerState.STATE_RESUMED);
         mInstrumentation.waitForIdleSync();
 
         // The sensor being tested should not be idle
@@ -295,35 +308,38 @@ public class BiometricServiceTest extends BiometricTestBase {
         mInstrumentation.waitForIdleSync();
         callbackState = getCallbackState(journal);
         assertNotNull(callbackState);
-        assertTrue(callbackState.mErrorsReceived.isEmpty());
-        assertTrue(callbackState.mAcquiredReceived.isEmpty());
-        assertEquals(1, callbackState.mNumAuthAccepted);
-        assertEquals(0, callbackState.mNumAuthRejected);
+        assertTrue(callbackState.toString(), callbackState.mErrorsReceived.isEmpty());
+        assertTrue(callbackState.toString(), callbackState.mAcquiredReceived.isEmpty());
+        assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);
+        assertEquals(callbackState.toString(), 0, callbackState.mNumAuthRejected);
     }
 
     @Test
     public void testBiometricOnly_rejectThenErrorFromForegroundActivity() throws Exception {
         for (SensorProperties prop : mSensorProperties) {
-            try (BiometricTestSession session
-                         = mBiometricManager.createTestSession(prop.getSensorId())) {
+            try (BiometricTestSession session =
+                         mBiometricManager.createTestSession(prop.getSensorId());
+                 ActivitySession activitySession =
+                         new ActivitySession(this, CLASS_2_BIOMETRIC_ACTIVITY)) {
                 testBiometricOnly_rejectThenErrorFromForegroundActivity_forSensor(
-                        session, prop.getSensorId());
+                        session, prop.getSensorId(), activitySession);
             }
         }
     }
 
     private void testBiometricOnly_rejectThenErrorFromForegroundActivity_forSensor(
-            @NonNull BiometricTestSession session, int sensorId)
-            throws Exception {
+            @NonNull BiometricTestSession session, int sensorId,
+            @NonNull ActivitySession activitySession) throws Exception {
         final int userId = 0;
         enrollForSensor(session, sensorId);
 
         final TestJournal journal =
-                TestJournalContainer.get(CLASS_2_BIOMETRIC_ACTIVITY);
+                TestJournalContainer.get(activitySession.getComponentName());
 
         // Launch test activity
-        launchActivity(CLASS_2_BIOMETRIC_ACTIVITY);
-        mWmState.waitForActivityState(CLASS_2_BIOMETRIC_ACTIVITY, WindowManagerState.STATE_RESUMED);
+        activitySession.start();
+        mWmState.waitForActivityState(activitySession.getComponentName(),
+                WindowManagerState.STATE_RESUMED);
         mInstrumentation.waitForIdleSync();
         BiometricCallbackHelper.State callbackState = getCallbackState(journal);
         assertNotNull(callbackState);
@@ -364,22 +380,26 @@ public class BiometricServiceTest extends BiometricTestBase {
     @Test
     public void testBiometricOnly_negativeButtonInvoked() throws Exception {
         for (SensorProperties prop : mSensorProperties) {
-            try (BiometricTestSession session
-                         = mBiometricManager.createTestSession(prop.getSensorId())) {
+            try (BiometricTestSession session =
+                         mBiometricManager.createTestSession(prop.getSensorId());
+                 ActivitySession activitySession =
+                         new ActivitySession(this, CLASS_2_BIOMETRIC_ACTIVITY)) {
                 testBiometricOnly_negativeButtonInvoked_forSensor(
-                        session, prop.getSensorId());
+                        session, prop.getSensorId(), activitySession);
             }
         }
     }
 
     private void testBiometricOnly_negativeButtonInvoked_forSensor(
-            @NonNull BiometricTestSession session, int sensorId) throws Exception {
+            @NonNull BiometricTestSession session, int sensorId,
+            @NonNull ActivitySession activitySession) throws Exception {
         enrollForSensor(session, sensorId);
-        final TestJournal journal = TestJournalContainer.get(CLASS_2_BIOMETRIC_ACTIVITY);
+        final TestJournal journal = TestJournalContainer.get(activitySession.getComponentName());
 
         // Launch test activity
-        launchActivity(CLASS_2_BIOMETRIC_ACTIVITY);
-        mWmState.waitForActivityState(CLASS_2_BIOMETRIC_ACTIVITY, WindowManagerState.STATE_RESUMED);
+        activitySession.start();
+        mWmState.waitForActivityState(activitySession.getComponentName(),
+                WindowManagerState.STATE_RESUMED);
         mInstrumentation.waitForIdleSync();
         BiometricCallbackHelper.State callbackState = getCallbackState(journal);
         assertNotNull(callbackState);
@@ -408,9 +428,12 @@ public class BiometricServiceTest extends BiometricTestBase {
 
             for (SensorProperties prop : mSensorProperties) {
                 try (BiometricTestSession session =
-                             mBiometricManager.createTestSession(prop.getSensorId())) {
+                             mBiometricManager.createTestSession(prop.getSensorId());
+                     ActivitySession activitySession =
+                             new ActivitySession(this, CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY)) {
                     testBiometricOrCredential_credentialButtonInvoked_forConfiguration(
-                            session, prop.getSensorId(), true /* shouldEnrollBiometric */);
+                            session, prop.getSensorId(), true /* shouldEnrollBiometric */,
+                            activitySession);
                 }
             }
         }
@@ -425,9 +448,12 @@ public class BiometricServiceTest extends BiometricTestBase {
 
             for (SensorProperties prop : mSensorProperties) {
                 try (BiometricTestSession session =
-                             mBiometricManager.createTestSession(prop.getSensorId())) {
+                             mBiometricManager.createTestSession(prop.getSensorId());
+                     ActivitySession activitySession =
+                             new ActivitySession(this, CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY)) {
                     testBiometricOrCredential_credentialButtonInvoked_forConfiguration(
-                            session, prop.getSensorId(), false /* shouldEnrollBiometric */);
+                            session, prop.getSensorId(), false /* shouldEnrollBiometric */,
+                            activitySession);
                 }
             }
         }
@@ -438,15 +464,18 @@ public class BiometricServiceTest extends BiometricTestBase {
     public void testBiometricOrCredential_credentialButtonInvoked_noBiometricSensor()
             throws Exception {
         assumeTrue(mSensorProperties.isEmpty());
-        try (LockScreenSession lockscreenSession = new LockScreenSession()){
+        try (LockScreenSession lockscreenSession = new LockScreenSession();
+             ActivitySession activitySession =
+                     new ActivitySession(this, CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY)){
             lockscreenSession.setLockCredential();
             testBiometricOrCredential_credentialButtonInvoked_forConfiguration(null,
-                    0 /* sensorId */, false /* shouldEnrollBiometric */);
+                    0 /* sensorId */, false /* shouldEnrollBiometric */, activitySession);
         }
     }
 
     private void testBiometricOrCredential_credentialButtonInvoked_forConfiguration(
-            @Nullable BiometricTestSession session, int sensorId, boolean shouldEnrollBiometric)
+            @Nullable BiometricTestSession session, int sensorId, boolean shouldEnrollBiometric,
+            @NonNull ActivitySession activitySession)
             throws Exception {
         if (shouldEnrollBiometric) {
             assertNotNull(session);
@@ -454,11 +483,11 @@ public class BiometricServiceTest extends BiometricTestBase {
         }
 
         final TestJournal journal = TestJournalContainer
-                .get(CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY);
+                .get(activitySession.getComponentName());
 
         // Launch test activity
-        launchActivity(CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY);
-        mWmState.waitForActivityState(CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY,
+        activitySession.start();
+        mWmState.waitForActivityState(activitySession.getComponentName(),
                 WindowManagerState.STATE_RESUMED);
         mInstrumentation.waitForIdleSync();
         BiometricCallbackHelper.State callbackState;

@@ -32,6 +32,7 @@ import android.server.wm.WindowManagerStateHelper
 import android.systemui.tv.cts.ResourceNames.SYSTEM_UI_PACKAGE
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Assert.assertFalse
@@ -46,6 +47,7 @@ abstract class TvTestBase {
     }
 
     protected val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
+    protected val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
     protected val context: Context = instrumentation.context
     protected val packageManager: PackageManager = context.packageManager
             ?: error("Could not get a PackageManager")
