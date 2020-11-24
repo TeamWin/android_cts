@@ -60,6 +60,17 @@ TEST_F(NdkBinderTest_AIBinder, AssociateWrongClassFails) {
   AIBinder_decStrong(binder);
 }
 
+TEST_F(NdkBinderTest_AIBinder, ClassGetDescriptor) {
+  EXPECT_NE(SampleData::kClass, SampleData::kAnotherClassWithSameDescriptor);
+  EXPECT_STREQ(SampleData::kDescriptor, AIBinder_Class_getDescriptor(SampleData::kClass));
+  EXPECT_STREQ(SampleData::kDescriptor,
+               AIBinder_Class_getDescriptor(SampleData::kAnotherClassWithSameDescriptor));
+
+  AIBinder* binder = SampleData::newBinder();
+  EXPECT_STREQ(SampleData::kDescriptor, AIBinder_Class_getDescriptor(AIBinder_getClass(binder)));
+  AIBinder_decStrong(binder);
+}
+
 TEST_F(NdkBinderTest_AIBinder, GetUserData) {
   // This test can't use the helper utility since SampleData isn't exposed
   SampleData* data = new SampleData;
