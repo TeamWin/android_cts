@@ -514,7 +514,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         WifiAwareSession session = attachAndGetSession();
         session.close();
-        assertFalse(mWifiAwareManager.isDeviceAttached());
+        if (BuildCompat.isAtLeastS()) {
+            assertFalse(mWifiAwareManager.isDeviceAttached());
+        }
     }
 
     /**
@@ -945,7 +947,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         WifiAwareSession session = attachCb.getSession();
         assertNotNull("Wi-Fi Aware session", session);
-        assertTrue(mWifiAwareManager.isDeviceAttached());
+        if (BuildCompat.isAtLeastS()) {
+            assertTrue(mWifiAwareManager.isDeviceAttached());
+        }
 
         return session;
     }
