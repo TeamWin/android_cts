@@ -687,7 +687,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     void moveTaskToPrimarySplitScreenAndVerify(Activity activity) {
         getLifecycleLog().clear();
 
-        moveTaskToPrimarySplitScreen(activity.getTaskId());
+        moveTaskToPrimarySplitScreen(activity.getTaskId(), true /* showSideActivity */);
 
         final Class<? extends Activity> activityClass = activity.getClass();
         waitAndAssertActivityEnterSplitScreenTransitions(activityClass, "enterSplitScreen");
@@ -705,18 +705,33 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         final List<LifecycleLog.ActivityCallback> expectedTransitions =
                 LifecycleVerifier.getSplitScreenTransitionSequence(activityClass);
 
+        final List<LifecycleLog.ActivityCallback> expectedTransitionForMinimizedDock =
+                LifecycleVerifier.appendMinimizedDockTransitionTrail(expectedTransitions);
+
         mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+
         if (!expectedTransitions.contains(ON_MULTI_WINDOW_MODE_CHANGED)) {
-            LifecycleVerifier.assertSequence(activityClass, getLifecycleLog(),
-                    expectedTransitions, message);
+            LifecycleVerifier.assertSequenceMatchesOneOf(
+                    activityClass,
+                    getLifecycleLog(),
+                    Arrays.asList(expectedTransitions, expectedTransitionForMinimizedDock),
+                    message);
         } else {
             final List<LifecycleLog.ActivityCallback> extraSequence =
                     Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST,
                             ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE,
-                            ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
-                            ON_TOP_POSITION_LOST, ON_PAUSE);
-            LifecycleVerifier.assertSequenceMatchesOneOf(activityClass, getLifecycleLog(),
-                    Arrays.asList(expectedTransitions, extraSequence), message);
+                            ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED);
+            final List<LifecycleLog.ActivityCallback> extraSequenceForMinimizedDock =
+                    LifecycleVerifier.appendMinimizedDockTransitionTrail(extraSequence);
+            LifecycleVerifier.assertSequenceMatchesOneOf(
+                    activityClass,
+                    getLifecycleLog(),
+                    Arrays.asList(
+                            expectedTransitions,
+                            extraSequence,
+                            expectedTransitionForMinimizedDock,
+                            extraSequenceForMinimizedDock),
+                    message);
         }
     }
 
