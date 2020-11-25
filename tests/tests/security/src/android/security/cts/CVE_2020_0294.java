@@ -24,17 +24,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.platform.test.annotations.SecurityTest;
-import android.test.AndroidTestCase;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 @SecurityTest
-public class CVE_2020_0294 extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class CVE_2020_0294 {
     private static final String TAG = "CVE_2020_0294";
 
     /**
      * b/170661753
      */
+    @Test
     @SecurityTest(minPatchLevel = "2020-12")
     public void testPocCVE_2020_0294() throws Exception {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
@@ -44,6 +52,7 @@ public class CVE_2020_0294 extends AndroidTestCase {
         ComponentName componentName =
                 ComponentName.unflattenFromString("com.android.systemui/.ImageWallpaper");
         PendingIntent pi = activityManager.getRunningServiceControlPanel(componentName);
+        assumeNotNull(pi);
 
         Intent spuriousIntent = new Intent();
         spuriousIntent.setPackage(targetContext.getPackageName());
