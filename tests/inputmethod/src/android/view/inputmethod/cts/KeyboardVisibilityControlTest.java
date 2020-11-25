@@ -622,24 +622,26 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
             // Launch test activity with focusing an editor from remote process and expect the
             // IME is visible.
-            launchRemoteActivitySync(TEST_ACTIVITY, instant, TIMEOUT,
-                    Map.of(EXTRA_KEY_PRIVATE_IME_OPTIONS, marker));
-            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
-            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
-            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
-            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
-                    View.VISIBLE, TIMEOUT);
-            expectImeVisible(TIMEOUT);
+            try (AutoCloseable closable = launchRemoteActivitySync(TEST_ACTIVITY, instant, TIMEOUT,
+                    Map.of(EXTRA_KEY_PRIVATE_IME_OPTIONS, marker))) {
+                expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+                expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+                expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+                expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                        View.VISIBLE, TIMEOUT);
+                expectImeVisible(TIMEOUT);
 
-            // Force stop test app package, and then expect IME should be invisible after the remote
-            // process stopped by forceStopPackage.
-            TestUtils.forceStopPackage(TEST_ACTIVITY.getPackageName());
-            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
-            expectImeInvisible(TIMEOUT);
+                // Force stop test app package, and then expect IME should be invisible after the
+                // remote
+                // process stopped by forceStopPackage.
+                TestUtils.forceStopPackage(TEST_ACTIVITY.getPackageName());
+                expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+                expectImeInvisible(TIMEOUT);
+            }
         }
     }
 
-    private void launchRemoteActivitySync(ComponentName componentName, boolean instant,
+    private AutoCloseable launchRemoteActivitySync(ComponentName componentName, boolean instant,
              long timeout, Map<String, String> extras) {
         final StringBuilder commandBuilder = new StringBuilder();
         if (instant) {
@@ -660,7 +662,9 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         BySelector activitySelector = By.pkg(componentName.getPackageName()).depth(0);
         uiDevice.wait(Until.hasObject(activitySelector), timeout);
-        assertNotNull(uiDevice.findObject(activitySelector));
+
+        // Make sure to stop package after test finished for resource reclaim.
+        return () -> TestUtils.forceStopPackage(componentName.getPackageName());
     }
 
     @NonNull
