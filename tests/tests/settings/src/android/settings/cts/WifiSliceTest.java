@@ -74,6 +74,8 @@ public class WifiSliceTest {
   public void setUp() throws Exception {
     assumeFalse("Skipping test: Auto does not support provider android.settings.slices", isCar());
     assumeFalse("Skipping test: TV does not support provider android.settings.slices", isTv());
+    assumeFalse(
+        "Skipping test: Watch does not support provider android.settings.slices", isWatch());
     mWifiSlice = mSliceManager.bindSlice(WIFI_SLICE_URI, Collections.emptySet());
     mAssistant = Secure.getString(mContext.getContentResolver(), ASSISTANT);
   }
@@ -168,6 +170,10 @@ public class WifiSliceTest {
     PackageManager pm = mContext.getPackageManager();
     return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
             && pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+  }
+
+  private boolean isWatch() {
+    return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
   }
 
   private boolean isWifiEnabled() {
