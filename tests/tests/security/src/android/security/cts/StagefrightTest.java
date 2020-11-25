@@ -1256,6 +1256,16 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2021-01")
+    public void testStagefright_cve_2021_0312() throws Exception {
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA));
+        doStagefrightTestExtractorSeek(R.raw.cve_2021_0312, 2, new CrashUtils.Config()
+                .setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT));
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2018-09")
     public void testStagefright_cve_2018_9474() throws Exception {
         MediaPlayer mp = new MediaPlayer();
