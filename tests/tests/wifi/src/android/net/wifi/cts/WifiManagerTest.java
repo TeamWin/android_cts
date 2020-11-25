@@ -2437,6 +2437,32 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Verify that startTemporarilyDisablingAllNonCarrierMergedWifi disconnects wifi and disables
+     * autoconnect to non-carrier-merged networks. Then verify that
+     * stopTemporarilyDisablingAllNonCarrierMergedWifi makes the disabled networks clear to connect
+     * again.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testStartAndStopTemporarilyDisablingAllNonCarrierMergedWifi() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        startScan();
+        waitForConnection();
+        int fakeSubscriptionId = 5;
+        ShellIdentityUtils.invokeWithShellPermissions(() ->
+                mWifiManager.startTemporarilyDisablingAllNonCarrierMergedWifi(fakeSubscriptionId));
+        startScan();
+        ensureNotConnected();
+        ShellIdentityUtils.invokeWithShellPermissions(() ->
+                mWifiManager.stopTemporarilyDisablingAllNonCarrierMergedWifi());
+        startScan();
+        waitForConnection();
+    }
+
+    /**
      * Test that the wifi country code is either null, or a length-2 string.
      */
     public void testGetCountryCode() throws Exception {
