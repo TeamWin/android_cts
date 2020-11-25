@@ -14,8 +14,9 @@ Compliance Test Specification as well as other Android specific tests.
 Running these CTS tests requires a specific HDMI layout with a CEC adapter.
 
 *   Android TV playback device
-*   CEC adapter see [External CEC Adapter instructions](cec_adapter.md)
-*   HDMI Display (aka a TV)
+*   CEC adapter, see [External CEC Adapter instructions](cec_adapter.md)
+*   Install `cec-client` binary, see [install instructions](cec_adapter.md#software)
+*   HDMI Display (aka a TV) or an HDMI fake plug
 
 ![drawing](setup.png)
 
