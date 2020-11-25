@@ -43,6 +43,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
+import android.media.MediaFormat;
 import android.net.Uri;
 import android.util.DisplayMetrics;
 import android.util.Size;
@@ -53,6 +54,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.BitmapUtils;
+import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,6 +67,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
@@ -98,19 +102,24 @@ public class ImageDecoderTest {
 
     private static final ColorSpace sSRGB = ColorSpace.get(ColorSpace.Named.SRGB);
 
-    static Object[] getRecords() {
-        return new Record[] {
-            new Record(R.drawable.baseline_jpeg, 1280, 960, "image/jpeg", false, false, sSRGB),
-            new Record(R.drawable.grayscale_jpg, 128, 128, "image/jpeg", true, false, sSRGB),
-            new Record(R.drawable.png_test, 640, 480, "image/png", false, false, sSRGB),
-            new Record(R.drawable.gif_test, 320, 240, "image/gif", false, false, sSRGB),
-            new Record(R.drawable.bmp_test, 320, 240, "image/bmp", false, false, sSRGB),
-            new Record(R.drawable.webp_test, 640, 480, "image/webp", false, false, sSRGB),
-            new Record(R.drawable.google_chrome, 256, 256, "image/x-ico", false, true, sSRGB),
-            new Record(R.drawable.color_wheel, 128, 128, "image/x-ico", false, true, sSRGB),
-            new Record(R.raw.sample_1mp, 600, 338, "image/x-adobe-dng", false, false, sSRGB),
-            new Record(R.raw.heifwriter_input, 1920, 1080, "image/heif", false, false, sSRGB),
-        };
+    static Record[] getRecords() {
+        ArrayList<Record> records = new ArrayList<>(Arrays.asList(new Record[] {
+                new Record(R.drawable.baseline_jpeg, 1280, 960, "image/jpeg", false, false, sSRGB),
+                new Record(R.drawable.grayscale_jpg, 128, 128, "image/jpeg", true, false, sSRGB),
+                new Record(R.drawable.png_test, 640, 480, "image/png", false, false, sSRGB),
+                new Record(R.drawable.gif_test, 320, 240, "image/gif", false, false, sSRGB),
+                new Record(R.drawable.bmp_test, 320, 240, "image/bmp", false, false, sSRGB),
+                new Record(R.drawable.webp_test, 640, 480, "image/webp", false, false, sSRGB),
+                new Record(R.drawable.google_chrome, 256, 256, "image/x-ico", false, true, sSRGB),
+                new Record(R.drawable.color_wheel, 128, 128, "image/x-ico", false, true, sSRGB),
+                new Record(R.raw.sample_1mp, 600, 338, "image/x-adobe-dng", false, false, sSRGB)
+        }));
+        if (MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            // HEIF support is optional when HEVC decoder is not supported.
+            records.add(new Record(R.raw.heifwriter_input, 1920, 1080, "image/heif", false, false,
+                                   sSRGB));
+        }
+        return records.toArray(new Record[] {});
     }
 
     // offset is how many bytes to offset the beginning of the image.
