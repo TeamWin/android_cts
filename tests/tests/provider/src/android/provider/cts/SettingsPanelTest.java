@@ -94,6 +94,8 @@ public class SettingsPanelTest {
                 PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
 
         assumeFalse("Skipping test: Auto does not support provider android.settings.panel", isCar());
+        assumeFalse(
+            "Skipping test: Watch does not support provider android.settings.panel", isWatch());
     }
 
     @After
@@ -395,5 +397,9 @@ public class SettingsPanelTest {
     private boolean isCar() {
         PackageManager pm = mContext.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    private boolean isWatch() {
+      return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
