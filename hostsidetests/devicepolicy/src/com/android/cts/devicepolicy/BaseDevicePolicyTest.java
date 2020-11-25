@@ -201,12 +201,20 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("settings put global verifier_verify_adb_installs 0");
 
         mFixedUsers = new ArrayList<>();
-        mPrimaryUserId = getPrimaryUser();
 
         // Set the value of initial user ID calls in {@link #setUp}.
         if(mSupportsMultiUser) {
             mInitialUserId = getDevice().getCurrentUser();
         }
+
+        if (!isHeadlessSystemUserMode()) {
+            mPrimaryUserId = getPrimaryUser();
+        } else {
+            // For headless system user, all tests will be executed on current user
+            // and therefore, initial user is set as primary user for test purpose.
+            mPrimaryUserId = mInitialUserId;
+        }
+
         mFixedUsers.add(mPrimaryUserId);
         if (mPrimaryUserId != USER_SYSTEM) {
             mFixedUsers.add(USER_SYSTEM);
@@ -225,7 +233,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand(" mkdir " + TEST_UPDATE_LOCATION);
 
         removeOwners();
-        switchUser(USER_SYSTEM);
+
+        switchUser(mPrimaryUserId);
+
         removeTestUsers();
         // Unlock keyguard before test
         wakeupAndDismissKeyguard();
@@ -1033,6 +1043,13 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     boolean isDeviceAb() throws DeviceNotAvailableException {
         final String result = getDevice().executeShellCommand("getprop ro.build.ab_update").trim();
+        return "true".equalsIgnoreCase(result);
+    }
+
+    // TODO (b/174775905) remove after exposing the check from ITestDevice.
+    boolean isHeadlessSystemUserMode() throws DeviceNotAvailableException {
+        final String result = getDevice()
+                .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
         return "true".equalsIgnoreCase(result);
     }
 
