@@ -540,16 +540,18 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         // Launch Ime test activity in virtual display.
         imeTestActivitySession.launchTestActivityOnDisplay(ImeTestActivity.class,
                 newDisplay.mId);
+        final EditText editText = imeTestActivitySession.getActivity().mEditText;
+        TestUtils.waitUntil("Waiting for window attachment", 5 /* timeoutSecond */,
+                () -> editText.isAttachedToWindow());
 
         // Expect onStartInput / showSoftInput would be executed when user tapping on the
         // non-system created display intentionally.
-        final Rect drawRect = new Rect();
-        imeTestActivitySession.getActivity().mEditText.getDrawingRect(drawRect);
-        tapOnDisplaySync(drawRect.left, drawRect.top, newDisplay.mId);
+        final int[] location = new int[2];
+        editText.getLocationOnScreen(location);
+        tapOnDisplaySync(location[0], location[1], newDisplay.mId);
 
         // Verify the activity to show soft input on the default display.
         final ImeEventStream stream = mockImeSession.openEventStream();
-        final EditText editText = imeTestActivitySession.getActivity().mEditText;
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
         waitOrderedImeEventsThenAssertImeShown(stream, DEFAULT_DISPLAY,
