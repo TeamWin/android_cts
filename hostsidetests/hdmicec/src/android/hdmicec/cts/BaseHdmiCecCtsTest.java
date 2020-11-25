@@ -92,6 +92,14 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                         HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
                         dutLogicalAddress.getDeviceTypeString());
         }
+
+        /** This rule will skip the test if the DUT belongs to the HDMI device type deviceType. */
+        public static TestRule skipDeviceType(BaseHostJUnit4Test testPointer, int deviceType) {
+            return RequiredPropertyRule.asCsvDoesNotContainsValue(
+                    testPointer,
+                    HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
+                    Integer.toString(deviceType));
+        }
     }
 
     @Option(name = HdmiCecConstants.PHYSICAL_ADDRESS_NAME,
