@@ -3,10 +3,8 @@ package android.location.cts.common;
 import static android.location.LocationManager.KEY_PROXIMITY_ENTERING;
 
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.location.LocationManager;
 import android.os.Looper;
 
@@ -31,7 +29,7 @@ public class ProximityPendingIntentCapture extends BroadcastCapture {
                 new Intent(ACTION)
                         .setPackage(context.getPackageName())
                         .addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
-                PendingIntent.FLAG_CANCEL_CURRENT);
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE);
         mProximityChanges = new LinkedBlockingQueue<>();
 
         register(ACTION);
