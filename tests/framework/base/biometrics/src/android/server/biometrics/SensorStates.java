@@ -123,8 +123,8 @@ public class SensorStates {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < sensorStates.size(); i++) {
-            sb.append("SensorId: ").append(sensorStates.keyAt(i));
-            sb.append(", busy: ").append(sensorStates.get(i).isBusy());
+            sb.append("{SensorId: ").append(sensorStates.keyAt(i));
+            sb.append(", Busy: ").append(sensorStates.get(i).isBusy());
 
             final SparseArray<UserState> userStates = sensorStates.get(i).getUserStates();
             for (int j = 0; j < userStates.size(); j++) {
@@ -132,7 +132,7 @@ public class SensorStates {
                 sb.append(", NumEnrolled: ").append(userStates.get(j).numEnrolled);
             }
 
-            sb.append(" | ");
+            sb.append("} ");
         }
         return sb.toString();
     }

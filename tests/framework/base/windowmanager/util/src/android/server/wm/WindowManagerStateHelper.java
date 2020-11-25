@@ -255,8 +255,15 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 getActivityName(activity) + " in pending list");
     }
 
-    public void waitForAppTransitionIdleOnDisplay(int displayId) {
-        waitForWithAmState(
+    public boolean waitForAppTransitionRunningOnDisplay(int displayId) {
+        return waitForWithAmState(
+                state -> WindowManagerState.APP_STATE_RUNNING.equals(
+                        state.getDisplay(displayId).getAppTransitionState()),
+                "app transition running on Display " + displayId);
+    }
+
+    public boolean waitForAppTransitionIdleOnDisplay(int displayId) {
+        return waitForWithAmState(
                 state -> WindowManagerState.APP_STATE_IDLE.equals(
                         state.getDisplay(displayId).getAppTransitionState()),
                 "app transition idle on Display " + displayId);

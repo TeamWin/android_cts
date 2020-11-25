@@ -300,6 +300,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         } else {
             assertNull(exifInterface.getThumbnailRange());
             assertNull(exifInterface.getThumbnail());
+            assertNull(exifInterface.getThumbnailBitmap());
         }
 
         // Checks GPS information.
@@ -603,15 +604,14 @@ public class ExifInterfaceTest extends AndroidTestCase {
     }
 
     private void testThumbnail(ExpectedValue expectedValue, ExifInterface exifInterface) {
-        byte[] thumbnail = exifInterface.getThumbnailBytes();
-        // TODO: Add support for testing validity of uncompressed thumbnails
-        if (expectedValue.isThumbnailCompressed) {
-            Bitmap thumbnailBitmap = BitmapFactory.decodeByteArray(thumbnail, 0,
-                    thumbnail.length);
-            assertNotNull(thumbnailBitmap);
-            assertEquals(expectedValue.thumbnailWidth, thumbnailBitmap.getWidth());
-            assertEquals(expectedValue.thumbnailHeight, thumbnailBitmap.getHeight());
-        }
+        byte[] thumbnailBytes = exifInterface.getThumbnailBytes();
+        assertNotNull(thumbnailBytes);
+
+        // Note: NEF file (nikon_1aw1.nef) contains uncompressed thumbnail.
+        Bitmap thumbnailBitmap = exifInterface.getThumbnailBitmap();
+        assertNotNull(thumbnailBitmap);
+        assertEquals(expectedValue.thumbnailWidth, thumbnailBitmap.getWidth());
+        assertEquals(expectedValue.thumbnailHeight, thumbnailBitmap.getHeight());
     }
 
     @Override
@@ -695,13 +695,6 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
     public void testReadExifDataFromSamsungNX3000Srw() throws Throwable {
         readFromFilesWithExif(SRW_SAMSUNG_NX3000, R.array.samsung_nx3000_srw);
-    }
-
-    public void testStandaloneDataForRead() throws Throwable {
-        readFromStandaloneDataWithExif(JPEG_WITH_EXIF_BYTE_ORDER_II,
-                R.array.standalone_data_with_exif_byte_order_ii);
-        readFromStandaloneDataWithExif(JPEG_WITH_EXIF_BYTE_ORDER_MM,
-                R.array.standalone_data_with_exif_byte_order_mm);
     }
 
     public void testPngFiles() throws Throwable {

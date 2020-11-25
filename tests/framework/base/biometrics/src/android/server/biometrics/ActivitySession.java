@@ -26,7 +26,7 @@ import androidx.annotation.NonNull;
 public class ActivitySession implements AutoCloseable {
 
     @NonNull
-    BiometricServiceTest mTest;
+    private final BiometricServiceTest mTest;
     @NonNull
     private final ComponentName mComponentName;
 

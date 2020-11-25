@@ -78,18 +78,26 @@ public class TouchHelper {
     }
 
     public void tapOnDisplay(int x, int y, int displayId, boolean sync) {
+        tapOnDisplay(x, y, displayId, sync, /* waitAnimations */ true);
+    }
+
+    public void tapOnDisplay(int x, int y, int displayId, boolean sync, boolean waitAnimations) {
         final long downTime = SystemClock.uptimeMillis();
-        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId, sync);
+        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId, sync,
+                waitAnimations);
 
         final long upTime = SystemClock.uptimeMillis();
-        injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId, sync);
+        injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId, sync,
+                waitAnimations);
 
-        mWmState.waitForWithAmState(state -> state.getFocusedDisplayId() == displayId,
-                "top focused displayId: " + displayId);
+        if (waitAnimations) {
+            mWmState.waitForWithAmState(state -> state.getFocusedDisplayId() == displayId,
+                    "top focused displayId: " + displayId);
+        }
         // This is needed after a tap in multi-display to ensure that the display focus has really
         // changed, if needed. The call to syncInputTransaction will wait until focus change has
         // propagated from WMS to native input before returning.
-        mInstrumentation.getUiAutomation().syncInputTransactions();
+        mInstrumentation.getUiAutomation().syncInputTransactions(waitAnimations);
     }
 
     public void tapOnCenter(Rect bounds, int displayId) {
@@ -99,11 +107,15 @@ public class TouchHelper {
     }
 
     public void tapOnViewCenter(View view) {
+        tapOnViewCenter(view, true /* waitAnimations */);
+    }
+
+    public void tapOnViewCenter(View view, boolean waitAnimations) {
         final int[] topleft = new int[2];
         view.getLocationOnScreen(topleft);
         int x = topleft[0] + view.getWidth() / 2;
         int y = topleft[1] + view.getHeight() / 2;
-        tapOnDisplaySync(x, y, view.getDisplay().getDisplayId());
+        tapOnDisplay(x, y, view.getDisplay().getDisplayId(), true /* sync */, waitAnimations);
     }
 
     public void tapOnStackCenter(WindowManagerState.ActivityTask stack) {
@@ -122,11 +134,17 @@ public class TouchHelper {
 
     public static void injectMotion(long downTime, long eventTime, int action,
             int x, int y, int displayId, boolean sync) {
+        injectMotion(downTime, eventTime, action, x, y, displayId, sync,
+                true /* waitForAnimations */);
+    }
+
+    public static void injectMotion(long downTime, long eventTime, int action,
+            int x, int y, int displayId, boolean sync, boolean waitAnimations) {
         final MotionEvent event = MotionEvent.obtain(downTime, eventTime, action,
                 x, y, 0 /* metaState */);
         event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
         event.setDisplayId(displayId);
-        getInstrumentation().getUiAutomation().injectInputEvent(event, sync);
+        getInstrumentation().getUiAutomation().injectInputEvent(event, sync, waitAnimations);
     }
 
     public static void injectKey(int keyCode, boolean longPress, boolean sync) {

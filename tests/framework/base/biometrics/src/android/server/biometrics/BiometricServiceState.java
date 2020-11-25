@@ -67,18 +67,10 @@ public class BiometricServiceState {
         mState = state;
     }
 
-    int getFirstAuthenticatingSensorId() {
-        for (int i = 0; i < mSensorStates.sensorStates.size(); i++) {
-            if (mSensorStates.sensorStates.valueAt(i).isBusy()) {
-                return mSensorStates.sensorStates.keyAt(i);
-            }
-        }
-        throw new IllegalStateException("No authenticating sensors");
-    }
-
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
+        sb.append("AuthSessionState: ").append(mState).append(". ");
         sb.append(mSensorStates.toString());
         return sb.toString();
     }

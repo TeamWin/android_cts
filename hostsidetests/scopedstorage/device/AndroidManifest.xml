@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-     Copyright (C) 2019 The Android Open Source Project
+<!-- Copyright (C) 2020 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -16,13 +15,16 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.os.ext.cts">
+          package="android.scopedstorage.cts.device">
+<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+<application android:label="Scoped Storage Device Tests">
+    <receiver android:name="com.android.cts.install.lib.LocalIntentSender"
+              android:exported="true" />
+    <uses-library android:name="android.test.runner" />
+</application>
 
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.os.ext.cts"
-                     android:label="CTS tests of android.os.ext">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
-    </instrumentation>
+<instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+                 android:targetPackage="android.scopedstorage.cts.device"
+                 android:label="Device-only scoped storage tests" />
 
 </manifest>

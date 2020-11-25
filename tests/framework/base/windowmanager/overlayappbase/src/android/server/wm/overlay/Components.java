@@ -17,8 +17,8 @@
 package android.server.wm.overlay;
 
 import android.content.ComponentName;
-import android.os.Binder;
 import android.server.wm.component.ComponentsBase;
+
 
 public class Components extends ComponentsBase {
     public interface TestCompanionService {
@@ -31,8 +31,20 @@ public class Components extends ComponentsBase {
 
     public interface OverlayActivity {
         ComponentName COMPONENT = component("OverlayActivity");
-        String EXTRA_NAME = "name";
         String EXTRA_OPACITY = "opacity";
+        String EXTRA_TOUCHABLE = "touchable";
+    }
+
+    public interface OpaqueActivity {
+        ComponentName COMPONENT = component("OpaqueActivity");
+    }
+
+    public interface ActivityReceiver {
+        String ACTION_FINISH = "android.server.wm.overlay.ActivityReceiver.ACTION_FINISH";
+        String EXTRA_ANIMATION = "animation";
+        int EXTRA_VALUE_ANIMATION_EMPTY = 0;
+        int EXTRA_VALUE_ANIMATION_0_7 = 1;
+        int EXTRA_VALUE_ANIMATION_0_9 = 2;
     }
 
     public interface ToastActivity {
