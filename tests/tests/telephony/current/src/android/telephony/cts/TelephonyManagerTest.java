@@ -16,6 +16,8 @@
 
 package android.telephony.cts;
 
+import static android.app.AppOpsManager.OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER;
+
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -30,6 +32,7 @@ import static org.junit.Assert.fail;
 
 import android.Manifest.permission;
 import android.annotation.NonNull;
+import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -582,6 +585,20 @@ public class TelephonyManagerTest {
         mTelephonyManager.getDefaultRespondViaMessageApplication();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 TelephonyManager::getAndUpdateDefaultRespondViaMessageApplication);
+
+        // Verify getImei/getSubscriberId/getIccAuthentication:
+        // With app ops permision USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER, should not throw
+        // SecurityException.
+        try {
+            setAppOpsPermissionAllowed(true, OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER);
+
+            mTelephonyManager.getImei();
+            mTelephonyManager.getSubscriberId();
+            mTelephonyManager.getIccAuthentication(
+                    TelephonyManager.APPTYPE_USIM, TelephonyManager.AUTHTYPE_EAP_AKA, "");
+        } finally {
+            setAppOpsPermissionAllowed(false, OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER);
+        }
     }
 
     @Test
@@ -3681,6 +3698,13 @@ public class TelephonyManagerTest {
                 super.wait(millis);
             }
         }
+    }
+
+    private void setAppOpsPermissionAllowed(boolean allowed, String op) {
+        AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
+        int mode = allowed ? AppOpsManager.MODE_ALLOWED : AppOpsManager.opToDefaultMode(op);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                appOpsManager, (appOps) -> appOps.setUidMode(op, Process.myUid(), mode));
     }
 }
 
