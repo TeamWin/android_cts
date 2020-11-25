@@ -229,7 +229,6 @@
 05-04 21:59:23.743  9363  9363 F DEBUG   :     #22 pc 00000000001a1f94  /system/lib64/hw/bluetooth.default.so (run_thread(void*)+184)
 05-04 21:59:23.743  9363  9363 F DEBUG   :     #23 pc 0000000000067d80  /system/lib64/libc.so (__pthread_start(void*)+36)
 05-04 21:59:23.743  9363  9363 F DEBUG   :     #24 pc 000000000001ec18  /system/lib64/libc.so (__start_thread+68)
-1-25 19:47:35.417  8080 11665 F MPEG4Extractor: frameworks/av/media/libstagefright/MPEG4Extractor.cpp:6853 CHECK_EQ( (unsigned)ptr[0],1u) failed: 129 vs. 1
 11-25 19:47:35.417  8080 11665 F libc    : Fatal signal 6 (SIGABRT), code -6 in tid 11665 (generic)
 11-25 19:47:35.487   940   940 F DEBUG   : *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
 11-25 19:47:35.487   940   940 F DEBUG   : Build fingerprint: 'samsung/hero2qltezc/hero2qltechn:6.0.1/MMB29M/G9350ZCU2APJ6:user/release-keys'
