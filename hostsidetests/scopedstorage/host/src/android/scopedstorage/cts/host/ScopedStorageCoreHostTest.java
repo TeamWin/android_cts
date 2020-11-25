@@ -80,103 +80,6 @@ public class ScopedStorageCoreHostTest extends BaseHostTestCase {
     }
 
     @Test
-    public void testTypePathConformity() throws Exception {
-        runDeviceTest("testTypePathConformity");
-    }
-
-    @Test
-    public void testCreateFileInAppExternalDir() throws Exception {
-        runDeviceTest("testCreateFileInAppExternalDir");
-    }
-
-    @Test
-    public void testCreateFileInOtherAppExternalDir() throws Exception {
-        runDeviceTest("testCreateFileInOtherAppExternalDir");
-    }
-
-    @Test
-    public void testContributeMediaFile() throws Exception {
-        runDeviceTest("testContributeMediaFile");
-    }
-
-    @Test
-    public void testCreateAndDeleteEmptyDir() throws Exception {
-        runDeviceTest("testCreateAndDeleteEmptyDir");
-    }
-
-    @Test
-    public void testOpendirRestrictions() throws Exception {
-        runDeviceTest("testOpendirRestrictions");
-    }
-
-    @Test
-    public void testLowLevelFileIO() throws Exception {
-        runDeviceTest("testLowLevelFileIO");
-    }
-
-    @Test
-    public void testListDirectoriesWithMediaFiles() throws Exception {
-        runDeviceTest("testListDirectoriesWithMediaFiles");
-    }
-
-    @Test
-    public void testListFilesFromExternalMediaDirectory() throws Exception {
-        runDeviceTest("testListFilesFromExternalMediaDirectory");
-    }
-
-    @Test
-    public void testMetaDataRedaction() throws Exception {
-        runDeviceTest("testMetaDataRedaction");
-    }
-
-    @Test
-    public void testVfsCacheConsistency() throws Exception {
-        runDeviceTest("testOpenFilePathFirstWriteContentResolver");
-        runDeviceTest("testOpenContentResolverFirstWriteContentResolver");
-        runDeviceTest("testOpenFilePathFirstWriteFilePath");
-        runDeviceTest("testOpenContentResolverFirstWriteFilePath");
-        runDeviceTest("testOpenContentResolverWriteOnly");
-        runDeviceTest("testOpenContentResolverDup");
-        runDeviceTest("testContentResolverDelete");
-        runDeviceTest("testContentResolverUpdate");
-        runDeviceTest("testOpenContentResolverClose");
-    }
-
-    @Test
-    public void testCaseInsensitivity() throws Exception {
-        runDeviceTest("testCreateLowerCaseDeleteUpperCase");
-        runDeviceTest("testCreateUpperCaseDeleteLowerCase");
-        runDeviceTest("testCreateMixedCaseDeleteDifferentMixedCase");
-        runDeviceTest("testAndroidDataObbDoesNotForgetMount");
-        runDeviceTest("testCacheConsistencyForCaseInsensitivity");
-    }
-
-    @Test
-    public void testRenameAndReplaceFile() throws Exception {
-        runDeviceTest("testRenameAndReplaceFile");
-    }
-
-    @Test
-    public void testRenameDirectory() throws Exception {
-        runDeviceTest("testRenameDirectory");
-    }
-
-    @Test
-    public void testSystemGalleryAppHasFullAccessToImages() throws Exception {
-        runDeviceTest("testSystemGalleryAppHasFullAccessToImages");
-    }
-
-    @Test
-    public void testSystemGalleryAppHasNoFullAccessToAudio() throws Exception {
-        runDeviceTest("testSystemGalleryAppHasNoFullAccessToAudio");
-    }
-
-    @Test
-    public void testSystemGalleryCanRenameImageAndVideoDirs() throws Exception {
-        runDeviceTest("testSystemGalleryCanRenameImageAndVideoDirs");
-    }
-
-    @Test
     public void testManageExternalStorageCanCreateFilesAnywhere() throws Exception {
         allowAppOps("android:manage_external_storage");
         try {
@@ -194,28 +97,6 @@ public class ScopedStorageCoreHostTest extends BaseHostTestCase {
         } finally {
             denyAppOps("android:manage_external_storage");
         }
-    }
-
-    @Test
-    public void testHiddenFiles() throws Exception {
-        runDeviceTest("testCanCreateHiddenFile");
-        runDeviceTest("testCanRenameHiddenFile");
-        runDeviceTest("testHiddenDirectory");
-    }
-
-    @Test
-    public void testCreateCanRestoreDeletedRowId() throws Exception {
-        runDeviceTest("testCreateCanRestoreDeletedRowId");
-    }
-
-    @Test
-    public void testRenameCanRestoreDeletedRowId() throws Exception {
-        runDeviceTest("testRenameCanRestoreDeletedRowId");
-    }
-
-    @Test
-    public void testQueryOtherAppsFiles() throws Exception {
-        runDeviceTest("testQueryOtherAppsFiles");
     }
 
     @Test
