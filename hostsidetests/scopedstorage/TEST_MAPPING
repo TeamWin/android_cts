@@ -8,6 +8,9 @@
     },
     {
       "name": "CtsScopedStoragePublicVolumeHostTest"
+    },
+    {
+      "name": "CtsScopedStorageDeviceOnlyTest"
     }
   ]
 }

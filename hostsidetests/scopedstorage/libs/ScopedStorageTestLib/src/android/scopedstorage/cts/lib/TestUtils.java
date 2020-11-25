@@ -787,6 +787,20 @@ public class TestUtils {
     }
 
     /**
+     * Asserts the default volume used in helper methods is the primary volume.
+     */
+    public static void assertDefaultVolumeIsPrimary() {
+        assertVolumeType(true /* isPrimary */);
+    }
+
+    /**
+     * Asserts the default volume used in helper methods is a public volume.
+     */
+    public static void assertDefaultVolumeIsPublic() {
+        assertVolumeType(false /* isPrimary */);
+    }
+
+    /**
      * Creates and returns the Android data sub-directory belonging to the calling package.
      */
     public static File getExternalFilesDir() {
@@ -1098,19 +1112,22 @@ public class TestUtils {
     }
 
     /**
-     * Gets the name of the public volume.
+     * Gets the name of the public volume, waiting for a bit for it to be available.
      */
     public static String getPublicVolumeName() throws Exception {
         final String[] volName = new String[1];
         pollForCondition(() -> {
-            volName[0] = getPublicVolumeNameInternal();
+            volName[0] = getCurrentPublicVolumeName();
             return volName[0] != null;
         }, "Timed out while waiting for public volume to be ready");
 
         return volName[0];
     }
 
-    private static String getPublicVolumeNameInternal() {
+    /**
+     * @return the currently mounted public volume, if any.
+     */
+    public static String getCurrentPublicVolumeName() {
         final String[] allVolumeDetails;
         try {
             allVolumeDetails = executeShellCommand("sm list-volumes")
@@ -1157,5 +1174,16 @@ public class TestUtils {
         pollForCondition(
                 () -> Environment.isExternalStorageManager(),
                 "Timed out while waiting for MANAGE_EXTERNAL_STORAGE");
+    }
+
+    private static void assertVolumeType(boolean isPrimary) {
+        String[] parts = getExternalFilesDir().getAbsolutePath().split("/");
+        assertThat(parts.length).isAtLeast(3);
+        assertThat(parts[1]).isEqualTo("storage");
+        if (isPrimary) {
+            assertThat(parts[2]).isEqualTo("emulated");
+        } else {
+            assertThat(parts[2]).isNotEqualTo("emulated");
+        }
     }
 }

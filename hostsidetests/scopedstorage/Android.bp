@@ -99,7 +99,7 @@ java_test_host {
 }
 
 android_test {
-    name: "ScopedStorageDeviceOnlyTest",
+    name: "CtsScopedStorageDeviceOnlyTest",
     manifest: "device/AndroidManifest.xml",
     test_config: "device/AndroidTest.xml",
     srcs: ["device/**/*.java"],
@@ -108,4 +108,10 @@ android_test {
     test_suites: ["device-tests", "mts", "cts"],
     sdk_version: "test_current",
     libs: ["android.test.base", "android.test.mock", "android.test.runner",],
+    java_resources: [
+        ":CtsScopedStorageTestAppA",
+        ":CtsScopedStorageTestAppB",
+        ":CtsScopedStorageTestAppC",
+        ":CtsScopedStorageTestAppCLegacy",
+    ]
 }
