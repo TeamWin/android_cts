@@ -22,7 +22,7 @@
     <uses-split android:name="feature_a"/>
 
     <application>
-        <activity android:name=".FeatureBActivity"
+        <activity android:name=".FeatureBActivity" android:theme="@style/Theme_Feature_B"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

@@ -20,7 +20,7 @@
      android:targetSandboxVersion="2">
 
     <application>
-        <activity android:name=".FeatureAActivity"
+        <activity android:name=".FeatureAActivity" android:theme="@style/Theme_Feature_A"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
