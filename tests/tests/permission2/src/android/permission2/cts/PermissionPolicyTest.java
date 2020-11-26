@@ -28,7 +28,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
-import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArrayMap;
 import android.util.ArraySet;
@@ -49,7 +48,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -263,20 +261,6 @@ public class PermissionPolicyTest {
                     permissions.add(permissionInfo);
                 } else {
                     Log.e(LOG_TAG, "Unknown tag " + parser.getName());
-                }
-            }
-        }
-
-        // STOPSHIP: remove this once isolated storage is always enabled
-        if (!StorageManager.hasIsolatedStorage()) {
-            Iterator<ExpectedPermissionInfo> it = permissions.iterator();
-            while (it.hasNext()) {
-                final ExpectedPermissionInfo pi = it.next();
-                switch (pi.name) {
-                    case android.Manifest.permission.ACCESS_MEDIA_LOCATION:
-                    case android.Manifest.permission.WRITE_OBB:
-                        it.remove();
-                        break;
                 }
             }
         }
