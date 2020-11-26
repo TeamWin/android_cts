@@ -184,7 +184,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase.ManualActivity
             // Create the authentication intent (launching a full screen activity)
             IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
                     new Intent(getContext(), ManualAuthenticationActivity.class),
-                    0).getIntentSender();
+                    PendingIntent.FLAG_MUTABLE).getIntentSender();
 
             // Prepare the authenticated response
             ManualAuthenticationActivity.setResponse(new CannedFillResponse.Builder()
@@ -295,7 +295,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase.ManualActivity
         // Create the authentication intent (launching a full screen activity)
         IntentSender authentication = PendingIntent.getActivity(getContext(), 0,
                 new Intent(getContext(), ManualAuthenticationActivity.class),
-                0).getIntentSender();
+                PendingIntent.FLAG_IMMUTABLE).getIntentSender();
 
         CannedFillResponse response = new CannedFillResponse.Builder()
                 .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
