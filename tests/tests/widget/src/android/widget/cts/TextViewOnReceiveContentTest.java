@@ -29,6 +29,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -45,7 +46,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcel;
 import android.text.Selection;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -855,21 +855,12 @@ public class TextViewOnReceiveContentTest {
     }
 
     private static DragEvent createDragEvent(int action, float x, float y, ClipData clip) {
-        // TODO(b/171717040): Expose a test API to instantiate a DragEvent
-        Parcel dest = Parcel.obtain();
-        dest.writeInt(action);
-        dest.writeFloat(x);
-        dest.writeFloat(y);
-        dest.writeFloat(0f); // offsetX
-        dest.writeFloat(0f); // offsetY
-        dest.writeInt(0); // Result
-        dest.writeInt(1); // ClipData
-        clip.writeToParcel(dest, 0);
-        dest.writeInt(1); // ClipDescription
-        clip.getDescription().writeToParcel(dest, 0);
-        dest.writeInt(0); // IDragAndDropPermissions
-        dest.setDataPosition(0);
-        return DragEvent.CREATOR.createFromParcel(dest);
+        DragEvent dragEvent = mock(DragEvent.class);
+        when(dragEvent.getAction()).thenReturn(action);
+        when(dragEvent.getX()).thenReturn(x);
+        when(dragEvent.getY()).thenReturn(y);
+        when(dragEvent.getClipData()).thenReturn(clip);
+        return dragEvent;
     }
 
     private void triggerProcessTextOnActivityResult(CharSequence replacementText) {
