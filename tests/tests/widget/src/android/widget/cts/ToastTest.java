@@ -18,6 +18,8 @@ package android.widget.cts;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
@@ -32,6 +34,7 @@ import static java.util.stream.Collectors.toList;
 
 import android.app.UiAutomation;
 import android.app.UiAutomation.AccessibilityEventFilter;
+import android.compat.Compatibility;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -40,8 +43,10 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.ConditionVariable;
+import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.util.ArraySet;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -54,7 +59,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
@@ -63,6 +67,8 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.internal.compat.CompatibilityChangeConfig;
+import com.android.internal.compat.IPlatformCompat;
 
 import junit.framework.Assert;
 
@@ -74,6 +80,7 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +104,13 @@ public class ToastTest {
     private static final ComponentName COMPONENT_TRANSLUCENT_ACTIVITY =
             ComponentName.unflattenFromString("android.widget.cts.app/.TranslucentActivity");
     private static final double TOAST_DURATION_ERROR_TOLERANCE_FRACTION = 0.25;
+    private static final long RATE_LIMIT_TOASTS_CHANGE_ID = 154198299L;
+
+    // The following two fields work together to define rate limits for toasts, where each limit is
+    // defined as TOAST_RATE_LIMITS[i] toasts are allowed in the window of length
+    // TOAST_WINDOW_SIZES_MS[i].
+    private static final int[] TOAST_RATE_LIMITS = {3, 5, 6};
+    private static final long[] TOAST_WINDOW_SIZES_MS = {20_000, 42_000, 68_000};
 
     private Toast mToast;
     private Context mContext;
@@ -104,6 +118,7 @@ public class ToastTest {
     private ViewTreeObserver.OnGlobalLayoutListener mLayoutListener;
     private ConditionVariable mToastShown;
     private ConditionVariable mToastHidden;
+    private IPlatformCompat mPlatformCompat;
 
     @Rule
     public ActivityTestRule<CtsActivity> mActivityRule =
@@ -112,14 +127,19 @@ public class ToastTest {
 
     @Before
     public void setup() {
-        mContext = InstrumentationRegistry.getTargetContext();
-        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        mContext = getInstrumentation().getContext();
+        mUiAutomation = getInstrumentation().getUiAutomation();
         mLayoutListener = () -> mLayoutDone = true;
+        mPlatformCompat = IPlatformCompat.Stub.asInterface(
+                ServiceManager.getService(Context.PLATFORM_COMPAT_SERVICE));
+        setToastRateLimitingEnabled(false);
     }
 
     @After
     public void teardown() {
         waitForToastToExpire();
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                mPlatformCompat.clearOverridesForTest(mContext.getPackageName()));
     }
 
     @UiThreadTest
@@ -215,6 +235,23 @@ public class ToastTest {
         if (view != null && view.getParent() != null) {
             PollingCheck.waitFor(TIME_OUT, () -> view.getParent() == null);
         }
+    }
+
+    /** Enable or disable the compat change for rate limiting toasts. */
+    private void setToastRateLimitingEnabled(boolean enable) {
+        Set<Long> enabled = new ArraySet<>();
+        Set<Long> disabled = new ArraySet<>();
+        if (enable) {
+            enabled.add(RATE_LIMIT_TOASTS_CHANGE_ID);
+        } else {
+            disabled.add(RATE_LIMIT_TOASTS_CHANGE_ID);
+        }
+
+        CompatibilityChangeConfig overrides =
+                new CompatibilityChangeConfig(
+                        new Compatibility.ChangeConfig(enabled, disabled));
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                mPlatformCompat.setOverridesForTest(overrides, mContext.getPackageName()));
     }
 
     @Test
@@ -884,21 +921,71 @@ public class ToastTest {
 
     @Test
     public void testPackageCantPostMoreThanMaxToastsQuickly() throws Throwable {
+        List<TextToastInfo> toasts =
+                createTextToasts(MAX_PACKAGE_TOASTS_LIMIT + 1, "Text", Toast.LENGTH_SHORT);
+        showTextToasts(toasts);
+
+        assertTextToastsShownAndHidden(toasts.subList(0, MAX_PACKAGE_TOASTS_LIMIT));
+        assertTextToastNotShown(toasts.get(MAX_PACKAGE_TOASTS_LIMIT));
+    }
+
+    @Test
+    public void testRateLimitingToasts() throws Throwable {
+        setToastRateLimitingEnabled(true);
+
+        long totalTimeSpentMs = 0;
+        int shownToastsNum = 0;
+        // We add additional 3 seconds just to be sure we get into the next window.
+        long additionalWaitTime = 3_000L;
+
+        for (int i = 0; i < TOAST_RATE_LIMITS.length; i++) {
+            int currentToastNum = TOAST_RATE_LIMITS[i] - shownToastsNum;
+            List<TextToastInfo> toasts =
+                    createTextToasts(currentToastNum + 1, "Text", Toast.LENGTH_SHORT);
+            long startTime = SystemClock.elapsedRealtime();
+            showTextToasts(toasts);
+
+            assertTextToastsShownAndHidden(toasts.subList(0, currentToastNum));
+            assertTextToastNotShown(toasts.get(currentToastNum));
+            long endTime = SystemClock.elapsedRealtime();
+
+            // We won't check after the last limit, no need to sleep then.
+            if (i != TOAST_RATE_LIMITS.length - 1) {
+                totalTimeSpentMs += endTime - startTime;
+                shownToastsNum += currentToastNum;
+                long sleepTime = Math.max(
+                        TOAST_WINDOW_SIZES_MS[i] - totalTimeSpentMs + additionalWaitTime, 0);
+                SystemClock.sleep(sleepTime);
+                totalTimeSpentMs += sleepTime;
+            }
+        }
+    }
+
+    /** Create given number of text toasts with the same given text and length. */
+    private List<TextToastInfo> createTextToasts(int num, String text, int length)
+            throws Throwable {
         List<TextToastInfo> toasts = new ArrayList<>();
         mActivityRule.runOnUiThread(() -> {
             toasts.addAll(Stream
-                    .generate(() -> TextToastInfo.create(mContext, "Text", Toast.LENGTH_SHORT))
-                    .limit(MAX_PACKAGE_TOASTS_LIMIT + 1)
+                    .generate(() -> TextToastInfo.create(mContext, text, length))
+                    .limit(num + 1)
                     .collect(toList()));
-            for (TextToastInfo t: toasts) {
+        });
+        return toasts;
+    }
+
+    private void showTextToasts(List<TextToastInfo> toasts) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            for (TextToastInfo t : toasts) {
                 t.getToast().show();
             }
         });
+    }
 
-        for (int i = 0; i < MAX_PACKAGE_TOASTS_LIMIT; i++) {
+    private void assertTextToastsShownAndHidden(List<TextToastInfo> toasts) {
+        for (int i = 0; i < toasts.size(); i++) {
             assertTextToastShownAndHidden(toasts.get(i));
         }
-        assertTextToastNotShown(toasts.get(MAX_PACKAGE_TOASTS_LIMIT));
     }
 
     private ConditionVariable registerBlockingReceiver(String action) {
