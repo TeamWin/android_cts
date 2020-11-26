@@ -25,15 +25,18 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.activities.MyWebView;
 import android.autofillservice.cts.activities.WebViewActivity;
 import android.autofillservice.cts.commontests.AugmentedAutofillAutoActivityLaunchTestCase;
+import android.autofillservice.cts.testcore.AugmentedHelper;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.CtsAugmentedAutofillService.AugmentedFillRequest;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillValue;
 
 import androidx.test.filters.FlakyTest;
 
@@ -82,8 +85,14 @@ public class InlineAugmentedWebViewActivityTest extends
 
         // Trigger autofill.
         mActivity.getUsernameInput().click();
-        sReplier.getNextFillRequest();
-        sAugmentedReplier.getNextFillRequest();
+
+        final FillRequest autofillRequest = sReplier.getNextFillRequest();
+        AutofillId usernameId = getAutofillIdByWebViewTag(autofillRequest, HTML_NAME_USERNAME);
+        final AugmentedFillRequest request = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        AugmentedHelper.assertBasicRequestInfo(request, mActivity, usernameId,
+                (AutofillValue) null);
 
         // Assert not shown.
         mUiBot.assertNoDatasetsEver();
@@ -146,7 +155,12 @@ public class InlineAugmentedWebViewActivityTest extends
                         .build())
                 .build());
 
-        sAugmentedReplier.getNextFillRequest();
+        final AugmentedFillRequest request = sAugmentedReplier.getNextFillRequest();
+
+        // Assert request
+        AugmentedHelper.assertBasicRequestInfo(request, mActivity, usernameId,
+                (AutofillValue) null);
+
         final UiObject2 datasetPicker = mUiBot.assertDatasets("dude");
 
         // Now Autofill it.
