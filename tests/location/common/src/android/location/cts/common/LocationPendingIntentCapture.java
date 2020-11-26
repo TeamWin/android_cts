@@ -52,7 +52,7 @@ public class LocationPendingIntentCapture extends BroadcastCapture {
                 new Intent(ACTION)
                         .setPackage(context.getPackageName())
                         .addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
-                PendingIntent.FLAG_CANCEL_CURRENT);
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE);
         mLocations = new LinkedBlockingQueue<>();
         mFlushes = new LinkedBlockingQueue<>();
         mProviderChanges = new LinkedBlockingQueue<>();
