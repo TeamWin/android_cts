@@ -130,4 +130,6 @@ interface ITest {
     SimpleUnion RepeatSimpleUnion(in SimpleUnion u);
 
     IBinder getICompatTest();
+
+    void RepeatExtendableParcelableWithoutExtension(in ExtendableParcelable input, out ExtendableParcelable output);
 }

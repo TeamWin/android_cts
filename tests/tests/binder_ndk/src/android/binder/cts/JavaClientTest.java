@@ -691,7 +691,7 @@ public class JavaClientTest {
     @Test
     public void testParcelableHolder() throws RemoteException {
         ExtendableParcelable ep = new ExtendableParcelable();
-
+        ep.c = 42L;
         MyExt myext1 = new MyExt();
         myext1.a = 42;
         myext1.b = "mystr";
@@ -700,9 +700,19 @@ public class JavaClientTest {
         ExtendableParcelable ep2 = new ExtendableParcelable();
         mInterface.RepeatExtendableParcelable(ep, ep2);
         MyExt myext2 = ep2.ext.getParcelable(MyExt.class);
+        assertEquals(42L, ep2.c);
         assertNotEquals(null, myext2);
         assertEquals(42, myext2.a);
         assertEquals("mystr", myext2.b);
+    }
+
+    @Test
+    public void testEmptyParcelableHolder() throws RemoteException {
+        ExtendableParcelable ep = new ExtendableParcelable();
+        ep.c = 42L;
+        ExtendableParcelable ep2 = new ExtendableParcelable();
+        mInterface.RepeatExtendableParcelableWithoutExtension(ep, ep2);
+        assertEquals(42L, ep2.c);
     }
 
     @Test
