@@ -22,8 +22,12 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -31,6 +35,7 @@ import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -68,7 +73,6 @@ public final class RecognitionServiceMicIndicatorTest {
     private SpeechRecognitionActivity mActivity;
     private Context mContext;
     private String mOriginalVoiceRecognizer;
-    private String mOriginalVoiceInteractor;
     private String mCameraLabel;
 
     @Rule
@@ -88,14 +92,17 @@ public final class RecognitionServiceMicIndicatorTest {
                     pm).toString();
         } catch (PackageManager.NameNotFoundException e) {
         }
-        getOriginalVoiceServices();
+        // get original voice service
+        mOriginalVoiceRecognizer = Settings.Secure.getString(
+                mContext.getContentResolver(), VOICE_RECOGNITION_SERVICE);
     }
 
     @After
     public void teardown() {
         // press back to close the dialog
         mUiDevice.pressBack();
-        restoreOriginalVoiceServices();
+        // restore to original voice service
+        setCurrentRecognizer(mOriginalVoiceRecognizer);
     }
 
     private void prepareDevice() {
@@ -105,20 +112,6 @@ public final class RecognitionServiceMicIndicatorTest {
         runShellCommand("wm dismiss-keyguard");
     }
 
-    private void getOriginalVoiceServices() {
-        mOriginalVoiceRecognizer = Settings.Secure.getString(
-                mContext.getContentResolver(), VOICE_RECOGNITION_SERVICE);
-        mOriginalVoiceInteractor = Settings.Secure.getString(
-                mContext.getContentResolver(), VOICE_INTERACTION_SERVICE);
-    }
-
-    private void restoreOriginalVoiceServices() {
-        Log.v(TAG, "restoreOriginalVoiceServices: voiceRecognizer=" + mOriginalVoiceRecognizer
-                + " voiceInteractor"+mOriginalVoiceInteractor);
-        setCurrentInteractor(mOriginalVoiceInteractor);
-        setCurrentRecognizer(mOriginalVoiceRecognizer);
-    }
-
     private void setCurrentRecognizer(String recognizer) {
         runWithShellPermissionIdentity(
                 () -> Settings.Secure.putString(mContext.getContentResolver(),
@@ -126,17 +119,26 @@ public final class RecognitionServiceMicIndicatorTest {
         mUiDevice.waitForIdle();
     }
 
-    private void setCurrentInteractor(String interactor) {
-        runWithShellPermissionIdentity(
-                () -> Settings.Secure.putString(mContext.getContentResolver(),
-                        VOICE_INTERACTION_SERVICE, interactor));
-        mUiDevice.waitForIdle();
+    private boolean hasPreInstalledRecognizer(String packageName) {
+        Log.v(TAG, "hasPreInstalledRecognizer package=" + packageName);
+        try {
+            final PackageManager pm = mContext.getPackageManager();
+            final ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
+            return ((info.flags & ApplicationInfo.FLAG_SYSTEM) != 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    private static String getComponentPackageNameFromString(String from) {
+        ComponentName componentName = from != null ? ComponentName.unflattenFromString(from) : null;
+        return componentName != null ? componentName.getPackageName() : "";
     }
 
     @Test
     public void testNonTrustedRecognitionServiceCannotBlameCallingApp() throws Throwable {
         // This is a workaound solution for R QPR. We treat trusted if the current voice recognizer
-        // is also the voice interactor. This is a untrusted case.
+        // is also a preinstalled app. This is a untrusted case.
         setCurrentRecognizer(CTS_VOICE_RECOGNITION_SERVICE);
 
         // verify that the untrusted app cannot blame the calling app mic access
@@ -146,9 +148,10 @@ public final class RecognitionServiceMicIndicatorTest {
     @Test
     public void testTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
         // This is a workaound solution for R QPR. We treat trusted if the current voice recognizer
-        // is also the voice interactor. This is a trusted case.
-        setCurrentInteractor(CTS_VOICE_RECOGNITION_SERVICE);
-        setCurrentRecognizer(CTS_VOICE_RECOGNITION_SERVICE);
+        // is also a preinstalled app. This is a trusted case.
+        boolean hasPreInstalledRecognizer = hasPreInstalledRecognizer(
+                getComponentPackageNameFromString(mOriginalVoiceRecognizer));
+        assumeTrue("No preinstalled recognizer.", hasPreInstalledRecognizer);
 
         // verify that the trusted app can blame the calling app mic access
         testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ true);
