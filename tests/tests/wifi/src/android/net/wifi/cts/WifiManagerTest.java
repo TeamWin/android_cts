@@ -2871,6 +2871,51 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Verify WifiNetworkSuggestion.Builder.setIsEnhancedMacRandomizationEnabled(true) creates a
+     * WifiConfiguration with macRandomizationSetting == RANDOMIZATION_ENHANCED.
+     * Then verify by default, a WifiConfiguration created by suggestions should have
+     * macRandomizationSetting == RANDOMIZATION_PERSISTENT.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testSuggestionBuilderEnhancedMacRandomizationSetting() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        WifiNetworkSuggestion suggestion = new WifiNetworkSuggestion.Builder()
+                .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE)
+                .setIsEnhancedMacRandomizationEnabled(true)
+                .build();
+        assertEquals(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
+                mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)));
+        verifySuggestionFoundWithMacRandomizationSetting(TEST_SSID,
+                WifiConfiguration.RANDOMIZATION_ENHANCED);
+
+        suggestion = new WifiNetworkSuggestion.Builder()
+                .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE)
+                .build();
+        assertEquals(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
+                mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)));
+        verifySuggestionFoundWithMacRandomizationSetting(TEST_SSID,
+                WifiConfiguration.RANDOMIZATION_PERSISTENT);
+    }
+
+    private void verifySuggestionFoundWithMacRandomizationSetting(String ssid,
+            int macRandomizationSetting) {
+        List<WifiNetworkSuggestion> retrievedSuggestions = mWifiManager.getNetworkSuggestions();
+        for (WifiNetworkSuggestion entry : retrievedSuggestions) {
+            if (entry.getSsid().equals(ssid)) {
+                assertEquals(macRandomizationSetting,
+                        entry.getWifiConfiguration().macRandomizationSetting);
+                return; // pass test after the MAC randomization setting is verified.
+            }
+        }
+        fail("WifiNetworkSuggestion not found for SSID=" + ssid + ", macRandomizationSetting="
+                + macRandomizationSetting);
+    }
+
+    /**
      * Tests {@link WifiManager#getWifiConfigForMatchedNetworkSuggestionsSharedWithUser(List)}
      */
     public void testGetAllWifiConfigForMatchedNetworkSuggestion() {
