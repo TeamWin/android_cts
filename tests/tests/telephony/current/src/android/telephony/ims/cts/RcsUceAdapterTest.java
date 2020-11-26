@@ -258,7 +258,7 @@ public class RcsUceAdapterTest {
                         @Override
                         public void onComplete() {}
                         @Override
-                        public void onError(int errorCode) {}
+                        public void onError(int errorCode, long retryAfterMilliseconds) {}
                     });
             fail("requestCapabilities should require READ_PRIVILEGED_PHONE_STATE.");
         } catch (SecurityException e) {
