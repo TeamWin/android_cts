@@ -455,11 +455,21 @@ class MyTest : public ::aidl::test_package::BnTest,
   ::ndk::ScopedAStatus RepeatExtendableParcelable(
       const ::aidl::test_package::ExtendableParcelable& in_input,
       ::aidl::test_package::ExtendableParcelable* out_output) {
+    RepeatExtendableParcelableWithoutExtension(in_input, out_output);
     std::unique_ptr<MyExt> ext = in_input.ext.getParcelable<MyExt>();
     MyExt ext2;
     ext2.a = ext->a;
     ext2.b = ext->b;
     out_output->ext.setParcelable(ext2);
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+  ::ndk::ScopedAStatus RepeatExtendableParcelableWithoutExtension(
+      const ::aidl::test_package::ExtendableParcelable& in_input,
+      ::aidl::test_package::ExtendableParcelable* out_output) {
+    out_output->a = in_input.a;
+    out_output->b = in_input.b;
+    out_output->c = in_input.c;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 
