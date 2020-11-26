@@ -398,11 +398,19 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public void RepeatExtendableParcelable(ExtendableParcelable in, ExtendableParcelable out) {
+    RepeatExtendableParcelableWithoutExtension(in, out);
     MyExt ext = in.ext.getParcelable(MyExt.class);
     MyExt ext2 = new MyExt();
     ext2.a = ext.a;
     ext2.b = ext.b;
     out.ext.setParcelable(ext2);
+  }
+
+  @Override
+  public void RepeatExtendableParcelableWithoutExtension(ExtendableParcelable in, ExtendableParcelable out) {
+    out.a = in.a;
+    out.b = in.b;
+    out.c = in.c;
   }
 
   public SimpleUnion RepeatSimpleUnion(SimpleUnion in_u) {
