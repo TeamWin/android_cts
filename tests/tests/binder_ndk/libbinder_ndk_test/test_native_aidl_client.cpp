@@ -958,7 +958,7 @@ TEST_P(NdkBinderTest_Aidl, ParcelableHolderTest) {
 }
 TEST_P(NdkBinderTest_Aidl, ParcelableHolderCommunicationTest) {
   ExtendableParcelable ep;
-
+  ep.c = 42L;
   MyExt myext1;
   myext1.a = 42;
   myext1.b = "mystr";
@@ -967,9 +967,19 @@ TEST_P(NdkBinderTest_Aidl, ParcelableHolderCommunicationTest) {
   ExtendableParcelable ep2;
   EXPECT_OK(iface->RepeatExtendableParcelable(ep, &ep2));
   std::unique_ptr<MyExt> myext2 = ep2.ext.getParcelable<MyExt>();
+  EXPECT_EQ(42L, ep2.c);
   EXPECT_TRUE(myext2);
   EXPECT_EQ(42, myext2->a);
   EXPECT_EQ("mystr", myext2->b);
+}
+
+TEST_P(NdkBinderTest_Aidl, EmptyParcelableHolderCommunicationTest) {
+  ExtendableParcelable ep;
+  ExtendableParcelable ep2;
+  ep.c = 42L;
+  EXPECT_OK(iface->RepeatExtendableParcelableWithoutExtension(ep, &ep2));
+
+  EXPECT_EQ(42L, ep2.c);
 }
 
 std::shared_ptr<ITest> getProxyLocalService() {
