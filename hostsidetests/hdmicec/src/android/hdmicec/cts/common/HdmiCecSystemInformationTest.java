@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts.common;
 
+import static android.hdmicec.cts.HdmiCecConstants.TIMEOUT_SAFETY_MS;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
@@ -32,8 +34,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-
-import java.util.concurrent.TimeUnit;
 
 /** HDMI CEC system information tests (Section 11.2.6) */
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -95,8 +95,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     /**
      * Test HF4-2-12
      * Tests that the device sends a {@code <CEC Version>} with correct version argument in
-     * response
-     * to a {@code <Get CEC Version>}.
+     * response to a {@code <Get CEC Version>} message.
      *
      * Also verifies that the CEC version reported in {@code <Report Features>} matches the CEC
      * version reported in {@code <CEC Version>}.
@@ -106,12 +105,14 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
         int cecVersion = HdmiCecConstants.CEC_VERSION_2_0;
         CecVersionHelper.setCecVersion(getDevice(), cecVersion);
 
-        hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, CecOperand.GET_CEC_VERSION);
-        String reportCecVersion = hdmiCecClient.checkExpectedOutput(LogicalAddress.RECORDER_1,
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
+        String reportCecVersion = hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
                 CecOperand.CEC_VERSION);
         assertThat(CecMessage.getParams(reportCecVersion)).isEqualTo(cecVersion);
 
-        hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, CecOperand.GIVE_FEATURES);
+        Thread.sleep(TIMEOUT_SAFETY_MS);
+
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GIVE_FEATURES);
         String reportFeatures = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
                 CecOperand.REPORT_FEATURES);
         assertThat(CecMessage.getParams(reportFeatures, 2)).isEqualTo(cecVersion);
