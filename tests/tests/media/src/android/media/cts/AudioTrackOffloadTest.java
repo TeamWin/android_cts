@@ -71,6 +71,34 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3), DEFAULT_ATTR);
     }
 
+    public void testGetPlaybackOffloadSupportNullFormat() throws Exception {
+        try {
+            final int offloadMode = AudioManager.getPlaybackOffloadSupport(null,
+                    DEFAULT_ATTR);
+            fail("Shouldn't be able to use null AudioFormat in getPlaybackOffloadSupport()");
+        } catch (NullPointerException e) {
+            // ok, NPE is expected here
+        }
+    }
+
+    public void testGetPlaybackOffloadSupportNullAttributes() throws Exception {
+        try {
+            final int offloadMode = AudioManager.getPlaybackOffloadSupport(
+                    getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3), null);
+            fail("Shouldn't be able to use null AudioAttributes in getPlaybackOffloadSupport()");
+        } catch (NullPointerException e) {
+            // ok, NPE is expected here
+        }
+    }
+
+    public void testExerciseGetPlaybackOffloadSupport() throws Exception {
+        final int offloadMode = AudioManager.getPlaybackOffloadSupport(
+                getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3), DEFAULT_ATTR);
+        assertTrue("getPlaybackOffloadSupport returned invalid mode: " + offloadMode,
+            offloadMode == AudioManager.PLAYBACK_OFFLOAD_NOT_SUPPORTED
+                || offloadMode == AudioManager.PLAYBACK_OFFLOAD_SUPPORTED
+                || offloadMode == AudioManager.PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED);
+    }
 
     public void testMP3AudioTrackOffload() throws Exception {
         testAudioTrackOffload(R.raw.sine1khzs40dblong,
