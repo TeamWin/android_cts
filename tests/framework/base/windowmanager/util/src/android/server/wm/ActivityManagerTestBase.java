@@ -176,6 +176,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -248,44 +249,36 @@ public abstract class ActivityManagerTestBase {
 
     /**
      * @return the am command to start the given activity with the following extra key/value pairs.
-     * {@param keyValuePairs} must be a list of arguments defining each key/value extra.
+     * {@param extras} a list of {@link CliIntentExtra} representing a generic intent extra
      */
     // TODO: Make this more generic, for instance accepting flags or extras of other types.
     protected static String getAmStartCmd(final ComponentName activityName,
-            final String... keyValuePairs) {
-        return getAmStartCmdInternal(getActivityName(activityName), keyValuePairs);
+            final CliIntentExtra... extras) {
+        return getAmStartCmdInternal(getActivityName(activityName), extras);
     }
 
     private static String getAmStartCmdInternal(final String activityName,
-            final String... keyValuePairs) {
+            final CliIntentExtra... extras) {
         return appendKeyValuePairs(
                 new StringBuilder("am start -n ").append(activityName),
-                keyValuePairs);
+                extras);
     }
 
     private static String appendKeyValuePairs(
-            final StringBuilder cmd, final String... keyValuePairs) {
-        if (keyValuePairs.length % 2 != 0) {
-            throw new RuntimeException("keyValuePairs must be pairs of key/value arguments");
-        }
-        for (int i = 0; i < keyValuePairs.length; i += 2) {
-            final String key = keyValuePairs[i];
-            final String value = keyValuePairs[i + 1];
-            cmd.append(" --es ")
-                    .append(key)
-                    .append(" ")
-                    .append(value);
+            final StringBuilder cmd, final CliIntentExtra... extras) {
+        for (int i = 0; i < extras.length; i++) {
+            extras[i].appendTo(cmd);
         }
         return cmd.toString();
     }
 
     protected static String getAmStartCmd(final ComponentName activityName, final int displayId,
-            final String... keyValuePair) {
-        return getAmStartCmdInternal(getActivityName(activityName), displayId, keyValuePair);
+            final CliIntentExtra... extras) {
+        return getAmStartCmdInternal(getActivityName(activityName), displayId, extras);
     }
 
     private static String getAmStartCmdInternal(final String activityName, final int displayId,
-            final String... keyValuePairs) {
+            final CliIntentExtra... extras) {
         return appendKeyValuePairs(
                 new StringBuilder("am start -n ")
                         .append(activityName)
@@ -293,7 +286,7 @@ public abstract class ActivityManagerTestBase {
                         .append(toHexString(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK))
                         .append(" --display ")
                         .append(displayId),
-                keyValuePairs);
+                extras);
     }
 
     protected static String getAmStartCmdInNewTask(final ComponentName activityName) {
@@ -719,14 +712,15 @@ public abstract class ActivityManagerTestBase {
         return mInstrumentation.getUiAutomation().takeScreenshot();
     }
 
-    protected void launchActivity(final ComponentName activityName, final String... keyValuePairs) {
-        launchActivityNoWait(activityName, keyValuePairs);
+    protected void launchActivity(final ComponentName activityName,
+            final CliIntentExtra... extras) {
+        launchActivityNoWait(activityName, extras);
         mWmState.waitForValidState(activityName);
     }
 
     protected void launchActivityNoWait(final ComponentName activityName,
-            final String... keyValuePairs) {
-        executeShellCommand(getAmStartCmd(activityName, keyValuePairs));
+            final CliIntentExtra... extras) {
+        executeShellCommand(getAmStartCmd(activityName, extras));
     }
 
     protected void launchActivityInNewTask(final ComponentName activityName) {
@@ -783,13 +777,13 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void launchActivityNoWait(ComponentName activityName, int windowingMode,
-            final String... keyValuePairs) {
-        executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
+            final CliIntentExtra... extras) {
+        executeShellCommand(getAmStartCmd(activityName, extras)
                 + " --windowingMode " + windowingMode);
     }
 
     protected void launchActivity(ComponentName activityName, int windowingMode,
-            final String... keyValuePairs) {
+            final CliIntentExtra... keyValuePairs) {
         launchActivityNoWait(activityName, windowingMode, keyValuePairs);
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setWindowingMode(windowingMode)
@@ -797,8 +791,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void launchActivityOnDisplay(ComponentName activityName, int windowingMode,
-            int displayId, final String... keyValuePairs) {
-        executeShellCommand(getAmStartCmd(activityName, displayId, keyValuePairs)
+            int displayId, final CliIntentExtra... extras) {
+        executeShellCommand(getAmStartCmd(activityName, displayId, extras)
                 + " --windowingMode " + windowingMode);
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setWindowingMode(windowingMode)
@@ -806,14 +800,14 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void launchActivityOnDisplay(ComponentName activityName, int displayId,
-            String... keyValuePairs) {
-        launchActivityOnDisplayNoWait(activityName, displayId, keyValuePairs);
+            CliIntentExtra... extras) {
+        launchActivityOnDisplayNoWait(activityName, displayId, extras);
         mWmState.waitForValidState(activityName);
     }
 
     protected void launchActivityOnDisplayNoWait(ComponentName activityName, int displayId,
-            String... keyValuePairs) {
-        executeShellCommand(getAmStartCmd(activityName, displayId, keyValuePairs));
+            CliIntentExtra... extras) {
+        executeShellCommand(getAmStartCmd(activityName, displayId, extras));
     }
 
     /**

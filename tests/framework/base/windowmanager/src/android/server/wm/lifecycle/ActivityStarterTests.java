@@ -73,6 +73,8 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
             = getComponentName(LaunchingAndFinishActivity.class);
     private static final ComponentName CLEAR_TASK_ON_LAUNCH_ACTIVITY
             = getComponentName(ClearTaskOnLaunchActivity.class);
+    private static final ComponentName FINISH_ON_TASK_LAUNCH_ACTIVITY
+            = getComponentName(FinishOnTaskLaunchActivity.class);
 
 
     /**
@@ -559,6 +561,41 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 mWmState.getActivityCountInTask(taskId, STANDARD_ACTIVITY));
     }
 
+    /**
+     * This test case tests behavior of activity with finishOnTaskLaunch attribute when the
+     * activity's task is relaunched from home, this activity should be finished.
+     */
+    @Test
+    public void testActivityWithFinishOnTaskLaunch() {
+        // Launch a standard activity.
+        launchActivity(STANDARD_ACTIVITY);
+
+        final int taskId = mWmState.getTaskByActivity(STANDARD_ACTIVITY).getTaskId();
+        final int instances = mWmState.getActivityCountInTask(taskId, null);
+
+        // Launch a activity with finishOnTaskLaunch
+        launchActivity(FINISH_ON_TASK_LAUNCH_ACTIVITY);
+
+        // Make sure instances in task are increased.
+        assertEquals("instances of activity in task must be increased.", instances + 1,
+                mWmState.getActivityCountInTask(taskId, null));
+
+        // Navigate home
+        launchHomeActivity();
+
+        // Simulate to launch the activity from home again
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(STANDARD_ACTIVITY)
+                .setIntentFlags(FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                .execute();
+        mWmState.waitForActivityState(STANDARD_ACTIVITY, STATE_RESUMED);
+
+        // Make sure the activity is finished.
+        assertEquals("Instance of the activity in its task must be cleared", 0,
+                mWmState.getActivityCountInTask(taskId, FINISH_ON_TASK_LAUNCH_ACTIVITY));
+    }
+
     // Test activity
     public static class StandardActivity extends Activity {
     }
@@ -582,6 +619,10 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
     // Test activity
     public static class ClearTaskOnLaunchActivity extends Activity {
+    }
+
+    // Test activity
+    public static class FinishOnTaskLaunchActivity extends Activity {
     }
 
     // Test activity

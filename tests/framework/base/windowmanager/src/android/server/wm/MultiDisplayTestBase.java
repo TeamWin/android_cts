@@ -35,6 +35,7 @@ import static android.server.wm.app.Components.VirtualDisplayActivity.KEY_SHOW_S
 import static android.server.wm.app.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
+import static android.view.WindowManager.DISPLAY_IME_POLICY_FALLBACK_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -43,6 +44,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
@@ -320,7 +322,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         private boolean mResizeDisplay = true;
         private boolean mShowSystemDecorations = false;
         private boolean mOwnContentOnly = false;
-        private boolean mRequestShowIme = false;
+        private int mDisplayImePolicy = DISPLAY_IME_POLICY_FALLBACK_DISPLAY;
         private boolean mPresentationDisplay = false;
         private boolean mSimulateDisplay = false;
         private boolean mMustBeCreated = true;
@@ -364,8 +366,18 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
-        VirtualDisplaySession setRequestShowIme(boolean requestShowIme) {
-            mRequestShowIme = requestShowIme;
+        /**
+         * Sets the policy for how the display should show the ime.
+         *
+         * Set to one of:
+         *   <ul>
+         *     <li>{@link WindowManager#DISPLAY_IME_POLICY_LOCAL}
+         *     <li>{@link WindowManager#DISPLAY_IME_POLICY_FALLBACK_DISPLAY}
+         *     <li>{@link WindowManager#DISPLAY_IME_POLICY_HIDE}
+         *   </ul>
+         */
+        VirtualDisplaySession setDisplayImePolicy(int displayImePolicy) {
+            mDisplayImePolicy = displayImePolicy;
             return this;
         }
 
@@ -439,9 +451,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                     mDensityDpi,
                     mOwnContentOnly,
                     mShowSystemDecorations);
-            if (mRequestShowIme) {
-                mOverlayDisplayDeviceSession.configureDisplays(true /* requestShowIme */);
-            }
+            mOverlayDisplayDeviceSession.configureDisplays(mDisplayImePolicy /* imePolicy */);
             return mOverlayDisplayDeviceSession.getCreatedDisplays();
         }
 
@@ -610,15 +620,15 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             set(displaySettingsEntry);
         }
 
-        void configureDisplays(boolean requestShowIme) {
+        void configureDisplays(int imePolicy) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 for (DisplayContent display : mDisplays) {
-                    final boolean showIme = mWm.shouldShowIme(display.mId);
-                    mDisplayStates.add(new OverlayDisplayState(display.mId, showIme));
-                    if (requestShowIme != showIme) {
-                        mWm.setShouldShowIme(display.mId, requestShowIme);
+                    final int oldImePolicy = mWm.getDisplayImePolicy(display.mId);
+                    mDisplayStates.add(new OverlayDisplayState(display.mId, oldImePolicy));
+                    if (imePolicy != oldImePolicy) {
+                        mWm.setDisplayImePolicy(display.mId, imePolicy);
                         waitForOrFail("display config show-IME to be set",
-                                () -> mWm.shouldShowIme(display.mId) == requestShowIme);
+                                () -> (mWm.getDisplayImePolicy(display.mId) == imePolicy));
                     }
                 }
             });
@@ -626,11 +636,11 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         private void restoreDisplayStates() {
             mDisplayStates.forEach(state -> SystemUtil.runWithShellPermissionIdentity(() -> {
-                mWm.setShouldShowIme(state.mId, state.mShouldShowIme);
+                mWm.setDisplayImePolicy(state.mId, state.mImePolicy);
 
                 // Only need to wait the last flag to be set.
                 waitForOrFail("display config show-IME to be restored",
-                        () -> mWm.shouldShowIme(state.mId) == state.mShouldShowIme);
+                        () -> (mWm.getDisplayImePolicy(state.mId) == state.mImePolicy));
             }));
         }
 
@@ -657,11 +667,11 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
         private class OverlayDisplayState {
             int mId;
-            boolean mShouldShowIme;
+            int mImePolicy;
 
-            OverlayDisplayState(int displayId, boolean showIme) {
+            OverlayDisplayState(int displayId, int imePolicy) {
                 mId = displayId;
-                mShouldShowIme = showIme;
+                mImePolicy = imePolicy;
             }
         }
     }
@@ -725,6 +735,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
     protected void assertBothDisplaysHaveResumedActivities(
             Pair<Integer, ComponentName> firstPair, Pair<Integer, ComponentName> secondPair) {
+        assertNotEquals("Displays must be different.  First display id: "
+                        + firstPair.first, firstPair.first, secondPair.first);
         mWmState.assertResumedActivities("Both displays must have resumed activities",
                 mapping -> {
                     mapping.put(firstPair.first, firstPair.second);

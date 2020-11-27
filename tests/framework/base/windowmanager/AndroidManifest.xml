@@ -208,6 +208,10 @@
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$ClearTaskOnLaunchActivity"
                   android:clearTaskOnLaunch="true"/>
 
+        <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$FinishOnTaskLaunchActivity"
+                  android:finishOnTaskLaunch="true"
+                  android:exported="true"/>
+
         <activity android:name="android.server.wm.ActivityViewTest$ActivityViewTestActivity"
              android:configChanges="keyboardHidden"
              android:exported="true"/>
