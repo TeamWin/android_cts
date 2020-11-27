@@ -929,7 +929,8 @@ public class StagedInstallTest {
 
     @Test
     public void testFailOverlappingMultipleStagedInstall_BothMultiPackage_Apk() throws Exception {
-        stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful();
+        int id = stageMultipleApks(TestApp.A1, TestApp.B1).assertSuccessful().getSessionId();
+        waitForIsReadyBroadcast(id);
         int sessionId = stageMultipleApks(TestApp.A2, TestApp.C1).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo info = waitForBroadcast(sessionId);
         assertThat(info).isStagedSessionFailed();
