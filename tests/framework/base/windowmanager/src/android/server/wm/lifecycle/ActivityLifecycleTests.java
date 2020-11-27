@@ -963,4 +963,30 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertEmptySequence(FirstActivity.class, getLifecycleLog(),
                 "finishBelow");
     }
+
+    @Test
+    public void testSingleTopActivityOnActivityResultNewTask() throws Exception {
+        testSingleTopActivityForResult(true /* newTask */);
+    }
+
+    @Test
+    public void testSingleTopActivityOnActivityResult() throws Exception {
+        testSingleTopActivityForResult(false /* newTask */);
+    }
+
+    private void testSingleTopActivityForResult(boolean newTask) throws Exception {
+        // Launch a singleTop activity
+        final Launcher launcher = new Launcher(SingleTopActivity.class)
+                .setExtraFlags(EXTRA_LAUNCH_ACTIVITY);
+
+        if (newTask) {
+            launcher.setExtraFlags(EXTRA_NEW_TASK);
+        }
+        final Activity activity = launcher.launch();
+        waitAndAssertActivityStates(state(activity, ON_TOP_POSITION_GAINED));
+
+        // Verify the result have been sent back to original activity
+        LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
+                transition(SingleTopActivity.class, ON_ACTIVITY_RESULT),"activityResult");
+    }
 }
