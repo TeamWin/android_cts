@@ -30,6 +30,7 @@ import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
@@ -561,13 +562,21 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         assumeTrue(rootView.getRootWindowInsets().isVisible(statusBars())
                 || rootView.getRootWindowInsets().isVisible(navigationBars()));
 
+        getInstrumentation().runOnMainSync(() -> {
+            // This makes the window frame stable while changing the system bar visibility.
+            final WindowManager.LayoutParams attrs = activity.getWindow().getAttributes();
+            attrs.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+            activity.getWindow().setAttributes(attrs);
+        });
+        getInstrumentation().waitForIdleSync();
+
         final int[] dispatchApplyWindowInsetsCount = {0};
         rootView.setOnApplyWindowInsetsListener((v, insets) -> {
             dispatchApplyWindowInsetsCount[0]++;
             return v.onApplyWindowInsets(insets);
         });
 
-        // One show-system-bar call...
+        // One hide-system-bar call...
         ANIMATION_CALLBACK.reset();
         getInstrumentation().runOnMainSync(() -> {
             rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
@@ -578,7 +587,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         // ... should only trigger one dispatchApplyWindowInsets
         assertEquals(1, dispatchApplyWindowInsetsCount[0]);
 
-        // One hide-system-bar call...
+        // One show-system-bar call...
         dispatchApplyWindowInsetsCount[0] = 0;
         ANIMATION_CALLBACK.reset();
         getInstrumentation().runOnMainSync(() -> {
