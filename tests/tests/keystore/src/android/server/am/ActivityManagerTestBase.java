@@ -32,6 +32,9 @@ import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressUnlockButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static android.view.Display.DEFAULT_DISPLAY;
+
 
 import android.accessibilityservice.AccessibilityService;
 import android.app.ActivityManager;
@@ -39,6 +42,8 @@ import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.SystemClock;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -256,6 +261,23 @@ public abstract class ActivityManagerTestBase {
         return false;
     }
 
+    protected void tapOnDisplay(int x, int y, int displayId) {
+        final long downTime = SystemClock.uptimeMillis();
+        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId);
+
+        final long upTime = SystemClock.uptimeMillis();
+        injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId);
+    }
+
+    private static void injectMotion(long downTime, long eventTime, int action,
+            int x, int y, int displayId) {
+        final MotionEvent event = MotionEvent.obtain(downTime, eventTime, action,
+                x, y, 0 /* metaState */);
+        event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        event.setDisplayId(displayId);
+        getInstrumentation().getUiAutomation().injectInputEvent(event, true /* sync */);
+    }
+
     protected class LockScreenSession implements AutoCloseable {
         private static final boolean DEBUG = false;
 
@@ -276,6 +298,7 @@ public abstract class ActivityManagerTestBase {
         }
 
         public LockScreenSession enterAndConfirmLockCredential() {
+            tapOnDisplay(10, 10, DEFAULT_DISPLAY);
             waitForDeviceIdle(3000);
 
             runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
