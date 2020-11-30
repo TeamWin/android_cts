@@ -61,6 +61,11 @@ public class MidiEchoTest extends AndroidTestCase {
     // So this timeout value is very generous.
     private static final int TIMEOUT_STATUS_MSEC = 500; // arbitrary
 
+    // This is defined in MidiPortImpl.java as the maximum payload that
+    // can be sent internally by MidiInputPort in a
+    // SOCK_SEQPACKET datagram.
+    private static final int MAX_PACKET_DATA_SIZE = 1024 - 9;
+
     // Store device and ports related to the Echo service.
     static class MidiTestContext {
         MidiDeviceInfo echoInfo;
@@ -310,6 +315,23 @@ public class MidiEchoTest extends AndroidTestCase {
     }
 
     public void testEchoSmallMessage() throws Exception {
+        checkEchoVariableMessage(3);
+    }
+
+    public void testEchoLargeMessage() throws Exception {
+        checkEchoVariableMessage(MAX_PACKET_DATA_SIZE);
+    }
+
+    // This message will not fit in the internal buffer in MidiInputPort.
+    // But it is still a legal size according to the API for
+    // MidiReceiver.send(). It may be received in multiple packets.
+    public void testEchoOversizeMessage() throws Exception {
+        checkEchoVariableMessage(MAX_PACKET_DATA_SIZE + 20);
+    }
+
+    // Send a variable sized message. The actual
+    // size will be a multiple of 3 because it sends NoteOns.
+    public void checkEchoVariableMessage(int messageSize) throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
             return; // Not supported so don't test it.
@@ -320,8 +342,15 @@ public class MidiEchoTest extends AndroidTestCase {
         MyLoggingReceiver receiver = new MyLoggingReceiver();
         mc.echoOutputPort.connect(receiver);
 
-        final byte[] buffer = {
-                (byte) 0x93, 0x47, 0x52
+        // Send an integral number of notes
+        int numNotes = messageSize / 3;
+        int noteSize = numNotes * 3;
+        final byte[] buffer = new byte[noteSize];
+        int index = 0;
+        for (int i = 0; i < numNotes; i++) {
+                buffer[index++] = (byte) (0x90 + (i & 0x0F)); // NoteOn
+                buffer[index++] = (byte) 0x47; // Pitch
+                buffer[index++] = (byte) 0x52; // Velocity
         };
         long timestamp = 0x0123765489ABFEDCL;
 
@@ -335,15 +364,27 @@ public class MidiEchoTest extends AndroidTestCase {
         synchronized (receiver) {
             receiver.waitForMessages(numMessages, timeoutMs);
         }
-        assertEquals("number of messages.", numMessages, receiver.getMessageCount());
-        MidiMessage message = receiver.getMessage(0);
+        // Message sent may have been split into multiple received messages.
 
-        assertEquals("byte count of message", buffer.length,
-                message.data.length);
-        assertEquals("timestamp in message", timestamp, message.timestamp);
-        for (int i = 0; i < buffer.length; i++) {
-            assertEquals("message byte[" + i + "]", buffer[i] & 0x0FF,
-                    message.data[i] & 0x0FF);
+        // Check total size.
+        final int numReceived = receiver.getMessageCount();
+        int totalBytesReceived = 0;
+        for (int i = 0; i < numReceived; i++) {
+            MidiMessage message = receiver.getMessage(i);
+            totalBytesReceived += message.data.length;
+            assertEquals("timestamp in message", timestamp, message.timestamp);
+        }
+        assertEquals("byte count of messages", buffer.length,
+                totalBytesReceived);
+
+        int sentIndex = 0;
+        for (int i = 0; i < numReceived; i++) {
+            MidiMessage message = receiver.getMessage(i);
+            for (int k = 0; k < message.data.length; k++) {
+                assertEquals("message byte[" + i + "]",
+                        buffer[sentIndex++] & 0x0FF,
+                        message.data[k] & 0x0FF);
+            }
         }
 
         mc.echoOutputPort.disconnect(receiver);
@@ -361,7 +402,8 @@ public class MidiEchoTest extends AndroidTestCase {
         mc.echoOutputPort.connect(receiver);
 
         final int numMessages = 10;
-        final long maxLatencyNanos = 15 * NANOS_PER_MSEC; // generally < 3 msec on N6
+        final int maxLatencyMs = 15; // generally < 3 msec on N6
+        final long maxLatencyNanos = maxLatencyMs * NANOS_PER_MSEC;
         byte[] buffer = {
                 (byte) 0x93, 0, 64
         };
@@ -373,7 +415,7 @@ public class MidiEchoTest extends AndroidTestCase {
         }
 
         // Wait for messages to pass quickly through echo service.
-        final int timeoutMs = 100;
+        final int timeoutMs = (numMessages * maxLatencyMs) + 20;
         synchronized (receiver) {
             receiver.waitForMessages(numMessages, timeoutMs);
         }
