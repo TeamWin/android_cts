@@ -20,9 +20,6 @@
     <option name="config-descriptor:metadata" key="component" value="telecom" />
     <option name="config-descriptor:metadata" key="token" value="UICC_SIM_CARD" />
     <option name="not-shardable" value="true" />
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.TokenRequirement">
-        <option name="token" value="sim-card-with-certs" />
-    </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsCarrierApiTestCases.apk" />
